@@ -44,3 +44,6 @@ in `TV_PROFILES.md`.
 
 The dedicated editor and its provisional dialog/data boundaries are described
 in `TV_PROFILE_EDIT.md`.
+
+Dedicated Live layout, bounded guide marker and missing connected feed/playback
+contracts are described in `TV_LIVE.md`.

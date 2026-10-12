@@ -50,3 +50,7 @@ TV `ProfileEdit` renders the supplied profile editor with fixture rating/languag
 labels. Name, avatar and PIN operations change memory only. Delete returns to
 Profiles without removing real data. Maturity/language editing explains the
 missing preference contract. Native Back returns the editor to Profiles.
+
+TV `Live` renders the supplied news still and fixture EPG window. Category
+filtering changes this supplied data only. OK enters a fixture live-player scene;
+its frame is not proof that a live source decodes or that an EPG provider is connected.

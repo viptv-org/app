@@ -22,6 +22,7 @@ import org.viptv.app.player.PlayerFact
 import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.features.library.TvLibraryScreen
 import org.viptv.app.features.live.LiveScreen
+import org.viptv.app.features.live.TvLiveScreen
 import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.search.TvSearchScreen
@@ -45,6 +46,10 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
     val current = screen ?: selected
     val go: (Screen) -> Unit = navigate ?: { selected = it }
     val query: (String) -> Unit = search ?: { term = it }
+    val watchLive: (org.viptv.app.features.live.LiveChannel) -> Unit = { channel ->
+        liveTitle = channel.card.copy(title = channel.current(PreviewLive.now)?.title ?: channel.card.title, subtitle = channel.card.title)
+        go(Screen.Player)
+    }
     var homeArrived by remember(tvDetailVariant) { mutableStateOf(tvDetailVariant != "LoadingThenReady") }
     LaunchedEffect(tvDetailVariant) {
         if (tvDetailVariant == "LoadingThenReady") { kotlinx.coroutines.delay(3000); homeArrived = true }
@@ -77,7 +82,9 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 PreviewTvDetails.movieExtras, loadingMore = tvDetailVariant == "Loading")
                                 else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail)
                             Screen.Calendar -> CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, television, { go(Screen.Details) }, { go(Screen.Settings) })
-                            Screen.Live -> LiveScreen(PreviewLive.channels, television, PreviewLive.start, PreviewLive.now, { channel -> liveTitle = channel.card.copy(title = channel.current(PreviewLive.now)?.title ?: channel.card.title, subtitle = channel.card.title); go(Screen.Player) }, { go(Screen.Settings) })
+                            Screen.Live -> if (television) TvLiveScreen(PreviewTvLive.channels, PreviewLive.start, PreviewLive.now, watchLive,
+                                { go(Screen.Settings) }, PreviewTvLive.categories)
+                                else LiveScreen(PreviewLive.channels, false, PreviewLive.start, PreviewLive.now, watchLive, { go(Screen.Settings) })
                             Screen.Library -> if (television) TvLibraryScreen(if (tvDetailVariant in listOf("Empty", "Unavailable")) emptyList() else PreviewTvLibrary.cards,
                                 tvDetailVariant != "Unavailable", { go(Screen.Details) }, { go(Screen.Home) }, PreviewTvLibrary.watched)
                                 else LibraryScreen(PreviewData.posters, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) })

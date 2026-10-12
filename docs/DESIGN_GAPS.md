@@ -92,3 +92,10 @@ confirmation boards. `TvProfileEditDialog` and the reused `AvatarPicker` provide
 provisional dialogs. Rating/language also expose missing engine preference states.
 The editor board itself is supplied and remains in progress; these additional
 dialog surfaces need design review.
+
+### GAP-028 — TV Live without guide data or channels
+
+`TvLiveScreen` displays a channel list when no EPG window is supplied, an empty
+state when no channels are available, and an unavailable-favorites notice. The
+TV ZIP supplies the populated Live guide but no matching no-guide, empty or
+favorites-unavailable boards. These provisional surfaces need design review.

@@ -11,6 +11,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, now: Int?, watch: (LiveChannel) -> Unit, manage: () -> Unit) {
+    if (television) { TvLiveScreen(channels, start, now, watch, manage); return }
     var fullGuide by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("All") }
     var selected by remember(channels) { mutableStateOf(channels.firstOrNull()) }
