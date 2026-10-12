@@ -17,16 +17,20 @@ import org.jetbrains.compose.resources.Font
 import androidx.compose.ui.text.font.FontFamily
 
 @Composable
-fun Brand(iconSize: androidx.compose.ui.unit.Dp = 23.dp, textSize: androidx.compose.ui.unit.TextUnit = 17.sp, gap: androidx.compose.ui.unit.Dp = 7.dp) {
+fun Brand(iconSize: androidx.compose.ui.unit.Dp = 23.dp, textSize: androidx.compose.ui.unit.TextUnit = 17.sp, gap: androidx.compose.ui.unit.Dp = 7.dp,
+    letterSpacing: androidx.compose.ui.unit.TextUnit = androidx.compose.ui.unit.TextUnit.Unspecified,
+    lineHeight: androidx.compose.ui.unit.TextUnit = androidx.compose.ui.unit.TextUnit.Unspecified) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(gap)) {
         BrandMark(iconSize)
-        Text("VIPTV", fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold, fontSize = textSize)
+        Text("VIPTV", fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold, fontSize = textSize,
+            letterSpacing = letterSpacing, lineHeight = lineHeight)
     }
 }
 
 @Composable
 internal fun BrandMark(size: androidx.compose.ui.unit.Dp) {
     Box(Modifier.size(size).background(Palette.accent, RoundedCornerShape((size.value * 0.28f).dp)), contentAlignment = Alignment.Center) {
-        Text("V", color = Palette.background, fontWeight = FontWeight.Black, fontSize = (size.value * 0.65f).sp)
+        Text("V", color = Palette.background, fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)),
+            fontWeight = FontWeight.ExtraBold, fontSize = (size.value * 0.625f).sp, lineHeight = (size.value * 0.625f).sp, letterSpacing = 0.sp)
     }
 }

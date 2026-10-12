@@ -22,9 +22,11 @@ class MainActivity : ComponentActivity() {
             val screen = runCatching { Screen.valueOf(intent.getStringExtra("ui_screen") ?: "Home") }.getOrDefault(Screen.Home)
             setContent {
                 var current by remember { mutableStateOf(screen) }
+                var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
                 LaunchedEffect(current) { configurePlayerWindow(current == Screen.Player, tv) }
-                BackHandler(current != Screen.Home) { current = Screen.Home }
-                UiPreview(screen = current, navigate = { current = it }, television = tv, handheld = !tv)
+                BackHandler(current != Screen.Home || entryBack != null) { entryBack?.invoke() ?: run { current = Screen.Home } }
+                UiPreview(screen = current, navigate = { current = it }, television = tv, handheld = !tv,
+                    tvDetailVariant = intent.getStringExtra("ui_variant") ?: "Movie", entryBackChanged = { entryBack = it })
             }
             return
         }
@@ -32,7 +34,9 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val controller = remember { ApplicationController(scope) }
             val state by controller.state.collectAsState()
-            BackHandler(enabled = state.screen !in listOf(Screen.Connect, Screen.Profiles)) {
+            var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
+            BackHandler(enabled = entryBack != null || state.screen !in listOf(Screen.Connect, Screen.Profiles)) {
+                if (entryBack != null) { entryBack?.invoke(); return@BackHandler }
                 when (state.screen) {
                     Screen.Player -> controller.closePlayer()
                     Screen.ProfilePin, Screen.ProfileEdit, Screen.Home -> controller.navigate(Screen.Profiles)
@@ -41,7 +45,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
-            App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller)
+            App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller, entryBackChanged = { entryBack = it })
         }
     }
 }

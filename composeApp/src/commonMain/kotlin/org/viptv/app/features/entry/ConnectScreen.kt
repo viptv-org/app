@@ -11,9 +11,18 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.components.Brand
 import org.viptv.app.theme.Palette
 
-// GAP-001: connection selection has no supplied current board.
+// Dedicated phone/TV/desktop layouts precede the wide connection fallback.
 @Composable
-fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false) {
+fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false, phone: Boolean = false,
+    television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {}) {
+    if (television) {
+        TvSignIn(origin, busy, error, local, connect, backChanged)
+        return
+    }
+    if (phone) {
+        MobileSignIn(origin, busy, error, local, connect)
+        return
+    }
     if (desktop) {
         DesktopSignIn(origin, busy, error, local, connect)
         return

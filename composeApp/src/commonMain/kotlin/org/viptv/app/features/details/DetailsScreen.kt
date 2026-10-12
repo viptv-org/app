@@ -18,7 +18,11 @@ import org.viptv.engine.wire.DetailSnapshot
 import coil3.compose.AsyncImage
 
 @Composable
-fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit) {
+fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false) {
+    if (television) {
+        TvDetailsScreen(detail, busy, error, sources)
+        return
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val compact = maxWidth < 900.dp

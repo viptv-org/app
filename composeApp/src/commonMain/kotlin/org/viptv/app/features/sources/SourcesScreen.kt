@@ -26,9 +26,13 @@ import org.viptv.engine.wire.SourceCandidate
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false) {
+    if (television) {
+        TvSourcesScreen(title, sources, busy, error, choose, back, detail)
+        return
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        if (detail != null) DetailsScreen(detail, false, null, back, {})
+        if (detail != null) DetailsScreen(detail, false, null, back, {}, television)
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
@@ -62,7 +66,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     }
 }
 
-private fun sourceSummary(sources: List<SourceCandidate>): String {
+internal fun sourceSummary(sources: List<SourceCandidate>): String {
     val providers = sources.map { it.provider_id }.distinct().size
     return "${sources.size} ${if (sources.size == 1) "source" else "sources"} from $providers ${if (providers == 1) "add-on" else "add-ons"}"
 }

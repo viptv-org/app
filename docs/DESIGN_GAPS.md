@@ -25,3 +25,28 @@
 Each implemented provisional surface will include its source location and a review capture. No provisional surface is recorded as supplied-design parity.
 
 The remaining supplied screens are tracked as pending/in progress in `design-coverage.json`; they are not classified as missing designs. No current board has passed visual parity review.
+
+### GAP-020 — Phone entry connection states
+
+`MobilePasswordPanel` includes a collapsible server address selector, which has no
+supplied phone board. `MobileSignInUnavailable` provides temporary unavailable
+states for browser, email/recovery, device approval, and IPTV authentication until
+those connection flows exist. Their supplied boards remain unfinished, rather
+than being counted as missing designs.
+
+### GAP-021 — TV entry controls beyond the supplied board
+
+`TvPasswordPanel` adds Delete character and Use another server actions. The ZIP
+keyboard lacks a deletion key and assumes a fixed server. The welcome footer
+omits “No profiles or sync” because local profiles are an agreed app requirement.
+Unimplemented phone/browser/email/device/IPTV approval flows remain supplied
+boards awaiting implementation; their unavailable states are temporary.
+
+### GAP-022 — TV title/source capabilities without connected contracts
+
+The source drawer's normal footer says “Select a source to start playback” because
+automatic best-match selection and per-profile ranking preferences are unfinished.
+Quality, format, add-on attribution and ranking currently render from structured
+preview values; normal `SourceCandidate` data lacks those fields. TV title options
+have temporary unavailable notices for My List and trailers. Cast/resume and
+recommendation presentation is currently supplied only in the review fixture.

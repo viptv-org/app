@@ -2,9 +2,11 @@ package org.viptv.app.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 object Palette {
     val background = Color(0xFF0B0B0C)
@@ -18,9 +20,14 @@ object Palette {
 }
 
 @Composable
-fun ViptvTheme(content: @Composable () -> Unit) {
+fun ViptvTheme(television: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = ViptvColors,
-        typography = viptvTypography(), content = { CompositionLocalProvider(LocalContentColor provides Palette.text, content = content) },
+        typography = viptvTypography(), content = {
+            CompositionLocalProvider(LocalContentColor provides Palette.text) {
+                if (television) CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(letterSpacing = 0.sp), content = content)
+                else content()
+            }
+        },
     )
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import com.composables.icons.lucide.*
@@ -81,11 +82,12 @@ internal fun SignInInput(
     change: (String) -> Unit,
     hint: String,
     transformation: VisualTransformation = VisualTransformation.None,
+    height: Dp = 44.dp,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     var focused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(10.dp)
-    BasicTextField(value, change, Modifier.fillMaxWidth().height(44.dp)
+    BasicTextField(value, change, Modifier.fillMaxWidth().height(height)
         .onFocusChanged { focused = it.isFocused }
         .background(Color(0xFF242426), shape)
         .border(if (focused) 2.dp else 1.dp, if (focused) Palette.text else Color(0xFF454548), shape),

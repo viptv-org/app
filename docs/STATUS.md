@@ -2,7 +2,7 @@
 
 This is an incomplete implementation checkpoint. It is not the completed application or a design-parity release.
 
-The active scope is UI parity first, using the current VIPTV ZIPs across every KMP platform. Functional integration work follows visual and interaction completion.
+The active scope is UI parity first, with Android TV as the first platform priority, using the current VIPTV ZIPs. Functional integration work follows visual and interaction completion.
 
 The latest navigation checkpoint expands the desktop rail to Home, Discover, Movies, Series, Live, Calendar, My List and History, with Add-ons and Settings at the bottom. The phone has the four-tab floating dock and separate Search action from the ZIP; Home reserves bottom scrolling space under it. Web navigation collapses additional destinations into a menu at medium and phone widths. Movies, Series and Discover have a shared poster-grid surface using already-loaded catalog cards, with alphabetical sorting and a provider-order default. Genre filters, populated-grid parity, Calendar, Live guide and My List remain incomplete. Captures are `docs/evidence/desktop-navigation.png`, `docs/evidence/desktop-browse-shell.png`, and `docs/evidence/android-floating-navigation.png`. The phone Search action and desktop Movies/sort interactions were observed; browser and TV runtime checks remain pending.
 
@@ -113,3 +113,20 @@ Live uses separate channel/program view models, phone current/next rows and prev
 Calendar has a seven-day phone strip, grouped release cards with aired/countdown badges, wider date filtering, and a TV detail pane. Phone date selection scrolls to a populated section; wider date selection filters releases. Chromium verified Tomorrow showing different titles with no runtime errors. Phone/TV captures are `android-calendar-preview.png` and `android-tv-calendar-preview.png`; `web-calendar-preview.png` shows the selected future date. Calendar normal connections have no release-feed adapter yet and show the explicit unavailable state. Preview countdowns/dates are fixed data, not a claimed live integration. Calendar filters/favourites notices are tracked as GAP-019.
 
 Desktop tests, Wasm compilation, Android assembly and development executable sync pass. The APK hash is refreshed. The full original UI objective remains unfinished and no board is certified.
+
+Phone entry checkpoint: the generic phone connection form now uses the supplied
+M3SignIn method list and a separate M3SignInPassword layout, with Lucide icons.
+The password action still calls the existing connection controller; local mode
+remains available. Isolated Android preview navigation to the password screen was
+observed. Desktop tests, Wasm compilation, and Android assembly passed. This does
+not certify either board: platform insets, focused keyboard states, input styling,
+and unsupported authentication methods still need parity work. Browser, email,
+device approval, and IPTV entry currently show explicit unavailable states.
+
+Android TV is now the first platform priority. Dedicated welcome/method/password,
+movie/series/episode, search-keyboard and source-drawer components replace generic
+layouts. An isolated TV emulator passed remote episode focus, search typing and
+deletion, password keyboard input, and Back through entry steps. The supplied
+boards still require complete visual, motion and connected-flow qualification;
+see `ANDROID_TV_DESIGN.md`. This checkpoint does not complete Android TV or the
+broader KMP parity objective.

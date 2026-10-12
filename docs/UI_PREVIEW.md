@@ -11,3 +11,10 @@ Browser preview: append `#ui-preview/Home` or another supported screen name to t
 The fixture is in `preview/PreviewData.kt`; routing is in `preview/UiPreview.kt`. `composeResources/files/ui-preview` contains byte-preserved assets from the supplied D3HomeWin/D3Search/D3Player boards. Ordinary app navigation remains in `App.kt`.
 
 `#playback-qa` is a separate public-MDN-video test entry point. It has no account, provider or history connection. Real UI Play, Pause, seek, mute and speed controls passed in isolated Chromium; the observed video ended the check paused at 2.786 seconds, volume 0 and speed 0.5. Normal web entry still requires its backend.
+
+Android TV has a dedicated `Connect` preview for welcome → sign-in methods →
+password. `Details --es ui_variant Series` renders the Dahmer series/episode
+fixture; ordinary `Details` renders the Oak Street movie fixture. `Sources --es
+ui_variant Loading` renders a partial source/loading scene. Quality/ranking
+fields in these fixtures are sample data, not inferred from provider labels.
+The TV entry uses bundled ZIP posters; it adds no metadata-provider requests.

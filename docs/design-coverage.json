@@ -35,9 +35,10 @@
     "title": "Welcome",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvWelcome.kt",
+    "capture": "docs/evidence/android-tv-welcome.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3SignInChoose",
@@ -45,9 +46,10 @@
     "title": "Sign in \u2014 every method",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvSignInChoice.kt",
+    "capture": "docs/evidence/android-tv-signin-choice.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3SignIn",
@@ -85,9 +87,10 @@
     "title": "Sign in \u2014 password",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvPasswordPanel.kt",
+    "capture": "docs/evidence/android-tv-signin-password.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3SignInIptv",
@@ -175,9 +178,10 @@
     "title": "Search \u2014 typing",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/search/TvSearchScreen.kt",
+    "capture": "docs/evidence/android-tv-search.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3Movies",
@@ -215,9 +219,10 @@
     "title": "Series page \u2014 actions first",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/details/TvDetailsScreen.kt",
+    "capture": "docs/evidence/android-tv-series.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3Episodes",
@@ -225,9 +230,10 @@
     "title": "Series page \u2014 scrolled to episodes",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/details/TvEpisodeShelf.kt",
+    "capture": "docs/evidence/android-tv-episodes.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3Movie",
@@ -235,9 +241,10 @@
     "title": "Movie page",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/details/TvDetailsScreen.kt",
+    "capture": "docs/evidence/android-tv-movie.png",
+    "verification": "1920x1080 Android TV fixture render; source summary and full connected parity unfinished"
   },
   {
     "id": "Tv3Sources",
@@ -245,9 +252,10 @@
     "title": "Choose a source",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/sources/TvSourcesScreen.kt",
+    "capture": "docs/evidence/android-tv-sources.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3SourcesLoading",
@@ -255,9 +263,10 @@
     "title": "Choose a source \u2014 still finding",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/sources/TvSourcesScreen.kt",
+    "capture": "docs/evidence/android-tv-sources-loading.png",
+    "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
     "id": "Tv3PlayerBuffer",

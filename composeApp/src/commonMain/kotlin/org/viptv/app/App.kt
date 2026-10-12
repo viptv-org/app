@@ -33,6 +33,7 @@ fun App(
     desktopChrome: Boolean = false,
     desktopMenuOpen: Boolean = false,
     providedController: ApplicationController? = null,
+    entryBackChanged: ((() -> Unit)?) -> Unit = {},
 ) {
     org.viptv.app.images.ConfigureImageLoading()
     val scope = rememberCoroutineScope()
@@ -40,12 +41,12 @@ fun App(
     val state by controller.state.collectAsState()
     LaunchedEffect(controller) { controller.restore() }
     DisposableEffect(controller) { onDispose { controller.disconnect() } }
-    ViptvTheme {
+    ViptvTheme(television) {
         BoxWithConstraints(Modifier.fillMaxSize().background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             val compact = maxWidth < 640.dp && !television
             val tablet = !compact && !television && !browser && !desktopChrome
             when (state.screen) {
-                Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome)
+                Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged)
                 Screen.Profiles -> ProfilesScreen(state.profiles, state.busy, state.error, state.localMode, state.managingProfiles, compact, desktopChrome,
                     controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television)
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
@@ -56,7 +57,7 @@ fun App(
                 Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer, state.sourceTitle, phone = !browser && !television && !desktopChrome, canvasColor = if (browser) androidx.compose.ui.graphics.Color.Transparent else androidx.compose.ui.graphics.Color.Black)
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {
-                    if (browser || (television && state.screen != Screen.Home)) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
+                    if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources))) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
                     Row(Modifier.weight(1f)) {
@@ -66,8 +67,8 @@ fun App(
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome,
                                 play = { card -> if (state.localMode) controller.chooseSource(card) else controller.open(card) }, tablet = tablet, navigate = controller::navigate, browser = browser)
                             Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open)
-                            Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open)
-                            Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
+                            Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open, television)
+                            Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource, television)
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource, { controller.navigate(if (state.detail == null) Screen.Home else Screen.Details) }, state.detail, television)
                             Screen.Calendar -> CalendarScreen(emptyList(), emptyList(), television, controller::open, { controller.navigate(Screen.Settings) })
                             Screen.Live -> LiveScreen(state.home?.rows.orEmpty().flatMap { it.cards }.filter { it.identity.kind in listOf("channel", "tv") }

@@ -1,0 +1,73 @@
+package org.viptv.app.features.details
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.*
+import coil3.compose.AsyncImage
+import com.composables.icons.lucide.*
+import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.TvAction
+import org.viptv.app.resources.Res
+import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.theme.Palette
+import org.viptv.engine.wire.Card
+
+@Composable
+internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
+    save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean) {
+    val series = card.identity.kind == "series"
+    LaunchedEffect(card.identity) { if (requestInitialFocus) first.requestFocus() }
+    Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds()) {
+        if (card.logo != null) AsyncImage(card.logo, card.title,
+            Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
+                .width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale)
+                .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen },
+            alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
+        else Text(card.title, Modifier.offset(96.dp * scale, 250.dp * scale).width(800.dp * scale),
+            fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp, fontWeight = FontWeight.Bold)
+        Box(Modifier.offset(96.dp * scale, (if (series) 410 else 432).dp * scale).width(1100.dp * scale)) {
+            TvDetailMetadata(card, scale)
+        }
+        card.description?.let { Text(it,
+            Modifier.offset(96.dp * scale, (if (series) 460 else 482).dp * scale).width(800.dp * scale),
+            fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.body,
+            maxLines = 3, overflow = TextOverflow.Ellipsis) }
+        extras.cast?.let { Text("Starring $it", Modifier.offset(96.dp * scale, 586.dp * scale).width(800.dp * scale),
+            color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp) }
+        Row(Modifier.offset(96.dp * scale, (if (series) 648 else 668).dp * scale),
+            horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
+            TvAction(Modifier.width((if (extras.resume != null) 420 else 260).dp * scale).height(72.dp * scale)
+                .focusProperties { if (down != null) this.down = down },
+                scale = scale, primary = true, requester = first, activate = play,
+                contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) { tint ->
+                Box(Modifier.fillMaxSize()) {
+                    Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), tint)
+                        Spacer(Modifier.width(12.dp * scale))
+                        Text(extras.resumeLabel ?: "Play", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
+                        extras.remaining?.let { Spacer(Modifier.width(54.dp * scale)); Text(it, color = tint.copy(alpha = 0.7f), fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold) }
+                    }
+                    extras.resume?.progress?.let { progress -> LinearProgressIndicator(progress = { progress.toFloat() },
+                        modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 12.dp * scale).fillMaxWidth().height(4.dp * scale),
+                        color = tint, trackColor = tint.copy(alpha = 0.2f)) }
+                }
+            }
+            TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = save) { Icon(Lucide.Plus, "Add to My List", Modifier.size(30.dp * scale), it) }
+            TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = trailer) { Icon(Lucide.Film, "Trailer", Modifier.size(30.dp * scale), it) }
+            if (extras.resume != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
+        }
+    }
+}
