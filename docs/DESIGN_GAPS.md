@@ -81,5 +81,14 @@ or empty/unavailable boards. These provisional surfaces need supplied designs.
 The existing shared name-entry dialog is used by Add profile. The TV ZIP supplies
 the Add tile and a separate Edit profile board, but no add-profile name-entry
 dialog. The shared dialog is provisional and requires a dedicated TV treatment
-or supplied design. The supplied Edit profile board is pending implementation,
-not an absent design.
+or supplied design. The supplied Edit profile board's dedicated layout is in
+progress; its design is present.
+
+### GAP-027 — TV profile editing dialogs
+
+The supplied Edit profile board has Name, Change avatar, Profile lock, rating,
+language and Delete entry controls, but no corresponding TV input/picker/delete
+confirmation boards. `TvProfileEditDialog` and the reused `AvatarPicker` provide
+provisional dialogs. Rating/language also expose missing engine preference states.
+The editor board itself is supplied and remains in progress; these additional
+dialog surfaces need design review.

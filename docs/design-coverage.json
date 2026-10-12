@@ -138,9 +138,9 @@
     "title": "Edit profile",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_PROFILE_EDIT.md",
+    "capture": "docs/evidence/android-tv-profile-edit.png"
   },
   {
     "id": "Tv3HomeLoading",

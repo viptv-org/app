@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.animation.core.tween
 import com.composeunstyled.UnstyledSwitch
 import com.composeunstyled.Track
@@ -26,17 +27,19 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float, value: String? = null,
-    checked: Boolean? = null, requester: FocusRequester? = null, left: FocusRequester? = null, activate: () -> Unit) {
+    checked: Boolean? = null, requester: FocusRequester? = null, left: FocusRequester? = null,
+    leading: ImageVector? = null, rowHeight: Int = 96, labelColor: Color? = null, activate: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
-    Row(Modifier.fillMaxWidth().height(96.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
+    Row(Modifier.fillMaxWidth().height(rowHeight.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
         .focusProperties { if (left != null) this.left = left }.onFocusChanged { focused = it.isFocused }
         .semantics { if (checked != null) { role = Role.Switch; toggleableState = if (checked) ToggleableState.On else ToggleableState.Off } }
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = activate)
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
+        leading?.let { Icon(it, null, Modifier.size(28.dp * scale), labelColor ?: color); Spacer(Modifier.width(24.dp * scale)) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
-            Text(label, color = color, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
+            Text(label, color = labelColor ?: color, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = if (leading == null) FontWeight.Bold else FontWeight.SemiBold)
             subtitle?.let { Text(it, color = if (focused) Palette.background.copy(alpha = 0.75f) else Palette.secondary,
                 fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp) }
         }

@@ -41,3 +41,6 @@ in `TV_LIBRARY.md`.
 
 Profile picker geometry, focus behavior and remaining editor work are described
 in `TV_PROFILES.md`.
+
+The dedicated editor and its provisional dialog/data boundaries are described
+in `TV_PROFILE_EDIT.md`.

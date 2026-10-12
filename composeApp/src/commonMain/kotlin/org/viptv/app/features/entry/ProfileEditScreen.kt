@@ -13,7 +13,12 @@ fun ProfileEditScreen(
     profile: Profile?, count: Int, busy: Boolean, error: String?, compact: Boolean,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
     setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
+    television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
 ) {
+    if (television) {
+        TvProfileEditScreen(profile, count, busy, error, back, rename, setPin, setAvatar, delete, backChanged = backChanged)
+        return
+    }
     if (compact) {
         MobileProfileEdit(profile, count, busy, error, back, rename, setPin, setAvatar, delete)
         return

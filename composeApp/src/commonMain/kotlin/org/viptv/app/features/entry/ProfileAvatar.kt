@@ -32,12 +32,13 @@ internal fun ProfileAvatar(profile: Profile?, size: Dp, radius: Dp) {
         else -> listOf(Color(0xFFC24E6B), Color(0xFF3E6B8A), Color(0xFF675C8E), Color(0xFF40766B))
             .let { it[((profile?.id?.hashCode() ?: 0) and Int.MAX_VALUE) % it.size] }
     }
-    Box(Modifier.size(size).clip(RoundedCornerShape(radius)).background(color), contentAlignment = Alignment.Center) {
-        val artwork = when (avatarId) {
-            "vynxc" -> Res.drawable.avatar_vynxc
-            "zayne" -> Res.drawable.avatar_zayne
-            else -> null
-        }
+    val artwork = when (avatarId) {
+        "vynxc" -> Res.drawable.avatar_vynxc
+        "zayne" -> Res.drawable.avatar_zayne
+        else -> null
+    }
+    val background = if (artwork != null || profile?.avatar != null) Color(0xFF0E0E10) else color
+    Box(Modifier.size(size).clip(RoundedCornerShape(radius)).background(background), contentAlignment = Alignment.Center) {
         when {
             artwork != null -> androidx.compose.foundation.Image(painterResource(artwork), profile?.name,
                 Modifier.fillMaxSize(), contentScale = ContentScale.Crop)

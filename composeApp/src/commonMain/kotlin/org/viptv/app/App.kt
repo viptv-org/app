@@ -54,7 +54,7 @@ fun App(
                     state.busy, state.error, controller::submitProfilePin, { controller.navigate(Screen.Profiles) }, television)
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
                     state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
-                    controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile)
+                    controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile, television, entryBackChanged)
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {

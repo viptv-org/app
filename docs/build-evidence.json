@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "138227d8303ad888faa94202f5c2de1bff76da0a7f86779637676a0088c4495e",
+    "sha256": "dc1e38453b38fb948627ca11d3903370501633071d7f89679993e039ff42a958",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -47,7 +47,8 @@
     "tv_home_motion": "preview Home/Play/rows/return and rapid Down/Right during exit passed; controls also passed with emulator animator duration scale zero, which was restored; frame-by-frame parity and reduced-motion visuals pending",
     "tv_home_content_arrival": "delayed preview supplied snapshot to same screen; recorded loading, partial-opacity and ready frames; D-pad entered Continue Watching afterward; pending shelf arrival and full timing parity not yet runtime-qualified",
     "tv_my_list": "preview header/filter/card traversal, Movies/Series filtering, sort-menu open/Back, and unavailable state passed at 1920x1080; header inset and segmented-track RGB matched ZIP values; normal saved-list contract absent",
-    "tv_profiles": "preview avatar position, exact white focus border, Right/Down traversal, Manage/Done, locked marker and empty picker Add/name dialog passed; TV edit layout and entrance motion pending"
+    "tv_profiles": "preview avatar position, exact white focus border, Right/Down traversal, Manage/Done, locked marker and empty picker Add/name dialog passed; TV edit layout and entrance motion pending",
+    "tv_profile_edit": "preview unavailable maturity dialog, avatar cancellation, keyboard name/PIN update, delete cancellation and Back passed at 1920x1080; portrait fringe count dropped from 156 to zero; normal mutation persistence and maturity/language contracts remain unqualified"
   },
   "desktop": {
     "compile": "passed",

@@ -12,9 +12,9 @@ an empty local list, Add is the initial focus target. Native local profile
 selection and management callbacks remain connected through `ProfilesScreen`.
 
 The normal profile engine already supports local creation, rename, avatars,
-PINs and deletion. The TV edit screen still uses the generic form and does not
-match the supplied `Tv3ProfileEdit` board. Its dedicated layout, maturity/language
-contracts, per-profile entry motion, and full visual qualification remain work.
+PINs and deletion. The dedicated TV editor is described in `TV_PROFILE_EDIT.md`.
+Maturity/language contracts, per-profile entry motion and full visual
+qualification remain work.
 
 The isolated Profiles preview uses the supplied unlocked board state by default.
 `Locked` retains the locked-profile fixture. Manage/Done change preview state;

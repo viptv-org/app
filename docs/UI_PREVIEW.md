@@ -43,5 +43,10 @@ server operations run.
 
 TV `Profiles` renders the supplied unlocked profile-picker board. `Locked`
 retains the locked-profile marker and `Empty` checks initial focus on Add profile.
-Manage/Done update only preview mode; profile edits and creation remain disconnected
-in this isolated preview.
+Manage/Done update only preview mode. Management opens the selected profile's
+TV editor; creation remains disconnected in this isolated preview.
+
+TV `ProfileEdit` renders the supplied profile editor with fixture rating/language
+labels. Name, avatar and PIN operations change memory only. Delete returns to
+Profiles without removing real data. Maturity/language editing explains the
+missing preference contract. Native Back returns the editor to Profiles.
