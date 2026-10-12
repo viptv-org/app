@@ -2,7 +2,7 @@
 
 The explicit preview renders production UI components with a fixed dataset and copied artwork from the current ZIP boards. It never authenticates, calls a metadata provider, or writes account/profile data. Preview interactions change the visible scene; they do not prove a backend or playback operation. Each capture identifies whether it uses preview data or a real connection.
 
-Desktop launch: `VIPTV_UI_PREVIEW=1 VIPTV_UI_SCREEN=Home ./gradlew :composeApp:run`. `VIPTV_UI_SCREEN` accepts an existing `Screen` name, including Profiles, Home, Search, Details, Sources, Movies, Series, Library, History, Settings and Player. The default desktop window is 1440×900.
+Desktop launch: `VIPTV_UI_PREVIEW=1 VIPTV_UI_SCREEN=Home ./gradlew :composeApp:run`. `VIPTV_UI_SCREEN` accepts an existing `Screen` name, including Profiles, Home, Search, Details, Sources, Movies, Series, Library, History, Settings, Player, Live and Calendar. The default desktop window is 1440×900.
 
 Android QA launch after installing the experimental APK: `adb -s emulator-5580 shell am start -S -n org.viptv.experiment/.MainActivity --ez ui_preview true --es ui_screen Settings`. The phone review uses a disposable emulator; the physical Android device is untouched. The same extras work on the disposable TV emulator (`emulator-5582`); TV mode follows Android's device configuration. Starting without the extras restores the ordinary application entry point.
 

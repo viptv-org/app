@@ -19,6 +19,9 @@ import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.browse.BrowseScreen
 import org.viptv.app.features.library.LibraryScreen
+import org.viptv.app.features.calendar.CalendarScreen
+import org.viptv.app.features.live.LiveScreen
+import org.viptv.app.features.live.LiveChannel
 import org.viptv.app.components.*
 import org.viptv.engine.wire.Card
 
@@ -66,6 +69,10 @@ fun App(
                             Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open)
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource, { controller.navigate(if (state.detail == null) Screen.Home else Screen.Details) }, state.detail, television)
+                            Screen.Calendar -> CalendarScreen(emptyList(), emptyList(), television, controller::open, { controller.navigate(Screen.Settings) })
+                            Screen.Live -> LiveScreen(state.home?.rows.orEmpty().flatMap { it.cards }.filter { it.identity.kind in listOf("channel", "tv") }
+                                .distinctBy { it.provider_id + ":" + it.identity.id }.map { LiveChannel(it) }, television, null, null,
+                                { if (state.localMode) controller.chooseSource(it.card) else controller.open(it.card) }, { controller.navigate(Screen.Settings) })
                             Screen.Library -> LibraryScreen(emptyList(), false, television, controller::open, { controller.navigate(Screen.History) }, { controller.navigate(Screen.Home) })
                             Screen.History -> if (state.localMode) HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) }) else Text("History is unavailable for this connection.", Modifier.padding(32.dp))
                             Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, { if (state.localMode) controller.disconnect() else controller.signOut() }, state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) })

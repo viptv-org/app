@@ -16,6 +16,8 @@ import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.features.library.LibraryScreen
+import org.viptv.app.features.live.LiveScreen
+import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.features.sources.SourcesScreen
@@ -29,6 +31,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
     search: ((String) -> Unit)? = null, handheld: Boolean = false) {
     org.viptv.app.images.ConfigureImageLoading()
     var selected by remember { mutableStateOf(initialScreen) }
+    var liveTitle by remember { mutableStateOf<org.viptv.engine.wire.Card?>(null) }
     var term by remember { mutableStateOf("the w") }
     val current = screen ?: selected
     val go: (Screen) -> Unit = navigate ?: { selected = it }
@@ -47,10 +50,12 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                     }
                     Box(Modifier.weight(1f)) {
                         when (current) {
-                            Screen.Player -> PlayerScreen(null, true, null, {}, {}, { go(Screen.Home) }, PreviewData.playerTitle, PlayerFact.Progress(842000, 3132000), phone = handheld, previewFrame = PreviewData.playerFrame)
+                            Screen.Player -> PlayerScreen(null, true, null, {}, {}, { go(if (liveTitle == null) Screen.Home else Screen.Live) }, liveTitle ?: PreviewData.playerTitle, if (liveTitle == null) PlayerFact.Progress(842000, 3132000) else PlayerFact.Progress(0, null), phone = handheld, previewFrame = liveTitle?.landscape ?: PreviewData.playerFrame)
                             Screen.Details -> DetailsScreen(PreviewData.detail, false, null, { go(Screen.Home) }, { go(Screen.Sources) })
                             Screen.Sources -> SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {},
                                 { go(Screen.Details) }, PreviewData.detail, television)
+                            Screen.Calendar -> CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, television, { go(Screen.Details) }, { go(Screen.Settings) })
+                            Screen.Live -> LiveScreen(PreviewLive.channels, television, PreviewLive.start, PreviewLive.now, { channel -> liveTitle = channel.card.copy(title = channel.current(PreviewLive.now)?.title ?: channel.card.title, subtitle = channel.card.title); go(Screen.Player) }, { go(Screen.Settings) })
                             Screen.Library -> LibraryScreen(PreviewData.posters, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) })
                             Screen.History -> HistoryScreen(PreviewData.history, false, null, { go(Screen.Details) }, {}, { go(Screen.Home) })
                             Screen.Search -> SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) })

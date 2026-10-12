@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Cast
+import com.composables.icons.lucide.SlidersHorizontal
 import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.painterResource
@@ -28,12 +29,12 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
     var unavailable by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (screen == Screen.Library) Text("My List", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else Brand(28.dp, 20.sp, 9.dp)
+            if (screen in listOf(Screen.Library, Screen.Live, Screen.Calendar)) Text(when (screen) { Screen.Library -> "My List"; Screen.Live -> "Live"; else -> "Calendar" }, fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else Brand(28.dp, 20.sp, 9.dp)
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = { unavailable = "Casting" }, modifier = Modifier.size(40.dp)) {
-                Icon(Lucide.Cast, "Cast", Modifier.size(22.dp))
+            IconButton(onClick = { unavailable = if (screen == Screen.Calendar) "Calendar filters" else "Casting" }, modifier = Modifier.size(40.dp)) {
+                Icon(if (screen == Screen.Calendar) Lucide.SlidersHorizontal else Lucide.Cast, if (screen == Screen.Calendar) "Calendar filters" else "Cast", Modifier.size(22.dp))
             }
-            if (screen != Screen.Library) IconButton(onClick = { unavailable = "Remote control" }, modifier = Modifier.size(40.dp)) {
+            if (screen !in listOf(Screen.Library, Screen.Live, Screen.Calendar)) IconButton(onClick = { unavailable = "Remote control" }, modifier = Modifier.size(40.dp)) {
                 Icon(painterResource(Res.drawable.ic_remote_zip), "Remote control", Modifier.size(22.dp))
             }
             Box {

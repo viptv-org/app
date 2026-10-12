@@ -87,7 +87,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) })
             }
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
-                PlaybackTimeline(position, duration, ::seek, remaining = phone)
+                if (title?.identity?.kind in listOf("channel", "tv") && duration == null) {
+                    Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
                 if (phone) PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true })
                 else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
                     { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true })

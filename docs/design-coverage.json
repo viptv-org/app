@@ -195,8 +195,8 @@
     "title": "Live \u2014 guide",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveScreen.kt",
     "capture": null
   },
   {
@@ -605,8 +605,8 @@
     "title": "Live",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveScreen.kt",
     "capture": null
   },
   {
@@ -965,8 +965,8 @@
     "title": "Live guide",
     "width": 1194,
     "height": 834,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveScreen.kt",
     "capture": null
   },
   {
@@ -1195,8 +1195,8 @@
     "title": "Live guide",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveScreen.kt",
     "capture": null
   },
   {
@@ -1655,9 +1655,9 @@
     "title": "Live guide",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveScreen.kt",
+    "capture": "docs/evidence/web-live-guide-preview.png"
   },
   {
     "id": "W3MyList",
@@ -1895,9 +1895,9 @@
     "title": "Phone \u2014 calendar",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/CalendarScreen.kt",
+    "capture": "docs/evidence/android-calendar-preview.png"
   },
   {
     "id": "SkMUpNext",
@@ -1945,9 +1945,9 @@
     "title": "TV \u2014 calendar",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/CalendarScreen.kt",
+    "capture": "docs/evidence/android-tv-calendar-preview.png"
   },
   {
     "id": "SkTvFilters",
