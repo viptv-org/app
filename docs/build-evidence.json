@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-12",
+  "android": {
+    "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+    "sha256": "b360a5b0e089c10ba737c5410060e74c82022bb6bcd2d643e93f0d3c31b04dfb",
+    "min_sdk": 26,
+    "native_abis": [
+      "arm64-v8a",
+      "x86_64"
+    ],
+    "emulator_local_profile_smoke": "passed"
+  },
+  "desktop": {
+    "compile": "passed",
+    "native_sqlite_persistence_test": "passed",
+    "rendered_provisional_entry": "docs/provisional/connection-desktop.png"
+  },
+  "web": {
+    "wasm_compile": "passed",
+    "browser_playback": "not qualified"
+  },
+  "engine_tests": 6,
+  "backend_v3_tests": 3,
+  "visual_parity_boards_passed": 0,
+  "real_media_qualification": "pending"
+}

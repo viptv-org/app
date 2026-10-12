@@ -1,0 +1,4 @@
+[submodule "native/core"]
+	path = native/core
+	url = https://github.com/viptv-org/core.git
+	branch = experiment/kmp-v2

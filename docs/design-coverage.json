@@ -1,0 +1,1972 @@
+[
+  {
+    "id": "Tv3Motion",
+    "platform": "tv",
+    "title": "Motion spec (live)",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3HomeToRows",
+    "platform": "tv",
+    "title": "Animation — Home to Continue Watching (loops)",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Splash",
+    "platform": "tv",
+    "title": "Starting — splash",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Welcome",
+    "platform": "tv",
+    "title": "Welcome",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignInChoose",
+    "platform": "tv",
+    "title": "Sign in — every method",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignIn",
+    "platform": "tv",
+    "title": "Sign in — phone or browser code",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignInEmail",
+    "platform": "tv",
+    "title": "Sign in — email (fallback)",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignInCode",
+    "platform": "tv",
+    "title": "Sign in — email code",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignInPassword",
+    "platform": "tv",
+    "title": "Sign in — password",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignInIptv",
+    "platform": "tv",
+    "title": "Sign in — IPTV provider",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignedIn",
+    "platform": "tv",
+    "title": "Signed in — welcome back",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Profiles",
+    "platform": "tv",
+    "title": "Who’s watching",
+    "width": 1920,
+    "height": 1080,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
+    "capture": null
+  },
+  {
+    "id": "Tv3Pin",
+    "platform": "tv",
+    "title": "Profile PIN",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3ProfileEdit",
+    "platform": "tv",
+    "title": "Edit profile",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3HomeLoading",
+    "platform": "tv",
+    "title": "Home — loading",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Home",
+    "platform": "tv",
+    "title": "Home — billboard, first row peeking",
+    "width": 1920,
+    "height": 1080,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "Tv3Browse",
+    "platform": "tv",
+    "title": "Home — browsing rows, the top describes the focused title",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Search",
+    "platform": "tv",
+    "title": "Search — typing",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Movies",
+    "platform": "tv",
+    "title": "Movies",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Live",
+    "platform": "tv",
+    "title": "Live — guide",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3MyList",
+    "platform": "tv",
+    "title": "My List",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Title",
+    "platform": "tv",
+    "title": "Series page — actions first",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Episodes",
+    "platform": "tv",
+    "title": "Series page — scrolled to episodes",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Movie",
+    "platform": "tv",
+    "title": "Movie page",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3Sources",
+    "platform": "tv",
+    "title": "Choose a source",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SourcesLoading",
+    "platform": "tv",
+    "title": "Choose a source — still finding",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3PlayerBuffer",
+    "platform": "tv",
+    "title": "Player — starting",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3PlayerControls",
+    "platform": "tv",
+    "title": "Player — controls",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3PlayerScrub",
+    "platform": "tv",
+    "title": "Player — scrubbing",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3PlayerSkip",
+    "platform": "tv",
+    "title": "Player — Skip intro",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3PlayerAudio",
+    "platform": "tv",
+    "title": "Player — audio and subtitles",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3PlayerNext",
+    "platform": "tv",
+    "title": "Player — next episode",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3PlayerError",
+    "platform": "tv",
+    "title": "Player — source failed",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SetPlayback",
+    "platform": "tv",
+    "title": "Settings — Playback",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SetSubs",
+    "platform": "tv",
+    "title": "Settings — Subtitles & audio",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SetAddons",
+    "platform": "tv",
+    "title": "Settings — Add-ons",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "Tv3SignOut",
+    "platform": "tv",
+    "title": "Settings — sign out",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Welcome",
+    "platform": "phone",
+    "title": "Welcome",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SignIn",
+    "platform": "phone",
+    "title": "Sign in — every method",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SignInEmail",
+    "platform": "phone",
+    "title": "Sign in — email",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Code",
+    "platform": "phone",
+    "title": "Sign in — email code",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SignInPassword",
+    "platform": "phone",
+    "title": "Sign in — password",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SignInDevice",
+    "platform": "phone",
+    "title": "Sign in — approve from another device",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SignInIptv",
+    "platform": "phone",
+    "title": "Sign in — IPTV provider",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SignInBrowser",
+    "platform": "phone",
+    "title": "Sign in — finishing in the browser",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3LinkScan",
+    "platform": "phone",
+    "title": "Link a TV — scan",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3LinkCode",
+    "platform": "phone",
+    "title": "Link a TV — enter code",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3LinkConfirm",
+    "platform": "phone",
+    "title": "Link a TV — confirm",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3LinkDone",
+    "platform": "phone",
+    "title": "Link a TV — done",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Profiles",
+    "platform": "phone",
+    "title": "Who’s watching",
+    "width": 390,
+    "height": 844,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
+    "capture": null
+  },
+  {
+    "id": "M3Pin",
+    "platform": "phone",
+    "title": "Profile PIN",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3ProfileEdit",
+    "platform": "phone",
+    "title": "Edit profile",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3HomeLoading",
+    "platform": "phone",
+    "title": "Home — loading",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Home",
+    "platform": "phone",
+    "title": "Home",
+    "width": 390,
+    "height": 844,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "M3HomeScrolled",
+    "platform": "phone",
+    "title": "Home — scrolled",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3CwMenu",
+    "platform": "phone",
+    "title": "Continue Watching — options",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3HomeToast",
+    "platform": "phone",
+    "title": "Home — added to My List",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3HomeCasting",
+    "platform": "phone",
+    "title": "Home — casting (mini controller)",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Search",
+    "platform": "phone",
+    "title": "Search",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SearchResults",
+    "platform": "phone",
+    "title": "Search — results",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Live",
+    "platform": "phone",
+    "title": "Live",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3MyList",
+    "platform": "phone",
+    "title": "My List",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3MyListSort",
+    "platform": "phone",
+    "title": "My List — sort and filter",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3MyListEmpty",
+    "platform": "phone",
+    "title": "My List — empty",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3History",
+    "platform": "phone",
+    "title": "History",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Title",
+    "platform": "phone",
+    "title": "Series page",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3TitleEpisodes",
+    "platform": "phone",
+    "title": "Series page — episodes",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SeasonSheet",
+    "platform": "phone",
+    "title": "Series page — choose season",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Movie",
+    "platform": "phone",
+    "title": "Movie page",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Sources",
+    "platform": "phone",
+    "title": "Choose a source",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SourcesLoading",
+    "platform": "phone",
+    "title": "Choose a source — still finding",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Player",
+    "platform": "phone",
+    "title": "Player — controls",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerSeek",
+    "platform": "phone",
+    "title": "Player — double-tap +10 s",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerScrub",
+    "platform": "phone",
+    "title": "Player — scrubbing",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerLocked",
+    "platform": "phone",
+    "title": "Player — screen locked",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerAudio",
+    "platform": "phone",
+    "title": "Player — audio and subtitles",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerNext",
+    "platform": "phone",
+    "title": "Player — next episode",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerBuffer",
+    "platform": "phone",
+    "title": "Player — starting",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerError",
+    "platform": "phone",
+    "title": "Player — source failed",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3PlayerLive",
+    "platform": "phone",
+    "title": "Player — live with channel list",
+    "width": 844,
+    "height": 390,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3CastPicker",
+    "platform": "phone",
+    "title": "Watch on — pick a TV",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3CastExpanded",
+    "platform": "phone",
+    "title": "Casting — controls",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Remote",
+    "platform": "phone",
+    "title": "TV remote",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Settings",
+    "platform": "phone",
+    "title": "Settings",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SetPlayback",
+    "platform": "phone",
+    "title": "Settings — Playback",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SetSubs",
+    "platform": "phone",
+    "title": "Settings — Subtitles & audio",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SetAddons",
+    "platform": "phone",
+    "title": "Settings — Add-ons",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3AddAddon",
+    "platform": "phone",
+    "title": "Add an add-on",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3SignOut",
+    "platform": "phone",
+    "title": "Sign out",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "M3Offline",
+    "platform": "phone",
+    "title": "Offline",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Home",
+    "platform": "tablet",
+    "title": "Home — landscape",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3HomePortrait",
+    "platform": "tablet",
+    "title": "Home — portrait",
+    "width": 834,
+    "height": 1194,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Narrow",
+    "platform": "tablet",
+    "title": "Split View — narrow window (compact: phone layout)",
+    "width": 507,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Title",
+    "platform": "tablet",
+    "title": "Series page — info | episodes",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Sources",
+    "platform": "tablet",
+    "title": "Choose a source — side sheet",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Player",
+    "platform": "tablet",
+    "title": "Player — episodes pane",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Live",
+    "platform": "tablet",
+    "title": "Live guide",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3MyList",
+    "platform": "tablet",
+    "title": "My List — sort popover",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Search",
+    "platform": "tablet",
+    "title": "Search",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3Settings",
+    "platform": "tablet",
+    "title": "Settings — list | detail",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "T3SignIn",
+    "platform": "tablet",
+    "title": "Sign in",
+    "width": 1194,
+    "height": 834,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3HomeWin",
+    "platform": "desktop",
+    "title": "Home — Windows, 1440 × 900",
+    "width": 1440,
+    "height": 900,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "D3HomeMac",
+    "platform": "desktop",
+    "title": "Home — macOS, 1280 × 800",
+    "width": 1280,
+    "height": 800,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "D3HomeCompact",
+    "platform": "desktop",
+    "title": "Home — 1024 × 700 (icon rail)",
+    "width": 1024,
+    "height": 700,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "D3HomeNarrow",
+    "platform": "desktop",
+    "title": "Home — snapped half, 600 × 800 (menu button)",
+    "width": 600,
+    "height": 800,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "D3HomeUltra",
+    "platform": "desktop",
+    "title": "Home — ultrawide 2560 × 1080",
+    "width": 2560,
+    "height": 1080,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "D3HomeLoading",
+    "platform": "desktop",
+    "title": "Home — loading",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3HomeHover",
+    "platform": "desktop",
+    "title": "Home — hover preview",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Context",
+    "platform": "desktop",
+    "title": "Right-click menu",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Toast",
+    "platform": "desktop",
+    "title": "Toast with undo",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Update",
+    "platform": "desktop",
+    "title": "Update ready (info bar)",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Offline",
+    "platform": "desktop",
+    "title": "Offline (info bar)",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Title",
+    "platform": "desktop",
+    "title": "Series page",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3TitleSeason",
+    "platform": "desktop",
+    "title": "Series page — season menu",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3TitleUltra",
+    "platform": "desktop",
+    "title": "Series page — ultrawide 2560 × 1080",
+    "width": 2560,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Movie",
+    "platform": "desktop",
+    "title": "Movie page",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Sources",
+    "platform": "desktop",
+    "title": "Choose a source — drawer",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Search",
+    "platform": "desktop",
+    "title": "Search — Ctrl K",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Browse",
+    "platform": "desktop",
+    "title": "Movies — keyboard focus on the first poster",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Live",
+    "platform": "desktop",
+    "title": "Live guide",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3MyList",
+    "platform": "desktop",
+    "title": "My List — sort menu",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3History",
+    "platform": "desktop",
+    "title": "History",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Player",
+    "platform": "desktop",
+    "title": "Player — controls",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3PlayerScrub",
+    "platform": "desktop",
+    "title": "Player — hover scrubbing",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3PlayerAudio",
+    "platform": "desktop",
+    "title": "Player — audio & subtitles flyout",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3PlayerNext",
+    "platform": "desktop",
+    "title": "Player — next episode",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3PlayerBuffer",
+    "platform": "desktop",
+    "title": "Player — starting",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3PlayerError",
+    "platform": "desktop",
+    "title": "Player — source failed",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Mini",
+    "platform": "desktop",
+    "title": "Mini player — always-on-top window",
+    "width": 480,
+    "height": 270,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SignIn",
+    "platform": "desktop",
+    "title": "Sign in — every method",
+    "width": 1100,
+    "height": 720,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SignInWaiting",
+    "platform": "desktop",
+    "title": "Sign in — waiting for the browser",
+    "width": 1100,
+    "height": 720,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SignInEmail",
+    "platform": "desktop",
+    "title": "Sign in — email code",
+    "width": 1100,
+    "height": 720,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SignInPassword",
+    "platform": "desktop",
+    "title": "Sign in — password",
+    "width": 1100,
+    "height": 720,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SignInDevice",
+    "platform": "desktop",
+    "title": "Sign in — approve from another device",
+    "width": 1100,
+    "height": 720,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SignInIptv",
+    "platform": "desktop",
+    "title": "Sign in — IPTV provider",
+    "width": 1100,
+    "height": 720,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Profiles",
+    "platform": "desktop",
+    "title": "Who’s watching",
+    "width": 1100,
+    "height": 720,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
+    "capture": null
+  },
+  {
+    "id": "D3SetGeneral",
+    "platform": "desktop",
+    "title": "Settings — General",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SetPlayback",
+    "platform": "desktop",
+    "title": "Settings — Playback",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3SetAddons",
+    "platform": "desktop",
+    "title": "Settings — Add-ons",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Shortcuts",
+    "platform": "desktop",
+    "title": "Keyboard shortcuts (Shift ?)",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "D3Remote",
+    "platform": "desktop",
+    "title": "TV remote popover",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Landing",
+    "platform": "web",
+    "title": "Signed-out landing — 1440",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3LandingMobile",
+    "platform": "web",
+    "title": "Signed-out landing — 390",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3SignIn",
+    "platform": "web",
+    "title": "Sign in — every method",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3SignInCode",
+    "platform": "web",
+    "title": "Sign in — email code",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3SignInPassword",
+    "platform": "web",
+    "title": "Sign in — password",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3SignInDevice",
+    "platform": "web",
+    "title": "Sign in — approve from another device",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3SignInIptv",
+    "platform": "web",
+    "title": "Sign in — IPTV provider",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3SignInMobile",
+    "platform": "web",
+    "title": "Sign in — phone browser",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Profiles",
+    "platform": "web",
+    "title": "Who’s watching",
+    "width": 1440,
+    "height": 900,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
+    "capture": null
+  },
+  {
+    "id": "W3Device",
+    "platform": "web",
+    "title": "Enter the TV code — 1440",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3DeviceMobile",
+    "platform": "web",
+    "title": "Enter the TV code — phone browser",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3DeviceConfirm",
+    "platform": "web",
+    "title": "Confirm the TV + pick a profile",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3DeviceDone",
+    "platform": "web",
+    "title": "TV signed in",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Addons",
+    "platform": "web",
+    "title": "Add an add-on (from the TV’s QR code)",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Home",
+    "platform": "web",
+    "title": "Home — 1440",
+    "width": 1440,
+    "height": 900,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "capture": null
+  },
+  {
+    "id": "W3Home1920",
+    "platform": "web",
+    "title": "Home — 1920",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Home768",
+    "platform": "web",
+    "title": "Home — 768 (Browse menu)",
+    "width": 768,
+    "height": 1024,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3HomeMobile",
+    "platform": "web",
+    "title": "Home — 390 (mobile web)",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3HomeLoading",
+    "platform": "web",
+    "title": "Home — loading",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3HomeHover",
+    "platform": "web",
+    "title": "Home — hover preview",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3HomeFocus",
+    "platform": "web",
+    "title": "Home — keyboard: skip link + focus ring",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3TitleModal",
+    "platform": "web",
+    "title": "Details modal over the page (URL kept)",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3TitlePage",
+    "platform": "web",
+    "title": "Shared title link — signed out",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Search",
+    "platform": "web",
+    "title": "Search",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Live",
+    "platform": "web",
+    "title": "Live guide",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3MyList",
+    "platform": "web",
+    "title": "My List",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Player",
+    "platform": "web",
+    "title": "Player",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3PlayerAudio",
+    "platform": "web",
+    "title": "Player — audio & subtitles",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3Account",
+    "platform": "web",
+    "title": "Account — devices",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "W3NotFound",
+    "platform": "web",
+    "title": "Not found",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkCalMonth",
+    "platform": "simkl",
+    "title": "Calendar — month",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkCalAgenda",
+    "platform": "simkl",
+    "title": "Calendar — agenda + up next",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkUpNext",
+    "platform": "simkl",
+    "title": "Up next — countdowns",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkDiscover",
+    "platform": "simkl",
+    "title": "Discover — Simkl trending, premieres, airing",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkGenres",
+    "platform": "simkl",
+    "title": "Browse by genre",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkSurprise",
+    "platform": "simkl",
+    "title": "Surprise me",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkSearch",
+    "platform": "simkl",
+    "title": "Search — Simkl results",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkFilters",
+    "platform": "simkl",
+    "title": "Advanced filters — every Simkl filter",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkFilterNetwork",
+    "platform": "simkl",
+    "title": "Advanced filters — network picker",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkFilterSave",
+    "platform": "simkl",
+    "title": "Save filters as a smart list",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkCalFilter",
+    "platform": "simkl",
+    "title": "Calendar filters",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkListFilter",
+    "platform": "simkl",
+    "title": "List filters",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkLists",
+    "platform": "simkl",
+    "title": "Lists — Simkl statuses, multi-select",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkTitle",
+    "platform": "simkl",
+    "title": "Title — tracking, ratings, episodes",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkStats",
+    "platform": "simkl",
+    "title": "Your stats",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkRate",
+    "platform": "simkl",
+    "title": "End of episode — tracked + rate",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkSettings",
+    "platform": "simkl",
+    "title": "Settings — Simkl connected",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkSettingsOff",
+    "platform": "simkl",
+    "title": "Settings — connect Simkl",
+    "width": 1440,
+    "height": 900,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkMCalendar",
+    "platform": "simkl",
+    "title": "Phone — calendar",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkMUpNext",
+    "platform": "simkl",
+    "title": "Phone — up next",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkMLists",
+    "platform": "simkl",
+    "title": "Phone — lists",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkMListsSheet",
+    "platform": "simkl",
+    "title": "Phone — move / rate sheet",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkMFilters",
+    "platform": "simkl",
+    "title": "Phone — filters sheet",
+    "width": 390,
+    "height": 844,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkTvCalendar",
+    "platform": "simkl",
+    "title": "TV — calendar",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkTvFilters",
+    "platform": "simkl",
+    "title": "TV — filters",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  },
+  {
+    "id": "SkTvConnect",
+    "platform": "simkl",
+    "title": "TV — connect Simkl",
+    "width": 1920,
+    "height": 1080,
+    "status": "pending",
+    "implementation": null,
+    "capture": null
+  }
+]
