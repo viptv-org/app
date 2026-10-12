@@ -68,3 +68,10 @@ Missing account data, unavailable playback/subtitle preference contracts and
 unavailable add-on pairing have explicit provisional states. The supplied
 Playback/Subtitles/Add-ons/Sign-out boards remain incomplete until their connected
 behavior and final visual review are qualified.
+
+### GAP-025 — TV My List sort options and empty/unavailable states
+
+`TvLibraryControls` opens a remote-sized sort menu from the supplied sort pill.
+`TvLibraryScreen` shows empty and unsupported-connection states with a Browse
+Home action. The TV ZIP provides the populated My List board, but no sort-menu
+or empty/unavailable boards. These provisional surfaces need supplied designs.

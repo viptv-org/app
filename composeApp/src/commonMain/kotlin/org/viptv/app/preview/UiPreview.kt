@@ -20,6 +20,7 @@ import org.viptv.app.features.browse.TvBrowseScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.features.library.LibraryScreen
+import org.viptv.app.features.library.TvLibraryScreen
 import org.viptv.app.features.live.LiveScreen
 import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.search.SearchScreen
@@ -75,7 +76,9 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail)
                             Screen.Calendar -> CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, television, { go(Screen.Details) }, { go(Screen.Settings) })
                             Screen.Live -> LiveScreen(PreviewLive.channels, television, PreviewLive.start, PreviewLive.now, { channel -> liveTitle = channel.card.copy(title = channel.current(PreviewLive.now)?.title ?: channel.card.title, subtitle = channel.card.title); go(Screen.Player) }, { go(Screen.Settings) })
-                            Screen.Library -> LibraryScreen(PreviewData.posters, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) })
+                            Screen.Library -> if (television) TvLibraryScreen(if (tvDetailVariant in listOf("Empty", "Unavailable")) emptyList() else PreviewTvLibrary.cards,
+                                tvDetailVariant != "Unavailable", { go(Screen.Details) }, { go(Screen.Home) }, PreviewTvLibrary.watched)
+                                else LibraryScreen(PreviewData.posters, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) })
                             Screen.History -> HistoryScreen(PreviewData.history, false, null, { go(Screen.Details) }, {}, { go(Screen.Home) })
                             Screen.Search -> if (television) TvSearchScreen(searchTerm ?: term, PreviewData.posters + PreviewLive.channels.take(3).map { it.card }, emptyList(), false, null, query, { go(Screen.Details) }, listOf("the whisper man", "the wild robot", "the white lotus"))
                                 else SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) })

@@ -35,3 +35,6 @@ Dedicated TV settings and their unavailable contract limits are described in `TV
 
 Home, loading and Movies implementation progress and remaining qualification
 are described in `TV_HOME.md`.
+
+Dedicated My List layout and its missing persistent data contract are described
+in `TV_LIBRARY.md`.

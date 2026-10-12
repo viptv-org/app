@@ -18,6 +18,7 @@ import org.viptv.engine.wire.Card
 @Composable
 fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, open: (Card) -> Unit,
     history: () -> Unit, home: () -> Unit) {
+    if (television) { TvLibraryScreen(cards, available, open, home); return }
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf("Date added") }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }

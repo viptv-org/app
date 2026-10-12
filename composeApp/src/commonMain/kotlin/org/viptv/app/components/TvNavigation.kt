@@ -48,7 +48,8 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                     Text(destination.label, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp,
                         color = if (selected == destination.screen || focused) Palette.text else Palette.body,
                         fontWeight = if (selected == destination.screen) FontWeight.Bold else FontWeight.Medium)
-                    if (selected == destination.screen) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp * scale).background(Palette.text))
+                    if (selected == destination.screen) Box(Modifier.align(Alignment.BottomCenter).offset(y = (-4).dp * scale)
+                        .fillMaxWidth().height(3.dp * scale).background(Palette.text, RoundedCornerShape(2.dp * scale)))
                 }
             }
         }

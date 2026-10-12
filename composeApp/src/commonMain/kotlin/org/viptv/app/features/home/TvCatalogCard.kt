@@ -29,12 +29,12 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier: Modifier = Modifier,
-    focused: (Card) -> Unit, open: (Card) -> Unit, showFocus: Boolean = true) {
+    focused: (Card) -> Unit, open: (Card) -> Unit, showFocus: Boolean = true, focusedCaptions: Boolean = false) {
     var focus by remember { mutableStateOf(false) }
     val frame by animateFloatAsState(if (focus && showFocus) 1f else 0f, tween(120), label = "Remote focus frame")
     Column(modifier.width((if (portrait) 232 else 384).dp * scale).onFocusChanged { focus = it.isFocused; if (focus) focused(card) }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
-        val shape = RoundedCornerShape(12.dp * scale)
+        val shape = RoundedCornerShape((if (focusedCaptions) 10 else 12).dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(shape).background(Palette.surface)) {
             AsyncImage(if (portrait) card.poster else card.landscape, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             card.badges.firstOrNull()?.let { Text(it, Modifier.align(Alignment.TopStart).padding(12.dp * scale).background(Palette.text, RoundedCornerShape(5.dp * scale))
@@ -52,6 +52,14 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
                 fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp,
                 color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        }
+        if (portrait && focusedCaptions) Box(Modifier.height(70.dp * scale)) {
+            if (focus) Column(Modifier.padding(top = 14.dp * scale), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
+                Text(card.title, fontSize = (22 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                card.subtitle?.let { Text(it, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            }
         }
     }
 }

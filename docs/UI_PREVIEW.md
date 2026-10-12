@@ -35,3 +35,8 @@ TV `Home --es ui_variant LoadingThenReady` keeps the loading placeholders visibl
 for three seconds, then supplies the fixture snapshot to the same screen instance.
 This exercises the real loading-to-content transition without account, provider,
 or persistence operations. `Loading` remains the static loading-scene entry point.
+
+TV `Library` renders the supplied My List artwork with fixture watched ordering.
+Variants `Empty` and `Unavailable` render the corresponding provisional states.
+Filters and sort choices change preview state only; no saved-list database or
+server operations run.
