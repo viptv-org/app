@@ -73,3 +73,7 @@ The desktop featured component is split into `features/home/DesktopHero.kt`. It 
 ## Phone featured layout checkpoint
 
 `features/home/PhoneHero.kt` replaces the generic phone hero with a 470-pixel artwork panel, 16-pixel corners, centered constrained logo, lower artwork fade, and two 46-pixel actions using Lucide icons. Local Play opens source selection. Remote Play currently opens title details because remote source selection is incomplete. My List displays the explicit unavailable notice tracked as GAP-015 rather than reporting a title saved. Supplied genre metadata and featured pagination are not represented by the current card contract. Desktop tests, web compilation and Android assembly pass; populated visual checks and phone hero parity remain pending.
+
+## Phone header checkpoint
+
+The compact native header now uses the supplied cast/remote icon style and a 28-pixel profile avatar with a Switch profile/Settings menu. Home has All, Movies, Series and Genres controls; Movies navigation passed on the disposable QA emulator. `docs/evidence/android-home-header.png` and `android-movies-header.png` record actual runtime layouts. Cast, remote pairing and genres show the provisional GAP-016 notice. Small initial avatars use 16-pixel lettering instead of the profile picker's 38-pixel lettering. Desktop tests, web compilation and Android assembly pass. The capture has no featured artwork because the profile's catalog requests failed; it does not certify the hero or image performance.

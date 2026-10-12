@@ -43,7 +43,7 @@ internal fun ProfileAvatar(profile: Profile?, size: Dp, radius: Dp) {
                 Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             profile?.avatar != null -> AsyncImage(profile.avatar, profile.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             else -> Text(profile?.name?.take(1)?.uppercase().orEmpty(),
-                fontSize = if (size <= 72.dp) 38.sp else 54.sp, fontWeight = FontWeight.Bold)
+                fontSize = if (size <= 40.dp) 16.sp else if (size <= 72.dp) 38.sp else 54.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

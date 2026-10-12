@@ -52,6 +52,7 @@ fun App(
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {
                     if (browser || television) TopNavigation(state.screen, television, controller::navigate)
+                    else if (!desktopChrome && compact) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                     else if (!desktopChrome) Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 20.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Brand(); Spacer(Modifier.weight(1f)); TextButton(onClick = { controller.navigate(Screen.Settings) }) { Text("Settings") }
                     }
