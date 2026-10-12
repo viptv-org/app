@@ -32,3 +32,6 @@ checks outstanding. `design-coverage.json` records each supplied board separatel
 The dedicated TV player and scoped real-video checks are described in `TV_PLAYER.md`.
 
 Dedicated TV settings and their unavailable contract limits are described in `TV_SETTINGS.md`.
+
+Home, loading and Movies implementation progress and remaining qualification
+are described in `TV_HOME.md`.

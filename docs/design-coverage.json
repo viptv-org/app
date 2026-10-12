@@ -15,9 +15,9 @@
     "title": "Animation \u2014 Home to Continue Watching (loops)",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_HOME.md",
+    "capture": "docs/evidence/android-tv-home-rows.png"
   },
   {
     "id": "Tv3Splash",
@@ -148,9 +148,9 @@
     "title": "Home \u2014 loading",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_HOME.md",
+    "capture": "docs/evidence/android-tv-home-loading.png"
   },
   {
     "id": "Tv3Home",
@@ -159,8 +159,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHero.kt",
-    "capture": null
+    "implementation": "docs/TV_HOME.md",
+    "capture": "docs/evidence/android-tv-home.png"
   },
   {
     "id": "Tv3Browse",
@@ -189,9 +189,9 @@
     "title": "Movies",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_HOME.md",
+    "capture": "docs/evidence/android-tv-movies.png"
   },
   {
     "id": "Tv3Live",

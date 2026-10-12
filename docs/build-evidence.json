@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "812a8df5bf4b0d732be1c3211f3dc7f27ad6e36201b2d89970dac51c9368c221",
+    "sha256": "6d468d3f4d80b66be355aa013ace56c7fb751272e53301072e350be768014313",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -41,7 +41,9 @@
       "render": "Playback, Subtitles, Add-ons and Sign-out at 1920x1080",
       "interaction": "fixture toggles, sidebar navigation, subtitle style selection, add-on address dialog dismissal and sign-out Cancel passed",
       "limits": "preferences/account/add-on pairing remain unconnected; fixture acknowledgements are not engine persistence or real logout evidence"
-    }
+    },
+    "tv_home_catalog": "preview D-pad Home/Play/rows, horizontal summary, return to billboard and supplied Action membership filtering passed; full parity pending",
+    "tv_home_loading": "two emulator captures show shimmer changes within placeholders and unchanged surrounding background"
   },
   "desktop": {
     "compile": "passed",

@@ -33,6 +33,10 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
             } }
         when (sort) { "A–Z" -> loaded.sortedBy { it.title.lowercase() }; "Z–A" -> loaded.sortedByDescending { it.title.lowercase() }; else -> loaded }
     }
+    if (television) {
+        TvBrowseScreen(cards, home == null, open)
+        return
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp && !television
         val gutter = if (television) 70.dp else if (compact) 16.dp else 40.dp

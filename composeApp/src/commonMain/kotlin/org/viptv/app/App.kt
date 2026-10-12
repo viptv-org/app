@@ -66,7 +66,7 @@ fun App(
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(state.screen, controller::navigate)
                         when (state.screen) {
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome,
-                                play = { card -> if (state.localMode) controller.chooseSource(card) else controller.open(card) }, tablet = tablet, navigate = controller::navigate, browser = browser)
+                                play = { card -> if (state.localMode) controller.chooseSource(card) else controller.open(card) }, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile })
                             Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open)
                             Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open, television)
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource, television)
@@ -82,7 +82,6 @@ fun App(
                         }
                     }
                   }
-                  if (television && state.screen == Screen.Home) TopNavigation(state.screen, true, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                   if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       BottomNavigation(state.screen, controller::navigate)
                   }

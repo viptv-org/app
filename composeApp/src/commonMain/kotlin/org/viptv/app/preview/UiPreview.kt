@@ -15,6 +15,8 @@ import org.viptv.app.features.entry.ConnectScreen
 import org.viptv.app.features.entry.ProfilePinScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.features.home.TvHomeScreen
+import org.viptv.app.features.browse.TvBrowseScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.features.library.LibraryScreen
@@ -78,13 +80,15 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                             Screen.ProfilePin -> ProfilePinScreen(PreviewData.profiles[2], phone, false, null, {}, { go(Screen.Profiles) }, television)
                             Screen.Profiles -> ProfilesScreen(PreviewData.profiles, false, null, true, false, phone, desktop,
                                 { go(Screen.Home) }, {}, {}, {}, {}, television)
-                            Screen.Movies, Screen.Series, Screen.Discover -> BrowseScreen(current, PreviewData.home, television) { go(Screen.Details) }
-                            else -> HomeScreen(PreviewData.home, television, { go(Screen.Details) }, {}, desktop, { go(Screen.Sources) }, tablet, go, browser)
+                            Screen.Movies, Screen.Series, Screen.Discover -> if (television) TvBrowseScreen(PreviewTvHome.movies, false, { go(Screen.Details) }, PreviewTvHome.genres, PreviewTvHome.membership, 4)
+                                else BrowseScreen(current, PreviewData.home, television) { go(Screen.Details) }
+                            else -> if (television) TvHomeScreen(if (tvDetailVariant == "Loading") null else PreviewTvHome.home, { go(Screen.Details) }, { go(Screen.Sources) }, {}, go,
+                                PreviewData.profile, PreviewTvHome.summaries, listOf(PreviewData.hero) + PreviewData.posters.take(4))
+                                else HomeScreen(PreviewData.home, television, { go(Screen.Details) }, {}, desktop, { go(Screen.Sources) }, tablet, go, browser)
                         }
                     }
                 }
             }
-            if (television && current == Screen.Home) TopNavigation(current, true, go, PreviewData.profile)
             if (phone && current !in listOf(Screen.Connect, Screen.Search, Screen.Details, Screen.Sources, Screen.Settings, Screen.Profiles, Screen.ProfilePin, Screen.Player))
                 Box(Modifier.align(Alignment.BottomCenter)) { BottomNavigation(current, go) }
         }

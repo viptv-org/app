@@ -40,7 +40,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
             }
             desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) }.forEach { destination ->
                 var focused by remember { mutableStateOf(false) }
-                Box(Modifier.height(56.dp * scale).then(if (destination.screen == selected) Modifier.focusRequester(initial) else Modifier)
+                Box(Modifier.width(IntrinsicSize.Max).height(56.dp * scale).then(if (destination.screen == selected) Modifier.focusRequester(initial) else Modifier)
                     .onFocusChanged { focused = it.isFocused }
                     .background(if (focused && selected != destination.screen) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp * scale))
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { navigate(destination.screen) }
