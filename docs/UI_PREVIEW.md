@@ -54,3 +54,8 @@ missing preference contract. Native Back returns the editor to Profiles.
 TV `Live` renders the supplied news still and fixture EPG window. Category
 filtering changes this supplied data only. OK enters a fixture live-player scene;
 its frame is not proof that a live source decodes or that an EPG provider is connected.
+
+TV `Calendar` renders the `SkTvCalendar` board data, with supplied date labels,
+artwork and optional Watch E481 action. Choosing a date filters preview entries;
+its detail/source routes remain generic fixtures. No real Simkl integration or
+episode resolution is exercised.

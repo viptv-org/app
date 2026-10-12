@@ -99,3 +99,10 @@ dialog surfaces need design review.
 state when no channels are available, and an unavailable-favorites notice. The
 TV ZIP supplies the populated Live guide but no matching no-guide, empty or
 favorites-unavailable boards. These provisional surfaces need design review.
+
+### GAP-029 — TV Calendar without releases or an actionable next episode
+
+`TvCalendarScreen` distinguishes an empty supplied date from an unavailable
+schedule. `TvCalendarPreview` uses View details when no explicit watch target is
+provided. The populated `SkTvCalendar` board does not supply these surfaces;
+they remain provisional and need design review.

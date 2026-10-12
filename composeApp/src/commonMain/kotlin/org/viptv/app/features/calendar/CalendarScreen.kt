@@ -21,6 +21,7 @@ import org.viptv.engine.wire.Card
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit) {
+    if (television) { TvCalendarScreen(days, entries, open, manage); return }
     var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()

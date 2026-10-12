@@ -24,6 +24,7 @@ import org.viptv.app.features.library.TvLibraryScreen
 import org.viptv.app.features.live.LiveScreen
 import org.viptv.app.features.live.TvLiveScreen
 import org.viptv.app.features.calendar.CalendarScreen
+import org.viptv.app.features.calendar.TvCalendarScreen
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.search.TvSearchScreen
 import org.viptv.app.features.settings.SettingsScreen
@@ -81,7 +82,9 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 false, null, { go(Screen.Player) }, { go(Screen.Details) }, PreviewTvDetails.movie, PreviewTvSources.info,
                                 PreviewTvDetails.movieExtras, loadingMore = tvDetailVariant == "Loading")
                                 else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail)
-                            Screen.Calendar -> CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, television, { go(Screen.Details) }, { go(Screen.Settings) })
+                            Screen.Calendar -> if (television) TvCalendarScreen(PreviewTvCalendar.days, PreviewTvCalendar.entries,
+                                { go(Screen.Details) }, { go(Screen.Settings) }, PreviewTvCalendar.actions, { go(Screen.Sources) })
+                                else CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, false, { go(Screen.Details) }, { go(Screen.Settings) })
                             Screen.Live -> if (television) TvLiveScreen(PreviewTvLive.channels, PreviewLive.start, PreviewLive.now, watchLive,
                                 { go(Screen.Settings) }, PreviewTvLive.categories)
                                 else LiveScreen(PreviewLive.channels, false, PreviewLive.start, PreviewLive.now, watchLive, { go(Screen.Settings) })

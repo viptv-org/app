@@ -47,3 +47,6 @@ in `TV_PROFILE_EDIT.md`.
 
 Dedicated Live layout, bounded guide marker and missing connected feed/playback
 contracts are described in `TV_LIVE.md`.
+
+The Calendar board belongs to the Simkl ZIP (`SkTvCalendar`); its dedicated TV
+layout and missing connected feed/actions are described in `TV_CALENDAR.md`.

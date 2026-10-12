@@ -1966,8 +1966,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/CalendarScreen.kt",
-    "capture": "docs/evidence/android-tv-calendar-preview.png"
+    "implementation": "docs/TV_CALENDAR.md",
+    "capture": "docs/evidence/android-tv-calendar.png"
   },
   {
     "id": "SkTvFilters",
