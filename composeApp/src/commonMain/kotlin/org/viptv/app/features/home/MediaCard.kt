@@ -35,8 +35,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         }
         if (showLabels) {
             Spacer(Modifier.height(9.dp))
-            Text(card.title, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            card.subtitle?.let { Text(it, fontSize = 11.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            Text(card.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            card.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
     }
 }

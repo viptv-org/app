@@ -30,16 +30,7 @@ fun Hero(card: Card, compact: Boolean, television: Boolean, open: (Card) -> Unit
             }
         }
     } else {
-        Row(Modifier.fillMaxWidth().padding(top = 48.dp, bottom = 36.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-            Column(Modifier.weight(0.38f), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Text("FEATURED", fontSize = 10.sp, letterSpacing = 2.sp, color = Palette.secondary)
-                HeroText(card)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(onClick = { open(card) }, shape = RoundedCornerShape(12.dp)) { Text("More info") }
-                }
-            }
-            AsyncImage(card.landscape, null, Modifier.weight(0.62f).widthIn(max = 774.dp).aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
-        }
+        DesktopHero(card, open)
     }
 }
 
