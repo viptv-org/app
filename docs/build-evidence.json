@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "1ce8c6622c7b112e9e556a60e5cde180cff00c8bd3e3e988d0b097c1fe055706",
+    "sha256": "b0e687a6200a3b3bfac36c35c8a4751fc11a70d3d55025ca368489a89ed990c1",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -18,7 +18,7 @@
     "avatar_persistence": "passed: selected supplied portrait on locked local profile after PIN, survived app restart",
     "remote_session_runtime": "not qualified against a real HTTPS backend",
     "floating_navigation": "rendered on QA emulator; separate Search button navigated; complete phone layout parity pending",
-    "tv_pin_preview": "rendered at 1920x1080; hardware digits filled two masked slots; 4\u20138 digit confirmation differs from ZIP",
+    "tv_pin_preview": "supplied two-mask/four-slot scene, key geometry, eight-digit limit, Backspace, recovery focus/Back, and rapid digit/Enter synthetic submission passed; real credential validation not qualified by preview",
     "tablet_home_preview": "rendered on disposable emulator at 1194x834 logical size; parity pending",
     "player_controls": "decoded public MP4 with shared controls, thin timeline and landscape/immersive playback; current seeking/track-switch coverage incomplete",
     "calendar_preview": "phone and TV preview render observed; source feed and parity pending",

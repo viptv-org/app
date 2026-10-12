@@ -59,3 +59,7 @@ TV `Calendar` renders the `SkTvCalendar` board data, with supplied date labels,
 artwork and optional Watch E481 action. Choosing a date filters preview entries;
 its detail/source routes remain generic fixtures. No real Simkl integration or
 episode resolution is exercised.
+
+TV `ProfilePin` starts with the supplied two masked digits; `Empty` starts empty.
+Digits/erase change preview memory and valid submission routes to Home through
+a synthetic callback. Back returns to Profiles. No stored PIN is checked.

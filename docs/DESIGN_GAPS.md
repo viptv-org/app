@@ -106,3 +106,11 @@ favorites-unavailable boards. These provisional surfaces need design review.
 schedule. `TvCalendarPreview` uses View details when no explicit watch target is
 provided. The populated `SkTvCalendar` board does not supply these surfaces;
 they remain provisional and need design review.
+
+### GAP-030 — TV longer PINs, submission and recovery/error states
+
+`Tv3Pin` supplies the four-slot keypad scene. The engine accepts existing 4–8
+digit PINs, so `TvPinScreen` adds an eight-slot layout after the fifth digit and
+an OK key when submission is valid. Recovery-unavailable and error states also
+lack matching boards. These additional states need supplied design review;
+the initial four-slot scene follows the provided board.

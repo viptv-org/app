@@ -50,3 +50,6 @@ contracts are described in `TV_LIVE.md`.
 
 The Calendar board belongs to the Simkl ZIP (`SkTvCalendar`); its dedicated TV
 layout and missing connected feed/actions are described in `TV_CALENDAR.md`.
+
+PIN layout, masking, longer-PIN compatibility and preview limits are described
+in `TV_PIN.md`.

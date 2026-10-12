@@ -129,8 +129,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvPinScreen.kt",
-    "capture": "docs/evidence/android-tv-pin-preview.png"
+    "implementation": "docs/TV_PIN.md",
+    "capture": "docs/evidence/android-tv-pin.png"
   },
   {
     "id": "Tv3ProfileEdit",

@@ -96,7 +96,8 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 else SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) })
                             Screen.Settings -> if (television) PreviewTvSettings(tvDetailVariant, go) else SettingsScreen(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
                                 { go(Screen.Profiles) }, {}, PreviewData.profile, { go(Screen.Home) })
-                            Screen.ProfilePin -> ProfilePinScreen(PreviewData.profiles[2], phone, false, null, {}, { go(Screen.Profiles) }, television)
+                            Screen.ProfilePin -> if (television) PreviewTvPin(tvDetailVariant, go, entryBackChanged)
+                                else ProfilePinScreen(PreviewData.profiles[2], phone, false, null, {}, { go(Screen.Profiles) }, false)
                             Screen.ProfileEdit -> if (television) PreviewTvProfileEdit(go, entryBackChanged, profileToEdit)
                             Screen.Profiles -> ProfilesScreen(if (television && tvDetailVariant == "Empty") emptyList()
                                 else if (television && tvDetailVariant != "Locked") PreviewData.profiles.map { it.copy(locked = false) } else PreviewData.profiles,
