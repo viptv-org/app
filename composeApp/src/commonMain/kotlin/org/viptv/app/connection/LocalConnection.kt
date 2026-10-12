@@ -4,6 +4,8 @@ import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.engine.wire.SourceCandidate
+import org.viptv.app.player.PlaybackInput
 
 interface LocalConnection : AutoCloseable {
     suspend fun bootstrap(profile: String? = null): Bootstrap
@@ -11,6 +13,11 @@ interface LocalConnection : AutoCloseable {
     suspend fun installAddon(profile: String, manifestUrl: String): List<IntegrationConnection>
     suspend fun search(profile: String, term: String): CatalogPage
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
+    suspend fun sources(profile: String, card: Card): List<SourceCandidate>
+    suspend fun openSource(id: String): PlaybackInput
+    suspend fun enabledAddons(profile: String): Set<String>
+    suspend fun setAddonEnabled(profile: String, id: String, enabled: Boolean)
+    suspend fun removeAddon(id: String)
 }
 expect fun localConnection(databasePath: String): LocalConnection
 

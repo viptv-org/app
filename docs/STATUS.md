@@ -12,10 +12,10 @@ This is an incomplete implementation checkpoint. It is not the completed applica
 | Local KMP profiles | Linux JNI tests pass; Android emulator restores local profile after APK update |
 | Remote backend | v3 identity/Home bootstrap, discovery/details projections and scoped revisioned integration configuration; three route tests pass |
 | KMP builds | Desktop and wasmJs compilation pass; Android APK includes arm64 and x86_64 Rust libraries |
-| Player adapters | Native KitePlayer and browser HTML/HLS surfaces compile; real-media qualification pending |
+| Player adapters | Android KitePlayer displayed a decoded frame from the public Flower MP4 fixture through local Search → Details → Sources → Player. HLS, tracks, subtitles, seek, desktop and browser playback remain unqualified |
 | Visual implementation | Initial connection/profile/Home/search/details work; zero boards certified as matching |
 | Native/remote credential persistence | Pending |
-| Full plugin execution | Stremio addon installation, secure local configuration, Home catalogs, Search and title details work on Android. Sources/playback, Simkl server integration, vsources, M3U and streaming Home updates remain pending |
+| Full plugin execution | Stremio installation, secure local configuration, Home/Search/details, direct HTTP source discovery, profile enable/disable and removal work on Android. Simkl server integration, vsources, M3U, torrent acquisition and streaming Home updates remain pending |
 | Remaining app flows | Pending: source selection and playback, live guide, library/history, tracking, auth variants, dashboard, casting/remote/update behavior and complete navigation |
 | Performance | Bounded-assembly behavior tested; real provider budgets and client network trace not yet qualified |
 | Migration and other clients | Populated migration, Roku/SolidTV adoption and regression acceptance pending |
@@ -33,3 +33,7 @@ The experimental APK is `androidApp/build/outputs/apk/debug/androidApp-debug.apk
 ## Local addon checkpoint
 
 The Android QA emulator installed Cinemeta through the app, stored its configuration through Android Keystore, restored it after updating the APK, rendered real catalog artwork on Home, and opened real title details. The addon uses a bounded 307 redirect to its catalog host. Some catalog rows missed the 1.9-second initial deadline and show retry; complete cold Home timing and actual playback remain unqualified.
+
+## Android direct-play checkpoint
+
+`docs/evidence/android-direct-playback.png` shows a decoded frame from the public MDN Flower MP4 after installing the immutable Stremio fixture, searching, opening its title, selecting its stream and starting KitePlayer. `docs/provisional/addon-settings-android.png` records the current profile switch and removal controls, which still need a supplied design. The fixture lives in the experimental workspace branch and is unrelated to production catalog data.

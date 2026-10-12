@@ -11,7 +11,7 @@ import org.viptv.engine.wire.DetailSnapshot
 import coil3.compose.AsyncImage
 
 @Composable
-fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit) {
+fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (org.viptv.engine.wire.Card) -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(32.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         item { TextButton(onClick = back) { Text("Back") } }
         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
@@ -21,6 +21,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     AsyncImage(value.item.landscape, null, Modifier.fillMaxWidth().heightIn(max = 400.dp))
                     Text(value.item.title, style = MaterialTheme.typography.headlineLarge)
+                    Button(onClick = { sources(value.item) }) { Text("Play") }
                     value.item.subtitle?.let { Text(it, color = Palette.secondary) }
                     value.item.description?.let { Text(it, color = Palette.secondary) }
                 }

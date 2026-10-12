@@ -17,6 +17,8 @@ import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.engine.wire.SourceCandidate
+import org.viptv.app.player.PlaybackInput
 import uniffi.viptv_core.LocalEngine
 
 actual fun localConnection(databasePath: String): LocalConnection = NativeLocalConnection(databasePath)
@@ -29,12 +31,18 @@ private class NativeLocalConnection(path: String) : LocalConnection {
     override suspend fun bootstrap(profile: String?): Bootstrap {
         val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<ProfileConfiguration>>(engine.profiles()) }.map { Profile(it.scope.profile_id, it.name, null) }
         val home = profile?.let { loadHome(it) }
-        return Bootstrap(profiles, profile, home, addons())
+        return Bootstrap(profiles, profile, home, addons(), profile?.let { enabledAddons(it) } ?: emptySet())
     }
 
     override suspend fun addons(): List<IntegrationConnection> = withContext(Dispatchers.IO) {
         json.decodeFromString(engine.addons())
     }
+
+    override suspend fun enabledAddons(profile: String): Set<String> = withContext(Dispatchers.IO) {
+        json.decodeFromString<ProfileConfiguration>(engine.profile(profile)).assignments.filter { it.enabled.isNotEmpty() }.map { it.connection_id }.toSet()
+    }
+    override suspend fun setAddonEnabled(profile: String, id: String, enabled: Boolean) = withContext(Dispatchers.IO) { engine.setAddonEnabled(profile,id,enabled) }
+    override suspend fun removeAddon(id: String) = withContext(Dispatchers.IO) { engine.removeAddon(id) }
 
     override suspend fun installAddon(profile: String, manifestUrl: String): List<IntegrationConnection> {
         val url = try { withContext(Dispatchers.IO) { engine.checkAddonUrl(manifestUrl.trim()) } }
@@ -58,6 +66,33 @@ private class NativeLocalConnection(path: String) : LocalConnection {
         return try { withContext(Dispatchers.IO) {
             json.decodeFromString(engine.projectDetail(operation.getValue("operation").jsonPrimitive.content, body, offset.toUInt()))
         } } catch (_: Exception) { throw LocalFailure("The add-on returned invalid title details.") }
+    }
+
+    override suspend fun sources(profile: String, card: Card): List<SourceCandidate> {
+        val plan = withContext(Dispatchers.IO) { engine.planSources(profile, card.identity.kind, card.identity.id) }
+        val request = json.parseToJsonElement(plan).jsonObject
+        val capacity = Semaphore(3)
+        val results = coroutineScope {
+            request.getValue("requests").jsonArray.map { item -> async {
+                val connection = item.jsonObject
+                val body = try { capacity.withPermit { withTimeout(2_000) { addonJson(client, connection.getValue("url").jsonPrimitive.content) } } }
+                catch (_: TimeoutCancellationException) { null }
+                catch (error: CancellationException) { throw error }
+                catch (_: Exception) { null }
+                buildJsonObject { put("provider", connection.getValue("provider").jsonPrimitive.content);body?.let { put("body",it) } }
+            } }.map { it.await() }
+        }
+        return withContext(Dispatchers.IO) {
+            json.decodeFromString(engine.projectSources(request.getValue("operation").jsonPrimitive.content, JsonArray(results).toString()))
+        }
+    }
+
+    override suspend fun openSource(id: String): PlaybackInput = withContext(Dispatchers.IO) {
+        val source = json.parseToJsonElement(engine.openSource(id)).jsonObject
+        val headers = source.getValue("headers").jsonArray.associate { pair ->
+            val values=pair.jsonArray;values[0].jsonPrimitive.content to values[1].jsonPrimitive.content
+        }
+        PlaybackInput(id,source.getValue("url").jsonPrimitive.content,headers)
     }
 
     private suspend fun loadHome(profile: String): HomeSnapshot = runPlan(withContext(Dispatchers.IO) { engine.planHome(profile) })

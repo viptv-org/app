@@ -2,14 +2,16 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "933505487fa254a174510d4191b61aafd82d1cd7b4aeb15c633e447cd7dbf660",
+    "sha256": "8d79a276837432c197689beeaf358a3752dfdfe4a7cf9cabf580b53bb6e72df6",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
       "x86_64"
     ],
     "emulator_local_profile_smoke": "passed",
-    "local_stremio_manifest_home_detail": "passed on QA emulator; some rows timed out"
+    "local_stremio_manifest_home_detail": "passed on QA emulator; some rows timed out",
+    "direct_mp4_decoded_frame": "passed on QA emulator through fixture source picker",
+    "profile_addon_toggle_and_removal": "passed on QA emulator"
   },
   "desktop": {
     "compile": "passed",
@@ -24,5 +26,5 @@
   "engine_tests": 6,
   "backend_v3_tests": 3,
   "visual_parity_boards_passed": 0,
-  "real_media_qualification": "pending"
+  "real_media_qualification": "Android direct MP4 fixture passed; other delivery/targets pending"
 }

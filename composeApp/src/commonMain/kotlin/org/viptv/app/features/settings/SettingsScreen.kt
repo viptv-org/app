@@ -11,8 +11,9 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 
 @Composable
-fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, busy: Boolean, error: String?, install: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit) {
+fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean, error: String?, install: (String) -> Unit, toggle: (String,Boolean) -> Unit, remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit) {
     var url by remember { mutableStateOf("") }
+    var removing by remember { mutableStateOf<IntegrationConnection?>(null) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { Text("Settings", style = MaterialTheme.typography.headlineLarge) }
         item { Text("Add-ons", style = MaterialTheme.typography.titleLarge) }
@@ -31,12 +32,19 @@ fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, busy: Bo
         if (addons.isNotEmpty()) item { Text("Installed", style = MaterialTheme.typography.titleMedium) }
         items(addons, key = { it.id }) { addon ->
             Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(addon.name, style = MaterialTheme.typography.titleMedium)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(addon.name, style = MaterialTheme.typography.titleMedium)
+                    if (local) Switch(checked = addon.id in enabledAddonIds, onCheckedChange = { toggle(addon.id,it) }, enabled = !busy)
+                }
                 Text(addon.capabilities.joinToString(" · ") { it.name.lowercase().replaceFirstChar(Char::uppercaseChar) }, color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
+                if (local) TextButton(onClick = { removing=addon }, enabled = !busy) { Text("Remove") }
                 HorizontalDivider(color = Palette.raised)
             }
         }
         item { TextButton(onClick = profiles) { Text("Switch profile") } }
         item { TextButton(onClick = leave) { Text(if (local) "Change connection" else "Sign out") } }
+    }
+    removing?.let { selected ->
+        AlertDialog(onDismissRequest = { removing=null }, title = { Text("Remove ${selected.name}?") }, text = { Text("This removes the add-on from every profile on this device.") }, confirmButton = { TextButton(onClick = { remove(selected.id); removing=null }) { Text("Remove") } }, dismissButton = { TextButton(onClick = { removing=null }) { Text("Cancel") } })
     }
 }

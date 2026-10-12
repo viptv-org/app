@@ -14,6 +14,8 @@ import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
+import org.viptv.app.features.sources.SourcesScreen
+import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.components.*
 import org.viptv.engine.wire.Card
 
@@ -29,6 +31,7 @@ fun App(television: Boolean = false, browser: Boolean = false, localDatabase: St
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect)
                 Screen.Profiles -> ProfilesScreen(state.profiles, state.busy, controller::selectProfile)
+                Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer)
                 else -> Column {
                     if (browser || television) TopNavigation(state.screen, television, controller::navigate)
                     else Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 20.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -39,8 +42,9 @@ fun App(television: Boolean = false, browser: Boolean = false, localDatabase: St
                         when (state.screen) {
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh)
                             Screen.Search -> SearchScreen(state.results, state.addons, state.busy, state.error, controller::search, controller::open)
-                            Screen.Details -> DetailsScreen(state.detail, state.busy, state.error) { controller.navigate(Screen.Home) }
-                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.busy, state.error, controller::installAddon, { controller.navigate(Screen.Profiles) }, controller::disconnect)
+                            Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
+                            Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource) { controller.navigate(Screen.Details) }
+                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, controller::disconnect)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }
