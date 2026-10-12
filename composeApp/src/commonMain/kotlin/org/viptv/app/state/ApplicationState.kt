@@ -98,6 +98,12 @@ class ApplicationController(private val scope: CoroutineScope) {
         val next=requireNotNull(local).bootstrap()
         mutable.value=mutable.value.copy(profiles=next.profiles,screen=Screen.Profiles,managingProfiles=true)
     }
+    fun setProfileAvatar(avatarId: String, pin: String) = run {
+        val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
+        requireNotNull(local).setProfileAvatar(id,avatarId,pin)
+        val next=requireNotNull(local).bootstrap()
+        mutable.value=mutable.value.copy(profiles=next.profiles)
+    }
     fun deleteProfile(pin: String) = run {
         val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
         requireNotNull(local).deleteProfile(id,pin)

@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -42,9 +41,7 @@ internal fun MobilePinScreen(
             Text("×", Modifier.clickable(onClick = back).padding(horizontal = 8.dp), fontSize = 30.sp)
         }
         Spacer(Modifier.height(16.dp))
-        Box(Modifier.size(72.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFC24E6B)), contentAlignment = Alignment.Center) {
-            Text(profile?.name?.take(1)?.uppercase().orEmpty(), fontSize = 38.sp, fontWeight = FontWeight.Bold)
-        }
+        ProfileAvatar(profile, 72.dp, 16.dp)
         Spacer(Modifier.height(40.dp))
         Text("Enter ${profile?.name.orEmpty()}’s PIN", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(18.dp))

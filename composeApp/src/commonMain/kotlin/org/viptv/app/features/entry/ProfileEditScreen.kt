@@ -10,16 +10,24 @@ import org.viptv.app.connection.Profile
 
 @Composable
 fun ProfileEditScreen(
-    profile: Profile?, count: Int, busy: Boolean, error: String?,
-    back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit, delete: (String) -> Unit,
+    profile: Profile?, count: Int, busy: Boolean, error: String?, compact: Boolean,
+    back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
+    setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
 ) {
+    if (compact) {
+        MobileProfileEdit(profile, count, busy, error, back, rename, setPin, setAvatar, delete)
+        return
+    }
     var name by remember(profile?.id) { mutableStateOf(profile?.name.orEmpty()) }
     var oldPin by remember(profile?.id) { mutableStateOf("") }
     var newPin by remember(profile?.id) { mutableStateOf("") }
     var confirmingDelete by remember(profile?.id) { mutableStateOf(false) }
+    var pickingAvatar by remember(profile?.id) { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
         Text("Edit profile", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(16.dp))
+        ProfileAvatar(profile, 88.dp, 18.dp)
+        TextButton(onClick = { pickingAvatar = true }) { Text("Change avatar") }
         OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
         if (profile?.locked == true) OutlinedTextField(oldPin, { if (it.length <= 8 && it.all(Char::isDigit)) oldPin = it },
             label = { Text("Current PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
@@ -42,4 +50,7 @@ fun ProfileEditScreen(
         title = { Text("Delete ${profile?.name}?") }, text = { Text("This removes this profile’s history and add-on choices from this device.") },
         confirmButton = { TextButton(onClick = { delete(oldPin); confirmingDelete = false }) { Text("Delete") } },
         dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") } })
+    if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }) { avatarId, pin ->
+        setAvatar(avatarId, pin); pickingAvatar = false
+    }
 }

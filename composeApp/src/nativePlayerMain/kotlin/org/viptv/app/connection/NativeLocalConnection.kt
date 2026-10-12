@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 actual fun localConnection(databasePath: String): LocalConnection = NativeLocalConnection(databasePath)
 
 @Serializable
-private data class LocalProfileCard(val id: String, val name: String, val locked: Boolean)
+private data class LocalProfileCard(val id: String, val name: String, val locked: Boolean, val avatar_id: String?)
 
 private class NativeLocalConnection(path: String) : LocalConnection {
     private val engine = LocalEngine(path, platformSecrets())
@@ -40,7 +40,7 @@ private class NativeLocalConnection(path: String) : LocalConnection {
     private val pendingHomes=ConcurrentHashMap<String,String>()
 
     override suspend fun bootstrap(profile: String?): Bootstrap {
-        val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<LocalProfileCard>>(engine.profileCards()) }.map { Profile(it.id, it.name, null, it.locked) }
+        val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<LocalProfileCard>>(engine.profileCards()) }.map { Profile(it.id, it.name, null, it.locked, it.avatar_id) }
         val home = profile?.let {
             val plan=withContext(Dispatchers.IO){engine.planHome(it)}
             val id=json.parseToJsonElement(plan).jsonObject.getValue("id").jsonPrimitive.content
@@ -58,6 +58,10 @@ private class NativeLocalConnection(path: String) : LocalConnection {
     override suspend fun renameProfile(id: String, name: String, pin: String) = withContext(Dispatchers.IO) {
         try { engine.renameProfile(id, name, pin) }
         catch (_: Exception) { throw LocalFailure("Could not rename the profile. Check its name and current PIN.") }
+    }
+    override suspend fun setProfileAvatar(id: String, avatarId: String, pin: String) = withContext(Dispatchers.IO) {
+        try { engine.setProfileAvatar(id, avatarId, pin) }
+        catch (_: Exception) { throw LocalFailure("Could not change the avatar. Check the current PIN.") }
     }
     override suspend fun deleteProfile(id: String, pin: String) = withContext(Dispatchers.IO) {
         try { engine.deleteProfile(id, pin) }

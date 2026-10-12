@@ -12,6 +12,7 @@ import org.viptv.engine.wire.HomeSnapshot
 interface LocalConnection : AutoCloseable {
     suspend fun createProfile(name: String): Profile
     suspend fun renameProfile(id: String, name: String, pin: String)
+    suspend fun setProfileAvatar(id: String, avatarId: String, pin: String)
     suspend fun deleteProfile(id: String, pin: String)
     suspend fun setProfilePin(id: String, oldPin: String, newPin: String)
     suspend fun verifyProfilePin(id: String, pin: String): Boolean

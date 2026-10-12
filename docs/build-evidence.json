@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "f8c8b4d2be47927512e4c3dc3e2456e15acb3cc658f2d41f3be6e7332a6f3b9a",
+    "sha256": "9ed05f85363ee683fb4e321d18ac194a5df047ba9c1e9a6775b05f7527fbd383",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -14,7 +14,8 @@
     "profile_addon_toggle_and_removal": "passed on QA emulator",
     "watch_history_restart": "passed: Continue Watching and Today history on QA emulator",
     "local_profile_management": "passed on QA emulator: create, set PIN, wrong PIN rejected, correct PIN accepted, locked picker persisted across restart",
-    "profile_phone_layout": "passed emulator render check against M3Profiles and M3Pin; keypad unlock passed; parity remains in progress"
+    "profile_phone_layout": "passed emulator render check against M3Profiles and M3Pin; keypad unlock passed; parity remains in progress",
+    "avatar_persistence": "passed: selected supplied portrait on locked local profile after PIN, survived app restart"
   },
   "desktop": {
     "compile": "passed",

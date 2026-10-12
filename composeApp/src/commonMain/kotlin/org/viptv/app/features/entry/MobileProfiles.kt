@@ -2,7 +2,6 @@ package org.viptv.app.features.entry
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 
@@ -61,13 +59,8 @@ internal fun MobileProfiles(
 
 @Composable
 private fun MobileProfileTile(profile: Profile, busy: Boolean, open: () -> Unit) {
-    val palette = listOf(Color(0xFFC24E6B), Color(0xFF3E6B8A), Color(0xFF675C8E), Color(0xFF40766B))
-    val color = palette[(profile.id.hashCode() and Int.MAX_VALUE) % palette.size]
     Column(Modifier.fillMaxWidth().clickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(120.dp).clip(RoundedCornerShape(22.dp)).background(color), contentAlignment = Alignment.Center) {
-            if (profile.avatar != null) AsyncImage(profile.avatar, profile.name, Modifier.fillMaxSize())
-            else Text(profile.name.take(1).uppercase(), fontSize = 54.sp, fontWeight = FontWeight.Bold)
-        }
+        ProfileAvatar(profile, 120.dp, 22.dp)
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             if (profile.locked) LockMark()

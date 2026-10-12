@@ -36,8 +36,8 @@ fun App(television: Boolean = false, browser: Boolean = false, localDatabase: St
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
                     state.busy, state.error, controller::submitProfilePin) { controller.navigate(Screen.Profiles) }
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
-                    state.busy, state.error, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
-                    controller::setProfilePin, controller::deleteProfile)
+                    state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
+                    controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile)
                 Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer)
                 else -> Column {
                     if (browser || television) TopNavigation(state.screen, television, controller::navigate)
