@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "ba4d433b48218288ab75cd6befa39a851a05e01abb75f4e13fef36d82af655c6",
+    "sha256": "13ad3d5c8096991b98bbfe546ecc352e0dabe30690c3d80b36b0f8e7a6b6e3b6",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -25,7 +25,10 @@
     "native_addon_binding_test": "passed",
     "native_history_bridge": "passed",
     "profile_engine_test": "passed: PIN/rename/delete/profile isolation",
-    "remote_session_mock": "passed: native expiry/rotation/reopen/sign-out, browser CSRF refresh, unavailable-vault fallback"
+    "remote_session_mock": "passed: native expiry/rotation/reopen/sign-out, browser CSRF refresh, unavailable-vault fallback",
+    "custom_chrome": "passed Linux isolated render at 1440x900 and 600x800; drag, menu and close controls observed",
+    "titlebar_search": "passed title-bar query to Search without duplicate field",
+    "profile_picker": "passed 1100x720 render and keyboard focus ring; board parity pending"
   },
   "web": {
     "wasm_compile": "passed with profile UI changes",

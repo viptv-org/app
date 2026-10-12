@@ -71,7 +71,7 @@ private fun MobileProfileTile(profile: Profile, busy: Boolean, open: () -> Unit)
 }
 
 @Composable
-private fun LockMark() {
+internal fun LockMark() {
     Canvas(Modifier.size(14.dp)) {
         val stroke = 1.6.dp.toPx()
         drawRoundRect(Palette.text, topLeft = Offset(size.width * .14f, size.height * .46f),

@@ -1017,7 +1017,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
-    "capture": null
+    "capture": "docs/evidence/desktop-titlebar-linux.png"
   },
   {
     "id": "D3HomeMac",
@@ -1047,7 +1047,7 @@
     "height": 800,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
-    "capture": null
+    "capture": "docs/evidence/desktop-titlebar-narrow.png"
   },
   {
     "id": "D3HomeUltra",
@@ -1175,9 +1175,9 @@
     "title": "Search — Ctrl K",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchScreen.kt",
+    "capture": "docs/evidence/desktop-search-shell.png"
   },
   {
     "id": "D3Browse",
@@ -1356,8 +1356,8 @@
     "width": 1100,
     "height": 720,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
-    "capture": null
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopProfiles.kt",
+    "capture": "docs/evidence/desktop-profiles.png"
   },
   {
     "id": "D3SetGeneral",

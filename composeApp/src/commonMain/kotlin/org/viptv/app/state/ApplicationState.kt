@@ -30,6 +30,7 @@ data class ApplicationState(
     val selectedProfile: String? = null,
     val home: HomeSnapshot? = null,
     val results: List<Card> = emptyList(),
+    val searchTerm: String = "",
     val detail: DetailSnapshot? = null,
     val localMode: Boolean = false,
     val sessionNotice: String? = null,
@@ -184,10 +185,13 @@ class ApplicationController(private val scope: CoroutineScope) {
         mutable.value=mutable.value.copy(home=updated.home)
         mutable.value=mutable.value.copy(home=requireNotNull(local).refreshHome(profile))
     }
-    fun search(term: String) = run {
+    fun search(term: String) {
+        mutable.value = mutable.value.copy(searchTerm = term)
+        run {
         delay(300)
         val cards = if (term.isBlank()) emptyList() else local?.search(requireNotNull(mutable.value.selectedProfile), term)?.cards ?: requireNotNull(connection).search(term).cards
         mutable.value = mutable.value.copy(results = cards)
+        }
     }
     fun open(card: Card) {
         mutable.value = mutable.value.copy(screen = Screen.Details, detail = null)
