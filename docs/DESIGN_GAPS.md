@@ -121,3 +121,11 @@ The populated `Tv3Search` board does not supply separate loading, empty, error o
 long-query boards. `TvSearchLoading` uses the supplied poster dimensions and
 shared motion-spec shimmer. Empty/error messages and single-line query ellipsis
 are provisional. These states need design review.
+
+### GAP-032 — TV password-entry auxiliary and long-input states
+
+Delete character and Use another server are additional entry controls beyond
+`Tv3SignInPassword`. The custom-server dialog, long-field ellipsis and loading/
+error states lack matching supplied boards. These surfaces remain provisional.
+The provided alternative phone/browser/email/IPTV boards are present designs
+with unfinished implementations, rather than missing designs.

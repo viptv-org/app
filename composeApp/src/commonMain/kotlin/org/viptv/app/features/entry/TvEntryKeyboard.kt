@@ -18,31 +18,37 @@ internal fun TvEntryKeyboard(scale: Float, input: (String) -> Unit) {
     var symbols by remember { mutableStateOf(false) }
     val initial = remember { FocusRequester() }
     LaunchedEffect(Unit) { initial.requestFocus() }
-    val rows = if (symbols) listOf("1234567890", "!@#$%^&*()", "[]{}<>/\\:;", "'\".,?+=_-~")
-        else listOf("1234567890", "qwertyuiop", "asdfghjkl@", "zxcvbnm.-_")
+    val symbolRows = listOf("1234567890", "!@#$%^&*()", "[]{}<>/\\:;", "'\".,?+=_-~")
+    val alphabetRows = listOf("1234567890", "qwertyuiop", "asdfghjkl@", "zxcvbnm.-_")
+    val rows = if (symbols) symbolRows else alphabetRows
     Column(verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
         rows.forEachIndexed { rowIndex, row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
                 row.forEachIndexed { index, character ->
                     val label = if (upper) character.uppercase() else character.toString()
-                    TvEntryKey(Modifier.weight(1f), scale, if (rowIndex == 1 && index == 0) initial else null, { input(label) }) {
-                        Text(label, color = it, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)
+                    TvEntryKey(Modifier.weight(1f), scale, if (rowIndex == 1 && index == 0) initial else null,
+                        {
+                            val current = (if (symbols) symbolRows else alphabetRows)[rowIndex][index]
+                            input(if (upper) current.uppercase() else current.toString())
+                        }) {
+                        Text(label, color = it, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-            TvEntryKey(Modifier.weight(1f), scale, activate = { upper = !upper }) { Icon(Lucide.ArrowUp, "Shift", Modifier.size(28.dp * scale), it) }
-            TvEntryKey(Modifier.weight(1f), scale, activate = { symbols = !symbols }) { Text(if (symbols) "abc" else "#+=", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold) }
-            TvEntryKey(Modifier.weight(3f), scale, activate = { input(" ") }) { Icon(Lucide.Space, "Space", Modifier.size(28.dp * scale), it) }
-            TvEntryKey(Modifier.weight(2f), scale, activate = { input(".com") }) { Text(".com", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold) }
-            TvEntryKey(Modifier.weight(3f), scale, activate = { input("@gmail.com") }) { Text("@gmail.com", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold) }
+            TvEntryKey(Modifier.width(104.dp * scale), scale, activate = { upper = !upper }) { Icon(Lucide.ArrowUp, "Shift", Modifier.size(28.dp * scale), it) }
+            TvEntryKey(Modifier.width(104.dp * scale), scale, activate = { symbols = !symbols }) { Text(if (symbols) "abc" else "#+=", color = it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold) }
+            TvEntryKey(Modifier.width(332.dp * scale), scale, activate = { input(" ") }) { Icon(Lucide.Space, "Space", Modifier.size(28.dp * scale), it) }
+            TvEntryKey(Modifier.width(218.dp * scale), scale, activate = { input(".com") }, suffix = true) { Text(".com", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold) }
+            TvEntryKey(Modifier.width(332.dp * scale), scale, activate = { input("@gmail.com") }, suffix = true) { Text("@gmail.com", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold) }
         }
     }
 }
 
 @Composable
-private fun TvEntryKey(modifier: Modifier, scale: Float, requester: FocusRequester? = null, activate: () -> Unit,
+private fun TvEntryKey(modifier: Modifier, scale: Float, requester: FocusRequester? = null, activate: () -> Unit, suffix: Boolean = false,
     content: @Composable (Color) -> Unit) {
-    TvAction(modifier.height(76.dp * scale), scale, requester = requester, background = Color(0xFF222224), activate = activate) { content(it) }
+    TvAction(modifier.height(76.dp * scale), scale, requester = requester,
+        background = Color.White.copy(alpha = if (suffix) .18f else .09f), cornerRadius = 10.dp * scale, activate = activate) { content(it) }
 }

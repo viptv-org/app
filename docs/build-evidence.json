@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "77ced42bed7e8ae45ee1427808032af747eccfcbf09a69a560719bd669a37019",
+    "sha256": "2789fd7359ae049166b50a684e6b6091bc4768d5d6425407afd23d51dd761ac0",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -51,7 +51,8 @@
     "tv_profile_edit": "preview unavailable maturity dialog, avatar cancellation, keyboard name/PIN update, delete cancellation and Back passed at 1920x1080; portrait fringe count dropped from 156 to zero; normal mutation persistence and maturity/language contracts remain unqualified",
     "tv_live": "preview guide entry, horizontal summary, fixture player/Back and Sports filtering passed; source geometry/marker RGB sampled; marker bounded after filtering and final typography render; real EPG feed and live decode unqualified",
     "tv_calendar": "preview header/date/release traversal, first-row geometry, focus/action update, Tomorrow filtering and empty date passed; actual release feed and actionable episode resolution unqualified",
-    "tv_search_input": "five rapid append/delete actions and fifty-character append retained; caret sampled inside long-query field; loading shimmer animated in poster shapes with unchanged gutter; real provider request counts unqualified"
+    "tv_search_input": "five rapid append/delete actions and fifty-character append retained; caret sampled inside long-query field; loading shimmer animated in poster shapes with unchanged gutter; real provider request counts unqualified",
+    "tv_password_input": "preview rapid entry, immediate Shift/character, long-email caret bounds and Back passed; field/key dimensions updated from ZIP; real successful sign-in unqualified"
   },
   "desktop": {
     "compile": "passed",

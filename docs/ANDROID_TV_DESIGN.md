@@ -56,3 +56,6 @@ in `TV_PIN.md`.
 
 Rapid search-input handling, bounded caret and shared loading placeholders are
 described in `TV_SEARCH.md`.
+
+Password-entry keyboard/layout qualification and remaining connection limits
+are described in `TV_PASSWORD.md`.

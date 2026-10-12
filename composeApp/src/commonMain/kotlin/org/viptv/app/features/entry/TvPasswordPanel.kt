@@ -1,16 +1,10 @@
 package org.viptv.app.features.entry
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
@@ -28,14 +22,14 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
     var visible by remember { mutableStateOf(false) }
     var serverDialog by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.offset(96.dp * scale, 96.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-            Text("Use a password", fontSize = (24 * scale).sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
+        Column(Modifier.offset(96.dp * scale, 96.dp * scale), verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
+            Text("Use a password", fontSize = (24 * scale).sp, lineHeight = (34.8f * scale).sp, color = androidx.compose.ui.graphics.Color(0xFF8F8D89), fontWeight = FontWeight.SemiBold)
             Text("Sign in with your password", fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp, letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold)
         }
         Column(Modifier.offset(96.dp * scale, 230.dp * scale).width(1130.dp * scale)) {
             TvEntryField("Email", email, "name@email.com", scale, !editingPassword) { editingPassword = false }
             Spacer(Modifier.height(16.dp * scale))
-            TvEntryField("Password", if (visible) password else "•".repeat(password.length), "Password", scale, editingPassword) { editingPassword = true }
+            TvEntryField("Password", if (visible) password else "•".repeat(password.length), "Password", scale, editingPassword, masked = !visible) { editingPassword = true }
             Spacer(Modifier.height(46.dp * scale))
             TvEntryKeyboard(scale) { value ->
                 if (editingPassword) password = (password + value).take(512) else email = (email + value).take(320)
@@ -61,24 +55,9 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
 }
 
 @Composable
-private fun TvEntryField(label: String, value: String, hint: String, scale: Float, active: Boolean, select: () -> Unit) {
-    Text(label, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(10.dp * scale))
-    Row(Modifier.fillMaxWidth().height(84.dp * scale).background(Palette.raised, RoundedCornerShape(14.dp * scale))
-        .border((if (active) 2 else 1).dp * scale, if (active) Palette.text else Palette.text.copy(alpha = 0.15f), RoundedCornerShape(14.dp * scale))
-        .onFocusChanged { if (it.isFocused) select() }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = select)
-        .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-        Text(value.ifEmpty { hint }, fontSize = (36 * scale).sp, lineHeight = (44 * scale).sp,
-            color = if (value.isEmpty()) Palette.secondary else Palette.text, maxLines = 1)
-        if (active) Box(Modifier.padding(start = 8.dp * scale).width(2.dp * scale).height(40.dp * scale).background(Palette.accent))
-    }
-}
-
-@Composable
 private fun TvPasswordAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, scale: Float, enabled: Boolean = true, activate: () -> Unit) {
     TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, enabled = enabled, activate = activate) {
         Icon(icon, null, Modifier.size(28.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
-        Text(label, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold, color = it)
+        Text(label, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold, color = it)
     }
 }
