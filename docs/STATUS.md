@@ -85,3 +85,7 @@ The shared detail screen now separates `DetailHero.kt` from the page/episode lis
 ## Source selection layout checkpoint
 
 Source selection uses a 461-pixel right drawer on desktop, an 84%-height rounded sheet on phone, and a half-width panel with larger focused rows on TV. Loaded detail content remains behind the dimmed overlay. Close/dismiss returns to the detail screen, or Home when Play opened directly from Home. The phone header and dock are hidden on Details/Sources, following the supplied screen structure. Counts reflect actual source/provider IDs; no best-match claim or quality filter is fabricated from the current label/detail-only stream contract. Desktop tests, browser compilation and Android assembly pass. Runtime captures, TV initial focus/back handling, quality filters, ranking, and panel visual parity remain pending.
+
+## History layout checkpoint
+
+History is split into a responsive page and `HistoryRow.kt`. It uses 136×76.5-pixel phone thumbnails and 160×90-pixel wider thumbnails with existing progress values, 14-pixel title text, 12-pixel subtitle/day labels, and 1080-pixel maximum page width. Phone History has its own centered heading, Back and Clear controls; its generic app header is hidden. Completed entries show Watched, and a Lucide overflow menu opens title details. The existing per-profile Clear confirmation remains. Desktop tests, browser compilation and Android assembly pass. Updated runtime captures, separate desktop progress-status placement, per-item removal, and complete visual parity remain pending.
