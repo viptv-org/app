@@ -75,3 +75,11 @@ behavior and final visual review are qualified.
 `TvLibraryScreen` shows empty and unsupported-connection states with a Browse
 Home action. The TV ZIP provides the populated My List board, but no sort-menu
 or empty/unavailable boards. These provisional surfaces need supplied designs.
+
+### GAP-026 — TV add-profile input dialog
+
+The existing shared name-entry dialog is used by Add profile. The TV ZIP supplies
+the Add tile and a separate Edit profile board, but no add-profile name-entry
+dialog. The shared dialog is provisional and requires a dedicated TV treatment
+or supplied design. The supplied Edit profile board is pending implementation,
+not an absent design.

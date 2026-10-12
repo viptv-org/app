@@ -40,6 +40,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
     var selected by remember { mutableStateOf(initialScreen) }
     var liveTitle by remember { mutableStateOf<org.viptv.engine.wire.Card?>(null) }
     var term by remember { mutableStateOf("the w") }
+    var managingProfiles by remember { mutableStateOf(false) }
     val current = screen ?: selected
     val go: (Screen) -> Unit = navigate ?: { selected = it }
     val query: (String) -> Unit = search ?: { term = it }
@@ -85,8 +86,10 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                             Screen.Settings -> if (television) PreviewTvSettings(tvDetailVariant, go) else SettingsScreen(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
                                 { go(Screen.Profiles) }, {}, PreviewData.profile, { go(Screen.Home) })
                             Screen.ProfilePin -> ProfilePinScreen(PreviewData.profiles[2], phone, false, null, {}, { go(Screen.Profiles) }, television)
-                            Screen.Profiles -> ProfilesScreen(PreviewData.profiles, false, null, true, false, phone, desktop,
-                                { go(Screen.Home) }, {}, {}, {}, {}, television)
+                            Screen.Profiles -> ProfilesScreen(if (television && tvDetailVariant == "Empty") emptyList()
+                                else if (television && tvDetailVariant != "Locked") PreviewData.profiles.map { it.copy(locked = false) } else PreviewData.profiles,
+                                false, null, true, managingProfiles, phone, desktop,
+                                { go(Screen.Home) }, {}, { managingProfiles = true }, { managingProfiles = false }, {}, television)
                             Screen.Movies, Screen.Series, Screen.Discover -> if (television) TvBrowseScreen(PreviewTvHome.movies, false, { go(Screen.Details) }, PreviewTvHome.genres, PreviewTvHome.membership, 4)
                                 else BrowseScreen(current, PreviewData.home, television) { go(Screen.Details) }
                             else -> if (television) TvHomeScreen(if (tvDetailVariant == "Loading" || !homeArrived) null else PreviewTvHome.home, { go(Screen.Details) }, { go(Screen.Sources) }, {}, go,

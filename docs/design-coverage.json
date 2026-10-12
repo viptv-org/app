@@ -119,8 +119,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfiles.kt",
-    "capture": null
+    "implementation": "docs/TV_PROFILES.md",
+    "capture": "docs/evidence/android-tv-profiles.png"
   },
   {
     "id": "Tv3Pin",

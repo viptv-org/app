@@ -40,3 +40,8 @@ TV `Library` renders the supplied My List artwork with fixture watched ordering.
 Variants `Empty` and `Unavailable` render the corresponding provisional states.
 Filters and sort choices change preview state only; no saved-list database or
 server operations run.
+
+TV `Profiles` renders the supplied unlocked profile-picker board. `Locked`
+retains the locked-profile marker and `Empty` checks initial focus on Add profile.
+Manage/Done update only preview mode; profile edits and creation remain disconnected
+in this isolated preview.
