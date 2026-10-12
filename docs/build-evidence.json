@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "9ed05f85363ee683fb4e321d18ac194a5df047ba9c1e9a6775b05f7527fbd383",
+    "sha256": "ba4d433b48218288ab75cd6befa39a851a05e01abb75f4e13fef36d82af655c6",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -15,7 +15,8 @@
     "watch_history_restart": "passed: Continue Watching and Today history on QA emulator",
     "local_profile_management": "passed on QA emulator: create, set PIN, wrong PIN rejected, correct PIN accepted, locked picker persisted across restart",
     "profile_phone_layout": "passed emulator render check against M3Profiles and M3Pin; keypad unlock passed; parity remains in progress",
-    "avatar_persistence": "passed: selected supplied portrait on locked local profile after PIN, survived app restart"
+    "avatar_persistence": "passed: selected supplied portrait on locked local profile after PIN, survived app restart",
+    "remote_session_runtime": "not qualified against a real HTTPS backend"
   },
   "desktop": {
     "compile": "passed",
@@ -23,11 +24,13 @@
     "rendered_provisional_entry": "docs/provisional/connection-desktop.png",
     "native_addon_binding_test": "passed",
     "native_history_bridge": "passed",
-    "profile_engine_test": "passed: PIN/rename/delete/profile isolation"
+    "profile_engine_test": "passed: PIN/rename/delete/profile isolation",
+    "remote_session_mock": "passed: native expiry/rotation/reopen/sign-out, browser CSRF refresh, unavailable-vault fallback"
   },
   "web": {
     "wasm_compile": "passed with profile UI changes",
-    "browser_playback": "not qualified"
+    "browser_playback": "not qualified",
+    "cookie_session": "compiled; real browser session flow not qualified"
   },
   "engine_tests": 6,
   "backend_v3_tests": 3,

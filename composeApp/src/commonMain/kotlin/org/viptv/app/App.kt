@@ -25,6 +25,7 @@ fun App(television: Boolean = false, browser: Boolean = false, localDatabase: St
     val scope = rememberCoroutineScope()
     val controller = remember { ApplicationController(scope) }
     val state by controller.state.collectAsState()
+    LaunchedEffect(controller) { controller.restore() }
     DisposableEffect(controller) { onDispose { controller.disconnect() } }
     ViptvTheme {
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
@@ -52,7 +53,7 @@ fun App(television: Boolean = false, browser: Boolean = false, localDatabase: St
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource) { controller.navigate(Screen.Details) }
                             Screen.History -> if (state.localMode) HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory) else Text("History is unavailable for this connection.", Modifier.padding(32.dp))
-                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, controller::disconnect)
+                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, { if (state.localMode) controller.disconnect() else controller.signOut() })
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }

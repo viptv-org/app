@@ -32,6 +32,7 @@ data class ApplicationState(
     val results: List<Card> = emptyList(),
     val detail: DetailSnapshot? = null,
     val localMode: Boolean = false,
+    val sessionNotice: String? = null,
     val addons: List<IntegrationConnection> = emptyList(),
     val enabledAddonIds: Set<String> = emptySet(),
     val sourceTitle: Card? = null,
@@ -54,6 +55,31 @@ class ApplicationController(private val scope: CoroutineScope) {
     private var completionSeen = false
     private var progressSavedAt = TimeSource.Monotonic.markNow()
 
+    fun restore() = run {
+        val origin = browserOrigin()
+        if (origin != null) {
+            val remote = RemoteConnection(origin)
+            connection = remote
+            val restored = remote.restoreBrowser()
+            if (restored == null) { remote.close(); connection = null }
+            else accept(restored)
+        } else {
+            val saved = try { remoteSessionStore().read() }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { null }
+            if (saved == null) return@run
+            val remote = try { RemoteConnection(saved.origin) }
+            catch (_: IllegalArgumentException) { remoteSessionStore().clear(); return@run }
+            connection = remote
+            try { accept(remote.restore(saved)) }
+            catch (error: RemoteFailure) {
+                if (error.status != 401) throw error
+                remote.close(); connection = null
+                mutable.value = mutable.value.copy(error = "Session expired. Sign in again.")
+            }
+        }
+    }
+
     fun connect(origin: String, username: String, password: String) {
         job?.cancel(); connection?.close(); connection = null; local?.close(); local = null
         run {
@@ -64,7 +90,13 @@ class ApplicationController(private val scope: CoroutineScope) {
     }
     fun useLocal(path: String) {
         disconnect()
-        run { local = withContext(Dispatchers.Default) { localConnection(path) }; accept(requireNotNull(local).bootstrap()) }
+        run {
+            try { remoteSessionStore().clear() }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { /* Local mode remains available when the OS vault is unavailable. */ }
+            local = withContext(Dispatchers.Default) { localConnection(path) }
+            accept(requireNotNull(local).bootstrap())
+        }
     }
     fun selectProfile(id: String) {
         if (local != null && mutable.value.profiles.any { it.id == id && it.locked }) {
@@ -232,10 +264,17 @@ class ApplicationController(private val scope: CoroutineScope) {
         if(finishing!=null && prior!=null) scope.launch { finishing.join(); prior.close() } else prior?.close()
         mutable.value = ApplicationState()
     }
+    fun signOut() = run {
+        connection?.signOut()
+        connection?.close(); connection = null
+        local?.close(); local = null
+        mutable.value = ApplicationState()
+    }
     private fun accept(value: Bootstrap) {
         mutable.value = ApplicationState(screen = if (value.selected == null) Screen.Profiles else Screen.Home,
             profiles = value.profiles, selectedProfile = value.selected, home = value.home,
-            localMode = local != null, addons = value.addons, enabledAddonIds = value.enabledAddonIds)
+            localMode = local != null, sessionNotice = connection?.persistenceWarning,
+            addons = value.addons, enabledAddonIds = value.enabledAddonIds)
     }
     private fun run(operation: suspend () -> Unit) {
         job?.cancel()
@@ -245,13 +284,16 @@ class ApplicationController(private val scope: CoroutineScope) {
             try { operation() }
             catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                if (generation == current) mutable.value = mutable.value.copy(error = when (e) {
+                if (generation == current && e is RemoteFailure && e.status == 401 && local == null) {
+                    connection?.close(); connection = null
+                    mutable.value = ApplicationState(error = "Session expired. Sign in again.")
+                } else if (generation == current) mutable.value = mutable.value.copy(error = when (e) {
                     is RemoteFailure -> e.message
                     is LocalFailure -> e.message
                     is IllegalArgumentException -> "Enter a valid HTTPS server address."
                     else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
                 })
-            } finally { if (generation == current) mutable.value = mutable.value.copy(busy = false) }
+            } finally { if (generation == current) mutable.value = mutable.value.copy(busy = false, sessionNotice = connection?.persistenceWarning) }
         }
     }
 }

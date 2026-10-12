@@ -48,7 +48,10 @@ kotlin {
             implementation("io.ktor:ktor-client-core:3.4.0")
             implementation("io.ktor:ktor-client-js:3.4.0")
         }
-        commonTest.dependencies { implementation(kotlin("test")) }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation("io.ktor:ktor-client-mock:3.4.0")
+        }
     }
 }
 

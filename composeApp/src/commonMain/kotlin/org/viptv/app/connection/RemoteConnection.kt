@@ -1,8 +1,13 @@
 package org.viptv.app.connection
 
 import io.ktor.client.request.*
+import io.ktor.client.HttpClient
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.*
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.CatalogPage
@@ -13,22 +18,46 @@ data class Profile(val id: String, val name: String, val avatar: String?, val lo
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet())
 class RemoteFailure(val status: Int, message: String) : Exception(message)
 
-class RemoteConnection(rawOrigin: String) {
-    private val client = platformClient()
+class RemoteConnection(
+    rawOrigin: String,
+    private val sessionStore: RemoteSessionStore = remoteSessionStore(),
+    private val client: HttpClient = platformClient(),
+    browserMode: Boolean = browserOrigin() != null,
+) {
     private val codec = Json { ignoreUnknownKeys = true }
+    private val browser = browserMode
     private val origin = Url(rawOrigin).let {
         require(it.protocol == URLProtocol.HTTPS && it.user == null && it.password == null && it.encodedPath in listOf("", "/") && it.parameters.isEmpty() && it.fragment.isEmpty() && it.host.isNotBlank()) { "Enter an HTTPS server address." }
         rawOrigin.trimEnd('/')
     }
     private var csrf: String? = null
     private var accessToken: String? = null
+    private var refreshToken: String? = null
+    private val refreshGate = Mutex()
+    private var refreshVersion = 0L
+    var persistenceWarning: String? = null
+        private set
 
     suspend fun login(username: String, password: String): Bootstrap {
-        val native = browserOrigin() == null
-        val result = call(if (native) "/api/auth/device/login" else "/api/auth/login", HttpMethod.Post,
+        val result = requestJson(if (browser) "/api/auth/login" else "/api/auth/device/login", HttpMethod.Post,
             buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", "VIPTV KMP") })
-        accessToken = result.jsonObject["access_token"]?.jsonPrimitive?.contentOrNull
+        if (!browser) installDeviceTokens(result.jsonObject)
         csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull
+        return bootstrap()
+    }
+
+    suspend fun restore(saved: SavedRemoteSession): Bootstrap {
+        require(!browser && saved.origin == origin)
+        refreshToken = saved.refreshToken
+        refreshDevice()
+        return bootstrap()
+    }
+
+    suspend fun restoreBrowser(): Bootstrap? {
+        if (!browser) return null
+        val status = requestJson("/api/auth/status").jsonObject
+        if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) return null
+        csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
         return bootstrap()
     }
 
@@ -54,14 +83,34 @@ class RemoteConnection(rawOrigin: String) {
 
     suspend fun call(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement {
         require(path.startsWith("/api/") && !path.contains('\\'))
-        val response = client.request(origin + path) {
+        val version = refreshVersion
+        var response = send(path, method, body, accessToken, csrf)
+        if (response.status == HttpStatusCode.Unauthorized && path !in setOf("/api/auth/login", "/api/auth/device/login", "/api/auth/logout")) {
+            response.bodyAsText()
+            refreshGate.withLock {
+                if (refreshVersion == version) {
+                    if (browser) refreshBrowser() else refreshDevice()
+                    refreshVersion++
+                }
+            }
+            response = send(path, method, body, accessToken, csrf)
+        }
+        return decode(response)
+    }
+
+    private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?): HttpResponse = client.request(origin + path) {
             this.method = method
             contentType(ContentType.Application.Json)
-            if (browserOrigin() == null) header(HttpHeaders.Origin, origin)
-            accessToken?.let { bearerAuth(it) }
-            csrf?.let { header("x-csrf-token", it) }
+            if (!browser) header(HttpHeaders.Origin, origin)
+            access?.let { bearerAuth(it) }
+            csrfValue?.let { header("x-csrf-token", it) }
             body?.let { setBody(it.toString()) }
         }
+
+    private suspend fun requestJson(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement =
+        decode(send(path, method, body, accessToken, csrf))
+
+    private suspend fun decode(response: HttpResponse): JsonElement {
         if (response.status.value !in 200..299) {
             throw RemoteFailure(response.status.value, when (response.status.value) {
                 401 -> "Sign in to continue."
@@ -73,5 +122,56 @@ class RemoteConnection(rawOrigin: String) {
         return codec.parseToJsonElement(response.bodyAsText())
     }
 
-    fun close() { client.close(); accessToken = null; csrf = null }
+    private suspend fun installDeviceTokens(value: JsonObject) {
+        val nextAccess = value["access_token"]?.jsonPrimitive?.contentOrNull ?: throw RemoteFailure(502, "The server did not provide a device session.")
+        val nextRefresh = value["refresh_token"]?.jsonPrimitive?.contentOrNull ?: throw RemoteFailure(502, "The server did not provide a refresh token.")
+        try {
+            sessionStore.save(SavedRemoteSession(origin, nextRefresh))
+            persistenceWarning = null
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) {
+            persistenceWarning = "Secure storage is unavailable. This device will need to sign in again after the app closes."
+        }
+        accessToken = nextAccess
+        refreshToken = nextRefresh
+    }
+
+    private suspend fun refreshDevice() {
+        val token = refreshToken ?: throw RemoteFailure(401, "Sign in to continue.")
+        val response = send("/api/auth/device/refresh", HttpMethod.Post,
+            buildJsonObject { put("refresh_token", token) }, null, null)
+        if (response.status == HttpStatusCode.Unauthorized) {
+            accessToken = null; refreshToken = null
+            try { sessionStore.clear() }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { /* The expired token remains unusable on the server. */ }
+        }
+        installDeviceTokens(decode(response).jsonObject)
+    }
+
+    private suspend fun refreshBrowser() {
+        val status = requestJson("/api/auth/status").jsonObject
+        if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) throw RemoteFailure(401, "Sign in to continue.")
+        csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
+        val result = requestJson("/api/auth/refresh", HttpMethod.Post, buildJsonObject {})
+        csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+    }
+
+    suspend fun signOut() {
+        try {
+            refreshGate.withLock {
+                if (browser) refreshBrowser() else if (refreshToken != null) refreshDevice()
+                refreshVersion++
+            }
+            call("/api/auth/logout", HttpMethod.Post, buildJsonObject {})
+        } catch (error: RemoteFailure) {
+            if (error.status != 401) throw error
+        }
+        try { sessionStore.clear() }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { /* Server revocation has already completed. */ }
+        accessToken = null; refreshToken = null; csrf = null
+    }
+
+    fun close() { client.close(); accessToken = null; refreshToken = null; csrf = null }
 }

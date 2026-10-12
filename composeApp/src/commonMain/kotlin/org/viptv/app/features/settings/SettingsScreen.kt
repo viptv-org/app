@@ -11,11 +11,12 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 
 @Composable
-fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean, error: String?, install: (String) -> Unit, toggle: (String,Boolean) -> Unit, remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit) {
+fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean, error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String,Boolean) -> Unit, remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit) {
     var url by remember { mutableStateOf("") }
     var removing by remember { mutableStateOf<IntegrationConnection?>(null) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { Text("Settings", style = MaterialTheme.typography.headlineLarge) }
+        sessionNotice?.let { item { Text(it, color = Palette.danger) } }
         item { Text("Add-ons", style = MaterialTheme.typography.titleLarge) }
         item { Text(if (local) "Add-ons find the movies, series and channels you watch on this device." else "Add-ons find the movies, series and channels you watch on this account.", color = Palette.secondary) }
         if (local) {
