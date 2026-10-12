@@ -1,5 +1,7 @@
 package org.viptv.app.features.entry
 
+import com.composables.icons.lucide.*
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -46,7 +48,7 @@ fun ProfilesScreen(
             if (local && profiles.size < 12) item {
                 Column(Modifier.clickable(enabled = !busy) { adding = true }, horizontalAlignment = Alignment.CenterHorizontally) {
                     Surface(Modifier.size(112.dp).clip(RoundedCornerShape(16.dp)), color = Palette.raised) {
-                        Box(contentAlignment = Alignment.Center) { Text("+", fontSize = 40.sp) }
+                        Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp)) }
                     }
                     Spacer(Modifier.height(14.dp)); Text("Add profile", color = Palette.secondary)
                 }

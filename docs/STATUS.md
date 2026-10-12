@@ -2,6 +2,8 @@
 
 This is an incomplete implementation checkpoint. It is not the completed application or a design-parity release.
 
+The active scope is UI parity first, using the current VIPTV ZIPs across every KMP platform. Functional integration work follows visual and interaction completion.
+
 | Area | Evidence / status |
 | --- | --- |
 | Experimental branches | 14 worktrees based on fetched origin/main; original main branches unchanged |
@@ -55,5 +57,9 @@ Native device login now saves its refresh token in the OS secret store, refreshe
 ## UI parity source and desktop chrome
 
 The authoritative UI inputs are the `VIPTV-screens-1-current-TV.zip`, `VIPTV-screens-2-current-Desktop-app.zip`, `VIPTV-screens-3-current-Phone-Tablet-Web.zip`, and `VIPTV-screens-4-current-Simkl.zip` archives in the workspace root. Their hashes match the experimental `design/current/sources.json` record. The ordinary design repository contains older material and is not the parity source for this experiment.
+
+The reported desktop dragging and icon problems prompted replacing the manual drag loop with Compose Foundation `WindowDraggableArea`. The new handler moved the window exactly 100 × 40 pixels for the same cursor movement in isolated Linux testing. Caption glyphs were replaced with the ZIP's 10-pixel vector paths; Lucide CMP supplies title-bar, navigation, sign-in, lock, add-profile and password-visibility icons. Native desktop scaling and Windows/macOS behavior remain unqualified. Library choices and image-cache bounds are recorded in `UI_LIBRARIES.md`; image latency has not been benchmarked.
+
+The desktop sign-in chooser and password panel now have ZIP-derived local poster assets and a radial backdrop fade. Captures are `docs/evidence/desktop-signin-choice.png` and `docs/evidence/desktop-signin-password.png`. Browser, email, device and IPTV panels are navigable UI states with unavailable-state copy; delivery, approval and provider connections are not implemented, and no fake pairing code is shown. All six sign-in boards remain in progress, not certified.
 
 `docs/evidence/desktop-titlebar-linux.png` records the current 1440 × 900 Linux window. The window uses custom undecorated chrome, moves by dragging its title bar, and closes through the custom close control. The top-bar geometry and search placement follow the supplied `D3HomeWin` board. `docs/evidence/desktop-titlebar-narrow.png` records the 600 × 800 collapsed bar; its menu opens the navigation rail. `docs/evidence/desktop-search-shell.png` records the title-bar search input driving the Search screen without a duplicate field. `docs/evidence/desktop-profiles.png` records the 1100 × 720 profile picker geometry and keyboard focus ring. Home content, search suggestions/results, desktop sign-in methods, navigation detail, popovers, and Mac/Windows runtime checks remain incomplete. Zero boards have passed full visual parity review. The extra Linux variant is tracked in `DESIGN_GAPS.md`.

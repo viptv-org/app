@@ -1,5 +1,7 @@
 package org.viptv.app.features.entry
 
+import com.composables.icons.lucide.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -31,7 +33,7 @@ internal fun MobileProfileEdit(
     var confirmingDelete by remember(profile?.id) { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
         Row(Modifier.fillMaxWidth().height(62.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = back) { Text("‹", fontSize = 32.sp, lineHeight = 32.sp) }
+            IconButton(onClick = back) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(24.dp)) }
             Spacer(Modifier.weight(1f))
             Text("Edit profile", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))

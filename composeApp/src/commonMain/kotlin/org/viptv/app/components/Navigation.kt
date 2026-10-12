@@ -15,6 +15,7 @@ import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.*
+import com.composables.icons.lucide.*
 
 private val destinations = listOf(Screen.Home to "Home", Screen.Search to "Search", Screen.Live to "Live", Screen.Library to "My List", Screen.History to "History")
 
@@ -36,13 +37,13 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
     Column(Modifier.width(72.dp).fillMaxHeight().padding(horizontal = 10.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         destinations.forEach { (screen, label) ->
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (screen == selected) Palette.raised else Palette.background).clickable { navigate(screen) }.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                val icon = when (screen) { Screen.Home -> Res.drawable.ic_home; Screen.Search -> Res.drawable.ic_search; Screen.Live -> Res.drawable.ic_live; Screen.Library -> Res.drawable.ic_list; else -> Res.drawable.ic_history }
-                Icon(painterResource(icon), label, Modifier.size(23.dp))
+                val icon = when (screen) { Screen.Home -> Lucide.House; Screen.Search -> Lucide.Search; Screen.Live -> Lucide.Tv; Screen.Library -> Lucide.Bookmark; else -> Lucide.History }
+                Icon(icon, label, Modifier.size(20.dp))
                 Text(label, fontSize = 9.sp, color = Palette.secondary)
             }
         }
         Spacer(Modifier.weight(1f))
-        IconButton(onClick = { navigate(Screen.Settings) }) { Icon(painterResource(Res.drawable.ic_settings), "Settings", Modifier.size(23.dp)) }
+        IconButton(onClick = { navigate(Screen.Settings) }) { Icon(Lucide.Settings, "Settings", Modifier.size(20.dp)) }
     }
 }
 

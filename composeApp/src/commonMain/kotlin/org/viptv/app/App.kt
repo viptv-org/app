@@ -29,6 +29,7 @@ fun App(
     desktopMenuOpen: Boolean = false,
     providedController: ApplicationController? = null,
 ) {
+    org.viptv.app.images.ConfigureImageLoading()
     val scope = rememberCoroutineScope()
     val controller = providedController ?: remember { ApplicationController(scope) }
     val state by controller.state.collectAsState()
@@ -38,7 +39,7 @@ fun App(
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             val compact = maxWidth < 640.dp && !television
             when (state.screen) {
-                Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect)
+                Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome)
                 Screen.Profiles -> ProfilesScreen(state.profiles, state.busy, state.error, state.localMode, state.managingProfiles, compact, desktopChrome,
                     controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile)
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,

@@ -13,7 +13,11 @@ import org.viptv.app.theme.Palette
 
 // GAP-001: connection selection has no supplied current board.
 @Composable
-fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit) {
+fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false) {
+    if (desktop) {
+        DesktopSignIn(origin, busy, error, local, connect)
+        return
+    }
     var server by remember { mutableStateOf(origin) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

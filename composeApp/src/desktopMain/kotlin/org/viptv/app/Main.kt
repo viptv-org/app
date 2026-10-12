@@ -1,19 +1,17 @@
 package org.viptv.app
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import kotlin.math.roundToInt
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -49,14 +47,10 @@ fun main() = application {
                         DesktopWindowButtons(mac, minimize, maximize, ::exitApplication, Modifier.align(Alignment.TopEnd))
                     }
                 } else {
-                    val dragArea = Modifier.pointerInput(window) {
-                        detectDragGestures { change, amount ->
-                            window.setLocation(window.x + amount.x.roundToInt(), window.y + amount.y.roundToInt())
-                            change.consume()
-                        }
+                    WindowDraggableArea(Modifier.fillMaxWidth()) {
+                        DesktopTitleBar(state, mac, controller::navigate, controller::search,
+                            { menuOpen = !menuOpen }, minimize, maximize, ::exitApplication, Modifier)
                     }
-                    DesktopTitleBar(state, mac, controller::navigate, controller::search,
-                        { menuOpen = !menuOpen }, minimize, maximize, ::exitApplication, dragArea)
                     Box(Modifier.weight(1f)) {
                         App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
                     }

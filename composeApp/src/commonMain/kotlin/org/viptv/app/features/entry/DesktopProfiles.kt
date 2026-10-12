@@ -1,5 +1,7 @@
 package org.viptv.app.features.entry
 
+import com.composables.icons.lucide.*
+
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -50,7 +52,8 @@ internal fun DesktopProfiles(
             Spacer(Modifier.height(40.dp))
             if (local) OutlinedButton(onClick = if (managing) done else manage, enabled = !busy,
                 shape = RoundedCornerShape(12.dp)) {
-                Text(if (managing) "Done" else "✎  Manage profiles", fontSize = 13.sp,
+                if (!managing) { androidx.compose.material3.Icon(Lucide.Pencil, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)) }
+                Text(if (managing) "Done" else "Manage profiles", fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold)
             }
             error?.let { Text(it, Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.error) }
@@ -83,7 +86,7 @@ private fun DesktopAddProfileTile(busy: Boolean, add: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(148.dp).padding(4.dp).border(2.dp, Color.White.copy(alpha = .14f),
             RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
-            Text("+", color = Palette.secondary, fontSize = 40.sp)
+            androidx.compose.material3.Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp), tint = Palette.secondary)
         }
         Spacer(Modifier.height(8.dp))
         Text("Add profile", color = Palette.secondary, fontSize = 15.sp)

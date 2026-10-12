@@ -1,7 +1,8 @@
 package org.viptv.app.features.entry
 
+import com.composables.icons.lucide.*
+
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,15 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import com.composables.icons.lucide.Lock
 
 @Composable
 internal fun MobileProfiles(
@@ -72,15 +71,7 @@ private fun MobileProfileTile(profile: Profile, busy: Boolean, open: () -> Unit)
 
 @Composable
 internal fun LockMark() {
-    Canvas(Modifier.size(14.dp)) {
-        val stroke = 1.6.dp.toPx()
-        drawRoundRect(Palette.text, topLeft = Offset(size.width * .14f, size.height * .46f),
-            size = Size(size.width * .72f, size.height * .45f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.width * .1f), style = Stroke(stroke))
-        drawArc(Palette.text, 180f, 180f, useCenter = false,
-            topLeft = Offset(size.width * .29f, size.height * .08f),
-            size = Size(size.width * .42f, size.height * .68f), style = Stroke(stroke))
-    }
+    androidx.compose.material3.Icon(com.composables.icons.lucide.Lucide.Lock, "Locked", Modifier.size(14.dp), tint = Palette.text)
 }
 
 @Composable
@@ -88,7 +79,7 @@ private fun AddProfileTile(busy: Boolean, add: () -> Unit) {
     Column(Modifier.fillMaxWidth().clickable(enabled = !busy, onClick = add), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(120.dp).clip(RoundedCornerShape(22.dp))
             .border(BorderStroke(2.dp, Color.White.copy(alpha = 0.14f)), RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
-            Text("+", color = Palette.secondary, fontSize = 40.sp)
+            androidx.compose.material3.Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp), tint = Palette.secondary)
         }
         Spacer(Modifier.height(10.dp))
         Text("Add profile", color = Palette.secondary, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)

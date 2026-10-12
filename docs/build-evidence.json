@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "13ad3d5c8096991b98bbfe546ecc352e0dabe30690c3d80b36b0f8e7a6b6e3b6",
+    "sha256": "7effd61e20b6b288a93cd520f7963095352fbf3df551e91881fad65b045c66d7",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -28,7 +28,10 @@
     "remote_session_mock": "passed: native expiry/rotation/reopen/sign-out, browser CSRF refresh, unavailable-vault fallback",
     "custom_chrome": "passed Linux isolated render at 1440x900 and 600x800; drag, menu and close controls observed",
     "titlebar_search": "passed title-bar query to Search without duplicate field",
-    "profile_picker": "passed 1100x720 render and keyboard focus ring; board parity pending"
+    "profile_picker": "passed 1100x720 render and keyboard focus ring; board parity pending",
+    "window_drag": "Compose Foundation WindowDraggableArea: isolated Linux cursor and window displacement both 100x40 pixels; user desktop scaling/snap remain unqualified",
+    "icon_library": "Lucide CMP 2.2.1; desktop/android/wasm compile passed",
+    "signin_ui": "choice/password rendered at 1100x720; navigation and entry verified; other methods visual states only"
   },
   "web": {
     "wasm_compile": "passed with profile UI changes",
@@ -38,5 +41,6 @@
   "engine_tests": 6,
   "backend_v3_tests": 3,
   "visual_parity_boards_passed": 0,
-  "real_media_qualification": "Android direct MP4 fixture passed; other delivery/targets pending"
+  "real_media_qualification": "Android direct MP4 fixture passed; other delivery/targets pending",
+  "images": "shared Coil singleton, 64MiB memory and 256MiB native disk cache; no latency benchmark yet"
 }

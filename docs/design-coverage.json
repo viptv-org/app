@@ -1295,9 +1295,9 @@
     "title": "Sign in — every method",
     "width": 1100,
     "height": 720,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
+    "capture": "docs/evidence/desktop-signin-choice.png"
   },
   {
     "id": "D3SignInWaiting",
@@ -1305,8 +1305,8 @@
     "title": "Sign in — waiting for the browser",
     "width": 1100,
     "height": 720,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
     "capture": null
   },
   {
@@ -1315,8 +1315,8 @@
     "title": "Sign in — email code",
     "width": 1100,
     "height": 720,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
     "capture": null
   },
   {
@@ -1325,9 +1325,9 @@
     "title": "Sign in — password",
     "width": 1100,
     "height": 720,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
+    "capture": "docs/evidence/desktop-signin-password.png"
   },
   {
     "id": "D3SignInDevice",
@@ -1335,8 +1335,8 @@
     "title": "Sign in — approve from another device",
     "width": 1100,
     "height": 720,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
     "capture": null
   },
   {
@@ -1345,8 +1345,8 @@
     "title": "Sign in — IPTV provider",
     "width": 1100,
     "height": 720,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
     "capture": null
   },
   {

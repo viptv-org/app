@@ -1,5 +1,7 @@
 package org.viptv.app.features.entry
 
+import com.composables.icons.lucide.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +40,7 @@ internal fun MobilePinScreen(
     var forgot by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("×", Modifier.clickable(onClick = back).padding(horizontal = 8.dp), fontSize = 30.sp)
+            androidx.compose.material3.IconButton(onClick = back) { androidx.compose.material3.Icon(Lucide.X, "Back", Modifier.size(24.dp)) }
         }
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 72.dp, 16.dp)
