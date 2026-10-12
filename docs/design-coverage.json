@@ -497,7 +497,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
-    "capture": null
+    "capture": "docs/evidence/android-profiles.png"
   },
   {
     "id": "M3Pin",
@@ -505,9 +505,9 @@
     "title": "Profile PIN",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilePinScreen.kt",
+    "capture": "docs/evidence/android-profile-pin.png"
   },
   {
     "id": "M3ProfileEdit",
@@ -515,9 +515,9 @@
     "title": "Edit profile",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfileEditScreen.kt",
+    "capture": "docs/evidence/android-profile-edit.png"
   },
   {
     "id": "M3HomeLoading",

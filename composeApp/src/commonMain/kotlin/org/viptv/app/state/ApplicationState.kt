@@ -18,12 +18,15 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.TimeSource
 import kotlin.time.Duration.Companion.seconds
 
-enum class Screen { Connect, Profiles, Home, Search, Details, Sources, Player, Live, Library, History, Settings }
+enum class Screen { Connect, Profiles, ProfilePin, ProfileEdit, Home, Search, Details, Sources, Player, Live, Library, History, Settings }
 data class ApplicationState(
     val screen: Screen = Screen.Connect,
     val busy: Boolean = false,
     val error: String? = null,
     val profiles: List<Profile> = emptyList(),
+    val profileToOpen: String? = null,
+    val profileToEdit: String? = null,
+    val managingProfiles: Boolean = false,
     val selectedProfile: String? = null,
     val home: HomeSnapshot? = null,
     val results: List<Card> = emptyList(),
@@ -63,10 +66,50 @@ class ApplicationController(private val scope: CoroutineScope) {
         disconnect()
         run { local = withContext(Dispatchers.Default) { localConnection(path) }; accept(requireNotNull(local).bootstrap()) }
     }
-    fun selectProfile(id: String) = run {
+    fun selectProfile(id: String) {
+        if (local != null && mutable.value.profiles.any { it.id == id && it.locked }) {
+            mutable.value = mutable.value.copy(screen = Screen.ProfilePin, profileToOpen = id, error = null)
+            return
+        }
+        run { openProfile(id) }
+    }
+    fun submitProfilePin(pin: String) = run {
+        val id = mutable.value.profileToOpen ?: throw LocalFailure("Choose a profile first.")
+        if (!requireNotNull(local).verifyProfilePin(id, pin)) throw LocalFailure("Incorrect PIN or too many attempts. Try again later.")
+        openProfile(id)
+    }
+    private suspend fun openProfile(id: String) {
+        progressJob?.join()
         val result=local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)
         accept(result)
         local?.let { mutable.value=mutable.value.copy(home=it.refreshHome(id)) }
+    }
+    fun manageProfiles() { mutable.value=mutable.value.copy(managingProfiles=true,error=null) }
+    fun stopManagingProfiles() { mutable.value=mutable.value.copy(managingProfiles=false,error=null) }
+    fun editProfile(id: String) { mutable.value=mutable.value.copy(screen=Screen.ProfileEdit,profileToEdit=id,error=null) }
+    fun createProfile(name: String) = run {
+        requireNotNull(local).createProfile(name)
+        val next=requireNotNull(local).bootstrap()
+        mutable.value=mutable.value.copy(profiles=next.profiles,error=null)
+    }
+    fun renameProfile(name: String, pin: String) = run {
+        val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
+        requireNotNull(local).renameProfile(id,name,pin)
+        val next=requireNotNull(local).bootstrap()
+        mutable.value=mutable.value.copy(profiles=next.profiles,screen=Screen.Profiles,managingProfiles=true)
+    }
+    fun deleteProfile(pin: String) = run {
+        val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
+        requireNotNull(local).deleteProfile(id,pin)
+        val next=requireNotNull(local).bootstrap()
+        mutable.value=mutable.value.copy(profiles=next.profiles,screen=Screen.Profiles,managingProfiles=true,
+            selectedProfile=mutable.value.selectedProfile.takeUnless { it==id })
+    }
+    fun setProfilePin(oldPin: String, newPin: String) = run {
+        val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
+        requireNotNull(local).setProfilePin(id,oldPin,newPin)
+        val next=requireNotNull(local).bootstrap()
+        mutable.value=mutable.value.copy(profiles=next.profiles,screen=Screen.Profiles,managingProfiles=true)
     }
     fun refresh() = run {
         progressJob?.join()

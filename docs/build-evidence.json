@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "872a0ef57d7febca4a34a037c260eb1971e06efef3976538a1b81867b69fa474",
+    "sha256": "6064c9b9985cb558ebeab4dcd21c7d956ba7554e2a753edbbaaac09a2589abfc",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -12,17 +12,19 @@
     "local_stremio_manifest_home_detail": "passed on QA emulator; some rows timed out",
     "direct_mp4_decoded_frame": "passed on QA emulator through fixture source picker",
     "profile_addon_toggle_and_removal": "passed on QA emulator",
-    "watch_history_restart": "passed: Continue Watching and Today history on QA emulator"
+    "watch_history_restart": "passed: Continue Watching and Today history on QA emulator",
+    "local_profile_management": "passed on QA emulator: create, set PIN, wrong PIN rejected, correct PIN accepted, locked picker persisted across restart"
   },
   "desktop": {
     "compile": "passed",
     "native_sqlite_persistence_test": "passed",
     "rendered_provisional_entry": "docs/provisional/connection-desktop.png",
     "native_addon_binding_test": "passed",
-    "native_history_bridge": "passed"
+    "native_history_bridge": "passed",
+    "profile_engine_test": "passed: PIN/rename/delete/profile isolation"
   },
   "web": {
-    "wasm_compile": "passed",
+    "wasm_compile": "passed with profile UI changes",
     "browser_playback": "not qualified"
   },
   "engine_tests": 6,

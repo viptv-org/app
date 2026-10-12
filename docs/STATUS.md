@@ -9,7 +9,7 @@ This is an incomplete implementation checkpoint. It is not the completed applica
 | Instructions and third-party skills | Initial branch cleanup plus private archive of root-level instructions; further documentation pruning pending |
 | Rust engine | Capability registry, profile assignments, query validation, mapping evidence, bounded Home assembly, SQLite profiles and profile-scoped watch history; focused engine and bridge tests pass |
 | Generated interfaces | Rust-derived Kotlin/TypeScript models and UniFFI native library |
-| Local KMP profiles | Linux JNI tests pass; Android emulator restores local profile after APK update |
+| Local KMP profiles | Create/rename/delete, profile-scoped settings/history, and salted PIN with failed-attempt delay are in the shared engine. Android emulator created a second profile, set its PIN, rejected a wrong PIN, accepted the right PIN, and restored the locked picker after restart. The PIN guards the app flow, not device-owner access to local files. |
 | Remote backend | v3 identity/Home bootstrap, discovery/details projections and scoped revisioned integration configuration; three route tests pass |
 | KMP builds | Desktop and wasmJs compilation pass; Android APK includes arm64 and x86_64 Rust libraries |
 | Player adapters | Android KitePlayer displayed a decoded frame from the public Flower MP4 fixture through local Search → Details → Sources → Player. HLS, tracks, subtitles, seek, desktop and browser playback remain unqualified |
@@ -41,3 +41,7 @@ The Android QA emulator installed Cinemeta through the app, stored its configura
 ## Profile history checkpoint
 
 A local Flower playback position was saved through KitePlayer into the shared Rust store. After app restart, Home displayed Continue Watching with Flower and its remaining time before catalog requests completed; History displayed the same item under Today. `docs/evidence/android-history.png` shows the current result. Playback metadata survives an app restart and is scoped by profile. No current design board has been certified as visually matched.
+
+## Local profile checkpoint
+
+`docs/evidence/android-profiles.png`, `docs/evidence/android-profile-pin.png`, and `docs/evidence/android-profile-edit.png` record the Android QA flow. The picker and PIN/edit screens remain in progress against their current design boards. Avatar selection, maturity controls, playback preferences, language, TV keypad behavior, and PIN recovery have not been implemented. A local profile-creation dialog is tracked in `DESIGN_GAPS.md` because the supplied boards do not show that form.

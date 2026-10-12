@@ -31,7 +31,13 @@ fun App(television: Boolean = false, browser: Boolean = false, localDatabase: St
             val compact = maxWidth < 640.dp && !television
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect)
-                Screen.Profiles -> ProfilesScreen(state.profiles, state.busy, controller::selectProfile)
+                Screen.Profiles -> ProfilesScreen(state.profiles, state.busy, state.error, state.localMode, state.managingProfiles,
+                    controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile)
+                Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }?.name.orEmpty(),
+                    state.busy, state.error, controller::submitProfilePin) { controller.navigate(Screen.Profiles) }
+                Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
+                    state.busy, state.error, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
+                    controller::setProfilePin, controller::deleteProfile)
                 Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer)
                 else -> Column {
                     if (browser || television) TopNavigation(state.screen, television, controller::navigate)

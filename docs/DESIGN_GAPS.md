@@ -9,6 +9,7 @@
 | GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Pending implementation |
 | GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt`; settings capture `docs/provisional/addon-settings-android.png` |
 | GAP-007 | Local History clear confirmation | Current History boards show Clear without its confirmation state | Provisional confirmation in `features/history/HistoryScreen.kt` |
+| GAP-008 | Local profile creation dialog | Current profile picker shows Add profile, but no local creation form | Provisional dialog in `features/entry/ProfilesScreen.kt`; capture `docs/evidence/android-profiles.png` |
 
 Each implemented provisional surface will include its source location and a review capture. No provisional surface is recorded as supplied-design parity.
 

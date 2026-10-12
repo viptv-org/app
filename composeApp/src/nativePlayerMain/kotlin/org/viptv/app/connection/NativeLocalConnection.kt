@@ -11,6 +11,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.*
+import kotlinx.serialization.Serializable
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.ProfileConfiguration
 import org.viptv.engine.wire.IntegrationConnection
@@ -29,6 +30,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 actual fun localConnection(databasePath: String): LocalConnection = NativeLocalConnection(databasePath)
 
+@Serializable
+private data class LocalProfileCard(val id: String, val name: String, val locked: Boolean)
+
 private class NativeLocalConnection(path: String) : LocalConnection {
     private val engine = LocalEngine(path, platformSecrets())
     private val client = platformClient()
@@ -36,7 +40,7 @@ private class NativeLocalConnection(path: String) : LocalConnection {
     private val pendingHomes=ConcurrentHashMap<String,String>()
 
     override suspend fun bootstrap(profile: String?): Bootstrap {
-        val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<ProfileConfiguration>>(engine.profiles()) }.map { Profile(it.scope.profile_id, it.name, null) }
+        val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<LocalProfileCard>>(engine.profileCards()) }.map { Profile(it.id, it.name, null, it.locked) }
         val home = profile?.let {
             val plan=withContext(Dispatchers.IO){engine.planHome(it)}
             val id=json.parseToJsonElement(plan).jsonObject.getValue("id").jsonPrimitive.content
@@ -45,6 +49,25 @@ private class NativeLocalConnection(path: String) : LocalConnection {
         }
         return Bootstrap(profiles, profile, home, addons(), profile?.let { enabledAddons(it) } ?: emptySet())
     }
+
+    override suspend fun createProfile(name: String): Profile = withContext(Dispatchers.IO) {
+        val id = java.util.UUID.randomUUID().toString()
+        engine.createProfile(id, name)
+        Profile(id, name.trim(), null)
+    }
+    override suspend fun renameProfile(id: String, name: String, pin: String) = withContext(Dispatchers.IO) {
+        try { engine.renameProfile(id, name, pin) }
+        catch (_: Exception) { throw LocalFailure("Could not rename the profile. Check its name and current PIN.") }
+    }
+    override suspend fun deleteProfile(id: String, pin: String) = withContext(Dispatchers.IO) {
+        try { engine.deleteProfile(id, pin) }
+        catch (_: Exception) { throw LocalFailure("Could not delete the profile. Check its PIN; at least one profile must remain.") }
+    }
+    override suspend fun setProfilePin(id: String, oldPin: String, newPin: String) = withContext(Dispatchers.IO) {
+        try { engine.setProfilePin(id, oldPin, newPin) }
+        catch (_: Exception) { throw LocalFailure("Could not update the PIN. Use 4–8 digits and check the current PIN.") }
+    }
+    override suspend fun verifyProfilePin(id: String, pin: String): Boolean = withContext(Dispatchers.IO) { engine.verifyProfilePin(id, pin) }
 
     override suspend fun refreshHome(profile: String): HomeSnapshot = runPlan(pendingHomes.remove(profile) ?: withContext(Dispatchers.IO) { engine.planHome(profile) })
 

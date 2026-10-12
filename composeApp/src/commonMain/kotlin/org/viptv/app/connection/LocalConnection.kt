@@ -10,6 +10,11 @@ import org.viptv.engine.wire.HistoryEntry
 import org.viptv.engine.wire.HomeSnapshot
 
 interface LocalConnection : AutoCloseable {
+    suspend fun createProfile(name: String): Profile
+    suspend fun renameProfile(id: String, name: String, pin: String)
+    suspend fun deleteProfile(id: String, pin: String)
+    suspend fun setProfilePin(id: String, oldPin: String, newPin: String)
+    suspend fun verifyProfilePin(id: String, pin: String): Boolean
     suspend fun bootstrap(profile: String? = null): Bootstrap
     suspend fun refreshHome(profile: String): HomeSnapshot
     suspend fun addons(): List<IntegrationConnection>
