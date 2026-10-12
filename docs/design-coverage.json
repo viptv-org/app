@@ -1185,9 +1185,9 @@
     "title": "Movies — keyboard focus on the first poster",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/browse/BrowseScreen.kt",
+    "capture": "docs/evidence/desktop-browse-shell.png"
   },
   {
     "id": "D3Live",

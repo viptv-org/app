@@ -17,6 +17,7 @@ import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.history.HistoryScreen
+import org.viptv.app.features.browse.BrowseScreen
 import org.viptv.app.components.*
 import org.viptv.engine.wire.Card
 
@@ -48,7 +49,8 @@ fun App(
                     state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
                     controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile)
                 Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer)
-                else -> Column {
+                else -> Box(Modifier.fillMaxSize()) {
+                  Column(Modifier.fillMaxSize()) {
                     if (browser || television) TopNavigation(state.screen, television, controller::navigate)
                     else if (!desktopChrome) Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 20.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Brand(); Spacer(Modifier.weight(1f)); TextButton(onClick = { controller.navigate(Screen.Settings) }) { Text("Settings") }
@@ -57,6 +59,7 @@ fun App(
                         if (!browser && !television && (!compact || (desktopChrome && desktopMenuOpen))) SideNavigation(state.screen, controller::navigate)
                         when (state.screen) {
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh)
+                            Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open)
                             Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open)
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource) { controller.navigate(Screen.Details) }
@@ -65,7 +68,10 @@ fun App(
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }
-                    if (compact && !browser && !desktopChrome) BottomNavigation(state.screen, controller::navigate)
+                  }
+                  if (compact && !browser && !desktopChrome) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
+                      BottomNavigation(state.screen, controller::navigate)
+                  }
                 }
             }
         }

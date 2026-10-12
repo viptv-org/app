@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.TimeSource
 import kotlin.time.Duration.Companion.seconds
 
-enum class Screen { Connect, Profiles, ProfilePin, ProfileEdit, Home, Search, Details, Sources, Player, Live, Library, History, Settings }
+enum class Screen { Connect, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings }
 data class ApplicationState(
     val screen: Screen = Screen.Connect,
     val busy: Boolean = false,

@@ -4,6 +4,8 @@ This is an incomplete implementation checkpoint. It is not the completed applica
 
 The active scope is UI parity first, using the current VIPTV ZIPs across every KMP platform. Functional integration work follows visual and interaction completion.
 
+The latest navigation checkpoint expands the desktop rail to Home, Discover, Movies, Series, Live, Calendar, My List and History, with Add-ons and Settings at the bottom. The phone has the four-tab floating dock and separate Search action from the ZIP; Home reserves bottom scrolling space under it. Web navigation collapses additional destinations into a menu at medium and phone widths. Movies, Series and Discover have a shared poster-grid surface using already-loaded catalog cards, with alphabetical sorting and a provider-order default. Genre filters, populated-grid parity, Calendar, Live guide and My List remain incomplete. Captures are `docs/evidence/desktop-navigation.png`, `docs/evidence/desktop-browse-shell.png`, and `docs/evidence/android-floating-navigation.png`. The phone Search action and desktop Movies/sort interactions were observed; browser and TV runtime checks remain pending.
+
 | Area | Evidence / status |
 | --- | --- |
 | Experimental branches | 14 worktrees based on fetched origin/main; original main branches unchanged |

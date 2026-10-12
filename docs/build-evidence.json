@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "7effd61e20b6b288a93cd520f7963095352fbf3df551e91881fad65b045c66d7",
+    "sha256": "16f4df3bce151e46857c64651b2a7a923783a38aa4d50cdc9a4f01cdcea213c1",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -16,7 +16,8 @@
     "local_profile_management": "passed on QA emulator: create, set PIN, wrong PIN rejected, correct PIN accepted, locked picker persisted across restart",
     "profile_phone_layout": "passed emulator render check against M3Profiles and M3Pin; keypad unlock passed; parity remains in progress",
     "avatar_persistence": "passed: selected supplied portrait on locked local profile after PIN, survived app restart",
-    "remote_session_runtime": "not qualified against a real HTTPS backend"
+    "remote_session_runtime": "not qualified against a real HTTPS backend",
+    "floating_navigation": "rendered on QA emulator; separate Search button navigated; complete phone layout parity pending"
   },
   "desktop": {
     "compile": "passed",
@@ -31,12 +32,14 @@
     "profile_picker": "passed 1100x720 render and keyboard focus ring; board parity pending",
     "window_drag": "Compose Foundation WindowDraggableArea: isolated Linux cursor and window displacement both 100x40 pixels; user desktop scaling/snap remain unqualified",
     "icon_library": "Lucide CMP 2.2.1; desktop/android/wasm compile passed",
-    "signin_ui": "choice/password rendered at 1100x720; navigation and entry verified; other methods visual states only"
+    "signin_ui": "choice/password rendered at 1100x720; navigation and entry verified; other methods visual states only",
+    "navigation": "eight ZIP destinations rendered; Movies navigation and sort menu observed; populated grid qualification pending"
   },
   "web": {
     "wasm_compile": "passed with profile UI changes",
     "browser_playback": "not qualified",
-    "cookie_session": "compiled; real browser session flow not qualified"
+    "cookie_session": "compiled; real browser session flow not qualified",
+    "responsive_navigation": "compiled with collapsed phone/medium-width menu; browser runtime verification pending"
   },
   "engine_tests": 6,
   "backend_v3_tests": 3,

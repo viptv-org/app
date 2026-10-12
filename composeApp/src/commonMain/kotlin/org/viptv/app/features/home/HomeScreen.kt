@@ -18,7 +18,8 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
         val compact = maxWidth < 640.dp && !television
         val gutter = if (compact) 16.dp else if (television) 70.dp else 40.dp
         var focused by remember(home?.revision) { mutableStateOf<Card?>(null) }
-        LazyColumn(contentPadding = PaddingValues(horizontal = if (television) 0.dp else gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        LazyColumn(contentPadding = PaddingValues(start = if (television) 0.dp else gutter, end = if (television) 0.dp else gutter,
+            top = 12.dp, bottom = if (compact) 96.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
             item(key = "hero") {
                 val hero = if (television) focused ?: home?.hero else home?.hero
                 if (hero != null) Hero(hero, compact, television, open)

@@ -21,11 +21,11 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit) {
+fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     Column(Modifier.width(width.dp).onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }.clickable { open(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(9.dp)).background(Palette.raised).then(if (focused) Modifier.border(3.dp, Palette.text, RoundedCornerShape(9.dp)) else Modifier)) {
-            AsyncImage(if (portrait) card.poster else card.landscape, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            AsyncImage(if (portrait) card.poster else card.landscape, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             if (card.badges.isNotEmpty()) Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
                 Text(card.badges.first(), Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -33,8 +33,10 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, onFocus: 
                 LinearProgressIndicator(progress = { progress.toFloat() }, modifier = Modifier.fillMaxWidth().height(3.dp).align(Alignment.BottomCenter), color = Palette.accent, trackColor = Palette.raised)
             }
         }
-        Spacer(Modifier.height(9.dp))
-        Text(card.title, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        card.subtitle?.let { Text(it, fontSize = 11.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        if (showLabels) {
+            Spacer(Modifier.height(9.dp))
+            Text(card.title, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            card.subtitle?.let { Text(it, fontSize = 11.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        }
     }
 }
