@@ -8,6 +8,7 @@
 | GAP-004 | Server and integration failures | Empty, unauthorized and unavailable are distinct | Pending implementation |
 | GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Pending implementation |
 | GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt`; settings capture `docs/provisional/addon-settings-android.png` |
+| GAP-007 | Local History clear confirmation | Current History boards show Clear without its confirmation state | Provisional confirmation in `features/history/HistoryScreen.kt` |
 
 Each implemented provisional surface will include its source location and a review capture. No provisional surface is recorded as supplied-design parity.
 

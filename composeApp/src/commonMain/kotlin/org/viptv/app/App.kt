@@ -16,6 +16,7 @@ import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.player.PlayerScreen
+import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.components.*
 import org.viptv.engine.wire.Card
 
@@ -44,6 +45,7 @@ fun App(television: Boolean = false, browser: Boolean = false, localDatabase: St
                             Screen.Search -> SearchScreen(state.results, state.addons, state.busy, state.error, controller::search, controller::open)
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource) { controller.navigate(Screen.Details) }
+                            Screen.History -> if (state.localMode) HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory) else Text("History is unavailable for this connection.", Modifier.padding(32.dp))
                             Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, controller::disconnect)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }

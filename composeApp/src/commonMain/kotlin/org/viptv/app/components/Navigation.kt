@@ -49,6 +49,6 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
 @Composable
 fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
     Row(Modifier.fillMaxWidth().height(64.dp).background(Palette.surface), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-        destinations.take(4).forEach { (screen, label) -> TextButton(onClick = { navigate(screen) }) { Text(label, color = if (screen == selected) Palette.text else Palette.secondary, fontSize = 12.sp) } }
+        destinations.forEach { (screen, label) -> TextButton(onClick = { navigate(screen) }) { Text(label, color = if (screen == selected) Palette.text else Palette.secondary, fontSize = 12.sp) } }
     }
 }

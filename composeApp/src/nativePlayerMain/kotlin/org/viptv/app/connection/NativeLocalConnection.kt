@@ -19,7 +19,13 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
+import org.viptv.engine.wire.HistoryEntry
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import uniffi.viptv_core.LocalEngine
+import java.util.concurrent.ConcurrentHashMap
 
 actual fun localConnection(databasePath: String): LocalConnection = NativeLocalConnection(databasePath)
 
@@ -27,12 +33,20 @@ private class NativeLocalConnection(path: String) : LocalConnection {
     private val engine = LocalEngine(path, platformSecrets())
     private val client = platformClient()
     private val json = Json { ignoreUnknownKeys = true }
+    private val pendingHomes=ConcurrentHashMap<String,String>()
 
     override suspend fun bootstrap(profile: String?): Bootstrap {
         val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<ProfileConfiguration>>(engine.profiles()) }.map { Profile(it.scope.profile_id, it.name, null) }
-        val home = profile?.let { loadHome(it) }
+        val home = profile?.let {
+            val plan=withContext(Dispatchers.IO){engine.planHome(it)}
+            val id=json.parseToJsonElement(plan).jsonObject.getValue("id").jsonPrimitive.content
+            pendingHomes[it]=plan
+            withContext(Dispatchers.IO){json.decodeFromString<HomeSnapshot>(engine.preparedHome(id))}
+        }
         return Bootstrap(profiles, profile, home, addons(), profile?.let { enabledAddons(it) } ?: emptySet())
     }
+
+    override suspend fun refreshHome(profile: String): HomeSnapshot = runPlan(pendingHomes.remove(profile) ?: withContext(Dispatchers.IO) { engine.planHome(profile) })
 
     override suspend fun addons(): List<IntegrationConnection> = withContext(Dispatchers.IO) {
         json.decodeFromString(engine.addons())
@@ -92,10 +106,25 @@ private class NativeLocalConnection(path: String) : LocalConnection {
         val headers = source.getValue("headers").jsonArray.associate { pair ->
             val values=pair.jsonArray;values[0].jsonPrimitive.content to values[1].jsonPrimitive.content
         }
-        PlaybackInput(id,source.getValue("url").jsonPrimitive.content,headers)
+        PlaybackInput(id,source.getValue("url").jsonPrimitive.content,headers,source.getValue("position_millis").jsonPrimitive.long,source.getValue("profile_id").jsonPrimitive.content,source.getValue("revision").jsonPrimitive.long)
     }
 
-    private suspend fun loadHome(profile: String): HomeSnapshot = runPlan(withContext(Dispatchers.IO) { engine.planHome(profile) })
+    override suspend fun recordProgress(input: PlaybackInput, card: Card, positionMillis: Long, durationMillis: Long?) = withContext(Dispatchers.IO) {
+        val profile = input.profileId ?: throw LocalFailure("No profile owns this playback session.")
+        engine.recordProgress(profile,input.revision.toULong(),json.encodeToString(card),positionMillis.coerceAtLeast(0).toULong(),(durationMillis ?: 0).coerceAtLeast(0).toULong())
+    }
+
+    override suspend fun history(profile: String): List<HistoryDisplay> = withContext(Dispatchers.IO) {
+        val today=LocalDate.now()
+        val zone=ZoneId.systemDefault()
+        json.decodeFromString<List<HistoryEntry>>(engine.history(profile)).map { entry ->
+            val day=Instant.ofEpochMilli(entry.updated_at_millis).atZone(zone).toLocalDate()
+            val label=when(day){today->"Today";today.minusDays(1)->"Yesterday";else->if(day.isBefore(today.minusDays(6))) "Last week" else day.format(DateTimeFormatter.ofPattern("EEEE"))}
+            HistoryDisplay(entry,label)
+        }
+    }
+
+    override suspend fun clearHistory(profile: String) = withContext(Dispatchers.IO) { engine.clearHistory(profile) }
 
     private suspend fun runPlan(raw: String): HomeSnapshot {
         val plan = json.parseToJsonElement(raw).jsonObject
@@ -117,5 +146,5 @@ private class NativeLocalConnection(path: String) : LocalConnection {
             json.decodeFromString(engine.projectHome(plan.getValue("id").jsonPrimitive.content, JsonArray(results).toString()))
         }
     }
-    override fun close() { client.close(); engine.close() }
+    override fun close() { pendingHomes.clear(); client.close(); engine.close() }
 }

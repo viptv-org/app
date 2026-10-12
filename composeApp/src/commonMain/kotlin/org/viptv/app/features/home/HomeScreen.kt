@@ -39,7 +39,9 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                             }
                             RowState.EMPTY -> Text("Nothing here yet.", color = Palette.secondary)
                             RowState.FAILED -> TextButton(onClick = retry) { Text(row.message ?: "Try again") }
-                            RowState.PENDING -> TextButton(onClick = retry) { Text("Load this row") }
+                            RowState.PENDING -> Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                                repeat(3) { Box(Modifier.width(if (compact) 240.dp else 290.dp).aspectRatio(16f / 9).clip(RoundedCornerShape(9.dp)).background(Palette.surface)) }
+                            }
                         }
                     }
                 }

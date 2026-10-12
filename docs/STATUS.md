@@ -7,17 +7,17 @@ This is an incomplete implementation checkpoint. It is not the completed applica
 | Experimental branches | 14 worktrees based on fetched origin/main; original main branches unchanged |
 | Current design | 197 HTML/PNG boards, assets, hashes and reference gallery imported |
 | Instructions and third-party skills | Initial branch cleanup plus private archive of root-level instructions; further documentation pruning pending |
-| Rust engine | Capability registry, profile assignments, query validation, mapping evidence, bounded Home assembly, SQLite profiles; six focused tests pass |
+| Rust engine | Capability registry, profile assignments, query validation, mapping evidence, bounded Home assembly, SQLite profiles and profile-scoped watch history; focused engine and bridge tests pass |
 | Generated interfaces | Rust-derived Kotlin/TypeScript models and UniFFI native library |
 | Local KMP profiles | Linux JNI tests pass; Android emulator restores local profile after APK update |
 | Remote backend | v3 identity/Home bootstrap, discovery/details projections and scoped revisioned integration configuration; three route tests pass |
 | KMP builds | Desktop and wasmJs compilation pass; Android APK includes arm64 and x86_64 Rust libraries |
 | Player adapters | Android KitePlayer displayed a decoded frame from the public Flower MP4 fixture through local Search → Details → Sources → Player. HLS, tracks, subtitles, seek, desktop and browser playback remain unqualified |
 | Visual implementation | Initial connection/profile/Home/search/details work; zero boards certified as matching |
-| Native/remote credential persistence | Pending |
+| Native/remote credential persistence | Local addon credentials use Android Keystore or the desktop secret store. Remote account session persistence remains pending |
 | Full plugin execution | Stremio installation, secure local configuration, Home/Search/details, direct HTTP source discovery, profile enable/disable and removal work on Android. Simkl server integration, vsources, M3U, torrent acquisition and streaming Home updates remain pending |
-| Remaining app flows | Pending: source selection and playback, live guide, library/history, tracking, auth variants, dashboard, casting/remote/update behavior and complete navigation |
-| Performance | Bounded-assembly behavior tested; real provider budgets and client network trace not yet qualified |
+| Remaining app flows | Local direct source selection, playback, History and resume work on Android. Live guide, My List, external tracking, auth variants, dashboard, casting/remote/update behavior and complete navigation remain pending |
+| Performance | Local Home now returns stored Continue Watching and pending catalog shapes before network results. The Android restart check showed Flower immediately. Full request counts and cold provider latency remain unqualified |
 | Migration and other clients | Populated migration, Roku/SolidTV adoption and regression acceptance pending |
 | Windows/macOS/device playback | Not qualified |
 | Production | Not modified or deployed |
@@ -37,3 +37,7 @@ The Android QA emulator installed Cinemeta through the app, stored its configura
 ## Android direct-play checkpoint
 
 `docs/evidence/android-direct-playback.png` shows a decoded frame from the public MDN Flower MP4 after installing the immutable Stremio fixture, searching, opening its title, selecting its stream and starting KitePlayer. `docs/provisional/addon-settings-android.png` records the current profile switch and removal controls, which still need a supplied design. The fixture lives in the experimental workspace branch and is unrelated to production catalog data.
+
+## Profile history checkpoint
+
+A local Flower playback position was saved through KitePlayer into the shared Rust store. After app restart, Home displayed Continue Watching with Flower and its remaining time before catalog requests completed; History displayed the same item under Today. `docs/evidence/android-history.png` shows the current result. Playback metadata survives an app restart and is scoped by profile. No current design board has been certified as visually matched.

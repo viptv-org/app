@@ -645,8 +645,8 @@
     "title": "History",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/history/HistoryScreen.kt",
     "capture": null
   },
   {
@@ -1215,8 +1215,8 @@
     "title": "History",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/history/HistoryScreen.kt",
     "capture": null
   },
   {

@@ -11,6 +11,12 @@ import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
+import org.viptv.engine.wire.HistoryEntry
+import org.viptv.app.connection.HistoryDisplay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.time.TimeSource
+import kotlin.time.Duration.Companion.seconds
 
 enum class Screen { Connect, Profiles, Home, Search, Details, Sources, Player, Live, Library, History, Settings }
 data class ApplicationState(
@@ -29,6 +35,7 @@ data class ApplicationState(
     val sources: List<SourceCandidate> = emptyList(),
     val playback: PlaybackInput? = null,
     val paused: Boolean = false,
+    val history: List<HistoryDisplay> = emptyList(),
 )
 
 class ApplicationController(private val scope: CoroutineScope) {
@@ -38,6 +45,11 @@ class ApplicationController(private val scope: CoroutineScope) {
     private var local: LocalConnection? = null
     private var job: Job? = null
     private var generation = 0L
+    private val progressGate = Mutex()
+    private var progressJob: Job? = null
+    private var lastProgress: PlayerFact.Progress? = null
+    private var completionSeen = false
+    private var progressSavedAt = TimeSource.Monotonic.markNow()
 
     fun connect(origin: String, username: String, password: String) {
         job?.cancel(); connection?.close(); connection = null; local?.close(); local = null
@@ -51,8 +63,18 @@ class ApplicationController(private val scope: CoroutineScope) {
         disconnect()
         run { local = withContext(Dispatchers.Default) { localConnection(path) }; accept(requireNotNull(local).bootstrap()) }
     }
-    fun selectProfile(id: String) = run { accept(local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)) }
-    fun refresh() = run { accept(local?.bootstrap(mutable.value.selectedProfile) ?: requireNotNull(connection).bootstrap()) }
+    fun selectProfile(id: String) = run {
+        val result=local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)
+        accept(result)
+        local?.let { mutable.value=mutable.value.copy(home=it.refreshHome(id)) }
+    }
+    fun refresh() = run {
+        progressJob?.join()
+        val profile=mutable.value.selectedProfile
+        val result=local?.bootstrap(profile) ?: requireNotNull(connection).bootstrap()
+        accept(result)
+        if(profile!=null) local?.let { mutable.value=mutable.value.copy(home=it.refreshHome(profile)) }
+    }
     fun refreshAddons() = run {
         val selected=mutable.value.selectedProfile
         mutable.value = mutable.value.copy(addons = local?.addons() ?: emptyList(), enabledAddonIds = if (selected != null) local?.enabledAddons(selected).orEmpty() else emptySet())
@@ -63,6 +85,7 @@ class ApplicationController(private val scope: CoroutineScope) {
         mutable.value=mutable.value.copy(addons=addons,enabledAddonIds=requireNotNull(local).enabledAddons(profile))
         val updated = requireNotNull(local).bootstrap(profile)
         mutable.value = mutable.value.copy(addons = addons, home = updated.home, screen = Screen.Settings)
+        mutable.value=mutable.value.copy(home=requireNotNull(local).refreshHome(profile))
     }
     fun toggleAddon(id: String, enabled: Boolean) = run {
         val profile=requireNotNull(mutable.value.selectedProfile)
@@ -70,6 +93,7 @@ class ApplicationController(private val scope: CoroutineScope) {
         mutable.value=mutable.value.copy(enabledAddonIds=requireNotNull(local).enabledAddons(profile))
         val updated=requireNotNull(local).bootstrap(profile)
         mutable.value=mutable.value.copy(home=updated.home)
+        mutable.value=mutable.value.copy(home=requireNotNull(local).refreshHome(profile))
     }
     fun removeAddon(id: String) = run {
         requireNotNull(local).removeAddon(id)
@@ -77,6 +101,7 @@ class ApplicationController(private val scope: CoroutineScope) {
         mutable.value=mutable.value.copy(addons=requireNotNull(local).addons(),enabledAddonIds=requireNotNull(local).enabledAddons(profile))
         val updated=requireNotNull(local).bootstrap(profile)
         mutable.value=mutable.value.copy(home=updated.home)
+        mutable.value=mutable.value.copy(home=requireNotNull(local).refreshHome(profile))
     }
     fun search(term: String) = run {
         delay(300)
@@ -93,19 +118,69 @@ class ApplicationController(private val scope: CoroutineScope) {
     }
     fun playSource(source: SourceCandidate) = run {
         val input=requireNotNull(local).openSource(source.id)
+        lastProgress=null
+        completionSeen=false
+        progressSavedAt=TimeSource.Monotonic.markNow()
         mutable.value = mutable.value.copy(playback = input, paused = false, screen = Screen.Player)
     }
-    fun pausePlayback() { mutable.value = mutable.value.copy(paused = !mutable.value.paused) }
+    fun pausePlayback() {
+        val paused=!mutable.value.paused
+        mutable.value = mutable.value.copy(paused = paused)
+        if(paused && !completionSeen) saveProgress(false)
+    }
     fun observePlayback(fact: PlayerFact) {
+        if (fact is PlayerFact.Progress) {
+            lastProgress=fact
+            if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
+        }
+        if (fact is PlayerFact.Status && fact.name=="Ended" && !completionSeen) {
+            completionSeen=true
+            saveProgress(true)
+        }
         if (fact is PlayerFact.Failed) mutable.value = mutable.value.copy(error = "This source could not play. Choose another source.")
     }
-    fun closePlayer() { mutable.value = mutable.value.copy(playback = null, screen = Screen.Sources, error = null) }
+    fun closePlayer() {
+        if(!completionSeen) saveProgress(false)
+        mutable.value = mutable.value.copy(playback = null, screen = Screen.Sources, error = null)
+        lastProgress=null
+    }
+    fun clearHistory() = run {
+        val profile=requireNotNull(mutable.value.selectedProfile)
+        requireNotNull(local).clearHistory(profile)
+        mutable.value=mutable.value.copy(history=emptyList())
+        val updated=requireNotNull(local).bootstrap(profile)
+        mutable.value=mutable.value.copy(home=updated.home)
+    }
+    private fun saveProgress(completed: Boolean): Job? {
+        val input=mutable.value.playback ?: return null
+        val title=mutable.value.sourceTitle ?: return null
+        val snapshot=lastProgress ?: return null
+        val store=local ?: return null
+        val position=if(completed && snapshot.durationMillis!=null) snapshot.durationMillis else snapshot.positionMillis
+        if(position<=0)return null
+        progressSavedAt=TimeSource.Monotonic.markNow()
+        return scope.launch {
+            progressGate.withLock {
+                try { store.recordProgress(input,title,position,snapshot.durationMillis) }
+                catch (_: Exception) {
+                    if(mutable.value.playback?.id==input.id) mutable.value=mutable.value.copy(error="Could not save your viewing position.")
+                }
+            }
+        }.also { progressJob=it }
+    }
     fun navigate(screen: Screen) {
         mutable.value = mutable.value.copy(screen = screen, error = null)
         if (screen == Screen.Settings && local != null) refreshAddons()
+        if (screen == Screen.History && local != null) run {
+            progressJob?.join()
+            mutable.value=mutable.value.copy(history=requireNotNull(local).history(requireNotNull(mutable.value.selectedProfile)))
+        }
     }
     fun disconnect() {
-        generation++; job?.cancel(); connection?.close(); connection = null; local?.close(); local = null
+        val prior=local
+        val finishing=if(completionSeen) progressJob else saveProgress(false)
+        generation++; job?.cancel(); connection?.close(); connection = null; local = null
+        if(finishing!=null && prior!=null) scope.launch { finishing.join(); prior.close() } else prior?.close()
         mutable.value = ApplicationState()
     }
     private fun accept(value: Bootstrap) {

@@ -48,4 +48,26 @@ class LocalEngineTest {
             }
         } finally { directory.toFile().deleteRecursively() }
     }
+
+    @Test
+    fun historyAndResumeSurviveNativeBridgeReopen() {
+        val directory=Files.createTempDirectory("viptv-history-test")
+        val path=directory.resolve("local.sqlite").toString()
+        val card="""{"identity":{"id":"fixture-film","kind":"movie","ids":[],"episode":null,"edition":null},"provider_id":"addon:fixture","title":"Film","subtitle":null,"description":null,"poster":null,"landscape":null,"logo":null,"progress":null,"badges":[]}"""
+        try {
+            LocalEngine(path,MemorySecrets()).use { engine ->
+                engine.createProfile("second","Second")
+                engine.recordProgress("default",0uL,card,30_000uL,100_000uL)
+                val home=Json.parseToJsonElement(engine.home("default")).jsonObject
+                assertEquals("Continue Watching",home.getValue("rows").jsonArray.single().jsonObject.getValue("title").jsonPrimitive.content)
+                assertEquals("2m left",home.getValue("rows").jsonArray.single().jsonObject.getValue("cards").jsonArray.single().jsonObject.getValue("subtitle").jsonPrimitive.content)
+                assertEquals(0,Json.parseToJsonElement(engine.history("second")).jsonArray.size)
+            }
+            LocalEngine(path,MemorySecrets()).use { engine ->
+                assertEquals(1,Json.parseToJsonElement(engine.history("default")).jsonArray.size)
+                engine.recordProgress("default",0uL,card,97_000uL,100_000uL)
+                assertEquals(0,Json.parseToJsonElement(engine.home("default")).jsonObject.getValue("rows").jsonArray.size)
+            }
+        } finally { directory.toFile().deleteRecursively() }
+    }
 }
