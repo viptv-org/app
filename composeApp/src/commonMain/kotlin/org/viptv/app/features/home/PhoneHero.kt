@@ -1,0 +1,58 @@
+package org.viptv.app.features.home
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Play
+import com.composables.icons.lucide.Plus
+import org.viptv.app.theme.Palette
+import org.viptv.engine.wire.Card
+
+@Composable
+internal fun PhoneHero(card: Card, play: (Card) -> Unit) {
+    var explainList by remember(card.identity) { mutableStateOf(false) }
+    Box(Modifier.fillMaxWidth().height(470.dp).clip(RoundedCornerShape(16.dp)).background(Palette.surface)) {
+        AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+            0f to Color.Transparent, 0.48f to Color.Transparent,
+            0.8f to Color.Black.copy(alpha = 0.65f), 1f to Palette.background.copy(alpha = 0.96f))))
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(180.dp).height(100.dp), contentScale = ContentScale.Fit)
+            else Text(card.title, fontSize = 28.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
+            card.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 2) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { play(card) }, modifier = Modifier.weight(1f).height(46.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
+                    Icon(Lucide.Play, null, Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Play", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Button(onClick = { explainList = true }, modifier = Modifier.weight(1f).height(46.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
+                    Icon(Lucide.Plus, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("My List", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+    if (explainList) AlertDialog(onDismissRequest = { explainList = false },
+        title = { Text("My List") }, text = { Text("Saving titles to My List is not available in this experiment yet.") },
+        confirmButton = { TextButton(onClick = { explainList = false }) { Text("OK") } })
+}

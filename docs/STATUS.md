@@ -69,3 +69,7 @@ The desktop sign-in chooser and password panel now have ZIP-derived local poster
 ## Featured Home layout checkpoint
 
 The desktop featured component is split into `features/home/DesktopHero.kt`. It uses a 44/56 text/artwork split with a 40-pixel gap, 16:9 artwork, constrained logo decoding, available metadata badges, and the Lucide information icon. Below 900 pixels of content width, artwork precedes the summary. Narrow native desktop windows now retain this desktop layout rather than using the phone overlay. Desktop landscape rows use 280-pixel cards and 14/12-pixel title/subtitle text. Desktop tests, browser compilation, and Android assembly pass. Populated visual captures, featured paging, Play/My List behavior, and phone/TV hero parity remain pending; this checkpoint does not certify Home parity.
+
+## Phone featured layout checkpoint
+
+`features/home/PhoneHero.kt` replaces the generic phone hero with a 470-pixel artwork panel, 16-pixel corners, centered constrained logo, lower artwork fade, and two 46-pixel actions using Lucide icons. Local Play opens source selection. Remote Play currently opens title details because remote source selection is incomplete. My List displays the explicit unavailable notice tracked as GAP-015 rather than reporting a title saved. Supplied genre metadata and featured pagination are not represented by the current card contract. Desktop tests, web compilation and Android assembly pass; populated visual checks and phone hero parity remain pending.

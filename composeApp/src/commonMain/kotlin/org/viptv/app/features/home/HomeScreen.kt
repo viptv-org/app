@@ -13,7 +13,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 
 @Composable
-fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false) {
+fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp && !television
         val gutter = if (compact) 16.dp else if (television) 70.dp else 40.dp
@@ -22,7 +22,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
             top = 12.dp, bottom = if (compact) 96.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
             item(key = "hero") {
                 val hero = if (television) focused ?: home?.hero else home?.hero
-                if (hero != null) Hero(hero, compact && !desktopChrome, television, open)
+                if (hero != null) Hero(hero, compact && !desktopChrome, television, open, play)
                 else if (home == null) Box(Modifier.fillMaxWidth().height(350.dp).clip(RoundedCornerShape(12.dp)).background(Palette.surface))
             }
             if (home != null) {

@@ -19,8 +19,10 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-fun Hero(card: Card, compact: Boolean, television: Boolean, open: (Card) -> Unit) {
-    if (compact || television) {
+fun Hero(card: Card, compact: Boolean, television: Boolean, open: (Card) -> Unit, play: (Card) -> Unit = open) {
+    if (compact) {
+        PhoneHero(card, play)
+    } else if (television) {
         Box(Modifier.fillMaxWidth().height(if (television) 580.dp else 490.dp).clip(RoundedCornerShape(if (compact) 12.dp else 0.dp))) {
             AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Palette.background))))

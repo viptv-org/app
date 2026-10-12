@@ -58,7 +58,8 @@ fun App(
                     Row(Modifier.weight(1f)) {
                         if (!browser && !television && (!compact || (desktopChrome && desktopMenuOpen))) SideNavigation(state.screen, controller::navigate)
                         when (state.screen) {
-                            Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome)
+                            Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome,
+                                play = { card -> if (state.localMode) controller.chooseSource(card) else controller.open(card) })
                             Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open)
                             Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open)
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
