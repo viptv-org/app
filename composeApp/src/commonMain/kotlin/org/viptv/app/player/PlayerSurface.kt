@@ -10,8 +10,11 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
 sealed interface PlayerFact {
     data class Progress(val positionMillis: Long, val durationMillis: Long?) : PlayerFact
     data class Status(val name: String) : PlayerFact
+    data class Properties(val volume: Float, val speed: Double, val subtitleSize: Float = 1f) : PlayerFact
+    data class Tracks(val options: PlaybackTracks) : PlayerFact
     data object Failed : PlayerFact
+    data object ControlFailed : PlayerFact
 }
 
 @Composable
-expect fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit)
+expect fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>)

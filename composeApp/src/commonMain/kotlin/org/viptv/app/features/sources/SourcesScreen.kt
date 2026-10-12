@@ -46,8 +46,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                         fontWeight = FontWeight.Bold)
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
-                Text(listOfNotNull(title?.title, if (busy) "Loading sources…" else
-                    "${sources.size} sources from ${sources.map { it.provider_id }.distinct().size} add-ons").joinToString(" · "),
+                Text(listOfNotNull(title?.title, if (busy) { if (sources.isEmpty()) "Loading sources…" else "Opening stream…" } else sourceSummary(sources)).joinToString(" · "),
                     color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
@@ -57,8 +56,13 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 if (!busy && sources.isEmpty() && error == null) item {
                     Text("No direct streams found. Enable an add-on that supplies sources.", Modifier.padding(20.dp), color = Palette.secondary)
                 }
-                items(sources, key = { it.id }) { SourceRow(it, television, choose) }
+                items(sources, key = { it.id }) { SourceRow(it, television, choose, enabled = !busy) }
             }
         }
     }
+}
+
+private fun sourceSummary(sources: List<SourceCandidate>): String {
+    val providers = sources.map { it.provider_id }.distinct().size
+    return "${sources.size} ${if (sources.size == 1) "source" else "sources"} from $providers ${if (providers == 1) "add-on" else "add-ons"}"
 }

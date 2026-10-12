@@ -1,0 +1,69 @@
+package org.viptv.app.features.home
+
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.*
+import kotlinx.coroutines.launch
+import org.viptv.app.theme.Palette
+import org.viptv.engine.wire.*
+
+@Composable
+internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean, modifier: Modifier,
+    focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false) {
+    val list = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val portrait = row.id != "continue"
+    val width = if (portrait) { if (compact) 112 else if (television) (240 * scale).toInt() else if (tablet) 164 else 176 }
+        else { if (compact) 240 else if (television) (384 * scale).toInt() else if (tablet) 300 else if (browser) 212 else 280 }
+    val cards = row.cards.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
+            if (!compact && !television && cards.isNotEmpty()) {
+                CarouselArrow(false, list.canScrollBackward) {
+                    scope.launch { list.animateScrollToItem((list.firstVisibleItemIndex - 1).coerceAtLeast(0)) }
+                }
+                Spacer(Modifier.width(8.dp))
+                CarouselArrow(true, list.canScrollForward) {
+                    scope.launch { list.animateScrollToItem((list.firstVisibleItemIndex + 1).coerceAtMost(cards.lastIndex)) }
+                }
+            }
+        }
+        when (row.state) {
+            RowState.READY -> LazyRow(state = list, horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
+                items(cards, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) {
+                    MediaCard(it, width, portrait = portrait, onFocus = focus, open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f, cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp)
+                }
+            }
+            RowState.EMPTY -> Text("Nothing here yet.", color = Palette.secondary)
+            RowState.FAILED -> TextButton(onClick = retry) { Text(row.message ?: "Try again") }
+            RowState.PENDING -> LazyRow(horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
+                items(4) { Box(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
+                    .clip(RoundedCornerShape(9.dp)).background(Palette.surface)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CarouselArrow(forward: Boolean, enabled: Boolean, move: () -> Unit) {
+    Box(Modifier.size(28.dp).clip(CircleShape).border(1.dp, Palette.raised, CircleShape)
+        .clickable(enabled = enabled, onClick = move), contentAlignment = Alignment.Center) {
+        Icon(if (forward) Lucide.ChevronRight else Lucide.ChevronLeft,
+            if (forward) "Next items" else "Previous items", Modifier.size(16.dp),
+            tint = Palette.text.copy(alpha = if (enabled) 1f else 0.4f))
+    }
+}

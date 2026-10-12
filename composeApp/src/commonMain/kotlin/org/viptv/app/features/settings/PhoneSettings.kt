@@ -1,0 +1,92 @@
+package org.viptv.app.features.settings
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.*
+import org.viptv.app.connection.Profile
+import org.viptv.app.features.entry.ProfileAvatar
+import org.viptv.app.theme.Palette
+
+@Composable
+internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
+    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit) {
+    var unavailable by remember { mutableStateOf<String?>(null) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        item {
+            Box(Modifier.fillMaxWidth().height(40.dp)) {
+                IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).size(32.dp)) {
+                    Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
+                }
+                Text("Settings", Modifier.align(Alignment.Center), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        item {
+            Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) {
+                Row(Modifier.fillMaxWidth().clickable(onClick = profiles).padding(14.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    ProfileAvatar(profile, 56.dp, 12.dp)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(profile?.name ?: "Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Switch profile", fontSize = 13.sp, color = Palette.secondary)
+                    }
+                    Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Palette.secondary)
+                }
+            }
+        }
+        notice?.let { item { Text(it, color = Palette.danger) } }
+        item {
+            SettingsGroup {
+                SettingsItem("Playback", Lucide.CirclePlay) { unavailable = "Playback preferences" }
+                SettingsDivider()
+                SettingsItem("Subtitles & audio", Lucide.Captions) { unavailable = "Subtitle and audio preferences" }
+                SettingsDivider()
+                SettingsItem("Notifications", Lucide.Bell) { unavailable = "Notifications" }
+            }
+        }
+        item {
+            SettingsGroup {
+                SettingsItem("Watch on TV", Lucide.Tv) { unavailable = "TV pairing" }
+                SettingsDivider()
+                SettingsItem("Add-ons", Lucide.Puzzle, "$addonCount installed", addons)
+            }
+        }
+        item {
+            SettingsGroup {
+                SettingsItem("Account", Lucide.UserRound, if (local) "Using this device locally" else "Connected to a server") { unavailable = "Account settings" }
+                SettingsDivider()
+                SettingsItem("Help", Lucide.Info) { unavailable = "Help" }
+                SettingsDivider()
+                SettingsItem("About VIPTV", Lucide.Info) { unavailable = "About VIPTV" }
+            }
+        }
+        item {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                TextButton(onClick = leave) { Text(if (local) "Change connection" else "Sign out", color = Palette.danger) }
+            }
+        }
+        item { Spacer(Modifier.height(24.dp)) }
+    }
+    unavailable?.let { label ->
+        AlertDialog(onDismissRequest = { unavailable = null }, title = { Text(label) },
+            text = { Text(if (label == "About VIPTV") "VIPTV · Experimental build" else "$label is not available in this experiment yet.") },
+            confirmButton = { TextButton(onClick = { unavailable = null }) { Text("OK") } })
+    }
+}
+
+@Composable
+private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
+    Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) { Column(content = content) }
+}
+
+@Composable
+private fun SettingsDivider() { HorizontalDivider(color = Palette.raised, thickness = 1.dp) }

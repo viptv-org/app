@@ -17,20 +17,21 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.MediaMetadata
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun DesktopHero(card: Card, open: (Card) -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 28.dp, bottom = 48.dp)) {
+internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false) {
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(top = if (browser) 57.dp else 28.dp, bottom = if (browser) 88.dp else 80.dp)) {
         if (maxWidth < 900.dp) {
             Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
                 HeroArtwork(card, Modifier.fillMaxWidth())
-                FeaturedSummary(card, open, Modifier.fillMaxWidth())
+                FeaturedSummary(card, open, play, Modifier.fillMaxWidth())
             }
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(40.dp)) {
-                FeaturedSummary(card, open, Modifier.weight(0.44f))
-                HeroArtwork(card, Modifier.weight(0.56f))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+                FeaturedSummary(card, open, play, Modifier.weight(0.45f))
+                HeroArtwork(card, Modifier.weight(0.55f))
             }
         }
     }
@@ -44,8 +45,8 @@ private fun HeroArtwork(card: Card, modifier: Modifier) {
 }
 
 @Composable
-private fun FeaturedSummary(card: Card, open: (Card) -> Unit, modifier: Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("FEATURED", fontSize = 13.sp, letterSpacing = 0.6.sp,
             fontWeight = FontWeight.SemiBold, color = Palette.secondary)
         if (card.logo != null) {
@@ -54,25 +55,10 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, modifier: Modifier
         } else {
             Text(card.title, fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold)
         }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            card.subtitle?.let { Text(it, fontSize = 14.sp, color = Palette.secondary) }
-            if (card.badges.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                card.badges.forEach { badge ->
-                    Text(badge, Modifier.border(1.dp, Palette.secondary.copy(alpha = 0.5f), RoundedCornerShape(3.dp))
-                        .padding(horizontal = 4.dp, vertical = 2.dp), fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold, color = Palette.secondary)
-                }
-            }
-        }
+        MediaMetadata(card)
         card.description?.let {
-            Text(it, fontSize = 14.sp, lineHeight = 23.sp, color = Palette.secondary, maxLines = 3)
+            Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = 3)
         }
-        Button(onClick = { open(card) }, modifier = Modifier.height(44.dp),
-            shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 18.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-            Icon(Lucide.Info, null, Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("More info", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        }
+        DesktopHeroActions({ play(card) }, { open(card) })
     }
 }

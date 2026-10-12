@@ -1,0 +1,52 @@
+package org.viptv.app.features.player
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.*
+import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.resources.Res
+import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.theme.Palette
+
+@Composable
+internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+        IconButton(onClick = { skip(-10000) }, modifier = Modifier.size(56.dp)) {
+            PlaybackSkipIcon(false, 34.dp)
+        }
+        FilledIconButton(onClick = toggle, modifier = Modifier.size(72.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.raised.copy(alpha = 0.8f), contentColor = Palette.text)) {
+            if (paused) Icon(painterResource(Res.drawable.ic_play_zip), "Play", Modifier.size(28.dp))
+            else Icon(Lucide.Pause, "Pause", Modifier.size(28.dp))
+        }
+        IconButton(onClick = { skip(10000) }, modifier = Modifier.size(56.dp)) {
+            PlaybackSkipIcon(true, 34.dp)
+        }
+    }
+}
+
+@Composable
+internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, lock: () -> Unit, tracks: () -> Unit) {
+    var speeds by remember { mutableStateOf(false) }
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        TextButton(onClick = tracks) {
+            Icon(Lucide.Captions, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Audio & subtitles")
+        }
+        Box {
+            TextButton(onClick = { speeds = true }) {
+                Icon(Lucide.Gauge, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(playbackSpeed(speed))
+            }
+            DropdownMenu(speeds, onDismissRequest = { speeds = false }) {
+                listOf(0.5, 0.75, 1.0, 1.25, 1.5, 2.0).forEach { value ->
+                    DropdownMenuItem(text = { Text(playbackSpeed(value)) }, onClick = { setSpeed(value); speeds = false })
+                }
+            }
+        }
+        TextButton(onClick = lock) {
+            Icon(Lucide.Lock, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Lock")
+        }
+    }
+}

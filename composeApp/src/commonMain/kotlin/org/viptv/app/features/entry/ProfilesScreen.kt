@@ -22,11 +22,12 @@ import org.viptv.app.theme.Palette
 fun ProfilesScreen(
     profiles: List<Profile>, busy: Boolean, error: String?, local: Boolean, managing: Boolean, compact: Boolean, desktop: Boolean,
     select: (String) -> Unit, edit: (String) -> Unit, manage: () -> Unit, done: () -> Unit,
-    create: (String) -> Unit,
+    create: (String) -> Unit, television: Boolean = false,
 ) {
     var adding by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
-    if (compact) MobileProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
+    if (television) TvProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
+    else if (compact) MobileProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
     else if (desktop) DesktopProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
     else
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {

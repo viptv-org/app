@@ -1,0 +1,35 @@
+package org.viptv.app
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.window.WindowDraggableArea
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
+import org.viptv.app.preview.UiPreview
+import org.viptv.app.preview.PreviewData
+import org.viptv.app.state.ApplicationState
+import org.viptv.app.state.Screen
+import org.viptv.app.theme.ViptvTheme
+
+internal fun launchUiPreview() = application {
+    val window = rememberWindowState(width = 1440.dp, height = 900.dp)
+    var screen by remember { mutableStateOf(runCatching { Screen.valueOf(System.getenv("VIPTV_UI_SCREEN") ?: "Home") }.getOrDefault(Screen.Home)) }
+    var term by remember { mutableStateOf(if (screen == Screen.Search) "the w" else "") }
+    Window(onCloseRequest = ::exitApplication, title = "VIPTV UI Preview", state = window, undecorated = true) {
+        ViptvTheme {
+            Column {
+                WindowDraggableArea {
+                    DesktopTitleBar(ApplicationState(screen = screen, searchTerm = term, profiles = listOf(PreviewData.profile), selectedProfile = PreviewData.profile.id), false, { screen = it },
+                        { term = it; screen = Screen.Search }, {}, { window.isMinimized = true },
+                        { window.placement = if (window.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized },
+                        ::exitApplication, Modifier)
+                }
+                UiPreview(desktop = true, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it })
+            }
+        }
+    }
+}

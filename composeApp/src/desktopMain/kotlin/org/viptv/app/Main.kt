@@ -17,7 +17,11 @@ import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 
-fun main() = application {
+fun main() {
+    if (System.getenv("VIPTV_UI_PREVIEW") == "1") launchUiPreview() else launchApplication()
+}
+
+private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
     Window(onCloseRequest = ::exitApplication, title = "VIPTV Experiment", state = windowState, undecorated = true) {
         val scope = rememberCoroutineScope()
@@ -25,15 +29,8 @@ fun main() = application {
         val state by controller.state.collectAsState()
         val mac = remember { System.getProperty("os.name").startsWith("Mac") }
         val base = remember { desktopDataDirectory() }
-        var expanded by remember { mutableStateOf(false) }
         var menuOpen by remember { mutableStateOf(false) }
         LaunchedEffect(window) { windowState.isMinimized = false; window.toFront() }
-        LaunchedEffect(state.screen) {
-            if (!expanded && state.screen == Screen.Home) {
-                windowState.size = DpSize(1440.dp, 900.dp)
-                expanded = true
-            }
-        }
         val minimize = { windowState.isMinimized = true }
         val maximize = {
             windowState.placement = if (windowState.placement == WindowPlacement.Maximized)

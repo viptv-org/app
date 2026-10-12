@@ -18,11 +18,17 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.MediaMetadata
+import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.resources.Res
+import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
 
 @Composable
 internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit) {
-    if (compact) {
+    if (card.landscape == null && card.poster == null) {
+        DetailSummary(card, play, Modifier.fillMaxWidth())
+    } else if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(Modifier.fillMaxWidth().height(280.dp)) {
                 DetailArtwork(card, Modifier.fillMaxSize())
@@ -51,22 +57,14 @@ private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier) 
         if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(220.dp).height(120.dp),
             alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
         else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
-        card.subtitle?.let { Text(it, fontSize = 14.sp, color = Palette.secondary) }
-        if (card.badges.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            card.badges.forEach { badge ->
-                OutlinedCard(shape = RoundedCornerShape(3.dp)) {
-                    Text(badge, Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontSize = 10.sp)
-                }
-            }
-        }
+        MediaMetadata(card)
         Button(onClick = { play(card) }, modifier = Modifier.height(48.dp).widthIn(min = 140.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-            Icon(Lucide.Play, null, Modifier.size(16.dp))
+            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
             Text("Play", fontWeight = FontWeight.SemiBold)
         }
-        card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.secondary) }
+        card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body) }
     }
 }

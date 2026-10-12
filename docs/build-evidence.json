@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "16f4df3bce151e46857c64651b2a7a923783a38aa4d50cdc9a4f01cdcea213c1",
+    "sha256": "5826309cfa0502cf6ca350c53f2a89115234ea503667b59cf55befda9df2dfbd",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -17,7 +17,10 @@
     "profile_phone_layout": "passed emulator render check against M3Profiles and M3Pin; keypad unlock passed; parity remains in progress",
     "avatar_persistence": "passed: selected supplied portrait on locked local profile after PIN, survived app restart",
     "remote_session_runtime": "not qualified against a real HTTPS backend",
-    "floating_navigation": "rendered on QA emulator; separate Search button navigated; complete phone layout parity pending"
+    "floating_navigation": "rendered on QA emulator; separate Search button navigated; complete phone layout parity pending",
+    "tv_pin_preview": "rendered at 1920x1080; hardware digits filled two masked slots; 4\u20138 digit confirmation differs from ZIP",
+    "tablet_home_preview": "rendered on disposable emulator at 1194x834 logical size; parity pending",
+    "player_controls": "decoded public MP4 with shared controls, thin timeline and landscape/immersive playback; current seeking/track-switch coverage incomplete"
   },
   "desktop": {
     "compile": "passed",
@@ -37,9 +40,11 @@
   },
   "web": {
     "wasm_compile": "passed with profile UI changes",
-    "browser_playback": "not qualified",
+    "browser_playback": "public MP4 only: decoded frame and UI Play/Pause/seek/mute/speed passed; HLS and authenticated delivery unqualified",
     "cookie_session": "compiled; real browser session flow not qualified",
-    "responsive_navigation": "compiled with collapsed phone/medium-width menu; browser runtime verification pending"
+    "responsive_navigation": "compiled with collapsed phone/medium-width menu; browser runtime verification pending",
+    "preview_runtime": "isolated Chromium: eight bundled posters rendered, no runtime errors or failed requests",
+    "video_overlay": "browser HTML video beneath a transparent Compose canvas; web continues without KitePlayer"
   },
   "engine_tests": 6,
   "backend_v3_tests": 3,

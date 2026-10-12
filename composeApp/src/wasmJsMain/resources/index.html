@@ -1,2 +1,19 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B0B0C"><title>VIPTV</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0B0B0C}</style></head><body><script src="composeApp.js"></script></body></html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#0B0B0C">
+    <title>VIPTV</title>
+    <style>
+        html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0B0C; }
+        #viptv-video-layer { position: fixed; inset: 0; z-index: 0; background: #000; pointer-events: none; }
+        #viptv-ui-layer { position: absolute; inset: 0; z-index: 1; }
+    </style>
+</head>
+<body>
+    <div id="viptv-video-layer"></div>
+    <div id="viptv-ui-layer"></div>
+    <script src="composeApp.js"></script>
+</body>
+</html>

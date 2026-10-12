@@ -18,6 +18,7 @@ import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.browse.BrowseScreen
+import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.components.*
 import org.viptv.engine.wire.Card
 
@@ -37,41 +38,43 @@ fun App(
     LaunchedEffect(controller) { controller.restore() }
     DisposableEffect(controller) { onDispose { controller.disconnect() } }
     ViptvTheme {
-        BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
+        BoxWithConstraints(Modifier.fillMaxSize().background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             val compact = maxWidth < 640.dp && !television
+            val tablet = !compact && !television && !browser && !desktopChrome
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome)
                 Screen.Profiles -> ProfilesScreen(state.profiles, state.busy, state.error, state.localMode, state.managingProfiles, compact, desktopChrome,
-                    controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile)
+                    controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television)
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
-                    state.busy, state.error, controller::submitProfilePin) { controller.navigate(Screen.Profiles) }
+                    state.busy, state.error, controller::submitProfilePin, { controller.navigate(Screen.Profiles) }, television)
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
                     state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
                     controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile)
-                Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer)
+                Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer, state.sourceTitle, phone = !browser && !television && !desktopChrome, canvasColor = if (browser) androidx.compose.ui.graphics.Color.Transparent else androidx.compose.ui.graphics.Color.Black)
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {
-                    if (browser || television) TopNavigation(state.screen, television, controller::navigate)
-                    else if (!desktopChrome && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
-                    else if (!desktopChrome && !compact) Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 20.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                        Brand(); Spacer(Modifier.weight(1f)); TextButton(onClick = { controller.navigate(Screen.Settings) }) { Text("Settings") }
-                    }
+                    if (browser || (television && state.screen != Screen.Home)) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
+                    else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+
                     Row(Modifier.weight(1f)) {
-                        if (!browser && !television && (!compact || (desktopChrome && desktopMenuOpen))) SideNavigation(state.screen, controller::navigate)
+                        if (tablet) TabletNavigation(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                        else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(state.screen, controller::navigate)
                         when (state.screen) {
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome,
-                                play = { card -> if (state.localMode) controller.chooseSource(card) else controller.open(card) })
+                                play = { card -> if (state.localMode) controller.chooseSource(card) else controller.open(card) }, tablet = tablet, navigate = controller::navigate, browser = browser)
                             Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open)
                             Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open)
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource)
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource, { controller.navigate(if (state.detail == null) Screen.Home else Screen.Details) }, state.detail, television)
+                            Screen.Library -> LibraryScreen(emptyList(), false, television, controller::open, { controller.navigate(Screen.History) }, { controller.navigate(Screen.Home) })
                             Screen.History -> if (state.localMode) HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) }) else Text("History is unavailable for this connection.", Modifier.padding(32.dp))
-                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, { if (state.localMode) controller.disconnect() else controller.signOut() })
+                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, { if (state.localMode) controller.disconnect() else controller.signOut() }, state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) })
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }
                   }
-                  if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
+                  if (television && state.screen == Screen.Home) TopNavigation(state.screen, true, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
+                  if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       BottomNavigation(state.screen, controller::navigate)
                   }
                 }

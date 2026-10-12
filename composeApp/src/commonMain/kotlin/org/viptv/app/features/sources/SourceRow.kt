@@ -20,12 +20,12 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
 @Composable
-internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit) {
+internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true) {
     var focused by remember { mutableStateOf(false) }
     val foreground = if (focused) Palette.background else Palette.text
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
         .background(if (focused) Palette.text else if (television) Palette.raised else Palette.surface)
-        .onFocusChanged { focused = it.isFocused }.clickable { choose(source) }
+        .onFocusChanged { focused = it.isFocused }.clickable(enabled = enabled) { choose(source) }
         .padding(horizontal = if (television) 28.dp else 20.dp, vertical = if (television) 24.dp else 18.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {

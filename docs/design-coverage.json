@@ -12,7 +12,7 @@
   {
     "id": "Tv3HomeToRows",
     "platform": "tv",
-    "title": "Animation — Home to Continue Watching (loops)",
+    "title": "Animation \u2014 Home to Continue Watching (loops)",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -22,7 +22,7 @@
   {
     "id": "Tv3Splash",
     "platform": "tv",
-    "title": "Starting — splash",
+    "title": "Starting \u2014 splash",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -42,7 +42,7 @@
   {
     "id": "Tv3SignInChoose",
     "platform": "tv",
-    "title": "Sign in — every method",
+    "title": "Sign in \u2014 every method",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -52,7 +52,7 @@
   {
     "id": "Tv3SignIn",
     "platform": "tv",
-    "title": "Sign in — phone or browser code",
+    "title": "Sign in \u2014 phone or browser code",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -62,7 +62,7 @@
   {
     "id": "Tv3SignInEmail",
     "platform": "tv",
-    "title": "Sign in — email (fallback)",
+    "title": "Sign in \u2014 email (fallback)",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -72,7 +72,7 @@
   {
     "id": "Tv3SignInCode",
     "platform": "tv",
-    "title": "Sign in — email code",
+    "title": "Sign in \u2014 email code",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -82,7 +82,7 @@
   {
     "id": "Tv3SignInPassword",
     "platform": "tv",
-    "title": "Sign in — password",
+    "title": "Sign in \u2014 password",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -92,7 +92,7 @@
   {
     "id": "Tv3SignInIptv",
     "platform": "tv",
-    "title": "Sign in — IPTV provider",
+    "title": "Sign in \u2014 IPTV provider",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -102,7 +102,7 @@
   {
     "id": "Tv3SignedIn",
     "platform": "tv",
-    "title": "Signed in — welcome back",
+    "title": "Signed in \u2014 welcome back",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -112,11 +112,11 @@
   {
     "id": "Tv3Profiles",
     "platform": "tv",
-    "title": "Who’s watching",
+    "title": "Who\u2019s watching",
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfiles.kt",
     "capture": null
   },
   {
@@ -125,9 +125,9 @@
     "title": "Profile PIN",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvPinScreen.kt",
+    "capture": "docs/evidence/android-tv-pin-preview.png"
   },
   {
     "id": "Tv3ProfileEdit",
@@ -142,7 +142,7 @@
   {
     "id": "Tv3HomeLoading",
     "platform": "tv",
-    "title": "Home — loading",
+    "title": "Home \u2014 loading",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -152,17 +152,17 @@
   {
     "id": "Tv3Home",
     "platform": "tv",
-    "title": "Home — billboard, first row peeking",
+    "title": "Home \u2014 billboard, first row peeking",
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHero.kt",
     "capture": null
   },
   {
     "id": "Tv3Browse",
     "platform": "tv",
-    "title": "Home — browsing rows, the top describes the focused title",
+    "title": "Home \u2014 browsing rows, the top describes the focused title",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -172,7 +172,7 @@
   {
     "id": "Tv3Search",
     "platform": "tv",
-    "title": "Search — typing",
+    "title": "Search \u2014 typing",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -192,7 +192,7 @@
   {
     "id": "Tv3Live",
     "platform": "tv",
-    "title": "Live — guide",
+    "title": "Live \u2014 guide",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -205,14 +205,14 @@
     "title": "My List",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/library/LibraryScreen.kt",
     "capture": null
   },
   {
     "id": "Tv3Title",
     "platform": "tv",
-    "title": "Series page — actions first",
+    "title": "Series page \u2014 actions first",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -222,7 +222,7 @@
   {
     "id": "Tv3Episodes",
     "platform": "tv",
-    "title": "Series page — scrolled to episodes",
+    "title": "Series page \u2014 scrolled to episodes",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -252,7 +252,7 @@
   {
     "id": "Tv3SourcesLoading",
     "platform": "tv",
-    "title": "Choose a source — still finding",
+    "title": "Choose a source \u2014 still finding",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -262,7 +262,7 @@
   {
     "id": "Tv3PlayerBuffer",
     "platform": "tv",
-    "title": "Player — starting",
+    "title": "Player \u2014 starting",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -272,7 +272,7 @@
   {
     "id": "Tv3PlayerControls",
     "platform": "tv",
-    "title": "Player — controls",
+    "title": "Player \u2014 controls",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -282,7 +282,7 @@
   {
     "id": "Tv3PlayerScrub",
     "platform": "tv",
-    "title": "Player — scrubbing",
+    "title": "Player \u2014 scrubbing",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -292,7 +292,7 @@
   {
     "id": "Tv3PlayerSkip",
     "platform": "tv",
-    "title": "Player — Skip intro",
+    "title": "Player \u2014 Skip intro",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -302,7 +302,7 @@
   {
     "id": "Tv3PlayerAudio",
     "platform": "tv",
-    "title": "Player — audio and subtitles",
+    "title": "Player \u2014 audio and subtitles",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -312,7 +312,7 @@
   {
     "id": "Tv3PlayerNext",
     "platform": "tv",
-    "title": "Player — next episode",
+    "title": "Player \u2014 next episode",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -322,7 +322,7 @@
   {
     "id": "Tv3PlayerError",
     "platform": "tv",
-    "title": "Player — source failed",
+    "title": "Player \u2014 source failed",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -332,7 +332,7 @@
   {
     "id": "Tv3SetPlayback",
     "platform": "tv",
-    "title": "Settings — Playback",
+    "title": "Settings \u2014 Playback",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -342,7 +342,7 @@
   {
     "id": "Tv3SetSubs",
     "platform": "tv",
-    "title": "Settings — Subtitles & audio",
+    "title": "Settings \u2014 Subtitles & audio",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -352,7 +352,7 @@
   {
     "id": "Tv3SetAddons",
     "platform": "tv",
-    "title": "Settings — Add-ons",
+    "title": "Settings \u2014 Add-ons",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -362,7 +362,7 @@
   {
     "id": "Tv3SignOut",
     "platform": "tv",
-    "title": "Settings — sign out",
+    "title": "Settings \u2014 sign out",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -382,7 +382,7 @@
   {
     "id": "M3SignIn",
     "platform": "phone",
-    "title": "Sign in — every method",
+    "title": "Sign in \u2014 every method",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -392,7 +392,7 @@
   {
     "id": "M3SignInEmail",
     "platform": "phone",
-    "title": "Sign in — email",
+    "title": "Sign in \u2014 email",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -402,7 +402,7 @@
   {
     "id": "M3Code",
     "platform": "phone",
-    "title": "Sign in — email code",
+    "title": "Sign in \u2014 email code",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -412,7 +412,7 @@
   {
     "id": "M3SignInPassword",
     "platform": "phone",
-    "title": "Sign in — password",
+    "title": "Sign in \u2014 password",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -422,7 +422,7 @@
   {
     "id": "M3SignInDevice",
     "platform": "phone",
-    "title": "Sign in — approve from another device",
+    "title": "Sign in \u2014 approve from another device",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -432,7 +432,7 @@
   {
     "id": "M3SignInIptv",
     "platform": "phone",
-    "title": "Sign in — IPTV provider",
+    "title": "Sign in \u2014 IPTV provider",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -442,7 +442,7 @@
   {
     "id": "M3SignInBrowser",
     "platform": "phone",
-    "title": "Sign in — finishing in the browser",
+    "title": "Sign in \u2014 finishing in the browser",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -452,7 +452,7 @@
   {
     "id": "M3LinkScan",
     "platform": "phone",
-    "title": "Link a TV — scan",
+    "title": "Link a TV \u2014 scan",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -462,7 +462,7 @@
   {
     "id": "M3LinkCode",
     "platform": "phone",
-    "title": "Link a TV — enter code",
+    "title": "Link a TV \u2014 enter code",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -472,7 +472,7 @@
   {
     "id": "M3LinkConfirm",
     "platform": "phone",
-    "title": "Link a TV — confirm",
+    "title": "Link a TV \u2014 confirm",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -482,7 +482,7 @@
   {
     "id": "M3LinkDone",
     "platform": "phone",
-    "title": "Link a TV — done",
+    "title": "Link a TV \u2014 done",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -492,7 +492,7 @@
   {
     "id": "M3Profiles",
     "platform": "phone",
-    "title": "Who’s watching",
+    "title": "Who\u2019s watching",
     "width": 390,
     "height": 844,
     "status": "in_progress",
@@ -522,7 +522,7 @@
   {
     "id": "M3HomeLoading",
     "platform": "phone",
-    "title": "Home — loading",
+    "title": "Home \u2014 loading",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -542,7 +542,7 @@
   {
     "id": "M3HomeScrolled",
     "platform": "phone",
-    "title": "Home — scrolled",
+    "title": "Home \u2014 scrolled",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -552,7 +552,7 @@
   {
     "id": "M3CwMenu",
     "platform": "phone",
-    "title": "Continue Watching — options",
+    "title": "Continue Watching \u2014 options",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -562,7 +562,7 @@
   {
     "id": "M3HomeToast",
     "platform": "phone",
-    "title": "Home — added to My List",
+    "title": "Home \u2014 added to My List",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -572,7 +572,7 @@
   {
     "id": "M3HomeCasting",
     "platform": "phone",
-    "title": "Home — casting (mini controller)",
+    "title": "Home \u2014 casting (mini controller)",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -592,7 +592,7 @@
   {
     "id": "M3SearchResults",
     "platform": "phone",
-    "title": "Search — results",
+    "title": "Search \u2014 results",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -615,14 +615,14 @@
     "title": "My List",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/library/LibraryScreen.kt",
+    "capture": "docs/evidence/android-library-preview.png"
   },
   {
     "id": "M3MyListSort",
     "platform": "phone",
-    "title": "My List — sort and filter",
+    "title": "My List \u2014 sort and filter",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -632,11 +632,11 @@
   {
     "id": "M3MyListEmpty",
     "platform": "phone",
-    "title": "My List — empty",
+    "title": "My List \u2014 empty",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/library/LibraryScreen.kt",
     "capture": null
   },
   {
@@ -662,7 +662,7 @@
   {
     "id": "M3TitleEpisodes",
     "platform": "phone",
-    "title": "Series page — episodes",
+    "title": "Series page \u2014 episodes",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -672,7 +672,7 @@
   {
     "id": "M3SeasonSheet",
     "platform": "phone",
-    "title": "Series page — choose season",
+    "title": "Series page \u2014 choose season",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -702,7 +702,7 @@
   {
     "id": "M3SourcesLoading",
     "platform": "phone",
-    "title": "Choose a source — still finding",
+    "title": "Choose a source \u2014 still finding",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -712,17 +712,17 @@
   {
     "id": "M3Player",
     "platform": "phone",
-    "title": "Player — controls",
+    "title": "Player \u2014 controls",
     "width": 844,
     "height": 390,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PlayerScreen.kt",
+    "capture": "docs/evidence/android-player-controls.png"
   },
   {
     "id": "M3PlayerSeek",
     "platform": "phone",
-    "title": "Player — double-tap +10 s",
+    "title": "Player \u2014 double-tap +10 s",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -732,7 +732,7 @@
   {
     "id": "M3PlayerScrub",
     "platform": "phone",
-    "title": "Player — scrubbing",
+    "title": "Player \u2014 scrubbing",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -742,7 +742,7 @@
   {
     "id": "M3PlayerLocked",
     "platform": "phone",
-    "title": "Player — screen locked",
+    "title": "Player \u2014 screen locked",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -752,7 +752,7 @@
   {
     "id": "M3PlayerAudio",
     "platform": "phone",
-    "title": "Player — audio and subtitles",
+    "title": "Player \u2014 audio and subtitles",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -762,7 +762,7 @@
   {
     "id": "M3PlayerNext",
     "platform": "phone",
-    "title": "Player — next episode",
+    "title": "Player \u2014 next episode",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -772,7 +772,7 @@
   {
     "id": "M3PlayerBuffer",
     "platform": "phone",
-    "title": "Player — starting",
+    "title": "Player \u2014 starting",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -782,7 +782,7 @@
   {
     "id": "M3PlayerError",
     "platform": "phone",
-    "title": "Player — source failed",
+    "title": "Player \u2014 source failed",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -792,7 +792,7 @@
   {
     "id": "M3PlayerLive",
     "platform": "phone",
-    "title": "Player — live with channel list",
+    "title": "Player \u2014 live with channel list",
     "width": 844,
     "height": 390,
     "status": "pending",
@@ -802,7 +802,7 @@
   {
     "id": "M3CastPicker",
     "platform": "phone",
-    "title": "Watch on — pick a TV",
+    "title": "Watch on \u2014 pick a TV",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -812,7 +812,7 @@
   {
     "id": "M3CastExpanded",
     "platform": "phone",
-    "title": "Casting — controls",
+    "title": "Casting \u2014 controls",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -835,14 +835,14 @@
     "title": "Settings",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneSettings.kt",
+    "capture": "docs/evidence/android-settings-preview.png"
   },
   {
     "id": "M3SetPlayback",
     "platform": "phone",
-    "title": "Settings — Playback",
+    "title": "Settings \u2014 Playback",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -852,7 +852,7 @@
   {
     "id": "M3SetSubs",
     "platform": "phone",
-    "title": "Settings — Subtitles & audio",
+    "title": "Settings \u2014 Subtitles & audio",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -862,7 +862,7 @@
   {
     "id": "M3SetAddons",
     "platform": "phone",
-    "title": "Settings — Add-ons",
+    "title": "Settings \u2014 Add-ons",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -902,27 +902,27 @@
   {
     "id": "T3Home",
     "platform": "tablet",
-    "title": "Home — landscape",
+    "title": "Home \u2014 landscape",
     "width": 1194,
     "height": 834,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TabletHero.kt",
+    "capture": "docs/evidence/android-tablet-home-preview.png"
   },
   {
     "id": "T3HomePortrait",
     "platform": "tablet",
-    "title": "Home — portrait",
+    "title": "Home \u2014 portrait",
     "width": 834,
     "height": 1194,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TabletHero.kt",
     "capture": null
   },
   {
     "id": "T3Narrow",
     "platform": "tablet",
-    "title": "Split View — narrow window (compact: phone layout)",
+    "title": "Split View \u2014 narrow window (compact: phone layout)",
     "width": 507,
     "height": 834,
     "status": "pending",
@@ -932,7 +932,7 @@
   {
     "id": "T3Title",
     "platform": "tablet",
-    "title": "Series page — info | episodes",
+    "title": "Series page \u2014 info | episodes",
     "width": 1194,
     "height": 834,
     "status": "pending",
@@ -942,7 +942,7 @@
   {
     "id": "T3Sources",
     "platform": "tablet",
-    "title": "Choose a source — side sheet",
+    "title": "Choose a source \u2014 side sheet",
     "width": 1194,
     "height": 834,
     "status": "pending",
@@ -952,7 +952,7 @@
   {
     "id": "T3Player",
     "platform": "tablet",
-    "title": "Player — episodes pane",
+    "title": "Player \u2014 episodes pane",
     "width": 1194,
     "height": 834,
     "status": "pending",
@@ -972,7 +972,7 @@
   {
     "id": "T3MyList",
     "platform": "tablet",
-    "title": "My List — sort popover",
+    "title": "My List \u2014 sort popover",
     "width": 1194,
     "height": 834,
     "status": "pending",
@@ -992,7 +992,7 @@
   {
     "id": "T3Settings",
     "platform": "tablet",
-    "title": "Settings — list | detail",
+    "title": "Settings \u2014 list | detail",
     "width": 1194,
     "height": 834,
     "status": "pending",
@@ -1012,7 +1012,7 @@
   {
     "id": "D3HomeWin",
     "platform": "desktop",
-    "title": "Home — Windows, 1440 × 900",
+    "title": "Home \u2014 Windows, 1440 \u00d7 900",
     "width": 1440,
     "height": 900,
     "status": "in_progress",
@@ -1022,7 +1022,7 @@
   {
     "id": "D3HomeMac",
     "platform": "desktop",
-    "title": "Home — macOS, 1280 × 800",
+    "title": "Home \u2014 macOS, 1280 \u00d7 800",
     "width": 1280,
     "height": 800,
     "status": "in_progress",
@@ -1032,7 +1032,7 @@
   {
     "id": "D3HomeCompact",
     "platform": "desktop",
-    "title": "Home — 1024 × 700 (icon rail)",
+    "title": "Home \u2014 1024 \u00d7 700 (icon rail)",
     "width": 1024,
     "height": 700,
     "status": "in_progress",
@@ -1042,7 +1042,7 @@
   {
     "id": "D3HomeNarrow",
     "platform": "desktop",
-    "title": "Home — snapped half, 600 × 800 (menu button)",
+    "title": "Home \u2014 snapped half, 600 \u00d7 800 (menu button)",
     "width": 600,
     "height": 800,
     "status": "in_progress",
@@ -1052,7 +1052,7 @@
   {
     "id": "D3HomeUltra",
     "platform": "desktop",
-    "title": "Home — ultrawide 2560 × 1080",
+    "title": "Home \u2014 ultrawide 2560 \u00d7 1080",
     "width": 2560,
     "height": 1080,
     "status": "in_progress",
@@ -1062,7 +1062,7 @@
   {
     "id": "D3HomeLoading",
     "platform": "desktop",
-    "title": "Home — loading",
+    "title": "Home \u2014 loading",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1072,7 +1072,7 @@
   {
     "id": "D3HomeHover",
     "platform": "desktop",
-    "title": "Home — hover preview",
+    "title": "Home \u2014 hover preview",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1132,7 +1132,7 @@
   {
     "id": "D3TitleSeason",
     "platform": "desktop",
-    "title": "Series page — season menu",
+    "title": "Series page \u2014 season menu",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1142,7 +1142,7 @@
   {
     "id": "D3TitleUltra",
     "platform": "desktop",
-    "title": "Series page — ultrawide 2560 × 1080",
+    "title": "Series page \u2014 ultrawide 2560 \u00d7 1080",
     "width": 2560,
     "height": 1080,
     "status": "pending",
@@ -1162,7 +1162,7 @@
   {
     "id": "D3Sources",
     "platform": "desktop",
-    "title": "Choose a source — drawer",
+    "title": "Choose a source \u2014 drawer",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1172,7 +1172,7 @@
   {
     "id": "D3Search",
     "platform": "desktop",
-    "title": "Search — Ctrl K",
+    "title": "Search \u2014 Ctrl K",
     "width": 1440,
     "height": 900,
     "status": "in_progress",
@@ -1182,7 +1182,7 @@
   {
     "id": "D3Browse",
     "platform": "desktop",
-    "title": "Movies — keyboard focus on the first poster",
+    "title": "Movies \u2014 keyboard focus on the first poster",
     "width": 1440,
     "height": 900,
     "status": "in_progress",
@@ -1202,11 +1202,11 @@
   {
     "id": "D3MyList",
     "platform": "desktop",
-    "title": "My List — sort menu",
+    "title": "My List \u2014 sort menu",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/library/LibraryScreen.kt",
     "capture": null
   },
   {
@@ -1222,7 +1222,7 @@
   {
     "id": "D3Player",
     "platform": "desktop",
-    "title": "Player — controls",
+    "title": "Player \u2014 controls",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1232,7 +1232,7 @@
   {
     "id": "D3PlayerScrub",
     "platform": "desktop",
-    "title": "Player — hover scrubbing",
+    "title": "Player \u2014 hover scrubbing",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1242,7 +1242,7 @@
   {
     "id": "D3PlayerAudio",
     "platform": "desktop",
-    "title": "Player — audio & subtitles flyout",
+    "title": "Player \u2014 audio & subtitles flyout",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1252,7 +1252,7 @@
   {
     "id": "D3PlayerNext",
     "platform": "desktop",
-    "title": "Player — next episode",
+    "title": "Player \u2014 next episode",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1262,7 +1262,7 @@
   {
     "id": "D3PlayerBuffer",
     "platform": "desktop",
-    "title": "Player — starting",
+    "title": "Player \u2014 starting",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1272,7 +1272,7 @@
   {
     "id": "D3PlayerError",
     "platform": "desktop",
-    "title": "Player — source failed",
+    "title": "Player \u2014 source failed",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1282,7 +1282,7 @@
   {
     "id": "D3Mini",
     "platform": "desktop",
-    "title": "Mini player — always-on-top window",
+    "title": "Mini player \u2014 always-on-top window",
     "width": 480,
     "height": 270,
     "status": "pending",
@@ -1292,7 +1292,7 @@
   {
     "id": "D3SignIn",
     "platform": "desktop",
-    "title": "Sign in — every method",
+    "title": "Sign in \u2014 every method",
     "width": 1100,
     "height": 720,
     "status": "in_progress",
@@ -1302,7 +1302,7 @@
   {
     "id": "D3SignInWaiting",
     "platform": "desktop",
-    "title": "Sign in — waiting for the browser",
+    "title": "Sign in \u2014 waiting for the browser",
     "width": 1100,
     "height": 720,
     "status": "in_progress",
@@ -1312,7 +1312,7 @@
   {
     "id": "D3SignInEmail",
     "platform": "desktop",
-    "title": "Sign in — email code",
+    "title": "Sign in \u2014 email code",
     "width": 1100,
     "height": 720,
     "status": "in_progress",
@@ -1322,7 +1322,7 @@
   {
     "id": "D3SignInPassword",
     "platform": "desktop",
-    "title": "Sign in — password",
+    "title": "Sign in \u2014 password",
     "width": 1100,
     "height": 720,
     "status": "in_progress",
@@ -1332,7 +1332,7 @@
   {
     "id": "D3SignInDevice",
     "platform": "desktop",
-    "title": "Sign in — approve from another device",
+    "title": "Sign in \u2014 approve from another device",
     "width": 1100,
     "height": 720,
     "status": "in_progress",
@@ -1342,7 +1342,7 @@
   {
     "id": "D3SignInIptv",
     "platform": "desktop",
-    "title": "Sign in — IPTV provider",
+    "title": "Sign in \u2014 IPTV provider",
     "width": 1100,
     "height": 720,
     "status": "in_progress",
@@ -1352,7 +1352,7 @@
   {
     "id": "D3Profiles",
     "platform": "desktop",
-    "title": "Who’s watching",
+    "title": "Who\u2019s watching",
     "width": 1100,
     "height": 720,
     "status": "in_progress",
@@ -1362,7 +1362,7 @@
   {
     "id": "D3SetGeneral",
     "platform": "desktop",
-    "title": "Settings — General",
+    "title": "Settings \u2014 General",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1372,7 +1372,7 @@
   {
     "id": "D3SetPlayback",
     "platform": "desktop",
-    "title": "Settings — Playback",
+    "title": "Settings \u2014 Playback",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1382,7 +1382,7 @@
   {
     "id": "D3SetAddons",
     "platform": "desktop",
-    "title": "Settings — Add-ons",
+    "title": "Settings \u2014 Add-ons",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1412,7 +1412,7 @@
   {
     "id": "W3Landing",
     "platform": "web",
-    "title": "Signed-out landing — 1440",
+    "title": "Signed-out landing \u2014 1440",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1422,7 +1422,7 @@
   {
     "id": "W3LandingMobile",
     "platform": "web",
-    "title": "Signed-out landing — 390",
+    "title": "Signed-out landing \u2014 390",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1432,7 +1432,7 @@
   {
     "id": "W3SignIn",
     "platform": "web",
-    "title": "Sign in — every method",
+    "title": "Sign in \u2014 every method",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1442,7 +1442,7 @@
   {
     "id": "W3SignInCode",
     "platform": "web",
-    "title": "Sign in — email code",
+    "title": "Sign in \u2014 email code",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1452,7 +1452,7 @@
   {
     "id": "W3SignInPassword",
     "platform": "web",
-    "title": "Sign in — password",
+    "title": "Sign in \u2014 password",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1462,7 +1462,7 @@
   {
     "id": "W3SignInDevice",
     "platform": "web",
-    "title": "Sign in — approve from another device",
+    "title": "Sign in \u2014 approve from another device",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1472,7 +1472,7 @@
   {
     "id": "W3SignInIptv",
     "platform": "web",
-    "title": "Sign in — IPTV provider",
+    "title": "Sign in \u2014 IPTV provider",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1482,7 +1482,7 @@
   {
     "id": "W3SignInMobile",
     "platform": "web",
-    "title": "Sign in — phone browser",
+    "title": "Sign in \u2014 phone browser",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1492,7 +1492,7 @@
   {
     "id": "W3Profiles",
     "platform": "web",
-    "title": "Who’s watching",
+    "title": "Who\u2019s watching",
     "width": 1440,
     "height": 900,
     "status": "in_progress",
@@ -1502,7 +1502,7 @@
   {
     "id": "W3Device",
     "platform": "web",
-    "title": "Enter the TV code — 1440",
+    "title": "Enter the TV code \u2014 1440",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1512,7 +1512,7 @@
   {
     "id": "W3DeviceMobile",
     "platform": "web",
-    "title": "Enter the TV code — phone browser",
+    "title": "Enter the TV code \u2014 phone browser",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1542,7 +1542,7 @@
   {
     "id": "W3Addons",
     "platform": "web",
-    "title": "Add an add-on (from the TV’s QR code)",
+    "title": "Add an add-on (from the TV\u2019s QR code)",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1552,7 +1552,7 @@
   {
     "id": "W3Home",
     "platform": "web",
-    "title": "Home — 1440",
+    "title": "Home \u2014 1440",
     "width": 1440,
     "height": 900,
     "status": "in_progress",
@@ -1562,7 +1562,7 @@
   {
     "id": "W3Home1920",
     "platform": "web",
-    "title": "Home — 1920",
+    "title": "Home \u2014 1920",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -1572,7 +1572,7 @@
   {
     "id": "W3Home768",
     "platform": "web",
-    "title": "Home — 768 (Browse menu)",
+    "title": "Home \u2014 768 (Browse menu)",
     "width": 768,
     "height": 1024,
     "status": "pending",
@@ -1582,7 +1582,7 @@
   {
     "id": "W3HomeMobile",
     "platform": "web",
-    "title": "Home — 390 (mobile web)",
+    "title": "Home \u2014 390 (mobile web)",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1592,7 +1592,7 @@
   {
     "id": "W3HomeLoading",
     "platform": "web",
-    "title": "Home — loading",
+    "title": "Home \u2014 loading",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1602,7 +1602,7 @@
   {
     "id": "W3HomeHover",
     "platform": "web",
-    "title": "Home — hover preview",
+    "title": "Home \u2014 hover preview",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1612,7 +1612,7 @@
   {
     "id": "W3HomeFocus",
     "platform": "web",
-    "title": "Home — keyboard: skip link + focus ring",
+    "title": "Home \u2014 keyboard: skip link + focus ring",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1632,7 +1632,7 @@
   {
     "id": "W3TitlePage",
     "platform": "web",
-    "title": "Shared title link — signed out",
+    "title": "Shared title link \u2014 signed out",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1645,9 +1645,9 @@
     "title": "Search",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchScreen.kt",
+    "capture": "docs/evidence/web-search-preview.png"
   },
   {
     "id": "W3Live",
@@ -1665,8 +1665,8 @@
     "title": "My List",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/library/LibraryScreen.kt",
     "capture": null
   },
   {
@@ -1675,14 +1675,14 @@
     "title": "Player",
     "width": 1440,
     "height": 900,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PlayerScreen.kt",
+    "capture": "docs/evidence/web-player-transport.png"
   },
   {
     "id": "W3PlayerAudio",
     "platform": "web",
-    "title": "Player — audio & subtitles",
+    "title": "Player \u2014 audio & subtitles",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1692,7 +1692,7 @@
   {
     "id": "W3Account",
     "platform": "web",
-    "title": "Account — devices",
+    "title": "Account \u2014 devices",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1712,7 +1712,7 @@
   {
     "id": "SkCalMonth",
     "platform": "simkl",
-    "title": "Calendar — month",
+    "title": "Calendar \u2014 month",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1722,7 +1722,7 @@
   {
     "id": "SkCalAgenda",
     "platform": "simkl",
-    "title": "Calendar — agenda + up next",
+    "title": "Calendar \u2014 agenda + up next",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1732,7 +1732,7 @@
   {
     "id": "SkUpNext",
     "platform": "simkl",
-    "title": "Up next — countdowns",
+    "title": "Up next \u2014 countdowns",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1742,7 +1742,7 @@
   {
     "id": "SkDiscover",
     "platform": "simkl",
-    "title": "Discover — Simkl trending, premieres, airing",
+    "title": "Discover \u2014 Simkl trending, premieres, airing",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1772,7 +1772,7 @@
   {
     "id": "SkSearch",
     "platform": "simkl",
-    "title": "Search — Simkl results",
+    "title": "Search \u2014 Simkl results",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1782,7 +1782,7 @@
   {
     "id": "SkFilters",
     "platform": "simkl",
-    "title": "Advanced filters — every Simkl filter",
+    "title": "Advanced filters \u2014 every Simkl filter",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1792,7 +1792,7 @@
   {
     "id": "SkFilterNetwork",
     "platform": "simkl",
-    "title": "Advanced filters — network picker",
+    "title": "Advanced filters \u2014 network picker",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1832,7 +1832,7 @@
   {
     "id": "SkLists",
     "platform": "simkl",
-    "title": "Lists — Simkl statuses, multi-select",
+    "title": "Lists \u2014 Simkl statuses, multi-select",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1842,7 +1842,7 @@
   {
     "id": "SkTitle",
     "platform": "simkl",
-    "title": "Title — tracking, ratings, episodes",
+    "title": "Title \u2014 tracking, ratings, episodes",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1862,7 +1862,7 @@
   {
     "id": "SkRate",
     "platform": "simkl",
-    "title": "End of episode — tracked + rate",
+    "title": "End of episode \u2014 tracked + rate",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1872,7 +1872,7 @@
   {
     "id": "SkSettings",
     "platform": "simkl",
-    "title": "Settings — Simkl connected",
+    "title": "Settings \u2014 Simkl connected",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1882,7 +1882,7 @@
   {
     "id": "SkSettingsOff",
     "platform": "simkl",
-    "title": "Settings — connect Simkl",
+    "title": "Settings \u2014 connect Simkl",
     "width": 1440,
     "height": 900,
     "status": "pending",
@@ -1892,7 +1892,7 @@
   {
     "id": "SkMCalendar",
     "platform": "simkl",
-    "title": "Phone — calendar",
+    "title": "Phone \u2014 calendar",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1902,7 +1902,7 @@
   {
     "id": "SkMUpNext",
     "platform": "simkl",
-    "title": "Phone — up next",
+    "title": "Phone \u2014 up next",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1912,7 +1912,7 @@
   {
     "id": "SkMLists",
     "platform": "simkl",
-    "title": "Phone — lists",
+    "title": "Phone \u2014 lists",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1922,7 +1922,7 @@
   {
     "id": "SkMListsSheet",
     "platform": "simkl",
-    "title": "Phone — move / rate sheet",
+    "title": "Phone \u2014 move / rate sheet",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1932,7 +1932,7 @@
   {
     "id": "SkMFilters",
     "platform": "simkl",
-    "title": "Phone — filters sheet",
+    "title": "Phone \u2014 filters sheet",
     "width": 390,
     "height": 844,
     "status": "pending",
@@ -1942,7 +1942,7 @@
   {
     "id": "SkTvCalendar",
     "platform": "simkl",
-    "title": "TV — calendar",
+    "title": "TV \u2014 calendar",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -1952,7 +1952,7 @@
   {
     "id": "SkTvFilters",
     "platform": "simkl",
-    "title": "TV — filters",
+    "title": "TV \u2014 filters",
     "width": 1920,
     "height": 1080,
     "status": "pending",
@@ -1962,7 +1962,7 @@
   {
     "id": "SkTvConnect",
     "platform": "simkl",
-    "title": "TV — connect Simkl",
+    "title": "TV \u2014 connect Simkl",
     "width": 1920,
     "height": 1080,
     "status": "pending",

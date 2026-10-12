@@ -210,6 +210,7 @@ class ApplicationController(private val scope: CoroutineScope) {
     }
     fun pausePlayback() {
         val paused=!mutable.value.paused
+        if (!paused) completionSeen = false
         mutable.value = mutable.value.copy(paused = paused)
         if(paused && !completionSeen) saveProgress(false)
     }
@@ -218,8 +219,12 @@ class ApplicationController(private val scope: CoroutineScope) {
             lastProgress=fact
             if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
         }
+        if (fact is PlayerFact.Status && fact.name in listOf("Playing", "Paused") && mutable.value.playback != null) {
+            mutable.value = mutable.value.copy(paused = fact.name == "Paused")
+        }
         if (fact is PlayerFact.Status && fact.name=="Ended" && !completionSeen) {
             completionSeen=true
+            mutable.value = mutable.value.copy(paused = true)
             saveProgress(true)
         }
         if (fact is PlayerFact.Failed) mutable.value = mutable.value.copy(error = "This source could not play. Choose another source.")

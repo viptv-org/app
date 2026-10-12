@@ -19,6 +19,9 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import org.viptv.app.theme.Palette
+import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.resources.Res
+import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
 
 @Composable
@@ -33,12 +36,12 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(180.dp).height(100.dp), contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = 28.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
-            card.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 2) }
+            card.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.body, maxLines = 2) }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { play(card) }, modifier = Modifier.weight(1f).height(46.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-                    Icon(Lucide.Play, null, Modifier.size(16.dp))
+                    Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Play", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
