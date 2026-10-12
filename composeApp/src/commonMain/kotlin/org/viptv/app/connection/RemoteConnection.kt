@@ -10,7 +10,7 @@ import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
 
 data class Profile(val id: String, val name: String, val avatar: String?)
-data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?)
+data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList())
 class RemoteFailure(val status: Int, message: String) : Exception(message)
 
 class RemoteConnection(rawOrigin: String) {

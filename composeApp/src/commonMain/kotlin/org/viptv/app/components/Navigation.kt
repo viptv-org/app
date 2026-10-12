@@ -26,6 +26,7 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
             TextButton(onClick = { navigate(screen) }) { Text(label, color = if (selected == screen) Palette.text else Palette.secondary, fontSize = if (television) 20.sp else 13.sp) }
         }
         Spacer(Modifier.weight(1f))
+        TextButton(onClick = { navigate(Screen.Settings) }) { Text("Settings") }
         TextButton(onClick = { navigate(Screen.Profiles) }) { Text("Profile") }
     }
 }

@@ -7,6 +7,7 @@ import org.viptv.app.connection.*
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.engine.wire.IntegrationConnection
 
 enum class Screen { Connect, Profiles, Home, Search, Details, Live, Library, History, Settings }
 data class ApplicationState(
@@ -18,6 +19,8 @@ data class ApplicationState(
     val home: HomeSnapshot? = null,
     val results: List<Card> = emptyList(),
     val detail: DetailSnapshot? = null,
+    val localMode: Boolean = false,
+    val addons: List<IntegrationConnection> = emptyList(),
 )
 
 class ApplicationController(private val scope: CoroutineScope) {
@@ -42,23 +45,34 @@ class ApplicationController(private val scope: CoroutineScope) {
     }
     fun selectProfile(id: String) = run { accept(local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)) }
     fun refresh() = run { accept(local?.bootstrap(mutable.value.selectedProfile) ?: requireNotNull(connection).bootstrap()) }
+    fun refreshAddons() = run { mutable.value = mutable.value.copy(addons = local?.addons() ?: emptyList()) }
+    fun installAddon(url: String) = run {
+        val profile = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
+        val addons = requireNotNull(local).installAddon(profile, url)
+        val updated = requireNotNull(local).bootstrap(profile)
+        mutable.value = mutable.value.copy(addons = addons, home = updated.home, screen = Screen.Settings)
+    }
     fun search(term: String) = run {
         delay(300)
-        val cards = if (term.isBlank()) emptyList() else requireNotNull(connection).search(term).cards
+        val cards = if (term.isBlank()) emptyList() else local?.search(requireNotNull(mutable.value.selectedProfile), term)?.cards ?: requireNotNull(connection).search(term).cards
         mutable.value = mutable.value.copy(results = cards)
     }
     fun open(card: Card) {
         mutable.value = mutable.value.copy(screen = Screen.Details, detail = null)
-        run { mutable.value = mutable.value.copy(detail = requireNotNull(connection).detail(card)) }
+        run { mutable.value = mutable.value.copy(detail = local?.detail(requireNotNull(mutable.value.selectedProfile), card) ?: requireNotNull(connection).detail(card)) }
     }
-    fun navigate(screen: Screen) { mutable.value = mutable.value.copy(screen = screen, error = null) }
+    fun navigate(screen: Screen) {
+        mutable.value = mutable.value.copy(screen = screen, error = null)
+        if (screen == Screen.Settings && local != null) refreshAddons()
+    }
     fun disconnect() {
         generation++; job?.cancel(); connection?.close(); connection = null; local?.close(); local = null
         mutable.value = ApplicationState()
     }
     private fun accept(value: Bootstrap) {
         mutable.value = ApplicationState(screen = if (value.selected == null) Screen.Profiles else Screen.Home,
-            profiles = value.profiles, selectedProfile = value.selected, home = value.home)
+            profiles = value.profiles, selectedProfile = value.selected, home = value.home,
+            localMode = local != null, addons = value.addons)
     }
     private fun run(operation: suspend () -> Unit) {
         job?.cancel()
@@ -70,8 +84,9 @@ class ApplicationController(private val scope: CoroutineScope) {
             catch (e: Exception) {
                 if (generation == current) mutable.value = mutable.value.copy(error = when (e) {
                     is RemoteFailure -> e.message
+                    is LocalFailure -> e.message
                     is IllegalArgumentException -> "Enter a valid HTTPS server address."
-                    else -> "Could not reach your server. Check the connection and try again."
+                    else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
                 })
             } finally { if (generation == current) mutable.value = mutable.value.copy(busy = false) }
         }

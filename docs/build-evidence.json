@@ -2,18 +2,20 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "b360a5b0e089c10ba737c5410060e74c82022bb6bcd2d643e93f0d3c31b04dfb",
+    "sha256": "933505487fa254a174510d4191b61aafd82d1cd7b4aeb15c633e447cd7dbf660",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
       "x86_64"
     ],
-    "emulator_local_profile_smoke": "passed"
+    "emulator_local_profile_smoke": "passed",
+    "local_stremio_manifest_home_detail": "passed on QA emulator; some rows timed out"
   },
   "desktop": {
     "compile": "passed",
     "native_sqlite_persistence_test": "passed",
-    "rendered_provisional_entry": "docs/provisional/connection-desktop.png"
+    "rendered_provisional_entry": "docs/provisional/connection-desktop.png",
+    "native_addon_binding_test": "passed"
   },
   "web": {
     "wasm_compile": "passed",
