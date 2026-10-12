@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "6064c9b9985cb558ebeab4dcd21c7d956ba7554e2a753edbbaaac09a2589abfc",
+    "sha256": "f8c8b4d2be47927512e4c3dc3e2456e15acb3cc658f2d41f3be6e7332a6f3b9a",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -13,7 +13,8 @@
     "direct_mp4_decoded_frame": "passed on QA emulator through fixture source picker",
     "profile_addon_toggle_and_removal": "passed on QA emulator",
     "watch_history_restart": "passed: Continue Watching and Today history on QA emulator",
-    "local_profile_management": "passed on QA emulator: create, set PIN, wrong PIN rejected, correct PIN accepted, locked picker persisted across restart"
+    "local_profile_management": "passed on QA emulator: create, set PIN, wrong PIN rejected, correct PIN accepted, locked picker persisted across restart",
+    "profile_phone_layout": "passed emulator render check against M3Profiles and M3Pin; keypad unlock passed; parity remains in progress"
   },
   "desktop": {
     "compile": "passed",

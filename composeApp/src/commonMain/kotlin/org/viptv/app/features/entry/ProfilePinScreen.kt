@@ -7,12 +7,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import org.viptv.app.connection.Profile
 
 @Composable
-fun ProfilePinScreen(name: String, busy: Boolean, error: String?, submit: (String) -> Unit, back: () -> Unit) {
-    var pin by remember(name) { mutableStateOf("") }
+fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: String?, submit: (String) -> Unit, back: () -> Unit) {
+    var pin by remember(profile?.id) { mutableStateOf("") }
+    if (compact) {
+        MobilePinScreen(profile, pin, busy, error, { digit -> if (pin.length < 8) pin += digit },
+            { pin = pin.dropLast(1) }, { if (pin.length in 4..8) { submit(pin); pin = "" } }, back)
+        return
+    }
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Enter $name’s PIN", style = MaterialTheme.typography.headlineLarge)
+        Text("Enter ${profile?.name.orEmpty()}’s PIN", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(24.dp))
         OutlinedTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
             label = { Text("PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)

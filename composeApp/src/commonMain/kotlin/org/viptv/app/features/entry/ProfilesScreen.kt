@@ -18,12 +18,14 @@ import org.viptv.app.theme.Palette
 
 @Composable
 fun ProfilesScreen(
-    profiles: List<Profile>, busy: Boolean, error: String?, local: Boolean, managing: Boolean,
+    profiles: List<Profile>, busy: Boolean, error: String?, local: Boolean, managing: Boolean, compact: Boolean,
     select: (String) -> Unit, edit: (String) -> Unit, manage: () -> Unit, done: () -> Unit,
     create: (String) -> Unit,
 ) {
     var adding by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
+    if (compact) MobileProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
+    else
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(if (managing) "Manage profiles" else "Who’s watching?", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(44.dp))
