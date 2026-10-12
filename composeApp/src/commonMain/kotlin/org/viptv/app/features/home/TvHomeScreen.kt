@@ -37,8 +37,16 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         if (home == null) TvHomeLoading(scale) else {
             TvHomeBackdrop(card, scale, browsing)
             if (card != null) {
-                if (browsing) Crossfade(card, animationSpec = tween(300, easing = easing), label = "Focused title summary") { TvBrowseSummary(it, focused ?: it, scale) }
-                else TvHero(card, open, play, playFocus, if (home.rows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, slides.size.coerceAtLeast(1))
+                TvHomeVisibility(browsing, scale, 24) {
+                    Crossfade(card, animationSpec = tween(300, easing = easing), label = "Focused title summary") {
+                        TvBrowseSummary(it, settled ?: it, scale)
+                    }
+                }
+                TvHomeVisibility(!browsing, scale, -60, 360) {
+                    home.hero?.let { hero ->
+                        TvHero(hero, open, play, playFocus, if (home.rows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, slides.size.coerceAtLeast(1))
+                    }
+                }
             }
             TvFocusScroll(manual = true) {
                 LazyColumn(Modifier.fillMaxSize().padding(top = top), state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
@@ -50,6 +58,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                 }
             }
         }
-        if (!browsing) TopNavigation(Screen.Home, true, navigate, profile)
+        TvHomeVisibility(!browsing, scale, -40, 375) { TopNavigation(Screen.Home, true, navigate, profile) }
     }
 }

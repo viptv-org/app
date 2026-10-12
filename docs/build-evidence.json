@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "6d468d3f4d80b66be355aa013ace56c7fb751272e53301072e350be768014313",
+    "sha256": "d860dd8b56e6a0d586b1b6456511bdfe97321918460df8b44f58a8c5938502c7",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -43,7 +43,8 @@
       "limits": "preferences/account/add-on pairing remain unconnected; fixture acknowledgements are not engine persistence or real logout evidence"
     },
     "tv_home_catalog": "preview D-pad Home/Play/rows, horizontal summary, return to billboard and supplied Action membership filtering passed; full parity pending",
-    "tv_home_loading": "two emulator captures show shimmer changes within placeholders and unchanged surrounding background"
+    "tv_home_loading": "two emulator captures show shimmer changes within placeholders and unchanged surrounding background",
+    "tv_home_motion": "preview Home/Play/rows/return and rapid Down/Right during exit passed; controls also passed with emulator animator duration scale zero, which was restored; frame-by-frame parity and reduced-motion visuals pending"
   },
   "desktop": {
     "compile": "passed",
