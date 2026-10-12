@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "346090e2444f39e65689ac977dc99105ca6101f1a40dbfa0ce5bd3536ac8d620",
+    "sha256": "812a8df5bf4b0d732be1c3211f3dc7f27ad6e36201b2d89970dac51c9368c221",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -36,6 +36,11 @@
       "remote_interaction": "seek preview/cancel/confirm, track-sheet open/dismiss, acknowledged subtitle choice, intro skip, keep credits and failed-source picker navigation passed in fixture",
       "native_transport": "public Flower MP4 decoded; seek observed beyond 900 ms; Playing and Paused observed",
       "limits": "Fixture track/skip/thumbnail acknowledgements are synthetic; multi-track native switching, authenticated HLS/HDR/live, failure retry/history resume and full parity remain unqualified"
+    },
+    "tv_settings": {
+      "render": "Playback, Subtitles, Add-ons and Sign-out at 1920x1080",
+      "interaction": "fixture toggles, sidebar navigation, subtitle style selection, add-on address dialog dismissal and sign-out Cancel passed",
+      "limits": "preferences/account/add-on pairing remain unconnected; fixture acknowledgements are not engine persistence or real logout evidence"
     }
   },
   "desktop": {

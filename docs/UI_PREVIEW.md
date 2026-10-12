@@ -25,3 +25,8 @@ are synthetic and confined to the preview. `Player --es ui_variant Native` inste
 uses the public Flower MP4 with real KitePlayer facts, without account/provider/
 history operations. Its diagnostic output contains public-test status/position/
 track counts only. Temporary key-event diagnostics were removed.
+
+TV `Settings --es ui_variant Playback|Subs|Addons|SignOut` renders the corresponding
+settings fixture. Its preferences and profile add-on toggles change in memory;
+those actions do not prove persistent engine settings. The sign-out fixture
+uses a remote-style account confirmation and never calls a real logout endpoint.

@@ -57,3 +57,14 @@ recommendation presentation is currently supplied only in the review fixture.
 Episodes pill; the current TV ZIP has no separate player episode-picker board.
 `TvPlayerControls` adds a small nonfatal control-error notice, distinct from the
 supplied full source-failure screen. Both need a supplied design review.
+
+### GAP-024 — TV settings dialogs and unavailable preference states
+
+`TvSettingsChoiceDialog` supplies option lists opened by settings rows;
+`TvSettingsScreen` supplies a manual add-on-address dialog. The TV ZIP shows the
+entry controls but no matching option-list/address-entry boards. Account,
+Display, Parental controls and About also lack complete supplied panel designs.
+Missing account data, unavailable playback/subtitle preference contracts and
+unavailable add-on pairing have explicit provisional states. The supplied
+Playback/Subtitles/Add-ons/Sign-out boards remain incomplete until their connected
+behavior and final visual review are qualified.

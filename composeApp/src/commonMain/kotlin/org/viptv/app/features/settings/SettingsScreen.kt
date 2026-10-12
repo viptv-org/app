@@ -10,7 +10,11 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
-    remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile? = null, back: () -> Unit = {}) {
+    remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile? = null, back: () -> Unit = {}, television: Boolean = false) {
+    if (television) {
+        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile)
+        return
+    }
     var addonsOpen by remember { mutableStateOf(false) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth < 640.dp && !addonsOpen) {

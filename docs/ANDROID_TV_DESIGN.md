@@ -25,8 +25,10 @@ supplied flows. No TV board is certified as fully matching.
 
 Remaining TV work includes splash and successful sign-in, all alternative auth
 boards, profile editing, Home loading and Home-to-rows motion, Movies, Live guide,
-My List, final playback-state typography/motion/data qualification, settings and sign-out.
+My List, final playback-state and settings typography/motion/data qualification.
 The implemented screens still have typography, focus/motion and data-contract
 checks outstanding. `design-coverage.json` records each supplied board separately.
 
 The dedicated TV player and scoped real-video checks are described in `TV_PLAYER.md`.
+
+Dedicated TV settings and their unavailable contract limits are described in `TV_SETTINGS.md`.

@@ -15,3 +15,13 @@ Jewel was considered for custom decorations. Its decoration layer requires JetBr
 Sources: [Compose Foundation window source](https://github.com/JetBrains/compose-multiplatform-core/tree/jb-main/compose/foundation/foundation/src/desktopMain/kotlin/androidx/compose/foundation/window), [Compose Icons](https://github.com/composablehorizons/compose-icons), [Jewel](https://github.com/JetBrains/jewel), [ComposeWindowStyler](https://github.com/MayakaApps/ComposeWindowStyler), [Coil image loaders](https://coil-kt.github.io/coil/image_loaders/).
 
 Playback transport controls use the installed KitePlayer 0.3.0 APIs for seek, volume, speed and track selection. Native player snapshots supply the displayed progress, volume/speed and audio/subtitle choices. Browser transport remains HTML video/HLS and handles seek, volume and speed separately; browser track selection and overlay composition are unqualified. The thin timeline uses Material3 Slider's custom thumb/track slots rather than custom drag handling. References: [KitePlayer](https://github.com/yuroyami/kiteplayer), [Slider customization](https://developer.android.com/develop/ui/compose/components/slider), [Android immersive playback](https://developer.android.com/develop/ui/views/layout/immersive).
+
+Android TV switches use `com.composables:composeunstyled-toggle-switch:2.10.0`.
+The published component supports a separately sized track and thumb, so both
+states keep the ZIP's 68×38 track and 30-pixel thumb. The containing settings row
+owns focus, interaction and switch semantics; the inner switch is noninteractive.
+The version was verified from Maven Central metadata. Desktop, Android and Wasm
+compilation passed with the dependency.
+
+Sources: [Compose Unstyled switch](https://github.com/composablehorizons/compose-unstyled/blob/main/docs/pages/toggleswitch.md),
+[published versions](https://repo.maven.apache.org/maven2/com/composables/composeunstyled-toggle-switch/maven-metadata.xml).

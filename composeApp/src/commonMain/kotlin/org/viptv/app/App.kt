@@ -58,7 +58,7 @@ fun App(
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {
-                    if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources))) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
+                    if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings))) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
                     Row(Modifier.weight(1f)) {
@@ -77,7 +77,7 @@ fun App(
                                 { if (state.localMode) controller.chooseSource(it.card) else controller.open(it.card) }, { controller.navigate(Screen.Settings) })
                             Screen.Library -> LibraryScreen(emptyList(), false, television, controller::open, { controller.navigate(Screen.History) }, { controller.navigate(Screen.Home) })
                             Screen.History -> if (state.localMode) HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) }) else Text("History is unavailable for this connection.", Modifier.padding(32.dp))
-                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, { if (state.localMode) controller.disconnect() else controller.signOut() }, state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) })
+                            Screen.Settings -> SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice, controller::installAddon, controller::toggleAddon, controller::removeAddon, { controller.navigate(Screen.Profiles) }, { if (state.localMode) controller.disconnect() else controller.signOut() }, state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }

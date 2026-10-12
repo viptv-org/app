@@ -45,7 +45,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
             val phone = maxWidth < 640.dp && !television && !desktop && !browser
             val tablet = !phone && !television && !desktop && !browser
             Column(Modifier.fillMaxSize()) {
-                if (current !in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.Player) && (browser || (television && current !in listOf(Screen.Home, Screen.Details, Screen.Sources)))) TopNavigation(current, television, go, PreviewData.profile)
+                if (current !in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.Player) && (browser || (television && current !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings)))) TopNavigation(current, television, go, PreviewData.profile)
                 else if (phone && current !in listOf(Screen.Connect, Screen.Search, Screen.Details, Screen.Sources, Screen.Settings, Screen.History, Screen.Profiles, Screen.ProfilePin, Screen.Player))
                     PhoneHeader(current, PreviewData.profile, go)
                 Row(Modifier.weight(1f)) {
@@ -73,7 +73,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                             Screen.History -> HistoryScreen(PreviewData.history, false, null, { go(Screen.Details) }, {}, { go(Screen.Home) })
                             Screen.Search -> if (television) TvSearchScreen(searchTerm ?: term, PreviewData.posters + PreviewLive.channels.take(3).map { it.card }, emptyList(), false, null, query, { go(Screen.Details) }, listOf("the whisper man", "the wild robot", "the white lotus"))
                                 else SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) })
-                            Screen.Settings -> SettingsScreen(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
+                            Screen.Settings -> if (television) PreviewTvSettings(tvDetailVariant, go) else SettingsScreen(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
                                 { go(Screen.Profiles) }, {}, PreviewData.profile, { go(Screen.Home) })
                             Screen.ProfilePin -> ProfilePinScreen(PreviewData.profiles[2], phone, false, null, {}, { go(Screen.Profiles) }, television)
                             Screen.Profiles -> ProfilesScreen(PreviewData.profiles, false, null, true, false, phone, desktop,

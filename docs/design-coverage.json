@@ -351,9 +351,10 @@
     "title": "Settings \u2014 Playback",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvPlaybackSettings.kt",
+    "capture": "docs/evidence/android-tv-settings-playback.png",
+    "verification": "1920x1080 isolated fixture render and scoped D-pad checks; persistence/account/pairing contracts and final parity unqualified"
   },
   {
     "id": "Tv3SetSubs",
@@ -361,9 +362,10 @@
     "title": "Settings \u2014 Subtitles & audio",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSubtitleSettings.kt",
+    "capture": "docs/evidence/android-tv-settings-subs.png",
+    "verification": "1920x1080 isolated fixture render and scoped D-pad checks; persistence/account/pairing contracts and final parity unqualified"
   },
   {
     "id": "Tv3SetAddons",
@@ -371,9 +373,10 @@
     "title": "Settings \u2014 Add-ons",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvAddonSettings.kt",
+    "capture": "docs/evidence/android-tv-settings-addons.png",
+    "verification": "1920x1080 isolated fixture render and scoped D-pad checks; persistence/account/pairing contracts and final parity unqualified"
   },
   {
     "id": "Tv3SignOut",
@@ -381,9 +384,10 @@
     "title": "Settings \u2014 sign out",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSettingsDialogs.kt",
+    "capture": "docs/evidence/android-tv-settings-signout.png",
+    "verification": "1920x1080 remote-style fixture confirmation; Cancel passed; real account sign-out and final typography unqualified"
   },
   {
     "id": "M3Welcome",

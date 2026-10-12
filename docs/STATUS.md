@@ -139,3 +139,11 @@ pause intent and suppresses pre-open zero progress; repeated source attempts use
 fresh player sessions. Source retry queues history persistence before reopening.
 Full source-recovery/persistence, real multi-track changes, HLS/HDR/live and all
 TV settings/data contracts remain unqualified. `TV_PLAYER.md` records the scopes.
+
+TV settings checkpoint: the supplied sidebar and dedicated Playback/Subtitles/
+Add-ons/sign-out layouts now have TV renderers. Add-on actions use the existing
+local installation/profile-toggle controller. Persistent preferences, account/
+device data and add-on pairing are still unavailable on ordinary connections;
+the review fixture exercises those controls with explicit sample data. The new
+small switch dependency supports the ZIP's independent track/thumb sizes. Full
+TV parity and connected settings behavior remain unfinished.
