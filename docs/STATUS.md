@@ -130,3 +130,12 @@ deletion, password keyboard input, and Back through entry steps. The supplied
 boards still require complete visual, motion and connected-flow qualification;
 see `ANDROID_TV_DESIGN.md`. This checkpoint does not complete Android TV or the
 broader KMP parity objective.
+
+TV playback checkpoint: dedicated controls, buffering, seek preview, track sheet,
+intro skip, next-episode decision and source failure now render. Remote fixture
+checks passed; a separate real KitePlayer MP4 check decoded video, observed a seek
+beyond 900 ms, and observed Playing/Paused. Shared native opening now preserves
+pause intent and suppresses pre-open zero progress; repeated source attempts use
+fresh player sessions. Source retry queues history persistence before reopening.
+Full source-recovery/persistence, real multi-track changes, HLS/HDR/live and all
+TV settings/data contracts remain unqualified. `TV_PLAYER.md` records the scopes.

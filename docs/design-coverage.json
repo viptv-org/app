@@ -274,9 +274,10 @@
     "title": "Player \u2014 starting",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerStates.kt",
+    "capture": "docs/evidence/android-tv-player-buffer.png",
+    "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
     "id": "Tv3PlayerControls",
@@ -284,9 +285,10 @@
     "title": "Player \u2014 controls",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerControls.kt",
+    "capture": "docs/evidence/android-tv-player-controls.png",
+    "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
     "id": "Tv3PlayerScrub",
@@ -294,9 +296,10 @@
     "title": "Player \u2014 scrubbing",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlaybackTimeline.kt",
+    "capture": "docs/evidence/android-tv-player-scrub.png",
+    "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
     "id": "Tv3PlayerSkip",
@@ -304,9 +307,10 @@
     "title": "Player \u2014 Skip intro",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerStates.kt",
+    "capture": "docs/evidence/android-tv-player-skip.png",
+    "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
     "id": "Tv3PlayerAudio",
@@ -314,9 +318,10 @@
     "title": "Player \u2014 audio and subtitles",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlaybackTrackPicker.kt",
+    "capture": "docs/evidence/android-tv-player-tracks.png",
+    "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
     "id": "Tv3PlayerNext",
@@ -324,9 +329,10 @@
     "title": "Player \u2014 next episode",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvNextEpisode.kt",
+    "capture": "docs/evidence/android-tv-player-next.png",
+    "verification": "1920x1080 fixture render; Keep watching dismisses without advance; final typography and connected next-source playback unqualified"
   },
   {
     "id": "Tv3PlayerError",
@@ -334,9 +340,10 @@
     "title": "Player \u2014 source failed",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerStates.kt",
+    "capture": "docs/evidence/android-tv-player-error.png",
+    "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
     "id": "Tv3SetPlayback",

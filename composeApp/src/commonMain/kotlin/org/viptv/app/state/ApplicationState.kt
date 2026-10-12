@@ -38,6 +38,7 @@ data class ApplicationState(
     val enabledAddonIds: Set<String> = emptySet(),
     val sourceTitle: Card? = null,
     val sources: List<SourceCandidate> = emptyList(),
+    val playingSource: SourceCandidate? = null,
     val playback: PlaybackInput? = null,
     val paused: Boolean = false,
     val history: List<HistoryDisplay> = emptyList(),
@@ -202,11 +203,16 @@ class ApplicationController(private val scope: CoroutineScope) {
         run { mutable.value = mutable.value.copy(sources = requireNotNull(local).sources(requireNotNull(mutable.value.selectedProfile), card)) }
     }
     fun playSource(source: SourceCandidate) = run {
+        progressJob?.join()
         val input=requireNotNull(local).openSource(source.id)
         lastProgress=null
         completionSeen=false
         progressSavedAt=TimeSource.Monotonic.markNow()
-        mutable.value = mutable.value.copy(playback = input, paused = false, screen = Screen.Player)
+        mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = false, screen = Screen.Player)
+    }
+    fun retrySource(source: SourceCandidate) {
+        if (!completionSeen) saveProgress(false)
+        playSource(source)
     }
     fun pausePlayback() {
         val paused=!mutable.value.paused

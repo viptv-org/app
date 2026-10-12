@@ -50,3 +50,10 @@ Quality, format, add-on attribution and ranking currently render from structured
 preview values; normal `SourceCandidate` data lacks those fields. TV title options
 have temporary unavailable notices for My List and trailers. Cast/resume and
 recommendation presentation is currently supplied only in the review fixture.
+
+### GAP-023 — TV playback episode picker and control failure notice
+
+`TvPlayerEpisodePicker` supplies a bottom episode shelf opened by the provided
+Episodes pill; the current TV ZIP has no separate player episode-picker board.
+`TvPlayerControls` adds a small nonfatal control-error notice, distinct from the
+supplied full source-failure screen. Both need a supplied design review.

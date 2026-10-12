@@ -16,6 +16,7 @@ import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.player.PlayerScreen
+import org.viptv.app.features.player.PlayerRoute
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.browse.BrowseScreen
 import org.viptv.app.features.library.LibraryScreen
@@ -54,7 +55,7 @@ fun App(
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
                     state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
                     controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile)
-                Screen.Player -> PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer, state.sourceTitle, phone = !browser && !television && !desktopChrome, canvasColor = if (browser) androidx.compose.ui.graphics.Color.Transparent else androidx.compose.ui.graphics.Color.Black)
+                Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources))) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })

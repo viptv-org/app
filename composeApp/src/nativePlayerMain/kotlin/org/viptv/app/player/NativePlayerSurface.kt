@@ -13,15 +13,18 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
-    key(input.id) {
+    key(input) {
         val player = rememberKitePlayer()
         val latestObserve by rememberUpdatedState(observe)
+        val latestPaused by rememberUpdatedState(paused)
         var opened by remember { mutableStateOf(false) }
         KitePlayerVideo(player, modifier)
-        LaunchedEffect(input.id) {
+        LaunchedEffect(input) {
             try {
                 player.open(MediaItem(uri = input.uri, headers = input.headers, startPosition = input.positionMillis.milliseconds))
+                if (latestPaused) player.pause() else player.play()
                 opened = true
+                latestObserve(PlayerFact.Status(player.state.value.status.name))
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { latestObserve(PlayerFact.Failed) }
         }
@@ -44,11 +47,12 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             }
         }
         LaunchedEffect(player) {
-            player.progress.collect { latestObserve(PlayerFact.Progress(it.positionMillis, player.state.value.durationMillis)) }
+            player.progress.collect { if (opened) latestObserve(PlayerFact.Progress(it.positionMillis, player.state.value.durationMillis)) }
         }
         LaunchedEffect(player) {
             player.state.collect { state ->
-                latestObserve(if (state.error != null) PlayerFact.Failed else PlayerFact.Status(state.status.name))
+                if (state.error != null) latestObserve(PlayerFact.Failed)
+                else if (opened || state.status.name != "Playing") latestObserve(PlayerFact.Status(state.status.name))
                 latestObserve(PlayerFact.Properties(state.volume, state.speed, state.subtitleScale))
                 latestObserve(PlayerFact.Tracks(PlaybackTracks(
                     state.tracks.audio.mapIndexed { index, track -> PlaybackTrack(track.id.value, track.label.takeUnless { it.isBlank() || it == "und" } ?: "Audio track ${index + 1}", track.id == state.tracks.selectedAudio) },

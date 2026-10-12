@@ -27,20 +27,27 @@ import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
-    observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black) {
-    val commands = remember(input?.id) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
-    var position by remember(input?.id) { mutableStateOf(input?.positionMillis ?: preview?.positionMillis ?: 0) }
-    var duration by remember(input?.id) { mutableStateOf(preview?.durationMillis) }
-    var tracks by remember(input?.id) { mutableStateOf(PlaybackTracks()) }
+    observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black,
+    television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
+    playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}) {
+    if (television) {
+        TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
+            previewFrame = previewFrame, initialFacts = listOfNotNull(preview))
+        return
+    }
+    val commands = remember(input) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
+    var position by remember(input) { mutableStateOf(input?.positionMillis ?: preview?.positionMillis ?: 0) }
+    var duration by remember(input) { mutableStateOf(preview?.durationMillis) }
+    var tracks by remember(input) { mutableStateOf(PlaybackTracks()) }
     var showTracks by remember { mutableStateOf(false) }
-    var locked by remember(input?.id) { mutableStateOf(false) }
+    var locked by remember(input) { mutableStateOf(false) }
     var visible by remember { mutableStateOf(true) }
     var interaction by remember { mutableStateOf(0) }
     var volume by remember { mutableStateOf(1f) }
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
     var controlError by remember { mutableStateOf<String?>(null) }
-    var buffering by remember(input?.id) { mutableStateOf(input != null) }
+    var buffering by remember(input) { mutableStateOf(input != null) }
     LaunchedEffect(paused) { if (paused) visible = true }
     LaunchedEffect(visible, paused, interaction, buffering) {
         if (visible && !paused && !buffering && input != null) { delay(5000); visible = false }
