@@ -34,26 +34,29 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         LaunchedEffect(focused?.identity, browsing) { if (browsing) { delay(400); settled = focused } else settled = null }
         val original = if (browsing) settled ?: home?.hero else home?.hero
         val card = original?.let { summaryCards[it.identity.id] ?: it }
+        val arrival = rememberTvContentArrival(home != null)
         if (home == null) TvHomeLoading(scale) else {
-            TvHomeBackdrop(card, scale, browsing)
-            if (card != null) {
-                TvHomeVisibility(browsing, scale, 24) {
-                    Crossfade(card, animationSpec = tween(300, easing = easing), label = "Focused title summary") {
-                        TvBrowseSummary(it, settled ?: it, scale)
+            Box(Modifier.fillMaxSize().then(arrival)) {
+                TvHomeBackdrop(card, scale, browsing)
+                if (card != null) {
+                    TvHomeVisibility(browsing, scale, 24) {
+                        Crossfade(card, animationSpec = tween(300, easing = easing), label = "Focused title summary") {
+                            TvBrowseSummary(it, settled ?: it, scale)
+                        }
+                    }
+                    TvHomeVisibility(!browsing, scale, -60, 360) {
+                        home.hero?.let { hero ->
+                            TvHero(hero, open, play, playFocus, if (home.rows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, slides.size.coerceAtLeast(1))
+                        }
                     }
                 }
-                TvHomeVisibility(!browsing, scale, -60, 360) {
-                    home.hero?.let { hero ->
-                        TvHero(hero, open, play, playFocus, if (home.rows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, slides.size.coerceAtLeast(1))
-                    }
-                }
-            }
-            TvFocusScroll(manual = true) {
-                LazyColumn(Modifier.fillMaxSize().padding(top = top), state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
-                    itemsIndexed(home.rows, key = { _, row -> row.id }) { index, row ->
-                        TvHomeShelf(row, scale, if (index == 0) firstCard else null, showFocus = landed,
-                            up = { browsing = false; focused = null },
-                            focus = { focused = it; if (!browsing) landed = false; browsing = true; scope.launch { rows.scrollToItem(index) } }, open, retry)
+                TvFocusScroll(manual = true) {
+                    LazyColumn(Modifier.fillMaxSize().padding(top = top), state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
+                        itemsIndexed(home.rows, key = { _, row -> row.id }) { index, row ->
+                            TvHomeShelf(row, scale, if (index == 0) firstCard else null, showFocus = landed,
+                                up = { browsing = false; focused = null },
+                                focus = { focused = it; if (!browsing) landed = false; browsing = true; scope.launch { rows.scrollToItem(index) } }, open, retry)
+                        }
                     }
                 }
             }

@@ -26,7 +26,12 @@ from keyboard focus during exit. Returning to Home restores the header. Summary
 progress and metadata now use the settled card together rather than immediately
 mixing a new focus target's progress into the previous title.
 
+Home content now fades in over 200 ms when its initial snapshot arrives. A shelf
+also fades when its state changes from pending to ready; already-loaded shelves
+do not replay that arrival animation when lazy composition recreates them. The
+alpha is read in the graphics layer rather than recomposing the layout per frame.
+
 Remaining work includes frame-by-frame transition comparison,
-loading-to-content fade, reduced-motion visual qualification, actual carousel selection
+reduced-motion visual qualification, actual carousel selection
 and cycling, richer provider presentation data, and full typography comparison.
 The fixture indicator count does not mean that carousel cycling is implemented.

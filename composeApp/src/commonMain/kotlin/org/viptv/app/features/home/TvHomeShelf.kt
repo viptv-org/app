@@ -18,11 +18,12 @@ import org.viptv.engine.wire.*
 internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: () -> Unit,
     focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit) {
     val portrait = row.id != "continue"
+    val arrival = rememberTvContentArrival(row.state == RowState.READY)
     Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
         Text(row.title, Modifier.padding(start = 96.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
             letterSpacing = (-0.3f * scale).sp, fontWeight = FontWeight.SemiBold)
         TvFocusScroll {
-            LazyRow(contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
+            LazyRow(modifier = arrival, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
                 when (row.state) {
                     RowState.READY -> itemsIndexed(row.cards.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }, key = { _, card -> card.provider_id + ":" + card.identity.kind + ":" + card.identity.id }) { index, card ->
                         TvCatalogCard(card, scale, portrait, Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first) else Modifier)

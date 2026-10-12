@@ -42,6 +42,10 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
     val current = screen ?: selected
     val go: (Screen) -> Unit = navigate ?: { selected = it }
     val query: (String) -> Unit = search ?: { term = it }
+    var homeArrived by remember(tvDetailVariant) { mutableStateOf(tvDetailVariant != "LoadingThenReady") }
+    LaunchedEffect(tvDetailVariant) {
+        if (tvDetailVariant == "LoadingThenReady") { kotlinx.coroutines.delay(3000); homeArrived = true }
+    }
     ViptvTheme(television) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             val phone = maxWidth < 640.dp && !television && !desktop && !browser
@@ -82,7 +86,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 { go(Screen.Home) }, {}, {}, {}, {}, television)
                             Screen.Movies, Screen.Series, Screen.Discover -> if (television) TvBrowseScreen(PreviewTvHome.movies, false, { go(Screen.Details) }, PreviewTvHome.genres, PreviewTvHome.membership, 4)
                                 else BrowseScreen(current, PreviewData.home, television) { go(Screen.Details) }
-                            else -> if (television) TvHomeScreen(if (tvDetailVariant == "Loading") null else PreviewTvHome.home, { go(Screen.Details) }, { go(Screen.Sources) }, {}, go,
+                            else -> if (television) TvHomeScreen(if (tvDetailVariant == "Loading" || !homeArrived) null else PreviewTvHome.home, { go(Screen.Details) }, { go(Screen.Sources) }, {}, go,
                                 PreviewData.profile, PreviewTvHome.summaries, listOf(PreviewData.hero) + PreviewData.posters.take(4))
                                 else HomeScreen(PreviewData.home, television, { go(Screen.Details) }, {}, desktop, { go(Screen.Sources) }, tablet, go, browser)
                         }

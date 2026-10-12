@@ -30,3 +30,8 @@ TV `Settings --es ui_variant Playback|Subs|Addons|SignOut` renders the correspon
 settings fixture. Its preferences and profile add-on toggles change in memory;
 those actions do not prove persistent engine settings. The sign-out fixture
 uses a remote-style account confirmation and never calls a real logout endpoint.
+
+TV `Home --es ui_variant LoadingThenReady` keeps the loading placeholders visible
+for three seconds, then supplies the fixture snapshot to the same screen instance.
+This exercises the real loading-to-content transition without account, provider,
+or persistence operations. `Loading` remains the static loading-scene entry point.
