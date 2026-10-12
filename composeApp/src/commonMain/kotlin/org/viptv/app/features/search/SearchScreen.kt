@@ -3,6 +3,8 @@ package org.viptv.app.features.search
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items as rowItems
@@ -23,19 +25,21 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean, query: (String) -> Unit, open: (Card) -> Unit) {
     var filter by remember { mutableStateOf("All") }
+    val unique = results.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
     val visible = when (filter) {
-        "Movies" -> results.filter { it.identity.kind == "movie" }
-        "Series" -> results.filter { it.identity.kind == "series" }
-        "Channels" -> results.filter { it.identity.kind in listOf("channel", "tv") }
-        "People" -> emptyList()
-        else -> results
+        "Movies" -> unique.filter { it.identity.kind == "movie" }
+        "Series" -> unique.filter { it.identity.kind == "series" }
+        "Channels" -> unique.filter { it.identity.kind in listOf("channel", "tv") }
+        else -> unique
     }
-    Column(Modifier.fillMaxSize().padding(if (desktop) 32.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(if (desktop) 18.dp else 24.dp)) {
-        Text(if (desktop && term.isNotBlank()) "Results for “$term”" else "Search",
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+    val phone = maxWidth < 640.dp
+    Column(Modifier.fillMaxSize().imePadding().padding(horizontal = if (phone) 16.dp else 40.dp, vertical = if (phone) 8.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp)) {
+        if (!phone) Text(if (desktop && term.isNotBlank()) "Results for “$term”" else "Search",
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
-        if (!desktop) OutlinedTextField(term, query, Modifier.fillMaxWidth(), placeholder = { Text("Search movies, series and channels") }, singleLine = true)
-        if (desktop) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("All", "Movies", "Series", "Channels", "People").forEach { tab ->
+        if (!desktop) SearchField(term, query)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("All", "Movies", "Series", "Channels").forEach { tab ->
                 Text(tab, Modifier.background(if (filter == tab) Palette.text else Color(0xFF202022), RoundedCornerShape(18.dp))
                     .clickable { filter = tab }.padding(horizontal = 14.dp, vertical = 7.dp),
                     color = if (filter == tab) Palette.background else Palette.text,
@@ -45,25 +49,27 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         error?.let { Text(it, color = Palette.danger) }
         if (!busy && term.isNotBlank() && visible.isEmpty() && error == null) Text("No matches. Try another search.", color = Palette.secondary)
+        if (phone && term.isNotBlank() && visible.isNotEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         val groups = visible.groupBy { it.provider_id }
         if (groups.size > 1) {
             val labels=addons.associate { it.id to it.name }
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 groups.forEach { (provider, cards) ->
                     item(key = "group:$provider") {
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(labels[provider] ?: "Results", style = MaterialTheme.typography.titleMedium)
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                rowItems(cards, key = { it.identity.id }) { MediaCard(it, width = 160, portrait = true, open = open) }
+                                rowItems(cards, key = { it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = 160, portrait = true, open = open) }
                             }
                         }
                     }
                 }
             }
         } else {
-            LazyVerticalGrid(GridCells.Adaptive(if (desktop) 172.dp else 240.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                items(visible, key = { it.provider_id + ":" + it.identity.id }) { MediaCard(it, width = if (desktop) 172 else 240, portrait = true, open = open) }
+            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 24.dp)) {
+                items(visible, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = if (phone) 112 else 172, portrait = true, showLabels = !phone, open = open) }
             }
         }
     }
+}
 }

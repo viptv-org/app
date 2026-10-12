@@ -52,7 +52,7 @@ fun App(
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {
                     if (browser || television) TopNavigation(state.screen, television, controller::navigate)
-                    else if (!desktopChrome && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                    else if (!desktopChrome && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                     else if (!desktopChrome && !compact) Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 20.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Brand(); Spacer(Modifier.weight(1f)); TextButton(onClick = { controller.navigate(Screen.Settings) }) { Text("Settings") }
                     }
@@ -71,7 +71,7 @@ fun App(
                         }
                     }
                   }
-                  if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
+                  if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       BottomNavigation(state.screen, controller::navigate)
                   }
                 }
