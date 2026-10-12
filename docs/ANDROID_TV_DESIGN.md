@@ -53,3 +53,6 @@ layout and missing connected feed/actions are described in `TV_CALENDAR.md`.
 
 PIN layout, masking, longer-PIN compatibility and preview limits are described
 in `TV_PIN.md`.
+
+Rapid search-input handling, bounded caret and shared loading placeholders are
+described in `TV_SEARCH.md`.

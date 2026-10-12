@@ -186,6 +186,7 @@ class ApplicationController(private val scope: CoroutineScope) {
         mutable.value=mutable.value.copy(home=updated.home)
         mutable.value=mutable.value.copy(home=requireNotNull(local).refreshHome(profile))
     }
+    fun editSearch(edit: (String) -> String) = search(edit(mutable.value.searchTerm))
     fun search(term: String) {
         mutable.value = mutable.value.copy(searchTerm = term)
         run {

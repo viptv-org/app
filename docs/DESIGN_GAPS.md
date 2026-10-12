@@ -114,3 +114,10 @@ digit PINs, so `TvPinScreen` adds an eight-slot layout after the fifth digit and
 an OK key when submission is valid. Recovery-unavailable and error states also
 lack matching boards. These additional states need supplied design review;
 the initial four-slot scene follows the provided board.
+
+### GAP-031 — TV Search loading, empty/error and long-query states
+
+The populated `Tv3Search` board does not supply separate loading, empty, error or
+long-query boards. `TvSearchLoading` uses the supplied poster dimensions and
+shared motion-spec shimmer. Empty/error messages and single-line query ellipsis
+are provisional. These states need design review.

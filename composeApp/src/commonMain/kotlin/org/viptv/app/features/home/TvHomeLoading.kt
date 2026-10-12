@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.rememberTvLoadingShimmer
 
 @Composable
 internal fun TvHomeLoading(scale: Float) {

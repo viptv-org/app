@@ -47,6 +47,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
     val current = screen ?: selected
     val go: (Screen) -> Unit = navigate ?: { selected = it }
     val query: (String) -> Unit = search ?: { term = it }
+    val editQuery: ((String) -> String) -> Unit = { edit -> term = edit(term); search?.invoke(term) }
     val watchLive: (org.viptv.app.features.live.LiveChannel) -> Unit = { channel ->
         liveTitle = channel.card.copy(title = channel.current(PreviewLive.now)?.title ?: channel.card.title, subtitle = channel.card.title)
         go(Screen.Player)
@@ -92,8 +93,10 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 tvDetailVariant != "Unavailable", { go(Screen.Details) }, { go(Screen.Home) }, PreviewTvLibrary.watched)
                                 else LibraryScreen(PreviewData.posters, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) })
                             Screen.History -> HistoryScreen(PreviewData.history, false, null, { go(Screen.Details) }, {}, { go(Screen.Home) })
-                            Screen.Search -> if (television) TvSearchScreen(searchTerm ?: term, PreviewData.posters + PreviewLive.channels.take(3).map { it.card }, emptyList(), false, null, query, { go(Screen.Details) }, listOf("the whisper man", "the wild robot", "the white lotus"))
-                                else SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) })
+                            Screen.Search -> if (television) TvSearchScreen(searchTerm ?: term,
+                                if (tvDetailVariant == "Loading") emptyList() else PreviewData.posters + PreviewLive.channels.take(3).map { it.card },
+                                emptyList(), tvDetailVariant == "Loading", null, query, { go(Screen.Details) }, editQuery, listOf("the whisper man", "the wild robot", "the white lotus"))
+                                else SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) }, editQuery = editQuery)
                             Screen.Settings -> if (television) PreviewTvSettings(tvDetailVariant, go) else SettingsScreen(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
                                 { go(Screen.Profiles) }, {}, PreviewData.profile, { go(Screen.Home) })
                             Screen.ProfilePin -> if (television) PreviewTvPin(tvDetailVariant, go, entryBackChanged)

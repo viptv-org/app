@@ -68,7 +68,8 @@ fun App(
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome,
                                 play = { card -> if (state.localMode) controller.chooseSource(card) else controller.open(card) }, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile })
                             Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open)
-                            Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome, controller::search, controller::open, television)
+                            Screen.Search -> SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
+                                controller::search, controller::open, television, controller::editSearch)
                             Screen.Details -> DetailsScreen(state.detail, state.busy, state.error, { controller.navigate(Screen.Home) }, controller::chooseSource, television)
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy, state.error, controller::playSource, { controller.navigate(if (state.detail == null) Screen.Home else Screen.Details) }, state.detail, television)
                             Screen.Calendar -> CalendarScreen(emptyList(), emptyList(), television, controller::open, { controller.navigate(Screen.Settings) })

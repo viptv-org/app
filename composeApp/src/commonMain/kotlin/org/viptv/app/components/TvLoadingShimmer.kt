@@ -1,4 +1,4 @@
-package org.viptv.app.features.home
+package org.viptv.app.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.runtime.Composable

@@ -19,19 +19,19 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvSearchKeyboard(term: String, query: (String) -> Unit, scale: Float) {
+internal fun TvSearchKeyboard(edit: ((String) -> String) -> Unit, scale: Float) {
     val initial = remember { FocusRequester() }
     LaunchedEffect(Unit) { initial.requestFocus() }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-            TvKeyboardKey(Modifier.weight(1f), scale, "Space", activate = { query(term + " ") }) { Icon(Lucide.Space, "Space", Modifier.size(28.dp * scale), it) }
-            TvKeyboardKey(Modifier.weight(1f), scale, "Delete", activate = { query(term.dropLast(1)) }) { Icon(Lucide.Delete, "Delete", Modifier.size(28.dp * scale), it) }
+            TvKeyboardKey(Modifier.weight(1f), scale, "Space", activate = { edit { it + " " } }) { Icon(Lucide.Space, "Space", Modifier.size(28.dp * scale), it) }
+            TvKeyboardKey(Modifier.weight(1f), scale, "Delete", activate = { edit { it.dropLast(1) } }) { Icon(Lucide.Delete, "Delete", Modifier.size(28.dp * scale), it) }
         }
         "abcdefghijklmnopqrstuvwxyz1234567890".chunked(6).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
                 row.forEach { character ->
                     TvKeyboardKey(Modifier.weight(1f).then(if (character == 'h') Modifier.focusRequester(initial) else Modifier),
-                        scale, character.toString(), activate = { query(term + character) }) {
+                        scale, character.toString(), activate = { edit { it + character } }) {
                         Text(character.toString(), color = it, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }

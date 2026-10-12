@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -25,7 +26,8 @@ import org.viptv.engine.wire.IntegrationConnection
 
 @Composable
 internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean,
-    error: String?, query: (String) -> Unit, open: (Card) -> Unit, suggestions: List<String> = emptyList()) {
+    error: String?, query: (String) -> Unit, open: (Card) -> Unit, editQuery: ((String) -> String) -> Unit,
+    suggestions: List<String> = emptyList()) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val unique = results.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
@@ -37,12 +39,13 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 Row(Modifier.fillMaxWidth().height(72.dp * scale).background(Palette.raised, RoundedCornerShape(12.dp * scale)).padding(horizontal = 20.dp * scale),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                     Icon(Lucide.Search, null, Modifier.size(28.dp * scale))
-                    Text(term.ifBlank { "Search" }, fontSize = (30 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.SemiBold,
+                    Text(term.ifBlank { "Search" }, Modifier.widthIn(max = 418.dp * scale), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        fontSize = (30 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.SemiBold,
                         color = if (term.isBlank()) Palette.secondary else Palette.text)
                     Box(Modifier.width(2.dp * scale).height(36.dp * scale).background(Palette.accent))
                 }
                 Spacer(Modifier.height(24.dp * scale))
-                TvSearchKeyboard(term, query, scale)
+                TvSearchKeyboard(editQuery, scale)
                 Spacer(Modifier.height(68.dp * scale))
                 suggestions.forEach { suggestion ->
                     Row(Modifier.fillMaxWidth().height(56.dp * scale).clickable { query(suggestion) },
@@ -53,7 +56,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 }
             }
             LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(68.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
-                if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
+                if (busy && unique.isEmpty()) item { TvSearchLoading(scale) }
                 error?.let { item { Text(it, color = Palette.danger) } }
                 val groups = titles.groupBy { it.provider_id }
                 groups.forEach { (provider, cards) -> item(key = provider) {

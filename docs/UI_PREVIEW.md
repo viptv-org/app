@@ -63,3 +63,7 @@ episode resolution is exercised.
 TV `ProfilePin` starts with the supplied two masked digits; `Empty` starts empty.
 Digits/erase change preview memory and valid submission routes to Home through
 a synthetic callback. Back returns to Profiles. No stored PIN is checked.
+
+TV `Search --es ui_variant Loading` renders empty-result loading placeholders;
+other variants keep the existing search fixtures. Keyboard edits change preview
+memory only, with no provider requests.

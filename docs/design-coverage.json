@@ -179,7 +179,7 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/search/TvSearchScreen.kt",
+    "implementation": "docs/TV_SEARCH.md",
     "capture": "docs/evidence/android-tv-search.png",
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },

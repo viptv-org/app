@@ -23,9 +23,10 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.IntegrationConnection
 
 @Composable
-fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean, query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false) {
+fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean,
+    query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false, editQuery: ((String) -> String) -> Unit) {
     if (television) {
-        TvSearchScreen(term, results, addons, busy, error, query, open)
+        TvSearchScreen(term, results, addons, busy, error, query, open, editQuery)
         return
     }
     var filter by remember { mutableStateOf("All") }
