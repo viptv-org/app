@@ -15,7 +15,9 @@ import org.viptv.app.components.rememberTvLoadingShimmer
 internal fun TvSearchLoading(scale: Float) {
     val shimmer = rememberTvLoadingShimmer(scale)
     Column(Modifier.semantics { contentDescription = "Loading search results" }, verticalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-        Box(Modifier.size(300.dp * scale, 36.dp * scale).clip(RoundedCornerShape(6.dp * scale)).then(shimmer))
+        Box(Modifier.height(40.dp * scale)) {
+            Box(Modifier.size(300.dp * scale, 36.dp * scale).clip(RoundedCornerShape(6.dp * scale)).then(shimmer))
+        }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
             items(5) { Box(Modifier.size(212.dp * scale, 318.dp * scale).clip(RoundedCornerShape(12.dp * scale)).then(shimmer)) }
         }

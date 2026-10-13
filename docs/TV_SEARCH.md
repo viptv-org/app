@@ -25,3 +25,17 @@ fixtures; no board is certified as complete.
 Two emulator captures confirmed shimmer movement inside the loading poster
 shapes while the gutter remained unchanged. Desktop tests, Wasm compilation and
 Android assembly passed with the shared shimmer and producer-edit wiring.
+
+Channel cards now use the supplied 356×200 frame, 10 px corners, dark gradient,
+Bricolage channel text and 28 px LIVE badge. A white focus border fades over
+120 ms instead of relying on a subtle background change. Caption/subtitle line
+heights are explicit so inherited body metrics cannot add oversized rows.
+Channel numbers/program labels still require structured presentation data;
+normal cards display their supplied title/subtitle only.
+
+At 1920×1080 the isolated emulator moved from poster results into channels and
+Right into the next channel. It measured the first channel at y=640 and sampled
+its visible white focus border. Heading reservations and section gaps now align
+poster/channel anchors; loading reserves the same poster start. Desktop tests,
+Wasm compilation and Android assembly passed. Complete data/typography parity
+and other navigation paths remain unqualified.

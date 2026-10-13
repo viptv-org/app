@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "92c7244b5536b5f38b079c364fe31add418ab78723c90b719973c02a167f08f7",
+    "sha256": "e82ffa34ee9e364c4a10d7d5235500f75d63da3c16f099dee9df3e139ae13c6d",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -63,7 +63,8 @@
     "tv_backdrop_fallback": "preview supplied landscape remains visible; poster-only card uses theme upper background while shelf poster/focus remains; rich provider data still required",
     "tv_pairing": "QRose preview QR decoded by zbar to supplied .invalid URL; unavailable refresh/focus/email/Back and no-session no-QR/code/expiry passed; actual pairing/polling/login absent",
     "tv_signed_in": "preview identity labels/progress and completion-to-Profiles passed; real account/bootstrap transition absent",
-    "tv_track_focus_fallback": "preview stale subtitle ID, audio-only, empty tracks and original panel focus/Back passed; dynamic real track updates/persistence unqualified"
+    "tv_track_focus_fallback": "preview stale subtitle ID, audio-only, empty tracks and original panel focus/Back passed; dynamic real track updates/persistence unqualified",
+    "tv_search_channels": "preview poster-to-channel and Right navigation passed; first channel y=640 and white focus border sampled; provider number/program presentation still incomplete"
   },
   "desktop": {
     "compile": "passed",
