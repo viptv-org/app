@@ -112,3 +112,7 @@ discovery status; no add-on/network request runs.
 TV `Details --es ui_variant SeriesSeasons|SeriesDelayed` uses a two-season fixture
 whose resume target is in season 2. Delayed supplies episodes after two seconds.
 These variants check focus/season resolution without provider or history requests.
+
+TV `Player --es ui_variant SkipHalf|SkipEnd` provides halfway/expired intro facts
+for the countdown rail. `Skip` starts the same ten-second fixture range at zero.
+These cases do not supply real-provider intro markers or run an independent timer.

@@ -139,3 +139,25 @@ GAP-039. Backdrop blur, remaining font/raster differences and complete board
 parity remain unfinished. Capture: `evidence/tv-player-error.png`.
 
 Desktop tests, Wasm compilation and Android assembly passed for this checkpoint.
+
+## Intro-skip prompt
+
+The prompt now follows `Tv3PlayerSkip`: 280×72 at (1544,896), a 26-pixel library
+icon, explicit text line height, clipped 4-pixel countdown rail and a 300 ms
+fade-up entrance. The rail derives its remaining fraction from playback position
+and the supplied intro range, interpolating fact updates over 200 ms. There is no
+independent countdown clock. Missing or expired ranges do not produce a prompt.
+
+The isolated TV emulator checked full and half remaining rail pixels, expiry,
+explicit Skip seeking outside the intro range, and Up revealing/focusing audio
+controls. The fixture uses a ten-second range to match the motion example.
+Desktop tests, Wasm compilation and Android assembly passed. Real-provider intro
+range delivery, exact entrance timing and complete board parity remain unqualified.
+Captures: `evidence/tv-player-skip.png`, `evidence/tv-player-skip-half.png`.
+
+The bright vertical mark at the lower-left of this preview is visible in the
+provided reference and its background JPEG. The bundled `tv3title-2.jpg` is
+byte-identical to `42b16a2d66c54eeda67d0a2254679a5c.jpg` from the ZIP
+(SHA-256 `7d043ba9db58f227d8ad9c0d745faa4bc84bf19ded3fe62c10b9a17a175d2a36`).
+This identifies that particular preview mark; other layout artifacts require
+separate diagnosis. The supplied artwork was not modified.

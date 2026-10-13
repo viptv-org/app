@@ -65,7 +65,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             } else false
             Key.DirectionDown -> if (state.timelineFocused) { state.scrub = null; state.visible = false; root.requestFocus(); true }
                 else if (!state.visible && !state.failed && !state.buffering && !state.showNext) { state.reveal(); true } else false
-            Key.DirectionUp -> if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && (state.timelineFocused || state.rootFocused)) {
+            Key.DirectionUp -> if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && (state.timelineFocused || state.rootFocused || !state.visible)) {
                 state.scrub = null; state.reveal(audio = true); true
             } else false
             else -> if (event.key != Key.Back && !state.visible && !state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes) {
@@ -88,7 +88,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                         toggle = toggle, previewCommand = previewCommand, chooseSources = chooseSources, playEpisode = playEpisode)
                 }
                 val skip = extras.skip
-                if (!state.visible && skip != null && state.position in skip.startMillis until skip.endMillis) TvSkipPrompt(skip, scale) { state.send(PlayerCommand.Seek(skip.endMillis), previewCommand) }
+                if (!state.visible && skip != null && state.position in skip.startMillis until skip.endMillis) TvSkipPrompt(skip, state.position, scale) { state.send(PlayerCommand.Seek(skip.endMillis), previewCommand) }
             }
         }
         if (state.showTracks) TvPlaybackTrackPicker(state.tracks, state.subtitleSize, scale,

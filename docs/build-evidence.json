@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "f2356dcfe900e870052e01c1bee3a13e5b3f35804c55b5e92b0dc177ec00eb1f",
+    "sha256": "8506142659cc13af41bd6784333fcb6a365d916fe6eae162c51e9165464aeeb9",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -41,7 +41,8 @@
       "track_sheet_motion": "Bottom-entry/exit uses supplied audio board; native recording contains intermediate and settled positions; original, stale-ID, audio-only and empty focus/Back checks passed; blur and full parity unfinished",
       "controls_motion": "200 ms entrance/300 ms exit configured; native video contains visible/hidden/intermediate timeline-opacity samples; hidden Up/audio focus, sheet Back, Down reveal, seek cancel and successive Back passed; exact timing and live inactivity unqualified",
       "next_episode_motion": "600 ms shrink/reverse configured, delayed information fade-up; recording contains intermediate and settled geometry; PNG confirms 880x495 at (96,96); Play-next focus, Keep watching, explicit OK and Back passed; live decoded resizing and full parity unqualified",
-      "failure_surface": "ZIP backdrop/spacing/icon/action fills refined; retry drop shadow darkens sampled backdrop pixels; full, source-only and Back-only focus/actions passed; real provider retry/resume, TalkBack and complete parity unqualified"
+      "failure_surface": "ZIP backdrop/spacing/icon/action fills refined; retry drop shadow darkens sampled backdrop pixels; full, source-only and Back-only focus/actions passed; real provider retry/resume, TalkBack and complete parity unqualified",
+      "skip_prompt": "300 ms fade-up and 4 px position-driven rail implemented; full/half pixel checks, expired prompt absence, explicit seek and Up/audio focus passed; real-provider intro ranges and complete motion parity unqualified"
     },
     "tv_settings": {
       "render": "Playback, Subtitles, Add-ons and Sign-out at 1920x1080",

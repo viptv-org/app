@@ -13,6 +13,7 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
     val scene = when {
         variant.startsWith("Tracks") -> TvPlayerScene.Tracks
         variant.startsWith("Error") -> TvPlayerScene.Error
+        variant.startsWith("Skip") -> TvPlayerScene.Skip
         variant == "BufferFast" -> TvPlayerScene.Buffer
         else -> TvPlayerScene.entries.find { it.name == variant } ?: TvPlayerScene.Controls
     }
@@ -31,9 +32,13 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
     var paused by remember { mutableStateOf(true) }
     val duration = 3132000L
     val openSources = { go(Screen.Sources) }
-    val previewExtras = if (variant == "ErrorBackOnly") PreviewTvPlayback.extras.copy(
-        failureDescription = "Playback failed. Go back to choose another item.", fallbackLabel = null) else PreviewTvPlayback.extras
-    val initial = remember { if (native) emptyList() else listOf(PlayerFact.Progress(if (scene == TvPlayerScene.Skip) 5000 else 842000, duration),
+    val previewExtras = when {
+        variant == "ErrorBackOnly" -> PreviewTvPlayback.extras.copy(failureDescription = "Playback failed. Go back to choose another item.", fallbackLabel = null)
+        scene == TvPlayerScene.Skip -> PreviewTvPlayback.extras.copy(skip = TvSkipRange(0, 10000))
+        else -> PreviewTvPlayback.extras
+    }
+    val initialPosition = if (scene != TvPlayerScene.Skip) 842000L else when (variant) { "SkipHalf" -> 5000L; "SkipEnd" -> 10000L; else -> 0L }
+    val initial = remember { if (native) emptyList() else listOf(PlayerFact.Progress(initialPosition, duration),
         PlayerFact.Tracks(tracks), PlayerFact.Properties(1f, 1.0)) }
     val command: (PlayerCommand) -> Unit = { value ->
         when (value) {
