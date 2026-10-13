@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 
 
 root = Path(__file__).resolve().parents[1]
@@ -37,8 +38,8 @@ if stamp.exists() and stamp.read_text().strip() == revision and verified_artifac
     raise SystemExit(0)
 
 
-def git(*args):
-    return subprocess.check_output(["git", "-C", str(source), *args], text=True).strip()
+def git(*args, directory=source):
+    return subprocess.check_output(["git", "-C", str(directory), *args], text=True).strip()
 
 
 cache.mkdir(parents=True, exist_ok=True)
@@ -46,13 +47,18 @@ if source.exists():
     if git("rev-parse", "HEAD") != revision or git("status", "--porcelain"):
         raise SystemExit("Player source cache has a different revision or local edits")
 else:
-    subprocess.run(["git", "clone", "--filter=blob:none", "--no-checkout",
-                    pin["upstream_repository"], str(source)], check=True)
-    git("fetch", "origin", pin["base_revision"])
-    git("checkout", "--detach", pin["base_revision"])
-    git("bundle", "verify", str(bundle))
-    git("fetch", str(bundle), revision)
-    git("checkout", "--detach", revision)
+    with tempfile.TemporaryDirectory(prefix="source-import-", dir=cache) as temporary:
+        imported = Path(temporary) / "source"
+        subprocess.run(["git", "clone", "--filter=blob:none", "--no-checkout",
+                        pin["upstream_repository"], str(imported)], check=True)
+        git("fetch", "origin", pin["base_revision"], directory=imported)
+        git("checkout", "--detach", pin["base_revision"], directory=imported)
+        git("bundle", "verify", str(bundle), directory=imported)
+        git("fetch", str(bundle), revision, directory=imported)
+        git("checkout", "--detach", revision, directory=imported)
+        if git("rev-parse", "HEAD", directory=imported) != revision:
+            raise SystemExit("Player source import verification failed")
+        imported.rename(source)
 if git("rev-parse", "HEAD") != revision:
     raise SystemExit("Player source revision verification failed")
 
