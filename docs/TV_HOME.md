@@ -58,3 +58,15 @@ The isolated emulator measured the final shelf heading at y=512 and its first
 poster at y=564 after this adjustment. Up returned through Continue Watching to
 the billboard. Desktop tests, Wasm compilation and Android assembly passed.
 These checks qualify that scroll path, not every shelf/dataset or full board parity.
+
+Full-screen TV Home backdrops now require landscape artwork. A portrait-only
+card keeps its shelf poster but uses the theme background above the shelf,
+instead of enlarging a narrow poster into a soft full-screen crop. Rich landscape
+metadata remains an engine/provider contract requirement; this fallback does not
+replace connected-data or design-parity work.
+
+The isolated TV emulator checked the supplied landscape scene, then a
+portrait-only card: the upper background used the theme colour while the shelf
+poster and focus remained visible. Desktop tests, Wasm compilation and Android
+assembly passed. This is fallback rendering evidence, not rich-provider metadata
+or full board certification.

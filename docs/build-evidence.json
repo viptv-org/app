@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "5d24e2378ff255a3b4bc336c7b362e179a65744818148aabf4b6db6b806047b3",
+    "sha256": "b6c26f9e4974c939d3b4d526b314aa09a26954ad552e6b1e54011a3a7bc6601d",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -59,7 +59,8 @@
     "tv_email_code": "preview supplied draft/key focus, six-digit limit, erase, unavailable verification/resend and focus/Back passed; actual delivery, challenge verification and login absent",
     "tv_startup": "preview indicator movement/clipping and brand mark y=448\u2013536 passed; controller startup flag wired; real restore timing and signed-in account transition unqualified",
     "tv_catalog_states": "preview loading shimmer, safe Down without cards, empty genre activation and populated initial poster focus passed; connected feed/genre mapping still unqualified",
-    "tv_last_shelf": "measured tail space permits final heading y=512 and poster y=564; Up through prior shelf/billboard passed in preview; all datasets and full parity pending"
+    "tv_last_shelf": "measured tail space permits final heading y=512 and poster y=564; Up through prior shelf/billboard passed in preview; all datasets and full parity pending",
+    "tv_backdrop_fallback": "preview supplied landscape remains visible; poster-only card uses theme upper background while shelf poster/focus remains; rich provider data still required"
   },
   "desktop": {
     "compile": "passed",

@@ -42,7 +42,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val arrival = rememberTvContentArrival(home != null)
         if (home == null) TvHomeLoading(scale) else {
             Box(Modifier.fillMaxSize().then(arrival)) {
-                TvHomeBackdrop(card, scale, browsing)
+                TvHomeBackdrop(card, browsing)
                 if (card != null) {
                     TvHomeVisibility(browsing, scale, 24) {
                         Crossfade(card, animationSpec = tween(300, easing = easing), label = "Focused title summary") {

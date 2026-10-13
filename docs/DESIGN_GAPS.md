@@ -157,3 +157,11 @@ reachable through the isolated preview with explicit fixture challenge data.
 shared motion-spec shimmer. The populated Movies board does not supply a
 separate catalog-loading or empty/no-match board. These provisional states need
 design review; no full-width progress bar is inserted above existing results.
+
+### GAP-037 — TV focused-title background without landscape artwork
+
+When a card supplies only a portrait poster, `TvHomeBackdrop` uses the theme
+background rather than stretching it full-screen. The shelf poster remains.
+The supplied browsing board has landscape artwork; its missing-art state is
+provisional and needs review. Connected providers still need to supply appropriate
+wide artwork for full fidelity.

@@ -11,15 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TvHomeBackdrop(card: Card?, scale: Float, browsing: Boolean) {
+internal fun TvHomeBackdrop(card: Card?, browsing: Boolean) {
     Crossfade(card, animationSpec = tween(300, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)), label = "Focused title artwork") { value ->
-        AsyncImage(value?.landscape ?: value?.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+        AsyncImage(value?.landscape, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
             alignment = if (browsing) androidx.compose.ui.BiasAlignment(0f, -0.6f) else Alignment.Center)
     }
     Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(
