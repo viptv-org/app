@@ -28,7 +28,7 @@ if args.target == "android":
             raise SystemExit("Android NDK is missing")
         env["ANDROID_NDK_HOME"] = str(ndks[-1])
     output = root / "androidApp/build/generated/rustJni"
-    subprocess.run(["cargo", "ndk", "-t", "arm64-v8a", "-t", "x86_64", "--platform", "26", "-o", str(output), *build], cwd=core, env=env, check=True)
+    subprocess.run(["cargo", "ndk", "-t", "armeabi-v7a", "-t", "arm64-v8a", "-t", "x86_64", "--platform", "26", "-o", str(output), *build], cwd=core, env=env, check=True)
 else:
     subprocess.run(["cargo", *build], env=env, check=True)
     system = platform.system()

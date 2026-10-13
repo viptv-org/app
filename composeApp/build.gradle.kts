@@ -32,11 +32,11 @@ kotlin {
             kotlin.srcDir(rootProject.file("native/core/generated/native-kotlin"))
             dependencies {
                 implementation("io.github.yuroyami:kiteplayer-compose:0.3.0")
-                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.1") {
-                    version { strictly("0.3.0-viptv-presentation.1") }
+                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.2") {
+                    version { strictly("0.3.0-viptv-presentation.2") }
                 }
-                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.1") {
-                    version { strictly("0.3.0-viptv-presentation.1") }
+                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.2") {
+                    version { strictly("0.3.0-viptv-presentation.2") }
                 }
                 implementation("io.ktor:ktor-client-core:3.4.0")
                 implementation("io.ktor:ktor-client-okhttp:3.4.0")
@@ -77,7 +77,7 @@ tasks.matching {
 val buildDesktopEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_engine.py", "desktop")
-    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"))
+    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"))
     outputs.dir(layout.buildDirectory.dir("nativeResources"))
 }
 tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopEngine) }

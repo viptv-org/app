@@ -6,7 +6,7 @@ fork. The Git delta bundle preserves the upstream license and history.
 
 The app uses released `kiteplayer-compose:0.3.0` with strict constraints on only
 `kiteplayer-compose-ui` and `kiteplayer-compose-video` at
-`0.3.0-viptv-presentation.1`. Its generated Maven repository is scoped to those
+`0.3.0-viptv-presentation.2`. Its generated Maven repository is scoped to those
 modules. Unchanged native engine, FFmpeg and output dependencies remain upstream.
 
 `tools/build_player.py` verifies the bundle, imports the exact pinned source into
@@ -19,13 +19,14 @@ cause preparation to fail.
 The additive `KitePlayerComposeVideoWithPresentation` callback reports an actual
 rendered image asynchronously, without changing existing overload signatures.
 `WindowGpuCompleted` identifies Android owning-window GPU completion;
-`DesktopDrawCompleted` identifies actual Compose drawing with no OS scanout
+`AndroidSoftwareDrawCompleted` identifies actual Android bitmap drawing with
+no GPU completion fence. `DesktopDrawCompleted` identifies actual Compose drawing with no OS scanout
 report. The timestamp is monotonic observation time, not media PTS. Decoder
 publication, player status and background-only draws do not emit presentation
 proof. Observer replacement/disposal cancels delivery, and the app additionally
 fences facts by the current playback input.
 
-The source fork passed 18 renderer tests, additive ABI checks, Android/JVM builds,
+The source fork passed 18 JVM renderer and 55 Android host tests, additive ABI checks, Android/JVM builds,
 clean bundle import and independent published-consumer builds. All 18 checksums
 reproduced. Application/device runtime acceptance remains separate. Older
 Android native views use the existing frame event path; iOS presentation and

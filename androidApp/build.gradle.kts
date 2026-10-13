@@ -14,7 +14,7 @@ dependencies { implementation(project(":composeApp")); implementation("androidx.
 val buildAndroidEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_engine.py", "android")
-    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"))
+    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"))
     outputs.dir(layout.buildDirectory.dir("generated/rustJni"))
 }
 tasks.named("preBuild") { dependsOn(buildAndroidEngine) }

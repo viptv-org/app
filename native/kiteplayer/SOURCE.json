@@ -1,10 +1,10 @@
 {
   "upstream_repository": "https://github.com/yuroyami/kiteplayer.git",
   "base_revision": "92c7e41415847f8797909605cdca1547083dd1e9",
-  "fork_revision": "2c424b9885bceedb9fc44e369a1da50c8a87739d",
+  "fork_revision": "f494e92e04d33bbe473f80bca9aa4e866feaa78a",
   "bundle": "viptv-presentation.bundle",
-  "bundle_sha256": "c4f625ef3be21bfa8dd3bdaa009af7ced5a14f9617dcdc5a6225a695227c4282",
-  "version": "0.3.0-viptv-presentation.1",
+  "bundle_sha256": "4104e157fb2e058b8c3a3806df117bd692ad35ffe21243c21b6fed1b95e7b037",
+  "version": "0.3.0-viptv-presentation.2",
   "modules": [
     "io.github.yuroyami:kiteplayer-compose-ui",
     "io.github.yuroyami:kiteplayer-compose-video"
