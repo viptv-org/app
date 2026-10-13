@@ -136,3 +136,10 @@ with unfinished implementations, rather than missing designs.
 and an unavailable-code dialog beyond the populated `Tv3SignInEmail` board.
 These extra surfaces need design review. The supplied code-entry/phone boards
 exist and remain unfinished; no successful email delivery is implied.
+
+### GAP-034 — TV IPTV M3U/input/unavailable states
+
+The supplied IPTV board shows Xtream fields and an M3U entry tab, but no expanded
+M3U form, field-input dialog or missing-service state. `TvIptvSignIn` supplies
+those provisional surfaces. Its in-memory storage explanation intentionally
+differs from the board's TV-only persistence claim until storage is connected.

@@ -71,3 +71,7 @@ memory only, with no provider requests.
 TV `Connect --es ui_variant Email` starts the email-entry board with its vynxc
 draft and Gmail-key focus. Next shows the missing code-service state; no email
 is sent. Phone and Back navigate the existing entry state machine.
+
+TV `Connect --es ui_variant Iptv` starts the supplied Xtream form with example
+values and username focus. Edits stay in memory. Connect reports the absent
+provider service; no provider, playlist, account or catalog request runs.

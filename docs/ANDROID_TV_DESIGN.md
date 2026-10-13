@@ -62,3 +62,6 @@ are described in `TV_PASSWORD.md`.
 
 Dedicated email-entry layout and its unavailable-code/phone boundaries are
 described in `TV_EMAIL.md`.
+
+IPTV-entry layout and missing provider/storage integration are described in
+`TV_IPTV.md`.

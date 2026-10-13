@@ -98,9 +98,9 @@
     "title": "Sign in \u2014 IPTV provider",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_IPTV.md",
+    "capture": "docs/evidence/android-tv-iptv.png"
   },
   {
     "id": "Tv3SignedIn",
