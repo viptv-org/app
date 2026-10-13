@@ -20,6 +20,7 @@ import kotlin.time.Duration.Companion.seconds
 
 enum class Screen { Connect, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings }
 data class ApplicationState(
+    val starting: Boolean = false,
     val screen: Screen = Screen.Connect,
     val busy: Boolean = false,
     val error: String? = null,
@@ -45,7 +46,7 @@ data class ApplicationState(
 )
 
 class ApplicationController(private val scope: CoroutineScope) {
-    private val mutable = MutableStateFlow(ApplicationState())
+    private val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     private var connection: RemoteConnection? = null
     private var local: LocalConnection? = null
@@ -309,7 +310,7 @@ class ApplicationController(private val scope: CoroutineScope) {
                     is IllegalArgumentException -> "Enter a valid HTTPS server address."
                     else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
                 })
-            } finally { if (generation == current) mutable.value = mutable.value.copy(busy = false, sessionNotice = connection?.persistenceWarning) }
+            } finally { if (generation == current) mutable.value = mutable.value.copy(starting = false, busy = false, sessionNotice = connection?.persistenceWarning) }
         }
     }
 }

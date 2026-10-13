@@ -44,6 +44,7 @@ fun App(
     DisposableEffect(controller) { onDispose { controller.disconnect() } }
     ViptvTheme(television) {
         BoxWithConstraints(Modifier.fillMaxSize().background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
+            if (television && state.starting) { TvSplash(); return@BoxWithConstraints }
             val compact = maxWidth < 640.dp && !television
             val tablet = !compact && !television && !browser && !desktopChrome
             when (state.screen) {

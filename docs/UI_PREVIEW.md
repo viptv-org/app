@@ -79,3 +79,6 @@ provider service; no provider, playlist, account or catalog request runs.
 TV `Connect --es ui_variant EmailCode` renders the supplied code-entry board with
 fixture challenge status and digits. Verify/resend explain unavailable services,
 and Back returns to email entry. No real challenge or email is created.
+
+TV `Connect --es ui_variant Splash` renders the supplied animated startup scene.
+It performs no actual session restoration or authentication.

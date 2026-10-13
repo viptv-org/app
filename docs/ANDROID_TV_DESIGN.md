@@ -75,3 +75,5 @@ These scoped checks do not certify complete board parity or connected metadata.
 
 Email-code layout and missing verification/session integration are described in
 `TV_EMAIL_CODE.md`.
+
+The supplied startup splash and controller flag are described in `TV_SPLASH.md`.
