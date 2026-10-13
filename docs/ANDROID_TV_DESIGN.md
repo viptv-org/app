@@ -98,3 +98,11 @@ focus All instead of requesting an absent or disabled source row. The isolated
 emulator checked partial discovery animation, empty/loading-empty focus and
 Back dismissal. Desktop tests, Wasm compilation and Android assembly passed;
 real discovery timing/rich source metadata remain unqualified.
+
+Episode shelves resolve their active season from available data and resume
+coordinates, and attach the initial focus target to an episode in that season.
+If the resume ID is outside the chosen season, its first visible episode is the
+target. Up returns to the active season tab; Down returns to the valid episode.
+The isolated emulator checked later-season resume, season switching and delayed
+episode arrival. Desktop tests, Wasm compilation and Android assembly passed.
+Real feed/resume persistence and complete episode/motion parity remain work.

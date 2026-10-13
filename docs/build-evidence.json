@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "7494c000a813be92275507173b47206eb830e8ca88a6f4d2ec14fa0773fd351b",
+    "sha256": "f9f341757da592c598b03b6eef9ac4a5241194c11baaf40918e6d70202f89180",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -67,7 +67,8 @@
     "tv_search_channels": "preview poster-to-channel and Right navigation passed; first channel y=640 and white focus border sampled; provider number/program presentation still incomplete",
     "tv_profile_arrival": "video captured intermediate opacity/stagger; Manage navigation and settled artwork with duration scale zero passed; precise timing/reduced-motion onset and full parity pending",
     "tv_source_drawer_motion": "source focus and guarded rapid Back to details passed; recorded edge revealed content during animated exit; precise timing/all interruption cases unqualified",
-    "tv_source_loading": "partial discovery placeholder shimmer, loading-empty/empty All focus and Back passed in preview; real discovery timing/data unqualified"
+    "tv_source_loading": "partial discovery placeholder shimmer, loading-empty/empty All focus and Back passed in preview; real discovery timing/data unqualified",
+    "tv_episode_season_focus": "later-season resume, Up to active season, switch-to-first-season Down target and delayed data passed in preview; real episode/resume persistence unqualified"
   },
   "desktop": {
     "compile": "passed",

@@ -102,3 +102,7 @@ acknowledgements remain synthetic; no provider/player request is made.
 TV `Sources --es ui_variant LoadingEmpty|Empty` checks the All filter's focus when
 no selectable source exists. Loading retains three placeholders and synthetic
 discovery status; no add-on/network request runs.
+
+TV `Details --es ui_variant SeriesSeasons|SeriesDelayed` uses a two-season fixture
+whose resume target is in season 2. Delayed supplies episodes after two seconds.
+These variants check focus/season resolution without provider or history requests.
