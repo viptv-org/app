@@ -42,7 +42,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             latestObserve(PlayerFact.Presentation(PresentationProof.BrowserCompositorPresented))
         } }
         video.onloadedmetadata = {
-            video.currentTime = input.positionMillis / 1000.0
+            if (!input.live) video.currentTime = input.positionMillis / 1000.0
             latestObserve(input.mediaProgress((video.currentTime * 1000).toLong(), video.duration.takeIf { it.isFinite() }?.let { (it * 1000).toLong() }))
             null
         }
@@ -117,5 +117,8 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
         }
     }
-    LaunchedEffect(paused, video) { if (paused) video.pause() else video.play() }
+    LaunchedEffect(paused, video) {
+        if (paused) video.pause()
+        else requestBrowserPlay(video, { latestObserve(PlayerFact.Status("Paused")) }, { latestObserve(PlayerFact.Failed) })
+    }
 }

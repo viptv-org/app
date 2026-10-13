@@ -17,18 +17,24 @@ import org.viptv.engine.wire.Card
 
 @Composable
 fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, open: (Card) -> Unit,
-    history: () -> Unit, home: () -> Unit) {
-    if (television) { TvLibraryScreen(cards, available, open, home); return }
+    history: () -> Unit, home: () -> Unit, snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
+    query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
+    changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null) {
+    if (television) { TvLibraryScreen(cards, available, open, home, snapshot = snapshot, query = query, changeQuery = changeQuery, more = more, busy = busy, error = error); return }
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf("Date added") }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
-    val visible = when (sort) { "Date added" -> filtered.sortedByDescending { it.added_at_millis ?: Long.MIN_VALUE }; "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
+    val visible = if (snapshot != null) cards else when (sort) { "Date added" -> filtered.sortedByDescending { it.added_at_millis ?: Long.MIN_VALUE }; "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
+    val empty = libraryEmptyState(snapshot, query, available)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else if (television) 70.dp else 40.dp,
             vertical = if (phone) 8.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             if (!phone) Text("My List", fontSize = if (television) 36.sp else 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
-            LibraryControls(filter, { filter = it }, sort, { sort = it })
+            if (snapshot != null) LibraryHeader(snapshot, query, changeQuery, false, 1f, busy, null, null)
+            else LibraryControls(filter, { filter = it }, sort, { sort = it })
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+            (error ?: snapshot?.reason)?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
             Surface(onClick = history, shape = RoundedCornerShape(16.dp), color = Palette.surface) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -45,10 +51,10 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                     Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
                         Icon(Lucide.Bookmark, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)
                     }
-                    Text(if (available) "Your list is empty." else "My List is not available yet.", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(if (available) "Tap + on a movie or series to save it here." else "Saving titles is not available for this connection yet.", fontSize = 14.sp, color = Palette.secondary)
-                    Button(onClick = home, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Browse Home") }
+                    Text(empty.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(empty.message, fontSize = 14.sp, color = Palette.secondary)
+                    Button(onClick = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() }, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home") }
                 }
             } else LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(if (television) 220.dp else 176.dp),
                 modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp),
@@ -57,6 +63,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                     MediaCard(it, if (phone) 112 else 176, portrait = true, showLabels = !phone, open = open)
                 }
             }
+            more?.let { OutlinedButton(onClick = it, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Load more") } }
         }
     }
 }

@@ -1,10 +1,10 @@
 {
   "status": "experimental, incomplete overall",
-  "core": "1827c4a1a70b573c5f427f61a9abaa8006bb4486",
+  "core": "1c03990af6bd174634b7f7eb6603e8ba4553e2a2",
   "kite_renderer": "56f361b7610bf1d20c328cf919877e37baff9d1f",
-  "backend_tests_passed": 378,
-  "backend_tests_ignored": 7,
-  "desktop_tests_passed": 40,
+  "backend_tests_passed": 390,
+  "backend_tests_ignored": 10,
+  "desktop_tests_passed": 53,
   "android_release_sha256": "8919a268a0198d26023a08235576013227d0369eda786b9349806fe8d8ec4d06",
   "android_abis": [
     "armeabi-v7a",
@@ -32,7 +32,11 @@
     "focus_animation": "draw-phase border; real Home navigation"
   },
   "full_design_parity": "not certified",
-  "windows_macos": "CI workflow added; verification pending",
+  "windows_macos": {
+    "ci_run": 38411304240,
+    "build_package_native_engine_smoke": "passed",
+    "player_gui_qualified": false
+  },
   "production_deployed": false,
   "date": "2026-10-13",
   "native_source_plugin": {
@@ -41,5 +45,65 @@
     "backend_required": false,
     "episode": "S1E1",
     "playback_qualified": false
+  },
+  "platform_ci": {
+    "run": 38411304240,
+    "renderer": "passed",
+    "android": "passed",
+    "web": "passed",
+    "windows": "passed",
+    "macos": "passed",
+    "linux": "passed"
+  },
+  "backend": "1c0dbd94d68191f852627f9e7affed7aa7233c69",
+  "current_ui_goal": {
+    "status": "implemented; broader goal remains incomplete",
+    "hero_titles": 5,
+    "hero_interval_ms": 8000,
+    "real_library_titles": 154,
+    "real_library_genres": 41,
+    "real_library_warm_ms": 29,
+    "real_naruto_episodes": 220,
+    "real_naruto_seasons": 5,
+    "emulator_navigation": {
+      "frames": 643,
+      "median_ms": 16,
+      "p95_ms": 16,
+      "missed_deadlines_percent": 1.56
+    },
+    "native_new_episode_image_ms": [
+      160,
+      399
+    ],
+    "latest_physical_tv_installed": true,
+    "browser_gui_qualified": false,
+    "private_artifacts": "workspace .local-device-artifacts/goal-2026-10-13"
+  },
+  "physical_tv_home_prior_ui_baseline": {
+    "median_ms": 25,
+    "p95_ms": 73,
+    "frames": 361,
+    "missed_deadlines_percent": 11.36,
+    "final_ui_batch": false
+  },
+  "current_ui_apk_sha256": "fd71cfaa36a4d68733abda5cad537949688a1c41cef66905793028c832034da2",
+  "native_engine_profile": "release",
+  "current_ui_apk_bytes": 131340834,
+  "native_live": {
+    "public_playlist": true,
+    "channels": 100,
+    "backend_required": false,
+    "emulator_playback_rendered": true,
+    "back_to_cached_live": true,
+    "physical_playback_qualified": false
+  },
+  "physical_tv_current_home": {
+    "apk_sha256": "fd71cfaa36a4d68733abda5cad537949688a1c41cef66905793028c832034da2",
+    "recording": false,
+    "frames": 346,
+    "median_ms": 23,
+    "p95_ms": 65,
+    "missed_deadlines_percent": 10.12,
+    "performance_fully_accepted": false
   }
 }

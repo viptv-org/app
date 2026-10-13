@@ -23,6 +23,9 @@ interface LocalConnection : AutoCloseable {
     suspend fun search(profile: String, term: String): CatalogPage
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
     suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate>
+    suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = LiveCatalogPage(reason = "Live TV is unavailable on this device.")
+    suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = LiveGuideSnapshot(channel, reason = "The program guide is unavailable.")
+    suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = throw LocalFailure("This live channel is unavailable.")
     suspend fun rankSources(profile: String, sources: List<SourceCandidate>): List<SourceCandidate> = sources
     suspend fun openSource(id: String): PlaybackInput
     suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot
@@ -34,6 +37,7 @@ interface LocalConnection : AutoCloseable {
     suspend fun history(profile: String): List<HistoryDisplay>
     suspend fun discoveryControls(profile: String, type: String): DiscoveryControls = throw LocalFailure("Browse is unavailable for this profile.")
     suspend fun browse(profile: String, query: BrowseQuery): CatalogPage = throw LocalFailure("Browse is unavailable for this profile.")
+    suspend fun libraryPage(profile: String, query: org.viptv.engine.wire.LibraryQuery): org.viptv.engine.wire.LibrarySnapshot = throw LocalFailure("My List is unavailable on this device.")
     suspend fun library(profile: String): List<Card> = throw LocalFailure("My List is unavailable on this device.")
     suspend fun saveFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
     suspend fun removeFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")

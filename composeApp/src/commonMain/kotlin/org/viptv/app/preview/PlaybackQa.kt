@@ -14,7 +14,7 @@ import org.viptv.engine.wire.MediaIdentity
 @Composable
 fun PlaybackQa(close: () -> Unit = {}, canvasColor: Color = Color.Black) {
     val input = remember { PlaybackInput("public-flower-qa", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4") }
-    val title = remember { Card(MediaIdentity("public-flower-qa", "movie", emptyList()), "qa", "Flower · Public QA clip", badges = emptyList()) }
+    val title = remember { Card(identity = MediaIdentity("public-flower-qa", "movie", emptyList()), provider_id = "qa", title = "Flower · Public QA clip", badges = emptyList()) }
     var paused by remember { mutableStateOf(true) }
     ViptvTheme {
         Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {

@@ -54,7 +54,7 @@ private fun DetailArtwork(card: Card, modifier: Modifier) {
 @Composable
 private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, save: (Card) -> Unit, saved: Boolean) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(220.dp).height(120.dp),
+        if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(220.dp).height(120.dp),
             alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
         else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
         MediaMetadata(card)
@@ -66,6 +66,7 @@ private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, 
             Text("Play", fontWeight = FontWeight.SemiBold)
         }
         FavoriteAction(card, saved, save)
-        card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body) }
+        card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body,
+            maxLines = 4, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
     }
 }

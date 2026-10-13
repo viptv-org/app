@@ -41,8 +41,8 @@ internal fun SourceIntegrationForm(schema: SourceIntegrationSchema, busy: Boolea
     }, confirmButton = {
         TextButton({
             val configuration = buildJsonObject {
-                values.forEach { (key, value) -> put(key, value.trim()) }
-                put("providers", JsonArray(selected.map(::JsonPrimitive)))
+                values.forEach { (key, value) -> if (value.isNotBlank()) put(key, value.trim()) }
+                if (schema.provider_choices.isNotEmpty()) put("providers", JsonArray(selected.map(::JsonPrimitive)))
             }
             values.clear()
             save(configuration)

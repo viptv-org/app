@@ -36,7 +36,7 @@ class RemotePlaybackEventsTest {
         val parent = MediaIdentity("opaque-title", "series", emptyList())
         val identity = MediaIdentity("opaque-episode", "series", emptyList(), EpisodeCoordinates("aired", 2, 4))
         val events = RemotePlaybackEvents(remote, PlaybackInput("actual-attempt", "https://media.example/clip", profileId = "12"),
-            Card(identity, "metadata-provider", "Episode", badges = emptyList()), parent)
+            Card(identity = identity, provider_id = "metadata-provider", title = "Episode", badges = emptyList()), parent)
         assertEquals("fixture-tracker", events.emit(PlaybackEvent.Start, 0, 100_000).providerId)
         val stopped = events.emit(PlaybackEvent.Stop, 80_000, 100_000)
         assertEquals("pause", stopped.action)

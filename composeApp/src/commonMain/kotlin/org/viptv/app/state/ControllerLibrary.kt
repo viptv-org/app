@@ -7,13 +7,14 @@ fun ApplicationController.toggleFavorite(card: Card) = run {
     val profile = requireNotNull(mutable.value.selectedProfile)
     libraryHydration?.cancel()
     libraryHydration?.join()
-    loadLibrary()
+    if (mutable.value.library.isEmpty()) loadLibrary()
     val favorite = if (card.parent_identity != null || card.identity.episode != null)
         (local?.detail(profile, card) ?: requireNotNull(connection).detail(card)).item else card
     val saved = mutable.value.library.any { it.identity.kind == favorite.identity.kind && it.identity.id == favorite.identity.id }
     if (saved) local?.removeFavorite(profile, favorite) ?: requireNotNull(connection).removeFavorite(profile, favorite)
     else local?.saveFavorite(profile, favorite) ?: requireNotNull(connection).saveFavorite(profile, favorite)
     loadLibrary()
+    if (mutable.value.screen == Screen.Library) loadLibraryPage()
 }
 
 internal suspend fun ApplicationController.loadLibrary() {

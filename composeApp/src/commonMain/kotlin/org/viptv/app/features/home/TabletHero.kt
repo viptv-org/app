@@ -25,12 +25,12 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean) {
+internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {
     var notice by remember { mutableStateOf<String?>(null) }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val portrait = maxWidth < 900.dp
         Box(Modifier.fillMaxWidth().height(if (portrait) 600.dp else 480.dp)) {
-            AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            BufferedArtwork(card.landscape ?: card.poster, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha = 0.65f), Color.Transparent))))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.65f to Color.Black.copy(alpha = 0.15f), 1f to Palette.background)))
             Box(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 16.dp)) {
@@ -38,8 +38,8 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
             }
             Column(Modifier.align(Alignment.BottomStart).padding(start = 32.dp, end = 32.dp, bottom = 24.dp).widthIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(180.dp).height(128.dp),
-                    alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
+                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(180.dp).height(128.dp),
+                    alignment = Alignment.BottomStart, contentScale = ContentScale.Fit)
                 else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
                 MediaMetadata(card)
                 card.description?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = 2) }
@@ -57,6 +57,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                         Icon(Lucide.Info, "More info", Modifier.size(22.dp))
                     }
                 }
+                carousel?.let { HeroIndicators(it.count, it.index, it.progress) }
             }
         }
     }

@@ -36,8 +36,8 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 .55f to Color.Transparent, 1f to Palette.background)))
         } else Spacer(Modifier.height(64.dp))
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(240.dp).height(76.dp)
-                .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen },
+            if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(240.dp).height(76.dp)
+                ,
                 alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
             MediaMetadata(card, fontSize = 13f, lineHeight = 19f)
@@ -49,7 +49,8 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 Text("Play", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
             FavoriteAction(card, saved, save)
-            card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body) }
+            card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
+                maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
         }
     }
 }

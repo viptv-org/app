@@ -19,6 +19,7 @@ internal fun ApplicationController.releaseRemotePlayback(): Job? {
 
 internal fun ApplicationController.saveProgress(completed: Boolean, final: Boolean = false): Job? {
     val input=mutable.value.playback ?: return null
+    if (input.live) return null
     val sourceTitle=mutable.value.sourceTitle ?: return null
     val parent = mutable.value.detail?.item?.takeIf {
         it.identity.id == sourceTitle.parent_identity?.id && it.identity.kind == sourceTitle.parent_identity?.kind

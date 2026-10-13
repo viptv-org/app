@@ -9,7 +9,7 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     val subtitleContent: (suspend (String) -> ByteArray)? = null,
     val timelineOffsetMillis: Long = 0, val durationMillis: Long? = null,
     val remoteSeek: ((Long) -> Unit)? = null,
-    val preferences: org.viptv.app.connection.ProfilePreferences = org.viptv.app.connection.ProfilePreferences()) {
+    val preferences: org.viptv.app.connection.ProfilePreferences = org.viptv.app.connection.ProfilePreferences(), val live: Boolean = false) {
     private val subtitleChoices = kotlinx.coroutines.flow.MutableStateFlow(providerSubtitles)
     val providerSubtitles = subtitleChoices.asStateFlow()
     internal fun updateProviderSubtitles(values: List<org.viptv.engine.wire.SubtitleCandidate>) { subtitleChoices.value = values }

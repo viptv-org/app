@@ -15,7 +15,7 @@ import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
 
 data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null)
-data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList())
+data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null)
 class RemoteFailure(val status: Int, message: String) : Exception(message)
 
 class RemoteConnection(
@@ -72,7 +72,9 @@ class RemoteConnection(
         }
         val management = value["profile_management"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<ProfileManagement>(it) }
         return Bootstrap(management?.cards() ?: profiles, identity["profile_id"]?.jsonPrimitive?.contentOrNull,
-            value["home"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<HomeSnapshot>(it) }, profileManagement = management, plugins = value["integrations"]?.let { codec.decodeFromJsonElement(it) } ?: emptyList())
+            value["home"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<HomeSnapshot>(it) }, profileManagement = management, plugins = value["integrations"]?.let { codec.decodeFromJsonElement(it) } ?: emptyList(),
+            library = value["library"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<CatalogPage>(it).takeIf { page -> page.complete }?.cards },
+            preferences = value["preferences"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) })
     }
 
     suspend fun selectProfile(id: String): Bootstrap {
@@ -81,8 +83,12 @@ class RemoteConnection(
     }
 
     suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/v3/discover?type=all&search=${term.encodeURLParameter()}"))
-    suspend fun detail(card: Card): DetailSnapshot = (card.parent_identity ?: card.identity).let { detail(it.kind, it.id) }
-    suspend fun detail(kind: String, id: String): DetailSnapshot = codec.decodeFromJsonElement(call("/api/v3/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}"))
+    suspend fun detail(card: Card, offset: Int = 0): DetailSnapshot = (card.parent_identity ?: card.identity).let { detail(it.kind, it.id, offset) }
+    suspend fun detail(kind: String, id: String, offset: Int = 0): DetailSnapshot {
+        require(offset in 0..10_000)
+        val page = if (offset == 0) "" else "?offset=$offset"
+        return codec.decodeFromJsonElement(call("/api/v3/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page"))
+    }
 
     suspend fun subtitles(card: Card): org.viptv.engine.wire.SubtitleSnapshot = codec.decodeFromJsonElement(
         call("/api/v3/subtitles/${card.identity.kind.encodeURLPathPart()}/${card.identity.id.encodeURLPathPart()}"))
@@ -117,6 +123,7 @@ class RemoteConnection(
     private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?): HttpResponse = client.request(origin + path) {
             this.method = method
             contentType(ContentType.Application.Json)
+            header("x-viptv-image-delivery", if (browser) "proxy" else "direct")
             if (!browser) header(HttpHeaders.Origin, origin)
             access?.let { bearerAuth(it) }
             csrfValue?.let { header("x-csrf-token", it) }
@@ -128,7 +135,7 @@ class RemoteConnection(
 
     private suspend fun decode(response: HttpResponse): JsonElement {
         checkStatus(response)
-        return codec.parseToJsonElement(response.bodyAsText())
+        return codec.parseToJsonElement(response.bodyAsText()).resolveRemoteImages(origin)
     }
 
     private fun checkStatus(response: HttpResponse) {

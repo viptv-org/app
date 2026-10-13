@@ -17,21 +17,18 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TvBrowseSummary(card: Card, original: Card, scale: Float) {
+internal fun TvBrowseSummary(card: Card, scale: Float) {
     Box(Modifier.fillMaxWidth().height(508.dp * scale)) {
-        if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.offset(96.dp * scale, 96.dp * scale).size(420.dp * scale, 120.dp * scale)
-            .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen }, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
-        else Text(card.title, Modifier.offset(96.dp * scale, 96.dp * scale).width(1000.dp * scale), fontSize = (48 * scale).sp, lineHeight = (58 * scale).sp, fontWeight = FontWeight.Bold)
+        if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.offset(96.dp * scale, 96.dp * scale).size(420.dp * scale, 120.dp * scale)
+            , contentScale = ContentScale.Fit, alignment = Alignment.BottomStart)
+        else Box(Modifier.offset(96.dp * scale, 96.dp * scale).size(1000.dp * scale, 120.dp * scale)) {
+            Text(card.title, Modifier.align(Alignment.BottomStart), fontSize = (48 * scale).sp,
+                lineHeight = (58 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
         Box(Modifier.offset(96.dp * scale, 240.dp * scale)) {
-            TvMediaMetadata(card, scale, subtitleParts = card.subtitle?.split('·')?.map(String::trim)?.filter(String::isNotEmpty))
+            TvMediaMetadata(card, scale)
         }
         card.description?.let { Text(it, Modifier.offset(96.dp * scale, 290.dp * scale).width(700.dp * scale), color = Palette.body,
             fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
-        val progress = original.progress ?: card.progress
-        if (progress != null && original.subtitle != null) Row(Modifier.offset(96.dp * scale, 418.dp * scale),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-            TvWatchProgress(progress, Modifier.width(160.dp * scale).height(4.dp * scale), scale, rounded = true)
-            Text("Resume ${original.subtitle}", fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold)
-        }
     }
 }

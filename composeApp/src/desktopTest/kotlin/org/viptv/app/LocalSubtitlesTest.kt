@@ -41,7 +41,7 @@ class LocalSubtitlesTest {
         val connection = NativeLocalConnection(directory.resolve("qa.sqlite").toString(), Secrets(), platformClient())
         try {
             val addon = connection.installAddon("default", "$origin/manifest.json").single()
-            val card = Card(MediaIdentity("tt123", "movie", emptyList()), addon.id, "Fixture", badges = emptyList())
+            val card = Card(identity = MediaIdentity("tt123", "movie", emptyList()), provider_id = addon.id, title = "Fixture", badges = emptyList())
             val source = connection.sources("default", card).single()
             val input = connection.openSource(source.id)
             val subtitles = connection.subtitles("default", card)

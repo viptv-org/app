@@ -1,7 +1,6 @@
 package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -37,18 +36,18 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
             AsyncImage(card.landscape ?: card.poster, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            card.badges.firstOrNull()?.let { badge -> Text(badge, Modifier.align(Alignment.TopStart).padding(12.dp * scale)
+            card.badges.firstOrNull { !it.equals("Simkl", true) }?.let { badge -> Text(badge, Modifier.align(Alignment.TopStart).padding(12.dp * scale)
                 .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.75f), RoundedCornerShape(4.dp * scale))
                 .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale), color = Palette.text,
                 fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
+            org.viptv.app.components.FocusOutline(focused, 12.dp * scale, 3.dp * scale, Modifier.matchParentSize())
             if (focused) {
-                Box(Modifier.fillMaxSize().border(3.dp * scale, Palette.text, shape))
                 Box(Modifier.align(Alignment.Center).size(72.dp * scale).background(Palette.text.copy(alpha = 0.2f), CircleShape), contentAlignment = Alignment.Center) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(30.dp * scale), tint = Palette.text)
                 }
             }
             if (card.progress != null) LinearProgressIndicator(progress = { card.progress.toFloat() },
-                modifier = Modifier.fillMaxWidth().height(4.dp * scale).align(Alignment.BottomCenter), color = Palette.text, trackColor = Palette.text.copy(alpha = 0.3f))
+                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 3.dp * scale, vertical = 3.dp * scale).height(5.dp * scale), color = Palette.text, trackColor = Palette.text.copy(alpha = 0.3f))
         }
         Spacer(Modifier.height(14.dp * scale))
         Text(card.identity.episode?.let { "${it.episode}. ${card.title}" } ?: card.title, color = if (focused) Palette.text else Palette.body,

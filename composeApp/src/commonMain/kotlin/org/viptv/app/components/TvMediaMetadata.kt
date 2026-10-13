@@ -16,20 +16,20 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvMediaMetadata(card: Card, scale: Float, lineHeight: Float = 30f, subtitleParts: List<String>? = null) {
+    val parts = subtitleParts ?: card.metadataParts()
     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
-        if (subtitleParts != null) {
+        if (parts.isNotEmpty()) {
             val fixedLines = LocalTextStyle.current.copy(lineHeightStyle = LineHeightStyle(
                 LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None, LineHeightStyle.Mode.Fixed))
-            if (subtitleParts.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-                subtitleParts.forEachIndexed { index, part ->
+            if (parts.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalAlignment = Alignment.CenterVertically) {
+                parts.forEachIndexed { index, part ->
                     if (index > 0) Text("·", color = Color(0xFF8F8D89), fontSize = (24 * scale).sp, lineHeight = (lineHeight * scale).sp, style = fixedLines)
                     Text(part, fontSize = (24 * scale).sp, lineHeight = (lineHeight * scale).sp, fontWeight = FontWeight.Medium, color = Palette.body, style = fixedLines)
                 }
             }
-            if (subtitleParts.isNotEmpty() && card.badges.isNotEmpty()) Spacer(Modifier.width(6.dp * scale))
-        } else card.subtitle?.let { Text(it, fontSize = (24 * scale).sp, lineHeight = (lineHeight * scale).sp,
-            fontWeight = FontWeight.Medium, color = Palette.body) }
-        card.badges.forEach { badge -> Box(Modifier.height(maxOf(30f, lineHeight).dp * scale), contentAlignment = Alignment.Center) {
+            if (parts.isNotEmpty() && card.presentationBadges().isNotEmpty()) Spacer(Modifier.width(6.dp * scale))
+        }
+        card.presentationBadges().forEach { badge -> Box(Modifier.height(maxOf(30f, lineHeight).dp * scale), contentAlignment = Alignment.Center) {
             TvMediaBadge(badge, scale)
         } }
     }

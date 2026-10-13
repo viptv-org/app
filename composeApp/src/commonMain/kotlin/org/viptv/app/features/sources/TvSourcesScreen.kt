@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
@@ -41,17 +42,29 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val scale = maxWidth / 1920.dp
-            val first = remember { FocusRequester() }
+            val rowFocus = remember { mutableMapOf<String, FocusRequester>() }
+            var focusedSource by remember { mutableStateOf<String?>(null) }
+            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
             val filterFocus = remember { FocusRequester() }
             var quality by remember { mutableStateOf<String?>(null) }
             val visible = sources.filter { quality == null || info[it.id]?.quality == quality }
             val finding = loadingMore || busy && sources.isEmpty()
             val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
-            LaunchedEffect(quality, visible.isEmpty(), busy) {
-                if (visible.isNotEmpty() && !busy) first.requestFocus() else filterFocus.requestFocus()
+            LaunchedEffect(quality, visible.map { it.id }, busy) {
+                if (busy) return@LaunchedEffect
+                val target = visible.find { it.id == focusedSource } ?: visible.firstOrNull()
+                if (target == null) { filterFocus.requestFocus(); return@LaunchedEffect }
+                val index = visible.indexOf(target) + if (error != null) 1 else 0
+                val shown = listState.layoutInfo.visibleItemsInfo.any {
+                    it.key == target.id && it.offset >= listState.layoutInfo.viewportStartOffset &&
+                        it.offset + it.size <= listState.layoutInfo.viewportEndOffset
+                }
+                if (!shown) listState.scrollToItem(index)
+                withFrameNanos { }
+                rowFocus[target.id]?.requestFocus()
             }
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }.background(Color.Black.copy(alpha = 0.55f))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
+                .focusProperties { canFocus = false }.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(960.dp * scale).fillMaxHeight()
                 .graphicsLayer { translationX = size.width * (1f - motion.progress.value) }.background(Color(0xFF151515))
                 .padding(start = 64.dp * scale, end = 96.dp * scale, top = 72.dp * scale, bottom = 56.dp * scale)) {
@@ -75,11 +88,11 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 }
                 Spacer(Modifier.height(28.dp * scale))
                 TvFocusScroll {
-                LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
+                LazyColumn(Modifier.weight(1f), state = listState, verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
                     error?.let { item { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) } }
                     itemsIndexed(visible, key = { _, source -> source.id }) { index, source ->
-                        TvSourceRow(source, info[source.id], scale, if (index == 0) first else null, !busy, choose,
-                            up = if (index == 0) filterFocus else null)
+                        TvSourceRow(source, info[source.id], scale, rowFocus.getOrPut(source.id) { FocusRequester() }, !busy, choose,
+                            up = if (index == 0) filterFocus else null, focusedSource = { focusedSource = it })
                     }
                     if (finding) items(3) {
                         Box(Modifier.fillMaxWidth().height(104.dp * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)

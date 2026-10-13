@@ -2,6 +2,7 @@ package org.viptv.app.features.details
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -9,6 +10,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import androidx.compose.animation.core.tween
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.engine.wire.Card
@@ -24,16 +27,40 @@ internal data class TvDetailExtras(
 
 @Composable
 internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, sources: (Card) -> Unit,
-    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false) {
+    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        val scroll = rememberLazyListState()
+        val card = detail?.item
+        val scroll = key(card?.identity) { rememberLazyListState() }
         val scope = rememberCoroutineScope()
         val playFocus = remember { FocusRequester() }
         val episodeFocus = remember { FocusRequester() }
         var notice by remember { mutableStateOf<String?>(null) }
-        val card = detail?.item
         var episodeMode by remember(card?.identity) { mutableStateOf(false) }
+        var activeRow by remember(card?.identity) { mutableIntStateOf(0) }
+        var motion by remember(card?.identity) { mutableStateOf<Job?>(null) }
+        val density = LocalDensity.current
+        DisposableEffect(card?.identity) { onDispose { motion?.cancel() } }
+        fun offset(index: Int): Float = with(density) {
+            when (index) { 0 -> 0.dp; 1 -> 816.dp; else -> (816 + if (episodeMode) 656 else 461).dp }.toPx() * scale
+        }
+        suspend fun moveRow(index: Int) {
+            withFrameNanos { }
+            val current = offset(scroll.firstVisibleItemIndex) + scroll.firstVisibleItemScrollOffset
+            scroll.animateScrollBy(offset(index) - current, tween(350))
+        }
+        fun focusRow(index: Int) {
+            if (activeRow == index) return
+            activeRow = index; motion?.cancel()
+            motion = scope.launch { moveRow(index) }
+        }
+        fun returnHero() {
+            activeRow = 0; episodeMode = false; motion?.cancel()
+            motion = scope.launch {
+                moveRow(0)
+                if (activeRow == 0) playFocus.requestFocus()
+            }
+        }
         TvDetailBackdrop(card, scale, scroll.firstVisibleItemIndex > 0,
             with(LocalDensity.current) { scroll.firstVisibleItemScrollOffset.toDp().value.toInt() })
         TvFocusScroll(manual = true) {
@@ -49,13 +76,13 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                 }
                 if (detail.episodes.isNotEmpty()) item(key = "episodes") {
                     TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
-                        focused = { episodeMode = true; scope.launch { withFrameNanos { }; scroll.animateScrollToItem(1) } }, expanded = episodeMode,
+                        focused = { episodeMode = true; focusRow(1) }, expanded = episodeMode,
                         initial = episodeFocus, resumeId = extras.resume?.identity?.id,
-                        returnToHero = { scope.launch { scroll.animateScrollToItem(0); episodeMode = false; playFocus.requestFocus() } })
+                        returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor, busy = busy, loadPage = loadPage)
                 }
                 if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
                     TvRecommendationShelf(extras.recommendations, scale, open,
-                        focused = { scope.launch { scroll.animateScrollToItem(if (detail.episodes.isEmpty()) 1 else 2) } })
+                        focused = { focusRow(if (detail.episodes.isEmpty()) 1 else 2) })
                 }
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }

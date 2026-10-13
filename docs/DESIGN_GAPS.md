@@ -248,3 +248,26 @@ Phone, tablet, desktop and Web use a provisional shared preference form for lang
 ### GAP-049 — Profile metadata provider choice
 
 Add-on settings contain a provisional capability-driven choice of the profile’s one metadata/browsing provider. Search does not ask the user to choose a provider. Available choices come from server plugin descriptors and configured connections; native Stremio mode shows its single provider. Stream/subtitle assignments are preserved when changing metadata provider.
+
+### GAP-050 — Live catalog loading and pagination
+
+Live channels and guide programs are host-provided records. Missing guide, unavailable connections, loading and retry states use provisional messages; guide selection fetches only the selected channel. Group controls retain supplied geometry while binding opaque host group IDs. A provisional Load more channels action handles host pagination. Guide clocks render provider epoch timestamps in the device time zone, including midnight and DST transitions.
+
+Discovery text/number/date filters keep a draft and use a provisional Apply action to prevent incomplete values and per-keystroke requests. Multiple-choice discovery transport remains unsupported and is explicitly labeled rather than silently dropping a control.
+
+### GAP-051 — Combined library filters
+
+The user requested sorting inside the filter panel. A shared provisional panel
+now presents host-supplied sorting, watched state, genre, added date and linked
+watchlist status/personal-rating/episode filters. Saved titles and linked watchlists
+have a list picker. Phone controls use two rows to avoid clipping. Loading,
+partial metadata, empty filtered results and the paginated Load more action need
+matching updated boards. The supplied SkListFilter informs the available fields;
+its separate sorting/PRO examples are not claimed as implemented provider APIs.
+
+### GAP-052 — Bounded episode page loading
+
+Season labels and counts come from the host's canonical index. Selecting an
+unloaded season requests its first page. A provisional Load more episodes action
+fetches another bounded page; it needs a final placement/loading design. TV retains
+focus in the episode row after the last page and resets the gutter on season change.

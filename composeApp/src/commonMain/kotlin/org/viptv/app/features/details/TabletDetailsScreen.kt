@@ -27,14 +27,14 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
-internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false) {
-    val seasons = remember(detail?.episodes) { detailSeasons(detail?.episodes.orEmpty()) }
+internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {}) {
+    val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     var selectedKey by remember(detail?.item?.identity) { mutableStateOf<String?>(null) }
     val selected = seasons.find { (it.number?.toString() ?: "unknown") == selectedKey }
         ?: seasons.firstOrNull { (it.number ?: 0) > 0 } ?: seasons.firstOrNull()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth < 800.dp) {
-            DetailsScreen(detail, busy, error, back, play, save = save, saved = saved)
+            DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage)
             return@BoxWithConstraints
         }
         Row(Modifier.fillMaxSize()) {
@@ -47,7 +47,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         contentPadding = PaddingValues(start = 32.dp, end = 32.dp, top = 72.dp, bottom = 36.dp)) {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(300.dp).height(92.dp),
+                                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(300.dp).height(92.dp),
                                     alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
                                 else Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
                                 MediaMetadata(card)
@@ -60,6 +60,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                 FavoriteAction(card, saved, save)
                             }
                         }
+                        if (detail.recommendations.isNotEmpty()) item(key = "related") { RelatedTitles(detail.recommendations, open) }
                     }
                 }
                 IconButton(onClick = back, modifier = Modifier.padding(20.dp).size(40.dp)
@@ -70,8 +71,9 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
             selected?.let { season ->
                 LazyColumn(Modifier.weight(.5f).fillMaxHeight(), contentPadding = PaddingValues(horizontal = 28.dp, vertical = 40.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    item { DetailSeasonPicker(seasons, season, false) { selectedKey = it?.toString() ?: "unknown" } }
+                    item { DetailSeasonPicker(seasons, season, false) { selectedKey = it?.toString() ?: "unknown"; seasons.find { group -> group.number == it }?.takeIf { group -> group.episodes.isEmpty() }?.nextOffset?.let(loadPage) } }
                     items(season.episodes, key = ::episodeKey) { episode -> DetailEpisodeCard(episode, true, play, Modifier.fillMaxWidth(), tablet = true) }
+                    item { MoreEpisodes(season, detail?.next_cursor, busy, loadPage) }
                 }
             }
         }

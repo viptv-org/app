@@ -12,9 +12,9 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit) {
+internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, seekEnabled: Boolean = true) {
     Row(horizontalArrangement = Arrangement.spacedBy(48.dp)) {
-        IconButton(onClick = { skip(-10000) }, modifier = Modifier.size(56.dp)) {
+        IconButton(enabled = seekEnabled, onClick = { skip(-10000) }, modifier = Modifier.size(56.dp)) {
             PlaybackSkipIcon(false, 34.dp)
         }
         FilledIconButton(onClick = toggle, modifier = Modifier.size(72.dp),
@@ -22,7 +22,7 @@ internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) ->
             if (paused) Icon(painterResource(Res.drawable.ic_play_zip), "Play", Modifier.size(28.dp))
             else Icon(Lucide.Pause, "Pause", Modifier.size(28.dp))
         }
-        IconButton(onClick = { skip(10000) }, modifier = Modifier.size(56.dp)) {
+        IconButton(enabled = seekEnabled, onClick = { skip(10000) }, modifier = Modifier.size(56.dp)) {
             PlaybackSkipIcon(true, 34.dp)
         }
     }

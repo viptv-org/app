@@ -24,7 +24,7 @@ fun ApplicationController.search(term: String) {
 }
 
 fun ApplicationController.open(card: Card) {
-    mutable.value = mutable.value.copy(screen = Screen.Details, detail = null)
+    beginDetails()
     run { mutable.value = mutable.value.copy(detail = local?.detail(requireNotNull(mutable.value.selectedProfile), card) ?: requireNotNull(connection).detail(card)) }
 }
 /** Resolve provider metadata before source discovery, including the native identity evidence cache. */
@@ -43,13 +43,14 @@ fun ApplicationController.playTitle(card: Card) = run {
 /** Resolve a linked identity through the server; presentation uses only its returned card. */
 
 fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
-    mutable.value = mutable.value.copy(screen = Screen.Details, detail = null)
+    beginDetails()
     run { mutable.value = mutable.value.copy(detail = requireNotNull(connection).detail(kind, id)) }
 }
 
 fun ApplicationController.chooseSource(card: Card) {
     releaseRemotePlayback()
-    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceTitle = card, sources = emptyList(), findingSources = true)
+    val origin = if (mutable.value.detail != null) Screen.Details else mutable.value.screen
+    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = origin, sourceTitle = card, sources = emptyList(), findingSources = true)
     run {
         val operation = generation
         try {
@@ -65,4 +66,13 @@ fun ApplicationController.chooseSource(card: Card) {
             if (mutable.value.preferences?.preferences?.source_selection == "best" && ranked.isNotEmpty()) playSource(ranked.first())
         } finally { if (generation == operation) mutable.value = mutable.value.copy(findingSources = false) }
     }
+}
+
+private fun ApplicationController.beginDetails() {
+    val previous = mutable.value
+    val origin = previous.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
+        ?: previous.detailReturnScreen
+    val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
+    mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
+        screen = Screen.Details, detail = null)
 }

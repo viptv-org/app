@@ -21,37 +21,37 @@ import org.viptv.app.components.MediaMetadata
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false) {
+internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, carousel: HeroCarousel? = null) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = if (browser) 57.dp else 28.dp, bottom = if (browser) 88.dp else 80.dp)) {
         if (maxWidth < 900.dp) {
             Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
-                HeroArtwork(card, Modifier.fillMaxWidth())
-                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth())
+                HeroArtwork(card, Modifier.fillMaxWidth(), carousel)
+                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel)
             }
         } else {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
-                FeaturedSummary(card, open, play, save, saved, Modifier.weight(0.45f))
-                HeroArtwork(card, Modifier.weight(0.55f))
+                FeaturedSummary(card, open, play, save, saved, Modifier.weight(0.45f), carousel)
+                HeroArtwork(card, Modifier.weight(0.55f), carousel)
             }
         }
     }
 }
 
 @Composable
-private fun HeroArtwork(card: Card, modifier: Modifier) {
-    AsyncImage(card.landscape ?: card.poster, card.title,
+private fun HeroArtwork(card: Card, modifier: Modifier, carousel: HeroCarousel?) {
+    BufferedArtwork(card.landscape ?: card.poster,
         modifier.aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)).background(Palette.surface),
-        contentScale = ContentScale.Crop)
+        onReady = { carousel?.artworkReady(it) })
 }
 
 @Composable
-private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier) {
+private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("FEATURED", fontSize = 13.sp, letterSpacing = 0.6.sp,
             fontWeight = FontWeight.SemiBold, color = Palette.secondary)
         if (card.logo != null) {
-            AsyncImage(card.logo, card.title, Modifier.width(220.dp).height(120.dp),
-                alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
+            AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(220.dp).height(120.dp),
+                alignment = Alignment.BottomStart, contentScale = ContentScale.Fit)
         } else {
             Text(card.title, fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold)
         }
@@ -60,5 +60,6 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Un
             Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = 3)
         }
         DesktopHeroActions({ play(card) }, { open(card) }, { save(card) }, saved)
+        carousel?.let { HeroIndicators(it.count, it.index, it.progress) }
     }
 }

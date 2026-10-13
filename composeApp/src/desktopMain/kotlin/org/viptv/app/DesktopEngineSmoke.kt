@@ -28,6 +28,9 @@ internal fun verifyPackagedLocalEngine() {
             check(Json.parseToJsonElement(engine.profilePreferences("smoke")).jsonObject
                 .getValue("preferences").jsonObject.getValue("preferred_audio_language").jsonPrimitive.content == "fr")
             check(Json.parseToJsonElement(engine.rankSources("smoke", "[]")).jsonArray.isEmpty())
+            val live = Json.parseToJsonElement(engine.liveChannels("smoke", "{}")).jsonObject
+            check(live.getValue("channels").jsonArray.isEmpty())
+            check(live.getValue("availability").jsonPrimitive.content == "NeedsConfiguration")
         }
         System.getenv("VIPTV_ENGINE_SMOKE_RESULT")?.let { Files.writeString(Path.of(it), "verified-local-engine\n") }
     } finally { directory.toFile().deleteRecursively() }

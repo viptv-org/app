@@ -19,9 +19,9 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvSearchKeyboard(edit: ((String) -> String) -> Unit, scale: Float) {
+internal fun TvSearchKeyboard(edit: ((String) -> String) -> Unit, scale: Float, requestInitialFocus: Boolean = true) {
     val initial = remember { FocusRequester() }
-    LaunchedEffect(Unit) { initial.requestFocus() }
+    org.viptv.app.components.TvRequestedFocus(initial, Unit, requestInitialFocus)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
             TvKeyboardKey(Modifier.weight(1f), scale, "Space", activate = { edit { it + " " } }) { Icon(Lucide.Space, "Space", Modifier.size(28.dp * scale), it) }

@@ -11,7 +11,7 @@ internal object PreviewTvLibrary {
         "mandalorian-grogu.jpg", "tv-movie-4.jpg", "tv-movie-2.jpg", "tv-movie-1.jpg", "tv-movie-13.jpg",
         "tv-movie-6.jpg", "tv-movie-8.jpg", "tv-movie-10.jpg", "tv-movie-12.jpg", "tv-movie-9.jpg")
     val cards = titles.mapIndexed { index, title ->
-        Card(MediaIdentity("tv-list-$index", if (index == 1) "series" else "movie", emptyList()), "preview", title,
+        Card(identity = MediaIdentity("tv-list-$index", if (index == 1) "series" else "movie", emptyList()), provider_id = "preview", title = title,
             subtitle = if (index == 0) "2026 · Action" else null,
             poster = Res.getUri("files/ui-preview/${artwork[index]}"),
             badges = if (index == 1) listOf("New episode") else emptyList())

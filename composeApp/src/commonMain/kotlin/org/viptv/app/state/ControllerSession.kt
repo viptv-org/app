@@ -80,10 +80,13 @@ fun ApplicationController.signOut() = run {
 
 internal fun ApplicationController.accept(value: Bootstrap) {
     libraryHydration?.cancel()
+    liveGuideJob?.cancel()
     mutable.value = ApplicationState(screen = if (value.selected == null) Screen.Profiles else Screen.Home,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
-        plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds)
+        plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
+    value.library?.let { updateLibrary(it) }
+    if (value.library != null) return
     val profile = value.selected ?: return
     val remote = connection
     val device = local

@@ -17,15 +17,19 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
-fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false) {
+fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}) {
     if (television) {
-        TvDetailsScreen(detail, busy, error, sources, save = save, saved = saved)
+        TvDetailsScreen(detail, busy, error, sources, extras = TvDetailExtras(recommendations = detail?.recommendations.orEmpty()), open = open, save = save, saved = saved, loadPage = loadPage)
         return
     }
-    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved); return }
-    val seasons = remember(detail?.episodes) { detailSeasons(detail?.episodes.orEmpty()) }
+    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage); return }
+    val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     var seasonKey by remember(detail?.item?.identity) { mutableStateOf<String?>(null) }
+    var section by remember(detail?.item?.identity) { mutableStateOf(
+        when { detail?.episodes?.isNotEmpty() == true -> DetailSection.Episodes
+            detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
+            else -> DetailSection.Information }) }
     val selected = seasons.find { (it.number?.toString() ?: "unknown") == seasonKey } ?: seasons.firstOrNull { (it.number ?: 0L) > 0L } ?: seasons.firstOrNull()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
@@ -45,10 +49,26 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     if (phone) PhoneDetailHero(value.item, sources, save, saved)
                     else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved) }
                 }
-                selected?.let { season ->
+                item(key = "sections") {
+                    DetailSections(section, seasons.isNotEmpty(), value.recommendations.isNotEmpty(),
+                        { section = it }, Modifier.padding(horizontal = gutter))
+                }
+                if (section == DetailSection.Information) item(key = "information") {
+                    Column(Modifier.padding(horizontal = gutter), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        org.viptv.app.components.MediaMetadata(value.item)
+                        value.item.description?.let { Text(it, color = Palette.body, style = MaterialTheme.typography.bodyLarge) }
+                    }
+                }
+                if (section == DetailSection.Related && value.recommendations.isNotEmpty()) item(key = "related") {
+                    RelatedTitles(value.recommendations, open, Modifier.padding(horizontal = gutter), showHeading = false)
+                }
+                if (section == DetailSection.Episodes) selected?.let { season ->
                     item {
                         Box(Modifier.padding(horizontal = gutter)) {
-                            DetailSeasonPicker(seasons, season, phone) { seasonKey = it?.toString() ?: "unknown" }
+                            DetailSeasonPicker(seasons, season, phone) { number ->
+                                seasonKey = number?.toString() ?: "unknown"
+                                seasons.find { it.number == number }?.takeIf { it.episodes.isEmpty() }?.nextOffset?.let(loadPage)
+                            }
                         }
                     }
                     if (phone) items(season.episodes, key = ::episodeKey) { episode ->
@@ -56,6 +76,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     } else items(season.episodes, key = ::episodeKey) { episode ->
                         DesktopEpisodeRow(episode, sources, modifier = Modifier.padding(horizontal = gutter))
                     }
+                    item(key = "more-episodes") { MoreEpisodes(season, value.next_cursor, busy, loadPage, Modifier.padding(horizontal = gutter)) }
                 }
             }
         }

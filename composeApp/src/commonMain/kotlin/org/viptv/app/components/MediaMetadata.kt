@@ -16,8 +16,8 @@ import org.viptv.engine.wire.Card
 internal fun MediaMetadata(card: Card, fontSize: Float = 14f, lineHeight: Float = 20f,
     badgeSize: Float = 10f, scale: Float = 1f) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
-        card.subtitle?.let { Text(it, fontSize = (fontSize * scale).sp, lineHeight = (lineHeight * scale).sp, color = Palette.body) }
-        card.badges.forEach { badge ->
+        card.metadataParts().takeIf { it.isNotEmpty() }?.let { Text(it.joinToString(" · "), fontSize = (fontSize * scale).sp, lineHeight = (lineHeight * scale).sp, color = Palette.body) }
+        card.presentationBadges().forEach { badge ->
             Text(badge, Modifier.border(1.dp * scale, Palette.secondary.copy(alpha = 0.5f), RoundedCornerShape(3.dp * scale))
                 .padding(horizontal = 4.dp * scale, vertical = 2.dp * scale),
                 fontSize = (badgeSize * scale).sp, lineHeight = ((badgeSize + 4) * scale).sp,

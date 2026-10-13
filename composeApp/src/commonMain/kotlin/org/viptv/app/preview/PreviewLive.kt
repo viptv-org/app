@@ -29,7 +29,7 @@ internal object PreviewLive {
             }
             LiveProgram("$name-$part", title, begin, end, "[Local and national headlines, weather and sports.]", PreviewData.posters[6].poster)
         }
-        LiveChannel(Card(MediaIdentity("live-$name", "channel", emptyList()), "preview", name,
+        LiveChannel(Card(identity = MediaIdentity("live-$name", "channel", emptyList()), provider_id = "preview", title = name,
             landscape = PreviewData.posters[6].poster, badges = emptyList()),
             listOf("4", "7", "11", "5", "2", "21")[index],
             listOf("News", "News", "Movies", "Sports", "News", "Kids")[index], programs)

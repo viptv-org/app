@@ -30,7 +30,7 @@ class RemoteHistoryTest {
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", MemoryStore(), client, browserMode = false)
         val input = PlaybackInput("gateway-lease", "https://media.example/clip", profileId = "12")
-        val card = Card(episode, "metadata-provider", "Episode four", badges = emptyList())
+        val card = Card(identity = episode, provider_id = "metadata-provider", title = "Episode four", badges = emptyList())
         remote.recordProgress(input, card, 12_345, null, parent)
         remote.recordProgress(input, card, 25_000, 60_000, parent, ended = true)
         val first = Json.decodeFromJsonElement<PlaybackRecord>(payloads[0].getValue("record"))

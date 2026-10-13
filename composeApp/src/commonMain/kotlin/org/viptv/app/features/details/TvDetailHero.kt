@@ -29,15 +29,18 @@ import org.viptv.engine.wire.Card
 internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
     save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean, saved: Boolean = false) {
     val series = card.identity.kind == "series"
-    LaunchedEffect(card.identity) { if (requestInitialFocus) first.requestFocus() }
+    org.viptv.app.components.TvRequestedFocus(first, card.identity, requestInitialFocus)
     Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds()) {
-        if (card.logo != null) AsyncImage(card.logo, card.title,
+        if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
             Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
                 .width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale)
-                .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen },
-            alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-        else Text(card.title, Modifier.offset(96.dp * scale, 250.dp * scale).width(800.dp * scale),
-            fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp, fontWeight = FontWeight.Bold)
+                ,
+            alignment = Alignment.BottomStart, contentScale = ContentScale.Fit)
+        else Box(Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
+            .size(800.dp * scale, (if (series) 134 else 190).dp * scale)) {
+            Text(card.title, Modifier.align(Alignment.BottomStart), fontSize = (52 * scale).sp,
+                lineHeight = (60 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
         Box(Modifier.offset(96.dp * scale, (if (series) 410 else 432).dp * scale).width(1100.dp * scale)) {
             TvDetailMetadata(card, scale)
         }

@@ -8,11 +8,11 @@ internal object PreviewTvHome {
         subtitle = when(index) { 0 -> "S1 E2 · 38m left"; 1 -> "Up next · S4 E16"; 2 -> "1h 40m left"; else -> "1h 12m left" },
         progress = when (index) { 0 -> .30; 2 -> .03; 3 -> .18; else -> null },
         badges = if (index == 1) listOf("New episode") else emptyList()) } +
-        Card(MediaIdentity("tv-continue-grey", "movie", emptyList()), "preview", "In the Grey", "36m left",
+        Card(identity = MediaIdentity("tv-continue-grey", "movie", emptyList()), provider_id = "preview", title = "In the Grey", subtitle = "36m left",
             landscape = Res.getUri("files/ui-preview/tv-continue-grey.jpg"), progress = .64, badges = emptyList())
     val movies = listOf("Project Hail Mary", "Mayday", "Weapons", "The Whisper Man", "The Invite", "The End of Oak Street", "Pressure",
         "One Night Only", "Those Who Wish Me Dead", "Backrooms", "Practical Magic", "The Ministry of Ungentlemanly Warfare", "Tony", "Obsession")
-        .mapIndexed { index, title -> Card(MediaIdentity("tv-movie-$index", "movie", emptyList()), "preview", title,
+        .mapIndexed { index, title -> Card(identity = MediaIdentity("tv-movie-$index", "movie", emptyList()), provider_id = "preview", title = title,
             poster = Res.getUri("files/ui-preview/tv-movie-$index.jpg"), badges = if (index in listOf(0, 2)) listOf("New") else emptyList()) }
     private val newThisWeek = listOf(0, 1, 2, 3, 4, 6, 8, 9).mapIndexed { index, movie ->
         movies[movie].copy(badges = if (index < 3) listOf("New") else emptyList())

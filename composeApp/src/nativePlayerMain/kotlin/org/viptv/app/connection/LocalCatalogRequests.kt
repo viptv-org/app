@@ -9,7 +9,7 @@ internal suspend fun fetchLocalCatalogRows(requests: JsonArray, fetch: suspend (
     val capacity = Semaphore(3)
     val responses = requests.mapNotNull { it.jsonObject["url"]?.jsonPrimitive?.contentOrNull }.distinct().associateWith { url ->
         async {
-            try { capacity.withPermit { withTimeout(1900) { fetch(url) } } }
+            try { withTimeout(1900) { capacity.withPermit { fetch(url) } } }
             catch (_: TimeoutCancellationException) { null }
             catch (error: CancellationException) { throw error }
             catch (_: Exception) { null }

@@ -1,3 +1,4 @@
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 package org.viptv.app.player
 
 import kotlinx.browser.document

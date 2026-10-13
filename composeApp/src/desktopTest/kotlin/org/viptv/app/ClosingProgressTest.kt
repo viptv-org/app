@@ -28,7 +28,7 @@ class ClosingProgressTest {
         val owner = SupervisorJob()
         val controller = ApplicationController(CoroutineScope(owner + Dispatchers.Default), Store())
         controller.connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
-        val card = Card(MediaIdentity("opaque-movie", "movie", emptyList()), "provider", "Movie", badges = emptyList())
+        val card = Card(identity = MediaIdentity("opaque-movie", "movie", emptyList()), provider_id = "provider", title = "Movie", badges = emptyList())
         controller.mutable.value = ApplicationState(selectedProfile = "12", sourceTitle = card,
             playback = PlaybackInput("lease", "https://media.example/movie", profileId = "12"))
         controller.lastProgress = PlayerFact.Progress(12_345, 60_000)

@@ -39,7 +39,7 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
         Spacer(Modifier.weight(1f))
         if (extras.nextEpisode != null && playEpisode != null) TvPlayerPill("Next episode", Lucide.SkipForward, scale, timeline) { state.showNext = true }
     }
-    TvPlaybackTimeline(state, extras, scale, timeline, audio, previewCommand, title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
+    TvPlaybackTimeline(state, extras, scale, timeline, audio, previewCommand, state.live || title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
     state.controlError?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 170.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp) }
 }
 

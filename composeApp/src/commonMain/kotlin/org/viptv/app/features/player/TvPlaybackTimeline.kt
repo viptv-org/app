@@ -21,7 +21,7 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun BoxScope.TvPlaybackTimeline(state: TvPlayerState, extras: TvPlaybackExtras, scale: Float,
     requester: FocusRequester, up: FocusRequester, previewCommand: ((PlayerCommand) -> Unit)?, live: Boolean = false) {
-    val length = state.duration?.takeIf { it > 0 }
+    val length = state.duration?.takeIf { it > 0 && !live }
     val actual = if (length != null) (state.position.toDouble() / length).toFloat().coerceIn(0f, 1f) else 0f
     val current = if (length != null) ((state.scrub ?: state.position).toDouble() / length).toFloat().coerceIn(0f, 1f) else 0f
     BoxWithConstraints(Modifier.align(Alignment.BottomCenter).padding(horizontal = 96.dp * scale, vertical = 116.dp * scale).fillMaxWidth().height(44.dp * scale)) {

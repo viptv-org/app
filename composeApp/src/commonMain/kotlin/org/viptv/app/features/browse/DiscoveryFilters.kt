@@ -36,10 +36,9 @@ internal fun DiscoveryFilters(controls: DiscoveryControls, query: BrowseQuery, s
                         }
                     }
                 }
-                ControlKind.TEXT, ControlKind.NUMBER, ControlKind.DATE -> OutlinedTextField(value.orEmpty(), { changed(control.id, it) },
-                    modifier.width(180.dp), label = { Text(control.label) }, singleLine = true)
+                ControlKind.TEXT, ControlKind.NUMBER, ControlKind.DATE -> DiscoveryTextFilter(control, value, modifier) { changed(control.id, it) }
                 ControlKind.TOGGLE -> FilterChip(value == "true", { changed(control.id, (value != "true").toString()) }, label = { Text(control.label) }, modifier = modifier)
-                ControlKind.MULTICHOICE -> Unit
+                ControlKind.MULTICHOICE -> Text("${control.label}: multiple selections are unavailable", modifier.focusable())
             }
         }
     }

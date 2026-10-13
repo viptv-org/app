@@ -19,12 +19,12 @@ import org.viptv.engine.wire.SourceCandidate
 
 @Composable
 internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Float, requester: FocusRequester?,
-    enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null) {
+    enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null, focusedSource: (String) -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
     Row(Modifier.fillMaxWidth().height(104.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
         .focusProperties { if (up != null) this.up = up }
-        .onFocusChanged { focused = it.isFocused }.clip(RoundedCornerShape(14.dp * scale))
+        .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }.clip(RoundedCornerShape(14.dp * scale))
         .background(if (focused) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))
         .clickable(enabled = enabled, interactionSource = remember { MutableInteractionSource() }, indication = null) { choose(source) }
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {

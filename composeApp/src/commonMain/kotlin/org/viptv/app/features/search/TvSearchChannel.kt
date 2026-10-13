@@ -30,15 +30,15 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit) {
+internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val frame by animateFloatAsState(if (focused) 1f else 0f, tween(120), label = "Channel focus")
     val shape = RoundedCornerShape(10.dp * scale)
-    Column(Modifier.width(356.dp * scale).onFocusChanged { focused = it.isFocused }
+    Column(Modifier.width(356.dp * scale).onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
         Box(Modifier.fillMaxWidth().height(200.dp * scale).clip(shape)
             .background(Brush.linearGradient(listOf(Color(0xFF1D2230), Color(0xFF121318)))), contentAlignment = Alignment.Center) {
-            if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.size(140.dp * scale), contentScale = ContentScale.Fit)
+            if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.size(140.dp * scale), contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = (56 * scale).sp, lineHeight = (67 * scale).sp, letterSpacing = (-1.12f * scale).sp,
                 fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold)
             Box(Modifier.align(Alignment.TopStart).padding(12.dp * scale)) {

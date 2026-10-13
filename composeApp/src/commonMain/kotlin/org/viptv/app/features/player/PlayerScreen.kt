@@ -53,7 +53,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && !paused && !buffering && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
-    fun seek(value: Long) { send(PlayerCommand.Seek(value.coerceIn(0, duration ?: Long.MAX_VALUE))) }
+    fun seek(value: Long) { if (input?.live != true) send(PlayerCommand.Seek(value.coerceIn(0, duration ?: Long.MAX_VALUE))) }
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (input != null) PlayerSurface(input, paused, Modifier.fillMaxSize(), { fact ->
@@ -92,15 +92,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 }
             }
             if (phone) Box(Modifier.align(Alignment.Center)) {
-                PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) })
+                PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
             }
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
-                if (title?.identity?.kind in listOf("channel", "tv") && duration == null) {
+                if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
                     Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
                 if (phone) PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true })
                 else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
-                    { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true })
+                    { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true)
             }
         }
         if (showTracks) PlaybackTrackPicker(tracks, { send(it) }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) })

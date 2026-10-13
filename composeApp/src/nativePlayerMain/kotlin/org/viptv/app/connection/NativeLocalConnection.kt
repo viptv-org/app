@@ -73,12 +73,19 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
     }
     override suspend fun verifyProfilePin(id: String, pin: String): Boolean = withContext(Dispatchers.IO) { engine.verifyProfilePin(id, pin) }
 
-    override suspend fun refreshHome(profile: String): HomeSnapshot = runPlan(pendingHomes.remove(profile) ?: withContext(Dispatchers.IO) { engine.planHome(profile) })
+    override suspend fun refreshHome(profile: String): HomeSnapshot = enrichHome(profile, runPlan(pendingHomes.remove(profile) ?: withContext(Dispatchers.IO) { engine.planHome(profile) }))
 
     override suspend fun discoveryControls(profile: String, type: String): DiscoveryControls = fetchLocalDiscoveryControls(profile, type)
 
     override suspend fun browse(profile: String, query: BrowseQuery): CatalogPage = fetchLocalBrowse(profile, query)
 
+    override suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = fetchLiveChannels(profile, query)
+    override suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = fetchLiveGuide(profile, channel)
+    override suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = fetchLiveSources(profile, channel)
+
+    override suspend fun libraryPage(profile: String, query: org.viptv.engine.wire.LibraryQuery): org.viptv.engine.wire.LibrarySnapshot = withContext(Dispatchers.IO) {
+        json.decodeFromString(engine.libraryPage(profile, json.encodeToString(query)))
+    }
     override suspend fun library(profile: String): List<Card> = fetchLocalLibrary(profile)
 
     override suspend fun saveFavorite(profile: String, card: Card): Unit = fetchLocalSaveFavorite(profile, card)
@@ -111,6 +118,8 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
 
     override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot {
         val identity = card.parent_identity ?: card.identity
+        val cached = withContext(Dispatchers.IO) { engine.cachedDetail(profile, identity.kind, identity.id, offset.toUInt()) }
+        if (cached != null) return withContext(Dispatchers.IO) { json.decodeFromString(cached) }
         val plan = try { withContext(Dispatchers.IO) { engine.planDetail(profile, identity.kind, identity.id, card.provider_id) } }
         catch (_: Exception) { throw LocalFailure("This title is unavailable from your enabled add-ons.") }
         val operation = json.parseToJsonElement(plan).jsonObject

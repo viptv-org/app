@@ -36,6 +36,8 @@ data class CapabilityState(
 @Serializable
 data class Card(
     val identity: MediaIdentity,
+    val category: String? = null,
+    val metadata: CardMetadata? = null,
     val provider_id: String,
     val title: String,
     val subtitle: String? = null,
@@ -47,6 +49,17 @@ data class Card(
     val badges: List<String>,
     val parent_identity: MediaIdentity? = null,
     val added_at_millis: Long? = null,
+)
+
+@Serializable
+data class CardMetadata(
+    val year: Long? = null,
+    val runtime_minutes: Long? = null,
+    val genres: List<String> = emptyList(),
+    val rating: Double? = null,
+    val rating_votes: Long? = null,
+    val certification: String? = null,
+    val alternate_titles: List<String> = emptyList(),
 )
 
 @Serializable
@@ -75,8 +88,10 @@ enum class ControlKind {
 @Serializable
 data class DetailSnapshot(
     val item: Card,
+    val recommendations: List<Card> = emptyList(),
     val episodes: List<Card>,
     val next_cursor: String? = null,
+    val seasons: List<EpisodeSeason> = emptyList(),
 )
 
 @Serializable
@@ -84,6 +99,13 @@ data class EpisodeCoordinates(
     val order: String,
     val season: Long? = null,
     val episode: Long,
+)
+
+@Serializable
+data class EpisodeSeason(
+    val season: Long? = null,
+    val episode_count: Long,
+    val offset: Long,
 )
 
 @Serializable
@@ -121,6 +143,7 @@ data class HomeSnapshot(
     val scope: Scope,
     val revision: Long,
     val hero: Card? = null,
+    val featured: List<Card> = emptyList(),
     val rows: List<HomeRow>,
     val complete: Boolean,
 )
@@ -135,6 +158,114 @@ data class IntegrationConnection(
     val enabled: Boolean,
     val revision: Long,
     val capabilities: List<Capability>,
+)
+
+@Serializable
+data class LibraryQuery(
+    val source: String,
+    val offset: Long,
+    val limit: Long,
+    val sort: String,
+    val show: String,
+    val type: String,
+    val status: String? = null,
+    val genre: String? = null,
+    val rated: String? = null,
+    val added: String? = null,
+    val episodes_left_max: Long? = null,
+)
+
+@Serializable
+data class LibrarySnapshot(
+    val scope: Scope,
+    val revision: Long,
+    val query: LibraryQuery,
+    val cards: List<Card>,
+    val next_cursor: String? = null,
+    val complete: Boolean,
+    val controls: List<QueryControl> = emptyList(),
+    val sources: List<LibrarySource> = emptyList(),
+    val statistics: List<LibraryStatistics> = emptyList(),
+    val availability: Availability,
+    val reason: String? = null,
+    val refresh_after_millis: Long? = null,
+)
+
+@Serializable
+data class LibrarySource(
+    val id: String,
+    val label: String,
+    val availability: Availability,
+    val reason: String? = null,
+)
+
+@Serializable
+data class LibraryStatistics(
+    val identity: MediaIdentity,
+    val watched: Boolean,
+    val last_watched_millis: Long? = null,
+    val times_watched: Long? = null,
+    val user_rating: Double? = null,
+    val watched_episode_count: Long? = null,
+    val total_episode_count: Long? = null,
+    val aired_episode_count: Long? = null,
+    val has_unwatched_aired_episodes: Boolean? = null,
+    val status: String? = null,
+    val next_episode: EpisodeCoordinates? = null,
+    val next_air_millis: Long? = null,
+)
+
+@Serializable
+data class LiveChannel(
+    val id: String,
+    val connection_id: String,
+    val card: Card,
+    val group_id: String? = null,
+    val group_name: String? = null,
+    val group_ids: List<String> = emptyList(),
+)
+
+@Serializable
+data class LiveGroup(
+    val id: String,
+    val label: String,
+)
+
+@Serializable
+data class LiveGuide(
+    val channel_id: String,
+    val programs: List<LiveProgram>,
+    val availability: Availability,
+    val reason: String? = null,
+)
+
+@Serializable
+data class LivePage(
+    val channels: List<LiveChannel>,
+    val groups: List<LiveGroup>,
+    val connections: List<IntegrationConnection>,
+    val next_cursor: String? = null,
+    val complete: Boolean,
+    val availability: Availability,
+    val reason: String? = null,
+)
+
+@Serializable
+data class LiveProgram(
+    val id: String,
+    val title: String,
+    val description: String? = null,
+    val start_millis: Long,
+    val end_millis: Long,
+)
+
+@Serializable
+data class LiveQuery(
+    val connection_id: String? = null,
+    val group_id: String? = null,
+    val search: String? = null,
+    val offset: Long,
+    val limit: Long? = null,
 )
 
 @Serializable
@@ -163,6 +294,8 @@ data class MediaIdentity(
 
 @Serializable
 data class PlaybackRecord(
+    val times_watched: Long? = null,
+    val presentation: Card? = null,
     val identity: MediaIdentity,
     val provider_id: String,
     val title: String,

@@ -6,6 +6,7 @@ import org.viptv.app.player.*
 
 /** View state and remote interaction; playback position changes only through player observations. */
 internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, scene: TvPlayerScene) {
+    val live = input?.live == true
     val commands = MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16)
     var position by mutableLongStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: 0)
     var duration by mutableStateOf<Long?>(null)
@@ -39,9 +40,11 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     }
     fun reveal(audio: Boolean = false) { focusAudio = audio; visible = true; interaction++ }
     fun send(command: PlayerCommand, preview: ((PlayerCommand) -> Unit)?) {
+        if (live && command is PlayerCommand.Seek) return
         commands.tryEmit(command); preview?.invoke(command); interaction++; controlError = null
     }
     fun step(direction: Int) {
+        if (live) return
         val length = duration?.takeIf { it > 0 } ?: return
         val increment = if (length < 60000) 1000L else 10000L
         scrub = ((scrub ?: position) + direction * increment).coerceIn(0, length)

@@ -1,78 +1,79 @@
-# VIPTV v2 implementation status — 2026-10-13
+# VIPTV experimental implementation — 2026-10-13
 
-The experimental implementation is incomplete. Main branches and repository
-history are preserved. The current VIPTV ZIP import contains 197 reference
-boards; complete visual parity is not certified.
+The implementation remains experimental and incomplete overall. Main branches,
+repositories and history are preserved. The 197 current VIPTV ZIP boards and the
+uploaded TV focus/rows HTML are the design references. Full visual parity is not
+certified.
 
-## Implemented
+## Current implementation
 
-- KMP Android, Android TV, desktop and Web clients, with native local Rust/SQLite
-  mode and remote connections. Web requires a backend for normal use.
-- Shared local profile lifecycle, salted local PIN protection, server profile management availability, per-profile watch history,
-  integration assignments, capability validation and identity mapping rules.
-- Native Home catalog projections cached for five minutes, isolated by account,
-  profile and configuration revision. Warm/reopened plans omit cached requests.
-- Stremio metadata, search, source and subtitle execution. Subtitle candidate
-  snapshots use opaque IDs; selected content remains host-controlled.
-- Server Simkl OAuth, metadata/search, default Home/discovery, explicit watched
-  writes and verified IMDb source/subtitle mappings. Credentials stay encrypted
-  on the server and profile-bound; real OAuth 2.0 consent, profile-bound search and encrypted token refresh are qualified against the disposable QA server.
-- Dedicated TV screens and remote focus work; platform-specific phone, desktop,
-  tablet and browser details/season surfaces and addon settings.
-- Native KitePlayer and browser HTML/HLS adapters. Android Compose rendering and
-  stable Haze source registration allow actual paused-video backdrop blur.
-- The pinned KitePlayer presentation fork is packaged as a verified source
-  bundle. Native builds prepare a scoped Maven repository and keep the unchanged
-  engine/FFmpeg dependencies upstream. The client consumes typed presentation
-  evidence instead of treating Playing or decoded-frame counts as presentation.
+- KMP Android/Android TV, Linux/Windows/macOS desktop and Web targets. Native
+  clients have a local Rust/SQLite engine and remote connections; Web uses a backend.
+- Profile-scoped metadata, Stremio catalog/search/streams/subtitles, source
+  integrations, metadata-provider selection, favourites, playback preferences,
+  watch history and explicit identity evidence. Account credentials remain in
+  their platform/server vaults.
+- Server-only Simkl OAuth 2.0, metadata/search/watchlists and tracking contracts.
+  Linking belongs to Web account settings. Personal ratings and episode states
+  remain separate from critic metadata and inferred watch counts.
+- Five enriched trending hero titles, eight-second decoded-artwork timers,
+  transparent trimmed logos, complete available metadata, and episode/time
+  captions for Continue Watching. Focus outlines, scroll cancellation, fixed
+  gradients and smaller soft-backdrop surfaces address the reported TV artifacts.
+- Search category rows, focused title marquees, visible returning headings and
+  detail/search history. Details contain related titles and canonical season
+  indexes with bounded episode paging. Native paging reuses verified cached metadata.
+- A single library page includes results, controls, source availability and
+  known statistics. Sorting sits inside the filter panel. Cold metadata has a
+  bounded refresh hint; warm filters require no per-title client requests.
+- Direct Simkl images for native clients; Web can use the bounded public image
+  cache. Verified transparent logos stay on their public CORS-enabled CDN.
+- KitePlayer native rendering and HTML/HLS Web playback. The pinned native
+  presentation fork reports presentation evidence rather than decoded-frame counts.
+- Live client adapters and clock/guide presentation are wired. Native M3U/Xtream
+  Live runs through the local engine with bounded host operations and scoped guide
+  caching. M3U category memberships are preserved individually. Packaged native
+  engines use release mode; raw native subtitle formats remain supported.
 
-## Verified evidence
+## Current evidence
 
-- Core cache/subtitle batch is committed as `ed232d1`; shared Simkl normalization
-  and mappings as `941636a`. Backend integration is committed as `201ba1f`.
-- App player provenance is committed as `d61d63b`; source bundle pin
-  `56f361b7610bf1d20c328cf919877e37baff9d1f` passed 18 renderer tests, additive ABI
-  checks, clean import and published-consumer builds. The app's own bootstrap
-  reproduced all 18 artifact hashes and Android/Desktop compilation passed.
-- The actual HLS/subtitle QA fixture is committed separately as backend
-  `242e303`. Default browser captions render above controls; explicit provider
-  positioning, repeated stop and revoked media access passed on the fixture.
-- Latest backend suite: 378 passed, 7 ignored. Core runtime engine suite: 25
-  passed. Focused Simkl suite: 13 passed.
-- Android assembly, Desktop tests and Wasm compilation passed for the latest
-  client subtitle/gateway plumbing. Loopback HTTP subtitle tests verify original
-  Windows-1252 bytes, opaque candidate IDs and revocation before outbound access.
-- Disposable HTTPS browser playback qualified actual FFmpeg HLS decoding,
-  frame-presentation acknowledgment, provider SRT/VTT captions and stop/Blob
-  cleanup. This fixture does not qualify an independent production gateway.
-- TV native paused-frame blur A/B, playing panel open/close, Live fallback variants,
-  Calendar return focus and subtitle option traversal passed on the isolated TV
-  emulator. The physical ARMv7 Android TV now runs the optimized experimental APK. Controlled real Home navigation now measures 18 ms median / 36 ms p95 after optimized packaging and draw-phase focus animations, versus 150 ms median initially. Remaining jank is still under review.
-- HTTPS browser addon installation, selected-profile toggles, removal and signout
-  persisted against a disposable backend. Rapid URL typing, Unicode/IME and
-  encoded-query submission passed after scoped native browser input integration.
+- Core pin: `1c03990af6bd174634b7f7eb6603e8ba4553e2a2`.
+- Backend UI/image pin: `1c0dbd94d68191f852627f9e7affed7aa7233c69`.
+- Server UI/image gate: 390 passed, 10 ignored; earlier integration gate: 16 passed.
+- Core season/cache batch: 11 native tests passed, two ignored; four Android ABI
+  release builds passed. App QA packages ARMv7, ARM64 and x86_64.
+- Android QA assembly, 53 Desktop tests and Wasm compilation pass for the UI batch.
+  Linux packaged launcher/JVM/SQLite diagnostics and Web production packaging pass.
+- Real linked library: 154 titles/41 genres. Cold page 237 ms, warm page 29 ms;
+  typed loading hint stops on completion. Actual genre/status/personal-rating and
+  episode-state filters returned scoped results.
+- Real Naruto: 220 episodes/five indexed seasons. TV selected Season 2 directly,
+  loaded its remaining episodes, and retained row focus. The first card returned
+  to the 96 px gutter after eight Right/eight Left presses.
+- TV emulator: a 643-frame navigation sample measured 16 ms median/p95 and 1.56%
+  missed deadlines. Direct new-season thumbnails measured 160–399 ms in the app,
+  versus roughly 3–4 seconds through the old proxy. Cold connections can be slower.
+- The latest release-engine QA APK is installed on the physical TV and Home
+  connects directly over trusted LAN HTTPS. The host firewall now permits only
+  the TV IP on the two test ports. Unrecorded rapid navigation measured 23 ms median/65 ms p95 with 10.12%
+  missed deadlines (346 frames); hardware performance remains under improvement.
+  Its earlier UI sample was 25 ms median/73 ms p95 and predates this batch.
+- Native public M3U qualification loaded 100 actual channels with no VIPTV
+  backend requests, played a real channel, and returned to the cached Live page.
+  No guide data was invented for the playlist without an EPG source.
+- Prior real physical-TV native MP4 playback reached 24 fps with zero rebuffers,
+  zero audio underruns and about 9 ms A/V drift. That source sample remains the
+  playback checkpoint, not qualification of every format or this entire UI batch.
+- Prior hosted CI run 38411304240 passed all platform build/package/native-engine
+  jobs. It predates the current UI changes; new hosted verification is pending.
 
-## Current playback checkpoint
+## Remaining qualification and implementation
 
-- Real Simkl Home/details/search and Stremio episode stream discovery work after user OAuth consent.
-- Default native admission detects the unsafe HTTPS-to-HTTP redirect and selects the independent playback gateway. Its actual HLS playlist and segment return 200, and a host decoder produced a complete 1920×960 RGB frame.
-- Native playback now produces real presentation evidence on the emulator and physical ARMv7 TV. Awaiting renderer attachment fixes a late-attach seek/stall. The gateway negotiates original seekable MP4 for compatible native clients; a bounded 1 MiB range cache/coalescer avoids upstream starvation. The physical TV sample reached native 24 fps, zero rebuffers/underruns and approximately 9 ms A/V drift with HardwareZeroCopy MediaCodec and AndroidWindowGpuCompleted. This qualifies the measured sample, not every media format or the entire UI.
-- ARMv7 packaging, optimized Android release assembly, desktop tests and Wasm compilation pass. Windows/macOS runtime qualification is still pending.
+Complete design coverage and unprovided UI review; current physical-TV performance;
+Windows/macOS native player GUI; broader HLS/DASH/live/subtitle/seek/recovery and
+long-running playback; broader Live feed/guide qualification;
+anime tracking/mapping acceptance; dashboard administration; Roku and Solid TV-web
+adoption; final workspace cleanup and generic Tauri plugin account transfer.
 
-## Remaining
-
-- Complete 1:1 design qualification across all supplied boards, unprovided UI
-  review, real Live/Calendar feeds and remaining authentication/preferences.
-- Broader subtitle, seek/recovery, long-running playback and live-format qualification across physical devices. Native remote MP4/gateway playback is qualified for the tested source.
-- Broader real-provider tracking/scrobbling acceptance, continuous synchronization and remaining advanced filters,
-  calendar and anime episode mapping/tracking.
-- Complete vsources/local-source provider integration, dashboard account-linking
-  UI, Roku and Solid TV-web adoption of the agreed backend contracts.
-- Windows/macOS and physical GPU/device performance, real HLS/DASH/live playback,
-  complete recovery/resume, and production deployment qualification.
-- Final workspace documentation/design cleanup and generic Tauri video-plugin
-  account transfer; no deployment or production success is claimed.
-
-Detailed limitations and screenshots live in the screen checkpoints,
-`DESIGN_GAPS.md`, `NON_TV_DETAILS.md`, `NON_TV_SETTINGS.md` and `TV_PLAYER.md`.
-The client integration batch is committed on the experimental branch. Home My List actions and schema-driven profile source settings are wired across KMP; native SDK runtime qualification and source adapters are still in progress. Hosted platform builds exposed missing Linux build dependencies, Windows renderer checksum differences and Android runner disk pressure; fixes and packaging diagnostics are being qualified in CI.
+Production deployment is not claimed. Private real-provider screenshots/videos
+remain in the workspace device artifacts rather than repository history.

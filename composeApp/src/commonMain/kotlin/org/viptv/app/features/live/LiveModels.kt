@@ -5,14 +5,17 @@ import org.viptv.engine.wire.Card
 data class LiveProgram(val id: String, val title: String, val start: Int, val end: Int,
     val description: String? = null, val artwork: String? = null)
 data class LiveChannel(val card: Card, val number: String? = null, val category: String? = null,
-    val programs: List<LiveProgram> = emptyList()) {
+    val programs: List<LiveProgram> = emptyList(), val id: String = card.identity.id, val connectionId: String = card.provider_id, val groupId: String? = null) {
     fun current(now: Int?) = now?.let { minute -> programs.firstOrNull { minute in it.start until it.end } }
     fun next(now: Int?) = now?.let { minute -> programs.firstOrNull { it.start > minute } }
 }
 
+@androidx.compose.runtime.Composable
 internal fun liveTime(minutes: Int, period: Boolean = false): String {
-    val hour = minutes / 60 % 24
-    return "${(hour + 11) % 12 + 1}:${(minutes % 60).toString().padStart(2, '0')}" +
+    LocalLiveClock.current?.let { return liveTimeAt(it.originMillis + minutes.toLong() * 60_000, period) }
+    val dayMinute = (minutes % 1440 + 1440) % 1440
+    val hour = dayMinute / 60
+    return "${(hour + 11) % 12 + 1}:${(dayMinute % 60).toString().padStart(2, '0')}" +
         if (period) { if (hour < 12) " AM" else " PM" } else ""
 }
 internal fun liveProgress(program: LiveProgram?, now: Int?) =

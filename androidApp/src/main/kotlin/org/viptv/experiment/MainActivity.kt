@@ -40,7 +40,8 @@ class MainActivity : ComponentActivity() {
                 when (state.screen) {
                     Screen.Player -> controller.closePlayer()
                     Screen.ProfilePin, Screen.ProfileEdit, Screen.Home -> controller.navigate(Screen.Profiles)
-                    Screen.Sources -> controller.navigate(if (state.detail == null) Screen.Home else Screen.Details)
+                    Screen.Details -> controller.backDetails()
+                    Screen.Sources -> controller.backSources()
                     else -> controller.navigate(Screen.Home)
                 }
             }

@@ -13,8 +13,10 @@ fun ApplicationController.navigate(screen: Screen) {
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series)) run {
         loadBrowse(BrowseQuery(if (screen == Screen.Series) "series" else "movie"))
     }
+    if (screen != Screen.Live) liveGuideJob?.cancel()
+    if (screen == Screen.Live) run { loadLive(LiveQuery()) }
     if (screen == Screen.Settings) refreshAddons()
-    if (screen == Screen.Library) run { loadLibrary() }
+    if (screen == Screen.Library) run { loadLibraryPage() }
     if (screen == Screen.Calendar && connection != null) run {
         val window = calendarWindow()
         mutable.value = mutable.value.copy(calendarDays = window.days)
@@ -25,4 +27,18 @@ fun ApplicationController.navigate(screen: Screen) {
         val profile=requireNotNull(mutable.value.selectedProfile)
         mutable.value=mutable.value.copy(history=local?.history(profile) ?: requireNotNull(connection).history(profile))
     }
+}
+
+fun ApplicationController.backDetails() {
+    generation++
+    job?.cancel()
+    val previous = mutable.value.detailHistory.lastOrNull()
+    if (previous != null) mutable.value = mutable.value.copy(detail = previous, detailHistory = mutable.value.detailHistory.dropLast(1), busy = false, error = null)
+    else { mutable.value = mutable.value.copy(busy = false); navigate(mutable.value.detailReturnScreen) }
+}
+
+fun ApplicationController.backSources() {
+    generation++; job?.cancel()
+    mutable.value = mutable.value.copy(screen = mutable.value.sourceReturnScreen,
+        busy = false, findingSources = false, error = null)
 }

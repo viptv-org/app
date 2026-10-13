@@ -1,6 +1,7 @@
 package org.viptv.app.features.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,18 +26,19 @@ import org.viptv.engine.wire.Card
 fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit, labelScale: Float = 1f, cornerRadius: androidx.compose.ui.unit.Dp = 8.dp, focusWidth: androidx.compose.ui.unit.Dp = 3.dp, modifier: Modifier = Modifier) {
     var focused by remember { mutableStateOf(false) }
     Column(modifier.width(width.dp).onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
-        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised).then(if (focused) Modifier.border(focusWidth, Palette.text, RoundedCornerShape(cornerRadius)) else Modifier)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             AsyncImage(if (portrait) card.poster else card.landscape, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            if (card.badges.isNotEmpty()) Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
-                Text(card.badges.first(), Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+            if (card.badges.any { !it.equals("Simkl", true) }) Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
+                Text(card.badges.first { !it.equals("Simkl", true) }, Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
             }
             card.progress?.let { progress ->
-                LinearProgressIndicator(progress = { progress.toFloat() }, modifier = Modifier.fillMaxWidth().height(3.dp).align(Alignment.BottomCenter), color = Palette.accent, trackColor = Palette.raised)
+                LinearProgressIndicator(progress = { progress.toFloat() }, modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = focusWidth, vertical = focusWidth).height(5.dp), color = Palette.accent, trackColor = Palette.raised)
             }
+            org.viptv.app.components.FocusOutline(focused, cornerRadius, focusWidth, Modifier.matchParentSize())
         }
         if (showLabels) {
             Spacer(Modifier.height(9.dp))
-            Text(card.title, fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = if (focused) TextOverflow.Clip else TextOverflow.Ellipsis)
             card.subtitle?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
     }

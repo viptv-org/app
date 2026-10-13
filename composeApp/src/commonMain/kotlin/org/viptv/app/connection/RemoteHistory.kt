@@ -37,8 +37,8 @@ internal suspend fun RemoteConnection.recordProgress(
     val profile = requireNotNull(input.profileId) { "Playback is not bound to a profile." }
     val duration = (durationMillis ?: 0).coerceAtLeast(0)
     val position = if (ended && duration > 0) duration else positionMillis.coerceAtLeast(0)
-    val record = PlaybackRecord(card.identity, card.provider_id, card.title, card.poster,
-        card.landscape, position, duration, updated_at_millis = 0, parent_identity = parentIdentity)
+    val record = PlaybackRecord(presentation = card, identity = card.identity, provider_id = card.provider_id, title = card.title, poster = card.poster,
+        landscape = card.landscape, position_millis = position, duration_millis = duration, updated_at_millis = 0, parent_identity = parentIdentity)
     call("/api/v3/profiles/${profile.encodeURLPathPart()}/progress", HttpMethod.Put, buildJsonObject {
         put("record", Json.encodeToJsonElement(record))
         parentIdentity?.let { put("parent_identity", Json.encodeToJsonElement(it)) }

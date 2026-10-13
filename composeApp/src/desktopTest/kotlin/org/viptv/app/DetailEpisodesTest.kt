@@ -9,8 +9,8 @@ import org.viptv.engine.wire.*
 
 class DetailEpisodesTest {
     private fun episode(season: Long?, number: Long, id: String = "shared-title", provider: String = "provider") =
-        Card(MediaIdentity(id, "series", emptyList(), EpisodeCoordinates("aired", season, number)),
-            provider, "Episode $number", badges = emptyList())
+        Card(identity = MediaIdentity(id, "series", emptyList(), EpisodeCoordinates("aired", season, number)),
+            provider_id = provider, title = "Episode $number", badges = emptyList())
 
     @Test fun sharedProviderIdsKeepDistinctEpisodesButDeduplicateRepeatedRecords() {
         val first = episode(1, 1)
@@ -34,5 +34,15 @@ class DetailEpisodesTest {
     @Test fun identitySeparatorsCannotCollide() {
         assertNotEquals(episodeKey(episode(1, 1, id = "b|c", provider = "a")),
             episodeKey(episode(1, 1, id = "c", provider = "a|b")))
+    }
+
+    @Test fun seasonIndexExposesUnloadedSeasonsAndKeepsPaginationAtTheirCanonicalOffset() {
+        val index = listOf(EpisodeSeason(1, 35, 0), EpisodeSeason(2, 49, 35))
+        val groups = detailSeasons(listOf(episode(1, 1)), index)
+        assertEquals(listOf(1L, 2L), groups.map { it.number })
+        assertEquals("49 episodes", groups[1].countLabel)
+        assertEquals(35L, groups[1].nextOffset)
+        val completeFirst = detailSeasons((1L..35L).map { episode(1, it) }, index).first()
+        assertEquals(null, completeFirst.nextOffset)
     }
 }

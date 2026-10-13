@@ -17,6 +17,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var generation = 0L
     internal val progressGate = Mutex()
     internal var progressJob: Job? = null
+    internal var liveGuideJob: Job? = null
     internal var libraryHydration: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
@@ -44,6 +45,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                 } else if (generation == current) mutable.value = mutable.value.copy(error = when (e) {
                     is RemoteFailure -> e.message
                     is LocalFailure -> e.message
+                    is kotlinx.serialization.SerializationException -> "The server returned an incompatible response."
                     is IllegalArgumentException -> "Enter a valid HTTPS server address."
                     else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
                 })

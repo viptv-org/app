@@ -20,23 +20,24 @@ import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Check
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.MediaMetadata
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean) {
+internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {
     Box(Modifier.fillMaxWidth().height(470.dp).clip(RoundedCornerShape(16.dp)).background(Palette.surface)) {
-        AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        BufferedArtwork(card.landscape ?: card.poster, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
             0f to Color.Transparent, 0.48f to Color.Transparent,
             0.8f to Color.Black.copy(alpha = 0.65f), 1f to Palette.background.copy(alpha = 0.96f))))
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(180.dp).height(100.dp), contentScale = ContentScale.Fit)
+            if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(180.dp).height(100.dp), contentScale = ContentScale.Fit, alignment = Alignment.BottomCenter)
             else Text(card.title, fontSize = 28.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
-            card.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.body, maxLines = 2) }
+            MediaMetadata(card, fontSize = 13f, lineHeight = 19f)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { play(card) }, modifier = Modifier.weight(1f).height(46.dp),
                     shape = RoundedCornerShape(12.dp),
@@ -53,6 +54,7 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
                     Text("My List", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
+            carousel?.let { HeroIndicators(it.count, it.index, it.progress) }
         }
     }
 }

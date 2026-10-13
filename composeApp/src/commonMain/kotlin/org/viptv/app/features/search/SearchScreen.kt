@@ -32,8 +32,9 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     var filter by remember { mutableStateOf("All") }
     val unique = results.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
     val visible = when (filter) {
-        "Movies" -> unique.filter { it.identity.kind == "movie" }
-        "Series" -> unique.filter { it.identity.kind == "series" }
+        "Movies" -> unique.filter { it.searchCategory() == "movie" }
+        "Series" -> unique.filter { it.searchCategory() == "series" }
+        "Anime" -> unique.filter { it.searchCategory() == "anime" }
         "Channels" -> unique.filter { it.identity.kind in listOf("channel", "tv") }
         else -> unique
     }
@@ -44,7 +45,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
         if (!desktop) SearchField(term, query)
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("All", "Movies", "Series", "Channels").forEach { tab ->
+            listOf("All", "Movies", "Series", "Anime", "Channels").forEach { tab ->
                 Text(tab, Modifier.background(if (filter == tab) Palette.text else Color(0xFF202022), RoundedCornerShape(18.dp))
                     .clickable { filter = tab }.padding(horizontal = 14.dp, vertical = 7.dp),
                     color = if (filter == tab) Palette.background else Palette.text,
@@ -55,16 +56,16 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         error?.let { Text(it, color = Palette.danger) }
         if (!busy && term.isNotBlank() && visible.isEmpty() && error == null) Text("No matches. Try another search.", color = Palette.secondary)
         if (phone && term.isNotBlank() && visible.isNotEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        val groups = visible.groupBy { it.provider_id }
+        val groups = searchGroups(visible, addons)
         if (groups.size > 1) {
             val labels=addons.associate { it.id to it.name }
             LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                groups.forEach { (provider, cards) ->
-                    item(key = "group:$provider") {
+                groups.forEach { group ->
+                    item(key = group.id) {
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text(labels[provider] ?: "Results", style = MaterialTheme.typography.titleMedium)
+                            Text(group.label, style = MaterialTheme.typography.titleMedium)
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                rowItems(cards, key = { it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = 160, portrait = true, open = open) }
+                                rowItems(group.cards, key = { it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = 160, portrait = true, open = open) }
                             }
                         }
                     }
@@ -72,7 +73,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             }
         } else {
             LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 24.dp)) {
-                items(visible, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = if (phone) 112 else 172, portrait = true, showLabels = !phone, open = open) }
+                items(visible, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = if (phone) 112 else 172, portrait = true, showLabels = true, open = open) }
             }
         }
     }

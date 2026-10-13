@@ -25,31 +25,27 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, first: FocusRequester? = null,
-    down: FocusRequester? = null, indicators: Int = 1, selected: Int = 0, save: (Card) -> Unit = {}, saved: Boolean = false) {
+    down: FocusRequester? = null, indicators: Int = 1, selected: Int = 0, progress: () -> Float = { 1f }, focusEpoch: Int = 0, requestFocus: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false) {
+    org.viptv.app.components.TvRequestedFocus(first, focusEpoch, requestFocus)
+    var presented by remember { mutableStateOf(card) }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val scale = maxWidth / 1920.dp
         Box(Modifier.fillMaxWidth().height(800.dp * scale)) {
-        if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.offset(96.dp * scale, 306.dp * scale).size(224.dp * scale, 160.dp * scale)
-            .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen }, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
-        else Text(card.title, Modifier.offset(96.dp * scale, 306.dp * scale).width(800.dp * scale), fontSize = (48 * scale).sp, lineHeight = (56 * scale).sp, fontWeight = FontWeight.Bold)
-        Box(Modifier.offset(96.dp * scale, 494.dp * scale)) {
-            TvMediaMetadata(card, scale, subtitleParts = card.subtitle?.split('·')?.map(String::trim)?.filter(String::isNotEmpty))
+        org.viptv.app.components.FadeThrough(card, Modifier.width(1100.dp * scale).height(630.dp * scale)) {
+            SideEffect { presented = it }
+            TvHeroSummary(it, scale)
         }
-        card.description?.let { Text(it, Modifier.offset(96.dp * scale, 544.dp * scale).width(780.dp * scale), fontSize = (26 * scale).sp,
-            lineHeight = (38 * scale).sp, color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         Row(Modifier.offset(96.dp * scale, 648.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width(220.dp * scale).height(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale,
-                primary = true, requester = first, activate = { play(card) }, contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) {
+                primary = true, requester = first, activate = { play(presented) }, contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) {
                 Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
                 Text("Play", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { save(card) }) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
-            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { open(card) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
+            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { save(presented) }) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
+            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
-        if (indicators > 1) Row(Modifier.offset(96.dp * scale, 760.dp * scale), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-            repeat(indicators) { Box(Modifier.width((if (it == selected) 48 else 16).dp * scale).height(4.dp * scale)
-                .background(if (it == selected) Palette.text else Palette.text.copy(alpha = 0.35f), androidx.compose.foundation.shape.RoundedCornerShape(2.dp * scale))) }
-        }
+        HeroIndicators(indicators, selected, progress, Modifier.offset(96.dp * scale, 760.dp * scale), scale)
+
         }
     }
 }

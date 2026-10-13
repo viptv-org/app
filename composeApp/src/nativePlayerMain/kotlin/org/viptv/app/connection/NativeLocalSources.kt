@@ -81,5 +81,5 @@ internal suspend fun NativeLocalConnection.fetchLocalOpenSource(id: String): Pla
         val headers = source.getValue("headers").jsonArray.associate { pair ->
             val values=pair.jsonArray;values[0].jsonPrimitive.content to values[1].jsonPrimitive.content
         }
-        PlaybackInput(id,source.getValue("url").jsonPrimitive.content,headers,source.getValue("position_millis").jsonPrimitive.long,source.getValue("profile_id").jsonPrimitive.content,source.getValue("revision").jsonPrimitive.long)
+        PlaybackInput(id,source.getValue("url").jsonPrimitive.content,headers,source.getValue("position_millis").jsonPrimitive.long,source.getValue("profile_id").jsonPrimitive.content,source.getValue("revision").jsonPrimitive.long, live = source["live"]?.jsonPrimitive?.booleanOrNull ?: false)
     }

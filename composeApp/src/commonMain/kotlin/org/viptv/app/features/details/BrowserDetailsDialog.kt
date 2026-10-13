@@ -34,11 +34,11 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
-internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false) {
+internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {}) {
     InitialBrowserEscape(back)
     val closeFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { closeFocus.requestFocus() }
-    val seasons = remember(detail?.episodes) { detailSeasons(detail?.episodes.orEmpty()) }
+    val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     var selectedKey by remember(detail?.item?.identity) { mutableStateOf<String?>(null) }
     val selected = seasons.find { (it.number?.toString() ?: "unknown") == selectedKey }
         ?: seasons.firstOrNull { (it.number ?: 0) > 0 } ?: seasons.firstOrNull()
@@ -63,13 +63,15 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                         }
                         selected?.let { season ->
                             item { Box(Modifier.padding(horizontal = gutter, vertical = 10.dp)) {
-                                DetailSeasonPicker(seasons, season, compact) { selectedKey = it?.toString() ?: "unknown" }
+                                DetailSeasonPicker(seasons, season, compact) { selectedKey = it?.toString() ?: "unknown"; seasons.find { group -> group.number == it }?.takeIf { group -> group.episodes.isEmpty() }?.nextOffset?.let(loadPage) }
                             } }
                             items(season.episodes, key = ::episodeKey) { episode ->
                                 if (compact) DetailEpisodeCard(episode, true, play, Modifier.padding(horizontal = gutter, vertical = 12.dp))
                                 else DesktopEpisodeRow(episode, play, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                             }
                         }
+                        if (selected != null) item(key = "more-episodes") { MoreEpisodes(selected, detail?.next_cursor, busy, loadPage, Modifier.padding(horizontal = gutter)) }
+                        if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(gutter)) }
                     }
                     IconButton(onClick = back, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)
                         .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }
@@ -85,7 +87,7 @@ private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, p
         AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
         Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
+            if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
             Button(onClick = { play(card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {

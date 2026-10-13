@@ -6,6 +6,17 @@ import org.viptv.app.connection.fetchLocalCatalogRows
 import kotlin.test.*
 
 class LocalCatalogRequestsTest {
+    @Test fun queuedRequestsShareOneDeadlineInsteadOfSerialTimeoutWaves() = runBlocking {
+        val requests = JsonArray((0 until 12).map { buildJsonObject {
+            put("id", "row-$it"); put("url", "https://example.invalid/$it")
+        } })
+        val results = kotlinx.coroutines.withTimeout(3000) {
+            fetchLocalCatalogRows(requests) { kotlinx.coroutines.awaitCancellation() }
+        }
+        assertEquals(12, results.size)
+        assertTrue(results.all { "body" !in it.jsonObject })
+    }
+
     @Test
     fun failedSharedRequestKeepsEveryFailedRow() = runBlocking {
         val requests = Json.parseToJsonElement("""[{"id":"one","url":"https://example.invalid/fail"},{"id":"two","url":"https://example.invalid/fail"}]""").jsonArray
