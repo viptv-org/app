@@ -17,6 +17,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var generation = 0L
     internal val progressGate = Mutex()
     internal var progressJob: Job? = null
+    internal var libraryHydration: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null

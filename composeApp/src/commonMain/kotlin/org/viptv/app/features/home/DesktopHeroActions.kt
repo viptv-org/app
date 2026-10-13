@@ -15,8 +15,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 
 @Composable
-internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit) {
-    var explainList by remember { mutableStateOf(false) }
+internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> Unit, saved: Boolean) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Button(play, Modifier.width(140.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
@@ -28,12 +27,9 @@ internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit) {
             Icon(Lucide.Info, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
             Text("More info", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
-        FilledIconButton(onClick = { explainList = true }, modifier = Modifier.size(44.dp),
+        FilledIconButton(onClick = save, modifier = Modifier.size(44.dp),
             colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-            Icon(Lucide.Plus, "Add to My List", Modifier.size(22.dp))
+            Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp))
         }
     }
-    if (explainList) AlertDialog(onDismissRequest = { explainList = false }, title = { Text("My List") },
-        text = { Text("Saving titles to My List is not available in this experiment yet.") },
-        confirmButton = { TextButton(onClick = { explainList = false }) { Text("OK") } })
 }

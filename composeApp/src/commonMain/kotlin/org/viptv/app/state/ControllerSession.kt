@@ -79,8 +79,20 @@ fun ApplicationController.signOut() = run {
 }
 
 internal fun ApplicationController.accept(value: Bootstrap) {
+    libraryHydration?.cancel()
     mutable.value = ApplicationState(screen = if (value.selected == null) Screen.Profiles else Screen.Home,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         addons = value.addons, enabledAddonIds = value.enabledAddonIds)
+    val profile = value.selected ?: return
+    val remote = connection
+    val device = local
+    libraryHydration = scope.launch {
+        try {
+            val cards = device?.library(profile) ?: remote?.library(profile) ?: return@launch
+            if (mutable.value.selectedProfile == profile && connection === remote && local === device)
+                mutable.value = mutable.value.copy(library = cards)
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { /* The library route offers an explicit retry; Home remains usable. */ }
+    }
 }

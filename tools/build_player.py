@@ -52,6 +52,7 @@ else:
         subprocess.run(["git", "clone", "--filter=blob:none", "--no-checkout",
                         pin["upstream_repository"], str(imported)], check=True)
         git("fetch", "origin", pin["base_revision"], directory=imported)
+        git("config", "core.autocrlf", "false", directory=imported)
         git("checkout", "--detach", pin["base_revision"], directory=imported)
         git("bundle", "verify", str(bundle), directory=imported)
         git("fetch", str(bundle), revision, directory=imported)
@@ -77,5 +78,10 @@ subprocess.run([str(wrapper), "--no-configuration-cache", "-I",
                 *tasks], cwd=source, env=env, check=True)
 shutil.copytree(source / "build/viptv-renderer-maven", repository, dirs_exist_ok=True)
 if not verified_artifacts():
+    for path, checksum in artifacts.items():
+        artifact = repository / path
+        actual = hashlib.sha256(artifact.read_bytes()).hexdigest() if artifact.is_file() else "missing"
+        if actual != checksum:
+            print(f"Renderer artifact mismatch: {path}: expected {checksum}, got {actual}")
     raise SystemExit("Player renderer artifact checksum verification failed")
 stamp.write_text(revision + "\n")

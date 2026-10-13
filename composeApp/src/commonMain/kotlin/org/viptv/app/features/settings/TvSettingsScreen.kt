@@ -17,7 +17,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     notice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile?,
     initialSection: TvSettingsSection = TvSettingsSection.Playback, prefs: TvSettingsPreferences? = null,
     change: ((TvSettingsPreferences) -> Unit)? = null, addonInfo: Map<String, TvAddonInfo> = emptyMap(), account: TvAccountInfo? = null,
-    initialLeave: Boolean = false, placeholderQr: Boolean = false) {
+    initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable () -> Unit)? = null) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -53,6 +53,14 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                 notice?.let { Text(it, Modifier.padding(top = 20.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp) }
                 error?.let { Text(it, Modifier.padding(top = 20.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp) }
             }
+        }
+        if (section == TvSettingsSection.Addons && sourceIntegrations != null) {
+            var showingSources by remember { mutableStateOf(false) }
+            Box(Modifier.fillMaxSize().padding(32.dp * scale), contentAlignment = androidx.compose.ui.Alignment.BottomEnd) {
+                Button({ showingSources = true }) { Text("Source integrations") }
+            }
+            if (showingSources) AlertDialog(onDismissRequest = { showingSources = false },
+                text = { sourceIntegrations() }, confirmButton = { TextButton({ showingSources = false }) { Text("Close") } })
         }
         if (leaving) TvLeaveConfirmation(local, scale, { leaving = false; leave() }, { leaving = false })
         choice?.let { TvSettingsChoiceDialog(it, scale) { choice = null } }

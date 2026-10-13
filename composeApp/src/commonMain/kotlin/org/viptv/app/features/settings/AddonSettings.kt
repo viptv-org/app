@@ -20,7 +20,7 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
-    remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true) {
+    remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true, sourceIntegrations: (@Composable () -> Unit)? = null) {
     val address = rememberTextFieldState()
     var installing by remember { mutableStateOf(false) }
     var removing by remember { mutableStateOf<IntegrationConnection?>(null) }
@@ -48,6 +48,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                 AddonSettingsRow(addon, addon.id in enabledAddonIds, busy, managementAvailable,
                     { toggle(addon.id, it) }, { removing = addon })
             }
+            sourceIntegrations?.let { content -> item { content() } }
             if (compact && managementAvailable) item {
                 Button(onClick = { installing = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {

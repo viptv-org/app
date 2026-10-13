@@ -21,16 +21,16 @@ import org.viptv.app.components.MediaMetadata
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false) {
+internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = if (browser) 57.dp else 28.dp, bottom = if (browser) 88.dp else 80.dp)) {
         if (maxWidth < 900.dp) {
             Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
                 HeroArtwork(card, Modifier.fillMaxWidth())
-                FeaturedSummary(card, open, play, Modifier.fillMaxWidth())
+                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth())
             }
         } else {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
-                FeaturedSummary(card, open, play, Modifier.weight(0.45f))
+                FeaturedSummary(card, open, play, save, saved, Modifier.weight(0.45f))
                 HeroArtwork(card, Modifier.weight(0.55f))
             }
         }
@@ -45,7 +45,7 @@ private fun HeroArtwork(card: Card, modifier: Modifier) {
 }
 
 @Composable
-private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, modifier: Modifier) {
+private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("FEATURED", fontSize = 13.sp, letterSpacing = 0.6.sp,
             fontWeight = FontWeight.SemiBold, color = Palette.secondary)
@@ -59,6 +59,6 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Un
         card.description?.let {
             Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = 3)
         }
-        DesktopHeroActions({ play(card) }, { open(card) })
+        DesktopHeroActions({ play(card) }, { open(card) }, { save(card) }, saved)
     }
 }

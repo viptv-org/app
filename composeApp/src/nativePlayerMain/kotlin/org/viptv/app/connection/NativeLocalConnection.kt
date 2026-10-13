@@ -34,9 +34,9 @@ actual fun localConnection(databasePath: String): LocalConnection = NativeLocalC
 private data class LocalProfileCard(val id: String, val name: String, val locked: Boolean, val avatar_id: String?)
 
 internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.SecretStore = platformSecrets(),
-    private val client: io.ktor.client.HttpClient = platformClient()) : LocalConnection {
-    private val engine = LocalEngine(path, secrets)
-    private val json = Json { ignoreUnknownKeys = true }
+    internal val client: io.ktor.client.HttpClient = platformClient()) : LocalConnection {
+    internal val engine = LocalEngine(path, secrets)
+    internal val json = Json { ignoreUnknownKeys = true }
     private val pendingHomes=ConcurrentHashMap<String,String>()
 
     override suspend fun bootstrap(profile: String?): Bootstrap {
@@ -75,37 +75,15 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
 
     override suspend fun refreshHome(profile: String): HomeSnapshot = runPlan(pendingHomes.remove(profile) ?: withContext(Dispatchers.IO) { engine.planHome(profile) })
 
-    override suspend fun discoveryControls(profile: String, type: String): DiscoveryControls = withContext(Dispatchers.IO) {
-        json.decodeFromString(engine.discoveryControls(profile, type))
-    }
-    override suspend fun browse(profile: String, query: BrowseQuery): CatalogPage {
-        val plan = withContext(Dispatchers.IO) { json.parseToJsonElement(engine.planDiscover(profile, json.encodeToString(query))).jsonObject }
-        val requests = plan.getValue("requests").jsonArray
-        val results = fetchLocalCatalogRows(requests) { addonJson(client, it) }
-        if (requests.isNotEmpty() && results.all { it.jsonObject["body"] == null || it.jsonObject["body"] == JsonNull })
-            throw LocalFailure("Could not load this catalog. Check your connection and try again.")
-        return withContext(Dispatchers.IO) { json.decodeFromString(engine.projectDiscover(plan.getValue("id").jsonPrimitive.content, results.toString())) }
-    }
+    override suspend fun discoveryControls(profile: String, type: String): DiscoveryControls = fetchLocalDiscoveryControls(profile, type)
 
-    override suspend fun library(profile: String): List<Card> = withContext(Dispatchers.IO) {
-        val cards = mutableListOf<Card>()
-        var offset = 0u
-        do {
-            val page = json.decodeFromString<CatalogPage>(engine.library(profile, offset, 100u))
-            cards += page.cards
-            offset += page.cards.size.toUInt()
-            if (page.complete || page.cards.isEmpty()) break
-        } while (true)
-        cards
-    }
-    override suspend fun saveFavorite(profile: String, card: Card) = withContext(Dispatchers.IO) {
-        val revision = json.decodeFromString<ProfileConfiguration>(engine.profile(profile)).scope.revision.toULong()
-        engine.saveFavorite(profile, revision, json.encodeToString(card))
-    }
-    override suspend fun removeFavorite(profile: String, card: Card) = withContext(Dispatchers.IO) {
-        val revision = json.decodeFromString<ProfileConfiguration>(engine.profile(profile)).scope.revision.toULong()
-        engine.removeFavorite(profile, revision, card.identity.kind, card.identity.id)
-    }
+    override suspend fun browse(profile: String, query: BrowseQuery): CatalogPage = fetchLocalBrowse(profile, query)
+
+    override suspend fun library(profile: String): List<Card> = fetchLocalLibrary(profile)
+
+    override suspend fun saveFavorite(profile: String, card: Card): Unit = fetchLocalSaveFavorite(profile, card)
+
+    override suspend fun removeFavorite(profile: String, card: Card): Unit = fetchLocalRemoveFavorite(profile, card)
 
     override suspend fun addons(): List<IntegrationConnection> = withContext(Dispatchers.IO) {
         json.decodeFromString(engine.addons())
@@ -142,62 +120,13 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
         } } catch (_: Exception) { throw LocalFailure("The add-on returned invalid title details.") }
     }
 
-    override suspend fun sources(profile: String, card: Card): List<SourceCandidate> {
-        val plan = withContext(Dispatchers.IO) { engine.planSources(profile, card.identity.kind, card.identity.id) }
-        val request = json.parseToJsonElement(plan).jsonObject
-        val capacity = Semaphore(3)
-        val results = coroutineScope {
-            request.getValue("requests").jsonArray.map { item -> async {
-                val connection = item.jsonObject
-                val body = try { capacity.withPermit { withTimeout(2_000) { addonJson(client, connection.getValue("url").jsonPrimitive.content) } } }
-                catch (_: TimeoutCancellationException) { null }
-                catch (error: CancellationException) { throw error }
-                catch (_: Exception) { null }
-                buildJsonObject { put("provider", connection.getValue("provider").jsonPrimitive.content);body?.let { put("body",it) } }
-            } }.map { it.await() }
-        }
-        return withContext(Dispatchers.IO) {
-            json.decodeFromString(engine.projectSources(request.getValue("operation").jsonPrimitive.content, JsonArray(results).toString()))
-        }
-    }
+    override suspend fun sources(profile: String, card: Card): List<SourceCandidate> = fetchLocalSources(profile, card)
 
-    override suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot {
-        val raw = withContext(Dispatchers.IO) { engine.planSubtitles(profile, card.identity.kind, card.identity.id, "{}") }
-        val plan = json.parseToJsonElement(raw).jsonObject
-        val capacity = Semaphore(3)
-        val results = coroutineScope {
-            plan.getValue("requests").jsonArray.map { item -> async {
-                val request = item.jsonObject
-                val url = request["url"]?.jsonPrimitive?.contentOrNull
-                val body = try { url?.let { capacity.withPermit { withTimeout(2_000) { addonJson(client, it) } } } }
-                catch (_: TimeoutCancellationException) { null }
-                catch (error: CancellationException) { throw error }
-                catch (_: Exception) { null }
-                buildJsonObject { put("provider", request.getValue("provider")); body?.let { put("body", it) } }
-            } }.map { it.await() }
-        }
-        return withContext(Dispatchers.IO) {
-            json.decodeFromString(engine.projectSubtitles(plan.getValue("operation").jsonPrimitive.content, JsonArray(results).toString()))
-        }
-    }
+    override suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot = fetchLocalSubtitles(profile, card)
 
-    override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray {
-        val selected = withContext(Dispatchers.IO) { json.parseToJsonElement(engine.openSubtitle(id)).jsonObject }
-        if (selected.getValue("profile_id").jsonPrimitive.content != input.profileId ||
-            selected.getValue("revision").jsonPrimitive.long != input.revision) throw LocalFailure("This subtitle choice has expired.")
-        val content = withTimeout(10_000) { addonBytes(client, selected.getValue("url").jsonPrimitive.content) }
-        // Recheck after network IO so a profile/configuration change cannot attach stale content.
-        withContext(Dispatchers.IO) { engine.openSubtitle(id) }
-        return content
-    }
+    override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray = fetchLocalSubtitleContent(id, input)
 
-    override suspend fun openSource(id: String): PlaybackInput = withContext(Dispatchers.IO) {
-        val source = json.parseToJsonElement(engine.openSource(id)).jsonObject
-        val headers = source.getValue("headers").jsonArray.associate { pair ->
-            val values=pair.jsonArray;values[0].jsonPrimitive.content to values[1].jsonPrimitive.content
-        }
-        PlaybackInput(id,source.getValue("url").jsonPrimitive.content,headers,source.getValue("position_millis").jsonPrimitive.long,source.getValue("profile_id").jsonPrimitive.content,source.getValue("revision").jsonPrimitive.long)
-    }
+    override suspend fun openSource(id: String): PlaybackInput = fetchLocalOpenSource(id)
 
     override suspend fun recordProgress(input: PlaybackInput, card: Card, positionMillis: Long, durationMillis: Long?) = withContext(Dispatchers.IO) {
         val profile = input.profileId ?: throw LocalFailure("No profile owns this playback session.")

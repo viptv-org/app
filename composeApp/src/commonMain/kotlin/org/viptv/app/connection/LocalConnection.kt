@@ -36,6 +36,9 @@ interface LocalConnection : AutoCloseable {
     suspend fun library(profile: String): List<Card> = throw LocalFailure("My List is unavailable on this device.")
     suspend fun saveFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
     suspend fun removeFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
+    suspend fun sourceIntegrationSchemas(profile: String): SourceIntegrationSnapshot = SourceIntegrationSnapshot()
+    suspend fun configureSourceIntegration(profile: String, revision: Long, plugin: String, configuration: kotlinx.serialization.json.JsonObject): Unit = throw LocalFailure("Source configuration is unavailable on this device.")
+    suspend fun removeSourceIntegration(profile: String, revision: Long, connection: String): Unit = throw LocalFailure("Source configuration is unavailable on this device.")
     suspend fun clearHistory(profile: String)
 }
 expect fun localConnection(databasePath: String): LocalConnection

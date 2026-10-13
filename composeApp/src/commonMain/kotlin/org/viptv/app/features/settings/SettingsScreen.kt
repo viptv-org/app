@@ -11,9 +11,9 @@ import org.viptv.engine.wire.IntegrationConnection
 fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
     remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile? = null,
-    back: () -> Unit = {}, television: Boolean = false, initialSection: String? = null, initialLeave: Boolean = false, account: (@Composable () -> Unit)? = null) {
+    back: () -> Unit = {}, television: Boolean = false, initialSection: String? = null, initialLeave: Boolean = false, account: (@Composable () -> Unit)? = null, sourceIntegrations: (@Composable () -> Unit)? = null) {
     if (television) {
-        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile)
+        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, sourceIntegrations = sourceIntegrations)
         return
     }
     var section by remember { mutableStateOf(initialSection) }
@@ -27,7 +27,7 @@ fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledA
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
                         { section = "Add-ons" }, { leaving = true }, back, account = account?.let { { section = "Account" } })
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
-                        sessionNotice, install, toggle, remove, if (compact) ({ section = null }) else null)
+                        sessionNotice, install, toggle, remove, if (compact) ({ section = null }) else null, sourceIntegrations = sourceIntegrations)
                     section == "Account" && account != null -> account()
                     else -> SettingsSection(section.orEmpty(), local, busy, error, sessionNotice, { leaving = true })
                 }

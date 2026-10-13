@@ -18,6 +18,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.Check
 import org.viptv.app.theme.Palette
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
@@ -25,8 +26,7 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun PhoneHero(card: Card, play: (Card) -> Unit) {
-    var explainList by remember(card.identity) { mutableStateOf(false) }
+internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean) {
     Box(Modifier.fillMaxWidth().height(470.dp).clip(RoundedCornerShape(16.dp)).background(Palette.surface)) {
         AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
@@ -45,17 +45,14 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit) {
                     Spacer(Modifier.width(8.dp))
                     Text("Play", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
-                Button(onClick = { explainList = true }, modifier = Modifier.weight(1f).height(46.dp),
+                Button(onClick = { save(card) }, modifier = Modifier.weight(1f).height(46.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-                    Icon(Lucide.Plus, null, Modifier.size(18.dp))
+                    Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("My List", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
     }
-    if (explainList) AlertDialog(onDismissRequest = { explainList = false },
-        title = { Text("My List") }, text = { Text("Saving titles to My List is not available in this experiment yet.") },
-        confirmButton = { TextButton(onClick = { explainList = false }) { Text("OK") } })
 }

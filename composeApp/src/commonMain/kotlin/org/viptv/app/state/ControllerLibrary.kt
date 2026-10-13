@@ -5,6 +5,8 @@ import org.viptv.engine.wire.Card
 
 fun ApplicationController.toggleFavorite(card: Card) = run {
     val profile = requireNotNull(mutable.value.selectedProfile)
+    libraryHydration?.cancel()
+    libraryHydration?.join()
     loadLibrary()
     val saved = mutable.value.library.any { it.identity.kind == card.identity.kind && it.identity.id == card.identity.id }
     if (saved) local?.removeFavorite(profile, card) ?: requireNotNull(connection).removeFavorite(profile, card)

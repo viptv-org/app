@@ -34,7 +34,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                         TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }
                             .semantics { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off }, scale, enabled = !busy,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
-                            activate = { if (local) toggle(addon.id, addon.id !in enabled) else unavailable() }) { tint ->
+                            activate = { toggle(addon.id, addon.id !in enabled) }) { tint ->
                             Box(Modifier.size(60.dp * scale).background(Color(info[addon.id]?.color ?: 0xFF3D6C88), RoundedCornerShape(14.dp * scale)), contentAlignment = Alignment.Center) {
                                 Text(info[addon.id]?.letter ?: addon.name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "A", color = Palette.text, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)
                             }
@@ -48,7 +48,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                         }
                     }
                     item { TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }, scale, requester = initial,
-                        enabled = !busy, activate = { if (local) install() else unavailable() }, arrangement = Arrangement.Start,
+                        enabled = !busy, activate = { install() }, arrangement = Arrangement.Start,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                         Box(Modifier.size(60.dp * scale).background(it.copy(alpha = 0.1f), RoundedCornerShape(14.dp * scale)), contentAlignment = Alignment.Center) {
                             Icon(Lucide.Plus, "Add an add-on", Modifier.size(30.dp * scale), it)

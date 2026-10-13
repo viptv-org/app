@@ -11,5 +11,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         { controller.navigate(Screen.Profiles) }, leave,
         state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television,
         account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,
-            controller::refreshAccounts, controller::linkSimkl, controller::unlinkSimkl, leave) })
+            controller::refreshAccounts, controller::linkSimkl, controller::unlinkSimkl, leave) },
+        sourceIntegrations = { SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
+            controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration) })
 }

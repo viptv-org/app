@@ -236,3 +236,7 @@ connection and supports the server’s OAuth 2.0 authorization and unlink flow.
 Native clients explain that account linking happens in the web dashboard; local
 mode identifies server-only integrations. The linked, unconfigured, loading,
 error and unlink confirmation variants need supplied design boards.
+
+### GAP-047 — Source integration configuration
+
+The supplied boards do not include a form for plugin-owned credentials and provider selection. A provisional shared settings form shows engine-supplied fields, write-only credentials, bounded provider choices and removal confirmation. TV opens it from Add-ons. Replace with supplied design when available.

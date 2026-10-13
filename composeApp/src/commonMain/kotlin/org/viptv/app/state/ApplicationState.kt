@@ -37,6 +37,8 @@ data class ApplicationState(
     val localMode: Boolean = false,
     val sessionNotice: String? = null,
     val addons: List<IntegrationConnection> = emptyList(),
+    val sourceIntegrations: SourceIntegrationSnapshot = SourceIntegrationSnapshot(),
+    val sourceIntegrationError: String? = null,
     val enabledAddonIds: Set<String> = emptySet(),
     val sourceTitle: Card? = null,
     val sources: List<SourceCandidate> = emptyList(),

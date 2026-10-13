@@ -25,7 +25,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit) {
+internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean) {
     var notice by remember { mutableStateOf<String?>(null) }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val portrait = maxWidth < 900.dp
@@ -48,9 +48,9 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                         Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Play")
                     }
-                    FilledIconButton(onClick = { notice = "My List" }, modifier = Modifier.size(48.dp),
+                    FilledIconButton(onClick = { save(card) }, modifier = Modifier.size(48.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-                        Icon(Lucide.Plus, "Add to My List", Modifier.size(22.dp))
+                        Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp))
                     }
                     FilledIconButton(onClick = { open(card) }, modifier = Modifier.size(48.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
