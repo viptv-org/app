@@ -12,6 +12,8 @@ import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.entry.ProfilesScreen
 import org.viptv.app.features.entry.ConnectScreen
+import org.viptv.app.features.entry.TvSignIn
+import org.viptv.app.features.entry.TvSignInStep
 import org.viptv.app.features.entry.ProfilePinScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.home.HomeScreen
@@ -70,7 +72,10 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                     }
                     Box(Modifier.weight(1f)) {
                         when (current) {
-                            Screen.Connect -> ConnectScreen(browser, "https://viptv.syek.tech", false, null, { go(Screen.Profiles) }, { _, _, _ -> }, desktop, phone, television, entryBackChanged)
+                            Screen.Connect -> if (television) TvSignIn("https://viptv.syek.tech", false, null, { go(Screen.Profiles) },
+                                { _, _, _ -> }, entryBackChanged, if (tvDetailVariant == "Email") TvSignInStep.Email else TvSignInStep.Welcome,
+                                if (tvDetailVariant == "Email") "vynxc" else "")
+                                else ConnectScreen(browser, "https://viptv.syek.tech", false, null, { go(Screen.Profiles) }, { _, _, _ -> }, desktop, phone, false, entryBackChanged)
                             Screen.Player -> if (television && liveTitle == null) PreviewTvPlayer(tvDetailVariant, go, entryBackChanged)
                                 else PlayerScreen(null, true, null, {}, {}, { go(if (liveTitle == null) Screen.Home else Screen.Live) }, liveTitle ?: PreviewData.playerTitle, if (liveTitle == null) PlayerFact.Progress(842000, 3132000) else PlayerFact.Progress(0, null), phone = handheld, previewFrame = liveTitle?.landscape ?: PreviewData.playerFrame, television = television, backChanged = entryBackChanged)
                             Screen.Details -> if (television) TvDetailsScreen(

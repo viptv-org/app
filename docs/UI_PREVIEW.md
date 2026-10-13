@@ -67,3 +67,7 @@ a synthetic callback. Back returns to Profiles. No stored PIN is checked.
 TV `Search --es ui_variant Loading` renders empty-result loading placeholders;
 other variants keep the existing search fixtures. Keyboard edits change preview
 memory only, with no provider requests.
+
+TV `Connect --es ui_variant Email` starts the email-entry board with its vynxc
+draft and Gmail-key focus. Next shows the missing code-service state; no email
+is sent. Phone and Back navigate the existing entry state machine.

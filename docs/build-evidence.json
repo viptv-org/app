@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "2789fd7359ae049166b50a684e6b6091bc4768d5d6425407afd23d51dd761ac0",
+    "sha256": "aff337c133fcca275348771ff4dd00a4d8d0de9037974278ec11ed3dcc0e4e81",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -52,7 +52,8 @@
     "tv_live": "preview guide entry, horizontal summary, fixture player/Back and Sports filtering passed; source geometry/marker RGB sampled; marker bounded after filtering and final typography render; real EPG feed and live decode unqualified",
     "tv_calendar": "preview header/date/release traversal, first-row geometry, focus/action update, Tomorrow filtering and empty date passed; actual release feed and actionable episode resolution unqualified",
     "tv_search_input": "five rapid append/delete actions and fifty-character append retained; caret sampled inside long-query field; loading shimmer animated in poster shapes with unchanged gutter; real provider request counts unqualified",
-    "tv_password_input": "preview rapid entry, immediate Shift/character, long-email caret bounds and Back passed; field/key dimensions updated from ZIP; real successful sign-in unqualified"
+    "tv_password_input": "preview rapid entry, immediate Shift/character, long-email caret bounds and Back passed; field/key dimensions updated from ZIP; real successful sign-in unqualified",
+    "tv_email_entry": "preview suffix focus, Gmail append, Backspace, unavailable Next/focus restoration, phone state and Back passed; delivery/verification and phone pairing unimplemented"
   },
   "desktop": {
     "compile": "passed",

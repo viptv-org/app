@@ -129,3 +129,10 @@ Delete character and Use another server are additional entry controls beyond
 error states lack matching supplied boards. These surfaces remain provisional.
 The provided alternative phone/browser/email/IPTV boards are present designs
 with unfinished implementations, rather than missing designs.
+
+### GAP-033 — TV email-entry deletion and unavailable-code state
+
+`TvEmailSignIn` adds a remote Delete character action, a bounded long-email state
+and an unavailable-code dialog beyond the populated `Tv3SignInEmail` board.
+These extra surfaces need design review. The supplied code-entry/phone boards
+exist and remain unfinished; no successful email delivery is implied.

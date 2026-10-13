@@ -14,8 +14,8 @@ internal enum class TvSignInStep { Welcome, Choice, Phone, Browser, Email, Passw
 
 @Composable
 internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit,
-    backChanged: ((() -> Unit)?) -> Unit) {
-    var step by remember { mutableStateOf(TvSignInStep.Welcome) }
+    backChanged: ((() -> Unit)?) -> Unit, initialStep: TvSignInStep = TvSignInStep.Welcome, initialEmail: String = "") {
+    var step by remember { mutableStateOf(initialStep) }
     val back = { step = if (step == TvSignInStep.Choice) TvSignInStep.Welcome else TvSignInStep.Choice }
     DisposableEffect(step) {
         backChanged(if (step == TvSignInStep.Welcome) null else back)
@@ -27,6 +27,7 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
             TvSignInStep.Welcome -> TvWelcome(scale, { step = TvSignInStep.Choice }, local)
             TvSignInStep.Choice -> TvSignInChoice(scale, local) { step = it }
             TvSignInStep.Password -> TvPasswordPanel(origin, busy, error, scale, connect, { step = TvSignInStep.Email })
+            TvSignInStep.Email -> TvEmailSignIn(scale, { step = TvSignInStep.Phone }, initialEmail, initialEmail.isNotEmpty())
             else -> Column(Modifier.padding(96.dp * scale), verticalArrangement = Arrangement.spacedBy(28.dp * scale)) {
                 Text(when (step) { TvSignInStep.Phone -> "Use your phone"; TvSignInStep.Browser -> "Use a browser"; TvSignInStep.Email -> "Email me a code"; else -> "IPTV provider" },
                     fontSize = (52 * scale).sp, fontWeight = FontWeight.Bold)

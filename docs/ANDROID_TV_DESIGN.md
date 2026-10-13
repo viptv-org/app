@@ -59,3 +59,6 @@ described in `TV_SEARCH.md`.
 
 Password-entry keyboard/layout qualification and remaining connection limits
 are described in `TV_PASSWORD.md`.
+
+Dedicated email-entry layout and its unavailable-code/phone boundaries are
+described in `TV_EMAIL.md`.
