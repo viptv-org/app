@@ -42,3 +42,9 @@ The current API was checked through Context7's [component documentation](https:/
 TV control visibility uses Compose `AnimatedVisibility` with `MutableTransitionState`
 and fade transitions, which retains content until exit completes. The API was
 checked through Context7's [official Compose animation documentation](https://developer.android.com/develop/ui/compose/animation/composables-modifiers).
+
+Next-episode text line-height behavior was checked against [Compose paragraph styling](https://developer.android.com/develop/ui/compose/text/style-paragraph)
+through Context7 and the installed Compose text API. Fixed line-height settings
+alone did not reduce the single-line heading's measured font bounds, so the
+heading uses Compose layout sizing and unbounded height wrapping to reserve the
+ZIP's CSS line height without clipping glyphs.

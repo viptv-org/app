@@ -5,8 +5,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
@@ -76,14 +74,14 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
     }.focusable()) {
         val scale = maxWidth / 1920.dp
-        val video = if (state.showNext) Modifier.offset(96.dp * scale, 96.dp * scale).size(880.dp * scale, 496.dp * scale).clip(RoundedCornerShape(16.dp * scale)) else Modifier.fillMaxSize()
+        val video = rememberTvVideoFrame(state.showNext, scale)
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, video, contentScale = ContentScale.Crop)
         if (input != null) PlayerSurface(input, paused, video, { state.observe(it); observe(it) }, state.commands)
         if (state.showNext) Box(video.background(Color.Black.copy(alpha = 0.25f)))
         when {
             state.failed -> TvPlayerFailure(extras, state.position, error, scale, retry, chooseSources, close)
             state.buffering -> TvPlayerBuffer(title, extras, scale)
-            state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale, { playEpisode?.invoke(extras.nextEpisode) }, { state.showNext = false; state.visible = false })
+            state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale, { playEpisode?.invoke(extras.nextEpisode) }, { state.showNext = false; state.visible = false }, extras.creditsLabel)
             else -> {
                 TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes) {
                     TvPlayerControls(state, title, extras, scale, timeline, audio,

@@ -96,3 +96,27 @@ seek cancellation and successive Back navigation. A native recording contained
 visible, hidden and intermediate timeline-opacity samples. These checks do not
 measure exact animation durations or qualify inactivity timing during real live
 playback. Desktop tests, Wasm compilation and Android assembly passed.
+
+## Next-episode motion and geometry
+
+The video shrinks from 1920×1080 into the ZIP's 880×495 frame at (96,96), with
+12-pixel corners and a 600 ms decelerating transition. Keep watching reverses
+the same transition. The information and credits caption fade up 16 pixels over
+450 ms after a 350 ms delay. Optional credits-label facts are supplied explicitly;
+normal connections fall back to the actual title, and the fixture supplies the
+ZIP's short label.
+
+Episode and runtime metadata are separate labels with the source's dot and badge
+spacing. The heading reserves the CSS line height per measured line while letting
+font glyphs extend beyond that box; long headings can still wrap. Description,
+button label and helper-copy spacing were refined. The Android font-padding
+helper tried during diagnosis was removed because it did not change the measured
+heading height. No global typography change was made.
+
+The isolated TV fixture checked initial Play-next focus, Keep watching, explicit
+OK before opening sources, Back dismissal and exact settled video bounds.
+A recording contains intermediate and settled video positions. The existing
+seven-scene player checks passed, and the separate public MP4 scene decoded,
+sought beyond 900 ms and reported Playing/Paused states. Live decoded-video
+resizing, exact frame timing, remaining typography differences and the complete
+real next-episode flow remain unqualified. Capture: `evidence/tv-player-next.png`.

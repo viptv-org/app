@@ -14,6 +14,7 @@ data class TvPlaybackExtras(
     val thumbnails: List<TvScrubThumbnail> = emptyList(),
     val fallbackLabel: String? = null,
     val failureDescription: String? = null,
+    val creditsLabel: String? = null,
 )
 data class TvSkipRange(val startMillis: Long, val endMillis: Long, val label: String = "Skip intro")
 data class TvScrubThumbnail(val startMillis: Long, val endMillis: Long, val image: String)
