@@ -180,3 +180,10 @@ The supplied `Tv3PlayerError` board contains all three actions; source-only and
 Back-only arrangements, including generic Back-only explanatory copy, are
 provisional and need design review. Preview actions do not prove real source
 fallback or position-preserving recovery.
+
+### GAP-040 — TV seek preview without thumbnail data
+
+`TvSeekPreview` retains a bounded timestamp when no thumbnail covers the proposed
+seek position. The supplied `Tv3PlayerScrub` board contains an image, so this
+time-only arrangement is provisional and needs design review. No unrelated
+poster or fabricated thumbnail is substituted.

@@ -14,6 +14,7 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
         variant.startsWith("Tracks") -> TvPlayerScene.Tracks
         variant.startsWith("Error") -> TvPlayerScene.Error
         variant.startsWith("Skip") -> TvPlayerScene.Skip
+        variant.startsWith("Scrub") -> TvPlayerScene.Scrub
         variant == "BufferFast" -> TvPlayerScene.Buffer
         else -> TvPlayerScene.entries.find { it.name == variant } ?: TvPlayerScene.Controls
     }
@@ -35,6 +36,7 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
     val previewExtras = when {
         variant == "ErrorBackOnly" -> PreviewTvPlayback.extras.copy(failureDescription = "Playback failed. Go back to choose another item.", fallbackLabel = null)
         scene == TvPlayerScene.Skip -> PreviewTvPlayback.extras.copy(skip = TvSkipRange(0, 10000))
+        variant == "ScrubNoImage" -> PreviewTvPlayback.extras.copy(thumbnails = emptyList())
         else -> PreviewTvPlayback.extras
     }
     val initialPosition = if (scene != TvPlayerScene.Skip) 842000L else when (variant) { "SkipHalf" -> 5000L; "SkipEnd" -> 10000L; else -> 0L }

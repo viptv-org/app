@@ -116,3 +116,6 @@ These variants check focus/season resolution without provider or history request
 TV `Player --es ui_variant SkipHalf|SkipEnd` provides halfway/expired intro facts
 for the countdown rail. `Skip` starts the same ten-second fixture range at zero.
 These cases do not supply real-provider intro markers or run an independent timer.
+
+TV `Player --es ui_variant ScrubNoImage` supplies a proposed seek without thumbnail
+data, for checking the timestamp-only fallback and explicit seek confirmation.

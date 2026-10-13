@@ -161,3 +161,23 @@ byte-identical to `42b16a2d66c54eeda67d0a2254679a5c.jpg` from the ZIP
 (SHA-256 `7d043ba9db58f227d8ad9c0d745faa4bc84bf19ded3fe62c10b9a17a175d2a36`).
 This identifies that particular preview mark; other layout artifacts require
 separate diagnosis. The supplied artwork was not modified.
+
+## Seek-preview refinement
+
+`TvSeekPreview` separates the thumbnail renderer from the timeline. Its content is
+400×225 with a 3-pixel exterior white border, 12-pixel inner corners and the
+supplied 60-pixel shadow/24-pixel offset. The timestamp has a centered 120-pixel
+box. The timeline draws the pending span between actual and proposed positions,
+uses the source's 22% white track and 25% thumb halo, and uses the supplied minus
+glyph in remaining time. Buffered ranges still require player facts; no sample
+52% buffer fill is invented for normal playback.
+
+The shared controls gradient now follows the source's 280-pixel top fade and
+440-pixel bottom fade beginning at y=640, with 72%/82% black endpoints.
+
+The isolated TV emulator checked the thumbnail border, actual/proposed times,
+pending-band pixels and their removal on Back, plus time-only preview and OK
+confirmation. The no-thumbnail surface is recorded in GAP-040. Desktop tests,
+Wasm compilation and Android assembly passed. Real thumbnail delivery, buffered
+range contracts, all seek boundaries and complete raster/typography parity remain
+unqualified. Capture: `evidence/tv-player-scrub.png`.

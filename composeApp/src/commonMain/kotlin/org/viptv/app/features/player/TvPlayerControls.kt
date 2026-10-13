@@ -23,8 +23,8 @@ import org.viptv.engine.wire.Card
 internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extras: TvPlaybackExtras, scale: Float,
     timeline: FocusRequester, audio: FocusRequester, toggle: () -> Unit, previewCommand: ((PlayerCommand) -> Unit)?,
     chooseSources: (() -> Unit)?, playEpisode: ((Card) -> Unit)?) {
-    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
-        0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
+    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = .72f),
+        (280f / 1080f) to Color.Transparent, (640f / 1080f) to Color.Transparent, 1f to Color.Black.copy(alpha = .82f))))
     Column(Modifier.align(Alignment.TopStart).padding(start = 96.dp * scale, top = 64.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
         Text(title?.title ?: "Playback", fontSize = (30 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.Bold)
         title?.subtitle?.let { Text(it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary) }
