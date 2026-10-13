@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "c32aa839575463fead8fa7c65b027b9ee6ce84cf4baac7e8363d3f8459738b65",
+    "sha256": "f2356dcfe900e870052e01c1bee3a13e5b3f35804c55b5e92b0dc177ec00eb1f",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -40,7 +40,8 @@
       "loading_motion": "Material fixed quarter-circle, 18% white track, 900 ms linear rotation, 500 ms delay and 300 ms overlay fade; sustained and 250 ms ready fixtures passed; exact frame timing unqualified",
       "track_sheet_motion": "Bottom-entry/exit uses supplied audio board; native recording contains intermediate and settled positions; original, stale-ID, audio-only and empty focus/Back checks passed; blur and full parity unfinished",
       "controls_motion": "200 ms entrance/300 ms exit configured; native video contains visible/hidden/intermediate timeline-opacity samples; hidden Up/audio focus, sheet Back, Down reveal, seek cancel and successive Back passed; exact timing and live inactivity unqualified",
-      "next_episode_motion": "600 ms shrink/reverse configured, delayed information fade-up; recording contains intermediate and settled geometry; PNG confirms 880x495 at (96,96); Play-next focus, Keep watching, explicit OK and Back passed; live decoded resizing and full parity unqualified"
+      "next_episode_motion": "600 ms shrink/reverse configured, delayed information fade-up; recording contains intermediate and settled geometry; PNG confirms 880x495 at (96,96); Play-next focus, Keep watching, explicit OK and Back passed; live decoded resizing and full parity unqualified",
+      "failure_surface": "ZIP backdrop/spacing/icon/action fills refined; retry drop shadow darkens sampled backdrop pixels; full, source-only and Back-only focus/actions passed; real provider retry/resume, TalkBack and complete parity unqualified"
     },
     "tv_settings": {
       "render": "Playback, Subtitles, Add-ons and Sign-out at 1920x1080",

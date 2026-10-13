@@ -12,6 +12,7 @@ import org.viptv.app.state.Screen
 internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged: ((() -> Unit)?) -> Unit) {
     val scene = when {
         variant.startsWith("Tracks") -> TvPlayerScene.Tracks
+        variant.startsWith("Error") -> TvPlayerScene.Error
         variant == "BufferFast" -> TvPlayerScene.Buffer
         else -> TvPlayerScene.entries.find { it.name == variant } ?: TvPlayerScene.Controls
     }
@@ -29,6 +30,9 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
     }) }
     var paused by remember { mutableStateOf(true) }
     val duration = 3132000L
+    val openSources = { go(Screen.Sources) }
+    val previewExtras = if (variant == "ErrorBackOnly") PreviewTvPlayback.extras.copy(
+        failureDescription = "Playback failed. Go back to choose another item.", fallbackLabel = null) else PreviewTvPlayback.extras
     val initial = remember { if (native) emptyList() else listOf(PlayerFact.Progress(if (scene == TvPlayerScene.Skip) 5000 else 842000, duration),
         PlayerFact.Tracks(tracks), PlayerFact.Properties(1f, 1.0)) }
     val command: (PlayerCommand) -> Unit = { value ->
@@ -54,8 +58,9 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
             }
         }
     }, { go(Screen.Home) }, if (native) PreviewData.hero.copy(title = "Flower", subtitle = "Public test clip", logo = null) else PreviewData.playerTitle,
-        if (native) TvPlaybackExtras(sourceLabel = "Public test clip") else PreviewTvPlayback.extras,
-        { go(Screen.Sources) }, { go(Screen.Sources) }, { go(Screen.Sources) }, backChanged,
+        if (native) TvPlaybackExtras(sourceLabel = "Public test clip") else previewExtras,
+        openSources.takeUnless { variant == "ErrorBackOnly" }, { openSources() },
+        openSources.takeUnless { variant == "ErrorSourceOnly" || variant == "ErrorBackOnly" }, backChanged,
         previewFrame = if (scene == TvPlayerScene.Skip) PreviewTvPlayback.skipFrame else PreviewTvPlayback.frame,
         scene = scene, initialFacts = initial, externalFacts = facts, previewCommand = if (native) null else command,
         trackFocus = if (variant == "TracksInvalidFocus" || variant == "TracksAudioOnly" || variant == "TracksEmpty") 999

@@ -28,6 +28,10 @@ uses the public Flower MP4 with real KitePlayer facts, without account/provider/
 history operations. Its diagnostic output contains public-test status/position/
 track counts only. Temporary key-event diagnostics were removed.
 
+`Player --es ui_variant ErrorSourceOnly|ErrorBackOnly` exercises error recovery
+when retry or source selection is unavailable. These isolated fixtures check
+focus and navigation, not real provider recovery.
+
 TV `Settings --es ui_variant Playback|Subs|Addons|SignOut` renders the corresponding
 settings fixture. Its preferences and profile add-on toggles change in memory;
 those actions do not prove persistent engine settings. The sign-out fixture

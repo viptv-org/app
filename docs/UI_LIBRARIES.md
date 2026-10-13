@@ -48,3 +48,7 @@ through Context7 and the installed Compose text API. Fixed line-height settings
 alone did not reduce the single-line heading's measured font bounds, so the
 heading uses Compose layout sizing and unbounded height wrapping to reserve the
 ZIP's CSS line height without clipping glyphs.
+
+The TV retry button uses Compose `dropShadow` with shape, radius, color and offset
+parameters. This avoids substituting a Material elevation shadow for the ZIP's
+specified CSS-style shadow. The API was checked through Context7's [official shadow documentation](https://developer.android.com/develop/ui/compose/graphics/draw/shadows).

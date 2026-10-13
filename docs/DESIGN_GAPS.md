@@ -172,3 +172,11 @@ wide artwork for full fidelity.
 absent from the populated `Tv3SignIn` board. No fabricated QR/code/expiry is shown
 without session data. The preview uses a matching `.invalid` host and QR URL for
 safe review; production pairing/authentication remains unimplemented.
+
+### GAP-039 — TV playback failure with reduced recovery actions
+
+`TvPlayerFailure` omits Retry or source selection when their callbacks are absent.
+The supplied `Tv3PlayerError` board contains all three actions; source-only and
+Back-only arrangements, including generic Back-only explanatory copy, are
+provisional and need design review. Preview actions do not prove real source
+fallback or position-preserving recovery.

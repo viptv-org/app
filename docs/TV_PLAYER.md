@@ -120,3 +120,22 @@ seven-scene player checks passed, and the separate public MP4 scene decoded,
 sought beyond 900 ms and reported Playing/Paused states. Live decoded-video
 resizing, exact frame timing, remaining typography differences and the complete
 real next-episode flow remain unqualified. Capture: `evidence/tv-player-next.png`.
+
+## Playback-failure surface
+
+`TvPlayerFailure` is a separate small renderer. Its backdrop uses the supplied
+85% black dim, its icon circle uses 12% white, and its vertical spacing follows
+`Tv3PlayerError`. The fixed heading reserves the CSS line height without clipping
+font glyphs. Wrapped failure copy is centered, and the group declares an assertive
+live region. TalkBack announcement behavior has not been qualified.
+
+The primary recovery button uses Compose dropShadow with the supplied 50-pixel
+radius, 18-pixel vertical offset and 45% black. Secondary fills use 16% white.
+The final emulator capture shows the shadow darkening the backdrop below the
+button. Error, source-only and Back-only fixtures each focused an available
+control and navigated through that control. These synthetic actions do not test
+real provider retry or resume recovery. Reduced-action states are recorded in
+GAP-039. Backdrop blur, remaining font/raster differences and complete board
+parity remain unfinished. Capture: `evidence/tv-player-error.png`.
+
+Desktop tests, Wasm compilation and Android assembly passed for this checkpoint.
