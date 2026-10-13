@@ -32,3 +32,14 @@ fixture supplies those sample values; normal connections do not infer them from
 names or invent tracks. Persistent subtitle preferences, HDR/HLS/live playback,
 actual multi-track switching, source recovery and every board's final typography/
 motion review remain incomplete. No complete TV parity claim is made.
+# Track-panel focus fallback
+
+The TV options panel validates its requested subtitle-focus ID against the
+available tracks. A stale ID falls back to the selected subtitle or Off. With no
+subtitles, audio receives focus when present; with no tracks, Off remains a valid
+focus target. These choices affect panel focus, not playback selection commands.
+
+The isolated 1920×1080 emulator checked stale-ID, audio-only, empty-track and
+original options scenes; each focused a valid control and Back dismissed the
+panel. Desktop tests, Wasm compilation and Android assembly passed. These
+fixtures do not qualify every live track-change/persistence scenario.

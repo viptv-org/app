@@ -25,6 +25,9 @@ import org.viptv.app.theme.Palette
 internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: Float, send: (PlayerCommand) -> Unit,
     close: () -> Unit, initialSubtitle: Int? = null) {
     val initial = remember { FocusRequester() }
+    val subtitleFocus = tracks.subtitles.find { it.id == initialSubtitle } ?: tracks.subtitles.find { it.selected }
+    val preferAudio = tracks.subtitles.isEmpty() && tracks.audio.isNotEmpty()
+    val audioFocus = tracks.audio.find { it.selected } ?: tracks.audio.firstOrNull()
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
         Box(Modifier.fillMaxSize()) {
             Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(540.dp * scale)
@@ -33,13 +36,13 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                 TvTrackColumn("Audio", Modifier.width(520.dp * scale), scale) {
                     if (tracks.audio.isEmpty()) item { Text("No audio tracks available", color = Palette.secondary, fontSize = (24 * scale).sp) }
                     items(tracks.audio, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
-                        if (tracks.subtitles.isEmpty() && track == (tracks.audio.find { it.selected } ?: tracks.audio.firstOrNull())) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
+                        if (preferAudio && track.id == audioFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
                 }
                 TvTrackColumn("Subtitles", Modifier.width(520.dp * scale), scale) {
                     item { TvTrackRow("Off", tracks.subtitles.none { it.selected }, scale,
-                        if (tracks.audio.isEmpty() && tracks.subtitles.isEmpty() || tracks.subtitles.isNotEmpty() && initialSubtitle == null && tracks.subtitles.none { it.selected }) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) } }
+                        if (!preferAudio && subtitleFocus == null) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) } }
                     items(tracks.subtitles, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
-                        if (track.id == (initialSubtitle ?: tracks.subtitles.find { it.selected }?.id)) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
+                        if (!preferAudio && track.id == subtitleFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
                 }
                 TvTrackColumn("Subtitle size", Modifier.width(520.dp * scale), scale) {
                     items(listOf("Small" to 0.8f, "Medium" to 1f, "Large" to 1.25f, "Extra large" to 1.5f)) { (label, value) ->

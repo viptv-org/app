@@ -94,3 +94,7 @@ code/expiry; unavailable contains no QR. No pairing poll or account request runs
 TV `Connect --es ui_variant SignedIn|SignedInHold` supplies an isolated greeting
 identity. SignedIn completes to Profiles; Hold retains the scene. Neither variant
 creates a real authenticated session or fetches account data.
+
+TV `Player --es ui_variant TracksInvalidFocus|TracksAudioOnly|TracksEmpty` exercises
+options-panel focus with a stale preferred ID or missing tracks. The data and
+acknowledgements remain synthetic; no provider/player request is made.

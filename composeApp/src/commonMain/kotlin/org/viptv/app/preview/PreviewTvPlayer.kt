@@ -9,11 +9,16 @@ import org.viptv.app.state.Screen
 /** Synthetic acknowledgements are confined to this fixture; Native uses real decoded video facts. */
 @Composable
 internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged: ((() -> Unit)?) -> Unit) {
-    val scene = TvPlayerScene.entries.find { it.name == variant } ?: TvPlayerScene.Controls
+    val scene = if (variant.startsWith("Tracks")) TvPlayerScene.Tracks else TvPlayerScene.entries.find { it.name == variant } ?: TvPlayerScene.Controls
     val native = variant == "Native"
     val input = remember(native) { if (native) PlaybackInput("tv-player-native-qa", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4") else null }
     val facts = remember { MutableSharedFlow<PlayerFact>(extraBufferCapacity = 16) }
-    var tracks by remember { mutableStateOf(PreviewTvPlayback.tracks) }
+    var tracks by remember(variant) { mutableStateOf(when (variant) {
+        "TracksInvalidFocus" -> PreviewTvPlayback.tracks.copy(subtitles = PreviewTvPlayback.tracks.subtitles.map { it.copy(selected = false) })
+        "TracksAudioOnly" -> PreviewTvPlayback.tracks.copy(subtitles = emptyList())
+        "TracksEmpty" -> PlaybackTracks(emptyList(), emptyList())
+        else -> PreviewTvPlayback.tracks
+    }) }
     var paused by remember { mutableStateOf(true) }
     val duration = 3132000L
     val initial = remember { if (native) emptyList() else listOf(PlayerFact.Progress(if (scene == TvPlayerScene.Skip) 5000 else 842000, duration),
@@ -45,5 +50,6 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
         { go(Screen.Sources) }, { go(Screen.Sources) }, { go(Screen.Sources) }, backChanged,
         previewFrame = if (scene == TvPlayerScene.Skip) PreviewTvPlayback.skipFrame else PreviewTvPlayback.frame,
         scene = scene, initialFacts = initial, externalFacts = facts, previewCommand = if (native) null else command,
-        trackFocus = if (scene == TvPlayerScene.Tracks) 11 else null)
+        trackFocus = if (variant == "TracksInvalidFocus" || variant == "TracksAudioOnly" || variant == "TracksEmpty") 999
+            else if (scene == TvPlayerScene.Tracks) 11 else null)
 }
