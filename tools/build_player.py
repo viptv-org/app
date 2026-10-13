@@ -28,12 +28,31 @@ stamp = repository / "source-revision"
 artifacts = json.loads((provenance / "ARTIFACTS.json").read_text())["sha256"]
 
 
+def canonicalize_poms():
+    # Maven XML differs only by host line endings; pins use canonical LF bytes.
+    for relative in artifacts:
+        if not relative.endswith(".pom"):
+            continue
+        path = repository / relative
+        if not path.is_file():
+            continue
+        original = path.read_bytes()
+        canonical = original.replace(b"\r\n", b"\n")
+        if canonical != original:
+            path.write_bytes(canonical)
+            for algorithm in ("md5", "sha1", "sha256", "sha512"):
+                checksum = Path(str(path) + "." + algorithm)
+                if checksum.exists():
+                    checksum.write_bytes(hashlib.new(algorithm, canonical).hexdigest().encode("ascii"))
+
+
 def verified_artifacts():
     return all((repository / path).is_file()
                and hashlib.sha256((repository / path).read_bytes()).hexdigest() == checksum
                for path, checksum in artifacts.items())
 
 
+canonicalize_poms()
 if stamp.exists() and stamp.read_text().strip() == revision and verified_artifacts():
     raise SystemExit(0)
 
@@ -77,6 +96,7 @@ subprocess.run([str(wrapper), "--no-configuration-cache", "-I",
                 "verification/viptv-renderer/publish.gradle", f"-PVERSION={pin['version']}",
                 *tasks], cwd=source, env=env, check=True)
 shutil.copytree(source / "build/viptv-renderer-maven", repository, dirs_exist_ok=True)
+canonicalize_poms()
 if not verified_artifacts():
     for path, checksum in artifacts.items():
         artifact = repository / path

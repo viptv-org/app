@@ -27,7 +27,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvSubtitleSettings(prefs: TvSettingsPreferences?, scale: Float, initial: FocusRequester, sidebar: FocusRequester,
-    change: (TvSettingsPreferences) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit, unavailable: () -> Unit) {
+    change: (TvSettingsPreferences) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit, unavailable: () -> Unit, actualPreferencesOnly: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(56.dp * scale)) {
         TvSettingsHeading("Subtitles & audio", scale)
         Row(horizontalArrangement = Arrangement.spacedBy(40.dp * scale)) {
@@ -44,25 +44,25 @@ internal fun TvSubtitleSettings(prefs: TvSettingsPreferences?, scale: Float, ini
                 }
                 Spacer(Modifier.height(45.dp * scale))
                 TvSubtitleChoiceRow("Size", listOf("Small", "Medium", "Large", "Extra large"), prefs?.subtitleSize, scale, initial, sidebar) {
-                    if (prefs != null) change(prefs.copy(subtitleSize = it)) else unavailable() }
+                    if (!actualPreferencesOnly && prefs != null) change(prefs.copy(subtitleSize = it)) else unavailable() }
                 Spacer(Modifier.height(24.dp * scale))
                 TvSubtitleChoiceRow("Background", listOf("None", "Shadow", "Box"), prefs?.subtitleBackground, scale, null, sidebar) {
-                    if (prefs != null) change(prefs.copy(subtitleBackground = it)) else unavailable() }
+                    if (!actualPreferencesOnly && prefs != null) change(prefs.copy(subtitleBackground = it)) else unavailable() }
                 Spacer(Modifier.height(24.dp * scale))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
                     Text("Text colour", Modifier.width(210.dp * scale), fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
                     listOf("White" to 0xFFFFFFFF, "Yellow" to 0xFFFFE16B, "Blue" to 0xFF7AE0EC, "Green" to 0xFFB5EF98).forEachIndexed { index, (label, value) ->
                         TvSubtitleColor(value, label, prefs?.subtitleColor == value, scale, if (index == 0) sidebar else null) {
-                            if (prefs != null) change(prefs.copy(subtitleColor = value)) else unavailable() }
+                            if (!actualPreferencesOnly && prefs != null) change(prefs.copy(subtitleColor = value)) else unavailable() }
                     }
                 }
             }
             Column(Modifier.width(424.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 TvSettingsRow("Subtitle language", scale = scale, value = prefs?.subtitleLanguage ?: "Unavailable", left = sidebar) {
-                    if (prefs != null) choose("Subtitle language", listOf("English", "Spanish", "Portuguese", "French", "German")) { change(prefs.copy(subtitleLanguage = it)) } else unavailable() }
+                    if (prefs != null) choose("Subtitle language", listOf("Default", "English", "Spanish", "Portuguese", "French", "German")) { change(prefs.copy(subtitleLanguage = it)) } else unavailable() }
                 TvSettingsRow("Audio language", scale = scale, value = prefs?.audioLanguage ?: "Unavailable", left = sidebar) {
                     if (prefs != null) choose("Audio language", listOf("Original", "English", "Spanish", "French", "German")) { change(prefs.copy(audioLanguage = it)) } else unavailable() }
-                Text(if (prefs != null) "The preview updates as you change a setting." else "Subtitle preferences are not available on this connection yet.",
+                Text(if (actualPreferencesOnly) "Subtitle style changes are unavailable on this connection." else if (prefs != null) "The preview updates as you change a setting." else "Subtitle preferences are not available on this connection yet.",
                     Modifier.padding(top = 12.dp * scale), fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Color(0xFF8F8D89))
             }
         }

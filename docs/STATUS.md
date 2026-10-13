@@ -75,4 +75,4 @@ boards; complete visual parity is not certified.
 
 Detailed limitations and screenshots live in the screen checkpoints,
 `DESIGN_GAPS.md`, `NON_TV_DETAILS.md`, `NON_TV_SETTINGS.md` and `TV_PLAYER.md`.
-The large client integration batch remains under review before commit.
+The client integration batch is committed on the experimental branch. Home My List actions and schema-driven profile source settings are wired across KMP; native SDK runtime qualification and source adapters are still in progress. Hosted platform builds exposed missing Linux build dependencies, Windows renderer checksum differences and Android runner disk pressure; fixes and packaging diagnostics are being qualified in CI.

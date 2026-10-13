@@ -34,7 +34,7 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
         val results = coroutineScope {
             request.getValue("requests").jsonArray.map { item -> async {
                 val connection = item.jsonObject
-                val body = try { capacity.withPermit { withTimeout(2_000) { addonJson(client, connection.getValue("url").jsonPrimitive.content) } } }
+                val body = try { capacity.withPermit { withTimeout(10_000) { addonJson(client, connection.getValue("url").jsonPrimitive.content) } } }
                 catch (_: TimeoutCancellationException) { null }
                 catch (error: CancellationException) { throw error }
                 catch (_: Exception) { null }
@@ -54,7 +54,7 @@ internal suspend fun NativeLocalConnection.fetchLocalSubtitles(profile: String, 
             plan.getValue("requests").jsonArray.map { item -> async {
                 val request = item.jsonObject
                 val url = request["url"]?.jsonPrimitive?.contentOrNull
-                val body = try { url?.let { capacity.withPermit { withTimeout(2_000) { addonJson(client, it) } } } }
+                val body = try { url?.let { capacity.withPermit { withTimeout(10_000) { addonJson(client, it) } } } }
                 catch (_: TimeoutCancellationException) { null }
                 catch (error: CancellationException) { throw error }
                 catch (_: Exception) { null }

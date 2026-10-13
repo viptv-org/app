@@ -30,7 +30,10 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceC
                 val value = stream.jsonObject
                 val id = value.getValue("id").jsonPrimitive.content
                 found[id] = SourceCandidate(id, event["source"]?.jsonPrimitive?.content ?: "server",
-                    value["name"]?.jsonPrimitive?.contentOrNull ?: value["title"]?.jsonPrimitive?.contentOrNull ?: "Source")
+                    value["name"]?.jsonPrimitive?.contentOrNull ?: value["title"]?.jsonPrimitive?.contentOrNull ?: "Source",
+                    detail = value["detail"]?.jsonPrimitive?.contentOrNull,
+                    quality_height = value["quality_height"]?.jsonPrimitive?.longOrNull,
+                    audio_languages = value["audio_languages"]?.jsonArray.orEmpty().mapNotNull { it.jsonPrimitive.contentOrNull })
             }
         }
         after += events.size

@@ -9,7 +9,29 @@ concurrency:
   group: kmp-platforms-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  renderer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.2'
+      - name: Build verified renderer publications once
+        run: python3 tools/build_player.py
+      - uses: actions/upload-artifact@v7
+        with:
+          name: verified-renderer
+          path: build/kiteplayer/maven
+          if-no-files-found: error
   desktop:
+    needs: renderer
     strategy:
       fail-fast: false
       matrix:
@@ -32,6 +54,10 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - uses: actions/download-artifact@v8
+        with:
+          name: verified-renderer
+          path: build/kiteplayer/maven
       - name: Install Linux keyring build dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
@@ -44,6 +70,8 @@ jobs:
       - name: Verify and package desktop
         shell: bash
         run: ./gradlew :composeApp:desktopTest :composeApp:packageDistributionForCurrentOS
+      - name: Verify bundled native runtime
+        run: python3 tools/verify_desktop.py
       - name: Packaging diagnostics
         if: failure()
         shell: bash
@@ -65,7 +93,8 @@ jobs:
           name: desktop-${{ matrix.os }}
           path: composeApp/build/compose/binaries/main/*/*
           if-no-files-found: error
-  android-web:
+  android:
+    needs: renderer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -84,6 +113,10 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - uses: actions/download-artifact@v8
+        with:
+          name: verified-renderer
+          path: build/kiteplayer/maven
       - name: Prepare Android and pinned native dependencies
         shell: bash
         run: |
@@ -93,13 +126,38 @@ jobs:
           cargo install cargo-ndk --version 4.1.2 --locked
           sdkmanager 'ndk;28.2.13676358'
           python3 tools/build_player.py
-      - name: Build Android and Web
-        run: ./gradlew :androidApp:assembleRelease :composeApp:wasmJsBrowserDistribution
+      - name: Build Android
+        run: ./gradlew -Pkotlin.compiler.execution.strategy=in-process :androidApp:assembleRelease
       - uses: actions/upload-artifact@v7
         with:
           name: android
           path: androidApp/build/outputs/apk/release/*.apk
           if-no-files-found: error
+  web:
+    needs: renderer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0'
+      - uses: actions/download-artifact@v8
+        with:
+          name: verified-renderer
+          path: build/kiteplayer/maven
+      - name: Verify renderer provenance
+        run: python3 tools/build_player.py
+      - name: Build Web independently
+        run: ./gradlew -Pkotlin.compiler.execution.strategy=in-process :composeApp:wasmJsBrowserDistribution
       - uses: actions/upload-artifact@v7
         with:
           name: web

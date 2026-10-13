@@ -15,7 +15,10 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
     var editing by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     var deleting by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Source integrations", style = MaterialTheme.typography.titleLarge)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Source integrations", style = MaterialTheme.typography.titleLarge)
+            TextButton(retry, enabled = !busy) { Text("Refresh") }
+        }
         Text("Configuration applies to this profile. Saved credentials are never displayed.", color = Palette.secondary)
         if (error != null) {
             Text(error, color = Palette.danger)

@@ -17,7 +17,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     notice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile?,
     initialSection: TvSettingsSection = TvSettingsSection.Playback, prefs: TvSettingsPreferences? = null,
     change: ((TvSettingsPreferences) -> Unit)? = null, addonInfo: Map<String, TvAddonInfo> = emptyMap(), account: TvAccountInfo? = null,
-    initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable () -> Unit)? = null) {
+    initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable () -> Unit)? = null, actualPreferencesOnly: Boolean = false) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -37,9 +37,9 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             Column(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 when (section) {
                     TvSettingsSection.Playback -> TvPlaybackSettings(profile?.name, prefs, scale, first, sidebar, { change?.invoke(it) },
-                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Playback preferences" })
+                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Playback preferences" }, actualPreferencesOnly)
                     TvSettingsSection.Subtitles -> TvSubtitleSettings(prefs, scale, first, sidebar, { change?.invoke(it) },
-                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Subtitle preferences" })
+                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Subtitle preferences" }, actualPreferencesOnly)
                     TvSettingsSection.Addons -> TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
                         { installing = true }, { unavailable = "Add-on management" }, placeholderQr)
                     TvSettingsSection.Account -> TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, { unavailable = "Account settings" })

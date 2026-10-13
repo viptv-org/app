@@ -86,7 +86,7 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
     override suspend fun removeFavorite(profile: String, card: Card): Unit = fetchLocalRemoveFavorite(profile, card)
 
     override suspend fun addons(): List<IntegrationConnection> = withContext(Dispatchers.IO) {
-        json.decodeFromString(engine.addons())
+        json.decodeFromString<List<IntegrationConnection>>(engine.addons()).filter { it.plugin_id == "stremio" }
     }
 
     override suspend fun enabledAddons(profile: String): Set<String> = withContext(Dispatchers.IO) {
@@ -120,12 +120,15 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
         } } catch (_: Exception) { throw LocalFailure("The add-on returned invalid title details.") }
     }
 
-    override suspend fun sources(profile: String, card: Card): List<SourceCandidate> = fetchLocalSources(profile, card)
+    override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): List<SourceCandidate> = fetchMergedLocalSources(profile, card, publish)
 
     override suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot = fetchLocalSubtitles(profile, card)
 
     override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray = fetchLocalSubtitleContent(id, input)
 
+    override suspend fun rankSources(profile: String, sources: List<SourceCandidate>): List<SourceCandidate> = withContext(Dispatchers.IO) {
+        json.decodeFromString(engine.rankSources(profile, json.encodeToString(sources)))
+    }
     override suspend fun openSource(id: String): PlaybackInput = fetchLocalOpenSource(id)
 
     override suspend fun recordProgress(input: PlaybackInput, card: Card, positionMillis: Long, durationMillis: Long?) = withContext(Dispatchers.IO) {
@@ -138,6 +141,20 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
             HistoryDisplay(entry,historyDayLabel(entry.updated_at_millis))
         }
     }
+
+    override suspend fun browsingConfiguration(profile: String): BrowsingConfiguration = withContext(Dispatchers.IO) {
+        BrowsingConfiguration(json.decodeFromString(engine.profile(profile)), json.decodeFromString<List<IntegrationConnection>>(engine.addons())
+            .filter { it.private_profile_id == null || it.private_profile_id == profile })
+    }
+    override suspend fun profilePreferences(profile: String): PreferencesSnapshot = withContext(Dispatchers.IO) {
+        json.decodeFromString(engine.profilePreferences(profile))
+    }
+    override suspend fun updateProfilePreferences(profile: String, revision: Long, preferences: ProfilePreferences): PreferencesSnapshot = withContext(Dispatchers.IO) {
+        json.decodeFromString(engine.updateProfilePreferences(profile, revision.toULong(), json.encodeToString(preferences)))
+    }
+    override suspend fun sourceIntegrationSchemas(profile: String): SourceIntegrationSnapshot = readSourceIntegrationSchemas(profile)
+    override suspend fun configureSourceIntegration(profile: String, revision: Long, plugin: String, configuration: JsonObject) = saveSourceIntegration(profile, revision, plugin, configuration)
+    override suspend fun removeSourceIntegration(profile: String, revision: Long, connection: String) = deleteSourceIntegration(profile, revision, connection)
 
     override suspend fun clearHistory(profile: String) = withContext(Dispatchers.IO) { engine.clearHistory(profile) }
 

@@ -27,6 +27,19 @@ fun ApplicationController.open(card: Card) {
     mutable.value = mutable.value.copy(screen = Screen.Details, detail = null)
     run { mutable.value = mutable.value.copy(detail = local?.detail(requireNotNull(mutable.value.selectedProfile), card) ?: requireNotNull(connection).detail(card)) }
 }
+/** Resolve provider metadata before source discovery, including the native identity evidence cache. */
+fun ApplicationController.playTitle(card: Card) = run {
+    val profile = requireNotNull(mutable.value.selectedProfile)
+    val detail = local?.detail(profile, card) ?: requireNotNull(connection).detail(card)
+    mutable.value = mutable.value.copy(detail = detail)
+    val target = when {
+        card.identity.episode != null -> detail.episodes.find { it.identity.kind == card.identity.kind && it.identity.id == card.identity.id } ?: card
+        detail.item.identity.kind == "series" -> detail.episodes.firstOrNull { (it.identity.episode?.season ?: 1L) > 0L } ?: throw LocalFailure("Choose an episode from this title’s details.")
+        else -> detail.item
+    }
+    chooseSource(target)
+}
+
 /** Resolve a linked identity through the server; presentation uses only its returned card. */
 
 fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
@@ -40,11 +53,16 @@ fun ApplicationController.chooseSource(card: Card) {
     run {
         val operation = generation
         try {
-            val sources = local?.sources(requireNotNull(mutable.value.selectedProfile), card)
-                ?: requireNotNull(connection).sources(card) { partial ->
-                    if (generation == operation) mutable.value = mutable.value.copy(sources = partial)
-                }
-            mutable.value = mutable.value.copy(sources = sources)
+            if (mutable.value.preferences == null) loadPreferences()
+            val publish: (List<org.viptv.engine.wire.SourceCandidate>) -> Unit = { partial ->
+                if (generation == operation) mutable.value = mutable.value.copy(sources = partial)
+            }
+            val sources = local?.sources(requireNotNull(mutable.value.selectedProfile), card, publish)
+                ?: requireNotNull(connection).sources(card, publish)
+            val profile = requireNotNull(mutable.value.selectedProfile)
+            val ranked = local?.rankSources(profile, sources) ?: requireNotNull(connection).rankSources(profile, sources)
+            mutable.value = mutable.value.copy(sources = ranked)
+            if (mutable.value.preferences?.preferences?.source_selection == "best" && ranked.isNotEmpty()) playSource(ranked.first())
         } finally { if (generation == operation) mutable.value = mutable.value.copy(findingSources = false) }
     }
 }

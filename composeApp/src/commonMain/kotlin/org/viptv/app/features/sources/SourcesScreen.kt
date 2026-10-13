@@ -27,7 +27,9 @@ import org.viptv.engine.wire.SourceCandidate
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false) {
     if (television) {
-        TvSourcesScreen(title, sources, busy, error, choose, back, detail, loadingMore = loadingMore)
+        TvSourcesScreen(title, sources, busy, error, choose, back, detail,
+            info = sources.associate { it.id to TvSourceInfo(quality = it.quality_height?.let { height -> if (height == 2160L) "4K" else "${height}p" }) },
+            loadingMore = loadingMore)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {

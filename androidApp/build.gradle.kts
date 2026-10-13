@@ -26,7 +26,12 @@ android {
     }
     sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/rustJni").get().asFile)
 }
-dependencies { implementation(project(":composeApp")); implementation("androidx.activity:activity-compose:1.10.1") }
+dependencies {
+    implementation(project(":composeApp"))
+    implementation("androidx.activity:activity-compose:1.10.1")
+    "qaImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    "debugImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+}
 
 val buildAndroidEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)

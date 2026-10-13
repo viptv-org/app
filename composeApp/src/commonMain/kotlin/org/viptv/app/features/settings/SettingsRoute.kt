@@ -1,6 +1,9 @@
 package org.viptv.app.features.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.unit.dp
 import org.viptv.app.state.*
 
 @Composable
@@ -12,6 +15,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television,
         account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,
             controller::refreshAccounts, controller::linkSimkl, controller::unlinkSimkl, leave) },
-        sourceIntegrations = { SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
-            controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration) })
+        sourceIntegrations = { Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider)
+            SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
+            controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration) } },
+        preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences) },
+        tvPreferences = state.preferences?.preferences?.tvSettings(),
+        changeTvPreferences = { controller.updatePreferences(it.profilePreferences()) })
 }

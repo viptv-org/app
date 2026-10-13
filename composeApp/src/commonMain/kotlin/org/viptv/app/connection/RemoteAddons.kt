@@ -5,7 +5,7 @@ import kotlinx.serialization.json.*
 import org.viptv.engine.wire.*
 
 private val addonCodec = Json { ignoreUnknownKeys = true }
-data class RemoteAddons(val addons: List<IntegrationConnection>, val enabled: Set<String>)
+data class RemoteAddons(val addons: List<IntegrationConnection>, val enabled: Set<String>, val browsing: BrowsingConfiguration? = null)
 private data class RemoteConfiguration(val profile: ProfileConfiguration, val connections: List<IntegrationConnection>)
 
 private suspend fun RemoteConnection.addonConfiguration(profile: String): RemoteConfiguration {
@@ -34,7 +34,7 @@ suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
         if (cursor != null && !visited.add(cursor)) throw RemoteFailure(502, "The server repeated an add-on page.")
     } while (cursor != null)
     val enabled = config.profile.assignments.filter { it.enabled.isNotEmpty() }.map { it.connection_id }.toSet()
-    return RemoteAddons(inventory.distinctBy { it.id }, enabled)
+    return RemoteAddons(inventory.distinctBy { it.id }, enabled, BrowsingConfiguration(config.profile, config.connections))
 }
 
 suspend fun RemoteConnection.installAddon(profile: String, address: String) {

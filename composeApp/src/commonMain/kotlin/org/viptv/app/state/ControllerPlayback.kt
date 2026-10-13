@@ -20,11 +20,13 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
     val store = local
     val remote = connection
     val profile = requireNotNull(mutable.value.selectedProfile)
+    if (mutable.value.preferences == null) loadPreferences()
+    val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
     val lease = if (store == null) requireNotNull(remote).openPlayback(source, profile, forceGateway = forceGateway, positionMillis = positionMillis) else null
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
     val card = requireNotNull(mutable.value.sourceTitle)
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId,
-        opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis,
+        opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences,
         remoteSeek = if (lease?.reopensForSeek == true) { target ->
             if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
                 saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)

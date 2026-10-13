@@ -18,6 +18,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 
 fun main() {
+    if (System.getenv("VIPTV_ENGINE_SMOKE_TEST") == "1") { verifyPackagedLocalEngine(); return }
     if (System.getenv("VIPTV_UI_PREVIEW") == "1") launchUiPreview() else launchApplication()
 }
 

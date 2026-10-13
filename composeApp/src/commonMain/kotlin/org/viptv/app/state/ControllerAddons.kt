@@ -5,13 +5,13 @@ import org.viptv.app.connection.*
 internal suspend fun ApplicationController.loadAddons() {
     val profile = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
     val device = local
-    if (device != null) mutable.value = mutable.value.copy(addons = device.addons(), enabledAddonIds = device.enabledAddons(profile))
+    if (device != null) mutable.value = mutable.value.copy(addons = device.addons(), enabledAddonIds = device.enabledAddons(profile), browsingConfiguration = device.browsingConfiguration(profile))
     else requireNotNull(connection).addons(profile).let { result ->
-        mutable.value = mutable.value.copy(addons = result.addons, enabledAddonIds = result.enabled)
+        mutable.value = mutable.value.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing)
     }
 }
 
-fun ApplicationController.refreshAddons() = run { loadAddons(); loadSourceIntegrations() }
+fun ApplicationController.refreshAddons() = run { loadAddons(); loadSourceIntegrations(); loadPreferences() }
 
 internal suspend fun ApplicationController.updateAddonHome() {
     val profile = requireNotNull(mutable.value.selectedProfile)
@@ -26,6 +26,7 @@ fun ApplicationController.installAddon(url: String) = run {
     else requireNotNull(connection).installAddon(profile, url)
     loadAddons()
     updateAddonHome()
+    loadSourceIntegrations()
 }
 
 fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
@@ -34,10 +35,12 @@ fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
     else requireNotNull(connection).setAddonEnabled(profile, id, enabled)
     loadAddons()
     updateAddonHome()
+    loadSourceIntegrations()
 }
 
 fun ApplicationController.removeAddon(id: String) = run {
     if (local != null) requireNotNull(local).removeAddon(id) else requireNotNull(connection).removeAddon(id)
     loadAddons()
     updateAddonHome()
+    loadSourceIntegrations()
 }

@@ -22,7 +22,8 @@ interface LocalConnection : AutoCloseable {
     suspend fun installAddon(profile: String, manifestUrl: String): List<IntegrationConnection>
     suspend fun search(profile: String, term: String): CatalogPage
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
-    suspend fun sources(profile: String, card: Card): List<SourceCandidate>
+    suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate>
+    suspend fun rankSources(profile: String, sources: List<SourceCandidate>): List<SourceCandidate> = sources
     suspend fun openSource(id: String): PlaybackInput
     suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot
     suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray
@@ -36,6 +37,9 @@ interface LocalConnection : AutoCloseable {
     suspend fun library(profile: String): List<Card> = throw LocalFailure("My List is unavailable on this device.")
     suspend fun saveFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
     suspend fun removeFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
+    suspend fun browsingConfiguration(profile: String): BrowsingConfiguration? = null
+    suspend fun profilePreferences(profile: String): PreferencesSnapshot = PreferencesSnapshot()
+    suspend fun updateProfilePreferences(profile: String, revision: Long, preferences: ProfilePreferences): PreferencesSnapshot = throw LocalFailure("Profile preferences are unavailable on this device.")
     suspend fun sourceIntegrationSchemas(profile: String): SourceIntegrationSnapshot = SourceIntegrationSnapshot()
     suspend fun configureSourceIntegration(profile: String, revision: Long, plugin: String, configuration: kotlinx.serialization.json.JsonObject): Unit = throw LocalFailure("Source configuration is unavailable on this device.")
     suspend fun removeSourceIntegration(profile: String, revision: Long, connection: String): Unit = throw LocalFailure("Source configuration is unavailable on this device.")

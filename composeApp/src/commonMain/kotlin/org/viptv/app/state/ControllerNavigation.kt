@@ -3,6 +3,11 @@ package org.viptv.app.state
 import org.viptv.app.connection.*
 
 fun ApplicationController.navigate(screen: Screen) {
+    if (screen != Screen.Sources && mutable.value.findingSources) {
+        generation++
+        job?.cancel()
+        mutable.value = mutable.value.copy(findingSources = false, busy = false)
+    }
     if (screen != Screen.Player && mutable.value.playback != null) { if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releaseRemotePlayback(); mutable.value = mutable.value.copy(playback = null) }
     mutable.value = mutable.value.copy(screen = screen, error = null)
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series)) run {

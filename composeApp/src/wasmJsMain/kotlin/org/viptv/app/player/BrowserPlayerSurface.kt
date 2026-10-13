@@ -26,6 +26,8 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
     val tracks = remember(video) { mutableMapOf<Int, HTMLTrackElement>() }
     val blobs = remember(video) { mutableListOf<String>() }
     var selected by remember(video) { mutableStateOf<String?>(null) }
+    var subtitleTouched by remember(video) { mutableStateOf(false) }
+    var subtitleJob by remember(video) { mutableStateOf<Job?>(null) }
     val latestObserve by rememberUpdatedState(observe)
     val candidates by input.providerSubtitles.collectAsState()
     LaunchedEffect(candidates) { latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected)))) }
@@ -53,7 +55,11 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
         video.onended = { latestObserve(PlayerFact.Status("Ended")); null }
         val playlist = input.uri.substringBefore('?').endsWith(".m3u8", ignoreCase = true)
         if (playlist && video.canPlayType("application/vnd.apple.mpegurl").toString().isEmpty() && Hls.isSupported()) {
-            hls = Hls().also { it.loadSource(input.uri); it.attachMedia(video) }
+            hls = Hls(hlsPreferences(input.preferences.preferred_audio_language.orEmpty(),
+                if (input.preferences.subtitles_enabled) input.preferences.preferred_subtitle_language.orEmpty() else "")).also {
+                it.subtitleDisplay = input.preferences.subtitles_enabled
+                it.loadSource(input.uri); it.attachMedia(video)
+            }
         } else { video.src = input.uri }
         latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(null))))
         onDispose {
@@ -67,8 +73,22 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             container.removeChild(video)
         }
     }
+    LaunchedEffect(candidates, subtitleTouched) {
+        if (subtitleTouched) return@LaunchedEffect
+        val candidate = preferredProviderSubtitle(input, candidates) ?: return@LaunchedEffect
+        val id = Int.MIN_VALUE + candidates.indexOfFirst { it.id == candidate.id }
+        val prior = subtitleJob
+        prior?.cancel()
+        subtitleJob = launch {
+            try {
+                prior?.join()
+                selected = selectBrowserSubtitle(input, video, id, tracks, blobs) { latestObserve(PlayerFact.ControlFailed) }
+                latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
+            } catch (error: CancellationException) { throw error }
+            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+        }
+    }
     LaunchedEffect(video, commands) {
-        var subtitleJob: Job? = null
         commands.collect { command ->
             try {
                 when (command) {
@@ -77,25 +97,14 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                     is PlayerCommand.Volume -> video.volume = command.value.coerceIn(0f, 1f).toDouble()
                     is PlayerCommand.SubtitleSize -> latestObserve(PlayerFact.ControlFailed)
                     is PlayerCommand.SelectTrack -> {
-                        subtitleJob?.cancel()
+                        subtitleTouched = true
+                        val prior = subtitleJob
+                        prior?.cancel()
                         subtitleJob = launch {
                             try {
+                                prior?.join()
                                 require(command.kind == PlaybackTrackKind.Subtitle)
-                                val candidate = input.providerSubtitle(command.id)
-                                if (command.id != null) requireNotNull(candidate)
-                                val chosen = if (candidate == null) null else tracks.getOrPut(requireNotNull(command.id)) {
-                                    val content = requireNotNull(input.subtitleContent)(candidate.id)
-                                    ensureActive()
-                                    val uri = subtitleBlob(content.decodeToString()).also { blobs.add(it) }
-                                    (document.createElement("track") as HTMLTrackElement).apply {
-                                        kind = "subtitles"; label = candidate.label; srclang = candidate.language; src = uri
-                                        onload = { placeProviderCues(this, input.timelineOffsetMillis / 1000.0); null }
-                                        onerror = { _, _, _, _, _ -> latestObserve(PlayerFact.ControlFailed); null }
-                                        video.appendChild(this)
-                                    }
-                                }
-                                tracks.values.forEach { it.track.mode = if (it == chosen) TextTrackMode.SHOWING else TextTrackMode.DISABLED }
-                                selected = candidate?.id
+                                selected = selectBrowserSubtitle(input, video, command.id, tracks, blobs) { latestObserve(PlayerFact.ControlFailed) }
                                 latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
                             } catch (error: CancellationException) { throw error }
                             catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }

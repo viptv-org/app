@@ -240,3 +240,11 @@ error and unlink confirmation variants need supplied design boards.
 ### GAP-047 — Source integration configuration
 
 The supplied boards do not include a form for plugin-owned credentials and provider selection. A provisional shared settings form shows engine-supplied fields, write-only credentials, bounded provider choices and removal confirmation. TV opens it from Add-ons. Replace with supplied design when available.
+
+### GAP-048 — Profile preference forms
+
+Phone, tablet, desktop and Web use a provisional shared preference form for language tags, subtitle default, source selection and quality. TV uses the supplied settings geometry with real profile persistence for supported fields. Next-episode prompts, intro skipping, display rate switching and persisted subtitle styling remain unavailable until their host/player contracts exist.
+
+### GAP-049 — Profile metadata provider choice
+
+Add-on settings contain a provisional capability-driven choice of the profile’s one metadata/browsing provider. Search does not ask the user to choose a provider. Available choices come from server plugin descriptors and configured connections; native Stremio mode shows its single provider. Stream/subtitle assignments are preserved when changing metadata provider.

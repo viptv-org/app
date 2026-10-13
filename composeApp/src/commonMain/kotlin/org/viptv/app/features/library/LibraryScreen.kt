@@ -22,7 +22,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf("Date added") }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
-    val visible = when (sort) { "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
+    val visible = when (sort) { "Date added" -> filtered.sortedByDescending { it.added_at_millis ?: Long.MIN_VALUE }; "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else if (television) 70.dp else 40.dp,

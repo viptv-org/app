@@ -2,6 +2,8 @@ package org.viptv.app.player
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import io.github.yuroyami.kiteplayer.AudioConfig
+import io.github.yuroyami.kiteplayer.SubtitleConfig
 import io.github.yuroyami.kiteplayer.PlayerConfig
 import io.github.yuroyami.kiteplayer.PlayerEvent
 import io.github.yuroyami.kiteplayer.PlaybackException
@@ -25,12 +27,17 @@ import kotlin.time.Duration.Companion.milliseconds
 actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
     key(input) {
         val path = nativePlayerRenderPath()
-        val player = rememberKitePlayer(PlayerConfig(frameEvents = path != KiteRenderPath.ComposeCanvas))
+        val player = rememberKitePlayer(PlayerConfig(frameEvents = path != KiteRenderPath.ComposeCanvas,
+            audio = AudioConfig(preferredLanguages = listOfNotNull(input.preferences.preferred_audio_language)),
+            subtitles = SubtitleConfig(preferredLanguages = if (input.preferences.subtitles_enabled) listOfNotNull(input.preferences.preferred_subtitle_language) else emptyList(),
+                autoSelect = input.preferences.subtitles_enabled, autoSelectForced = input.preferences.subtitles_enabled)))
         val subtitleDirectory = subtitleCacheDirectory()
         val latestObserve by rememberUpdatedState(observe)
         val candidates by input.providerSubtitles.collectAsState()
         val latestPaused by rememberUpdatedState(paused)
         val providerIds = remember { mutableMapOf<String, TrackId>() }
+        var subtitleTouched by remember { mutableStateOf(false) }
+        var subtitleJob by remember { mutableStateOf<Job?>(null) }
         var opened by remember { mutableStateOf(false) }
         var rendererReady by remember { mutableStateOf(false) }
         val transport = remember { PlaybackTransportGate() }
@@ -76,7 +83,6 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             if (paused) player.pause() else player.play()
         } }
         LaunchedEffect(player, commands) {
-            var subtitleJob: Job? = null
             commands.collect { command ->
                 if (opened) try {
                     when (command) {
@@ -90,6 +96,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                         is PlayerCommand.Volume -> player.setVolume(command.value.coerceIn(0f, 1f))
                         is PlayerCommand.SubtitleSize -> player.setSubtitleScale(command.value.coerceIn(0.5f, 2f))
                         is PlayerCommand.SelectTrack -> {
+                            if (command.kind == PlaybackTrackKind.Subtitle) subtitleTouched = true
                             val prior = subtitleJob
                             prior?.cancel()
                             subtitleJob = launch {
@@ -114,6 +121,24 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                         is PlayerCommand.Speed -> player.setSpeed(command.value.coerceIn(0.25, 2.0))
                     }
                 } catch (e: CancellationException) { throw e }
+                catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            }
+        }
+        LaunchedEffect(candidates, opened, subtitleTouched) {
+            if (!opened || subtitleTouched) return@LaunchedEffect
+            val candidate = preferredProviderSubtitle(input, candidates) ?: return@LaunchedEffect
+            val desired = input.preferences.preferred_subtitle_language ?: return@LaunchedEffect
+            val embedded = player.state.value.tracks.let { tracks -> tracks.subtitles.find { it.id == tracks.selectedSubtitle } }
+            if (embedded?.language?.let { canonicalLanguageTag(it).substringBefore('-') == canonicalLanguageTag(desired).substringBefore('-') } == true) return@LaunchedEffect
+            val prior = subtitleJob
+            prior?.cancel()
+            subtitleJob = launch {
+                try {
+                    prior?.join()
+                    val track = providerIds[candidate.id] ?: attachProviderSubtitle(player, input, candidate, subtitleDirectory).also { providerIds[candidate.id] = it }
+                    ensureActive()
+                    if (!subtitleTouched) player.selectTrack(TrackKind.Subtitle, track)
+                } catch (error: CancellationException) { throw error }
                 catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
             }
         }
