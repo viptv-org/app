@@ -1,0 +1,25 @@
+{
+  "base_revision": "92c7e41415847f8797909605cdca1547083dd1e9",
+  "version": "0.3.0-viptv-presentation.1",
+  "repository": "build/viptv-renderer-maven",
+  "sha256": {
+    "io/github/yuroyami/kiteplayer-compose-ui/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-0.3.0-viptv-presentation.1.jar": "6df27499309df97e5f51a1ecc3205f3b9ed11f802a1f8f95717d807b13896a8a",
+    "io/github/yuroyami/kiteplayer-compose-ui/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-0.3.0-viptv-presentation.1.module": "7ae80e6b8c7b37cc371a46e8e28407aaec72cdf5a9cb11b56c9674f6ac997b77",
+    "io/github/yuroyami/kiteplayer-compose-ui/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-0.3.0-viptv-presentation.1.pom": "bbce188ecab35935bd34235eaf74e241d537c39140addd5b5a4e748dffe2c108",
+    "io/github/yuroyami/kiteplayer-compose-ui-android/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-android-0.3.0-viptv-presentation.1.aar": "6249223a253a4140dab58ba5fa325e96263d6603ca5604d5ac7fb7505334e984",
+    "io/github/yuroyami/kiteplayer-compose-ui-android/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-android-0.3.0-viptv-presentation.1.module": "4fea604be04724a31fbc5febb679be4deb8f176c04bc45b7747b9f85fa77d944",
+    "io/github/yuroyami/kiteplayer-compose-ui-android/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-android-0.3.0-viptv-presentation.1.pom": "9a267288fb1c6bbb735a07f902f7df22adcc3417b96c02c51e1135437008334e",
+    "io/github/yuroyami/kiteplayer-compose-ui-jvm/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-jvm-0.3.0-viptv-presentation.1.jar": "6a917cb33894a042a79c3ced464f77209f216730a44e8cd4e91758966de93b88",
+    "io/github/yuroyami/kiteplayer-compose-ui-jvm/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-jvm-0.3.0-viptv-presentation.1.module": "90d95786cc62e3833a1c787c8453413cf3cfb50192e2eb76e71eb80dca9230fb",
+    "io/github/yuroyami/kiteplayer-compose-ui-jvm/0.3.0-viptv-presentation.1/kiteplayer-compose-ui-jvm-0.3.0-viptv-presentation.1.pom": "2a91b6428228a43f96ab982274bfc194597c144f5180f11b4788a3da49d03632",
+    "io/github/yuroyami/kiteplayer-compose-video/0.3.0-viptv-presentation.1/kiteplayer-compose-video-0.3.0-viptv-presentation.1.jar": "b505b972bd78bdc3762e2bb882305e26ad3d45a99ec5f9224c27640cc6f9b17e",
+    "io/github/yuroyami/kiteplayer-compose-video/0.3.0-viptv-presentation.1/kiteplayer-compose-video-0.3.0-viptv-presentation.1.module": "2d757bd404ad24900c314febfff9e0fc82d34843ca9f73c369ea7c5754712669",
+    "io/github/yuroyami/kiteplayer-compose-video/0.3.0-viptv-presentation.1/kiteplayer-compose-video-0.3.0-viptv-presentation.1.pom": "37ea72b17e0d4e217a72212fb06c3bd5d211a4a9dd4bfd3d0c5c0e7bbab2a841",
+    "io/github/yuroyami/kiteplayer-compose-video-android/0.3.0-viptv-presentation.1/kiteplayer-compose-video-android-0.3.0-viptv-presentation.1.aar": "e82165dc59ff24feeef1f12ab9ac449ad11c54c7c0ad945f1e92acf68fbd3b3b",
+    "io/github/yuroyami/kiteplayer-compose-video-android/0.3.0-viptv-presentation.1/kiteplayer-compose-video-android-0.3.0-viptv-presentation.1.module": "54fc2d075df73f2534e3d386dcecac991460b67063dd57711472b1d218f1542d",
+    "io/github/yuroyami/kiteplayer-compose-video-android/0.3.0-viptv-presentation.1/kiteplayer-compose-video-android-0.3.0-viptv-presentation.1.pom": "ec9d35a0421a0d29a733858795e04da761f3bdb623ebccc7ca479a42ba5d0d63",
+    "io/github/yuroyami/kiteplayer-compose-video-jvm/0.3.0-viptv-presentation.1/kiteplayer-compose-video-jvm-0.3.0-viptv-presentation.1.jar": "cdd2558f2c1cb1c0a2ddaa2f7b56c883827bec233cf4ada5d574f7afe4bdc26e",
+    "io/github/yuroyami/kiteplayer-compose-video-jvm/0.3.0-viptv-presentation.1/kiteplayer-compose-video-jvm-0.3.0-viptv-presentation.1.module": "713af024088eaaf161fca85235122ac19b0c62a99fe73e27a5c56956d41f0456",
+    "io/github/yuroyami/kiteplayer-compose-video-jvm/0.3.0-viptv-presentation.1/kiteplayer-compose-video-jvm-0.3.0-viptv-presentation.1.pom": "773d612cf87ecfd4e2881a372c30d241930796fa764923e7f8452dc4afcba5bb"
+  }
+}

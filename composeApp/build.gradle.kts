@@ -32,6 +32,12 @@ kotlin {
             kotlin.srcDir(rootProject.file("native/core/generated/native-kotlin"))
             dependencies {
                 implementation("io.github.yuroyami:kiteplayer-compose:0.3.0")
+                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.1") {
+                    version { strictly("0.3.0-viptv-presentation.1") }
+                }
+                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.1") {
+                    version { strictly("0.3.0-viptv-presentation.1") }
+                }
                 implementation("io.ktor:ktor-client-core:3.4.0")
                 implementation("io.ktor:ktor-client-okhttp:3.4.0")
             }
@@ -57,6 +63,16 @@ kotlin {
         }
     }
 }
+
+val prepareKitePlayer by tasks.registering(Exec::class) {
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/build_player.py")
+    inputs.files(rootProject.fileTree("native/kiteplayer"), rootProject.file("tools/build_player.py"))
+    outputs.dir(rootProject.layout.buildDirectory.dir("kiteplayer/maven"))
+}
+tasks.matching {
+    it.name.startsWith("compile") && (it.name.contains("Desktop") || it.name.contains("Android"))
+}.configureEach { dependsOn(prepareKitePlayer) }
 
 val buildDesktopEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
