@@ -19,9 +19,11 @@ ui_variant Loading` renders a partial source/loading scene. Quality/ranking
 fields in these fixtures are sample data, not inferred from provider labels.
 The TV entry uses bundled ZIP posters; it adds no metadata-provider requests.
 
-TV `Player --es ui_variant Controls|Buffer|Scrub|Tracks|Skip|Next|Error` renders the
+TV `Player --es ui_variant Controls|Buffer|BufferFast|Scrub|Tracks|Skip|Next|Error` renders the
 corresponding supplied playback scene. The fixture's command acknowledgements
-are synthetic and confined to the preview. `Player --es ui_variant Native` instead
+are synthetic and confined to the preview. `BufferFast` reports ready after
+250 ms to exercise cancellation of the delayed buffering overlay.
+`Player --es ui_variant Native` instead
 uses the public Flower MP4 with real KitePlayer facts, without account/provider/
 history operations. Its diagnostic output contains public-test status/position/
 track counts only. Temporary key-event diagnostics were removed.

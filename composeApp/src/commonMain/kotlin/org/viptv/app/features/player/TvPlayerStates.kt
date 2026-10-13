@@ -13,12 +13,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import kotlinx.coroutines.delay
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
 internal fun BoxScope.TvPlayerBuffer(title: Card?, extras: TvPlaybackExtras, scale: Float) {
+    var showIndicator by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { delay(500); showIndicator = true }
+    if (!showIndicator) return
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)))
     Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
         CircularProgressIndicator(Modifier.size(72.dp * scale), color = Palette.text, strokeWidth = 5.dp * scale)

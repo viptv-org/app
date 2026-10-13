@@ -23,9 +23,10 @@ connections show available fields and do not invent those values. Browser/email/
 device/IPTV authentication still has unavailable states, rather than the complete
 supplied flows. No TV board is certified as fully matching.
 
-Remaining TV work includes splash and successful sign-in, all alternative auth
-boards, profile editing, Home loading and Home-to-rows motion, Movies, Live guide,
-My List, final playback-state and settings typography/motion/data qualification.
+Splash, successful sign-in, alternative auth boards, profile editing, Home loading
+and browsing motion, Movies, Live guide and My List now have dedicated UI
+checkpoints. Their real-data integration and final typography, focus and motion
+qualification remain incomplete, alongside playback and settings qualification.
 The implemented screens still have typography, focus/motion and data-contract
 checks outstanding. `design-coverage.json` records each supplied board separately.
 

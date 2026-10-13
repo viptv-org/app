@@ -43,3 +43,15 @@ The isolated 1920×1080 emulator checked stale-ID, audio-only, empty-track and
 original options scenes; each focused a valid control and Back dismissed the
 panel. Desktop tests, Wasm compilation and Android assembly passed. These
 fixtures do not qualify every live track-change/persistence scenario.
+
+## Buffering delay
+
+The buffering overlay waits 500 ms, as specified by `Tv3Motion`. Leaving the
+buffering branch disposes its delay; a new buffering interval starts a fresh
+wait. Playback facts still determine readiness and failure.
+
+The isolated TV emulator displayed the sustained Buffer overlay and showed no
+overlay after the BufferFast fixture reported ready at 250 ms. Seek confirmation
+still passed. These settled-state checks do not measure exact frame timing or
+certify the spinner's complete motion parity. Desktop tests, Wasm compilation
+and Android assembly passed.

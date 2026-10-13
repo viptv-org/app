@@ -1,6 +1,7 @@
 package org.viptv.app.preview
 
 import androidx.compose.runtime.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.viptv.app.features.player.*
 import org.viptv.app.player.*
@@ -9,10 +10,17 @@ import org.viptv.app.state.Screen
 /** Synthetic acknowledgements are confined to this fixture; Native uses real decoded video facts. */
 @Composable
 internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged: ((() -> Unit)?) -> Unit) {
-    val scene = if (variant.startsWith("Tracks")) TvPlayerScene.Tracks else TvPlayerScene.entries.find { it.name == variant } ?: TvPlayerScene.Controls
+    val scene = when {
+        variant.startsWith("Tracks") -> TvPlayerScene.Tracks
+        variant == "BufferFast" -> TvPlayerScene.Buffer
+        else -> TvPlayerScene.entries.find { it.name == variant } ?: TvPlayerScene.Controls
+    }
     val native = variant == "Native"
     val input = remember(native) { if (native) PlaybackInput("tv-player-native-qa", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4") else null }
     val facts = remember { MutableSharedFlow<PlayerFact>(extraBufferCapacity = 16) }
+    LaunchedEffect(variant) {
+        if (variant == "BufferFast") { delay(250); facts.emit(PlayerFact.Status("Playing")) }
+    }
     var tracks by remember(variant) { mutableStateOf(when (variant) {
         "TracksInvalidFocus" -> PreviewTvPlayback.tracks.copy(subtitles = PreviewTvPlayback.tracks.subtitles.map { it.copy(selected = false) })
         "TracksAudioOnly" -> PreviewTvPlayback.tracks.copy(subtitles = emptyList())
