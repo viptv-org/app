@@ -156,21 +156,9 @@ private class NativeLocalConnection(path: String) : LocalConnection {
     private suspend fun runPlan(raw: String): HomeSnapshot {
         val plan = json.parseToJsonElement(raw).jsonObject
         val requests = plan.getValue("requests").jsonArray
-        val capacity = Semaphore(3)
-        val results = coroutineScope {
-            requests.map { item -> async {
-                val row = item.jsonObject
-                val body = try { capacity.withPermit {
-                    val url = row["url"]?.jsonPrimitive?.contentOrNull
-                    if (url == null) null else withTimeout(1_900) { addonJson(client, url) }
-                } } catch (_: TimeoutCancellationException) { null }
-                  catch (error: CancellationException) { throw error }
-                  catch (_: Exception) { null }
-                buildJsonObject { put("id", row.getValue("id").jsonPrimitive.content); body?.let { put("body", it) } }
-            } }.map { it.await() }
-        }
+        val results = fetchLocalCatalogRows(requests) { addonJson(client, it) }
         return withContext(Dispatchers.IO) {
-            json.decodeFromString(engine.projectHome(plan.getValue("id").jsonPrimitive.content, JsonArray(results).toString()))
+            json.decodeFromString(engine.projectHome(plan.getValue("id").jsonPrimitive.content, results.toString()))
         }
     }
     override fun close() { pendingHomes.clear(); client.close(); engine.close() }
