@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "aaefd72791c5e825a8ad7ab5b428f94f5b7edb9877e2d98c029796876a235d0c",
+    "sha256": "e320d955b562f7f3a574d03e038aac1115e04c2fd4a1f60056a879956ce264aa",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -38,7 +38,8 @@
       "limits": "Fixture track/skip/thumbnail acknowledgements are synthetic; multi-track native switching, authenticated HLS/HDR/live, failure retry/history resume and full parity remain unqualified",
       "buffering_delay": "500 ms overlay delay; sustained Buffer visible and 250 ms BufferFast ready fixture absent in settled emulator checks; seek confirmation passed; exact frame timing and spinner motion parity unqualified",
       "loading_motion": "Material fixed quarter-circle, 18% white track, 900 ms linear rotation, 500 ms delay and 300 ms overlay fade; sustained and 250 ms ready fixtures passed; exact frame timing unqualified",
-      "track_sheet_motion": "Bottom-entry/exit uses supplied audio board; native recording contains intermediate and settled positions; original, stale-ID, audio-only and empty focus/Back checks passed; blur and full parity unfinished"
+      "track_sheet_motion": "Bottom-entry/exit uses supplied audio board; native recording contains intermediate and settled positions; original, stale-ID, audio-only and empty focus/Back checks passed; blur and full parity unfinished",
+      "controls_motion": "200 ms entrance/300 ms exit configured; native video contains visible/hidden/intermediate timeline-opacity samples; hidden Up/audio focus, sheet Back, Down reveal, seek cancel and successive Back passed; exact timing and live inactivity unqualified"
     },
     "tv_settings": {
       "render": "Playback, Subtitles, Add-ons and Sign-out at 1920x1080",

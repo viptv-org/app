@@ -20,6 +20,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var scrub by mutableStateOf<Long?>(if (scene == TvPlayerScene.Scrub) 1300000 else null)
     var timelineFocused by mutableStateOf(false)
     var rootFocused by mutableStateOf(false)
+    var focusAudio by mutableStateOf(false)
     var interaction by mutableIntStateOf(0)
     var controlError by mutableStateOf<String?>(null)
     init { initial.forEach(::observe) }
@@ -34,7 +35,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
         }
     }
-    fun reveal() { visible = true; interaction++ }
+    fun reveal(audio: Boolean = false) { focusAudio = audio; visible = true; interaction++ }
     fun send(command: PlayerCommand, preview: ((PlayerCommand) -> Unit)?) {
         commands.tryEmit(command); preview?.invoke(command); interaction++; controlError = null
     }

@@ -5,7 +5,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.focus.*
@@ -47,13 +46,14 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { delay(5000); state.visible = false }
     }
     val skipActive = extras.skip?.let { state.position in it.startMillis until it.endMillis } == true && !state.visible
-    LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, skipActive) {
+    LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive) {
         if (state.visible && !state.buffering && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes) {
-            if ((state.duration ?: 0) > 0) timeline.requestFocus() else audio.requestFocus()
+            if (!state.focusAudio && (state.duration ?: 0) > 0) timeline.requestFocus() else audio.requestFocus()
         }
         else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive) root.requestFocus()
     }
     BoxWithConstraints(Modifier.fillMaxSize().background(if (state.showNext) Palette.background else Color.Black).focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
+        if (event.type == KeyEventType.KeyDown) state.interaction++
         if (event.type == KeyEventType.KeyUp && event.key in listOf(Key.DirectionLeft, Key.DirectionRight) &&
             (state.timelineFocused || state.scrub != null)) true
         else if (event.type != KeyEventType.KeyDown) false else when (event.key) {
@@ -65,9 +65,14 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             Key.DirectionCenter, Key.Enter -> if (!state.failed && !state.showNext && (state.timelineFocused || state.rootFocused)) {
                 if (state.scrub != null) state.commit(previewCommand) else { state.reveal(); toggle() }; true
             } else false
-            Key.DirectionDown -> if (state.timelineFocused) { state.scrub = null; state.visible = false; root.requestFocus(); true } else false
-            Key.DirectionUp -> if (state.timelineFocused || state.rootFocused) { state.scrub = null; audio.requestFocus(); true } else false
-            else -> false
+            Key.DirectionDown -> if (state.timelineFocused) { state.scrub = null; state.visible = false; root.requestFocus(); true }
+                else if (!state.visible && !state.failed && !state.buffering && !state.showNext) { state.reveal(); true } else false
+            Key.DirectionUp -> if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && (state.timelineFocused || state.rootFocused)) {
+                state.scrub = null; state.reveal(audio = true); true
+            } else false
+            else -> if (event.key != Key.Back && !state.visible && !state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes) {
+                state.reveal(); false
+            } else false
         }
     }.focusable()) {
         val scale = maxWidth / 1920.dp
@@ -80,8 +85,10 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             state.buffering -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale, { playEpisode?.invoke(extras.nextEpisode) }, { state.showNext = false; state.visible = false })
             else -> {
-                if (state.visible && !state.showTracks && !state.showEpisodes) TvPlayerControls(state, title, extras, scale, timeline, audio,
-                    toggle = toggle, previewCommand = previewCommand, chooseSources = chooseSources, playEpisode = playEpisode)
+                TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes) {
+                    TvPlayerControls(state, title, extras, scale, timeline, audio,
+                        toggle = toggle, previewCommand = previewCommand, chooseSources = chooseSources, playEpisode = playEpisode)
+                }
                 val skip = extras.skip
                 if (!state.visible && skip != null && state.position in skip.startMillis until skip.endMillis) TvSkipPrompt(skip, scale) { state.send(PlayerCommand.Seek(skip.endMillis), previewCommand) }
             }

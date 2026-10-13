@@ -38,3 +38,7 @@ TV buffering reuses Material 3's `CircularProgressIndicator` with fixed progress
 track, cap and gap parameters, then rotates the component to follow the ZIP's
 900 ms motion. It does not use Material's changing indeterminate arc animation.
 The current API was checked through Context7's [component documentation](https://composables.com/jetpack-compose/androidx.compose.material3/material3/components/CircularProgressIndicator).
+
+TV control visibility uses Compose `AnimatedVisibility` with `MutableTransitionState`
+and fade transitions, which retains content until exit completes. The API was
+checked through Context7's [official Compose animation documentation](https://developer.android.com/develop/ui/compose/animation/composables-modifiers).

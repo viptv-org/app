@@ -3,7 +3,7 @@
 The TV player has dedicated controls, buffering, seek preview, audio/subtitle,
 intro-skip, next-episode and source-error surfaces based on the supplied `Tv3Player`
 boards. Native playback continues to use KitePlayer; web playback uses its existing
-browser adapter. Renderer and interaction files are separate, each under 100 lines.
+browser adapter. Renderer and interaction logic live in separate small files.
 
 Remote Left/Right previews a seek. OK commits it; Back cancels it. Up moves from
 the timeline to the control row. Back dismisses a sheet or hides controls before
@@ -76,3 +76,23 @@ exit positions and the settled sheet at y=540; it does not establish exact frame
 durations. Captures are `evidence/tv-player-buffer.png` and
 `evidence/tv-player-tracks.png`. Desktop tests, Wasm compilation and Android
 assembly passed.
+
+## Controls visibility and focus
+
+Controls fade in over 200 ms and out over 300 ms, following `Tv3Motion`.
+Compose AnimatedVisibility retains the overlay through its exit transition.
+The existing five-second inactivity timer now resets on every key-down that
+reaches the player surface, including focus navigation between control buttons.
+Native Back remains handled by the activity callback.
+
+Up from hidden controls records an audio-focus request before revealing the
+controls; the shared focus effect applies it after composition. Down reveals
+hidden controls, and ordinary unhandled keys reveal them without consuming their
+platform behavior. Back still cancels a pending seek, then hides controls, then
+leaves playback.
+
+The isolated TV emulator passed hidden-controls Up/audio-sheet/Back, Down reveal,
+seek cancellation and successive Back navigation. A native recording contained
+visible, hidden and intermediate timeline-opacity samples. These checks do not
+measure exact animation durations or qualify inactivity timing during real live
+playback. Desktop tests, Wasm compilation and Android assembly passed.
