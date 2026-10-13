@@ -82,3 +82,7 @@ and Back returns to email entry. No real challenge or email is created.
 
 TV `Connect --es ui_variant Splash` renders the supplied animated startup scene.
 It performs no actual session restoration or authentication.
+
+TV `Movies --es ui_variant Loading|Empty` exercises catalog placeholders and the
+empty state. Down remains safe when no poster focus target is attached. These
+variants make no provider request.

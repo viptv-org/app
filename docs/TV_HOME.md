@@ -35,3 +35,14 @@ Remaining work includes frame-by-frame transition comparison,
 reduced-motion visual qualification, actual carousel selection
 and cycling, richer provider presentation data, and full typography comparison.
 The fixture indicator count does not mean that carousel cycling is implemented.
+
+Catalog loading now uses a seven-column poster skeleton grid and the shared TV
+shimmer. Existing results do not gain an extra progress line during refresh.
+Down targets a card only when cards exist. The initial target is clamped against
+the displayed, deduplicated list. Entering the page targets the selected genre
+before the poster grid. Loading and empty states are provisional (`GAP-036`).
+
+The isolated TV emulator exercised Down during loading/empty states, genre
+activation with no cards, and the populated board's initial poster target.
+Two captures confirmed the loading grid shimmer. Desktop tests, Wasm compilation
+and Android assembly passed. Connected catalog/genre feeds remain unqualified.

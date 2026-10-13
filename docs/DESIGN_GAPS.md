@@ -150,3 +150,10 @@ differs from the board's TV-only persistence claim until storage is connected.
 populated `Tv3SignInCode` board. These provisional dialogs need design review.
 The normal email flow does not invent a sent session; the code screen is currently
 reachable through the isolated preview with explicit fixture challenge data.
+
+### GAP-036 — TV catalog loading and empty states
+
+`TvBrowseLoading` uses the supplied seven-column poster dimensions with the
+shared motion-spec shimmer. The populated Movies board does not supply a
+separate catalog-loading or empty/no-match board. These provisional states need
+design review; no full-width progress bar is inserted above existing results.

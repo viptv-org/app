@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "38601b3899422fbfbf82896b6e25f7d0c0045d4cabbc5b3ba20591cc13187cae",
+    "sha256": "20ea152f4795069cfcd053786e88c523d69064f5c3d045e181dbc13811bb9873",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -57,7 +57,8 @@
     "tv_iptv_entry": "preview username-row geometry/focus, native-input dialog cancellation, M3U switch, unsupported Connect/focus and Back passed; actual provider registration/storage/playback absent",
     "tv_metadata_badges": "shared ZIP badge dimensions/style; Home, Details, Live and Next preview text bounds measured 22px in 30px containers; full board/data parity pending",
     "tv_email_code": "preview supplied draft/key focus, six-digit limit, erase, unavailable verification/resend and focus/Back passed; actual delivery, challenge verification and login absent",
-    "tv_startup": "preview indicator movement/clipping and brand mark y=448\u2013536 passed; controller startup flag wired; real restore timing and signed-in account transition unqualified"
+    "tv_startup": "preview indicator movement/clipping and brand mark y=448\u2013536 passed; controller startup flag wired; real restore timing and signed-in account transition unqualified",
+    "tv_catalog_states": "preview loading shimmer, safe Down without cards, empty genre activation and populated initial poster focus passed; connected feed/genre mapping still unqualified"
   },
   "desktop": {
     "compile": "passed",
