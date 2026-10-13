@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TvMediaBadge
 
 @Composable
 internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, watch: () -> Unit) {
@@ -39,10 +40,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 Text("${liveTime(it.start)} – ${liveTime(it.end, true)}$remaining", fontSize = (24 * scale).sp,
                     lineHeight = (30 * scale).sp, color = Palette.body, fontWeight = FontWeight.Medium)
-                channel.card.badges.forEach { badge -> Text(badge,
-                    Modifier.border(1.5.dp * scale, Palette.text.copy(alpha = .55f), RoundedCornerShape(5.dp * scale))
-                        .padding(horizontal = 8.dp * scale, vertical = 4.dp * scale), fontSize = (18 * scale).sp,
-                    lineHeight = (22 * scale).sp, letterSpacing = (.36f * scale).sp, fontWeight = FontWeight.Bold) }
+                channel.card.badges.forEach { TvMediaBadge(it, scale) }
             }
             it.description?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
                 color = Palette.body, maxLines = 2) }

@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
-import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.components.TvAction
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
@@ -33,7 +33,7 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
         if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.offset(96.dp * scale, 306.dp * scale).size(224.dp * scale, 160.dp * scale)
             .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen }, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
         else Text(card.title, Modifier.offset(96.dp * scale, 306.dp * scale).width(800.dp * scale), fontSize = (48 * scale).sp, lineHeight = (56 * scale).sp, fontWeight = FontWeight.Bold)
-        Box(Modifier.offset(96.dp * scale, 494.dp * scale)) { MediaMetadata(card, 24f, 30f, 18f, scale) }
+        Box(Modifier.offset(96.dp * scale, 494.dp * scale)) { TvMediaMetadata(card, scale) }
         card.description?.let { Text(it, Modifier.offset(96.dp * scale, 544.dp * scale).width(760.dp * scale), fontSize = (26 * scale).sp,
             lineHeight = (38 * scale).sp, color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         Row(Modifier.offset(96.dp * scale, 648.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {

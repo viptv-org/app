@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.TvAction
-import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -28,8 +28,8 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
             Text("Next episode", color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (35 * scale).sp, fontWeight = FontWeight.SemiBold)
             Text(next.identity.episode?.let { "${it.episode}. ${next.title}" } ?: next.title,
                 fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp, letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold)
-            MediaMetadata(next.copy(subtitle = listOfNotNull(next.identity.episode?.let { "S${it.season ?: 1} E${it.episode}" }, next.subtitle).joinToString(" · ")),
-                fontSize = 24f, lineHeight = 35f, badgeSize = 18f, scale = scale)
+            TvMediaMetadata(next.copy(subtitle = listOfNotNull(next.identity.episode?.let { "S${it.season ?: 1} E${it.episode}" }, next.subtitle).joinToString(" · ")),
+                scale = scale, lineHeight = 35f)
             next.description?.let { Text(it, fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, color = Palette.body, maxLines = 3, overflow = TextOverflow.Ellipsis) }
             Spacer(Modifier.height(2.dp * scale))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {

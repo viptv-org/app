@@ -12,7 +12,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -22,7 +22,7 @@ internal fun TvBrowseSummary(card: Card, original: Card, scale: Float) {
         if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.offset(96.dp * scale, 96.dp * scale).size(420.dp * scale, 120.dp * scale)
             .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen }, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
         else Text(card.title, Modifier.offset(96.dp * scale, 96.dp * scale).width(1000.dp * scale), fontSize = (48 * scale).sp, lineHeight = (58 * scale).sp, fontWeight = FontWeight.Bold)
-        Box(Modifier.offset(96.dp * scale, 240.dp * scale)) { MediaMetadata(card, 24f, 30f, 18f, scale) }
+        Box(Modifier.offset(96.dp * scale, 240.dp * scale)) { TvMediaMetadata(card, scale) }
         card.description?.let { Text(it, Modifier.offset(96.dp * scale, 290.dp * scale).width(800.dp * scale), color = Palette.body,
             fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
         val progress = original.progress ?: card.progress
