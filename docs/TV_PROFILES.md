@@ -13,7 +13,7 @@ selection and management callbacks remain connected through `ProfilesScreen`.
 
 The normal profile engine already supports local creation, rename, avatars,
 PINs and deletion. The dedicated TV editor is described in `TV_PROFILE_EDIT.md`.
-Maturity/language contracts, per-profile entry motion and full visual
+Maturity/language contracts, exact motion timing and full visual
 qualification remain work.
 
 The isolated Profiles preview uses the supplied unlocked board state by default.
@@ -27,3 +27,12 @@ claim about backend authentication or profile persistence.
 
 A subsequent render check confirmed the focus frame is white, and the empty
 local picker initially focuses Add profile and opens the existing name dialog.
+
+Profile tiles now enter with the supplied 450 ms fade/16 px rise and 60 ms
+per-item stagger. Tween owns the delay; completed animation state is kept above
+the lazy row so composition recreation does not replay completed entrances.
+An emulator recording contained intermediate opacity with a later card lagging
+an earlier card. Manage navigation passed, and completed artwork was visible
+with animator duration scale zero. Desktop tests, Wasm compilation and Android
+assembly passed. Exact frame timing/reduced-motion onset and full parity remain
+unqualified by these scoped checks.

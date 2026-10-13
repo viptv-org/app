@@ -1,6 +1,8 @@
 package org.viptv.app.features.entry
 
 import androidx.compose.foundation.border
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -23,6 +25,7 @@ import org.viptv.app.components.TvAction
 internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, local: Boolean, managing: Boolean,
     select: (String) -> Unit, edit: (String) -> Unit, manage: () -> Unit, done: () -> Unit, add: () -> Unit) {
     val first = remember { FocusRequester() }; val manageFocus = remember { FocusRequester() }
+    val arrivals = remember { mutableMapOf<String, Animatable<Float, AnimationVector1D>>() }
     LaunchedEffect(profiles.map { it.id }, managing, local, busy) {
         if (!busy && (profiles.isNotEmpty() || (local && profiles.size < 12))) first.requestFocus()
     }
@@ -38,13 +41,15 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
             horizontalArrangement = Arrangement.spacedBy(56.dp * scale), contentPadding = PaddingValues(horizontal = 4.dp * scale)) {
             itemsIndexed(profiles, key = { _, profile -> profile.id }) { index, profile ->
                 TvProfileItem(profile.name, profile.locked && !managing, cardSize, scale,
-                    (if (index == 0) Modifier.focusRequester(first) else Modifier).focusProperties { if (local) down = manageFocus }, !busy,
+                    (if (index == 0) Modifier.focusRequester(first) else Modifier).focusProperties { if (local) down = manageFocus }
+                        .then(tvProfileArrival("profile:${profile.id}", index, scale, arrivals)), !busy,
                     { if (managing) edit(profile.id) else select(profile.id) }) {
                     ProfileAvatar(profile, cardSize, 28.dp * scale)
                 }
             }
             if (local && profiles.size < 12) item {
-                TvProfileItem("Add profile", false, cardSize, scale, (if (profiles.isEmpty()) Modifier.focusRequester(first) else Modifier).focusProperties { down = manageFocus }, !busy, add) {
+                TvProfileItem("Add profile", false, cardSize, scale, (if (profiles.isEmpty()) Modifier.focusRequester(first) else Modifier)
+                    .focusProperties { down = manageFocus }.then(tvProfileArrival("add", profiles.size, scale, arrivals)), !busy, add) {
                     Surface(Modifier.size(cardSize).border(2.dp * scale, Color.White.copy(alpha = .18f), RoundedCornerShape(28.dp * scale)), shape = RoundedCornerShape(28.dp * scale), color = Color.White.copy(alpha = .08f)) {
                         Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, null, Modifier.size(64.dp * scale), tint = Palette.secondary) }
                     }
