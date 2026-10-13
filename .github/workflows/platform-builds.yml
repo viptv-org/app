@@ -28,7 +28,7 @@ jobs:
           python-version: '3.13'
       - uses: android-actions/setup-android@v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
       - name: Install native tools and Android compile platform
         shell: bash
         run: |
@@ -58,7 +58,7 @@ jobs:
           python-version: '3.13'
       - uses: android-actions/setup-android@v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
       - name: Prepare Android and pinned native dependencies
         shell: bash
         run: |
