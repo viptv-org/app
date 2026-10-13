@@ -18,6 +18,8 @@ import org.viptv.app.features.entry.TvIptvDraft
 import org.viptv.app.features.entry.TvEmailCodeChallenge
 import org.viptv.app.features.entry.TvSplash
 import org.viptv.app.features.entry.TvPairingSession
+import org.viptv.app.features.entry.TvSignedIn
+import org.viptv.app.features.entry.TvSignedInIdentity
 import org.viptv.app.features.entry.ProfilePinScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.home.HomeScreen
@@ -77,6 +79,9 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                     Box(Modifier.weight(1f)) {
                         when (current) {
                             Screen.Connect -> if (television && tvDetailVariant == "Splash") TvSplash()
+                                else if (television && tvDetailVariant in listOf("SignedIn", "SignedInHold")) TvSignedIn(
+                                    TvSignedInIdentity("isolated-preview", "vynxc", "[name@email.com]", PreviewData.profile),
+                                    if (tvDetailVariant == "SignedInHold") null else ({ go(Screen.Profiles) }))
                                 else if (television) TvSignIn("https://viptv.syek.tech", false, null, { go(Screen.Profiles) },
                                 { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Pairing", "PairingUnavailable" -> TvSignInStep.Phone; "Email" -> TvSignInStep.Email; "EmailCode" -> TvSignInStep.EmailCode; "Iptv" -> TvSignInStep.Iptv; else -> TvSignInStep.Welcome },
                                 if (tvDetailVariant == "Email") "vynxc" else "",

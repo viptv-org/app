@@ -80,3 +80,6 @@ The supplied startup splash and controller flag are described in `TV_SPLASH.md`.
 
 Phone/browser pairing layout, QR payload checks and missing backend contracts
 are described in `TV_PAIRING.md`.
+
+The signed-in greeting renderer and missing account/bootstrap transition data
+are described in `TV_SIGNED_IN.md`.

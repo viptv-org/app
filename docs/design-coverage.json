@@ -108,9 +108,9 @@
     "title": "Signed in \u2014 welcome back",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_SIGNED_IN.md",
+    "capture": "docs/evidence/android-tv-signed-in.png"
   },
   {
     "id": "Tv3Profiles",
