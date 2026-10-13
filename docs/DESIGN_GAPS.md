@@ -143,3 +143,10 @@ The supplied IPTV board shows Xtream fields and an M3U entry tab, but no expande
 M3U form, field-input dialog or missing-service state. `TvIptvSignIn` supplies
 those provisional surfaces. Its in-memory storage explanation intentionally
 differs from the board's TV-only persistence claim until storage is connected.
+
+### GAP-035 — TV email-code unavailable states
+
+`TvEmailCode` supplies verification/resend-unavailable notices absent from the
+populated `Tv3SignInCode` board. These provisional dialogs need design review.
+The normal email flow does not invent a sent session; the code screen is currently
+reachable through the isolated preview with explicit fixture challenge data.

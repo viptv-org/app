@@ -72,3 +72,6 @@ by Home, focused summaries, details, Live and next-episode metadata. At 1920×10
 Home/Details/Live/Next preview captures confirmed 22 px badge text lines inside
 those containers. Desktop tests, Wasm compilation and Android assembly passed.
 These scoped checks do not certify complete board parity or connected metadata.
+
+Email-code layout and missing verification/session integration are described in
+`TV_EMAIL_CODE.md`.

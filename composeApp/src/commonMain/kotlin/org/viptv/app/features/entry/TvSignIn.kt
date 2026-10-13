@@ -10,14 +10,14 @@ import androidx.compose.ui.text.font.FontWeight
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
-internal enum class TvSignInStep { Welcome, Choice, Phone, Browser, Email, Password, Iptv }
+internal enum class TvSignInStep { Welcome, Choice, Phone, Browser, Email, EmailCode, Password, Iptv }
 
 @Composable
 internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit,
     backChanged: ((() -> Unit)?) -> Unit, initialStep: TvSignInStep = TvSignInStep.Welcome, initialEmail: String = "",
-    initialIptv: TvIptvDraft = TvIptvDraft()) {
+    initialIptv: TvIptvDraft = TvIptvDraft(), emailChallenge: TvEmailCodeChallenge? = null) {
     var step by remember { mutableStateOf(initialStep) }
-    val back = { step = if (step == TvSignInStep.Choice) TvSignInStep.Welcome else TvSignInStep.Choice }
+    val back = { step = when (step) { TvSignInStep.Choice -> TvSignInStep.Welcome; TvSignInStep.EmailCode -> TvSignInStep.Email; else -> TvSignInStep.Choice } }
     DisposableEffect(step) {
         backChanged(if (step == TvSignInStep.Welcome) null else back)
         onDispose { backChanged(null) }
@@ -29,6 +29,8 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
             TvSignInStep.Choice -> TvSignInChoice(scale, local) { step = it }
             TvSignInStep.Password -> TvPasswordPanel(origin, busy, error, scale, connect, { step = TvSignInStep.Email })
             TvSignInStep.Email -> TvEmailSignIn(scale, { step = TvSignInStep.Phone }, initialEmail, initialEmail.isNotEmpty())
+            TvSignInStep.EmailCode -> if (emailChallenge != null) TvEmailCode(scale, emailChallenge, busy = busy)
+                else TvEmailSignIn(scale, { step = TvSignInStep.Phone })
             TvSignInStep.Iptv -> TvIptvSignIn(scale, { step = TvSignInStep.Phone }, initialIptv)
             else -> Column(Modifier.padding(96.dp * scale), verticalArrangement = Arrangement.spacedBy(28.dp * scale)) {
                 Text(when (step) { TvSignInStep.Phone -> "Use your phone"; TvSignInStep.Browser -> "Use a browser"; TvSignInStep.Email -> "Email me a code"; else -> "IPTV provider" },

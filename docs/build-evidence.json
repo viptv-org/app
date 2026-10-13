@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "3c3f9b039270fb81f88294a596709b51de647292cc4b33e99a92f9be39de5c37",
+    "sha256": "d6a7911e1d09c83613e4817c1fc7980f7f17b015aa4af68a39f484a8d6a3359a",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -55,7 +55,8 @@
     "tv_password_input": "preview rapid entry, immediate Shift/character, long-email caret bounds and Back passed; field/key dimensions updated from ZIP; real successful sign-in unqualified",
     "tv_email_entry": "preview suffix focus, Gmail append, Backspace, unavailable Next/focus restoration, phone state and Back passed; delivery/verification and phone pairing unimplemented",
     "tv_iptv_entry": "preview username-row geometry/focus, native-input dialog cancellation, M3U switch, unsupported Connect/focus and Back passed; actual provider registration/storage/playback absent",
-    "tv_metadata_badges": "shared ZIP badge dimensions/style; Home, Details, Live and Next preview text bounds measured 22px in 30px containers; full board/data parity pending"
+    "tv_metadata_badges": "shared ZIP badge dimensions/style; Home, Details, Live and Next preview text bounds measured 22px in 30px containers; full board/data parity pending",
+    "tv_email_code": "preview supplied draft/key focus, six-digit limit, erase, unavailable verification/resend and focus/Back passed; actual delivery, challenge verification and login absent"
   },
   "desktop": {
     "compile": "passed",

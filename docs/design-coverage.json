@@ -77,9 +77,9 @@
     "title": "Sign in \u2014 email code",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_EMAIL_CODE.md",
+    "capture": "docs/evidence/android-tv-email-code.png"
   },
   {
     "id": "Tv3SignInPassword",

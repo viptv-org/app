@@ -9,7 +9,8 @@ Next has an optional request-code callback. The current normal connection does
 not supply it, so Next explicitly reports unavailable email codes. It does not
 invent a sent-code session or call an assumed endpoint. Email-code delivery,
 verification, expiry, resend and successful sign-in remain backend work. The
-provided code-entry board remains unfinished.
+code-entry layout is described in `TV_EMAIL_CODE.md`; its connected flow remains
+unfinished.
 
 Hardware Backspace and an additional remote Delete action edit the current
 buffer. Long text stays in the field. Unavailable-dialog dismissal returns focus

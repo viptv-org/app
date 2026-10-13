@@ -75,3 +75,7 @@ is sent. Phone and Back navigate the existing entry state machine.
 TV `Connect --es ui_variant Iptv` starts the supplied Xtream form with example
 values and username focus. Edits stay in memory. Connect reports the absent
 provider service; no provider, playlist, account or catalog request runs.
+
+TV `Connect --es ui_variant EmailCode` renders the supplied code-entry board with
+fixture challenge status and digits. Verify/resend explain unavailable services,
+and Back returns to email entry. No real challenge or email is created.

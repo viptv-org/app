@@ -15,6 +15,7 @@ import org.viptv.app.features.entry.ConnectScreen
 import org.viptv.app.features.entry.TvSignIn
 import org.viptv.app.features.entry.TvSignInStep
 import org.viptv.app.features.entry.TvIptvDraft
+import org.viptv.app.features.entry.TvEmailCodeChallenge
 import org.viptv.app.features.entry.ProfilePinScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.home.HomeScreen
@@ -74,9 +75,10 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                     Box(Modifier.weight(1f)) {
                         when (current) {
                             Screen.Connect -> if (television) TvSignIn("https://viptv.syek.tech", false, null, { go(Screen.Profiles) },
-                                { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Email" -> TvSignInStep.Email; "Iptv" -> TvSignInStep.Iptv; else -> TvSignInStep.Welcome },
+                                { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Email" -> TvSignInStep.Email; "EmailCode" -> TvSignInStep.EmailCode; "Iptv" -> TvSignInStep.Iptv; else -> TvSignInStep.Welcome },
                                 if (tvDetailVariant == "Email") "vynxc" else "",
-                                if (tvDetailVariant == "Iptv") TvIptvDraft(address = "http://[provider.example]:8080", username = "vynxc") else TvIptvDraft())
+                                if (tvDetailVariant == "Iptv") TvIptvDraft(address = "http://[provider.example]:8080", username = "vynxc") else TvIptvDraft(),
+                                if (tvDetailVariant == "EmailCode") TvEmailCodeChallenge("Sent to [name@email.com] · expires in 15 minutes", "481", "isolated-preview") else null)
                                 else ConnectScreen(browser, "https://viptv.syek.tech", false, null, { go(Screen.Profiles) }, { _, _, _ -> }, desktop, phone, false, entryBackChanged)
                             Screen.Player -> if (television && liveTitle == null) PreviewTvPlayer(tvDetailVariant, go, entryBackChanged)
                                 else PlayerScreen(null, true, null, {}, {}, { go(if (liveTitle == null) Screen.Home else Screen.Live) }, liveTitle ?: PreviewData.playerTitle, if (liveTitle == null) PlayerFact.Progress(842000, 3132000) else PlayerFact.Progress(0, null), phone = handheld, previewFrame = liveTitle?.landscape ?: PreviewData.playerFrame, television = television, backChanged = entryBackChanged)
