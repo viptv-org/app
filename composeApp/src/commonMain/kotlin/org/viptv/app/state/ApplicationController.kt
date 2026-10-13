@@ -18,6 +18,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val progressGate = Mutex()
     internal var progressJob: Job? = null
     internal var liveGuideJob: Job? = null
+    internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
@@ -32,8 +33,9 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal fun run(operation: suspend () -> Unit) {
         val prior = job
         prior?.cancel()
+        detailPagingJob?.cancel(); detailPagingJob = null
         val current = ++generation
-        mutable.value = mutable.value.copy(busy = true, error = null)
+        mutable.value = mutable.value.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null)
         job = scope.launch {
             try { prior?.join(); operation() }
             catch (e: CancellationException) { throw e }

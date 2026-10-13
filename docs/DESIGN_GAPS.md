@@ -267,7 +267,8 @@ its separate sorting/PRO examples are not claimed as implemented provider APIs.
 
 ### GAP-052 — Bounded episode page loading
 
-Season labels and counts come from the host's canonical index. Selecting an
-unloaded season requests its first page. A provisional Load more episodes action
-fetches another bounded page; it needs a final placement/loading design. TV retains
-focus in the episode row after the last page and resets the gutter on season change.
+Season labels and counts come from the host's canonical index. Per the user's
+updated requirement, episodes load automatically in bounded background pages.
+There is no Load more episodes action. Images remain viewport-lazy and selecting
+a season prioritizes its missing records. Network-failure copy remains provisional;
+reselecting a season retries its remaining page.

@@ -3,6 +3,7 @@ package org.viptv.app.state
 import org.viptv.app.connection.*
 
 fun ApplicationController.navigate(screen: Screen) {
+    if (screen != Screen.Details) cancelDetailPaging()
     if (screen != Screen.Sources && mutable.value.findingSources) {
         generation++
         job?.cancel()
@@ -30,6 +31,7 @@ fun ApplicationController.navigate(screen: Screen) {
 }
 
 fun ApplicationController.backDetails() {
+    cancelDetailPaging()
     generation++
     job?.cancel()
     val previous = mutable.value.detailHistory.lastOrNull()

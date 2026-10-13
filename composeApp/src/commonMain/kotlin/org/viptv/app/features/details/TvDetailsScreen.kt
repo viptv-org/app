@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import androidx.compose.animation.core.tween
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TvFocusScroll
+import org.viptv.app.components.TvFocusHandle
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
@@ -34,7 +35,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         val scroll = key(card?.identity) { rememberLazyListState() }
         val scope = rememberCoroutineScope()
         val playFocus = remember { FocusRequester() }
-        val episodeFocus = remember { FocusRequester() }
+        val episodesRestore = remember(card?.identity) { TvFocusHandle() }
         var notice by remember { mutableStateOf<String?>(null) }
         var episodeMode by remember(card?.identity) { mutableStateOf(false) }
         var activeRow by remember(card?.identity) { mutableIntStateOf(0) }
@@ -61,8 +62,20 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                 if (activeRow == 0) playFocus.requestFocus()
             }
         }
-        TvDetailBackdrop(card, scale, scroll.firstVisibleItemIndex > 0,
-            with(LocalDensity.current) { scroll.firstVisibleItemScrollOffset.toDp().value.toInt() })
+        fun returnEpisodes() {
+            if (detail?.episodes.isNullOrEmpty()) { returnHero(); return }
+            activeRow = 1; episodeMode = true; motion?.cancel()
+            motion = scope.launch {
+                launch { moveRow(1) }
+                repeat(32) {
+                    withFrameNanos { }
+                    if (episodesRestore.request?.invoke() == true) return@launch
+                }
+            }
+        }
+        key(card?.identity) {
+            TvDetailBackdrop(card, scale) { offset(scroll.firstVisibleItemIndex) + scroll.firstVisibleItemScrollOffset }
+        }
         TvFocusScroll(manual = true) {
         LazyColumn(state = scroll, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
             if (detail != null) {
@@ -72,17 +85,19 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                         save = { save(detail.item) }, saved = saved,
                         trailer = { notice = "No trailer is available for this title." },
                         restart = { sources(detail.item) }, first = playFocus,
-                        down = if (detail.episodes.isEmpty()) null else episodeFocus, requestInitialFocus = requestInitialFocus)
+                        down = null, requestInitialFocus = requestInitialFocus && activeRow == 0,
+                        downAction = if (detail.episodes.isEmpty()) null else ::returnEpisodes)
                 }
                 if (detail.episodes.isNotEmpty()) item(key = "episodes") {
                     TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
                         focused = { episodeMode = true; focusRow(1) }, expanded = episodeMode,
-                        initial = episodeFocus, resumeId = extras.resume?.identity?.id,
-                        returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor, busy = busy, loadPage = loadPage)
+                        resumeId = extras.resume?.identity?.id,
+                        returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
+                        busy = busy, loadPage = loadPage, restoreChanged = { episodesRestore.request = it })
                 }
                 if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
                     TvRecommendationShelf(extras.recommendations, scale, open,
-                        focused = { focusRow(if (detail.episodes.isEmpty()) 1 else 2) })
+                        focused = { focusRow(if (detail.episodes.isEmpty()) 1 else 2) }, up = ::returnEpisodes)
                 }
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }

@@ -81,7 +81,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                     }
                     TvHomeVisibility(!browsing, scale, -80, 450, retain = true, focusEnabled = { !browsing }, sequentialFade = true) {
                         carousel.card?.let { hero ->
-                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing, save = { if (!browsing) save(it) }, saved = saved(hero))
+                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing, save = { if (!browsing) save(it) }, isSaved = saved)
                         }
                     }
                 }

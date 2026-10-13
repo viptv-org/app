@@ -31,6 +31,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
             else -> DetailSection.Information }) }
     val selected = seasons.find { (it.number?.toString() ?: "unknown") == seasonKey } ?: seasons.firstOrNull { (it.number ?: 0L) > 0L } ?: seasons.firstOrNull()
+    AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = section == DetailSection.Episodes,
+        scopeKey = detail?.item?.let { it.provider_id to it.identity })
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val compact = maxWidth < 900.dp
@@ -67,7 +69,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                         Box(Modifier.padding(horizontal = gutter)) {
                             DetailSeasonPicker(seasons, season, phone) { number ->
                                 seasonKey = number?.toString() ?: "unknown"
-                                seasons.find { it.number == number }?.takeIf { it.episodes.isEmpty() }?.nextOffset?.let(loadPage)
+                                seasons.find { it.number == number }?.nextOffset?.let(loadPage)
                             }
                         }
                     }
@@ -76,7 +78,6 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     } else items(season.episodes, key = ::episodeKey) { episode ->
                         DesktopEpisodeRow(episode, sources, modifier = Modifier.padding(horizontal = gutter))
                     }
-                    item(key = "more-episodes") { MoreEpisodes(season, value.next_cursor, busy, loadPage, Modifier.padding(horizontal = gutter)) }
                 }
             }
         }

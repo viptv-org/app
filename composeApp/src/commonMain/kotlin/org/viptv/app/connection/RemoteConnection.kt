@@ -83,11 +83,14 @@ class RemoteConnection(
     }
 
     suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/v3/discover?type=all&search=${term.encodeURLParameter()}"))
-    suspend fun detail(card: Card, offset: Int = 0): DetailSnapshot = (card.parent_identity ?: card.identity).let { detail(it.kind, it.id, offset) }
-    suspend fun detail(kind: String, id: String, offset: Int = 0): DetailSnapshot {
+    suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = (card.parent_identity ?: card.identity).let { detail(it.kind, it.id, offset, limit) }
+    suspend fun detail(kind: String, id: String, offset: Int = 0, limit: Int = 24): DetailSnapshot {
         require(offset in 0..10_000)
-        val page = if (offset == 0) "" else "?offset=$offset"
-        return codec.decodeFromJsonElement(call("/api/v3/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page"))
+        require(limit in 1..128)
+        val page = if (offset == 0 && limit == 24) "" else "?offset=$offset&limit=$limit"
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            codec.decodeFromJsonElement(call("/api/v3/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page"))
+        }
     }
 
     suspend fun subtitles(card: Card): org.viptv.engine.wire.SubtitleSnapshot = codec.decodeFromJsonElement(

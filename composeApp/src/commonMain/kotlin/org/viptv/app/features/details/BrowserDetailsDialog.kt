@@ -42,6 +42,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     var selectedKey by remember(detail?.item?.identity) { mutableStateOf<String?>(null) }
     val selected = seasons.find { (it.number?.toString() ?: "unknown") == selectedKey }
         ?: seasons.firstOrNull { (it.number ?: 0) > 0 } ?: seasons.firstOrNull()
+    AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, scopeKey = detail?.item?.let { it.provider_id to it.identity })
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
             val compact = maxWidth < 640.dp
@@ -63,14 +64,16 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                         }
                         selected?.let { season ->
                             item { Box(Modifier.padding(horizontal = gutter, vertical = 10.dp)) {
-                                DetailSeasonPicker(seasons, season, compact) { selectedKey = it?.toString() ?: "unknown"; seasons.find { group -> group.number == it }?.takeIf { group -> group.episodes.isEmpty() }?.nextOffset?.let(loadPage) }
+                                DetailSeasonPicker(seasons, season, compact) {
+                                    selectedKey = it?.toString() ?: "unknown"
+                                    seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
+                                }
                             } }
                             items(season.episodes, key = ::episodeKey) { episode ->
                                 if (compact) DetailEpisodeCard(episode, true, play, Modifier.padding(horizontal = gutter, vertical = 12.dp))
                                 else DesktopEpisodeRow(episode, play, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                             }
                         }
-                        if (selected != null) item(key = "more-episodes") { MoreEpisodes(selected, detail?.next_cursor, busy, loadPage, Modifier.padding(horizontal = gutter)) }
                         if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(gutter)) }
                     }
                     IconButton(onClick = back, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)

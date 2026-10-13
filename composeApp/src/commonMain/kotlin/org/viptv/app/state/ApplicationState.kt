@@ -40,6 +40,8 @@ data class ApplicationState(
     val searchTerm: String = "",
     val detailReturnScreen: Screen = Screen.Home,
     val detail: DetailSnapshot? = null,
+    val detailLoadingOffset: Long? = null,
+    val detailPageError: String? = null,
     val detailHistory: List<DetailSnapshot> = emptyList(),
     val localMode: Boolean = false,
     val sessionNotice: String? = null,

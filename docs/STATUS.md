@@ -22,7 +22,10 @@ certified.
   gradients and smaller soft-backdrop surfaces address the reported TV artifacts.
 - Search category rows, focused title marquees, visible returning headings and
   detail/search history. Details contain related titles and canonical season
-  indexes with bounded episode paging. Native paging reuses verified cached metadata.
+  indexes with automatic background episode paging. Initial pages contain 24
+  records; background pages request 96 (host maximum 128). Native paging reuses
+  verified cached metadata. The TV detail backdrop stays sharp and follows absolute
+  scroll distance in the draw phase.
 - A single library page includes results, controls, source availability and
   known statistics. Sorting sits inside the filter panel. Cold metadata has a
   bounded refresh hint; warm filters require no per-title client requests.
@@ -37,16 +40,21 @@ certified.
 
 ## Current evidence
 
-- Core pin: `1c03990af6bd174634b7f7eb6603e8ba4553e2a2`.
-- Backend UI/image pin: `1c0dbd94d68191f852627f9e7affed7aa7233c69`.
-- Server UI/image gate: 390 passed, 10 ignored; earlier integration gate: 16 passed.
-- Core season/cache batch: 11 native tests passed, two ignored; four Android ABI
+- Core pin: `eb61685491088c082c3ad99abbf88b798d1c41f5`.
+- Backend UI/image pin: `85eaa6233c336056ec60b3ce4bcdf318ed108171`.
+- Server UI/image gate: 392 passed, 10 ignored; earlier integration gate: 16 passed.
+- Core paging/cache batch: 36 native tests passed, three ignored; six projection
+  tests passed; four Android ABI
   release builds passed. App QA packages ARMv7, ARM64 and x86_64.
-- Android QA assembly, 53 Desktop tests and Wasm compilation pass for the UI batch.
+- Android QA assembly, 55 Desktop tests and Wasm compilation pass for the UI batch.
   Linux packaged launcher/JVM/SQLite diagnostics and Web production packaging pass.
 - Real linked library: 154 titles/41 genres. Cold page 237 ms, warm page 29 ms;
   typed loading hint stops on completion. Actual genre/status/personal-rating and
   episode-state filters returned scoped results.
+- Real Simkl One Piece: 1,184 episodes/23 seasons, initial 24 plus 13 continuation
+  pages of up to 96, no duplicates and stable indexes; all reads took 2.825 seconds.
+  Native Cinemeta independently projected 1,242 records from one cached document.
+  Counts belong to their respective authoritative provider documents.
 - Real Naruto: 220 episodes/five indexed seasons. TV selected Season 2 directly,
   loaded its remaining episodes, and retained row focus. The first card returned
   to the 96 px gutter after eight Right/eight Left presses.
@@ -55,8 +63,9 @@ certified.
   versus roughly 3–4 seconds through the old proxy. Cold connections can be slower.
 - The latest release-engine QA APK is installed on the physical TV and Home
   connects directly over trusted LAN HTTPS. The host firewall now permits only
-  the TV IP on the two test ports. Unrecorded rapid navigation measured 23 ms median/65 ms p95 with 10.12%
-  missed deadlines (346 frames); hardware performance remains under improvement.
+  the TV IP on the two test ports. Cached Home compositing measured 21 ms median/32 ms p95 with 1.08%
+  missed deadlines (371 unrecorded frames). Detail transitions measured 20 ms median/32 ms p95 and 7.06% missed
+  deadlines (439 unrecorded frames). Full 60 fps is not certified.
   Its earlier UI sample was 25 ms median/73 ms p95 and predates this batch.
 - Native public M3U qualification loaded 100 actual channels with no VIPTV
   backend requests, played a real channel, and returned to the cached Live page.
@@ -64,8 +73,9 @@ certified.
 - Prior real physical-TV native MP4 playback reached 24 fps with zero rebuffers,
   zero audio underruns and about 9 ms A/V drift. That source sample remains the
   playback checkpoint, not qualification of every format or this entire UI batch.
-- Prior hosted CI run 38411304240 passed all platform build/package/native-engine
-  jobs. It predates the current UI changes; new hosted verification is pending.
+- Hosted CI run 38475963262 passed all six platform build/package/native-engine
+  jobs for app6028a97. It predates the latest details/focus changes; a final
+  hosted run is pending.
 
 ## Remaining qualification and implementation
 

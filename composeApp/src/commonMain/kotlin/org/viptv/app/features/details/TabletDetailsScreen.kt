@@ -37,6 +37,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
             DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage)
             return@BoxWithConstraints
         }
+        AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, scopeKey = detail?.item?.let { it.provider_id to it.identity })
         Row(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxHeight().weight(if (selected == null) 1f else .5f)) {
                 detail?.item?.let { card ->
@@ -71,9 +72,11 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
             selected?.let { season ->
                 LazyColumn(Modifier.weight(.5f).fillMaxHeight(), contentPadding = PaddingValues(horizontal = 28.dp, vertical = 40.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    item { DetailSeasonPicker(seasons, season, false) { selectedKey = it?.toString() ?: "unknown"; seasons.find { group -> group.number == it }?.takeIf { group -> group.episodes.isEmpty() }?.nextOffset?.let(loadPage) } }
+                    item { DetailSeasonPicker(seasons, season, false) {
+                        selectedKey = it?.toString() ?: "unknown"
+                        seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
+                    } }
                     items(season.episodes, key = ::episodeKey) { episode -> DetailEpisodeCard(episode, true, play, Modifier.fillMaxWidth(), tablet = true) }
-                    item { MoreEpisodes(season, detail?.next_cursor, busy, loadPage) }
                 }
             }
         }

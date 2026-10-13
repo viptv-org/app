@@ -30,7 +30,7 @@ A 643-frame navigation sample measured 16 ms median, 16 ms p95 and 1.56% missed
 frame deadlines. These measurements qualify the emulator sample. The physical
 TV's earlier sample measured 25 ms median/73 ms p95; it predates this final UI
 batch. The latest release-engine APK is now installed and connected over LAN HTTPS.
-Its unrecorded 346-frame rapid-navigation sample measured 23 ms median, 65 ms p95
-and 10.12% missed deadlines. Recording adds significant overhead, so recorded
+After cached grouped compositing, an unrecorded 371-frame navigation sample
+measured 21 ms median, 32 ms p95 and 1.08% missed deadlines. Recording adds significant overhead, so recorded
 measurements are not compared to this sample. Hardware performance remains under
 active improvement.

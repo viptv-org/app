@@ -116,18 +116,8 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
         return CatalogPage(snapshot.rows.flatMap { it.cards }, null, true)
     }
 
-    override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot {
-        val identity = card.parent_identity ?: card.identity
-        val cached = withContext(Dispatchers.IO) { engine.cachedDetail(profile, identity.kind, identity.id, offset.toUInt()) }
-        if (cached != null) return withContext(Dispatchers.IO) { json.decodeFromString(cached) }
-        val plan = try { withContext(Dispatchers.IO) { engine.planDetail(profile, identity.kind, identity.id, card.provider_id) } }
-        catch (_: Exception) { throw LocalFailure("This title is unavailable from your enabled add-ons.") }
-        val operation = json.parseToJsonElement(plan).jsonObject
-        val body = addonJson(client, operation.getValue("url").jsonPrimitive.content)
-        return try { withContext(Dispatchers.IO) {
-            json.decodeFromString(engine.projectDetail(operation.getValue("operation").jsonPrimitive.content, body, offset.toUInt()))
-        } } catch (_: Exception) { throw LocalFailure("The add-on returned invalid title details.") }
-    }
+    override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, 24)
+    override suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, limit)
 
     override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): List<SourceCandidate> = fetchMergedLocalSources(profile, card, publish)
 

@@ -78,7 +78,7 @@ fun App(
                             }
                             Screen.Details -> Box(Modifier.fillMaxSize()) {
                                 if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true)
-                                DetailsScreen(state.detail, state.busy, state.error, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.library.any { it.identity.kind == state.detail?.item?.identity?.kind && it.identity.id == state.detail?.item?.identity?.id }, open = controller::open, loadPage = controller::detailPage)
+                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.library.any { it.identity.kind == state.detail?.item?.identity?.kind && it.identity.id == state.detail?.item?.identity?.id }, open = controller::open, loadPage = controller::detailPage)
                             }
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources)
                             Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode, busy = state.busy, error = state.error)

@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,10 +28,15 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
-    save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean, saved: Boolean = false) {
+    save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
+    saved: Boolean = false, downAction: (() -> Unit)? = null) {
     val series = card.identity.kind == "series"
     org.viptv.app.components.TvRequestedFocus(first, card.identity, requestInitialFocus)
-    Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds()) {
+    Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds().onPreviewKeyEvent {
+        if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown && downAction != null) {
+            downAction(); true
+        } else false
+    }) {
         if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
             Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
                 .width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale)

@@ -22,6 +22,7 @@ interface LocalConnection : AutoCloseable {
     suspend fun installAddon(profile: String, manifestUrl: String): List<IntegrationConnection>
     suspend fun search(profile: String, term: String): CatalogPage
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
+    suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = detail(profile, card, offset)
     suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate>
     suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = LiveCatalogPage(reason = "Live TV is unavailable on this device.")
     suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = LiveGuideSnapshot(channel, reason = "The program guide is unavailable.")

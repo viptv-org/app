@@ -55,6 +55,7 @@ fun ApplicationController.useLocal(path: String) {
 }
 
 fun ApplicationController.disconnect() {
+    cancelDetailPaging()
     val stopping = releaseRemotePlayback()
     val priorRemote = connection
     val prior=local

@@ -25,9 +25,11 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, first: FocusRequester? = null,
-    down: FocusRequester? = null, indicators: Int = 1, selected: Int = 0, progress: () -> Float = { 1f }, focusEpoch: Int = 0, requestFocus: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false) {
+    down: FocusRequester? = null, indicators: Int = 1, selected: Int = 0, progress: () -> Float = { 1f }, focusEpoch: Int = 0, requestFocus: Boolean = false,
+    save: (Card) -> Unit = {}, saved: Boolean = false, isSaved: (Card) -> Boolean = { saved }) {
     org.viptv.app.components.TvRequestedFocus(first, focusEpoch, requestFocus)
     var presented by remember { mutableStateOf(card) }
+    val presentedSaved = isSaved(presented)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val scale = maxWidth / 1920.dp
         Box(Modifier.fillMaxWidth().height(800.dp * scale)) {
@@ -41,7 +43,7 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
                 Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
                 Text("Play", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { save(presented) }) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
+            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { save(presented) }) { Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, if (presentedSaved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
         HeroIndicators(indicators, selected, progress, Modifier.offset(96.dp * scale, 760.dp * scale), scale)

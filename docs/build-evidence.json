@@ -1,10 +1,10 @@
 {
   "status": "experimental, incomplete overall",
-  "core": "1c03990af6bd174634b7f7eb6603e8ba4553e2a2",
+  "core": "eb61685491088c082c3ad99abbf88b798d1c41f5",
   "kite_renderer": "56f361b7610bf1d20c328cf919877e37baff9d1f",
-  "backend_tests_passed": 390,
+  "backend_tests_passed": 392,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 53,
+  "desktop_tests_passed": 55,
   "android_release_sha256": "8919a268a0198d26023a08235576013227d0369eda786b9349806fe8d8ec4d06",
   "android_abis": [
     "armeabi-v7a",
@@ -47,15 +47,17 @@
     "playback_qualified": false
   },
   "platform_ci": {
-    "run": 38411304240,
+    "run": 38475963262,
+    "app_revision": "6028a973e8345125c914ad5cd673afbbcc3124a6",
     "renderer": "passed",
     "android": "passed",
     "web": "passed",
     "windows": "passed",
     "macos": "passed",
-    "linux": "passed"
+    "linux": "passed",
+    "includes_latest_info_changes": false
   },
-  "backend": "1c0dbd94d68191f852627f9e7affed7aa7233c69",
+  "backend": "85eaa6233c336056ec60b3ce4bcdf318ed108171",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -86,9 +88,9 @@
     "missed_deadlines_percent": 11.36,
     "final_ui_batch": false
   },
-  "current_ui_apk_sha256": "fd71cfaa36a4d68733abda5cad537949688a1c41cef66905793028c832034da2",
+  "current_ui_apk_sha256": "5ce1dfd52c4b717c9126a8edf63accda5fd4a26ed2d6daac71269c349ce15364",
   "native_engine_profile": "release",
-  "current_ui_apk_bytes": 131340834,
+  "current_ui_apk_bytes": 131366434,
   "native_live": {
     "public_playlist": true,
     "channels": 100,
@@ -98,12 +100,34 @@
     "physical_playback_qualified": false
   },
   "physical_tv_current_home": {
-    "apk_sha256": "fd71cfaa36a4d68733abda5cad537949688a1c41cef66905793028c832034da2",
     "recording": false,
-    "frames": 346,
-    "median_ms": 23,
-    "p95_ms": 65,
-    "missed_deadlines_percent": 10.12,
+    "frames": 371,
+    "median_ms": 21,
+    "p95_ms": 32,
+    "missed_deadlines_percent": 1.08,
     "performance_fully_accepted": false
+  },
+  "physical_tv_current_detail": {
+    "recording": false,
+    "frames": 439,
+    "median_ms": 20,
+    "p95_ms": 32,
+    "missed_deadlines_percent": 7.06,
+    "sharp_continuous_backdrop": true,
+    "automatic_episodes": true,
+    "single_up_restores_episode25_from_related_end": true,
+    "full_sixty_fps_certified": false
+  },
+  "episode_loading": {
+    "initial_limit": 24,
+    "background_limit": 96,
+    "maximum_limit": 128,
+    "manual_more_action": false,
+    "simkl_one_piece_episodes": 1184,
+    "simkl_one_piece_seasons": 23,
+    "simkl_continuation_requests": 13,
+    "simkl_total_read_millis": 2825,
+    "native_cinemeta_records": 1242,
+    "native_metadata_documents": 1
   }
 }
