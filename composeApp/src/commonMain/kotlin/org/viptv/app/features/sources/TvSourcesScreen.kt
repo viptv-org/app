@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,6 +21,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusScroll
+import org.viptv.app.components.rememberTvDrawerMotion
 import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.app.theme.Palette
@@ -32,7 +34,8 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot?, info: Map<String, TvSourceInfo> = emptyMap(),
     extras: TvDetailExtras = TvDetailExtras(), loadingMore: Boolean = false) {
     TvDetailsScreen(detail, false, null, {}, extras, requestInitialFocus = false)
-    Popup(onDismissRequest = back, properties = PopupProperties(focusable = true)) {
+    val motion = rememberTvDrawerMotion(back)
+    Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val scale = maxWidth / 1920.dp
             val first = remember { FocusRequester() }
@@ -40,8 +43,10 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             var quality by remember { mutableStateOf<String?>(null) }
             val visible = sources.filter { quality == null || info[it.id]?.quality == quality }
             LaunchedEffect(quality, visible.isEmpty(), busy) { if (visible.isNotEmpty() && !busy) first.requestFocus() }
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = back))
-            Column(Modifier.align(Alignment.CenterEnd).width(960.dp * scale).fillMaxHeight().background(Color(0xFF151515))
+            Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }.background(Color.Black.copy(alpha = 0.55f))
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
+            Column(Modifier.align(Alignment.CenterEnd).width(960.dp * scale).fillMaxHeight()
+                .graphicsLayer { translationX = size.width * (1f - motion.progress.value) }.background(Color(0xFF151515))
                 .padding(start = 64.dp * scale, end = 96.dp * scale, top = 72.dp * scale, bottom = 56.dp * scale)) {
                 Text("Choose a source", fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp, letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp * scale))

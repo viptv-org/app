@@ -83,3 +83,11 @@ are described in `TV_PAIRING.md`.
 
 The signed-in greeting renderer and missing account/bootstrap transition data
 are described in `TV_SIGNED_IN.md`.
+
+The source drawer now slides from the right in 300 ms with decelerating easing
+and exits in 200 ms with accelerating easing. Its background dim tracks the
+same animation. Repeated dismissal is guarded; source-opening requests are not
+delayed. The isolated emulator retained source focus and rapid Back returned to
+the movie details scene. A recording showed the moving drawer edge revealing
+content during exit. Desktop tests, Wasm compilation and Android assembly passed.
+Precise frame timing/interruption coverage and complete motion parity remain work.

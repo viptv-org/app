@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "7e00f9ff3b56f1bd4d1fd0721708450e2374a6fd3474a1f899af03a2470bd1f6",
+    "sha256": "781c49eeec7db85dcd4a4851da23f177d303bdfcda31e73d6243ca887fdc5816",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -65,7 +65,8 @@
     "tv_signed_in": "preview identity labels/progress and completion-to-Profiles passed; real account/bootstrap transition absent",
     "tv_track_focus_fallback": "preview stale subtitle ID, audio-only, empty tracks and original panel focus/Back passed; dynamic real track updates/persistence unqualified",
     "tv_search_channels": "preview poster-to-channel and Right navigation passed; first channel y=640 and white focus border sampled; provider number/program presentation still incomplete",
-    "tv_profile_arrival": "video captured intermediate opacity/stagger; Manage navigation and settled artwork with duration scale zero passed; precise timing/reduced-motion onset and full parity pending"
+    "tv_profile_arrival": "video captured intermediate opacity/stagger; Manage navigation and settled artwork with duration scale zero passed; precise timing/reduced-motion onset and full parity pending",
+    "tv_source_drawer_motion": "source focus and guarded rapid Back to details passed; recorded edge revealed content during animated exit; precise timing/all interruption cases unqualified"
   },
   "desktop": {
     "compile": "passed",
