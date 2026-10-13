@@ -16,7 +16,7 @@ data class ProfilePreferences(
 @Serializable
 data class PreferencesSnapshot(val revision: Long = 0, val preferences: ProfilePreferences = ProfilePreferences())
 
-private val preferencesCodec = Json { ignoreUnknownKeys = true }
+private val preferencesCodec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
 suspend fun RemoteConnection.profilePreferences(profile: String): PreferencesSnapshot =
     preferencesCodec.decodeFromJsonElement(call("/api/v3/profiles/${profile.encodeURLPathPart()}/preferences"))

@@ -12,7 +12,7 @@
     "x86_64"
   ],
   "wasm_compile": "passed",
-  "linux_portable_distribution": "Temurin21.0.12.1+1 packaged launcher, bundled JVM and SQLite/prefs/ranking bridge smoke passed",
+  "linux_portable_distribution": "Temurin21.0.12.1+1 packaged launcher, bundled JVM and SQLite/profile preferences/ranking bridge smoke passed",
   "physical_tv_real_playback": {
     "source": "real Stremio MP4",
     "metadata": "real Simkl OAuth2 profile",

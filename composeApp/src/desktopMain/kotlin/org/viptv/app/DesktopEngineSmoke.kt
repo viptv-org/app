@@ -19,7 +19,7 @@ internal fun verifyPackagedLocalEngine() {
         val database = directory.resolve("local.sqlite").toString()
         LocalEngine(database, secrets).use { engine ->
             engine.createProfile("smoke", "Packaging check")
-            engine.updateProfilePreferences("smoke", 0uL, """{"preferred_audio_language":"fr"}""")
+            engine.updateProfilePreferences("smoke", 0uL, """{"preferred_audio_language":"fr","preferred_subtitle_language":null,"subtitles_enabled":true,"source_selection":"ask","max_quality_height":null}""")
         }
         LocalEngine(database, secrets).use { engine ->
             check(Json.parseToJsonElement(engine.profileCards()).jsonArray.size == 2)

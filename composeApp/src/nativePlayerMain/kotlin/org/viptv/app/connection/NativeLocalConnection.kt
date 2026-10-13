@@ -150,7 +150,7 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
         json.decodeFromString(engine.profilePreferences(profile))
     }
     override suspend fun updateProfilePreferences(profile: String, revision: Long, preferences: ProfilePreferences): PreferencesSnapshot = withContext(Dispatchers.IO) {
-        json.decodeFromString(engine.updateProfilePreferences(profile, revision.toULong(), json.encodeToString(preferences)))
+        json.decodeFromString(engine.updateProfilePreferences(profile, revision.toULong(), Json { encodeDefaults = true }.encodeToString(preferences)))
     }
     override suspend fun sourceIntegrationSchemas(profile: String): SourceIntegrationSnapshot = readSourceIntegrationSchemas(profile)
     override suspend fun configureSourceIntegration(profile: String, revision: Long, plugin: String, configuration: JsonObject) = saveSourceIntegration(profile, revision, plugin, configuration)
