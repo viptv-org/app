@@ -13,26 +13,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
-import kotlinx.coroutines.delay
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
-
-@Composable
-internal fun BoxScope.TvPlayerBuffer(title: Card?, extras: TvPlaybackExtras, scale: Float) {
-    var showIndicator by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { delay(500); showIndicator = true }
-    if (!showIndicator) return
-    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)))
-    Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-        CircularProgressIndicator(Modifier.size(72.dp * scale), color = Palette.text, strokeWidth = 5.dp * scale)
-        Spacer(Modifier.height(28.dp * scale))
-        Text("Starting playback", fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(16.dp * scale))
-        Text(extras.bufferLabel ?: listOfNotNull(title?.title, extras.sourceLabel).joinToString(" · "),
-            fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary)
-    }
-}
 
 @Composable
 internal fun BoxScope.TvSkipPrompt(skip: TvSkipRange, scale: Float, activate: () -> Unit) {

@@ -55,3 +55,24 @@ overlay after the BufferFast fixture reported ready at 250 ms. Seek confirmation
 still passed. These settled-state checks do not measure exact frame timing or
 certify the spinner's complete motion parity. Desktop tests, Wasm compilation
 and Android assembly passed.
+
+## Loading and track-sheet refinement
+
+The buffering scene now uses Material's determinate circular indicator as a fixed
+quarter-circle, with a white 18% track, square stroke ends, zero gap and a linear
+900 ms rotation. Its accessibility state remains indeterminate. After the 500 ms
+wait, the overlay fades in over 300 ms. Backdrop opacity, text weight, line heights
+and spacing follow `Tv3PlayerBuffer`.
+
+The audio/subtitle sheet follows the specific `Tv3PlayerAudio` bottom-entry
+animation, rather than the generic right-panel example in `Tv3Motion`: 300 ms
+entry and 200 ms dismissal. Selected labels use weight 600; unselected labels
+use the supplied secondary foreground. The backdrop-blur treatment remains
+unimplemented; complete audio-panel parity is not claimed.
+
+The isolated TV emulator passed sustained/short buffering and all four track-focus
+scenes after this refinement. A native recording contains intermediate entry and
+exit positions and the settled sheet at y=540; it does not establish exact frame
+durations. Captures are `evidence/tv-player-buffer.png` and
+`evidence/tv-player-tracks.png`. Desktop tests, Wasm compilation and Android
+assembly passed.

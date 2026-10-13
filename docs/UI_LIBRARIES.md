@@ -33,3 +33,8 @@ The dependency/version was checked against Maven Central metadata; the native
 preview QR was decoded with zbar to verify its payload.
 [Official project](https://github.com/alexzhirkevich/qrose),
 [Maven metadata](https://repo.maven.apache.org/maven2/io/github/alexzhirkevich/qrose/maven-metadata.xml).
+
+TV buffering reuses Material 3's `CircularProgressIndicator` with fixed progress,
+track, cap and gap parameters, then rotates the component to follow the ZIP's
+900 ms motion. It does not use Material's changing indeterminate arc animation.
+The current API was checked through Context7's [component documentation](https://composables.com/jetpack-compose/androidx.compose.material3/material3/components/CircularProgressIndicator).
