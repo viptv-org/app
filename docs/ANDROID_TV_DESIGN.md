@@ -77,3 +77,6 @@ Email-code layout and missing verification/session integration are described in
 `TV_EMAIL_CODE.md`.
 
 The supplied startup splash and controller flag are described in `TV_SPLASH.md`.
+
+Phone/browser pairing layout, QR payload checks and missing backend contracts
+are described in `TV_PAIRING.md`.

@@ -25,3 +25,12 @@ compilation passed with the dependency.
 
 Sources: [Compose Unstyled switch](https://github.com/composablehorizons/compose-unstyled/blob/main/docs/pages/toggleswitch.md),
 [published versions](https://repo.maven.apache.org/maven2/com/composables/composeunstyled-toggle-switch/maven-metadata.xml).
+# QR pairing
+
+QRose 1.3.1 supplies Compose Multiplatform QR painters for the TV pairing frame.
+Its official documentation lists Android, JVM/desktop and WasmJS support.
+The dependency/version was checked against Maven Central metadata; the native
+preview QR was decoded with zbar to verify its payload.
+[Official project](https://github.com/alexzhirkevich/qrose),
+[Maven metadata](https://repo.maven.apache.org/maven2/io/github/alexzhirkevich/qrose/maven-metadata.xml).
+

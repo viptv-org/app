@@ -15,7 +15,7 @@ internal enum class TvSignInStep { Welcome, Choice, Phone, Browser, Email, Email
 @Composable
 internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit,
     backChanged: ((() -> Unit)?) -> Unit, initialStep: TvSignInStep = TvSignInStep.Welcome, initialEmail: String = "",
-    initialIptv: TvIptvDraft = TvIptvDraft(), emailChallenge: TvEmailCodeChallenge? = null) {
+    initialIptv: TvIptvDraft = TvIptvDraft(), emailChallenge: TvEmailCodeChallenge? = null, pairing: TvPairingSession? = null) {
     var step by remember { mutableStateOf(initialStep) }
     val back = { step = when (step) { TvSignInStep.Choice -> TvSignInStep.Welcome; TvSignInStep.EmailCode -> TvSignInStep.Email; else -> TvSignInStep.Choice } }
     DisposableEffect(step) {
@@ -32,6 +32,7 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
             TvSignInStep.EmailCode -> if (emailChallenge != null) TvEmailCode(scale, emailChallenge, busy = busy)
                 else TvEmailSignIn(scale, { step = TvSignInStep.Phone })
             TvSignInStep.Iptv -> TvIptvSignIn(scale, { step = TvSignInStep.Phone }, initialIptv)
+            TvSignInStep.Phone, TvSignInStep.Browser -> TvPairingSignIn(scale, { step = TvSignInStep.Email }, pairing)
             else -> Column(Modifier.padding(96.dp * scale), verticalArrangement = Arrangement.spacedBy(28.dp * scale)) {
                 Text(when (step) { TvSignInStep.Phone -> "Use your phone"; TvSignInStep.Browser -> "Use a browser"; TvSignInStep.Email -> "Email me a code"; else -> "IPTV provider" },
                     fontSize = (52 * scale).sp, fontWeight = FontWeight.Bold)

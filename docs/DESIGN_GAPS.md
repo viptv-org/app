@@ -165,3 +165,10 @@ background rather than stretching it full-screen. The shelf poster remains.
 The supplied browsing board has landscape artwork; its missing-art state is
 provisional and needs review. Connected providers still need to supply appropriate
 wide artwork for full fidelity.
+
+### GAP-038 — TV pairing without a session or refresh service
+
+`TvPairingSignIn` shows explicit missing-session and refresh-unavailable states
+absent from the populated `Tv3SignIn` board. No fabricated QR/code/expiry is shown
+without session data. The preview uses a matching `.invalid` host and QR URL for
+safe review; production pairing/authentication remains unimplemented.

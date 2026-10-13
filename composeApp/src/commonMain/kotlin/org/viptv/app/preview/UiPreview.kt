@@ -17,6 +17,7 @@ import org.viptv.app.features.entry.TvSignInStep
 import org.viptv.app.features.entry.TvIptvDraft
 import org.viptv.app.features.entry.TvEmailCodeChallenge
 import org.viptv.app.features.entry.TvSplash
+import org.viptv.app.features.entry.TvPairingSession
 import org.viptv.app.features.entry.ProfilePinScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.home.HomeScreen
@@ -77,10 +78,11 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                         when (current) {
                             Screen.Connect -> if (television && tvDetailVariant == "Splash") TvSplash()
                                 else if (television) TvSignIn("https://viptv.syek.tech", false, null, { go(Screen.Profiles) },
-                                { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Email" -> TvSignInStep.Email; "EmailCode" -> TvSignInStep.EmailCode; "Iptv" -> TvSignInStep.Iptv; else -> TvSignInStep.Welcome },
+                                { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Pairing", "PairingUnavailable" -> TvSignInStep.Phone; "Email" -> TvSignInStep.Email; "EmailCode" -> TvSignInStep.EmailCode; "Iptv" -> TvSignInStep.Iptv; else -> TvSignInStep.Welcome },
                                 if (tvDetailVariant == "Email") "vynxc" else "",
                                 if (tvDetailVariant == "Iptv") TvIptvDraft(address = "http://[provider.example]:8080", username = "vynxc") else TvIptvDraft(),
-                                if (tvDetailVariant == "EmailCode") TvEmailCodeChallenge("Sent to [name@email.com] · expires in 15 minutes", "481", "isolated-preview") else null)
+                                if (tvDetailVariant == "EmailCode") TvEmailCodeChallenge("Sent to [name@email.com] · expires in 15 minutes", "481", "isolated-preview") else null,
+                                if (tvDetailVariant == "Pairing") TvPairingSession("https://example.invalid/device?code=AB12CD34EF", "example.invalid/device", "AB12CD34EF", "14:52") else null)
                                 else ConnectScreen(browser, "https://viptv.syek.tech", false, null, { go(Screen.Profiles) }, { _, _, _ -> }, desktop, phone, false, entryBackChanged)
                             Screen.Player -> if (television && liveTitle == null) PreviewTvPlayer(tvDetailVariant, go, entryBackChanged)
                                 else PlayerScreen(null, true, null, {}, {}, { go(if (liveTitle == null) Screen.Home else Screen.Live) }, liveTitle ?: PreviewData.playerTitle, if (liveTitle == null) PlayerFact.Progress(842000, 3132000) else PlayerFact.Progress(0, null), phone = handheld, previewFrame = liveTitle?.landscape ?: PreviewData.playerFrame, television = television, backChanged = entryBackChanged)

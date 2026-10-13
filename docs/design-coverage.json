@@ -57,9 +57,9 @@
     "title": "Sign in \u2014 phone or browser code",
     "width": 1920,
     "height": 1080,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "docs/TV_PAIRING.md",
+    "capture": "docs/evidence/android-tv-pairing.png"
   },
   {
     "id": "Tv3SignInEmail",

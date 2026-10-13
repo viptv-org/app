@@ -86,3 +86,7 @@ It performs no actual session restoration or authentication.
 TV `Movies --es ui_variant Loading|Empty` exercises catalog placeholders and the
 empty state. Down remains safe when no poster focus target is attached. These
 variants make no provider request.
+
+TV `Connect --es ui_variant Pairing|PairingUnavailable` renders the shared phone/
+browser pairing scene. Pairing uses an explicit `.invalid` fixture URL and static
+code/expiry; unavailable contains no QR. No pairing poll or account request runs.
