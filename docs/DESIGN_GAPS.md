@@ -22,7 +22,7 @@
 | GAP-015 | My List unavailable notice | The design assumes persisted saved titles; the experiment has no shared list operation yet | Provisional notices in `features/home/PhoneHero.kt`, `DesktopHeroActions.kt`, `TvHero.kt` and `features/library/LibraryScreen.kt`; visual capture pending |
 | GAP-014 | Custom server selection in desktop password flow | The supplied password board assumes one server | Use another server expands the address field in `DesktopPasswordPanel.kt`; capture `docs/evidence/desktop-signin-password.png` |
 
-Each implemented provisional surface will include its source location and a review capture. No provisional surface is recorded as supplied-design parity.
+Provisional surfaces are recorded with their source locations and available review captures. No provisional surface is recorded as supplied-design parity.
 
 The remaining supplied screens are tracked as pending/in progress in `design-coverage.json`; they are not classified as missing designs. No current board has passed visual parity review.
 
@@ -95,10 +95,10 @@ dialog surfaces need design review.
 
 ### GAP-028 — TV Live without guide data or channels
 
-`TvLiveScreen` displays a channel list when no EPG window is supplied, an empty
-state when no channels are available, and an unavailable-favorites notice. The
-TV ZIP supplies the populated Live guide but no matching no-guide, empty or
-favorites-unavailable boards. These provisional surfaces need design review.
+`TvLiveScreen` displays TV-sized channel rows when no EPG window is supplied and
+an empty state when no channels are available. Favorites controls are omitted
+when the connection cannot save them. The TV ZIP supplies the populated Live
+guide but no matching no-guide or empty boards. These surfaces remain provisional.
 
 ### GAP-029 — TV Calendar without releases or an actionable next episode
 
@@ -187,3 +187,28 @@ fallback or position-preserving recovery.
 seek position. The supplied `Tv3PlayerScrub` board contains an image, so this
 time-only arrangement is provisional and needs design review. No unrelated
 poster or fabricated thumbnail is substituted.
+
+### GAP-041 — Details with incomplete season metadata
+
+`DetailEpisodes` and `DetailSeasonPicker` group loaded episodes using the actual
+season values and preserve entries whose season is unknown. Specials and other
+episodes, missing season labels and counts based only on loaded data do not have
+matching populated boards. These states remain provisional; counts do not imply
+that the provider supplied a complete series inventory.
+
+### GAP-042 — External provider subtitle choices
+
+`ProviderSubtitles`, `TvPlaybackTrackPicker` and `NativeProviderSubtitle` expose
+external subtitle candidates alongside the player's embedded tracks. The supplied
+audio/subtitle board covers embedded language choices, but not provider labels,
+external download failures or changing candidate lists. The additional labels and
+failure states remain provisional and require design review.
+
+### GAP-043 — Browser provider caption placement
+
+Native browser tracks place default cues underneath the canvas toolbar and its
+bottom gradient. Automatically positioned provider cues now use a provisional
+72% vertical position so captions remain legible above that chrome. Explicit
+WebVTT line settings are preserved. The supplied boards do not specify external
+browser caption placement; the safe position needs design review across viewport
+sizes and multiline captions.

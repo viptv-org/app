@@ -67,8 +67,8 @@ and spacing follow `Tv3PlayerBuffer`.
 The audio/subtitle sheet follows the specific `Tv3PlayerAudio` bottom-entry
 animation, rather than the generic right-panel example in `Tv3Motion`: 300 ms
 entry and 200 ms dismissal. Selected labels use weight 600; unselected labels
-use the supplied secondary foreground. The backdrop-blur treatment remains
-unimplemented; complete audio-panel parity is not claimed.
+use the supplied secondary foreground. The media box supplies a Haze backdrop
+source for the track sheet; complete audio-panel parity is not claimed.
 
 The isolated TV emulator passed sustained/short buffering and all four track-focus
 scenes after this refinement. A native recording contains intermediate entry and
@@ -135,7 +135,7 @@ The final emulator capture shows the shadow darkening the backdrop below the
 button. Error, source-only and Back-only fixtures each focused an available
 control and navigated through that control. These synthetic actions do not test
 real provider retry or resume recovery. Reduced-action states are recorded in
-GAP-039. Backdrop blur, remaining font/raster differences and complete board
+GAP-039. Remaining font/raster differences and complete board
 parity remain unfinished. Capture: `evidence/tv-player-error.png`.
 
 Desktop tests, Wasm compilation and Android assembly passed for this checkpoint.
@@ -191,5 +191,25 @@ corners, 22-pixel horizontal padding and 12-pixel spacing between pills remain.
 
 The isolated TV emulator checked initial audio focus from the timeline, options
 opening/Back and source-picker navigation. Desktop tests, Wasm compilation and
-Android assembly passed. The supplied backdrop blur and final icon-stroke/font
-raster parity remain unfinished. Capture: `evidence/tv-player-control-pills.png`.
+Android assembly passed. Final icon-stroke/font raster parity remains unfinished.
+Capture: `evidence/tv-player-control-pills.png`.
+
+## Actual paused-video backdrop blur
+
+The media box keeps its Haze source registered for its lifetime. Haze records
+when the track sheet requires it and releases the captured layer when the sheet
+closes. Attaching the source only when the sheet opened failed for a paused video
+because the existing frame did not redraw into the new layer.
+
+On the isolated API 36 TV emulator, the same native Flower frame paused at
+1034 ms was compared with radius 30 and radius zero. Pixels above the sheet were
+identical; the sheet region changed and its background gradients softened.
+Android RenderEffect received a 15 dp radius, equivalent to 30 physical pixels
+in this configuration. Playing-video sheet open/close also passed. Diagnostics
+were removed after the checks.
+
+The report is `/tmp/viptv-tv-validation-report.md`; clean captures and comparison
+data are `/tmp/viptv-tv-native-qualified30-panel.png` and
+`/tmp/viptv-tv-native-stable-blur-comparison.json`. This qualifies the tested
+emulator path, not physical GPU performance or every renderer/device. Older
+Android versions retain their documented fallback treatment.

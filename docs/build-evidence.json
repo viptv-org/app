@@ -1,8 +1,8 @@
 {
-  "date": "2026-10-12",
+  "date": "2026-10-13",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "f6846d5bb6e0476b46b24dbeb1344129ec31666490b404c4cd4df5728e9d83ee",
+    "sha256": "b15113d3a094bf271b7e3a07e2eb13bcfb54264f380f29f9f291cb84f923b2b7",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -77,7 +77,9 @@
     "tv_profile_arrival": "video captured intermediate opacity/stagger; Manage navigation and settled artwork with duration scale zero passed; precise timing/reduced-motion onset and full parity pending",
     "tv_source_drawer_motion": "source focus and guarded rapid Back to details passed; recorded edge revealed content during animated exit; precise timing/all interruption cases unqualified",
     "tv_source_loading": "partial discovery placeholder shimmer, loading-empty/empty All focus and Back passed in preview; real discovery timing/data unqualified",
-    "tv_episode_season_focus": "later-season resume, Up to active season, switch-to-first-season Down target and delayed data passed in preview; real episode/resume persistence unqualified"
+    "tv_episode_season_focus": "later-season resume, Up to active season, switch-to-first-season Down target and delayed data passed in preview; real episode/resume persistence unqualified",
+    "artifact_scope": "Latest assembled debug APK; later source changes require another build. Build log /tmp/viptv-sol-playback-final-build.log.",
+    "tv_native_backdrop_blur": "Passed API 36 emulator paused-frame radius30/zero comparison and playing open/close; report /tmp/viptv-tv-validation-report.md. Physical GPU performance unqualified."
   },
   "desktop": {
     "compile": "passed",
@@ -93,21 +95,22 @@
     "window_drag": "Compose Foundation WindowDraggableArea: isolated Linux cursor and window displacement both 100x40 pixels; user desktop scaling/snap remain unqualified",
     "icon_library": "Lucide CMP 2.2.1; desktop/android/wasm compile passed",
     "signin_ui": "choice/password rendered at 1100x720; navigation and entry verified; other methods visual states only",
-    "navigation": "eight ZIP destinations rendered; Movies navigation and sort menu observed; populated grid qualification pending"
+    "navigation": "eight ZIP destinations rendered; Movies navigation and sort menu observed; populated grid qualification pending",
+    "provider_subtitle_http": "Loopback real HTTP manifest/stream/subtitle discovery: opaque IDs, exact Windows-1252 SRT bytes, no invented extras, revoked scope blocks egress. LocalSubtitlesTest XML passes."
   },
   "web": {
     "wasm_compile": "passed with profile UI changes",
-    "browser_playback": "public MP4 only: decoded frame and UI Play/Pause/seek/mute/speed passed; HLS and authenticated delivery unqualified",
-    "cookie_session": "compiled; real browser session flow not qualified",
+    "browser_playback": "Passed disposable HTTPS backend protected source discovery, actual FFmpeg HLS decode 640x360, requestVideoFrameCallback first-frame acknowledgment, SRT/VTT captions and stop/Blob cleanup; /tmp/viptv-subtitle-browser-lkd1c2v8/browser-result.log. Independent production gateway unqualified; default cue overlap refinement underway.",
+    "cookie_session": "Disposable authenticated HTTPS browser addon install, per-profile toggle, removal and signout passed. Real operator/provider account login unqualified.",
     "responsive_navigation": "compiled with collapsed phone/medium-width menu; browser runtime verification pending",
     "preview_runtime": "isolated Chromium: eight bundled posters rendered, no runtime errors or failed requests",
     "video_overlay": "browser HTML video beneath a transparent Compose canvas; web continues without KitePlayer",
     "schedule_interactions": "Chromium preview: Live Sports filtering/full-guide expansion and Calendar date selection passed without runtime errors"
   },
-  "engine_tests": 6,
+  "engine_tests": 25,
   "backend_v3_tests": 3,
   "visual_parity_boards_passed": 0,
-  "real_media_qualification": "Android direct MP4 fixture passed; other delivery/targets pending",
+  "real_media_qualification": "Native direct MP4 and paused-video blur on isolated Android TV; authenticated browser fixture FFmpeg HLS and SRT/VTT captions. Native remote gateway, physical devices and independent production gateway remain unqualified.",
   "images": "shared Coil singleton, 64MiB memory and 256MiB native disk cache; no latency benchmark yet",
   "last_build_commands": [
     ":composeApp:desktopTest",
@@ -115,5 +118,11 @@
     ":androidApp:assembleDebug"
   ],
   "last_build_result": "passed",
-  "local_catalog_requests": "Three desktop tests passed: distinct URLs fetch once per operation, shared failures preserve rows, cancellation propagates; real-provider latency unmeasured"
+  "local_catalog_requests": "Three desktop tests passed: distinct URLs fetch once per operation, shared failures preserve rows, cancellation propagates; real-provider latency unmeasured",
+  "backend_library_tests": {
+    "passed": 319,
+    "ignored": 6,
+    "log": "/tmp/viptv-backend-reviewed-final-full-tests.log"
+  },
+  "simkl_focused_tests": 13
 }
