@@ -14,6 +14,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +24,7 @@ import androidx.compose.ui.window.PopupProperties
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.rememberTvDrawerMotion
+import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.app.theme.Palette
@@ -42,7 +45,11 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val filterFocus = remember { FocusRequester() }
             var quality by remember { mutableStateOf<String?>(null) }
             val visible = sources.filter { quality == null || info[it.id]?.quality == quality }
-            LaunchedEffect(quality, visible.isEmpty(), busy) { if (visible.isNotEmpty() && !busy) first.requestFocus() }
+            val finding = loadingMore || busy && sources.isEmpty()
+            val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
+            LaunchedEffect(quality, visible.isEmpty(), busy) {
+                if (visible.isNotEmpty() && !busy) first.requestFocus() else filterFocus.requestFocus()
+            }
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }.background(Color.Black.copy(alpha = 0.55f))
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(960.dp * scale).fillMaxHeight()
@@ -74,8 +81,9 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         TvSourceRow(source, info[source.id], scale, if (index == 0) first else null, !busy, choose,
                             up = if (index == 0) filterFocus else null)
                     }
-                    if (loadingMore || busy && sources.isEmpty()) items(3) {
-                        Box(Modifier.fillMaxWidth().height(104.dp * scale).clip(RoundedCornerShape(14.dp * scale)).background(Palette.raised))
+                    if (finding) items(3) {
+                        Box(Modifier.fillMaxWidth().height(104.dp * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
+                            .semantics { contentDescription = "Loading source" })
                     }
                     if (!busy && !loadingMore && visible.isEmpty() && error == null) item { Text("No sources found. Enable an add-on that supplies streams.", color = Palette.secondary, fontSize = (22 * scale).sp) }
                 }

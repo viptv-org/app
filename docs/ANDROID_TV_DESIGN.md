@@ -91,3 +91,10 @@ delayed. The isolated emulator retained source focus and rapid Back returned to
 the movie details scene. A recording showed the moving drawer edge revealing
 content during exit. Desktop tests, Wasm compilation and Android assembly passed.
 Precise frame timing/interruption coverage and complete motion parity remain work.
+
+Source discovery's three 104 px placeholders now use the shared 1.4 second TV
+shimmer, clipped to their supplied 14 px corners. Empty/loading-empty drawers
+focus All instead of requesting an absent or disabled source row. The isolated
+emulator checked partial discovery animation, empty/loading-empty focus and
+Back dismissal. Desktop tests, Wasm compilation and Android assembly passed;
+real discovery timing/rich source metadata remain unqualified.

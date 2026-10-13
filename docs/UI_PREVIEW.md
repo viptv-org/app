@@ -98,3 +98,7 @@ creates a real authenticated session or fetches account data.
 TV `Player --es ui_variant TracksInvalidFocus|TracksAudioOnly|TracksEmpty` exercises
 options-panel focus with a stale preferred ID or missing tracks. The data and
 acknowledgements remain synthetic; no provider/player request is made.
+
+TV `Sources --es ui_variant LoadingEmpty|Empty` checks the All filter's focus when
+no selectable source exists. Loading retains three placeholders and synthetic
+discovery status; no add-on/network request runs.

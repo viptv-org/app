@@ -97,9 +97,9 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 if (tvDetailVariant == "Series") PreviewTvDetails.seriesExtras else PreviewTvDetails.movieExtras)
                                 else DetailsScreen(PreviewData.detail, false, null, { go(Screen.Home) }, { go(Screen.Sources) })
                             Screen.Sources -> if (television) TvSourcesScreen(PreviewTvDetails.movie.item,
-                                if (tvDetailVariant == "Loading") PreviewTvSources.sources.take(2) else PreviewTvSources.sources,
-                                false, null, { go(Screen.Player) }, { go(Screen.Details) }, PreviewTvDetails.movie, PreviewTvSources.info,
-                                PreviewTvDetails.movieExtras, loadingMore = tvDetailVariant == "Loading")
+                                when (tvDetailVariant) { "Loading" -> PreviewTvSources.sources.take(2); "LoadingEmpty", "Empty" -> emptyList(); else -> PreviewTvSources.sources },
+                                tvDetailVariant == "LoadingEmpty", null, { go(Screen.Player) }, { go(Screen.Details) }, PreviewTvDetails.movie, PreviewTvSources.info,
+                                PreviewTvDetails.movieExtras, loadingMore = tvDetailVariant in listOf("Loading", "LoadingEmpty"))
                                 else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail)
                             Screen.Calendar -> if (television) TvCalendarScreen(PreviewTvCalendar.days, PreviewTvCalendar.entries,
                                 { go(Screen.Details) }, { go(Screen.Settings) }, PreviewTvCalendar.actions, { go(Screen.Sources) })
