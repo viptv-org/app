@@ -46,3 +46,15 @@ The isolated TV emulator exercised Down during loading/empty states, genre
 activation with no cards, and the populated board's initial poster target.
 Two captures confirmed the loading grid shimmer. Desktop tests, Wasm compilation
 and Android assembly passed. Connected catalog/genre feeds remain unqualified.
+
+Home's bottom scroll space now uses the measured final shelf height so a short
+last shelf can reach the same browsing anchor as earlier shelves. The previous
+fixed padding clamped the final poster lower in the viewport. Shelf headings
+also constrain their height to the supplied 36 px instead of allowing natural
+font metrics to add two pixels to poster placement. This is presentation layout,
+not additional provider fetching or new business logic.
+
+The isolated emulator measured the final shelf heading at y=512 and its first
+poster at y=564 after this adjustment. Up returned through Continue Watching to
+the billboard. Desktop tests, Wasm compilation and Android assembly passed.
+These checks qualify that scroll path, not every shelf/dataset or full board parity.
