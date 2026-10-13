@@ -181,3 +181,15 @@ confirmation. The no-thumbnail surface is recorded in GAP-040. Desktop tests,
 Wasm compilation and Android assembly passed. Real thumbnail delivery, buffered
 range contracts, all seek boundaries and complete raster/typography parity remain
 unqualified. Capture: `evidence/tv-player-scrub.png`.
+
+## Control-button detail pass
+
+The TV control pills now use the supplied 24-pixel library icons, 10-pixel
+icon-to-label gap and 16% white fill. The audio label matches the ZIP's
+`Audio & subtitles` capitalization. The existing 56-pixel height, 28-pixel
+corners, 22-pixel horizontal padding and 12-pixel spacing between pills remain.
+
+The isolated TV emulator checked initial audio focus from the timeline, options
+opening/Back and source-picker navigation. Desktop tests, Wasm compilation and
+Android assembly passed. The supplied backdrop blur and final icon-stroke/font
+raster parity remain unfinished. Capture: `evidence/tv-player-control-pills.png`.

@@ -34,7 +34,7 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
     if (state.scrub == null) Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 96.dp * scale, end = 96.dp * scale, bottom = 178.dp * scale),
         horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalAlignment = Alignment.CenterVertically) {
         if (extras.episodes.isNotEmpty() && playEpisode != null) TvPlayerPill("Episodes", Lucide.List, scale, timeline) { state.showEpisodes = true }
-        TvPlayerPill("Audio & Subtitles", Lucide.Captions, scale, timeline, audio) { state.showTracks = true; state.interaction++ }
+        TvPlayerPill("Audio & subtitles", Lucide.Captions, scale, timeline, audio) { state.showTracks = true; state.interaction++ }
         if (chooseSources != null) TvPlayerPill("Source" + (extras.sourceQuality?.let { " · $it" } ?: ""), Lucide.SlidersHorizontal, scale, timeline, activate = chooseSources)
         Spacer(Modifier.weight(1f))
         if (extras.nextEpisode != null && playEpisode != null) TvPlayerPill("Next episode", Lucide.SkipForward, scale, timeline) { state.showNext = true }
@@ -47,8 +47,8 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
 private fun TvPlayerPill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, scale: Float,
     down: FocusRequester, requester: FocusRequester? = null, activate: () -> Unit) {
     TvAction(Modifier.height(56.dp * scale).focusProperties { this.down = down }, scale, requester = requester, activate = activate,
-        cornerRadius = 28.dp * scale, contentPadding = PaddingValues(horizontal = 22.dp * scale)) {
-        Icon(icon, null, Modifier.size(22.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
+        cornerRadius = 28.dp * scale, contentPadding = PaddingValues(horizontal = 22.dp * scale), background = Color.White.copy(alpha = .16f)) {
+        Icon(icon, null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(10.dp * scale))
         Text(label, color = it, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold)
     }
 }

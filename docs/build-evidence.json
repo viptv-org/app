@@ -2,7 +2,7 @@
   "date": "2026-10-12",
   "android": {
     "artifact": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-    "sha256": "a95d0efcb9016fbfd9107e68fee12412ddefc8349774d765dc35feaa02faa955",
+    "sha256": "f6846d5bb6e0476b46b24dbeb1344129ec31666490b404c4cd4df5728e9d83ee",
     "min_sdk": 26,
     "native_abis": [
       "arm64-v8a",
@@ -43,7 +43,8 @@
       "next_episode_motion": "600 ms shrink/reverse configured, delayed information fade-up; recording contains intermediate and settled geometry; PNG confirms 880x495 at (96,96); Play-next focus, Keep watching, explicit OK and Back passed; live decoded resizing and full parity unqualified",
       "failure_surface": "ZIP backdrop/spacing/icon/action fills refined; retry drop shadow darkens sampled backdrop pixels; full, source-only and Back-only focus/actions passed; real provider retry/resume, TalkBack and complete parity unqualified",
       "skip_prompt": "300 ms fade-up and 4 px position-driven rail implemented; full/half pixel checks, expired prompt absence, explicit seek and Up/audio focus passed; real-provider intro ranges and complete motion parity unqualified",
-      "seek_preview": "400x225 content/exterior border/shadow refined; pending span, source gradients/track/halo/minus glyph implemented; border/band pixels, cancellation, time-only fallback and explicit confirmation passed; real thumbnail/buffer contracts and complete parity unqualified"
+      "seek_preview": "400x225 content/exterior border/shadow refined; pending span, source gradients/track/halo/minus glyph implemented; border/band pixels, cancellation, time-only fallback and explicit confirmation passed; real thumbnail/buffer contracts and complete parity unqualified",
+      "control_pills": "24 px icons, 10 px icon/text gap, source capitalization and 16% white fills; audio/options/Back and source navigation passed; blur and final raster parity unfinished"
     },
     "tv_settings": {
       "render": "Playback, Subtitles, Add-ons and Sign-out at 1920x1080",
