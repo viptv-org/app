@@ -13,14 +13,14 @@ fun ProfileEditScreen(
     profile: Profile?, count: Int, busy: Boolean, error: String?, compact: Boolean,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
     setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
-    television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
+    television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {}, pinAvailable: Boolean = true,
 ) {
     if (television) {
-        TvProfileEditScreen(profile, count, busy, error, back, rename, setPin, setAvatar, delete, backChanged = backChanged)
+        TvProfileEditScreen(profile, count, busy, error, back, rename, setPin, setAvatar, delete, backChanged = backChanged, pinAvailable = pinAvailable)
         return
     }
     if (compact) {
-        MobileProfileEdit(profile, count, busy, error, back, rename, setPin, setAvatar, delete)
+        MobileProfileEdit(profile, count, busy, error, back, rename, setPin, setAvatar, delete, pinAvailable = pinAvailable)
         return
     }
     var name by remember(profile?.id) { mutableStateOf(profile?.name.orEmpty()) }
@@ -36,23 +36,23 @@ fun ProfileEditScreen(
         OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
         if (profile?.locked == true) OutlinedTextField(oldPin, { if (it.length <= 8 && it.all(Char::isDigit)) oldPin = it },
             label = { Text("Current PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
-        OutlinedTextField(newPin, { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
+        if (pinAvailable) { OutlinedTextField(newPin, { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
             label = { Text(if (profile?.locked == true) "New PIN (blank to remove)" else "Set PIN (optional)") },
             visualTransformation = PasswordVisualTransformation(), singleLine = true)
-        Text("A local PIN keeps profiles separate in the app. The device owner can access local files.", style = MaterialTheme.typography.bodySmall)
+        Text("A local PIN keeps profiles separate in the app. The device owner can access local files.", style = MaterialTheme.typography.bodySmall) }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Row {
             TextButton(onClick = back) { Text("Back") }
             Button(onClick = { rename(name, oldPin) }, enabled = !busy && name.isNotBlank() && name != profile?.name) { Text("Save name") }
         }
-        Button(onClick = { setPin(oldPin, newPin); oldPin = ""; newPin = "" },
+        if (pinAvailable) Button(onClick = { setPin(oldPin, newPin); oldPin = ""; newPin = "" },
             enabled = !busy && (newPin.length in 4..8 || (profile?.locked == true && newPin.isEmpty()))) {
             Text(if (profile?.locked == true && newPin.isEmpty()) "Remove PIN" else "Save PIN")
         }
-        if (count > 1) TextButton(onClick = { confirmingDelete = true }, enabled = !busy) { Text("Delete profile") }
+        if (count > 1 && profile?.canDelete != false) TextButton(onClick = { confirmingDelete = true }, enabled = !busy) { Text("Delete profile") }
     }
     if (confirmingDelete) AlertDialog(onDismissRequest = { confirmingDelete = false },
-        title = { Text("Delete ${profile?.name}?") }, text = { Text("This removes this profile’s history and add-on choices from this device.") },
+        title = { Text("Delete ${profile?.name}?") }, text = { Text("This removes this profile’s history and add-on choices.") },
         confirmButton = { TextButton(onClick = { delete(oldPin); confirmingDelete = false }) { Text("Delete") } },
         dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") } })
     if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }) { avatarId, pin ->

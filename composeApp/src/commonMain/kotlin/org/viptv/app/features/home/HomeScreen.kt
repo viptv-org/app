@@ -14,9 +14,9 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 
 @Composable
-fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null) {
+fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }) {
     if (television) {
-        TvHomeScreen(home, open, play, retry, navigate, profile)
+        TvHomeScreen(home, open, play, retry, navigate, profile, save = save, saved = saved)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {

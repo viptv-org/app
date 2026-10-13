@@ -37,3 +37,19 @@ space. A final typography render retained those positions after explicitly
 setting summary, badge and time-label line heights. Desktop tests, Wasm
 compilation and Android assembly passed. These checks do not qualify a real feed
 or decoded live playback.
+
+The current guide update limits its initial focus target to programs rendered
+inside the visible window. A feed can retain the currently airing program while
+the guide displays a later window; that off-window program no longer receives an
+unattached focus request. Removed categories fall back to All. The missing-guide
+fallback now uses 72 px remote-focusable TV rows, updates the preview on focus,
+and supports category-to-row entry instead of reusing the phone row controls.
+The fallback remains provisional under GAP-028. It does not expose favorites.
+
+Isolated `Live --es ui_variant FutureGuide|NoGuide|Empty` fixtures cover these
+boundaries without provider requests. A fresh build and emulator checks are
+pending; previous captures do not qualify this update.
+
+Refresh restoration now compares the channel's provider as well as its media
+identity. Providers may reuse channel IDs; a refresh must not switch the preview
+to another provider's matching ID. A multi-provider refresh check remains pending.

@@ -14,8 +14,8 @@ import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
 
-data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null)
-data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet())
+data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null)
+data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null)
 class RemoteFailure(val status: Int, message: String) : Exception(message)
 
 class RemoteConnection(
@@ -67,10 +67,12 @@ class RemoteConnection(
         csrf = identity["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
         val profiles = identity["profiles"]?.jsonArray.orEmpty().map {
             val p = it.jsonObject
-            Profile(p.getValue("id").jsonPrimitive.content, p.getValue("name").jsonPrimitive.content, p["avatar"]?.jsonPrimitive?.contentOrNull)
+            Profile(p.getValue("id").jsonPrimitive.content, p.getValue("name").jsonPrimitive.content, p["avatar"]?.jsonPrimitive?.contentOrNull,
+                p["locked"]?.jsonPrimitive?.booleanOrNull ?: false, p["avatar_id"]?.jsonPrimitive?.contentOrNull)
         }
-        return Bootstrap(profiles, identity["profile_id"]?.jsonPrimitive?.contentOrNull,
-            value["home"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<HomeSnapshot>(it) })
+        val management = value["profile_management"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<ProfileManagement>(it) }
+        return Bootstrap(management?.cards() ?: profiles, identity["profile_id"]?.jsonPrimitive?.contentOrNull,
+            value["home"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<HomeSnapshot>(it) }, profileManagement = management)
     }
 
     suspend fun selectProfile(id: String): Bootstrap {
@@ -78,10 +80,24 @@ class RemoteConnection(
         return bootstrap()
     }
 
-    suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/v3/discover?type=movie&search=${term.encodeURLParameter()}"))
-    suspend fun detail(card: Card): DetailSnapshot = codec.decodeFromJsonElement(call("/api/v3/meta/${card.identity.kind.encodeURLPathPart()}/${card.identity.id.encodeURLPathPart()}"))
+    suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/v3/discover?type=all&search=${term.encodeURLParameter()}"))
+    suspend fun detail(card: Card): DetailSnapshot = (card.parent_identity ?: card.identity).let { detail(it.kind, it.id) }
+    suspend fun detail(kind: String, id: String): DetailSnapshot = codec.decodeFromJsonElement(call("/api/v3/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}"))
+
+    suspend fun subtitles(card: Card): org.viptv.engine.wire.SubtitleSnapshot = codec.decodeFromJsonElement(
+        call("/api/v3/subtitles/${card.identity.kind.encodeURLPathPart()}/${card.identity.id.encodeURLPathPart()}"))
+
+    suspend fun subtitleContent(id: String): String = authenticatedResponse(
+        "/api/v3/subtitle-content/${id.encodeURLPathPart()}").let { response ->
+        checkStatus(response)
+        response.bodyAsText()
+    }
 
     suspend fun call(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement {
+        return decode(authenticatedResponse(path, method, body))
+    }
+
+    private suspend fun authenticatedResponse(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): HttpResponse {
         require(path.startsWith("/api/") && !path.contains('\\'))
         val version = refreshVersion
         var response = send(path, method, body, accessToken, csrf)
@@ -95,7 +111,7 @@ class RemoteConnection(
             }
             response = send(path, method, body, accessToken, csrf)
         }
-        return decode(response)
+        return response
     }
 
     private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?): HttpResponse = client.request(origin + path) {
@@ -111,6 +127,11 @@ class RemoteConnection(
         decode(send(path, method, body, accessToken, csrf))
 
     private suspend fun decode(response: HttpResponse): JsonElement {
+        checkStatus(response)
+        return codec.parseToJsonElement(response.bodyAsText())
+    }
+
+    private fun checkStatus(response: HttpResponse) {
         if (response.status.value !in 200..299) {
             throw RemoteFailure(response.status.value, when (response.status.value) {
                 401 -> "Sign in to continue."
@@ -119,7 +140,6 @@ class RemoteConnection(
                 else -> "The server could not complete this request."
             })
         }
-        return codec.parseToJsonElement(response.bodyAsText())
     }
 
     private suspend fun installDeviceTokens(value: JsonObject) {

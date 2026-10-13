@@ -45,7 +45,7 @@ internal fun MobilePinScreen(
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 72.dp, 16.dp)
         Spacer(Modifier.height(40.dp))
-        Text("Enter ${profile?.name.orEmpty()}’s PIN", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter ${profile?.name.orEmpty()}’s PIN", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             repeat(maxOf(4, pin.length)) { index ->
@@ -78,7 +78,7 @@ internal fun MobilePinScreen(
         }
         TextButton(onClick = { forgot = true }) { Text("Forgot PIN?", fontSize = 15.sp) }
     }
-    if (forgot) AlertDialog(onDismissRequest = { forgot = false }, title = { Text("Local profile PIN") },
-        text = { Text("This device’s profile PIN cannot be recovered in the app. The device owner can clear app data, which also removes local profiles and settings.") },
+    if (forgot) AlertDialog(onDismissRequest = { forgot = false }, title = { Text(if (profile?.lockKind == "parent") "Account parent PIN" else "Local profile PIN") },
+        text = { Text(if (profile?.lockKind == "parent") "Manage the account parent PIN in the web dashboard." else "This device’s profile PIN cannot be recovered in the app. The device owner can clear app data, which also removes local profiles and settings.") },
         confirmButton = { TextButton(onClick = { forgot = false }) { Text("OK") } })
 }

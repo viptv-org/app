@@ -39,13 +39,14 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
         leading?.let { Icon(it, null, Modifier.size(28.dp * scale), labelColor ?: color); Spacer(Modifier.width(24.dp * scale)) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
-            Text(label, color = labelColor ?: color, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = if (leading == null) FontWeight.Bold else FontWeight.SemiBold)
-            subtitle?.let { Text(it, color = if (focused) Palette.background.copy(alpha = 0.75f) else Palette.secondary,
-                fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp) }
+            Text(label, color = labelColor ?: color, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)
+            subtitle?.let { Text(it, color = if (focused) Color(0xFF4A4945) else Palette.secondary,
+                fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Medium) }
         }
         if (checked != null) TvSettingsSwitch(checked, scale)
-        if (value != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-            Text(value, color = if (focused) Palette.background.copy(alpha = 0.75f) else Palette.secondary, fontSize = (24 * scale).sp)
+        if (value != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+            Text(value, color = if (focused) Color(0xFF4A4945) else Palette.secondary, fontSize = (24 * scale).sp,
+                lineHeight = (30 * scale).sp, fontWeight = FontWeight.Medium)
             Icon(Lucide.ChevronRight, null, Modifier.size(24.dp * scale), if (focused) Palette.background else Palette.secondary)
         }
     }

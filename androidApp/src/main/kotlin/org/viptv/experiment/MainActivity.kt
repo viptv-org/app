@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
-import org.viptv.app.state.ApplicationController
+import org.viptv.app.state.*
 import org.viptv.app.state.Screen
 import org.viptv.app.App
 import org.viptv.app.preview.UiPreview

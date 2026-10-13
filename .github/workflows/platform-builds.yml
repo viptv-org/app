@@ -1,0 +1,79 @@
+name: Experimental KMP platforms
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/kmp-v2]
+permissions:
+  contents: read
+concurrency:
+  group: kmp-platforms-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: android-actions/setup-android@v4
+      - name: Install native tools and Android compile platform
+        shell: bash
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          rustup default 1.98.0
+          sdkmanager 'platforms;android-37'
+          python3 tools/build_player.py
+      - name: Verify and package desktop
+        shell: bash
+        run: ./gradlew :composeApp:desktopTest :composeApp:packageDistributionForCurrentOS
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.os }}
+          path: composeApp/build/compose/binaries/main/*/*
+          if-no-files-found: error
+  android-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: android-actions/setup-android@v4
+      - name: Prepare Android and pinned native dependencies
+        shell: bash
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          rustup default 1.98.0
+          rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
+          cargo install cargo-ndk --version 4.1.2 --locked
+          sdkmanager 'platforms;android-37' 'ndk;28.2.13676358'
+          python3 tools/build_player.py
+      - name: Build Android and Web
+        run: ./gradlew :androidApp:assembleRelease :composeApp:wasmJsBrowserDistribution
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: androidApp/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web
+          path: composeApp/build/dist/wasmJs/productionExecutable
+          if-no-files-found: error

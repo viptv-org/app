@@ -18,14 +18,15 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean, first: FocusRequester?, up: FocusRequester?,
+internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean, first: FocusRequester?, up: FocusRequester?, right: FocusRequester,
     focus: () -> Unit, open: () -> Unit) {
     TvAction(Modifier.fillMaxWidth().height(132.dp * scale).onFocusChanged { if (it.isFocused) focus() }
-        .focusProperties { if (up != null) this.up = up }, scale, primary = selected, requester = first, activate = open,
+        .focusProperties { if (up != null) this.up = up; this.right = right }, scale, primary = selected, requester = first, activate = open,
         background = Color.White.copy(alpha = .06f), cornerRadius = 18.dp * scale, arrangement = Arrangement.Start,
         contentPadding = PaddingValues(horizontal = 28.dp * scale)) { color ->
         val secondary = if (color == Palette.background) Color(0xFF4A4945) else Palette.secondary
-        Text(entry.time, Modifier.width(120.dp * scale), color = color, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.Bold)
+        Text(entry.time, Modifier.width(120.dp * scale), color = color, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp,
+            fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.width(28.dp * scale))
         AsyncImage(entry.card.poster ?: entry.card.landscape, entry.card.title, Modifier.size(72.dp * scale, 108.dp * scale)
             .clip(RoundedCornerShape(8.dp * scale)), contentScale = ContentScale.Crop)
@@ -36,7 +37,8 @@ internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean
             entry.subtitle?.let { Text(it, color = secondary, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp,
                 maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
-        entry.status?.let { Text(it, Modifier.padding(start = 16.dp * scale), color = if (entry.aired) secondary else Palette.accent,
+        entry.status?.let { Text(it, Modifier.padding(start = 16.dp * scale).widthIn(max = 220.dp * scale),
+            color = if (entry.aired) secondary else Palette.accent, maxLines = 2, overflow = TextOverflow.Ellipsis,
             fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.Bold) }
     }
 }

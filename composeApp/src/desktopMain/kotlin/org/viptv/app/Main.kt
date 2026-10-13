@@ -12,7 +12,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import org.viptv.app.state.ApplicationController
+import org.viptv.app.state.*
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme

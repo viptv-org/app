@@ -16,10 +16,12 @@ private const val MAX_ADDON_RESPONSE = 2 * 1024 * 1024
 
 private sealed interface AddonReply {
     data class Moved(val location: String) : AddonReply
-    data class Content(val body: String) : AddonReply
+    data class Content(val body: ByteArray) : AddonReply
 }
 
-internal suspend fun addonJson(client: HttpClient, url: String): String {
+internal suspend fun addonJson(client: HttpClient, url: String): String = addonBytes(client, url).decodeToString()
+
+internal suspend fun addonBytes(client: HttpClient, url: String): ByteArray {
     var current = URI(url)
     repeat(4) { redirects ->
         val reply: AddonReply = client.prepareGet(current.toString()) {
@@ -46,7 +48,7 @@ internal suspend fun addonJson(client: HttpClient, url: String): String {
     throw LocalFailure("This add-on redirected too many times.")
 }
 
-private suspend fun readContent(response: HttpResponse): String {
+private suspend fun readContent(response: HttpResponse): ByteArray {
     if (response.status != HttpStatusCode.OK || response.headers[HttpHeaders.ContentLength]?.toLongOrNull()?.let { it > MAX_ADDON_RESPONSE } == true) {
         throw LocalFailure("This add-on could not be loaded. Check its address and try again.")
     }
@@ -60,6 +62,6 @@ private suspend fun readContent(response: HttpResponse): String {
         if (output.size() + size > MAX_ADDON_RESPONSE) throw LocalFailure("This add-on returned too much data.")
         output.write(buffer, 0, size)
     }
-    return output.toByteArray().decodeToString()
+    return output.toByteArray()
 }
 

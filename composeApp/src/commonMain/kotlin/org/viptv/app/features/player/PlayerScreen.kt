@@ -36,7 +36,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         return
     }
     val commands = remember(input) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
-    var position by remember(input) { mutableStateOf(input?.positionMillis ?: preview?.positionMillis ?: 0) }
+    var position by remember(input) { mutableStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: preview?.positionMillis ?: 0) }
     var duration by remember(input) { mutableStateOf(preview?.durationMillis) }
     var tracks by remember(input) { mutableStateOf(PlaybackTracks()) }
     var showTracks by remember { mutableStateOf(false) }
@@ -62,6 +62,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 is PlayerFact.Tracks -> tracks = fact.options
                 is PlayerFact.Progress -> { position = fact.positionMillis; duration = fact.durationMillis }
                 is PlayerFact.Status -> buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
+            is PlayerFact.Presentation -> Unit
                 PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
                 PlayerFact.Failed -> buffering = false
             }

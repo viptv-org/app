@@ -1,6 +1,7 @@
 package org.viptv.app.features.player
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,27 +16,27 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.rememberTvDrawerMotion
+import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.player.*
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: Float, send: (PlayerCommand) -> Unit,
-    close: () -> Unit, initialSubtitle: Int? = null) {
+    close: () -> Unit, initialSubtitle: Int? = null, dismissChanged: ((() -> Unit)?) -> Unit) {
     val initial = remember { FocusRequester() }
     val subtitleFocus = tracks.subtitles.find { it.id == initialSubtitle } ?: tracks.subtitles.find { it.selected }
     val preferAudio = tracks.subtitles.isEmpty() && tracks.audio.isNotEmpty()
     val audioFocus = tracks.audio.find { it.selected } ?: tracks.audio.firstOrNull()
     val motion = rememberTvDrawerMotion(close)
-    Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
-        Box(Modifier.fillMaxSize()) {
+    DisposableEffect(motion.dismiss) { dismissChanged(motion.dismiss); onDispose { dismissChanged(null) } }
+        Box(Modifier.fillMaxSize().focusProperties { onExit = { cancelFocusChange() } }.focusGroup()) {
             Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(540.dp * scale)
                 .graphicsLayer { translationY = this.size.height * (1f - motion.progress.value) }
-                .clip(RoundedCornerShape(topStart = 24.dp * scale, topEnd = 24.dp * scale)).background(Color(0xFF191818))
+                .clip(RoundedCornerShape(topStart = 24.dp * scale, topEnd = 24.dp * scale))
+                .tvBackdropBlur(30.dp * scale).background(Color(0xFF161618).copy(alpha = .9f))
                 .padding(start = 76.dp * scale, top = 48.dp * scale), horizontalArrangement = Arrangement.spacedBy(80.dp * scale)) {
                 TvTrackColumn("Audio", Modifier.width(520.dp * scale), scale) {
                     if (tracks.audio.isEmpty()) item { Text("No audio tracks available", color = Palette.secondary, fontSize = (24 * scale).sp) }
@@ -56,7 +57,6 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
             }
         }
         LaunchedEffect(Unit) { initial.requestFocus() }
-    }
 }
 
 @Composable

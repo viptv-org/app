@@ -2,7 +2,7 @@ package org.viptv.app.features.player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import org.viptv.app.state.ApplicationController
+import org.viptv.app.state.*
 import org.viptv.app.state.ApplicationState
 
 @Composable
@@ -17,7 +17,8 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         if (episode != null && detail != null) card.copy(title = detail.item.title,
             subtitle = "S${episode.season ?: 1} E${episode.episode} · ${card.title}") else card
     }
-    PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback, controller::observePlayback, controller::closePlayer,
+    PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback,
+        { fact -> controller.observePlaybackFor(state.playback, fact) }, controller::closePlayer,
         title, phone = phone, canvasColor = if (browser) Color.Transparent else Color.Black, television = television,
         tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.label, episodes = episodes,
             nextEpisode = if (index >= 0) episodes.getOrNull(index + 1) else null, fallbackLabel = fallback?.label),

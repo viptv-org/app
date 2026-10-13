@@ -25,3 +25,13 @@ closes the native TV keyboard when it is active; a further Back dismisses the
 address dialog. All checks are scoped to the fixture, rather than being described
 as persistent preference or remote account checks. Build checks passed for
 Android, Desktop tests and Wasm compilation.
+
+## Source comparison update
+
+The latest comparison with `Tv3SetPlayback` and `Tv3SetSubs` corrects settings
+labels to weight 600, value/subtitle text to weight 500, focused secondary colour,
+sidebar icon spacing and subtitle option geometry/colours. Left now traverses
+previous subtitle sizes/background choices/colour swatches; only the first item
+in each group routes Left to the sidebar. Previously every option redirected
+Left to the sidebar. These changes need a fresh build and rendered remote check;
+they do not establish persistent settings integration or full parity.

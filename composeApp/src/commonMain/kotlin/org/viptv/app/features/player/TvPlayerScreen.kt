@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import org.viptv.app.player.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.TvBackdrop
+import org.viptv.app.components.tvBackdropSource
 
 @Composable
 internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
@@ -50,9 +52,10 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
         else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive) root.requestFocus()
     }
-    BoxWithConstraints(Modifier.fillMaxSize().background(if (state.showNext) Palette.background else Color.Black).focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
+    TvBackdrop(Modifier.fillMaxSize().background(if (state.showNext) Palette.background else Color.Black).focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown) state.interaction++
-        if (event.type == KeyEventType.KeyUp && event.key in listOf(Key.DirectionLeft, Key.DirectionRight) &&
+        if (state.showTracks && event.key != Key.Escape) false
+        else if (event.type == KeyEventType.KeyUp && event.key in listOf(Key.DirectionLeft, Key.DirectionRight) &&
             (state.timelineFocused || state.scrub != null)) true
         else if (event.type != KeyEventType.KeyDown) false else when (event.key) {
             Key.Escape -> { back(); true }
@@ -74,9 +77,12 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
     }.focusable()) {
         val scale = maxWidth / 1920.dp
-        val video = rememberTvVideoFrame(state.showNext, scale)
-        if (input == null && previewFrame != null) AsyncImage(previewFrame, null, video, contentScale = ContentScale.Crop)
-        if (input != null) PlayerSurface(input, paused, video, { state.observe(it); observe(it) }, state.commands)
+        // Keep the source registered while paused; Haze records only while an effect consumes it.
+        val video = rememberTvVideoFrame(state.showNext, scale).tvBackdropSource(true)
+        Box(video) {
+            if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            if (input != null) PlayerSurface(input, paused, Modifier.fillMaxSize(), { state.observe(it); observe(it) }, state.commands)
+        }
         if (state.showNext) Box(video.background(Color.Black.copy(alpha = 0.25f)))
         when {
             state.failed -> TvPlayerFailure(extras, state.position, error, scale, retry, chooseSources, close)
@@ -92,7 +98,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             }
         }
         if (state.showTracks) TvPlaybackTrackPicker(state.tracks, state.subtitleSize, scale,
-            { state.send(it, previewCommand) }, { state.showTracks = false; state.reveal() }, trackFocus)
+            { state.send(it, previewCommand) }, { state.showTracks = false; state.reveal() }, trackFocus,
+            dismissChanged = { state.dismissTracks = it })
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
     }
 }

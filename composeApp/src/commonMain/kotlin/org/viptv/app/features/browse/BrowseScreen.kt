@@ -20,11 +20,13 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
 
 @Composable
-fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit) {
+fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, loadedCards: List<Card>? = null, controls: org.viptv.app.connection.DiscoveryControls? = null,
+    query: org.viptv.app.connection.BrowseQuery = org.viptv.app.connection.BrowseQuery("movie"), busy: Boolean = false, error: String? = null,
+    filterChanged: (String, String) -> Unit = { _, _ -> }, more: (() -> Unit)? = null) {
     var sort by remember(screen) { mutableStateOf("Popular") }
     var menu by remember { mutableStateOf(false) }
-    val cards = remember(home, screen, sort) {
-        val loaded = home?.rows.orEmpty().flatMap { it.cards }
+    val cards = remember(home, loadedCards, screen, sort) {
+        val loaded = loadedCards ?: home?.rows.orEmpty().flatMap { it.cards }
             .distinctBy { it.identity.kind to it.identity.id }
             .filter { when (screen) {
                 Screen.Movies -> it.identity.kind == "movie"
@@ -34,7 +36,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         when (sort) { "A–Z" -> loaded.sortedBy { it.title.lowercase() }; "Z–A" -> loaded.sortedByDescending { it.title.lowercase() }; else -> loaded }
     }
     if (television) {
-        TvBrowseScreen(cards, home == null, open)
+        TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, more = more, error = error, filters = controls?.let { { first -> DiscoveryFilters(it, query, screen == Screen.Discover, filterChanged, first) } })
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -44,7 +46,8 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
             Text(screen.name, fontSize = if (television) 36.sp else 28.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(18.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("All genres", Modifier.background(Palette.text, RoundedCornerShape(18.dp))
+                if (controls != null) DiscoveryFilters(controls, query, screen == Screen.Discover, filterChanged)
+                else Text("All genres", Modifier.background(Palette.text, RoundedCornerShape(18.dp))
                     .padding(horizontal = 14.dp, vertical = 8.dp), color = Palette.background,
                     fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
                 Box {
@@ -63,14 +66,16 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                 }
             }
             Spacer(Modifier.height(18.dp))
-            if (home == null) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            else if (cards.isEmpty()) Text("No ${if (screen == Screen.Series) "series" else if (screen == Screen.Movies) "movies" else "titles"} are available in your loaded catalogs.", color = Palette.secondary)
+            error?.let { Text(it, color = Palette.danger) }
+            if (busy || (loadedCards == null && home == null)) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+            else if (cards.isEmpty()) Text("No ${if (screen == Screen.Series) "series" else if (screen == Screen.Movies) "movies" else "titles"} are available for these filters.", color = Palette.secondary)
             LazyVerticalGrid(GridCells.Adaptive(if (television) 220.dp else if (compact) 155.dp else 172.dp),
                 horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
                 contentPadding = PaddingValues(bottom = if (compact) 88.dp else 24.dp)) {
                 items(cards, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) {
                     MediaCard(it, width = if (television) 220 else if (compact) 155 else 172, portrait = true, showLabels = compact || television, open = open)
                 }
+                more?.let { next -> item(span = { GridItemSpan(maxLineSpan) }) { TextButton(next, enabled = !busy) { Text("Load more") } } }
             }
         }
     }

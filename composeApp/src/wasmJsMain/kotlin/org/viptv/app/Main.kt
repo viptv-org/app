@@ -13,10 +13,12 @@ import org.viptv.app.state.Screen
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val preview = window.location.hash.startsWith("#ui-preview")
-    val screen = runCatching { Screen.valueOf(window.location.hash.substringAfter("/", "Home")) }.getOrDefault(Screen.Home)
+    val previewParts = window.location.hash.removePrefix("#").split("/")
+    val screen = runCatching { Screen.valueOf(previewParts.getOrNull(1) ?: "Home") }.getOrDefault(Screen.Home)
+    val variant = previewParts.getOrNull(2) ?: "Movie"
     ComposeViewport(document.getElementById("viptv-ui-layer") as HTMLElement) {
         if (window.location.hash == "#playback-qa") PlaybackQa(canvasColor = Color.Transparent)
-        else if (preview) UiPreview(initialScreen = screen, browser = true)
+        else if (preview) UiPreview(initialScreen = screen, browser = true, tvDetailVariant = variant)
         else App(browser = true)
     }
 }

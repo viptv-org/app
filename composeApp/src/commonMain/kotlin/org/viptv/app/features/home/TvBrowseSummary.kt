@@ -22,14 +22,15 @@ internal fun TvBrowseSummary(card: Card, original: Card, scale: Float) {
         if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.offset(96.dp * scale, 96.dp * scale).size(420.dp * scale, 120.dp * scale)
             .graphicsLayer { blendMode = BlendMode.Lighten; compositingStrategy = CompositingStrategy.Offscreen }, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
         else Text(card.title, Modifier.offset(96.dp * scale, 96.dp * scale).width(1000.dp * scale), fontSize = (48 * scale).sp, lineHeight = (58 * scale).sp, fontWeight = FontWeight.Bold)
-        Box(Modifier.offset(96.dp * scale, 240.dp * scale)) { TvMediaMetadata(card, scale) }
-        card.description?.let { Text(it, Modifier.offset(96.dp * scale, 290.dp * scale).width(800.dp * scale), color = Palette.body,
+        Box(Modifier.offset(96.dp * scale, 240.dp * scale)) {
+            TvMediaMetadata(card, scale, subtitleParts = card.subtitle?.split('·')?.map(String::trim)?.filter(String::isNotEmpty))
+        }
+        card.description?.let { Text(it, Modifier.offset(96.dp * scale, 290.dp * scale).width(700.dp * scale), color = Palette.body,
             fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
         val progress = original.progress ?: card.progress
         if (progress != null && original.subtitle != null) Row(Modifier.offset(96.dp * scale, 418.dp * scale),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-            LinearProgressIndicator(progress = { progress.toFloat() }, modifier = Modifier.width(160.dp * scale).height(4.dp * scale),
-                color = Palette.accent, trackColor = Palette.text.copy(alpha = 0.3f))
+            TvWatchProgress(progress, Modifier.width(160.dp * scale).height(4.dp * scale), scale, rounded = true)
             Text("Resume ${original.subtitle}", fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
     }

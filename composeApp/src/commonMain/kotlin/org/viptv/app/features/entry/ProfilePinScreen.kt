@@ -23,7 +23,7 @@ fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: 
         return
     }
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Enter ${profile?.name.orEmpty()}’s PIN", style = MaterialTheme.typography.headlineLarge)
+        Text(if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter ${profile?.name.orEmpty()}’s PIN", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(24.dp))
         OutlinedTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
             label = { Text("PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)

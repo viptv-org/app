@@ -124,5 +124,40 @@
     "ignored": 6,
     "log": "/tmp/viptv-backend-reviewed-final-full-tests.log"
   },
-  "simkl_focused_tests": 13
+  "simkl_focused_tests": 13,
+  "2026-10-13_real_provider_candidate": {
+    "status": "experimental, incomplete overall",
+    "core": "ef9a9bf2ca5c3c9f73035b64038a592903bd1dbe",
+    "kite_renderer": "56f361b7610bf1d20c328cf919877e37baff9d1f",
+    "backend_tests_passed": 378,
+    "backend_tests_ignored": 7,
+    "desktop_tests_passed": 38,
+    "android_release_sha256": "f840913c53d512245900748a5a69bd39ff9139a8f316a00c14b6a27e7239b798",
+    "android_abis": [
+      "armeabi-v7a",
+      "arm64-v8a",
+      "x86_64"
+    ],
+    "wasm_compile": "passed",
+    "linux_portable_distribution": "passed with Java21; local .deb unsupported by installed jpackage",
+    "physical_tv_real_playback": {
+      "source": "real Stremio MP4",
+      "metadata": "real Simkl OAuth2 profile",
+      "fps": 24,
+      "rebuffers": 0,
+      "audio_underruns": 0,
+      "av_drift_ms": 8.772,
+      "renderer": "HardwareZeroCopy MediaCodec",
+      "presentation": "AndroidWindowGpuCompleted"
+    },
+    "physical_tv_home": {
+      "continue_watching_upper_right_artwork": "verified",
+      "warm_navigation_median_ms": 23,
+      "warm_navigation_p95_ms": 65,
+      "performance_fully_accepted": false
+    },
+    "full_design_parity": "not certified",
+    "windows_macos": "CI workflow added; verification pending",
+    "production_deployed": false
+  }
 }

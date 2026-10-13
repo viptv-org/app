@@ -27,7 +27,7 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
-    save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean) {
+    save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean, saved: Boolean = false) {
     val series = card.identity.kind == "series"
     LaunchedEffect(card.identity) { if (requestInitialFocus) first.requestFocus() }
     Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds()) {
@@ -65,7 +65,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         color = tint, trackColor = tint.copy(alpha = 0.2f)) }
                 }
             }
-            TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = save) { Icon(Lucide.Plus, "Add to My List", Modifier.size(30.dp * scale), it) }
+            TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = save) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
             TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = trailer) { Icon(Lucide.Film, "Trailer", Modifier.size(30.dp * scale), it) }
             if (extras.resume != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
         }

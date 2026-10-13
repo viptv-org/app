@@ -24,7 +24,7 @@ internal enum class TvProfileEditAction { Name, Pin, Delete, Maturity, Language 
 internal fun TvProfileEditScreen(profile: Profile?, count: Int, busy: Boolean, error: String?,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
     setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
-    maturity: String? = null, language: String? = null, backChanged: ((() -> Unit)?) -> Unit = {}) {
+    maturity: String? = null, language: String? = null, backChanged: ((() -> Unit)?) -> Unit = {}, pinAvailable: Boolean = true) {
     var action by remember(profile?.id) { mutableStateOf<TvProfileEditAction?>(null) }
     var avatar by remember { mutableStateOf(false) }
     val targets = remember { TvProfileEditAction.entries.associateWith { FocusRequester() } }
@@ -58,14 +58,14 @@ internal fun TvProfileEditScreen(profile: Profile?, count: Int, busy: Boolean, e
             TvSettingsRow("Maturity rating", "Titles above this rating are hidden for this profile", scale,
                 value = maturity ?: "Unavailable", leading = Lucide.Shield, left = avatarFocus,
                 requester = targets.getValue(TvProfileEditAction.Maturity), activate = { action = TvProfileEditAction.Maturity })
-            TvSettingsRow("Profile lock", "Ask for a PIN before this profile opens", scale, checked = profile?.locked == true,
+            if (pinAvailable) TvSettingsRow("Profile lock", "Ask for a PIN before this profile opens", scale, checked = profile?.locked == true,
                 leading = Lucide.Lock, left = avatarFocus, requester = targets.getValue(TvProfileEditAction.Pin),
                 activate = { if (!busy) action = TvProfileEditAction.Pin })
             TvSettingsRow("Language", "Menus and default audio for this profile", scale,
                 value = language ?: "Unavailable", leading = Lucide.Languages, left = avatarFocus,
                 requester = targets.getValue(TvProfileEditAction.Language), activate = { action = TvProfileEditAction.Language })
             Spacer(Modifier.height(120.dp * scale))
-            if (count > 1) TvSettingsRow("Delete profile", scale = scale, leading = Lucide.Trash2, rowHeight = 80,
+            if (count > 1 && profile?.canDelete != false) TvSettingsRow("Delete profile", scale = scale, leading = Lucide.Trash2, rowHeight = 80,
                 labelColor = Color(0xFFFF8A80), left = avatarFocus, requester = targets.getValue(TvProfileEditAction.Delete),
                 activate = { if (!busy) action = TvProfileEditAction.Delete })
             error?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }

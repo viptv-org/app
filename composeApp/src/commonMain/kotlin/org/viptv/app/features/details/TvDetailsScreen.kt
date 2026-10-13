@@ -24,7 +24,7 @@ internal data class TvDetailExtras(
 
 @Composable
 internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, sources: (Card) -> Unit,
-    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true) {
+    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val scroll = rememberLazyListState()
@@ -42,7 +42,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                 item(key = "hero") {
                     TvDetailHero(detail.item, extras, scale,
                         play = { sources(extras.resume ?: detail.item) },
-                        save = { notice = "Saving titles to My List is not available on this connection yet." },
+                        save = { save(detail.item) }, saved = saved,
                         trailer = { notice = "No trailer is available for this title." },
                         restart = { sources(detail.item) }, first = playFocus,
                         down = if (detail.episodes.isEmpty()) null else episodeFocus, requestInitialFocus = requestInitialFocus)

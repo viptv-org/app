@@ -39,3 +39,13 @@ its visible white focus border. Heading reservations and section gaps now align
 poster/channel anchors; loading reserves the same poster start. Desktop tests,
 Wasm compilation and Android assembly passed. Complete data/typography parity
 and other navigation paths remain unqualified.
+
+## Source comparison update
+
+The latest `Tv3Search` comparison corrects query text to 32 px/weight 500,
+heading letter spacing, channel-program captions to 20 px, and suggestions to
+52 px rows with 4 px gaps and 14 px icon spacing. Suggestion focus now uses a
+visible TV action treatment; the previous generic clickable rows gave the
+remote user no persistent focus indication. Fresh rendering/navigation checks
+are pending. Channel numbers/current programs still require presentation data
+from connected feeds, and this update does not establish search-board parity.

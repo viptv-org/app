@@ -69,12 +69,12 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
             val phone = maxWidth < 640.dp && !television && !desktop && !browser
             val tablet = !phone && !television && !desktop && !browser
             Column(Modifier.fillMaxSize()) {
-                if (current !in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit, Screen.Player) && (browser || (television && current !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings)))) TopNavigation(current, television, go, PreviewData.profile)
+                if (current !in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit, Screen.Player) && ((browser && !(current == Screen.Details && tvDetailVariant == "SharedTitle")) || (television && current !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings)))) TopNavigation(current, television, go, PreviewData.profile)
                 else if (phone && current !in listOf(Screen.Connect, Screen.Search, Screen.Details, Screen.Sources, Screen.Settings, Screen.History, Screen.Profiles, Screen.ProfilePin, Screen.Player))
                     PhoneHeader(current, PreviewData.profile, go)
                 Row(Modifier.weight(1f)) {
                     if (current !in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit, Screen.Player)) {
-                        if (tablet) TabletNavigation(current, PreviewData.profile, go) else if (desktop) SideNavigation(current, go)
+                        if (tablet && current !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(current, PreviewData.profile, go) else if (desktop) SideNavigation(current, go)
                     }
                     Box(Modifier.weight(1f)) {
                         when (current) {
@@ -96,17 +96,16 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 if (tvDetailVariant == "Series") PreviewTvDetails.series else PreviewTvDetails.movie,
                                 false, null, { go(Screen.Sources) },
                                 if (tvDetailVariant == "Series") PreviewTvDetails.seriesExtras else PreviewTvDetails.movieExtras)
-                                else DetailsScreen(PreviewData.detail, false, null, { go(Screen.Home) }, { go(Screen.Sources) })
+                                else PreviewDetails(tvDetailVariant, go, tablet, browser, desktop)
                             Screen.Sources -> if (television) TvSourcesScreen(PreviewTvDetails.movie.item,
                                 when (tvDetailVariant) { "Loading" -> PreviewTvSources.sources.take(2); "LoadingEmpty", "Empty" -> emptyList(); else -> PreviewTvSources.sources },
                                 tvDetailVariant == "LoadingEmpty", null, { go(Screen.Player) }, { go(Screen.Details) }, PreviewTvDetails.movie, PreviewTvSources.info,
                                 PreviewTvDetails.movieExtras, loadingMore = tvDetailVariant in listOf("Loading", "LoadingEmpty"))
-                                else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail)
+                                else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail, tablet = tablet)
                             Screen.Calendar -> if (television) TvCalendarScreen(PreviewTvCalendar.days, PreviewTvCalendar.entries,
                                 { go(Screen.Details) }, { go(Screen.Settings) }, PreviewTvCalendar.actions, { go(Screen.Sources) })
                                 else CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, false, { go(Screen.Details) }, { go(Screen.Settings) })
-                            Screen.Live -> if (television) TvLiveScreen(PreviewTvLive.channels, PreviewLive.start, PreviewLive.now, watchLive,
-                                { go(Screen.Settings) }, PreviewTvLive.categories)
+                            Screen.Live -> if (television) PreviewTvGuide(tvDetailVariant, watchLive, { go(Screen.Settings) })
                                 else LiveScreen(PreviewLive.channels, false, PreviewLive.start, PreviewLive.now, watchLive, { go(Screen.Settings) })
                             Screen.Library -> if (television) TvLibraryScreen(if (tvDetailVariant in listOf("Empty", "Unavailable")) emptyList() else PreviewTvLibrary.cards,
                                 tvDetailVariant != "Unavailable", { go(Screen.Details) }, { go(Screen.Home) }, PreviewTvLibrary.watched)
@@ -116,8 +115,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 if (tvDetailVariant == "Loading") emptyList() else PreviewData.posters + PreviewLive.channels.take(3).map { it.card },
                                 emptyList(), tvDetailVariant == "Loading", null, query, { go(Screen.Details) }, editQuery, listOf("the whisper man", "the wild robot", "the white lotus"))
                                 else SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) }, editQuery = editQuery)
-                            Screen.Settings -> if (television) PreviewTvSettings(tvDetailVariant, go) else SettingsScreen(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
-                                { go(Screen.Profiles) }, {}, PreviewData.profile, { go(Screen.Home) })
+                            Screen.Settings -> if (television) PreviewTvSettings(tvDetailVariant, go) else PreviewNonTvSettings(tvDetailVariant, go)
                             Screen.ProfilePin -> if (television) PreviewTvPin(tvDetailVariant, go, entryBackChanged)
                                 else ProfilePinScreen(PreviewData.profiles[2], phone, false, null, {}, { go(Screen.Profiles) }, false)
                             Screen.ProfileEdit -> if (television) PreviewTvProfileEdit(go, entryBackChanged, profileToEdit)
@@ -129,7 +127,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                             Screen.Movies, Screen.Series, Screen.Discover -> if (television) TvBrowseScreen(
                                 if (tvDetailVariant in listOf("Loading", "Empty")) emptyList() else PreviewTvHome.movies,
                                 tvDetailVariant == "Loading", { go(Screen.Details) }, PreviewTvHome.genres, PreviewTvHome.membership, 4)
-                                else BrowseScreen(current, PreviewData.home, television) { go(Screen.Details) }
+                                else BrowseScreen(current, PreviewData.home, television, open = { go(Screen.Details) })
                             else -> if (television) TvHomeScreen(if (tvDetailVariant == "Loading" || !homeArrived) null else PreviewTvHome.home, { go(Screen.Details) }, { go(Screen.Sources) }, {}, go,
                                 PreviewData.profile, PreviewTvHome.summaries, listOf(PreviewData.hero) + PreviewData.posters.take(4))
                                 else HomeScreen(PreviewData.home, television, { go(Screen.Details) }, {}, desktop, { go(Screen.Sources) }, tablet, go, browser)

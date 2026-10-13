@@ -52,7 +52,7 @@ internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit) {
         }
         Text(card.title, Modifier.padding(top = 12.dp * scale), fontSize = (22 * scale).sp, lineHeight = (26 * scale).sp,
             fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (22 * scale).sp,
-            lineHeight = (28 * scale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (20 * scale).sp,
+            lineHeight = (26 * scale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
 }

@@ -35,7 +35,7 @@ internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, reques
                 .background(if (highlighted) Palette.text else if (section == selected) Color(0xFF333333) else Color.Transparent, RoundedCornerShape(12.dp * scale))
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { select(section) }
                 .padding(horizontal = 24.dp * scale), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
+                horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {
                 val tint = if (highlighted) Palette.background else if (section == selected) Palette.text else Palette.secondary
                 Icon(when (section) { TvSettingsSection.Account -> Lucide.UserRound; TvSettingsSection.Profiles -> Lucide.Users;
                     TvSettingsSection.Playback -> Lucide.CirclePlay; TvSettingsSection.Subtitles -> Lucide.Captions;

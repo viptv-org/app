@@ -45,7 +45,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                     Text(label, Modifier.padding(top = 12.dp, bottom = 4.dp), fontSize = 12.sp,
                         fontWeight = FontWeight.Medium, color = Palette.secondary)
                 }
-                items(entries, key = { it.entry.card.identity.kind + ":" + it.entry.card.identity.id }) {
+                items(entries, key = { it.entry.card.provider_id + ":" + it.entry.card.identity.kind + ":" + it.entry.card.identity.id }) {
                     HistoryRow(it.entry, phone, open)
                 }
             }
@@ -53,7 +53,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
         }
     }
     if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text("Clear history?") },
-        text = { Text("This removes viewing history for this profile on this device.") },
+        text = { Text("This removes viewing history for this profile.") },
         confirmButton = { TextButton(onClick = { clear(); confirm = false }) { Text("Clear") } },
         dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } })
 }

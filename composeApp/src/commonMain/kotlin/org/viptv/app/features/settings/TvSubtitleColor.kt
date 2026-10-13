@@ -16,9 +16,9 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvSubtitleColor(value: Long, label: String, selected: Boolean, scale: Float, sidebar: FocusRequester, choose: () -> Unit) {
+internal fun TvSubtitleColor(value: Long, label: String, selected: Boolean, scale: Float, sidebar: FocusRequester?, choose: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
-    Box(Modifier.size(64.dp * scale).focusProperties { left = sidebar }.onFocusChanged { focused = it.isFocused }
+    Box(Modifier.size(64.dp * scale).focusProperties { if (sidebar != null) left = sidebar }.onFocusChanged { focused = it.isFocused }
         .semantics { contentDescription = label; this.selected = selected; role = Role.RadioButton }
         .then(if (focused || selected) Modifier.border(3.dp * scale, Palette.text, CircleShape) else Modifier)
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = choose), contentAlignment = Alignment.Center) {

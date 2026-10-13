@@ -20,6 +20,7 @@ kotlin {
             implementation("com.composables:icons-lucide-cmp:2.2.1")
             implementation("com.composables:composeunstyled-toggle-switch:2.10.0")
             implementation("io.github.alexzhirkevich:qrose:1.3.1")
+            implementation("dev.chrisbanes.haze:haze-blur:2.0.1")
             implementation(compose.components.resources)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
@@ -32,11 +33,11 @@ kotlin {
             kotlin.srcDir(rootProject.file("native/core/generated/native-kotlin"))
             dependencies {
                 implementation("io.github.yuroyami:kiteplayer-compose:0.3.0")
-                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.2") {
-                    version { strictly("0.3.0-viptv-presentation.2") }
+                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.3") {
+                    version { strictly("0.3.0-viptv-presentation.3") }
                 }
-                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.2") {
-                    version { strictly("0.3.0-viptv-presentation.2") }
+                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.3") {
+                    version { strictly("0.3.0-viptv-presentation.3") }
                 }
                 implementation("io.ktor:ktor-client-core:3.4.0")
                 implementation("io.ktor:ktor-client-okhttp:3.4.0")

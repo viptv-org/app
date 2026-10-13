@@ -25,9 +25,9 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit) {
+internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false) {
     if (card.landscape == null && card.poster == null) {
-        DetailSummary(card, play, Modifier.fillMaxWidth())
+        DetailSummary(card, play, Modifier.fillMaxWidth(), save, saved)
     } else if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(Modifier.fillMaxWidth().height(280.dp)) {
@@ -35,12 +35,12 @@ internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit) {
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
                     listOf(Color.Transparent, Palette.background))))
             }
-            DetailSummary(card, play, Modifier.fillMaxWidth())
+            DetailSummary(card, play, Modifier.fillMaxWidth(), save, saved)
         }
     } else {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(40.dp)) {
-            DetailSummary(card, play, Modifier.weight(0.44f))
+            DetailSummary(card, play, Modifier.weight(0.44f), save, saved)
             DetailArtwork(card, Modifier.weight(0.56f).aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)))
         }
     }
@@ -52,7 +52,7 @@ private fun DetailArtwork(card: Card, modifier: Modifier) {
 }
 
 @Composable
-private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier) {
+private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, save: (Card) -> Unit, saved: Boolean) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (card.logo != null) AsyncImage(card.logo, card.title, Modifier.width(220.dp).height(120.dp),
             alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
@@ -65,6 +65,7 @@ private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier) 
             Spacer(Modifier.width(8.dp))
             Text("Play", fontWeight = FontWeight.SemiBold)
         }
+        FavoriteAction(card, saved, save)
         card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body) }
     }
 }

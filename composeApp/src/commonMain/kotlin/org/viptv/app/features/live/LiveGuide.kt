@@ -31,7 +31,10 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
         val channelWidth = if (television) 300.dp * scale else 192.dp
         val gap = (if (television) 28 else 8).dp * scale
         val unit = (maxWidth - channelWidth - gap + if (television) 4.dp * scale else 0.dp) / span
-        val initialProgram = channels.firstOrNull()?.let { it.current(now) ?: it.programs.firstOrNull { program -> program.end > start && program.start < start + span } }
+        val initialProgram = channels.firstOrNull()?.let { channel ->
+            val visible = channel.programs.filter { it.end > start && it.start < start + span }
+            visible.find { now != null && now in it.start until it.end } ?: visible.firstOrNull()
+        }
         val rowHeight = if (television) 72.dp * scale else 56.dp
         val headerHeight = (if (television) 44 else 34).dp * scale
         val spacing = (if (television) 8 else 6).dp * scale

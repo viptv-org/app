@@ -28,7 +28,7 @@ internal fun launchUiPreview() = application {
                         { window.placement = if (window.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized },
                         ::exitApplication, Modifier)
                 }
-                UiPreview(desktop = true, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it })
+                UiPreview(desktop = true, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
             }
         }
     }

@@ -24,11 +24,18 @@ interface LocalConnection : AutoCloseable {
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
     suspend fun sources(profile: String, card: Card): List<SourceCandidate>
     suspend fun openSource(id: String): PlaybackInput
+    suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot
+    suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray
     suspend fun enabledAddons(profile: String): Set<String>
     suspend fun setAddonEnabled(profile: String, id: String, enabled: Boolean)
     suspend fun removeAddon(id: String)
     suspend fun recordProgress(input: PlaybackInput, card: Card, positionMillis: Long, durationMillis: Long?)
     suspend fun history(profile: String): List<HistoryDisplay>
+    suspend fun discoveryControls(profile: String, type: String): DiscoveryControls = throw LocalFailure("Browse is unavailable for this profile.")
+    suspend fun browse(profile: String, query: BrowseQuery): CatalogPage = throw LocalFailure("Browse is unavailable for this profile.")
+    suspend fun library(profile: String): List<Card> = throw LocalFailure("My List is unavailable on this device.")
+    suspend fun saveFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
+    suspend fun removeFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
     suspend fun clearHistory(profile: String)
 }
 expect fun localConnection(databasePath: String): LocalConnection

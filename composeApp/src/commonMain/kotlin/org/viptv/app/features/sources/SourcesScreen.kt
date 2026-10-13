@@ -25,14 +25,14 @@ import org.viptv.engine.wire.SourceCandidate
 
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
-    choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false) {
+    choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false) {
     if (television) {
-        TvSourcesScreen(title, sources, busy, error, choose, back, detail)
+        TvSourcesScreen(title, sources, busy, error, choose, back, detail, loadingMore = loadingMore)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        if (detail != null) DetailsScreen(detail, false, null, back, {}, television)
+        if (detail != null) DetailsScreen(detail, false, null, back, {}, television, tablet)
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
@@ -53,11 +53,11 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 Text(listOfNotNull(title?.title, if (busy) { if (sources.isEmpty()) "Loading sources…" else "Opening stream…" } else sourceSummary(sources)).joinToString(" · "),
                     color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
             }
-            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+            if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp)) {
                 error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
-                if (!busy && sources.isEmpty() && error == null) item {
+                if (!busy && !loadingMore && sources.isEmpty() && error == null) item {
                     Text("No direct streams found. Enable an add-on that supplies sources.", Modifier.padding(20.dp), color = Palette.secondary)
                 }
                 items(sources, key = { it.id }) { SourceRow(it, television, choose, enabled = !busy) }

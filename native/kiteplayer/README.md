@@ -6,7 +6,7 @@ fork. The Git delta bundle preserves the upstream license and history.
 
 The app uses released `kiteplayer-compose:0.3.0` with strict constraints on only
 `kiteplayer-compose-ui` and `kiteplayer-compose-video` at
-`0.3.0-viptv-presentation.2`. Its generated Maven repository is scoped to those
+`0.3.0-viptv-presentation.3`. Its generated Maven repository is scoped to those
 modules. Unchanged native engine, FFmpeg and output dependencies remain upstream.
 
 `tools/build_player.py` verifies the bundle, imports the exact pinned source into

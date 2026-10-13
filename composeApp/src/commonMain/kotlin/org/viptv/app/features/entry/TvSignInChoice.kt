@@ -8,6 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +43,7 @@ internal fun TvSignInChoice(scale: Float, local: (() -> Unit)?, select: (TvSignI
                 Icon(Lucide.UserRound, null, Modifier.size(32.dp * scale), it)
             }
         }
-        Column(Modifier.offset(1120.dp * scale, 250.dp * scale).width(704.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+        Column(Modifier.offset(1120.dp * scale, 250.dp * scale).width(704.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale)) {
             Box(Modifier.fillMaxWidth().height(396.dp * scale).clip(RoundedCornerShape(18.dp * scale))) {
                 AsyncImage(Res.getUri("files/entry/feature.jpg"), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = 0.6f)
                 Box(Modifier.align(Alignment.BottomStart).padding(32.dp * scale)) { Brand(64.dp * scale, (72 * scale).sp, 18.dp * scale, (-2.88f * scale).sp, (72 * scale).sp) }
@@ -56,12 +58,16 @@ internal fun TvSignInChoice(scale: Float, local: (() -> Unit)?, select: (TvSignI
 private fun TvEntryOption(scale: Float, title: String, subtitle: String?, requester: FocusRequester?, activate: () -> Unit,
     icon: @Composable (androidx.compose.ui.graphics.Color) -> Unit) {
     TvAction(Modifier.fillMaxWidth().height(100.dp * scale), scale, requester = requester, activate = activate,
-        contentPadding = PaddingValues(horizontal = 32.dp * scale), arrangement = Arrangement.Start, background = androidx.compose.ui.graphics.Color(0xFF1D1D1D)) { tint ->
+        contentPadding = PaddingValues(horizontal = 32.dp * scale), arrangement = Arrangement.Start,
+        cornerRadius = 16.dp * scale, background = Color.White.copy(alpha = .07f)) { tint ->
         icon(tint)
-        Spacer(Modifier.width(28.dp * scale))
+        Spacer(Modifier.width(26.dp * scale))
         Column {
-            Text(title, color = tint, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, fontWeight = FontWeight.Bold)
-            subtitle?.let { Text(it, color = tint.copy(alpha = 0.75f), fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp) }
+            Text(title, color = tint, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, fontWeight = FontWeight.Bold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            subtitle?.let { Text(it, color = if (tint == Palette.background) Color(0xFF4A4945) else Palette.secondary,
+                fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.Medium,
+                maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
     }
 }

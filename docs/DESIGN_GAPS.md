@@ -212,3 +212,27 @@ bottom gradient. Automatically positioned provider cues now use a provisional
 WebVTT line settings are preserved. The supplied boards do not specify external
 browser caption placement; the safe position needs design review across viewport
 sizes and multiline captions.
+
+### GAP-044 — Provider-driven discovery controls and pagination
+
+Discovery now uses the selected profile's advertised query controls and real
+catalog pages. Type, catalog, genre and timeframe controls use the existing theme.
+The supplied boards do not specify all provider-dependent combinations, numeric,
+date or multi-select filters, or the Load more action. These need final designs.
+
+### GAP-045 — My List actions and remote profile availability
+
+Phone, tablet, desktop and browser title details now include a provisional My
+List action using existing Lucide icons and theme controls. The supplied title
+boards do not cover every saved state or action placement. Remote profile
+management follows server availability, hides unsupported per-profile PINs,
+protects the primary profile from deletion, and identifies account parent PINs
+separately. These capability-dependent variants need updated design boards.
+
+### GAP-046 — Linked account management
+
+The browser Account settings surface now shows the selected profile’s Simkl
+connection and supports the server’s OAuth 2.0 authorization and unlink flow.
+Native clients explain that account linking happens in the web dashboard; local
+mode identifies server-only integrations. The linked, unconfigured, loading,
+error and unlink confirmation variants need supplied design boards.

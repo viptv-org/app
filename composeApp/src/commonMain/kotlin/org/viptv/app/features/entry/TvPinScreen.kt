@@ -46,7 +46,7 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
     }) {
         val scale = maxWidth / 1920.dp
         ProfileAvatarAtTop(profile, scale)
-        Text("Enter the PIN for ${profile?.name.orEmpty()}", Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale),
+        Text(if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter the PIN for ${profile?.name.orEmpty()}", Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale),
             fontSize = (44 * scale).sp, lineHeight = (50.6f * scale).sp, letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)
         Row(Modifier.align(Alignment.TopCenter).padding(top = 380.dp * scale), horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {
             repeat(if (pin.length > 4) 8 else 4) { index ->

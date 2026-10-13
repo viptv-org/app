@@ -31,3 +31,16 @@ incoming data changes when it remains available. The supplied artwork reuses
 existing resources; no duplicate image files were added. Desktop tests, Wasm
 compilation and Android assembly passed. Real feeds and episode resolution remain
 unqualified by these preview checks.
+
+The current focus update gives every release a stable row requester. Right from
+any release enters the preview action; Left returns to that release, and Up from
+the action returns to the selected date. Date changes reset the release scroll
+position. Preview titles, descriptions, action labels and row statuses now have
+explicit bounds so long provider text cannot push the action off the screen.
+These changes still require a fresh build and rendered remote-navigation check;
+the earlier captures do not qualify this update.
+
+When an incoming schedule removes the selected date, its fallback now becomes the
+stored selection and the release selection resets with it. Reintroducing a removed
+date therefore does not silently switch the user away from the fallback date.
+This refresh path still needs rendered validation with changing fixture data.

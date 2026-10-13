@@ -70,3 +70,24 @@ portrait-only card: the upper background used the theme colour while the shelf
 poster and focus remained visible. Desktop tests, Wasm compilation and Android
 assembly passed. This is fallback rendering evidence, not rich-provider metadata
 or full board certification.
+
+The current catalog focus update falls back to All genres when a provider removes
+the selected genre. Activating a genre, including All genres, scrolls its target
+into composition before moving focus into the results. Duplicate genre labels
+are removed. A fresh build and remote check are pending for this update; prior
+captures do not establish the new refresh behavior.
+
+The next source comparison corrects Home summary/hero description widths to
+700/780 px, separates metadata fields with the supplied spacing, uses 10 px card
+corners and focus-dependent caption colours, and replaces Material's gapped
+progress treatment with the supplied continuous 4 px track. The track clamps
+invalid/out-of-range provider values and keeps progress accessibility semantics.
+The isolated Home fixture now includes the fifth Continue Watching title and
+the exact supplied New this week order/badges; its extra artwork is copied
+byte-for-byte from `Tv3Browse`, not requested from a provider. These changes still
+need fresh rendered qualification and do not certify the board.
+
+The follow-up review routes genre-row Down through the same scroll-before-focus
+path as OK. This also supports an initial poster target outside the first visible
+grid rows. Pending focus work restarts if the displayed cards or target change,
+so it cannot finish with the prior feed's target. Fresh remote validation is pending.

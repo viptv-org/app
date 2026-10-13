@@ -20,8 +20,8 @@ import org.viptv.engine.wire.Card
 
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
-    open: (Card) -> Unit, manage: () -> Unit) {
-    if (television) { TvCalendarScreen(days, entries, open, manage); return }
+    open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null) {
+    if (television) { TvCalendarScreen(days, entries, open, manage, available = available, busy = busy, error = error); return }
     var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -42,8 +42,10 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                     list.animateScrollToItem(index)
                 }
             }
-            if (entries.isEmpty()) {
-                Text("Release schedules are not available for this profile.", color = Palette.secondary)
+            error?.let { Text(it, color = Palette.danger) }
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+            if (entries.isEmpty() && !busy && error == null) {
+                Text(if (available) "Nothing is scheduled in these dates." else "Release schedules are not available for this profile.", color = Palette.secondary)
                 TextButton(manage) { Text("Manage integrations") }
             } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
                 LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp),

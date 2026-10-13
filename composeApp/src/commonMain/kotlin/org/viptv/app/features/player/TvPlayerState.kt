@@ -7,7 +7,7 @@ import org.viptv.app.player.*
 /** View state and remote interaction; playback position changes only through player observations. */
 internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, scene: TvPlayerScene) {
     val commands = MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16)
-    var position by mutableLongStateOf(input?.positionMillis ?: 0)
+    var position by mutableLongStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: 0)
     var duration by mutableStateOf<Long?>(null)
     var tracks by mutableStateOf(PlaybackTracks())
     var subtitleSize by mutableFloatStateOf(1f)
@@ -21,6 +21,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var timelineFocused by mutableStateOf(false)
     var rootFocused by mutableStateOf(false)
     var focusAudio by mutableStateOf(false)
+    var dismissTracks: (() -> Unit)? = null
     var interaction by mutableIntStateOf(0)
     var controlError by mutableStateOf<String?>(null)
     init { initial.forEach(::observe) }
@@ -31,6 +32,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
+            is PlayerFact.Presentation -> Unit
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
         }
@@ -50,7 +52,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     }
     fun back(close: () -> Unit): Boolean {
         when {
-            showTracks -> showTracks = false
+            showTracks -> dismissTracks?.invoke() ?: run { showTracks = false }
             showEpisodes -> showEpisodes = false
             showNext -> { showNext = false; visible = false }
             scrub != null -> { scrub = null; reveal() }

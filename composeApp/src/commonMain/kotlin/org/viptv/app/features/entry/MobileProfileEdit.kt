@@ -25,7 +25,7 @@ import org.viptv.app.theme.Palette
 internal fun MobileProfileEdit(
     profile: Profile?, count: Int, busy: Boolean, error: String?,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
-    setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
+    setAvatar: (String, String) -> Unit, delete: (String) -> Unit, pinAvailable: Boolean = true,
 ) {
     var pickingAvatar by remember(profile?.id) { mutableStateOf(false) }
     var editingName by remember(profile?.id) { mutableStateOf(false) }
@@ -49,12 +49,12 @@ internal fun MobileProfileEdit(
         Spacer(Modifier.height(28.dp))
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF1B1B1D))) {
             EditSettingRow("Name", profile?.name.orEmpty(), onClick = { editingName = true })
-            HorizontalDivider(color = Color.White.copy(alpha = .08f))
-            EditSettingRow("Profile lock", if (profile?.locked == true) "On" else "Off",
+            if (pinAvailable) HorizontalDivider(color = Color.White.copy(alpha = .08f))
+            if (pinAvailable) EditSettingRow("Profile lock", if (profile?.locked == true) "On" else "Off",
                 subtitle = "Ask for a PIN on this device", onClick = { editingPin = true })
         }
         error?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error) }
-        if (count > 1) {
+        if (count > 1 && profile?.canDelete != false) {
             Spacer(Modifier.height(24.dp))
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF1B1B1D))) {
                 EditSettingRow("Delete profile", "", danger = true, onClick = { confirmingDelete = true })
