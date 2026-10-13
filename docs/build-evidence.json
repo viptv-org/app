@@ -25,9 +25,11 @@
   },
   "physical_tv_home": {
     "continue_watching_upper_right_artwork": "verified",
-    "warm_navigation_median_ms": 23,
-    "warm_navigation_p95_ms": 65,
-    "performance_fully_accepted": false
+    "warm_navigation_median_ms": 18,
+    "warm_navigation_p95_ms": 36,
+    "performance_fully_accepted": false,
+    "janky_frames_percent": 11.19,
+    "focus_animation": "draw-phase border; real Home navigation"
   },
   "full_design_parity": "not certified",
   "windows_macos": "CI workflow added; verification pending",

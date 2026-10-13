@@ -47,7 +47,7 @@ boards; complete visual parity is not certified.
   cleanup. This fixture does not qualify an independent production gateway.
 - TV native paused-frame blur A/B, playing panel open/close, Live fallback variants,
   Calendar return focus and subtitle option traversal passed on the isolated TV
-  emulator. The physical ARMv7 Android TV now runs the optimized experimental APK. Controlled navigation median frame time improved from 150 ms to 48 ms; performance remains below acceptance.
+  emulator. The physical ARMv7 Android TV now runs the optimized experimental APK. Controlled real Home navigation now measures 18 ms median / 36 ms p95 after optimized packaging and draw-phase focus animations, versus 150 ms median initially. Remaining jank is still under review.
 - HTTPS browser addon installation, selected-profile toggles, removal and signout
   persisted against a disposable backend. Rapid URL typing, Unicode/IME and
   encoded-query submission passed after scoped native browser input integration.
