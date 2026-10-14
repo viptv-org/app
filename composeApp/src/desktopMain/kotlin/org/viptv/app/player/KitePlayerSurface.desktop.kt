@@ -41,6 +41,7 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
         var opened by remember { mutableStateOf(false) }
         var rendererReady by remember { mutableStateOf(false) }
         val transport = remember { PlaybackTransportGate() }
+        val requiredAudio = remember { RequiredAudioSelection(input.requiredAudioIndex) }
         val presented = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
         val drawn = remember { java.util.concurrent.atomic.AtomicLong(0) }
         val scope = rememberCoroutineScope()
@@ -83,6 +84,7 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
             if (!rendererReady) return@LaunchedEffect
             try {
                 player.open(MediaItem(uri = input.uri, headers = input.headers, startPosition = input.positionMillis.milliseconds))
+                if (!applyRequiredAudio(player, requiredAudio) { latestObserve(it) }) return@LaunchedEffect
                 transport.request(latestPaused, player.state.value.status.name)
                 if (latestPaused) player.pause() else player.play()
                 opened = true
@@ -110,6 +112,7 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
                         is PlayerCommand.Volume -> player.setVolume(command.value.coerceIn(0f, 1f))
                         is PlayerCommand.SubtitleSize -> player.setSubtitleScale(command.value.coerceIn(0.5f, 2f))
                         is PlayerCommand.SelectTrack -> {
+                            if (command.kind == PlaybackTrackKind.Audio) requiredAudio.userSelected()
                             if (command.kind == PlaybackTrackKind.Subtitle) subtitleTouched = true
                             val prior = subtitleJob
                             prior?.cancel()
@@ -184,4 +187,3 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
         }
     }
 }
-

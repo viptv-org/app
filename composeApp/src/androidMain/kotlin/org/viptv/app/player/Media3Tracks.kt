@@ -10,6 +10,8 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
     private val keys = mutableMapOf<Key, Int>()
     private var next = 1
     private val references = mutableMapOf<Int, Key>()
+    private val requiredAudio = RequiredAudioSelection(input.requiredAudioIndex)
+    private var requiredAudioFailed = false
     fun changed() {
         references.clear()
         var selectedProvider: String? = null
@@ -33,12 +35,32 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
         }
         val audio = options(C.TRACK_TYPE_AUDIO)
         val text = options(C.TRACK_TYPE_TEXT)
+        val candidates = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }.flatMap { group ->
+            (0 until group.length).map { index ->
+                val id = keys.getOrPut(Key(group.mediaTrackGroup, index)) { next++ }
+                AudioCandidate(id, group.isTrackSupported(index))
+            }
+        }
+        when (val choice = requiredAudio.choose(candidates, player.currentTracks.groups.isNotEmpty())) {
+            is RequiredAudioChoice.Select -> references[choice.id]?.let { key ->
+                player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+                    .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
+                    .setOverrideForType(TrackSelectionOverride(key.group, listOf(key.index))).build()
+            }
+            RequiredAudioChoice.Unavailable -> if (!requiredAudioFailed) {
+                requiredAudioFailed = true
+                player.pause()
+                emit(PlayerFact.Failed)
+            }
+            RequiredAudioChoice.Unchanged -> Unit
+        }
         emit(PlayerFact.Tracks(PlaybackTracks(audio, text + input.providerTracks(selectedProvider))))
     }
     fun select(kind: PlaybackTrackKind, id: Int?) {
         val type = if (kind == PlaybackTrackKind.Audio) C.TRACK_TYPE_AUDIO else C.TRACK_TYPE_TEXT
         val key = id?.let(references::get)
         require(id == null || key != null)
+        if (kind == PlaybackTrackKind.Audio) requiredAudio.userSelected()
         val builder = player.trackSelectionParameters.buildUpon().clearOverridesOfType(type).setTrackTypeDisabled(type, id == null)
         key?.let { builder.setOverrideForType(TrackSelectionOverride(it.group, listOf(it.index))) }
         player.trackSelectionParameters = builder.build()

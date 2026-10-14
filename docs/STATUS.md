@@ -110,3 +110,12 @@ session. Physical-TV sign-in visual/input review remains pending.
 Desktop Back now follows route return state, including Details→Search and
 Sources→Live. Unavailable Forward/Cast/Remote chrome actions are disabled instead
 of accepting clicks without an operation.
+
+A subsequent candidate preserves a source's optional required audio-only ordinal
+through local/direct playback into Media3 and Kite, maps it to actual player track
+IDs, and keeps later manual choices. Missing/unsupported requirements fail rather
+than silently selecting another language. Gateway remux output is not assigned
+an input-file ordinal. This candidate passed 68 desktop checks, Android QA assembly,
+Wasm compilation and FFmpeg packaging checks. The corresponding core/backend/
+gateway artifact updates and physical multi-audio qualification are pending;
+existing user-facing services and the installed TV app are unchanged.

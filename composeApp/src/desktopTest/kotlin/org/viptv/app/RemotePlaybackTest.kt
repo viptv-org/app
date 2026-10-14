@@ -42,7 +42,7 @@ class RemotePlaybackTest {
                     """{"id":"lease","status":"starting"}"""
                 }
                 "/api/v2/playback/lease" -> if (request.method == HttpMethod.Delete) "{}" else
-                    """{"id":"lease","status":"ready","renew_after_seconds":20,"delivery":{"kind":"gateway","url":"https://media.example/scoped/index.m3u8","position":0,"timeline_offset_seconds":3,"duration":60}}"""
+                    """{"id":"lease","status":"ready","renew_after_seconds":20,"delivery":{"kind":"gateway","url":"https://media.example/scoped/index.m3u8","position":0,"timeline_offset_seconds":3,"duration":60,"required_audio_index":9}}"""
                 else -> "{}"
             }
             respond(response, headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -55,6 +55,7 @@ class RemotePlaybackTest {
         assertEquals(3000L, lease.input.timelineOffsetMillis)
         assertEquals(60_000L, lease.input.durationMillis)
         assertEquals("profile", lease.input.profileId)
+        assertNull(lease.input.requiredAudioIndex)
         lease.firstFrame(); lease.renew(); lease.close()
         assertEquals(listOf("POST /api/v2/playback", "GET /api/v2/playback/lease", "POST /api/v2/playback/lease/first-frame",
             "POST /api/v2/playback/lease/heartbeat", "DELETE /api/v2/playback/lease"), calls)
@@ -67,12 +68,13 @@ class RemotePlaybackTest {
             calls += request.url.encodedPath
             if (request.url.encodedPath.endsWith("/heartbeat")) assertEquals(0L, request.body.contentLength ?: 0L)
             respond(if (request.url.encodedPath == "/api/v2/playback")
-                """{"id":"direct","status":"ready","delivery":{"kind":"direct","url":"https://media.example/movie.mp4","position":0}}"""
+                """{"id":"direct","status":"ready","delivery":{"kind":"direct","url":"https://media.example/movie.mp4","position":0,"required_audio_index":1}}"""
                 else "{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
         val native = buildJsonObject { put("can_play_direct", true) }
         val lease = connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", native)
+        assertEquals(1, lease.input.requiredAudioIndex)
         lease.firstFrame(); lease.renew(); lease.close()
         assertFalse(calls.any { it.endsWith("/first-frame") })
         assertTrue(calls.any { it.endsWith("/heartbeat") })

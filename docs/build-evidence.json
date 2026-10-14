@@ -206,9 +206,9 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "89c330af84e6068fc0893b1e4fc357a97dd69dcb94ec799ea1ff9ae42dd5494e",
+    "apk_sha256": "cc076b251b82cf8b5ce1a13ddb28dfc53f9f658b089bd215ab06ccc0f2d375d9",
     "build": "passed",
-    "desktop_tests_passed": 65,
+    "desktop_tests_passed": 68,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
@@ -216,7 +216,8 @@
       "Artwork/logo prefetch at their displayed sizes with shared logo transformation",
       "Stable provider/quality chip identities and last-focused provider return",
       "Server-issued TV device pairing with explicit server choice and cancellation",
-      "Desktop Back follows screen return history; unavailable chrome actions disabled"
+      "Desktop Back follows screen return history; unavailable chrome actions disabled",
+      "Preserve required provider audio ordinals in native and direct playback; capability negotiation for new backend"
     ]
   },
   "local_runtime_services": {
@@ -267,5 +268,14 @@
     "physical_tv_controls_used": false,
     "cancellation_during_bootstrap": "covered by a focused test; credentials not persisted",
     "installed_on_physical_tv": false
+  },
+  "required_audio_candidate": {
+    "desktop_checks_passed": 68,
+    "android_qa_assembly": "passed",
+    "wasm_compile": "passed",
+    "ffmpeg_packaging": "passed",
+    "native_core_repin": "pending backend integration artifact build",
+    "remote_backend_gateway_updates": "candidate only; existing live runtime unchanged",
+    "physical_multiaudio_qualification": false
   }
 }
