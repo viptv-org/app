@@ -81,6 +81,29 @@ class RemotePlaybackTest {
         connection.close()
     }
 
+    @Test fun audioSelectionCapabilityRequiresHostBootstrapAdvertisement() = runBlocking {
+        for (supported in listOf(false, true)) {
+            var sent: JsonObject? = null
+            val client = HttpClient(MockEngine { request ->
+                val body = if (request.url.encodedPath == "/api/v3/bootstrap")
+                    """{"identity":{"profiles":[],"profile_id":null},"playback_capabilities":{"required_audio_index":$supported}}"""
+                else {
+                    sent = Json.parseToJsonElement((request.body as TextContent).text).jsonObject.getValue("client").jsonObject
+                    """{"id":"direct","status":"ready","delivery":{"kind":"direct","url":"https://media.example/movie.mp4"}}"""
+                }
+                respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }) { configureTransport() }
+            val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+            try {
+                connection.bootstrap()
+                connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", buildJsonObject {
+                    put("can_play_direct", true); put("supports_required_audio_index", true)
+                })
+                assertEquals(if (supported) JsonPrimitive(true) else null, sent?.get("supports_required_audio_index"))
+            } finally { connection.close() }
+        }
+    }
+
     @Test fun cancellingStartingLeaseStopsIt() = runBlocking {
         val started = CompletableDeferred<Unit>()
         val stopped = mutableListOf<String>()

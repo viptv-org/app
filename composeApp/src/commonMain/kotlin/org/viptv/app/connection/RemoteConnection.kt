@@ -37,6 +37,8 @@ class RemoteConnection(
     private var refreshVersion = 0L
     var persistenceWarning: String? = null
         private set
+    internal var requiredAudioIndexSupported = false
+        private set
 
     internal fun devicePairing(active: () -> Boolean = { true }) = RemoteDevicePairing(
         send = { path, body -> send(path, HttpMethod.Post, body, null, null) },
@@ -75,6 +77,8 @@ class RemoteConnection(
 
     suspend fun bootstrap(): Bootstrap {
         val value = call("/api/v3/bootstrap").jsonObject
+        requiredAudioIndexSupported = value["playback_capabilities"]?.jsonObject
+            ?.get("required_audio_index")?.jsonPrimitive?.booleanOrNull == true
         val identity = value.getValue("identity").jsonObject
         csrf = identity["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
         val profiles = identity["profiles"]?.jsonArray.orEmpty().map {

@@ -35,10 +35,13 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
         }
         val audio = options(C.TRACK_TYPE_AUDIO)
         val text = options(C.TRACK_TYPE_TEXT)
-        val candidates = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }.flatMap { group ->
+        val audioGroups = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
+        // Adaptive encodings within one group are not proven file-audio ordinals.
+        val unambiguous = audioGroups.all { it.length == 1 }
+        val candidates = audioGroups.flatMap { group ->
             (0 until group.length).map { index ->
                 val id = keys.getOrPut(Key(group.mediaTrackGroup, index)) { next++ }
-                AudioCandidate(id, group.isTrackSupported(index))
+                AudioCandidate(id, unambiguous && group.isTrackSupported(index))
             }
         }
         when (val choice = requiredAudio.choose(candidates, player.currentTracks.groups.isNotEmpty())) {

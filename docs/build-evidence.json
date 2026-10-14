@@ -1,10 +1,10 @@
 {
   "status": "experimental, incomplete overall",
-  "core": "a7495e753ba9bdace3eb83d7cf99d86b9ed7f200",
+  "core": "0adeb981318c5cc4eb10e7809808f0f36c6fe2a7",
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
-  "backend_tests_passed": 413,
+  "backend_tests_passed": 415,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 62,
+  "desktop_tests_passed": 69,
   "android_release_sha256": null,
   "android_abis": [
     "armeabi-v7a",
@@ -74,7 +74,7 @@
     "includes_media3_ffmpeg_audio": true,
     "includes_latest_core_contract": false
   },
-  "backend": "7c3f0428a59e34eba5c7b173517a073bc68acb9c",
+  "backend": "70b674167f8cc874a4ef15a9eafe45f099e605bd",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -149,12 +149,12 @@
   },
   "current_core_build": {
     "qa_apk": "passed",
-    "desktop_tests": 65,
+    "desktop_tests": 69,
     "wasm_compile": "passed",
-    "physical_tv_installed": true,
+    "physical_tv_installed": false,
     "real_server_home_ready": true
   },
-  "playback_gateway": "c85cd279c68e9fbc46530fb2e39bfc5de45ee7cd",
+  "playback_gateway": "dda7c0535c8653b7afed45c86c237e2d459c9d7f",
   "roku": {
     "commit": "616ac26da2d0195860df245def4c32f06f9a643d",
     "local_checks_passed": 71,
@@ -168,13 +168,17 @@
     "real_naruto_results": 38,
     "startup_bootstrap_requests": 1,
     "detail_metadata_requests": 1,
-    "unit_component_checks": 332,
+    "unit_component_checks": 335,
     "launcher_checks": 3,
     "physical_tv_decoder_qualified": false,
     "cold_image_delivery": "earlier cold37failure cause unconfirmed; current fresh cold53/53 succeeded; bounded failure diagnostics added",
     "normalized_provider_caption_renderer": "original timeline, managed seek preservation, Off without video reopen; transport/controller checked; physical TV unqualified",
-    "commit": "7b533d93c8a4ae07c5b1b4b12cd4e7b695d3a69f",
-    "provider_availability": "profile-scoped bootstrap fact, no startup fanout"
+    "commit": "aebccf1fda74b937288ec35eacbfa4f50e24f7ef",
+    "provider_availability": "profile-scoped bootstrap fact, no startup fanout",
+    "featured_titles": 5,
+    "featured_interval_millis": 8000,
+    "featured_timer_after_artwork": true,
+    "featured_browser_fixture": "rotation, retained Play focus and shelf pause passed; screenshots inspected; no physical TV control"
   },
   "platform_builds": {
     "ci_run": 38499843865,
@@ -206,9 +210,9 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "cc076b251b82cf8b5ce1a13ddb28dfc53f9f658b089bd215ab06ccc0f2d375d9",
+    "apk_sha256": "08c3119a4c1c06858edbf8115a725ffc4d6fc908b1bb17be3bcbd0ffdde67986",
     "build": "passed",
-    "desktop_tests_passed": 68,
+    "desktop_tests_passed": 69,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
@@ -228,7 +232,10 @@
     "authenticated_lan_bootstrap_millis": 583,
     "database_and_sessions_preserved": true,
     "adb_unchanged": true,
-    "proof": "/home/vynxc/.local/state/viptv-qa/restoration-proof.json"
+    "proof": "/home/vynxc/.local/state/viptv-qa/restoration-proof.json",
+    "api_source": "7c3f0428a59e34eba5c7b173517a073bc68acb9c",
+    "gateway_source": "c85cd279c68e9fbc46530fb2e39bfc5de45ee7cd",
+    "restarted_for_current_changes": false
   },
   "standalone_tauri_plugin": {
     "repository": "https://github.com/vynxc/tauri-plugin-video",
@@ -270,12 +277,27 @@
     "installed_on_physical_tv": false
   },
   "required_audio_candidate": {
-    "desktop_checks_passed": 68,
+    "desktop_checks_passed": 69,
     "android_qa_assembly": "passed",
     "wasm_compile": "passed",
     "ffmpeg_packaging": "passed",
-    "native_core_repin": "pending backend integration artifact build",
-    "remote_backend_gateway_updates": "candidate only; existing live runtime unchanged",
-    "physical_multiaudio_qualification": false
+    "native_core_repin": "0adeb981318c5cc4eb10e7809808f0f36c6fe2a7",
+    "remote_backend_gateway_updates": "committed experimental candidates; live runtime unchanged",
+    "physical_multiaudio_qualification": false,
+    "packaged_core_allocated_sections_match_source": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86_64"
+    ],
+    "android_api": 26,
+    "native_build_provenance": "core release artifacts built separately with matching feature/API flags; reused for app assembly; no second Rust compile",
+    "older_host_negotiation": "new client flag omitted unless cached bootstrap advertises support",
+    "adaptive_media3_audio_groups": "required ordinal refused when group encoding order is ambiguous"
+  },
+  "latest_hosted_attempt": {
+    "run": 38529217190,
+    "application_revision": "2e7ba63cfc088269195f7a4bf881bcb8e82a275a",
+    "build_steps_started": false,
+    "result": "blocked by GitHub account payments or spending limit; latest Windows/macOS qualification unavailable"
   }
 }

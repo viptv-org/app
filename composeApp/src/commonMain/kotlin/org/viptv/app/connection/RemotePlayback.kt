@@ -20,11 +20,13 @@ internal class RemotePlaybackLease(val input: PlaybackInput, val renewSeconds: L
 internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, profile: String, clientFacts: JsonObject = playbackClientFacts(), forceGateway: Boolean = false, positionMillis: Long? = null): RemotePlaybackLease {
     val requestId = kotlin.uuid.Uuid.random().toString()
     var playbackId: String? = null
+    val negotiatedFacts = if (requiredAudioIndexSupported) clientFacts
+        else JsonObject(clientFacts - "supports_required_audio_index")
     try {
         return withTimeout(60_000) {
             var response = call("/api/v2/playback", HttpMethod.Post, buildJsonObject {
                 put("request_id", requestId); put("stream_id", source.id)
-                put("client", clientFacts)
+                put("client", negotiatedFacts)
                 put("force_gateway", forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true)
                 put("position", (positionMillis ?: 0).coerceAtLeast(0) / 1000.0); put("resume", positionMillis == null)
             }).jsonObject

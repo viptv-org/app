@@ -41,9 +41,10 @@ physical TV rendering and richer provider controls remain qualification work.
 ## Current evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
-core is `a7495e7`; backend is `7c3f042`; gateway is `c85cd27`. The compatible
+core is `0adeb98`; experimental backend is `70b6741`; gateway is `dda7c05`.
+The running QA server retains backend `7c3f042` and gateway `c85cd27` during manual testing. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 413 checks passed. Gateway: 229 passed. KMP: 65 desktop checks,
+Backend: 415 checks passed. Gateway: 230 passed. KMP: 69 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
@@ -56,7 +57,7 @@ These samples do not qualify every format or all UI transitions.
 
 Roku passed 71 local checks and compilation/staging. Its actual off-device API
 adapter automatically collected all 1,184 real One Piece episodes. TV-web passed
-332 unit/component checks and three Chromium launcher checks. A real HTTPS
+335 unit/component checks and three Chromium launcher checks. A real HTTPS
 Home→Details→Search run used one bootstrap, one metadata request and one Naruto
 query for 38 results, with zero JS/request failures on the warm run. Screenshots
 were inspected. An earlier cold traversal returned 37 artwork 502s; a fresh cold run now returned
@@ -85,7 +86,7 @@ authenticated LAN bootstrap completed in 583 ms.
 
 The next TV candidate reduces settled backdrop compositing, bounds role-specific
 artwork prefetch, and returns Sources focus to the last-focused provider chip.
-Its Android assembly, 65 desktop checks, Wasm compilation and FFmpeg packaging checks passed. It
+Its Android assembly, 69 desktop checks, Wasm compilation and FFmpeg packaging checks passed. It
 is not installed while manual testing continues; physical validation is pending.
 
 The standalone native Tauri plugin moved to `vynxc/tauri-plugin-video`. Generic
@@ -115,7 +116,26 @@ A subsequent candidate preserves a source's optional required audio-only ordinal
 through local/direct playback into Media3 and Kite, maps it to actual player track
 IDs, and keeps later manual choices. Missing/unsupported requirements fail rather
 than silently selecting another language. Gateway remux output is not assigned
-an input-file ordinal. This candidate passed 68 desktop checks, Android QA assembly,
-Wasm compilation and FFmpeg packaging checks. The corresponding core/backend/
-gateway artifact updates and physical multi-audio qualification are pending;
+an input-file ordinal. This candidate passed 69 desktop checks, Android QA assembly,
+Wasm compilation and FFmpeg packaging checks. The native core is repinned and its packaged runtime sections match the separately
+built release inputs. Backend/gateway candidate updates are committed; activation
+and physical multi-audio qualification are pending;
 existing user-facing services and the installed TV app are unchanged.
+
+Media3 rejects a required audio ordinal inside a multi-format adaptive audio group:
+its encoding order is not a verified equivalent of file audio-stream order. Normal
+manual track choices remain available. Single-format groups and Kite's demuxer
+track ordering are supported; adaptive-HLS language selection remains unqualified.
+
+TV-web now rotates five host-selected featured titles after artwork composition,
+with eight-second timers, five indicators, retained Play focus and shelf/menu
+pausing. Its production candidate passed 335 checks, type/build verification and
+three Chromium launcher checks. A separate browser fixture exercised actual
+rotation and a row pause; screenshots were inspected. The current header/hero
+geometry still needs migration to the latest TV design. Served assets were not
+replaced during manual testing.
+
+Latest hosted run 38529217190 did not start any build step: GitHub reports account
+payments failed or the spending limit needs increasing. Previous successful hosted
+runs apply to their recorded revisions. Current local Android, Wasm and Linux
+checks pass; latest Windows/macOS checks remain unavailable.
