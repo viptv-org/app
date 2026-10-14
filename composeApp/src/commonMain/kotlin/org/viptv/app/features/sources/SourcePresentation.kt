@@ -7,12 +7,13 @@ internal fun SourceCandidate.providerLabel(): String = presentation?.provider_na
 internal fun SourceCandidate.qualityLabel(): String? = quality_height?.let { if (it == 2160L) "4K" else "${it}p" } ?: presentation?.quality
 internal fun SourceCandidate.formatLabel(): String? = presentation?.let { it.container ?: it.delivery_format?.takeIf { format -> format.equals("hls", true) }?.uppercase() }
 internal fun SourceCandidate.technicalDetail(): String? {
-    val value = presentation ?: return detail
+    val fallback = detail?.takeUnless { it.trim() == qualityLabel() }
+    val value = presentation ?: return fallback
     val parts = listOfNotNull(value.container, value.video_codec, value.audio_codecs.takeIf { it.isNotEmpty() }?.joinToString(" / "),
         value.size_label ?: value.size_bytes?.let { bytes ->
             if (bytes >= 1_073_741_824) "${(bytes / 107_374_182L) / 10.0} GB" else "${bytes / 1_048_576} MB"
         })
-    return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ") ?: detail
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ") ?: fallback
 }
 
 internal fun sourceHeading(title: org.viptv.engine.wire.Card?, detail: org.viptv.engine.wire.DetailSnapshot?): String? {

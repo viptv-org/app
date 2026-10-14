@@ -29,10 +29,10 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         .onFocusChanged { focused = it.isFocused }.clickable(enabled = enabled) { choose(source) }
         .padding(horizontal = if (television) 28.dp else 20.dp, vertical = if (television) 24.dp else 18.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        source.qualityLabel()?.let { quality -> Column(Modifier.width(49.dp)) {
-            Text(quality, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = foreground)
+        Column(Modifier.width(49.dp)) {
+            Text(source.qualityLabel() ?: "—", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = foreground)
             source.formatLabel()?.let { Text(it, fontSize = 10.sp, maxLines = 2, color = foreground.copy(alpha = .7f)) }
-        } }
+        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(source.label, fontSize = if (television) 24.sp else 14.sp, fontWeight = FontWeight.SemiBold, color = foreground)
             source.technicalDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp,
