@@ -186,7 +186,7 @@ page. Its sheet applies drafts once, respects limits and restores TV focus; seve
 new checks include actual Compose input/focus and a real native Rust/SQLite bridge
 with only add-on IO replaced. Simkl advanced parameters remain limited to its
 verified capabilities. New sheet states and three inspected common-layout captures
-are recorded in GAP-057; TV-web/Roku multiple-choice UI remains migration work.
+are recorded in GAP-057. TV-web/Roku now consume the same controls; their current validation is recorded below.
 
 Core `47b85b5` passed 62 engine and 39 native checks (3 native ignored); backend
 `5aa2f1c` passed 427 checks (10 ignored). Its separately built Linux/Android API26
@@ -200,3 +200,22 @@ missing required fields leave controls usable without a catalog request. Add-on
 configuration refresh clears stale discovery controls/cards/cursors. The native
 bridge check also switches to a search-only catalog, clears its previous genres
 and performs one search request.
+
+TV-web `7bba985` and Roku `5ee3377` now read host discovery capabilities on demand,
+including catalog-less providers, exact catalog ownership, friendly choice labels,
+required inputs and multiple-selection limits. Both keep a draft until Apply,
+clear foreign filters on catalog changes and retain selections while paging.
+TV-web passed 337 checks, type/build verification and production-bundle interaction
+checks on all three Chromium launchers, including 40 choices, Cancel, selection
+limits and focus return. Screenshot inspection caught and corrected overlapping
+checkbox/label spacing; the corrected full source image is recorded in evidence.
+Roku passed 73 local checks, compilation, provenance checks and public runtime ZIP
+inspection. Its new interaction fixture executes the actual scene/sheet handlers.
+These new filter states remain provisional design variants in each client’s
+tracking document. Physical Roku presentation and full design parity remain open.
+
+The existing independent real-browser fixture token returned 401 during a
+read-only discovery check. It was not refreshed or modified during manual TV
+testing. TV API/gateway health and trusted TLS remain successful; active TV/server
+installations were kept unchanged. No updated physical-device acceptance or
+production activation is claimed.

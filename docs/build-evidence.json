@@ -156,29 +156,49 @@
   },
   "playback_gateway": "8deb493c5d428d64298e339f7ae02ebc195e1fdc",
   "roku": {
-    "commit": "616ac26da2d0195860df245def4c32f06f9a643d",
-    "local_checks_passed": 71,
+    "commit": "5ee3377eb66f507fbd16455e040cb5cdc4c2886e",
+    "local_checks_passed": 73,
     "real_https_episode_count": 1184,
     "native_m3u_projection": true,
     "viewer_scoped_provider_caption_controller": true,
-    "physical_decoder_qualified": false
+    "physical_decoder_qualified": false,
+    "host_discovery_controls": true,
+    "multichoice_scene_transport_fixture": true,
+    "public_runtime_zip_sha256": "f9f5b37babe0d59e3fb59e7a1735a96163c144ce92898572f389176443de8519",
+    "compiled_staging": true,
+    "physical_focus_qualified": false
   },
   "tv_web": {
     "global_search_requests": 1,
     "real_naruto_results": 38,
     "startup_bootstrap_requests": 1,
     "detail_metadata_requests": 1,
-    "unit_component_checks": 335,
+    "unit_component_checks": 337,
     "launcher_checks": 3,
     "physical_tv_decoder_qualified": false,
     "cold_image_delivery": "earlier cold37failure cause unconfirmed; current fresh cold53/53 succeeded; bounded failure diagnostics added",
     "normalized_provider_caption_renderer": "original timeline, managed seek preservation, Off without video reopen; transport/controller checked; physical TV unqualified",
-    "commit": "aebccf1fda74b937288ec35eacbfa4f50e24f7ef",
+    "commit": "7bba9853bc431ab5c42dcc58b2c1c5e5918f797e",
     "provider_availability": "profile-scoped bootstrap fact, no startup fanout",
     "featured_titles": 5,
     "featured_interval_millis": 8000,
     "featured_timer_after_artwork": true,
-    "featured_browser_fixture": "rotation, retained Play focus and shelf pause passed; screenshots inspected; no physical TV control"
+    "featured_browser_fixture": "rotation, retained Play focus and shelf pause passed; screenshots inspected; no physical TV control",
+    "host_discovery_controls": true,
+    "discovery_browser_fixture": {
+      "launchers": [
+        "tizen",
+        "vizio",
+        "webos"
+      ],
+      "choices": 40,
+      "selection_limit": 2,
+      "apply_requests_per_owner": 1,
+      "cancel_requests": 0,
+      "catalog_owner_preserved": true,
+      "trigger_focus_restored": true,
+      "physical_hardware_qualified": false
+    }
   },
   "platform_builds": {
     "ci_run": 38499843865,
@@ -432,13 +452,24 @@
       "docs/evidence/discovery-multichoice-tv.png"
     ],
     "simkl": "single-value documented feeds; no invented advanced controls",
-    "tv_web_roku_multichoice_ui": "pending",
+    "tv_web_roku_multichoice_ui": "implemented; TV-web three Chromium launchers and Roku scene-handler/transport fixtures passed; physical TV/Roku acceptance pending",
     "physical_tv_installed": false,
     "live_services_restarted": false,
     "search_only_catalog_requests": 1,
     "required_search_control": "visible per selected catalog; draft applies once; missing requirements avoid catalog IO",
     "addon_changes": "invalidate discovery controls/cards/cursor before refreshing configuration",
-    "v3_owner_contract": "connection_id is populated by native/current and QA7c hosts; remote addon_id comes from exact matching descriptor; legacy /api/catalogs is a separate shape"
+    "v3_owner_contract": "connection_id is populated by native/current and QA7c hosts; remote addon_id comes from exact matching descriptor; legacy /api/catalogs is a separate shape",
+    "real_controls_read_only_probe": {
+      "http": 401,
+      "cause": "stored independent browser fixture access token no longer authorized; no refresh or family mutation during manual TV testing",
+      "server_health_http": 200
+    },
+    "tv_web_capture": {
+      "path": "docs/evidence/discovery-multichoice-tv-web.png",
+      "sha256": "46795893a8d35c8c765975bb99acca370d6a7efb273f8f94009a2c0afdd6885e",
+      "fixture_only": true,
+      "provisional_design": true
+    }
   },
   "native_runtime_current": {
     "core": "47b85b5386617f455ade8b294a7a844b54f537c0",
