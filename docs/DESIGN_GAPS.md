@@ -362,3 +362,10 @@ Cancel, and repeated input submits once. A successful per-device mutation remove
 only that known row without refetching the account. Parent PIN administration and
 remaining operator/account-management screens are separate unfinished dashboard
 work; this surface does not establish complete dashboard or browser design parity.
+
+The browser Devices surface additionally has real production-Wasm/HTTPS fixture
+captures: `browser-account-real.png`, `browser-account-parent-refusal.png` and
+`browser-account-confirmation.png`. Browser Settings opens Devices without loading
+unrelated configuration. Loaded rows and their supplied geometry were inspected;
+permission/refusal and confirmation variants remain provisional. Synthetic account
+records do not establish provider metadata or general browser/OS parity.

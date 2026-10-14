@@ -21,7 +21,8 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountDevicesBrowserLayoutTest {
     @Test fun browserAccountLayoutUsesTheSuppliedSidebarAndContentGeometry() {
-        val scene = ImageComposeScene(1440,860,Density(1f)) { Fixture() }
+        var addonLoads = 0
+        val scene = ImageComposeScene(1440,860,Density(1f)) { Fixture { addonLoads++ } }
         try {
             repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
             fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node)+node.children.flatMap(::flatten)
@@ -31,23 +32,28 @@ class AccountDevicesBrowserLayoutTest {
             val rows = nodes.filter { it.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Living room TV" } == true }
             assertEquals(1,rows.size)
             assertTrue(rows.single().boundsInRoot.right <= 1105f)
+            assertEquals(0,addonLoads)
             System.getenv("VIPTV_ACCOUNT_CAPTURE_DIR")?.let { directory ->
                 File(directory).mkdirs()
                 scene.render(21 * 16_666_667L).use { image -> image.encodeToData()!!.use {
                     File(directory,"account-devices-browser.png").writeBytes(it.bytes)
                 } }
             }
+            val addonAction = nodes.single { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Add-ons" } == true && node.config.contains(SemanticsActions.OnClick) }
+            addonAction.config[SemanticsActions.OnClick].action!!.invoke()
+            repeat(12) { scene.render((it+30)*16_666_667L).close();Thread.sleep(4) }
+            assertEquals(1,addonLoads,"Add-on configuration loads when its section opens")
         } finally { scene.close() }
     }
 
-    @Composable private fun Fixture() {
+    @Composable private fun Fixture(addonsRequested: () -> Unit) {
         val snapshot = Json.decodeFromString<AccountDevices>(accountFixture)
         ViptvTheme {
             Surface(Modifier.fillMaxSize(),color = Palette.background) {
                 Column {
                     TopNavigation(Screen.Settings,false,{},Profile("1","Viewer",null))
                     SettingsScreen(false,emptyList(),emptySet(),false,null,null,{}, { _, _ -> },{}, {},{},
-                        initialSection = "Devices",devices = { compact, back ->
+                        initialSection = "Devices",addonsRequested = addonsRequested,devices = { compact, back ->
                             AccountDevicesScreen(snapshot,false,null,{}, {},{},compact,if (compact) back else null)
                         })
                 }

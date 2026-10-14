@@ -13,6 +13,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
         state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television,
+        initialSection = if (browser) "Devices" else null,
+        addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,
             controller::refreshAccounts, controller::linkSimkl, controller::unlinkSimkl, leave) },
         sourceIntegrations = { Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {

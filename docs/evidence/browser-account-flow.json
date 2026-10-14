@@ -1,0 +1,26 @@
+{
+  "backend": "7dde035920f3570cbd2dce42f0c068af83f893f6",
+  "real_production_wasm": true,
+  "real_https_cookie_flow": true,
+  "opening_account_requests": 1,
+  "opening_account_paths": [
+    "/api/v3/account/devices"
+  ],
+  "cancel_mutations": 0,
+  "per_device_mutations": 1,
+  "all_devices_mutations": 1,
+  "current_browser_protected": true,
+  "permission_refusal_hides_data": true,
+  "foreign_account_preserved": true,
+  "saved_titles_and_progress_preserved": true,
+  "approved_pairing_cancelled": true,
+  "cookies_cleared": true,
+  "javascript_errors": 0,
+  "live_services_changed": false,
+  "media_or_physical_hardware_qualified": false,
+  "opening_account_requests_before": 5,
+  "addon_configuration_on_demand_requests": 3,
+  "parent_policy_change": "Applied only to disposable fixture SQLite; parent administration UI not qualified",
+  "fixture_accounts_only": true,
+  "normal_server_binary_sha256": "2f8dc8a39ba72eec78c365c8b1e576800dbf76e07e3c5b7040e20aa9976b95e2"
+}

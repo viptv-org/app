@@ -16,7 +16,7 @@ fun ApplicationController.navigate(screen: Screen) {
     }
     if (screen != Screen.Live) liveGuideJob?.cancel()
     if (screen == Screen.Live) run { loadLive(LiveQuery()) }
-    if (screen == Screen.Settings) refreshAddons()
+    if (screen == Screen.Settings && connection?.accountManagementEnabled != true) refreshAddons()
     if (screen == Screen.Library) run { loadLibraryPage() }
     if (screen == Screen.Calendar && connection != null) run {
         val window = calendarWindow()

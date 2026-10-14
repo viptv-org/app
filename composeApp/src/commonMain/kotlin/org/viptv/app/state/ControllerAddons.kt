@@ -14,6 +14,8 @@ internal suspend fun ApplicationController.loadAddons() {
 
 fun ApplicationController.refreshAddons() = run { loadAddons(); loadSourceIntegrations(); loadPreferences() }
 
+fun ApplicationController.refreshAddonConfiguration() = run { loadAddons(); loadSourceIntegrations() }
+
 internal suspend fun ApplicationController.updateAddonHome() {
     val profile = requireNotNull(mutable.value.selectedProfile)
     val device = local

@@ -44,7 +44,7 @@ The detailed receipts and immutable pins are in `build-evidence.json`. Native
 core is `47b85b5`; experimental backend is `7dde035`; gateway is `8deb493`.
 The running QA server retains backend `7c3f042` and gateway `c85cd27` during manual testing. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 438 Live/SDK checks passed (10 ignored) at `7dde035`; the last default-feature run at `cc72fbc` passed 415 (8 ignored). This includes the paused-import identity regressions. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 90 desktop checks,
+Backend: 438 Live/SDK checks passed (10 ignored) at `7dde035`; the last default-feature run at `cc72fbc` passed 415 (8 ignored). This includes the paused-import identity regressions. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 91 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
@@ -252,3 +252,22 @@ with verified hashes, separate candidate/rollback manifests and an activation
 plan. The prior 5aa candidate remains intact. Neither new binary was launched;
 the existing API/gateway PIDs and live pointers remain unchanged. Build readiness
 does not establish live activation or current-device acceptance.
+
+The production KMP Web bundle now passed real Chromium pointer/keyboard sign-in,
+profile selection, account device listing, Cancel, per-device revocation, permission
+refusal, retry/recovery and repeated sign-out-all confirmation against a fresh
+normal 7dde035 HTTPS host. Approved pending pairing was cancelled, both cookies
+cleared, the foreign account remained valid, and saved titles/progress survived.
+No API responses were intercepted. The database/accounts were synthetic; the
+parent policy changed only in that disposable database. This is not media-provider,
+parent-administration, decoder or physical-device acceptance. Three actual browser
+captures were inspected and the sanitized proof is recorded in evidence.
+
+Browser Settings now opens Devices directly. Its entry made one account request,
+previously five including unrelated configuration. Add-on configuration reads
+three endpoints only when its section opens; native Settings behavior is retained.
+The new budget check brings KMP to 91 passing desktop checks. Production Wasm,
+Android QA/release and Linux distribution/native smoke passed; both APKs retain
+verified official FFmpeg audio packaging. All 109 files in the currently served
+KMP distribution remain byte-identical. The new bundle stayed isolated and the
+existing TV/API/gateway installations were untouched.

@@ -1717,8 +1717,8 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AccountDevicesScreen.kt",
-    "capture": "docs/evidence/account-devices-browser.png",
-    "verification": "Common Compose browser geometry and responsive screenshots inspected; actual Compose pointer/confirmation and cookie transport fixtures; full browser/OS data and design parity not certified"
+    "capture": "docs/evidence/browser-account-real.png",
+    "verification": "Common geometry and actual production Chromium/HTTPS account flow passed on a fresh synthetic host; screenshots inspected; full design/OS/media parity not certified"
   },
   {
     "id": "W3NotFound",

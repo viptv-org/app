@@ -12,7 +12,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
     remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile? = null,
     back: () -> Unit = {}, television: Boolean = false, initialSection: String? = null, initialLeave: Boolean = false, account: (@Composable () -> Unit)? = null, sourceIntegrations: (@Composable () -> Unit)? = null, preferences: (@Composable () -> Unit)? = null,
-    devices: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
+    devices: (@Composable (Boolean, () -> Unit) -> Unit)? = null, addonsRequested: (() -> Unit)? = null,
     tvPreferences: TvSettingsPreferences? = null, changeTvPreferences: ((TvSettingsPreferences) -> Unit)? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true)
@@ -20,6 +20,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     }
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
+    LaunchedEffect(section) { if (section == "Add-ons") addonsRequested?.invoke() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
         val webAccount = devices != null && !compact

@@ -4,8 +4,8 @@
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
   "backend_tests_passed": 438,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 90,
-  "android_release_sha256": "cbfdb65031782de32c8250fc3645f84304c05d76f664f8f0d543d64e8f2a7071",
+  "desktop_tests_passed": 91,
+  "android_release_sha256": "5cb9a3e7d2b7ac4ec2ba21a274805b24bd9f406d6c6ca569005f99178ede2f73",
   "android_abis": [
     "armeabi-v7a",
     "arm64-v8a",
@@ -149,7 +149,7 @@
   },
   "current_core_build": {
     "qa_apk": "passed",
-    "desktop_tests": 90,
+    "desktop_tests": 91,
     "wasm_compile": "passed",
     "physical_tv_installed": false,
     "real_server_home_ready": true
@@ -230,9 +230,9 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "94c64afa9a85f9c9a3b4f5d483a864ae3215b03f8fa6bf72c1a8c34e442dde71",
+    "apk_sha256": "b2688d5642b2e839fa07e69f5898067cd40d0f32605626aa5bc1da9b7c7cb362",
     "build": "passed",
-    "desktop_tests_passed": 90,
+    "desktop_tests_passed": 91,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
@@ -566,5 +566,53 @@
     "active": false,
     "old_candidate_preserved": true,
     "live_service_pids_unchanged": true
+  },
+  "browser_account_runtime": {
+    "backend": "7dde035920f3570cbd2dce42f0c068af83f893f6",
+    "real_production_wasm": true,
+    "real_https_cookie_flow": true,
+    "opening_account_requests": 1,
+    "opening_account_paths": [
+      "/api/v3/account/devices"
+    ],
+    "cancel_mutations": 0,
+    "per_device_mutations": 1,
+    "all_devices_mutations": 1,
+    "current_browser_protected": true,
+    "permission_refusal_hides_data": true,
+    "foreign_account_preserved": true,
+    "saved_titles_and_progress_preserved": true,
+    "approved_pairing_cancelled": true,
+    "cookies_cleared": true,
+    "javascript_errors": 0,
+    "live_services_changed": false,
+    "media_or_physical_hardware_qualified": false,
+    "opening_account_requests_before": 5,
+    "addon_configuration_on_demand_requests": 3,
+    "parent_policy_change": "Applied only to disposable fixture SQLite; parent administration UI not qualified",
+    "fixture_accounts_only": true,
+    "normal_server_binary_sha256": "2f8dc8a39ba72eec78c365c8b1e576800dbf76e07e3c5b7040e20aa9976b95e2",
+    "captures": [
+      {
+        "path": "docs/evidence/browser-account-real.png",
+        "sha256": "07dd3307d864dfcc3de38bd77bfa40148a1ba7470711c116d2dc93a2a4bd44c6",
+        "synthetic_fixture_data": true
+      },
+      {
+        "path": "docs/evidence/browser-account-parent-refusal.png",
+        "sha256": "a6d50a7198c5a782f8314e6cacfbcfd35f43008cd4e43955282ecf06f0be2d39",
+        "synthetic_fixture_data": true
+      },
+      {
+        "path": "docs/evidence/browser-account-confirmation.png",
+        "sha256": "6c5bc40900716bd7626bf83bd6046fe85089486fb5b1098216bd591ccff7d683",
+        "synthetic_fixture_data": true
+      }
+    ],
+    "production_distribution_build": "passed with an isolated Sync destination",
+    "protected_served_asset_count": 109,
+    "protected_served_assets_byte_identical": true,
+    "cold_assets_from_new_browser_context": true,
+    "media_playback_or_throughput_qualified": false
   }
 }
