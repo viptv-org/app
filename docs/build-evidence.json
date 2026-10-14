@@ -1,8 +1,8 @@
 {
   "status": "experimental, incomplete overall",
   "core": "a7495e753ba9bdace3eb83d7cf99d86b9ed7f200",
-  "kite_renderer": "56f361b7610bf1d20c328cf919877e37baff9d1f",
-  "backend_tests_passed": 405,
+  "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
+  "backend_tests_passed": 406,
   "backend_tests_ignored": 10,
   "desktop_tests_passed": 62,
   "android_release_sha256": null,
@@ -73,7 +73,7 @@
     "linux": "passed",
     "includes_latest_info_changes": false
   },
-  "backend": "df4febfb07ee81ce80aa56c416dc3b54ffbbd4c2",
+  "backend": "79cc5cd87cf4e198434f7472a10e2c900ecd74f3",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
