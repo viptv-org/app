@@ -2,10 +2,10 @@
   "status": "experimental, incomplete overall",
   "core": "47b85b5386617f455ade8b294a7a844b54f537c0",
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
-  "backend_tests_passed": 427,
+  "backend_tests_passed": 438,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 80,
-  "android_release_sha256": "0be01aa5d8476f986d61c84b19e5e1881532cecfb07b5153ce30c754c9282d40",
+  "desktop_tests_passed": 90,
+  "android_release_sha256": "cbfdb65031782de32c8250fc3645f84304c05d76f664f8f0d543d64e8f2a7071",
   "android_abis": [
     "armeabi-v7a",
     "arm64-v8a",
@@ -52,7 +52,7 @@
     "player_gui_qualified": false
   },
   "production_deployed": false,
-  "date": "2026-10-13",
+  "date": "2026-10-14",
   "native_source_plugin": {
     "backend_required": false,
     "physical_tv_candidate_providers": 4,
@@ -74,7 +74,7 @@
     "includes_media3_ffmpeg_audio": true,
     "includes_latest_core_contract": false
   },
-  "backend": "5aa2f1cff35a6bf567a182643f3da16d6bf2a370",
+  "backend": "7dde035920f3570cbd2dce42f0c068af83f893f6",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -149,7 +149,7 @@
   },
   "current_core_build": {
     "qa_apk": "passed",
-    "desktop_tests": 80,
+    "desktop_tests": 90,
     "wasm_compile": "passed",
     "physical_tv_installed": false,
     "real_server_home_ready": true
@@ -230,9 +230,9 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "df0039ad7cc4ea367635e97ec8200627e31e98e29a99478a935b64465ff8e25d",
+    "apk_sha256": "94c64afa9a85f9c9a3b4f5d483a864ae3215b03f8fa6bf72c1a8c34e442dde71",
     "build": "passed",
-    "desktop_tests_passed": 80,
+    "desktop_tests_passed": 90,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
@@ -244,7 +244,8 @@
       "Preserve required provider audio ordinals in native and direct playback; capability negotiation for new backend",
       "Phone/desktop browser and device pairing share TV challenge lifecycle; explicit server validation and Back cancellation",
       "Profile-local M3U/Xtream native entry, PIN-before-assignment, cancellation-safe engine open and HTTP provider media support",
-      "Provider-owned multi-choice discovery sheets, explicit catalog ownership, one catalog request per page and catalog-change filter reset"
+      "Provider-owned multi-choice discovery sheets, explicit catalog ownership, one catalog request per page and catalog-change filter reset",
+      "Readable native sign-in device labels and working phone preference routes; browser account device management is separately gated"
     ]
   },
   "local_runtime_services": {
@@ -346,7 +347,7 @@
     "failed": 0,
     "test_only_followup": "two missing SocketAddr imports; runtime unchanged"
   },
-  "backend_full_suite_revision": "5aa2f1cff35a6bf567a182643f3da16d6bf2a370",
+  "backend_full_suite_revision": "7dde035920f3570cbd2dce42f0c068af83f893f6",
   "simkl_paused_identity": {
     "revision": "b412561505c8116866334d90dba9426d0049b99c",
     "focused_tests_passed": 8,
@@ -489,5 +490,61 @@
       "armeabi-v7a",
       "x86_64"
     ]
+  },
+  "account_devices": {
+    "backend": "7dde035920f3570cbd2dce42f0c068af83f893f6",
+    "account_aggregate_requests": 1,
+    "per_device_mutation_requests": 1,
+    "per_device_followup_reads": 0,
+    "server_checks_passed": 4,
+    "cookie_csrf_and_parent_policy": true,
+    "cross_account_revoke_rejected": true,
+    "saved_titles_and_progress_preserved": true,
+    "rapid_confirmation_publishes_once": true,
+    "permission_refusal_clears_loaded_data": true,
+    "browser_only": true,
+    "native_credentials_not_persisted_for_browser": true,
+    "common_compose_checks": 4,
+    "transport_controller_checks": 5,
+    "phone_preference_routing_checks": 1,
+    "captures": [
+      {
+        "path": "docs/evidence/account-devices-browser.png",
+        "sha256": "e6f6f66a12d531d28ffaaa7526ac19f484082b3be8f38b6dfb9ab5ad66cec510",
+        "fixture_only": true
+      },
+      {
+        "path": "docs/evidence/account-devices-phone.png",
+        "sha256": "fd12d8faa19c0958e6dc606c234c07fdd9314c4aa19f6ec513947b64184681ea",
+        "fixture_only": true
+      },
+      {
+        "path": "docs/evidence/account-devices-confirm-all.png",
+        "sha256": "54a39651a4a369a1070b96b7ab96c5d5b0d403c020c6bde350f7d6baaaebf66c",
+        "fixture_only": true
+      }
+    ],
+    "full_browser_or_hardware_acceptance": false,
+    "real_accounts_mutated": false,
+    "runtime_activated": false,
+    "new_runtime_feature_file_max_lines": 72
+  },
+  "simkl_anime_identity": {
+    "revision": "3de59b3483f1b249fbc55def2f30265f4d5874bb",
+    "focused_passed": 66,
+    "ignored": 1,
+    "paused_title_category_scoped": true,
+    "absolute_mapping_requires_unique_provider_assertion": true,
+    "ambiguous_tracking_egress": 0,
+    "real_account_history_mutated": false,
+    "core_native_abi_changed": false
+  },
+  "auth_mutation_family_fence": {
+    "revision": "6ff4e6b77b76947d01bc4c3793a9a9d5fab758fe",
+    "focused_auth_checks": 32,
+    "new_stale_authority_cases": 3,
+    "queued_approval_rejected_after_family_revocation": true,
+    "live_approval_preserved": true,
+    "real_sessions_mutated": false
   }
 }

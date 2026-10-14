@@ -26,6 +26,7 @@ class RemoteConnection(
 ) {
     private val codec = Json { ignoreUnknownKeys = true }
     private val browser = browserMode
+    internal val accountManagementEnabled: Boolean get() = browser
     private val origin = validatedRemoteOrigin(rawOrigin)
     private val client = client ?: platformClient()
     private var csrf: String? = null
@@ -52,7 +53,7 @@ class RemoteConnection(
 
     suspend fun login(username: String, password: String): Bootstrap {
         val result = requestJson(if (browser) "/api/auth/login" else "/api/auth/device/login", HttpMethod.Post,
-            buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", "VIPTV") })
+            buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", deviceDisplayName()) })
         if (!browser) installDeviceTokens(result.jsonObject)
         csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull
         return bootstrap()

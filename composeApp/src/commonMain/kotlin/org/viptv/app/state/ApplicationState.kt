@@ -21,6 +21,7 @@ data class ApplicationState(
     val profileToEdit: String? = null,
     val profileNotice: String? = null,
     val simkl: SimklLinkStatus? = null,
+    val accountDevices: AccountDevices? = null,
     val profileManagement: ProfileManagement? = null,
     val managingProfiles: Boolean = false,
     val selectedProfile: String? = null,

@@ -37,12 +37,12 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
     var overflow by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(68.dp)
         .padding(horizontal = if (collapsed) 16.dp else 57.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-        Brand(28.dp, 20.sp, 9.dp)
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+        Box(Modifier.padding(end = if (collapsed) 0.dp else 14.dp)) { Brand(28.dp, 20.sp, 9.dp) }
         visible.forEach { destination ->
             Text(destination.label, Modifier.clip(RoundedCornerShape(8.dp))
                 .clickable { navigate(destination.screen) }.padding(vertical = 10.dp),
-                color = if (selected == destination.screen) Palette.text else Palette.secondary,
+                color = if (selected == destination.screen) Palette.text else Palette.body,
                 fontSize = 14.sp,
                 fontWeight = if (selected == destination.screen) FontWeight.Bold else FontWeight.Medium)
         }

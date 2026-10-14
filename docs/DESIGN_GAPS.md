@@ -6,7 +6,7 @@
 | GAP-002 | Profile integration assignment | One browsing integration; multiple sources/subtitles | Initial per-profile add-on switch in `features/settings/SettingsScreen.kt`; capture `docs/provisional/addon-settings-android.png`; full capability controls pending |
 | GAP-003 | Simkl TV connection | Dashboard linking replaces direct provider PIN flow | Implemented native explanation and browser linking in `features/settings/LinkedAccounts.kt`; supplied-design review pending |
 | GAP-004 | Server and integration failures | Empty, unauthorized and unavailable are distinct | Pending implementation |
-| GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Pending implementation |
+| GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Browser device management implemented from W3Account; broader administration remains pending |
 | GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt`; settings capture `docs/provisional/addon-settings-android.png` |
 | GAP-007 | Local History clear confirmation | Current History boards show Clear without its confirmation state | Provisional confirmation in `features/history/HistoryScreen.kt` |
 | GAP-008 | Local profile creation dialog | Current profile picker shows Add profile, but no local creation form | Provisional dialog in `features/entry/ProfilesScreen.kt`; capture `docs/evidence/android-profiles.png` |
@@ -17,7 +17,7 @@
 | GAP-013 | Linux desktop window controls | The current desktop ZIP shows Windows and macOS chrome, with no Linux board | Provisional Linux variant follows the Windows control placement in `desktopMain/DesktopTitleBar.kt`; capture `docs/evidence/desktop-titlebar-linux.png` |
 | GAP-019 | Unavailable channel favourites and calendar filters | Normal connections currently lack the save/filter operations | Provisional notices in `features/live/LiveScreen.kt` and `components/PhoneHeader.kt`; preview guide/calendar captures cover the surrounding layouts |
 | GAP-018 | Confirming a 5–8 digit TV PIN | The supplied TV keypad has four slots and no confirmation key | Provisional OK key in `features/entry/TvPinScreen.kt`; `docs/evidence/android-tv-pin-preview.png` records preview input |
-| GAP-017 | Phone settings capability notices | Playback preferences, notifications, pairing and account/help settings lack connected behavior | Provisional explanation in `features/settings/PhoneSettings.kt`; settings landing capture uses ZIP artwork in preview mode |
+| GAP-017 | Phone settings capability notices | Notifications, pairing and help retain unavailable states | Playback/Subtitles now open the real profile form; remaining notices in `features/settings/PhoneSettings.kt` are provisional |
 | GAP-016 | Unavailable header capabilities | Casting, TV remote control and provider genre controls lack connected contracts | Phone notices in `components/PhoneHeader.kt`; desktop Cast/Remote/Forward buttons are disabled when no operation exists; capture pending |
 | GAP-015 | My List unavailable notice | Earlier missing shared list operation | Resolved by persisted local/remote My List; capability-dependent action variants remain in GAP-045 |
 | GAP-014 | Custom server selection in desktop password flow | The supplied password board assumes one server | Use another server expands the address field in `DesktopPasswordPanel.kt`; capture `docs/evidence/desktop-signin-password.png` |
@@ -338,3 +338,27 @@ supplied boards. These are provisional states; no full design parity is claimed.
 Compose layouts with synthetic genre choices, not a live Simkl capability.
 Three real Compose input/focus checks cover Apply/limit behavior, required catalog search input and TV initial focus;
 Android input, physical TV rendering and browser popup placement remain separate.
+
+### GAP-058 — Browser account device management
+
+The browser Devices page follows `W3Account` for sidebar/content geometry, device
+rows, typography and sign-out controls. Its loaded browser layout is recorded in
+`docs/evidence/account-devices-browser.png`. The host returns browser and paired
+app families with a current-session marker. The current browser has no per-device
+sign-out action; the separate all-devices action includes it after confirmation.
+
+Per-device/all-device confirmation, initial skeleton/loading, busy/error/retry, no-session and old-server
+states, the Refresh action, keyboard focus treatment and narrow-screen adaptation
+have no individually supplied boards. These variants remain provisional. The
+phone common-layout and all-devices confirmation captures are also recorded in
+`docs/evidence`. Creation time is labeled “Signed in …”; last activity, browser OS
+and app device class are not fabricated. Unknown kinds use a generic device icon.
+New native sign-ins send a readable platform/model label without hardware IDs.
+No existing session names are rewritten.
+
+The KMP UI hides device management on native/local connections. Permission failure
+clears previously loaded device data. Confirmation does not submit on open or
+Cancel, and repeated input submits once. A successful per-device mutation removes
+only that known row without refetching the account. Parent PIN administration and
+remaining operator/account-management screens are separate unfinished dashboard
+work; this surface does not establish complete dashboard or browser design parity.

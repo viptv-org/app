@@ -41,10 +41,10 @@ physical TV rendering and richer provider controls remain qualification work.
 ## Current evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
-core is `47b85b5`; experimental backend is `5aa2f1c`; gateway is `8deb493`.
+core is `47b85b5`; experimental backend is `7dde035`; gateway is `8deb493`.
 The running QA server retains backend `7c3f042` and gateway `c85cd27` during manual testing. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 427 Live/SDK checks passed (10 ignored) at `5aa2f1c`; the last default-feature run at `cc72fbc` passed 415 (8 ignored). This includes the paused-import identity regressions. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 80 desktop checks,
+Backend: 438 Live/SDK checks passed (10 ignored) at `7dde035`; the last default-feature run at `cc72fbc` passed 415 (8 ignored). This includes the paused-import identity regressions. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 90 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
@@ -55,9 +55,9 @@ drops, FFmpeg AAC audio and Amlogic hardware AVC video. A real native VixSrc epi
 was visually verified at its approximately 24 FPS source cadence with zero drops.
 These samples do not qualify every format or all UI transitions.
 
-Roku passed 71 local checks and compilation/staging. Its actual off-device API
+Roku passed 73 local checks and compilation/staging. Its actual off-device API
 adapter automatically collected all 1,184 real One Piece episodes. TV-web passed
-335 unit/component checks and three Chromium launcher checks. A real HTTPS
+337 unit/component checks and three Chromium launcher checks. A real HTTPS
 Home→Details→Search run used one bootstrap, one metadata request and one Naruto
 query for 38 results, with zero JS/request failures on the warm run. Screenshots
 were inspected. An earlier cold traversal returned 37 artwork 502s; a fresh cold run now returned
@@ -219,3 +219,30 @@ read-only discovery check. It was not refreshed or modified during manual TV
 testing. TV API/gateway health and trusted TLS remain successful; active TV/server
 installations were kept unchanged. No updated physical-device acceptance or
 production activation is claimed.
+
+Browser Account→Devices now uses one account-owned aggregate with both browser
+and paired-app families, current-browser protection and confirmed single/all
+sign-out. A successful single removal reconciles just that row with no follow-up
+read. Parent-policy refusals clear previously displayed device data. Screens follow
+W3Account geometry; browser/common-phone/confirmation captures were inspected.
+New states are tracked in GAP-058. Repeated confirmation input now submits once.
+Phone Playback/Subtitles settings open the existing real preference forms and
+return to Settings. Native sign-ins send readable platform/model names without
+hardware identifiers; native clients cannot dispatch browser account management.
+
+KMP passed 90 desktop checks, Wasm compilation, Android QA/release assembly and a
+new Linux distribution’s bundled-JVM/SQLite smoke. Both APKs retain verified
+three-ABI official FFmpeg audio and 16 KiB alignment. These are build/common-renderer
+checks, not new physical TV/Android input or desktop GPU acceptance. The new APK
+remains uninstalled during manual testing; the running QA services are unchanged.
+
+Backend `7dde035` passed 438 Live/SDK checks with 10 ignored. Four account-device
+HTTP/SQLite regressions cover scope, parent policy, CSRF and preserved content.
+The preceding Simkl fix scopes equal numeric IDs by title category and requires
+provider-asserted anime episode hints to agree, including imported Next/tracking;
+66 focused checks passed with one ignored. A final-transaction authorization fence
+rejects queued TV approvals after their browser family was revoked; 32 auth checks
+passed. All new revocations/imports used isolated fixtures. No real account history
+or active session was changed. Updated runtime preparation remains separate from
+activation; broader dashboard, real-provider anime acceptance and full design
+parity remain unfinished.

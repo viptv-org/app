@@ -20,6 +20,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration) } },
         preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences) },
+        devices = if (browser && !state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
+            controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null) }) else null,
         tvPreferences = state.preferences?.preferences?.tvSettings(),
         changeTvPreferences = { controller.updatePreferences(it.profilePreferences()) })
 }

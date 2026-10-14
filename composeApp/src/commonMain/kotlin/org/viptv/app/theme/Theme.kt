@@ -15,6 +15,7 @@ object Palette {
     val text = Color(0xFFF4F2EE)
     val body = Color(0xFFDAD8D3)
     val secondary = Color(0xFFB6B4AF)
+    val tertiary = Color(0xFF8F8D89)
     val accent = Color(0xFFF5C542)
     val danger = Color(0xFFFF7A6E)
 }

@@ -18,7 +18,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
-    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null) {
+    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null) {
     var unavailable by remember { mutableStateOf<String?>(null) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -46,9 +46,9 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
         notice?.let { item { Text(it, color = Palette.danger) } }
         item {
             SettingsGroup {
-                SettingsItem("Playback", Lucide.CirclePlay) { unavailable = "Playback preferences" }
+                SettingsItem("Playback", Lucide.CirclePlay) { if (preferences != null) preferences("Playback") else unavailable = "Playback preferences" }
                 SettingsDivider()
-                SettingsItem("Subtitles & audio", Lucide.Captions) { unavailable = "Subtitle and audio preferences" }
+                SettingsItem("Subtitles & audio", Lucide.Captions) { if (preferences != null) preferences("Subtitles & audio") else unavailable = "Subtitle and audio preferences" }
                 SettingsDivider()
                 SettingsItem("Notifications", Lucide.Bell) { unavailable = "Notifications" }
             }
@@ -64,6 +64,10 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             SettingsGroup {
                 SettingsItem("Account", Lucide.UserRound, if (local) "Using this device locally" else "Connected to a server") { if (account != null) account() else unavailable = "Account settings" }
                 SettingsDivider()
+                if (devices != null) {
+                    SettingsItem("Devices", Lucide.Monitor, action = devices)
+                    SettingsDivider()
+                }
                 SettingsItem("Help", Lucide.Info) { unavailable = "Help" }
                 SettingsDivider()
                 SettingsItem("About VIPTV", Lucide.Info) { unavailable = "About VIPTV" }

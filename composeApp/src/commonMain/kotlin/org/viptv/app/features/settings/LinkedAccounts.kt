@@ -12,7 +12,7 @@ import org.viptv.app.theme.Palette
 internal fun LinkedAccounts(local: Boolean, browser: Boolean, status: SimklLinkStatus?, busy: Boolean,
     error: String?, load: () -> Unit, link: () -> Unit, unlink: () -> Unit, leave: () -> Unit) {
     var confirming by remember { mutableStateOf(false) }
-    LaunchedEffect(local) { if (!local) load() }
+    LaunchedEffect(local, browser) { if (!local && browser) load() }
     Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Account", style = MaterialTheme.typography.headlineMedium)
         when {
