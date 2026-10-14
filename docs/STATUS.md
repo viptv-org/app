@@ -43,7 +43,7 @@ physical TV rendering and richer provider controls remain qualification work.
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
 core is `a7495e7`; backend is `7c3f042`; gateway is `c85cd27`. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 413 checks passed. Gateway: 229 passed. KMP: 62 desktop checks,
+Backend: 413 checks passed. Gateway: 229 passed. KMP: 65 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
@@ -68,8 +68,7 @@ failure diagnostics added. Warm success does not explain the earlier failure.
 Full design coverage and unprovided UI review; remaining physical-TV UI/performance
 acceptance; desktop GUI/player qualification; broader format/live/subtitle/seek
 and long-running playback; anime tracking/mapping acceptance; dashboard
-administration; remaining TV-web/Roku migration; final cleanup and generic Tauri
-plugin account transfer. Production deployment is not claimed. Private provider
+administration; remaining TV-web/Roku migration; remaining workspace and inactive-client cleanup. Production deployment is not claimed. Private provider
 captures remain in workspace artifacts rather than repository history.
 
 An isolated Linux playback diagnostic visibly rendered the public 1080p60 sample,
@@ -86,5 +85,28 @@ authenticated LAN bootstrap completed in 583 ms.
 
 The next TV candidate reduces settled backdrop compositing, bounds role-specific
 artwork prefetch, and returns Sources focus to the last-focused provider chip.
-Its Android assembly, 62 desktop checks and FFmpeg packaging checks passed. It
+Its Android assembly, 65 desktop checks, Wasm compilation and FFmpeg packaging checks passed. It
 is not installed while manual testing continues; physical validation is pending.
+
+The standalone native Tauri plugin moved to `vynxc/tauri-plugin-video`. Generic
+branding and package metadata are on `experiment/kmp-v2`; the main commit and
+all branch/tag refs were preserved through transfer. It passed 56 native and
+31 JavaScript checks, package build and a zero-advisory root dependency audit.
+It is independent of KMP playback; no registry release is claimed.
+
+The old Tauri desktop host and Android-only client are retired on their
+experimental branches. Their current branch trees contain only retirement
+records and original root licenses, pointing to the KMP app. Main branches,
+Git history and historical local files remain available.
+
+The TV candidate also connects normal Phone/Browser sign-in to the backend device
+challenge: real QR/code/expiry, bounded polling, cancellation and explicit HTTPS
+server selection. A live adapter check approved a fresh owned challenge, restored
+its saved session and loaded a real profile Home, then signed out its temporary
+family. Existing device families and the physical TV were untouched. A focused
+check covers cancellation during bootstrap without persisting the abandoned
+session. Physical-TV sign-in visual/input review remains pending.
+
+Desktop Back now follows route return state, including Details→Search and
+Sources→Live. Unavailable Forward/Cast/Remote chrome actions are disabled instead
+of accepting clicks without an operation.

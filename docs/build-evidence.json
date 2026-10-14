@@ -149,7 +149,7 @@
   },
   "current_core_build": {
     "qa_apk": "passed",
-    "desktop_tests": 62,
+    "desktop_tests": 65,
     "wasm_compile": "passed",
     "physical_tv_installed": true,
     "real_server_home_ready": true
@@ -206,15 +206,17 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "f3ab81eeec4bf1a904718a16528bd5aa10a1ad159b53f8151262ff54696dded9",
+    "apk_sha256": "89c330af84e6068fc0893b1e4fc357a97dd69dcb94ec799ea1ff9ae42dd5494e",
     "build": "passed",
-    "desktop_tests_passed": 62,
+    "desktop_tests_passed": 65,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
       "Auto compositing with explicit clipping for settled Home backdrop",
       "Artwork/logo prefetch at their displayed sizes with shared logo transformation",
-      "Stable provider/quality chip identities and last-focused provider return"
+      "Stable provider/quality chip identities and last-focused provider return",
+      "Server-issued TV device pairing with explicit server choice and cancellation",
+      "Desktop Back follows screen return history; unavailable chrome actions disabled"
     ]
   },
   "local_runtime_services": {
@@ -226,5 +228,44 @@
     "database_and_sessions_preserved": true,
     "adb_unchanged": true,
     "proof": "/home/vynxc/.local/state/viptv-qa/restoration-proof.json"
+  },
+  "standalone_tauri_plugin": {
+    "repository": "https://github.com/vynxc/tauri-plugin-video",
+    "branch": "experiment/kmp-v2",
+    "source": "3443319091549a6e485a2d79ca6e975b83ce26d3",
+    "repository_id": 1367453527,
+    "main_preserved_at_transfer": "7a85ad46b5f1ece4ae7cc1e7afb928e3d2c4dad2",
+    "all_branch_tag_refs_preserved_at_transfer": true,
+    "native_checks_passed": 56,
+    "native_checks_ignored": 7,
+    "javascript_checks_passed": 31,
+    "root_javascript_dependency_advisories": 0,
+    "registry_release": false
+  },
+  "retired_clients": {
+    "desktop": {
+      "experimental_commit": "51090e31cce353e488f34c840bc0017cef967dc7",
+      "replacement": "viptv-org/app",
+      "main_branch_retained": true,
+      "history_retained": true,
+      "historical_local_files_retained": true
+    },
+    "android": {
+      "experimental_commit": "6f16c9fa36035cbd3cc4e81d95c2b4ac0c10ef79",
+      "replacement": "viptv-org/app",
+      "main_branch_retained": true,
+      "history_retained": true,
+      "historical_local_files_retained": true
+    }
+  },
+  "device_pairing": {
+    "real_https_approval": true,
+    "normal_session_store_restore": true,
+    "selected_profile_home_loaded": true,
+    "temporary_device_family_signed_out": true,
+    "existing_device_families_revoked": 0,
+    "physical_tv_controls_used": false,
+    "cancellation_during_bootstrap": "covered by a focused test; credentials not persisted",
+    "installed_on_physical_tv": false
   }
 }

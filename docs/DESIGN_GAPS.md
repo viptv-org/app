@@ -4,7 +4,7 @@
 | --- | --- | --- | --- |
 | GAP-001 | Local/remote connection selection | Native local mode; browser remains remote-only | Initial provisional implementation: `features/entry/ConnectScreen.kt`; capture `docs/provisional/connection-desktop.png` |
 | GAP-002 | Profile integration assignment | One browsing integration; multiple sources/subtitles | Initial per-profile add-on switch in `features/settings/SettingsScreen.kt`; capture `docs/provisional/addon-settings-android.png`; full capability controls pending |
-| GAP-003 | Simkl TV connection | Dashboard link replaces direct provider PIN flow | Pending implementation |
+| GAP-003 | Simkl TV connection | Dashboard linking replaces direct provider PIN flow | Implemented native explanation and browser linking in `features/settings/LinkedAccounts.kt`; supplied-design review pending |
 | GAP-004 | Server and integration failures | Empty, unauthorized and unavailable are distinct | Pending implementation |
 | GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Pending implementation |
 | GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt`; settings capture `docs/provisional/addon-settings-android.png` |
@@ -18,8 +18,8 @@
 | GAP-019 | Unavailable channel favourites and calendar filters | Normal connections currently lack the save/filter operations | Provisional notices in `features/live/LiveScreen.kt` and `components/PhoneHeader.kt`; preview guide/calendar captures cover the surrounding layouts |
 | GAP-018 | Confirming a 5–8 digit TV PIN | The supplied TV keypad has four slots and no confirmation key | Provisional OK key in `features/entry/TvPinScreen.kt`; `docs/evidence/android-tv-pin-preview.png` records preview input |
 | GAP-017 | Phone settings capability notices | Playback preferences, notifications, pairing and account/help settings lack connected behavior | Provisional explanation in `features/settings/PhoneSettings.kt`; settings landing capture uses ZIP artwork in preview mode |
-| GAP-016 | Unavailable phone header capabilities | Casting, remote pairing and provider genre controls are not connected yet | Provisional notice in `components/PhoneHeader.kt`; capture pending |
-| GAP-015 | My List unavailable notice | The design assumes persisted saved titles; the experiment has no shared list operation yet | Provisional notices in `features/home/PhoneHero.kt`, `DesktopHeroActions.kt`, `TvHero.kt` and `features/library/LibraryScreen.kt`; visual capture pending |
+| GAP-016 | Unavailable header capabilities | Casting, TV remote control and provider genre controls lack connected contracts | Phone notices in `components/PhoneHeader.kt`; desktop Cast/Remote/Forward buttons are disabled when no operation exists; capture pending |
+| GAP-015 | My List unavailable notice | Earlier missing shared list operation | Resolved by persisted local/remote My List; capability-dependent action variants remain in GAP-045 |
 | GAP-014 | Custom server selection in desktop password flow | The supplied password board assumes one server | Use another server expands the address field in `DesktopPasswordPanel.kt`; capture `docs/evidence/desktop-signin-password.png` |
 
 Provisional surfaces are recorded with their source locations and available review captures. No provisional surface is recorded as supplied-design parity.
@@ -39,17 +39,19 @@ than being counted as missing designs.
 `TvPasswordPanel` adds Delete character and Use another server actions. The ZIP
 keyboard lacks a deletion key and assumes a fixed server. The welcome footer
 omits “No profiles or sync” because local profiles are an agreed app requirement.
-Unimplemented phone/browser/email/device/IPTV approval flows remain supplied
-boards awaiting implementation; their unavailable states are temporary.
+Phone/browser device pairing is connected to the server-owned challenge flow.
+Email and IPTV entry boards still have unfinished connection behavior; their
+unavailable states are temporary.
 
 ### GAP-022 — TV title/source capabilities without connected contracts
 
 The source drawer's normal footer says “Select a source to start playback” because
 automatic best-match selection and per-profile ranking preferences are unfinished.
-Quality, format, add-on attribution and ranking currently render from structured
-preview values; normal `SourceCandidate` data lacks those fields. TV title options
-have temporary unavailable notices for My List and trailers. Cast/resume and
-recommendation presentation is currently supplied only in the review fixture.
+Quality, format and add-on attribution use structured source projections.
+Provider/quality chips and source rows use the existing design geometry; added
+provider filter variants need review. Trailers and casting still expose unavailable
+states where no operation exists. My List, resume and related titles now use
+connected local/remote operations.
 
 ### GAP-023 — TV playback episode picker and control failure notice
 
@@ -160,18 +162,18 @@ design review; no full-width progress bar is inserted above existing results.
 
 ### GAP-037 — TV focused-title background without landscape artwork
 
-When a card supplies only a portrait poster, `TvHomeBackdrop` uses the theme
-background rather than stretching it full-screen. The shelf poster remains.
-The supplied browsing board has landscape artwork; its missing-art state is
-provisional and needs review. Connected providers still need to supply appropriate
-wide artwork for full fidelity.
+Portrait-only cards use a bounded portrait image over a soft poster backdrop in
+`TvHomeBackdrop`. Cards with neither landscape nor portrait artwork retain the
+theme background. The supplied browsing board has landscape artwork; these
+missing-art variants need review. Wide provider artwork remains preferable.
 
-### GAP-038 — TV pairing without a session or refresh service
+### GAP-038 — TV pairing server selection and challenge states
 
-`TvPairingSignIn` shows explicit missing-session and refresh-unavailable states
-absent from the populated `Tv3SignIn` board. No fabricated QR/code/expiry is shown
-without session data. The preview uses a matching `.invalid` host and QR URL for
-safe review; production pairing/authentication remains unimplemented.
+`TvRemotePairing` connects the supplied `Tv3SignIn` layout to server-issued QR,
+code, expiry and polling. The explicit HTTPS server selector, creating-code,
+expired/error and use-another-server variants are additional provisional UI.
+The preview uses a matching `.invalid` host; normal sign-in uses real challenge
+data. Physical-TV pairing and these additional states still need visual review.
 
 ### GAP-039 — TV playback failure with reduced recovery actions
 
