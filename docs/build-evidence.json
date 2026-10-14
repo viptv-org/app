@@ -2,7 +2,7 @@
   "status": "experimental, incomplete overall",
   "core": "a7495e753ba9bdace3eb83d7cf99d86b9ed7f200",
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
-  "backend_tests_passed": 412,
+  "backend_tests_passed": 413,
   "backend_tests_ignored": 10,
   "desktop_tests_passed": 62,
   "android_release_sha256": null,
@@ -74,7 +74,7 @@
     "includes_media3_ffmpeg_audio": true,
     "includes_latest_core_contract": false
   },
-  "backend": "91ecda58179ffa9fde4f19264c49b52c8dd4386c",
+  "backend": "7c3f0428a59e34eba5c7b173517a073bc68acb9c",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -156,7 +156,7 @@
   },
   "playback_gateway": "c85cd279c68e9fbc46530fb2e39bfc5de45ee7cd",
   "roku": {
-    "commit": "436015b",
+    "commit": "616ac26da2d0195860df245def4c32f06f9a643d",
     "local_checks_passed": 71,
     "real_https_episode_count": 1184,
     "native_m3u_projection": true,
@@ -168,9 +168,41 @@
     "real_naruto_results": 38,
     "startup_bootstrap_requests": 1,
     "detail_metadata_requests": 1,
-    "unit_component_checks": 323,
+    "unit_component_checks": 332,
     "launcher_checks": 3,
     "physical_tv_decoder_qualified": false,
-    "cold_image_delivery": "502 regression under investigation; warm run zero failures"
-  }
+    "cold_image_delivery": "earlier cold37failure cause unconfirmed; current fresh cold53/53 succeeded; bounded failure diagnostics added",
+    "normalized_provider_caption_renderer": "original timeline, managed seek preservation, Off without video reopen; transport/controller checked; physical TV unqualified",
+    "commit": "7b533d93c8a4ae07c5b1b4b12cd4e7b695d3a69f",
+    "provider_availability": "profile-scoped bootstrap fact, no startup fanout"
+  },
+  "platform_builds": {
+    "ci_run": 38499843865,
+    "application_revision": "eecacf4d7e2efe1a38545c52d21a19f2b30cef8f",
+    "result": "renderer, Android, Web, Linux, Windows and macOS passed",
+    "desktop_gui_qualification": false
+  },
+  "provider_subtitles_real_content": {
+    "backend": "7c3f0428a59e34eba5c7b173517a073bc68acb9c",
+    "candidate_count": 38,
+    "normalized_cues": 1775,
+    "content_http_status": 200,
+    "client_clock_checks": 5,
+    "client_content_fetches": 1,
+    "off_clears": true,
+    "physical_tv_renderer_qualified": false
+  },
+  "desktop_playback_diagnostic": {
+    "platform": "Linux",
+    "fixed_public_source_fps": 60,
+    "visible_video_inspected": true,
+    "decoded_fps_approximate": 60,
+    "draw_cadence_fully_qualified": false,
+    "hardware_decode": false,
+    "sample_reported_rebuffers": 0,
+    "sample_reported_audio_underruns": 0,
+    "sample_av_drift_millis_approximate": -25,
+    "audio_output": "owned diagnostic null sink; no global volume changes"
+  },
+  "updated_date": "2026-10-14"
 }

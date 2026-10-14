@@ -1,4 +1,4 @@
-# VIPTV experimental implementation — 2026-10-13
+# VIPTV experimental implementation — 2026-10-14
 
 The implementation is incomplete overall. Work remains on experimental branches;
 main branches, repositories and history are preserved. The current uploaded ZIP
@@ -35,16 +35,16 @@ explicit shelf actions, categorized global search, automatic episode/library
 paging and complete lightweight saved-title membership. Live projections retain
 opaque M3U connection/channel/group IDs. Unsupported Live collections are hidden.
 Roku's provider caption controller uses managed replacement; physical decoding
-and design parity remain unqualified. TV-web provider captions and some richer
-provider controls remain migration work.
+and design parity remain unqualified. TV-web provider captions use normalized VTT on the original title clock; their
+physical TV rendering and richer provider controls remain qualification work.
 
 ## Current evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
-core is `a7495e7`; backend is `91ecda5`; gateway is `c85cd27`. The compatible
+core is `a7495e7`; backend is `7c3f042`; gateway is `c85cd27`. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 412 checks passed. Gateway: 229 passed. KMP: 62 desktop checks,
-Android QA assembly and Wasm compilation passed. Hosted run 38494987673 passed
+Backend: 413 checks passed. Gateway: 229 passed. KMP: 62 desktop checks,
+Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
 
@@ -56,11 +56,12 @@ These samples do not qualify every format or all UI transitions.
 
 Roku passed 71 local checks and compilation/staging. Its actual off-device API
 adapter automatically collected all 1,184 real One Piece episodes. TV-web passed
-323 unit/component checks and three Chromium launcher checks. A real HTTPS
+332 unit/component checks and three Chromium launcher checks. A real HTTPS
 Home→Details→Search run used one bootstrap, one metadata request and one Naruto
 query for 38 results, with zero JS/request failures on the warm run. Screenshots
-were inspected. Cold artwork requests returned 502 after an API restart and are
-being investigated; warm success does not qualify that path.
+were inspected. An earlier cold traversal returned 37 artwork 502s; a fresh cold run now returned
+53/53 successful images. The original cause remains unconfirmed, with bounded
+failure diagnostics added. Warm success does not explain the earlier failure.
 
 ## Remaining work
 
@@ -70,3 +71,10 @@ and long-running playback; anime tracking/mapping acceptance; dashboard
 administration; remaining TV-web/Roku migration; final cleanup and generic Tauri
 plugin account transfer. Production deployment is not claimed. Private provider
 captures remain in workspace artifacts rather than repository history.
+
+An isolated Linux playback diagnostic visibly rendered the public 1080p60 sample,
+reported roughly 60 decoded FPS, zero rebuffers/underruns and approximately 25 ms
+A/V drift. Drawing cadence and broader desktop GUI performance remain unqualified.
+The process used its own silent audio sink, which was removed after the check.
+Actual provider WebVTT projected all 1,775 cues and matched five client-clock
+positions with one content load; physical TV caption rendering remains separate.
