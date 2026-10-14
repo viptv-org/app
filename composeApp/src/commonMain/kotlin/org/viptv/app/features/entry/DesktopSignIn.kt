@@ -37,6 +37,7 @@ internal fun DesktopSignIn(
     startPairing: ((String) -> Unit)? = null,
     cancelPairing: () -> Unit = {},
     backChanged: ((() -> Unit)?) -> Unit = {},
+    iptv: IptvEntryActions? = null,
 ) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
     var server by remember(origin) { mutableStateOf(origin) }
@@ -73,7 +74,7 @@ internal fun DesktopSignIn(
                         androidx.compose.material3.TextButton(back) { Text("All sign-in options") }
                     }
                 SignInStep.Email -> DesktopEmailPanel(back)
-                SignInStep.Iptv -> DesktopIptvPanel(back)
+                SignInStep.Iptv -> DesktopIptvPanel(back, busy, error, iptv)
             }
         }
     }

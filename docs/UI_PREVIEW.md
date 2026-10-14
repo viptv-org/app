@@ -119,3 +119,10 @@ These cases do not supply real-provider intro markers or run an independent time
 
 TV `Player --es ui_variant ScrubNoImage` supplies a proposed seek without thumbnail
 data, for checking the timestamp-only fallback and explicit seek confirmation.
+
+Native IPTV layout fixtures use `VIPTV_UI_SCREEN=Connect` with
+`VIPTV_UI_VARIANT=IptvXtream` or `IptvM3u`. `VIPTV_UI_PHONE=1` selects the common
+390×844 phone layout in the desktop harness. Fixture submissions are inert and
+reserved-domain credentials never configure providers. The inspected Xvfb
+captures used `SKIKO_RENDER_API=SOFTWARE_COMPAT`; header paint was intermittently omitted on that isolated display with automatic GL fallback and both software renderers. The cause remains under investigation. Android input,
+keyboard/status-bar placement and default desktop GPU rendering are separate.

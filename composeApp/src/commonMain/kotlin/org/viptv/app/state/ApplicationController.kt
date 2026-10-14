@@ -9,7 +9,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlin.time.TimeSource
 
 class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore(),
-    internal val playbackDiagnostics: ((String) -> Unit)? = null) {
+    internal val playbackDiagnostics: ((String) -> Unit)? = null,
+    internal val localFactory: (String) -> LocalConnection = ::localConnection) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal var connection: RemoteConnection? = null
@@ -28,6 +29,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var subtitleDiscovery: Job? = null
     internal var pairingJob: Job? = null
     internal var pairingGeneration = 0L
+    internal var pendingIptv: IptvCredentials? = null
     internal var firstFrameSeen = false
     internal var frameAcknowledgment: Job? = null
     internal var lastProgress: PlayerFact.Progress? = null

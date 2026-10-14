@@ -2,10 +2,10 @@
   "status": "experimental, incomplete overall",
   "core": "0adeb981318c5cc4eb10e7809808f0f36c6fe2a7",
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
-  "backend_tests_passed": 415,
+  "backend_tests_passed": 425,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 70,
-  "android_release_sha256": null,
+  "desktop_tests_passed": 73,
+  "android_release_sha256": "1526bb7ce5daf16921b6f7a7dbf2bb248796f62b64153026ba1e2dc7ae7de05d",
   "android_abis": [
     "armeabi-v7a",
     "arm64-v8a",
@@ -74,7 +74,7 @@
     "includes_media3_ffmpeg_audio": true,
     "includes_latest_core_contract": false
   },
-  "backend": "b412561505c8116866334d90dba9426d0049b99c",
+  "backend": "cc72fbc9b7bb49ffebb784c18385d90ec8dda01b",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -149,7 +149,7 @@
   },
   "current_core_build": {
     "qa_apk": "passed",
-    "desktop_tests": 70,
+    "desktop_tests": 73,
     "wasm_compile": "passed",
     "physical_tv_installed": false,
     "real_server_home_ready": true
@@ -210,9 +210,9 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "7d10984ea80ffb3571d44730db4a7a545eccdacba01e6430a26f2cc1a3ff33b5",
+    "apk_sha256": "6fc35e3e90048c7a9cf67ca1d07f7b1ca1212c306ae8b2002dabf27f89adcadf",
     "build": "passed",
-    "desktop_tests_passed": 70,
+    "desktop_tests_passed": 73,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
@@ -222,7 +222,8 @@
       "Server-issued TV device pairing with explicit server choice and cancellation",
       "Desktop Back follows screen return history; unavailable chrome actions disabled",
       "Preserve required provider audio ordinals in native and direct playback; capability negotiation for new backend",
-      "Phone/desktop browser and device pairing share TV challenge lifecycle; explicit server validation and Back cancellation"
+      "Phone/desktop browser and device pairing share TV challenge lifecycle; explicit server validation and Back cancellation",
+      "Profile-local M3U/Xtream native entry, PIN-before-assignment, cancellation-safe engine open and HTTP provider media support"
     ]
   },
   "local_runtime_services": {
@@ -324,7 +325,7 @@
     "failed": 0,
     "test_only_followup": "two missing SocketAddr imports; runtime unchanged"
   },
-  "backend_full_suite_revision": "70b674167f8cc874a4ef15a9eafe45f099e605bd",
+  "backend_full_suite_revision": "cc72fbc9b7bb49ffebb784c18385d90ec8dda01b",
   "simkl_paused_identity": {
     "revision": "b412561505c8116866334d90dba9426d0049b99c",
     "focused_tests_passed": 8,
@@ -332,5 +333,64 @@
     "real_account_history_mutated": false,
     "live_services_restarted": false
   },
-  "packaged_desktop_current_smoke": "bundled JVM launcher + temporary SQLite/profile preference bridge passed"
+  "packaged_desktop_current_smoke": "bundled JVM launcher + temporary SQLite/profile preference bridge passed",
+  "backend_default_suite": {
+    "passed": 415,
+    "ignored": 8,
+    "revision": "cc72fbc9b7bb49ffebb784c18385d90ec8dda01b"
+  },
+  "native_iptv_entry": {
+    "native_targets": [
+      "Android",
+      "Android TV",
+      "Linux",
+      "Windows",
+      "macOS"
+    ],
+    "configuration": "profile-private M3U/Xtream; existing metadata selection retained",
+    "local_backend_required": false,
+    "profile_pin_required_before_assignment": true,
+    "credentials": "encrypted engine vault; write-only public state",
+    "cancellation_during_engine_open": "late acquired connection closed; focused check passed",
+    "controller_checks_passed": 3,
+    "public_m3u_probe": {
+      "public_playlist": true,
+      "native_engine": true,
+      "remote_connection_null": true,
+      "first_page_channels": 100,
+      "groups": 28,
+      "has_next_page": true,
+      "elapsed_millis": 1063,
+      "profile_selected": true,
+      "physical_tv_controls_used": false
+    },
+    "real_xtream_playback_qualified": false,
+    "physical_tv_installed": false,
+    "provisional_ui": "GAP-056",
+    "capture_renderer_issue": "isolated Xvfb intermittently omits header paint; observed with automatic GL fallback and explicit SOFTWARE_COMPAT/SOFTWARE_FAST; unresolved",
+    "captures": [
+      "docs/evidence/native-iptv-desktop-xtream.png",
+      "docs/evidence/native-iptv-desktop-m3u.png",
+      "docs/evidence/native-iptv-phone-xtream.png",
+      "docs/evidence/native-iptv-phone-m3u.png"
+    ],
+    "capture_visual_acceptance": false,
+    "failing_capture": "docs/evidence/native-iptv-phone-m3u.png",
+    "android_qa_assembly": "passed",
+    "android_release_assembly": "passed",
+    "native_core": "separately built core0ade release libraries reused; packaged allocated sections verified; no second Rust compile"
+  },
+  "remote_xtream": {
+    "revision": "cc72fbc9b7bb49ffebb784c18385d90ec8dda01b",
+    "paired_profile_configuration": true,
+    "credentials": "encrypted profile-private vault; replacement keeps connection key",
+    "shared_account_resources": "legacy account providers remain readable; paired profile cannot delete account-owned provider",
+    "same_wire_contract": true,
+    "bounded_cached_coalesced_live": true,
+    "m3u_playback_headers_retained": true,
+    "live_checks_passed": 11,
+    "live_checks_ignored": 1,
+    "real_xtream_subscription_qualified": false,
+    "live_services_restarted": false
+  }
 }

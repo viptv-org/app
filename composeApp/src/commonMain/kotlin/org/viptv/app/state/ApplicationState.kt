@@ -19,6 +19,7 @@ data class ApplicationState(
     val profiles: List<Profile> = emptyList(),
     val profileToOpen: String? = null,
     val profileToEdit: String? = null,
+    val profileNotice: String? = null,
     val simkl: SimklLinkStatus? = null,
     val profileManagement: ProfileManagement? = null,
     val managingProfiles: Boolean = false,

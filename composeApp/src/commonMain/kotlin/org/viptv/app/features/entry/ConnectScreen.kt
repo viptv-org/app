@@ -16,17 +16,17 @@ import org.viptv.app.theme.Palette
 fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false, phone: Boolean = false,
     television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
     pairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
-    cancelPairing: () -> Unit = {}) {
+    cancelPairing: () -> Unit = {}, iptv: IptvEntryActions? = null) {
     if (television) {
-        TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing)
+        TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing, iptv = iptv)
         return
     }
     if (phone) {
-        MobileSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
+        MobileSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged, iptv)
         return
     }
-    if (desktop) {
-        DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
+    if (desktop || !browser && !phone) {
+        DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged, iptv)
         return
     }
     var server by remember { mutableStateOf(origin) }

@@ -1,24 +1,15 @@
 package org.viptv.app.features.entry
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import com.composables.icons.lucide.*
@@ -75,32 +66,4 @@ internal fun DesktopPasswordPanel(
         if (changeServer) OutlinedTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
             label = { Text("Server address") }, singleLine = true, shape = RoundedCornerShape(10.dp))
     }
-}
-
-@Composable
-internal fun SignInInput(
-    value: String,
-    change: (String) -> Unit,
-    hint: String,
-    transformation: VisualTransformation = VisualTransformation.None,
-    height: Dp = 44.dp,
-    trailing: @Composable (() -> Unit)? = null,
-) {
-    var focused by remember { mutableStateOf(false) }
-    val shape = RoundedCornerShape(10.dp)
-    BasicTextField(value, change, Modifier.fillMaxWidth().height(height)
-        .onFocusChanged { focused = it.isFocused }
-        .background(Color(0xFF242426), shape)
-        .border(if (focused) 2.dp else 1.dp, if (focused) Palette.text else Color(0xFF454548), shape),
-        singleLine = true, visualTransformation = transformation,
-        textStyle = TextStyle(color = Palette.text, fontSize = 14.sp),
-        cursorBrush = SolidColor(Palette.text), decorationBox = { inner ->
-            Row(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) {
-                    if (value.isEmpty()) Text(hint, color = Palette.secondary, fontSize = 14.sp)
-                    inner()
-                }
-                trailing?.invoke()
-            }
-        })
 }

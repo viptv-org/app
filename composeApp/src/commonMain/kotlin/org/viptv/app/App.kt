@@ -52,9 +52,13 @@ fun App(
             val tablet = !compact && !television && !browser && !desktopChrome
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
-                    pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing)
-                Screen.Profiles -> ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
-                    controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television)
+                    pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
+                    iptv = if (browser) null else localDatabase?.let { path -> IptvEntryActions({ credentials -> controller.connectIptv(path, credentials) }, controller::cancelIptvEntry) })
+                Screen.Profiles -> Box(Modifier.fillMaxSize()) {
+                    ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
+                        controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television)
+                    ProfileSetupNotice(state.profileNotice, state.busy, television, controller::cancelIptvSetup, entryBackChanged)
+                }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
                     state.busy, state.error, controller::submitProfilePin, { controller.navigate(Screen.Profiles) }, television)
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,

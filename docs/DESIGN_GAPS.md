@@ -29,7 +29,7 @@ The remaining supplied screens are tracked as pending/in progress in `design-cov
 ### GAP-020 — Phone entry connection states
 
 `MobilePasswordPanel` includes a collapsible server address selector, which has no
-supplied phone board. `MobileSignInUnavailable` still covers email/recovery and IPTV entry. Browser
+supplied phone board. `MobileSignInUnavailable` still covers email/recovery. Native IPTV entry now configures the selected local profile; its additional states are in GAP-056. Browser
 and device sign-in now use the same real server challenge as TV. Explicit server
 selection, creating/expired/error and browser-opening failure variants remain
 provisional; supplied normal-state boards still await full parity review.
@@ -40,8 +40,7 @@ provisional; supplied normal-state boards still await full parity review.
 keyboard lacks a deletion key and assumes a fixed server. The welcome footer
 omits “No profiles or sync” because local profiles are an agreed app requirement.
 Phone/browser device pairing is connected to the server-owned challenge flow.
-Email and IPTV entry boards still have unfinished connection behavior; their
-unavailable states are temporary.
+Email entry remains unfinished. Native IPTV entry now saves provider credentials through the profile-local engine; its added states are in GAP-056.
 
 ### GAP-022 — TV title/source capabilities without connected contracts
 
@@ -129,8 +128,7 @@ are provisional. These states need design review.
 Delete character and Use another server are additional entry controls beyond
 `Tv3SignInPassword`. The custom-server dialog, long-field ellipsis and loading/
 error states lack matching supplied boards. These surfaces remain provisional.
-The provided alternative phone/browser/email/IPTV boards are present designs
-with unfinished implementations, rather than missing designs.
+The provided alternative entry boards are present designs, with parity still under review. Email delivery remains unfinished.
 
 ### GAP-033 — TV email-entry deletion and unavailable-code state
 
@@ -139,12 +137,11 @@ and an unavailable-code dialog beyond the populated `Tv3SignInEmail` board.
 These extra surfaces need design review. The supplied code-entry/phone boards
 exist and remain unfinished; no successful email delivery is implied.
 
-### GAP-034 — TV IPTV M3U/input/unavailable states
+### GAP-034 — TV IPTV M3U/input states
 
 The supplied IPTV board shows Xtream fields and an M3U entry tab, but no expanded
 M3U form, field-input dialog or missing-service state. `TvIptvSignIn` supplies
-those provisional surfaces. Its in-memory storage explanation intentionally
-differs from the board's TV-only persistence claim until storage is connected.
+those provisional surfaces. Native submission now configures the chosen local profile using the encrypted engine vault. The replacement storage copy and profile-selection/error variants are recorded in GAP-056.
 
 ### GAP-035 — TV email-code unavailable states
 
@@ -302,3 +299,26 @@ at 390×844 in an isolated desktop renderer; it does not prove Android input or 
 chrome. These fixtures use `.invalid` links and never open an actual browser.
 Both generated QR images decode to the complete expected link/code. Real protocol
 approval/restore/Home evidence remains separate from these layout captures.
+
+### GAP-056 — Native IPTV setup and profile selection
+
+Phone/tablet/desktop and TV entry now submit M3U/Xtream credentials to the local
+engine. A fresh, unlocked sole profile proceeds directly to Live. Existing multiple
+or PIN-protected profiles require selection/unlock before a provider is assigned.
+The setup notice/cancel action over the profile picker, save/loading/network-error
+states, empty fields and independent tab drafts have no exact supplied boards.
+The profile-storage explanation replaces the board's keychain/add-on wording
+because the engine encrypts credentials using its platform-backed vault and this
+entry currently opens Live channels. Xtream VOD entry is not implied.
+
+`native-iptv-{desktop,phone}-{xtream,m3u}.png` under `docs/evidence` shows the
+packaged Linux/common-phone layout with reserved-domain fixtures. Phone captures
+are 390×844 common layouts, not Android keyboard/status-bar qualification. Review
+uses Skiko SOFTWARE_COMPAT on an isolated Xvfb display. The phone M3U capture
+retains the observed missing heading/back-link text; it is a failing diagnostic,
+not approved visual parity. Repeated captures and a tab click reproduced
+intermittent header painting with automatic GL fallback and both software
+renderers. Root/window screenshots and FFmpeg capture also varied. Adding an
+ordinary or offscreen form layer did not fix it; those experimental layers were
+removed. The cause remains under investigation. These captures do not qualify
+the default desktop renderer or physical Android input. No device app was replaced.

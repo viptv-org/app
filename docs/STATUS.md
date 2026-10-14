@@ -41,10 +41,10 @@ physical TV rendering and richer provider controls remain qualification work.
 ## Current evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
-core is `0adeb98`; experimental backend is `b412561`; gateway is `8deb493`.
+core is `0adeb98`; experimental backend is `cc72fbc`; gateway is `8deb493`.
 The running QA server retains backend `7c3f042` and gateway `c85cd27` during manual testing. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 415 full checks passed at `70b6741`; eight focused import checks passed at `b412561` after the paused-episode identity fix. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 70 desktop checks,
+Backend: 425 Live/SDK checks passed (10 ignored), and 415 default checks passed (8 ignored) at `cc72fbc`; this includes the paused-import identity regressions. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 73 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
@@ -156,3 +156,24 @@ agree on a unique episode, preventing conflicting Simkl TV/anime evidence from
 writing progress onto another episode. Before-fix regressions reproduced the bug;
 eight focused checks now pass. No real history or provider tracking was modified;
 live services retain their previous commits.
+
+Native IPTV entry now accepts M3U/Xtream on phone/tablet/desktop/TV, selects or
+unlocks the local profile before saving, and opens real Live channels. Tab drafts
+remain separate; cancellation closes a late-opening native engine. Three focused
+controller checks use real SQLite/vault configuration with only directory IO
+replaced. A separate real public-M3U run read 100 channels and 28 groups in
+1,063 ms through the controller without a VIPTV backend. Real Xtream playback
+and the updated physical-device form remain unqualified. Android QA and release,
+73 desktop checks, Web compilation and packaged JVM/native/FFmpeg checks passed.
+
+Backend `cc72fbc` adds encrypted profile-private Xtream configuration for paired
+devices using the existing wire contracts and shared engine builders. In-place
+updates preserve metadata ownership; bounded/coalesced catalog/guide projections
+and opaque sources retain profile/revision boundaries. Legacy account providers
+remain viewable and cannot be deleted by a paired profile. M3U playback headers
+are retained. No real Xtream subscription or live runtime activation is claimed.
+
+Four native IPTV layout captures were inspected. Desktop and phone Xtream render
+the form; the common-phone M3U preview intermittently omits heading/back-link
+text on isolated Xvfb. This failing diagnostic is preserved in GAP-056, with no
+visual acceptance claim. No rendering-layer workaround is retained.

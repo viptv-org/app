@@ -1,5 +1,7 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.connection.IptvCredentials
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -10,9 +12,9 @@ internal enum class TvSignInStep { Welcome, Choice, Phone, Browser, Email, Email
 @Composable
 internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit,
     backChanged: ((() -> Unit)?) -> Unit, initialStep: TvSignInStep = TvSignInStep.Welcome, initialEmail: String = "",
-    initialIptv: TvIptvDraft = TvIptvDraft(), emailChallenge: TvEmailCodeChallenge? = null, pairing: TvPairingSession? = null,
+    initialIptv: IptvCredentials = IptvCredentials(), emailChallenge: TvEmailCodeChallenge? = null, pairing: TvPairingSession? = null,
     remotePairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
-    cancelPairing: () -> Unit = {}) {
+    cancelPairing: () -> Unit = {}, iptv: IptvEntryActions? = null) {
     var step by remember { mutableStateOf(initialStep) }
     var server by remember(origin) { mutableStateOf(origin) }
     val back = { step = when (step) { TvSignInStep.Choice -> TvSignInStep.Welcome; TvSignInStep.EmailCode -> TvSignInStep.Email; else -> TvSignInStep.Choice } }
@@ -29,7 +31,7 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
             TvSignInStep.Email -> TvEmailSignIn(scale, { step = TvSignInStep.Phone }, initialEmail, initialEmail.isNotEmpty())
             TvSignInStep.EmailCode -> if (emailChallenge != null) TvEmailCode(scale, emailChallenge, busy = busy)
                 else TvEmailSignIn(scale, { step = TvSignInStep.Phone })
-            TvSignInStep.Iptv -> TvIptvSignIn(scale, { step = TvSignInStep.Phone }, initialIptv)
+            TvSignInStep.Iptv -> TvIptvSignIn(scale, { step = TvSignInStep.Phone }, initialIptv, iptv, busy, error)
             TvSignInStep.Phone, TvSignInStep.Browser -> if (startPairing == null) TvPairingSignIn(scale, { step = TvSignInStep.Email }, pairing)
                 else TvRemotePairing(server, remotePairing, busy, error, scale, { server = it }, startPairing, cancelPairing, back) { step = TvSignInStep.Email }
         }
