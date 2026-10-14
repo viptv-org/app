@@ -52,6 +52,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             var entryJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
             var quality by remember { mutableStateOf<String?>(null) }
             var provider by remember { mutableStateOf<String?>(null) }
+            var lastProviderFocus by remember { mutableStateOf<String?>(null) }
             val visible = remember(sources, info, quality, provider) { sources.filter { (quality == null || info[it.id]?.quality == quality) && (provider == null || it.sourceFilterId() == provider) } }
             val finding = loadingMore || busy && sources.isEmpty()
             val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
@@ -79,7 +80,8 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 Text(listOfNotNull(sourceHeading(title, detail), if (loadingMore || busy && sources.isEmpty()) "finding sources" else if (busy) "opening stream" else count).joinToString(" · "),
                     fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary)
                 Spacer(Modifier.height(22.dp * scale))
-                TvSourcesFilters(sources, info, scale, quality, provider, { quality = it }, { provider = it }, filterFocus, providerFocus) {
+                TvSourcesFilters(sources, info, scale, quality, provider, { quality = it }, { provider = it }, filterFocus, providerFocus,
+                    focusedProvider = lastProviderFocus, providerFocused = { lastProviderFocus = it }) {
                     if (entryJob?.isActive != true && visible.isNotEmpty()) entryJob = scope.launch {
                         listState.scrollToItem(if (error != null) 1 else 0)
                         withFrameNanos { }

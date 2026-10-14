@@ -204,5 +204,27 @@
     "sample_av_drift_millis_approximate": -25,
     "audio_output": "owned diagnostic null sink; no global volume changes"
   },
-  "updated_date": "2026-10-14"
+  "updated_date": "2026-10-14",
+  "pending_tv_candidate": {
+    "apk_sha256": "f3ab81eeec4bf1a904718a16528bd5aa10a1ad159b53f8151262ff54696dded9",
+    "build": "passed",
+    "desktop_tests_passed": 62,
+    "ffmpeg_packaging": "three ABIs/16 KiB passed",
+    "installed_on_physical_tv": false,
+    "changes": [
+      "Auto compositing with explicit clipping for settled Home backdrop",
+      "Artwork/logo prefetch at their displayed sizes with shared logo transformation",
+      "Stable provider/quality chip identities and last-focused provider return"
+    ]
+  },
+  "local_runtime_services": {
+    "target": "viptv-qa.target",
+    "enabled": true,
+    "restart_policy": "on-failure/2s",
+    "api_and_gateway_canonical_lan_tls": "all HTTP200, TLS verification0",
+    "authenticated_lan_bootstrap_millis": 583,
+    "database_and_sessions_preserved": true,
+    "adb_unchanged": true,
+    "proof": "/home/vynxc/.local/state/viptv-qa/restoration-proof.json"
+  }
 }

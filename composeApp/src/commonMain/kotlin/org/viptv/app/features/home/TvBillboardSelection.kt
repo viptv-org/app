@@ -20,9 +20,12 @@ internal fun rememberTvBillboardSelection(focused: Card?, browsing: Boolean, por
         delay(400)
         withTimeoutOrNull(1900) {
             coroutineScope {
-                listOfNotNull(if (portrait) card.poster else card.landscape ?: card.poster, card.logo).distinct().map { url -> async {
-                    SingletonImageLoader.get(context).execute(ImageRequest.Builder(context).data(url).size(1160, 620).build())
-                } }.awaitAll()
+                val artwork = if (portrait) card.poster else card.landscape ?: card.poster
+                val requests = listOfNotNull(
+                    artwork?.let { ImageRequest.Builder(context).data(it).size(if (portrait) 280 else 1160, if (portrait) 420 else 620).build() },
+                    card.logo?.let { org.viptv.app.images.logoRequest(context, it).newBuilder().size(420, 120).build() },
+                )
+                requests.map { request -> async { SingletonImageLoader.get(context).execute(request) } }.awaitAll()
             }
         }
         selected = TvBillboardSelection(card, portrait)

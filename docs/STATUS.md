@@ -78,3 +78,13 @@ A/V drift. Drawing cadence and broader desktop GUI performance remain unqualifie
 The process used its own silent audio sink, which was removed after the check.
 Actual provider WebVTT projected all 1,775 cues and matched five client-clock
 positions with one content load; physical TV caption rendering remains separate.
+
+The local QA API/gateway/HTTPS proxies now run under enabled user service target
+`viptv-qa.target`, independent of browser/chat process lifetime, with automatic
+restart. All four canonical/LAN endpoints passed trusted TLS health checks; an
+authenticated LAN bootstrap completed in 583 ms.
+
+The next TV candidate reduces settled backdrop compositing, bounds role-specific
+artwork prefetch, and returns Sources focus to the last-focused provider chip.
+Its Android assembly, 62 desktop checks and FFmpeg packaging checks passed. It
+is not installed while manual testing continues; physical validation is pending.
