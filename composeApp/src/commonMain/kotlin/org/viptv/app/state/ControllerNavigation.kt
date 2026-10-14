@@ -44,3 +44,15 @@ fun ApplicationController.backSources() {
     mutable.value = mutable.value.copy(screen = mutable.value.sourceReturnScreen,
         busy = false, findingSources = false, error = null)
 }
+
+/** Chrome and other global Back controls use the same route-specific return state. */
+fun ApplicationController.navigateBack() {
+    when (mutable.value.screen) {
+        Screen.Details -> backDetails()
+        Screen.Sources -> backSources()
+        Screen.Player -> closePlayer()
+        Screen.ProfilePin, Screen.ProfileEdit -> navigate(Screen.Profiles)
+        Screen.Connect, Screen.Profiles, Screen.Home -> Unit
+        else -> navigate(Screen.Home)
+    }
+}

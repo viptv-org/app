@@ -26,7 +26,7 @@ internal fun launchUiPreview() = application {
                     DesktopTitleBar(ApplicationState(screen = screen, searchTerm = term, profiles = listOf(PreviewData.profile), selectedProfile = PreviewData.profile.id), false, { screen = it },
                         { term = it; screen = Screen.Search }, {}, { window.isMinimized = true },
                         { window.placement = if (window.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized },
-                        ::exitApplication, Modifier)
+                        ::exitApplication, Modifier, back = if (screen != Screen.Home) { { screen = Screen.Home } } else null)
                 }
                 UiPreview(desktop = true, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
             }

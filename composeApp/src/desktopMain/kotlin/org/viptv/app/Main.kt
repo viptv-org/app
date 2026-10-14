@@ -48,7 +48,8 @@ private fun launchApplication() = application {
                 } else {
                     WindowDraggableArea(Modifier.fillMaxWidth()) {
                         DesktopTitleBar(state, mac, controller::navigate, controller::search,
-                            { menuOpen = !menuOpen }, minimize, maximize, ::exitApplication, Modifier)
+                            { menuOpen = !menuOpen }, minimize, maximize, ::exitApplication, Modifier,
+                            back = if (state.screen != Screen.Home) controller::navigateBack else null)
                     }
                     Box(Modifier.weight(1f)) {
                         App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
