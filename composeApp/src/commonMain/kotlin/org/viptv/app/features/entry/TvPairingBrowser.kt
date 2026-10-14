@@ -19,17 +19,17 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: FocusRequester, refresh: () -> Unit) {
+internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: FocusRequester, busy: Boolean = false, refresh: () -> Unit) {
     Column(Modifier.offset(1064.dp * scale, 250.dp * scale).width(760.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale)) {
         Text("Use any browser", fontSize = (30 * scale).sp, lineHeight = (43.5f * scale).sp, fontWeight = FontWeight.Bold)
         TvPairingInstruction("1", "Go to", scale)
-        Text(session?.browserAddress ?: "Pairing service unavailable", Modifier.padding(start = 62.dp * scale),
+        Text(session?.browserAddress ?: if (busy) "Creating a code…" else "Your server", Modifier.padding(start = 62.dp * scale),
             fontSize = (44 * scale).sp, lineHeight = (63.8f * scale).sp, fontWeight = FontWeight.Bold)
         TvPairingInstruction("2", "Enter this code", scale)
         Box(Modifier.padding(start = 62.dp * scale).size(640.dp * scale, 120.dp * scale)
             .background(Color.White.copy(alpha = .08f), RoundedCornerShape(16.dp * scale))
             .border(1.dp * scale, Color.White.copy(alpha = .12f), RoundedCornerShape(16.dp * scale)), contentAlignment = Alignment.Center) {
-            Text(session?.code ?: "Unavailable", fontSize = ((if (session == null) 36 else 72) * scale).sp,
+            Text(session?.code ?: if (busy) "Waiting…" else "No code", fontSize = ((if (session == null) 36 else 72) * scale).sp,
                 lineHeight = (86 * scale).sp, letterSpacing = (5.76f * scale).sp, fontWeight = FontWeight.Bold)
         }
         Row(Modifier.padding(start = 62.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {

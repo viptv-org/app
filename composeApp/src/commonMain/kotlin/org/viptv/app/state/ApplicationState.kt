@@ -46,6 +46,7 @@ data class ApplicationState(
     val detailHistory: List<DetailSnapshot> = emptyList(),
     val localMode: Boolean = false,
     val sessionNotice: String? = null,
+    val devicePairing: DevicePairingDisplay? = null,
     val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(),
     val browsingConfiguration: BrowsingConfiguration? = null,
     val addons: List<IntegrationConnection> = emptyList(),

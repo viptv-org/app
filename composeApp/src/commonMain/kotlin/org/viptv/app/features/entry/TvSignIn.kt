@@ -1,22 +1,20 @@
 package org.viptv.app.features.entry
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import org.viptv.app.components.TvAction
-import org.viptv.app.theme.Palette
 
 internal enum class TvSignInStep { Welcome, Choice, Phone, Browser, Email, EmailCode, Password, Iptv }
 
 @Composable
 internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit,
     backChanged: ((() -> Unit)?) -> Unit, initialStep: TvSignInStep = TvSignInStep.Welcome, initialEmail: String = "",
-    initialIptv: TvIptvDraft = TvIptvDraft(), emailChallenge: TvEmailCodeChallenge? = null, pairing: TvPairingSession? = null) {
+    initialIptv: TvIptvDraft = TvIptvDraft(), emailChallenge: TvEmailCodeChallenge? = null, pairing: TvPairingSession? = null,
+    remotePairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
+    cancelPairing: () -> Unit = {}) {
     var step by remember { mutableStateOf(initialStep) }
+    var server by remember(origin) { mutableStateOf(origin) }
     val back = { step = when (step) { TvSignInStep.Choice -> TvSignInStep.Welcome; TvSignInStep.EmailCode -> TvSignInStep.Email; else -> TvSignInStep.Choice } }
     DisposableEffect(step) {
         backChanged(if (step == TvSignInStep.Welcome) null else back)
@@ -27,23 +25,13 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
         when (step) {
             TvSignInStep.Welcome -> TvWelcome(scale, { step = TvSignInStep.Choice }, local)
             TvSignInStep.Choice -> TvSignInChoice(scale, local) { step = it }
-            TvSignInStep.Password -> TvPasswordPanel(origin, busy, error, scale, connect, { step = TvSignInStep.Email })
+            TvSignInStep.Password -> TvPasswordPanel(server, busy, error, scale, connect, { step = TvSignInStep.Email }, serverChanged = { server = it })
             TvSignInStep.Email -> TvEmailSignIn(scale, { step = TvSignInStep.Phone }, initialEmail, initialEmail.isNotEmpty())
             TvSignInStep.EmailCode -> if (emailChallenge != null) TvEmailCode(scale, emailChallenge, busy = busy)
                 else TvEmailSignIn(scale, { step = TvSignInStep.Phone })
             TvSignInStep.Iptv -> TvIptvSignIn(scale, { step = TvSignInStep.Phone }, initialIptv)
-            TvSignInStep.Phone, TvSignInStep.Browser -> TvPairingSignIn(scale, { step = TvSignInStep.Email }, pairing)
-            else -> Column(Modifier.padding(96.dp * scale), verticalArrangement = Arrangement.spacedBy(28.dp * scale)) {
-                Text(when (step) { TvSignInStep.Phone -> "Use your phone"; TvSignInStep.Browser -> "Use a browser"; TvSignInStep.Email -> "Email me a code"; else -> "IPTV provider" },
-                    fontSize = (52 * scale).sp, fontWeight = FontWeight.Bold)
-                Text("This sign-in method is not available on this connection yet.", color = Palette.secondary, fontSize = (26 * scale).sp)
-                TvAction(Modifier.width(400.dp * scale).height(72.dp * scale), scale, primary = true, activate = { step = TvSignInStep.Password }) {
-                    Text("Use a password", fontSize = (26 * scale).sp, color = it, fontWeight = FontWeight.Bold)
-                }
-                TvAction(Modifier.width(400.dp * scale).height(72.dp * scale), scale, activate = back) {
-                    Text("All sign-in options", fontSize = (26 * scale).sp, color = it)
-                }
-            }
+            TvSignInStep.Phone, TvSignInStep.Browser -> if (startPairing == null) TvPairingSignIn(scale, { step = TvSignInStep.Email }, pairing)
+                else TvRemotePairing(server, remotePairing, busy, error, scale, { server = it }, startPairing, cancelPairing) { step = TvSignInStep.Email }
         }
     }
 }

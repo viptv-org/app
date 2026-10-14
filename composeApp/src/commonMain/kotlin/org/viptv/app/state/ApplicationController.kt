@@ -26,6 +26,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null
     internal var subtitleDiscovery: Job? = null
+    internal var pairingJob: Job? = null
+    internal var pairingGeneration = 0L
     internal var firstFrameSeen = false
     internal var frameAcknowledgment: Job? = null
     internal var lastProgress: PlayerFact.Progress? = null

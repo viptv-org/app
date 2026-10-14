@@ -14,9 +14,11 @@ import org.viptv.app.theme.Palette
 // Dedicated phone/TV/desktop layouts precede the wide connection fallback.
 @Composable
 fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false, phone: Boolean = false,
-    television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {}) {
+    television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
+    pairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
+    cancelPairing: () -> Unit = {}) {
     if (television) {
-        TvSignIn(origin, busy, error, local, connect, backChanged)
+        TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing)
         return
     }
     if (phone) {

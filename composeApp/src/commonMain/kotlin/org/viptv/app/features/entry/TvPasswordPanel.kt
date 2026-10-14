@@ -14,7 +14,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scale: Float,
-    connect: (String, String, String) -> Unit, forgot: () -> Unit) {
+    connect: (String, String, String) -> Unit, forgot: () -> Unit, serverChanged: (String) -> Unit = {}) {
     var server by remember { mutableStateOf(origin.ifBlank { "https://viptv.syek.tech" }) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -51,7 +51,7 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
     }
     if (serverDialog) AlertDialog(onDismissRequest = { serverDialog = false }, title = { Text("Server address") },
         text = { OutlinedTextField(server, { server = it }, singleLine = true, label = { Text("HTTPS server address") }) },
-        confirmButton = { TextButton(onClick = { serverDialog = false }) { Text("Done") } })
+        confirmButton = { TextButton(onClick = { serverChanged(server); serverDialog = false }) { Text("Done") } })
 }
 
 @Composable

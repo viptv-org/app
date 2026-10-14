@@ -16,16 +16,17 @@ import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvPairingQr(session: TvPairingSession?, scale: Float) {
+internal fun TvPairingQr(session: TvPairingSession?, scale: Float, busy: Boolean = false) {
     Column(Modifier.offset(96.dp * scale, 250.dp * scale).width(760.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale)) {
         Text("Scan with your phone", fontSize = (30 * scale).sp, lineHeight = (43.5f * scale).sp, fontWeight = FontWeight.Bold)
-        Text(if (session == null) "Phone pairing is not available on this connection yet."
+        Text(if (session == null) "Request a sign-in code, then scan it with your phone."
             else "Point your camera at the code. You’ll finish on your phone and this TV signs in by itself.",
             fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.secondary)
         Box(Modifier.padding(top = 10.dp * scale).size(340.dp * scale).background(Color.White, RoundedCornerShape(20.dp * scale)), contentAlignment = Alignment.Center) {
             if (session != null) Image(rememberQrCodePainter(session.qrUrl) { this.scale = .88f }, "Pairing QR code",
                 Modifier.size(300.dp * scale))
-            else Text("Pairing unavailable", color = Palette.background, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp)
+            else if (busy) androidx.compose.material3.CircularProgressIndicator(color = Palette.background, modifier = Modifier.size(48.dp * scale))
+            else Text("Sign-in code", color = Palette.background, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp)
         }
     }
 }

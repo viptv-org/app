@@ -38,6 +38,18 @@ class RemoteConnection(
     var persistenceWarning: String? = null
         private set
 
+    internal fun devicePairing(active: () -> Boolean = { true }) = RemoteDevicePairing(
+        send = { path, body -> send(path, HttpMethod.Post, body, null, null) },
+        adopt = { value ->
+            if (!active()) throw CancellationException("Pairing cancelled")
+            installDeviceTokens(value, persist = false)
+            val result = bootstrap()
+            if (!active()) throw CancellationException("Pairing cancelled")
+            persistDeviceToken(requireNotNull(refreshToken))
+            result
+        },
+    )
+
     suspend fun login(username: String, password: String): Bootstrap {
         val result = requestJson(if (browser) "/api/auth/login" else "/api/auth/device/login", HttpMethod.Post,
             buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", "VIPTV KMP") })
@@ -154,18 +166,22 @@ class RemoteConnection(
         }
     }
 
-    private suspend fun installDeviceTokens(value: JsonObject) {
+    private suspend fun installDeviceTokens(value: JsonObject, persist: Boolean = true) {
         val nextAccess = value["access_token"]?.jsonPrimitive?.contentOrNull ?: throw RemoteFailure(502, "The server did not provide a device session.")
         val nextRefresh = value["refresh_token"]?.jsonPrimitive?.contentOrNull ?: throw RemoteFailure(502, "The server did not provide a refresh token.")
+        if (persist) persistDeviceToken(nextRefresh)
+        accessToken = nextAccess
+        refreshToken = nextRefresh
+    }
+
+    private suspend fun persistDeviceToken(token: String) {
         try {
-            sessionStore.save(SavedRemoteSession(origin, nextRefresh))
+            sessionStore.save(SavedRemoteSession(origin, token))
             persistenceWarning = null
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) {
             persistenceWarning = "Secure storage is unavailable. This device will need to sign in again after the app closes."
         }
-        accessToken = nextAccess
-        refreshToken = nextRefresh
     }
 
     private suspend fun refreshDevice() {

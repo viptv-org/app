@@ -30,6 +30,7 @@ fun ApplicationController.restore() = run {
 
 
 fun ApplicationController.connect(origin: String, username: String, password: String) {
+    cancelDevicePairing()
     libraryImportRefresh?.cancel()
     val finishing = if (completionSeen) progressJob else saveProgress(false, final = true)
     val stopping = releaseRemotePlayback()
@@ -56,6 +57,7 @@ fun ApplicationController.useLocal(path: String) {
 }
 
 fun ApplicationController.disconnect() {
+    cancelDevicePairing()
     libraryImportRefresh?.cancel()
     cancelDetailPaging()
     val stopping = releaseRemotePlayback()
