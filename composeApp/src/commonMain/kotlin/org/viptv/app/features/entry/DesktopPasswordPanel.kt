@@ -31,12 +31,13 @@ internal fun DesktopPasswordPanel(
     back: () -> Unit,
     forgot: () -> Unit,
     connect: (String, String, String) -> Unit,
+    serverChanged: (String) -> Unit = {},
 ) {
-    var server by remember { mutableStateOf(initialOrigin.ifBlank { "https://viptv.syek.tech" }) }
+    var server by remember { mutableStateOf(initialOrigin) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
-    var changeServer by remember { mutableStateOf(false) }
+    var changeServer by remember { mutableStateOf(initialOrigin.isBlank()) }
     SignInPanel(440.dp, verticalPadding = 24.dp) {
         Text("‹  All sign-in options", Modifier.height(20.dp).clickable(onClick = back),
             color = Palette.text, fontSize = 13.sp)
@@ -71,7 +72,7 @@ internal fun DesktopPasswordPanel(
             Text(if (changeServer) "Hide server address" else "Use another server",
                 Modifier.clickable { changeServer = !changeServer }, color = Palette.secondary, fontSize = 11.sp)
         }
-        if (changeServer) OutlinedTextField(server, { server = it }, Modifier.fillMaxWidth(),
+        if (changeServer) OutlinedTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
             label = { Text("Server address") }, singleLine = true, shape = RoundedCornerShape(10.dp))
     }
 }

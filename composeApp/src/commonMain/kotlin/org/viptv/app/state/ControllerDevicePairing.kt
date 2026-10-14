@@ -7,7 +7,7 @@ import kotlin.time.TimeSource
 fun ApplicationController.cancelDevicePairing() {
     pairingGeneration++; pairingJob?.cancel(); pairingJob = null
     if (mutable.value.screen == Screen.Connect)
-        mutable.value = mutable.value.copy(devicePairing = null, busy = false)
+        mutable.value = mutable.value.copy(devicePairing = null, busy = false, error = null)
 }
 
 fun ApplicationController.startDevicePairing(origin: String) {

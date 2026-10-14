@@ -59,9 +59,11 @@ class RemoteSessionTest {
             assertEquals("r2", store.saved?.refreshToken)
             close()
         }
-        RemoteConnection("https://watch.example", store, client()).apply {
-            restore(requireNotNull(store.saved))
+        val legacy = SavedRemoteSession(" https://watch.example/ ", requireNotNull(store.saved).refreshToken)
+        RemoteConnection(legacy.origin, store, client()).apply {
+            restore(legacy)
             assertEquals("r3", store.saved?.refreshToken)
+            assertEquals("https://watch.example", store.saved?.origin)
             signOut()
             assertNull(store.saved)
             close()

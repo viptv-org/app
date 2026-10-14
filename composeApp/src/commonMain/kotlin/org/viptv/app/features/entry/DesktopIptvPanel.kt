@@ -16,33 +16,6 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun DesktopDevicePanel(back: () -> Unit) {
-    SignInPanel(480.dp) {
-        TextButton(onClick = back, contentPadding = PaddingValues(0.dp)) {
-            Text("‹  All sign-in options", color = Palette.text, fontSize = 13.sp)
-        }
-        Spacer(Modifier.height(12.dp))
-        Text("Use another device", color = Palette.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(12.dp))
-        Text("On a phone or TV that’s signed in to VIPTV, open Settings › Sign in a device and scan this code — or go to viptv.syek.tech/device and type it.",
-            color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp)
-        Spacer(Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            Box(Modifier.size(135.dp).background(Palette.text, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                Text("▦\nCode pending", color = Palette.background, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-            }
-            Column {
-                Text("Code", color = Palette.secondary, fontSize = 12.sp)
-                Text("— — — —", color = Palette.text, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                Text("Device approval is not connected yet", color = Palette.secondary, fontSize = 12.sp)
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-        Text("Device approval will be available when the connection flow is added.", color = Palette.secondary, fontSize = 13.sp)
-    }
-}
-
-@Composable
 internal fun DesktopIptvPanel(back: () -> Unit) {
     var tab by remember { mutableStateOf("Xtream Codes") }
     var server by remember { mutableStateOf("") }

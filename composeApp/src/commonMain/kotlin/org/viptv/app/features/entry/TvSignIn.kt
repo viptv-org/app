@@ -31,7 +31,7 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
                 else TvEmailSignIn(scale, { step = TvSignInStep.Phone })
             TvSignInStep.Iptv -> TvIptvSignIn(scale, { step = TvSignInStep.Phone }, initialIptv)
             TvSignInStep.Phone, TvSignInStep.Browser -> if (startPairing == null) TvPairingSignIn(scale, { step = TvSignInStep.Email }, pairing)
-                else TvRemotePairing(server, remotePairing, busy, error, scale, { server = it }, startPairing, cancelPairing) { step = TvSignInStep.Email }
+                else TvRemotePairing(server, remotePairing, busy, error, scale, { server = it }, startPairing, cancelPairing, back) { step = TvSignInStep.Email }
         }
     }
 }

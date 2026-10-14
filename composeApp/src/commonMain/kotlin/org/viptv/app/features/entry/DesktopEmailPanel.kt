@@ -10,47 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
-
-private const val SIGN_IN_URL = "https://viptv.syek.tech"
-
-@Composable
-internal fun DesktopBrowserPanel(back: () -> Unit) {
-    val uri = LocalUriHandler.current
-    val clipboard = LocalClipboardManager.current
-    SignInPanel(440.dp) {
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(Modifier.size(32.dp), color = Palette.secondary, strokeWidth = 3.dp)
-            Spacer(Modifier.height(14.dp))
-            Text("Finish signing in in your browser", color = Palette.text,
-                fontSize = 21.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(10.dp))
-            Text("Browser sign-in is not connected yet. You can open viptv.syek.tech, then choose another sign-in method here.",
-                color = Palette.secondary, fontSize = 14.sp, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = { uri.openUri(SIGN_IN_URL) }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF303033), contentColor = Palette.text)) {
-                    Text("Open browser again", fontSize = 13.sp)
-                }
-                Button(onClick = { clipboard.setText(AnnotatedString(SIGN_IN_URL)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF303033), contentColor = Palette.text)) {
-                    Text("Copy link", fontSize = 13.sp)
-                }
-            }
-            Box(Modifier.height(20.dp), contentAlignment = Alignment.Center) {
-                Text("‹  All sign-in options", Modifier.clickable(onClick = back),
-                    color = Palette.text, fontSize = 13.sp)
-            }
-        }
-    }
-}
 
 @Composable
 internal fun DesktopEmailPanel(back: () -> Unit) {
@@ -62,7 +25,7 @@ internal fun DesktopEmailPanel(back: () -> Unit) {
         Spacer(Modifier.height(12.dp))
         Text("Enter the code", color = Palette.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))
-        Text("Email-code delivery is not connected yet. This entry state previews the supplied design.", color = Palette.secondary, fontSize = 14.sp)
+        Text("Email sign-in is unavailable. Use a password or continue in your browser.", color = Palette.secondary, fontSize = 14.sp)
         Spacer(Modifier.height(14.dp))
         BasicTextField(code, { code = it.filter(Char::isDigit).take(6) }, singleLine = true,
             decorationBox = { inner ->

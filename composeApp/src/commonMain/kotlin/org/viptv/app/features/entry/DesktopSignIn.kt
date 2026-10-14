@@ -33,9 +33,18 @@ internal fun DesktopSignIn(
     error: String?,
     local: (() -> Unit)?,
     connect: (String, String, String) -> Unit,
+    pairing: org.viptv.app.connection.DevicePairingDisplay? = null,
+    startPairing: ((String) -> Unit)? = null,
+    cancelPairing: () -> Unit = {},
+    backChanged: ((() -> Unit)?) -> Unit = {},
 ) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
+    var server by remember(origin) { mutableStateOf(origin) }
     val back = { step = SignInStep.Choice }
+    DisposableEffect(step) {
+        backChanged(if (step == SignInStep.Choice) null else back)
+        onDispose { backChanged(null) }
+    }
     Box(Modifier.fillMaxSize()) {
         DesktopSignInBackdrop()
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -47,18 +56,23 @@ internal fun DesktopSignIn(
                     Spacer(Modifier.height(9.dp))
                     Text("Pick whichever is easiest. They all reach the same account.", color = Palette.secondary, fontSize = 14.sp)
                     Spacer(Modifier.height(16.dp))
-                    SignInChoice(SignInMethod.Browser, "Continue in browser", "Sign in on viptv.syek.tech, then come back here") { step = SignInStep.Browser }
+                    SignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
                     SignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }
                     SignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
-                    SignInChoice(SignInMethod.Device, "Use another device", "Approve this sign-in from a phone or TV that’s signed in") { step = SignInStep.Device }
+                    SignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
                     SignInChoice(SignInMethod.Iptv, "IPTV provider", "Xtream Codes login or an M3U playlist link") { step = SignInStep.Iptv }
                     if (local != null) SignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", last = true, activate = local)
                 }
-                SignInStep.Password -> DesktopPasswordPanel(origin, busy, error, back,
-                    { step = SignInStep.Email }, connect)
-                SignInStep.Browser -> DesktopBrowserPanel(back)
+                SignInStep.Password -> DesktopPasswordPanel(server, busy, error, back,
+                    { step = SignInStep.Email }, connect, serverChanged = { server = it })
+                SignInStep.Browser, SignInStep.Device -> if (startPairing != null)
+                    NativeDevicePairing(server, pairing, busy, error, false, step == SignInStep.Browser,
+                        { server = it }, startPairing, cancelPairing, back)
+                    else SignInPanel(480.dp) {
+                        Text("Device sign-in requires a server connection.", color = Palette.secondary)
+                        androidx.compose.material3.TextButton(back) { Text("All sign-in options") }
+                    }
                 SignInStep.Email -> DesktopEmailPanel(back)
-                SignInStep.Device -> DesktopDevicePanel(back)
                 SignInStep.Iptv -> DesktopIptvPanel(back)
             }
         }

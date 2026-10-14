@@ -17,7 +17,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, back: () -> Unit,
-    forgot: () -> Unit, connect: (String, String, String) -> Unit) {
+    forgot: () -> Unit, connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {}) {
     var server by remember { mutableStateOf(origin) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -56,6 +56,6 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     TextButton(onClick = { editServer = !editServer }, modifier = Modifier.fillMaxWidth()) {
         Text("Use another server", color = Palette.secondary, fontSize = 12.sp)
     }
-    if (editServer) OutlinedTextField(server, { server = it }, Modifier.fillMaxWidth(),
+    if (editServer) OutlinedTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
         label = { Text("Server address") }, singleLine = true, shape = RoundedCornerShape(12.dp))
 }

@@ -21,15 +21,13 @@ class RemoteFailure(val status: Int, message: String) : Exception(message)
 class RemoteConnection(
     rawOrigin: String,
     private val sessionStore: RemoteSessionStore = remoteSessionStore(),
-    private val client: HttpClient = platformClient(),
+    client: HttpClient? = null,
     browserMode: Boolean = browserOrigin() != null,
 ) {
     private val codec = Json { ignoreUnknownKeys = true }
     private val browser = browserMode
-    private val origin = Url(rawOrigin).let {
-        require(it.protocol == URLProtocol.HTTPS && it.user == null && it.password == null && it.encodedPath in listOf("", "/") && it.parameters.isEmpty() && it.fragment.isEmpty() && it.host.isNotBlank()) { "Enter an HTTPS server address." }
-        rawOrigin.trimEnd('/')
-    }
+    private val origin = validatedRemoteOrigin(rawOrigin)
+    private val client = client ?: platformClient()
     private var csrf: String? = null
     private var accessToken: String? = null
     private var refreshToken: String? = null
@@ -54,14 +52,14 @@ class RemoteConnection(
 
     suspend fun login(username: String, password: String): Bootstrap {
         val result = requestJson(if (browser) "/api/auth/login" else "/api/auth/device/login", HttpMethod.Post,
-            buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", "VIPTV KMP") })
+            buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", "VIPTV") })
         if (!browser) installDeviceTokens(result.jsonObject)
         csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull
         return bootstrap()
     }
 
     suspend fun restore(saved: SavedRemoteSession): Bootstrap {
-        require(!browser && saved.origin == origin)
+        require(!browser && validatedRemoteOrigin(saved.origin) == origin)
         refreshToken = saved.refreshToken
         refreshDevice()
         return bootstrap()

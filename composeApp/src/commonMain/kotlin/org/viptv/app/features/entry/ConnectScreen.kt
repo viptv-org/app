@@ -22,11 +22,11 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
         return
     }
     if (phone) {
-        MobileSignIn(origin, busy, error, local, connect)
+        MobileSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
         return
     }
     if (desktop) {
-        DesktopSignIn(origin, busy, error, local, connect)
+        DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
         return
     }
     var server by remember { mutableStateOf(origin) }

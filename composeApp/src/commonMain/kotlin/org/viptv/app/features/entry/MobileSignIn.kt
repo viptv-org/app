@@ -21,13 +21,17 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?,
-    connect: (String, String, String) -> Unit) {
+    connect: (String, String, String) -> Unit, pairing: org.viptv.app.connection.DevicePairingDisplay? = null,
+    startPairing: ((String) -> Unit)? = null, cancelPairing: () -> Unit = {}, backChanged: ((() -> Unit)?) -> Unit = {}) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
+    var server by remember(origin) { mutableStateOf(origin) }
     val back = { step = SignInStep.Choice }
+    DisposableEffect(step) {
+        backChanged(if (step == SignInStep.Choice) null else back)
+        onDispose { backChanged(null) }
+    }
     Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-        Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.CenterStart) {
-            Icon(Lucide.ChevronLeft, "All sign-in options", Modifier.size(24.dp).clickable(onClick = back), tint = Palette.text)
-        }
+        SignInBackBar(back)
         when (step) {
             SignInStep.Choice -> {
                 Spacer(Modifier.height(12.dp))
@@ -35,17 +39,28 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
                 Spacer(Modifier.height(14.dp))
                 Text("Pick whichever is easiest. They all reach the same account.", color = Palette.secondary, fontSize = 15.sp, lineHeight = 22.sp)
                 Spacer(Modifier.height(18.dp))
-                MobileSignInChoice(SignInMethod.Browser, "Continue in browser", "Sign in on viptv.syek.tech, then come back here") { step = SignInStep.Browser }
+                MobileSignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
                 MobileSignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }
                 MobileSignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
-                MobileSignInChoice(SignInMethod.Device, "Use another device", "Approve this sign-in from a phone or TV that’s signed in") { step = SignInStep.Device }
+                MobileSignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
                 MobileSignInChoice(SignInMethod.Iptv, "IPTV provider", "Xtream Codes login or an M3U playlist link") { step = SignInStep.Iptv }
                 if (local != null) MobileSignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", local)
             }
-            SignInStep.Password -> MobilePasswordPanel(origin, busy, error, back, { step = SignInStep.Email }, connect)
+            SignInStep.Password -> MobilePasswordPanel(server, busy, error, back, { step = SignInStep.Email }, connect, serverChanged = { server = it })
+            SignInStep.Browser, SignInStep.Device -> if (startPairing != null)
+                NativeDevicePairing(server, pairing, busy, error, true, step == SignInStep.Browser,
+                    { server = it }, startPairing, cancelPairing, back)
+                else MobileSignInUnavailable(step, back, { step = SignInStep.Password })
             else -> MobileSignInUnavailable(step, back, { step = SignInStep.Password })
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+internal fun SignInBackBar(back: () -> Unit) {
+    Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.CenterStart) {
+        Icon(Lucide.ChevronLeft, "All sign-in options", Modifier.size(24.dp).clickable(onClick = back), tint = Palette.text)
     }
 }
 
