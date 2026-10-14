@@ -41,10 +41,10 @@ physical TV rendering and richer provider controls remain qualification work.
 ## Current evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
-core is `0adeb98`; experimental backend is `70b6741`; gateway is `8deb493`.
+core is `0adeb98`; experimental backend is `b412561`; gateway is `8deb493`.
 The running QA server retains backend `7c3f042` and gateway `c85cd27` during manual testing. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 415 checks passed. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 69 desktop checks,
+Backend: 415 full checks passed at `70b6741`; eight focused import checks passed at `b412561` after the paused-episode identity fix. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 70 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
@@ -86,7 +86,7 @@ authenticated LAN bootstrap completed in 583 ms.
 
 The next TV candidate reduces settled backdrop compositing, bounds role-specific
 artwork prefetch, and returns Sources focus to the last-focused provider chip.
-Its Android assembly, 69 desktop checks, Wasm compilation and FFmpeg packaging checks passed. It
+Its Android assembly, 70 desktop checks, Wasm compilation and FFmpeg packaging checks passed. It
 is not installed while manual testing continues; physical validation is pending.
 
 The standalone native Tauri plugin moved to `vynxc/tauri-plugin-video`. Generic
@@ -139,3 +139,20 @@ Latest hosted run 38529217190 did not start any build step: GitHub reports accou
 payments failed or the spending limit needs increasing. Previous successful hosted
 runs apply to their recorded revisions. Current local Android, Wasm and Linux
 checks pass; latest Windows/macOS checks remain unavailable.
+
+Phone and desktop Browser/Device sign-in now use the same cancellable server
+challenge lifecycle as TV. Normal flows show real QR/code/expiry, open or copy the
+complete approval link and retain the explicitly chosen server between methods.
+Android Back returns to method selection. Invalid origins are rejected before a
+network client is allocated. Changed/new/error states are recorded in GAP-055.
+Four packaged Linux/common-phone layout captures were inspected and both QR
+images decoded correctly; external browser launching and physical-phone input
+remain unqualified. The current candidate passed 70 desktop checks, Android QA
+assembly, Wasm compilation, FFmpeg/native package checks and bundled desktop
+JVM/SQLite smoke. It was not installed while physical-TV manual testing continued.
+
+The backend paused-import fix requires episode IDs and supplied coordinates to
+agree on a unique episode, preventing conflicting Simkl TV/anime evidence from
+writing progress onto another episode. Before-fix regressions reproduced the bug;
+eight focused checks now pass. No real history or provider tracking was modified;
+live services retain their previous commits.

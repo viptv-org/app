@@ -4,7 +4,7 @@
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
   "backend_tests_passed": 415,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 69,
+  "desktop_tests_passed": 70,
   "android_release_sha256": null,
   "android_abis": [
     "armeabi-v7a",
@@ -74,7 +74,7 @@
     "includes_media3_ffmpeg_audio": true,
     "includes_latest_core_contract": false
   },
-  "backend": "70b674167f8cc874a4ef15a9eafe45f099e605bd",
+  "backend": "b412561505c8116866334d90dba9426d0049b99c",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -149,7 +149,7 @@
   },
   "current_core_build": {
     "qa_apk": "passed",
-    "desktop_tests": 69,
+    "desktop_tests": 70,
     "wasm_compile": "passed",
     "physical_tv_installed": false,
     "real_server_home_ready": true
@@ -210,9 +210,9 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "08c3119a4c1c06858edbf8115a725ffc4d6fc908b1bb17be3bcbd0ffdde67986",
+    "apk_sha256": "7d10984ea80ffb3571d44730db4a7a545eccdacba01e6430a26f2cc1a3ff33b5",
     "build": "passed",
-    "desktop_tests_passed": 69,
+    "desktop_tests_passed": 70,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
@@ -221,7 +221,8 @@
       "Stable provider/quality chip identities and last-focused provider return",
       "Server-issued TV device pairing with explicit server choice and cancellation",
       "Desktop Back follows screen return history; unavailable chrome actions disabled",
-      "Preserve required provider audio ordinals in native and direct playback; capability negotiation for new backend"
+      "Preserve required provider audio ordinals in native and direct playback; capability negotiation for new backend",
+      "Phone/desktop browser and device pairing share TV challenge lifecycle; explicit server validation and Back cancellation"
     ]
   },
   "local_runtime_services": {
@@ -274,7 +275,23 @@
     "existing_device_families_revoked": 0,
     "physical_tv_controls_used": false,
     "cancellation_during_bootstrap": "covered by a focused test; credentials not persisted",
-    "installed_on_physical_tv": false
+    "installed_on_physical_tv": false,
+    "shared_native_layouts": [
+      "phone",
+      "desktop",
+      "TV"
+    ],
+    "offline_layouts_inspected": 4,
+    "preview_qr_decoded": 2,
+    "external_browser_launch_physically_qualified": false,
+    "phone_capture": "common layout rendered at390x844 on isolated Linux display; not Android input/OS-chrome proof",
+    "captures": [
+      "docs/evidence/native-pairing-desktop-device.png",
+      "docs/evidence/native-pairing-desktop-browser.png",
+      "docs/evidence/native-pairing-phone-device.png",
+      "docs/evidence/native-pairing-phone-browser.png"
+    ],
+    "legacy_saved_origins": "whitespace/trailing-slash normalization preserved through tested refresh/restore"
   },
   "required_audio_candidate": {
     "desktop_checks_passed": 69,
@@ -306,5 +323,14 @@
     "ignored": 59,
     "failed": 0,
     "test_only_followup": "two missing SocketAddr imports; runtime unchanged"
-  }
+  },
+  "backend_full_suite_revision": "70b674167f8cc874a4ef15a9eafe45f099e605bd",
+  "simkl_paused_identity": {
+    "revision": "b412561505c8116866334d90dba9426d0049b99c",
+    "focused_tests_passed": 8,
+    "conflicting_identity_and_episode_coordinates_rejected": true,
+    "real_account_history_mutated": false,
+    "live_services_restarted": false
+  },
+  "packaged_desktop_current_smoke": "bundled JVM launcher + temporary SQLite/profile preference bridge passed"
 }

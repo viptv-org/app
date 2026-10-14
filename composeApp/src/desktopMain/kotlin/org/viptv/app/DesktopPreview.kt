@@ -16,19 +16,22 @@ import org.viptv.app.state.Screen
 import org.viptv.app.theme.ViptvTheme
 
 internal fun launchUiPreview() = application {
-    val window = rememberWindowState(width = 1440.dp, height = 900.dp)
+    val phone = System.getenv("VIPTV_UI_PHONE") == "1"
+    val width = System.getenv("VIPTV_UI_WIDTH")?.toIntOrNull()?.coerceIn(320, 3840) ?: if (phone) 390 else 1440
+    val height = System.getenv("VIPTV_UI_HEIGHT")?.toIntOrNull()?.coerceIn(480, 2160) ?: if (phone) 844 else 900
+    val window = rememberWindowState(width = width.dp, height = height.dp)
     var screen by remember { mutableStateOf(runCatching { Screen.valueOf(System.getenv("VIPTV_UI_SCREEN") ?: "Home") }.getOrDefault(Screen.Home)) }
     var term by remember { mutableStateOf(if (screen == Screen.Search) "the w" else "") }
     Window(onCloseRequest = ::exitApplication, title = "VIPTV UI Preview", state = window, undecorated = true) {
         ViptvTheme {
             Column {
-                WindowDraggableArea {
+                if (!phone) WindowDraggableArea {
                     DesktopTitleBar(ApplicationState(screen = screen, searchTerm = term, profiles = listOf(PreviewData.profile), selectedProfile = PreviewData.profile.id), false, { screen = it },
                         { term = it; screen = Screen.Search }, {}, { window.isMinimized = true },
                         { window.placement = if (window.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized },
                         ::exitApplication, Modifier, back = if (screen != Screen.Home) { { screen = Screen.Home } } else null)
                 }
-                UiPreview(desktop = true, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
+                UiPreview(desktop = !phone, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
             }
         }
     }

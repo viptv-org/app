@@ -29,10 +29,10 @@ The remaining supplied screens are tracked as pending/in progress in `design-cov
 ### GAP-020 — Phone entry connection states
 
 `MobilePasswordPanel` includes a collapsible server address selector, which has no
-supplied phone board. `MobileSignInUnavailable` provides temporary unavailable
-states for browser, email/recovery, device approval, and IPTV authentication until
-those connection flows exist. Their supplied boards remain unfinished, rather
-than being counted as missing designs.
+supplied phone board. `MobileSignInUnavailable` still covers email/recovery and IPTV entry. Browser
+and device sign-in now use the same real server challenge as TV. Explicit server
+selection, creating/expired/error and browser-opening failure variants remain
+provisional; supplied normal-state boards still await full parity review.
 
 ### GAP-021 — TV entry controls beyond the supplied board
 
@@ -220,7 +220,7 @@ sizes and multiline captions.
 Discovery now uses the selected profile's advertised query controls and real
 catalog pages. Type, catalog, genre and timeframe controls use the existing theme.
 The supplied boards do not specify all provider-dependent combinations, numeric,
-date or multi-select filters, or the Load more action. These need final designs.
+date or multi-select filters. These need final designs. Catalog pages load automatically without a manual Load more action.
 
 ### GAP-045 — My List actions and remote profile availability
 
@@ -286,3 +286,19 @@ Full-layout placeholders now occupy the title, metadata, description, actions, s
 and episode cards while native detail data loads. The supplied set has Home and Sources
 loading boards, but no matching Info skeleton board. These static placeholders need review
 and a supplied loading design; static drawing avoids a continuous TV animation workload.
+
+### GAP-055 — Native device and browser pairing states
+
+Phone and desktop use the provided device-code and browser-waiting layouts with
+real server challenges, complete QR links, expiry and approval polling. New-code
+and use-another-server controls, the HTTPS server dialog, invalid-address feedback,
+creating/expired/error states, variable server-address text and failed browser
+opening have no individually supplied boards. The new controls and dynamic copy
+are provisional; normal supplied layouts are not certified as exact parity.
+
+`docs/evidence/native-pairing-desktop-{device,browser}.png` shows the packaged
+Linux layout. `native-pairing-phone-{device,browser}.png` shows common phone layout
+at 390×844 in an isolated desktop renderer; it does not prove Android input or OS
+chrome. These fixtures use `.invalid` links and never open an actual browser.
+Both generated QR images decode to the complete expected link/code. Real protocol
+approval/restore/Home evidence remains separate from these layout captures.
