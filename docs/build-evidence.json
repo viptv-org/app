@@ -2,7 +2,7 @@
   "status": "experimental, incomplete overall",
   "core": "a7495e753ba9bdace3eb83d7cf99d86b9ed7f200",
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
-  "backend_tests_passed": 408,
+  "backend_tests_passed": 412,
   "backend_tests_ignored": 10,
   "desktop_tests_passed": 62,
   "android_release_sha256": null,
@@ -74,7 +74,7 @@
     "includes_media3_ffmpeg_audio": true,
     "includes_latest_core_contract": false
   },
-  "backend": "1ffbecd85d5b6eed4c3a21589e9cd4a95619e5f1",
+  "backend": "91ecda58179ffa9fde4f19264c49b52c8dd4386c",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -153,5 +153,24 @@
     "wasm_compile": "passed",
     "physical_tv_installed": true,
     "real_server_home_ready": true
+  },
+  "playback_gateway": "c85cd279c68e9fbc46530fb2e39bfc5de45ee7cd",
+  "roku": {
+    "commit": "436015b",
+    "local_checks_passed": 71,
+    "real_https_episode_count": 1184,
+    "native_m3u_projection": true,
+    "viewer_scoped_provider_caption_controller": true,
+    "physical_decoder_qualified": false
+  },
+  "tv_web": {
+    "global_search_requests": 1,
+    "real_naruto_results": 38,
+    "startup_bootstrap_requests": 1,
+    "detail_metadata_requests": 1,
+    "unit_component_checks": 323,
+    "launcher_checks": 3,
+    "physical_tv_decoder_qualified": false,
+    "cold_image_delivery": "502 regression under investigation; warm run zero failures"
   }
 }
