@@ -2,7 +2,7 @@
   "status": "experimental, incomplete overall",
   "core": "a7495e753ba9bdace3eb83d7cf99d86b9ed7f200",
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
-  "backend_tests_passed": 406,
+  "backend_tests_passed": 408,
   "backend_tests_ignored": 10,
   "desktop_tests_passed": 62,
   "android_release_sha256": null,
@@ -63,17 +63,18 @@
     "known_atlantic_diagnostic_video_rejected": true
   },
   "platform_ci": {
-    "run": 38475963262,
-    "app_revision": "6028a973e8345125c914ad5cd673afbbcc3124a6",
+    "run": 38494987673,
+    "app_revision": "467a6f0aa720d104811c039ed2253a3c502cea87",
     "renderer": "passed",
     "android": "passed",
     "web": "passed",
     "windows": "passed",
     "macos": "passed",
     "linux": "passed",
-    "includes_latest_info_changes": false
+    "includes_media3_ffmpeg_audio": true,
+    "includes_latest_core_contract": false
   },
-  "backend": "79cc5cd87cf4e198434f7472a10e2c900ecd74f3",
+  "backend": "1ffbecd85d5b6eed4c3a21589e9cd4a95619e5f1",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
