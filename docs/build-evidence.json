@@ -1,11 +1,11 @@
 {
   "status": "experimental, incomplete overall",
-  "core": "eb61685491088c082c3ad99abbf88b798d1c41f5",
+  "core": "a7495e753ba9bdace3eb83d7cf99d86b9ed7f200",
   "kite_renderer": "56f361b7610bf1d20c328cf919877e37baff9d1f",
-  "backend_tests_passed": 392,
+  "backend_tests_passed": 405,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 55,
-  "android_release_sha256": "8919a268a0198d26023a08235576013227d0369eda786b9349806fe8d8ec4d06",
+  "desktop_tests_passed": 62,
+  "android_release_sha256": null,
   "android_abis": [
     "armeabi-v7a",
     "arm64-v8a",
@@ -14,14 +14,28 @@
   "wasm_compile": "passed",
   "linux_portable_distribution": "Temurin21.0.12.1+1 packaged launcher, bundled JVM and SQLite/profile preferences/ranking bridge smoke passed",
   "physical_tv_real_playback": {
-    "source": "real Stremio MP4",
-    "metadata": "real Simkl OAuth2 profile",
-    "fps": 24,
-    "rebuffers": 0,
-    "audio_underruns": 0,
-    "av_drift_ms": 8.772,
-    "renderer": "HardwareZeroCopy MediaCodec",
-    "presentation": "AndroidWindowGpuCompleted"
+    "engine": "Media3 1.11.1",
+    "audio": "Official matching FFmpeg extension; preferred decoder verified on device",
+    "video": "hardware MediaCodec SurfaceView",
+    "fixed_1080p60_sample": {
+      "source_fps": 60,
+      "compositor_fps": [
+        60,
+        60,
+        59.99,
+        60
+      ],
+      "reported_dropped_frames": 0,
+      "audio_decoder": "ffmpegLavc60.3.100-aac",
+      "video_decoder": "c2.amlogic.avc.decoder"
+    },
+    "real_native_vixsrc_episode": {
+      "visually_verified_content": true,
+      "source_fps_approximate": 24,
+      "compositor_fps_approximate": 24,
+      "reported_dropped_frames": 0
+    },
+    "full_player_acceptance": false
   },
   "physical_tv_home": {
     "continue_watching_upper_right_artwork": "verified",
@@ -40,11 +54,13 @@
   "production_deployed": false,
   "date": "2026-10-13",
   "native_source_plugin": {
-    "physical_tv_sources": 12,
-    "emulator_sources": 11,
     "backend_required": false,
+    "physical_tv_candidate_providers": 4,
+    "physical_tv_candidates": 8,
     "episode": "S1E1",
-    "playback_qualified": false
+    "vixsrc_playback_visually_verified": true,
+    "all_providers_playback_qualified": false,
+    "known_atlantic_diagnostic_video_rejected": true
   },
   "platform_ci": {
     "run": 38475963262,
@@ -57,7 +73,7 @@
     "linux": "passed",
     "includes_latest_info_changes": false
   },
-  "backend": "85eaa6233c336056ec60b3ce4bcdf318ed108171",
+  "backend": "df4febfb07ee81ce80aa56c416dc3b54ffbbd4c2",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -88,9 +104,9 @@
     "missed_deadlines_percent": 11.36,
     "final_ui_batch": false
   },
-  "current_ui_apk_sha256": "5ce1dfd52c4b717c9126a8edf63accda5fd4a26ed2d6daac71269c349ce15364",
+  "current_ui_apk_sha256": "9d882e37dc0332ca0a37b71f5f6e0dab32f47faa8da92c1ed6fc3b138506f249",
   "native_engine_profile": "release",
-  "current_ui_apk_bytes": 131366434,
+  "current_ui_apk_bytes": 74474278,
   "native_live": {
     "public_playlist": true,
     "channels": 100,
@@ -129,5 +145,12 @@
     "simkl_total_read_millis": 2825,
     "native_cinemeta_records": 1242,
     "native_metadata_documents": 1
+  },
+  "current_core_build": {
+    "qa_apk": "passed",
+    "desktop_tests": 62,
+    "wasm_compile": "passed",
+    "physical_tv_installed": true,
+    "real_server_home_ready": true
   }
 }

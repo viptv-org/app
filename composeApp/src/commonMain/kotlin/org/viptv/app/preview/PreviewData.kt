@@ -24,8 +24,8 @@ internal object PreviewData {
             poster = art("poster${index + 1}.jpg"), badges = emptyList())
     }
     val home = HomeSnapshot(scope = Scope("preview", "preview", "preview", 1), revision = 1, hero = hero,
-        rows = listOf(HomeRow("continue", "Continue Watching", "preview", RowState.READY, watching),
-            HomeRow("new", "New this week", "preview", RowState.READY, posters)), complete = true)
+        rows = listOf(HomeRow(id = "continue", title = "Continue Watching", provider_id = "preview", state = RowState.READY, cards = watching),
+            HomeRow(id = "new", title = "New this week", provider_id = "preview", state = RowState.READY, cards = posters)), complete = true)
     val playerTitle = watching.first().copy(subtitle = "S1 E2 · Please Don’t Go")
     val detail = DetailSnapshot(item = hero.copy(subtitle = "Movie · " + hero.subtitle), episodes = emptyList())
     val sources = listOf(SourceCandidate("source-1", "preview", "LordStreams", "WEB-DL · HEVC · 5.1 · 18.4 GB"),

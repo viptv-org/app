@@ -41,7 +41,7 @@ internal fun ApplicationController.updateLibrary(cards: List<Card>, identities: 
     val home = mutable.value.home?.let { snapshot ->
         val existing = snapshot.rows.find { it.id == "favorites" && it.provider_id == "library" }
         val row = existing?.copy(cards = ordered.take(12), state = if (ordered.isEmpty()) RowState.EMPTY else RowState.READY, next_cursor = null)
-            ?: HomeRow("favorites", "My List", "library", if (ordered.isEmpty()) RowState.EMPTY else RowState.READY, ordered.take(12))
+            ?: HomeRow(id = "favorites", title = "My List", provider_id = "library", state = if (ordered.isEmpty()) RowState.EMPTY else RowState.READY, cards = ordered.take(12))
         val rows = if (existing != null) snapshot.rows.map { if (it === existing) row else it }
             else snapshot.rows.toMutableList().apply { add(indexOfFirst { it.id != "continue" }.takeIf { it >= 0 } ?: size, row) }
         snapshot.copy(rows = rows)

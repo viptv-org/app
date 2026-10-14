@@ -19,8 +19,8 @@ internal object PreviewTvHome {
     }
     val home = PreviewData.home.copy(hero = PreviewData.hero.copy(description =
         "The Platt family bands together to navigate their new surroundings after a cosmic event transports their neighborhood to someplace unknown."),
-        rows = listOf(HomeRow("continue", "Continue Watching", "preview", RowState.READY, watching),
-        HomeRow("new", "New this week", "preview", RowState.READY, newThisWeek)))
+        rows = listOf(HomeRow(id = "continue", title = "Continue Watching", provider_id = "preview", state = RowState.READY, cards = watching),
+        HomeRow(id = "new", title = "New this week", provider_id = "preview", state = RowState.READY, cards = newThisWeek)))
     val summaries = mapOf(watching[0].identity.id to PreviewTvDetails.series.item.copy(subtitle = "Series · 2022 · Crime, Drama",
         description = "This true-crime anthology series delivers a multi-layered psychological study of individuals whose extreme actions shocked society.",
         progress = 0.3, badges = listOf("TV-MA", "HD", "5.1")),
