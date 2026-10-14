@@ -13,32 +13,32 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.*
 
-/** Controls come from the selected profile's provider; the view never chooses a provider. */
+/** Provider and per-catalog capabilities determine the controls; search never selects a provider. */
 @Composable
 internal fun DiscoveryFilters(controls: DiscoveryControls, query: BrowseQuery, showType: Boolean,
-    changed: (String, String) -> Unit, first: FocusRequester? = null) {
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        val visible = controls.controls.filter { (showType || it.id != "type") && it.id != "search" }
+    changed: (String, String) -> Unit, first: FocusRequester? = null, television: Boolean = false,
+    scale: Float = 1f, multipleChanged: (String, List<String>) -> Unit = { _, _ -> }) {
+    val catalog = controls.selectedCatalog(query)
+    val fields = if (catalog == null) controls.controls else
+        controls.controls.filter { it.id in listOf("type", "catalog") } + catalog.controls.filter { it.id !in listOf("type", "catalog") }
+    val visible = fields.filter { (showType || it.id != "type") && (it.id != "search" || catalog != null) && it.maximum_selections != 0L }
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         if (visible.isEmpty()) Text("No browsing filters", Modifier.then(if (first != null) Modifier.focusRequester(first) else Modifier).focusable())
-        visible.forEachIndexed { index, control ->
-            val value = when (control.id) { "type" -> query.type; "catalog" -> query.catalog; "genre" -> query.genre; else -> query.extras[control.id] }
+        visible.forEachIndexed { index, supplied ->
+            val peers = controls.catalogs.filter { it.type == query.type }
+            val control = if (supplied.id == "catalog" && peers.isNotEmpty()) supplied.copy(
+                choices = peers.map { Choice(it.selectionKey(), it.displayName(peers)) }) else supplied
+            val value = when (control.id) {
+                "type" -> query.type; "catalog" -> catalog?.selectionKey() ?: query.catalog
+                "genre" -> query.genre; "search" -> query.search; else -> query.extras[control.id]
+            }
             val modifier = if (index == 0 && first != null) Modifier.focusRequester(first) else Modifier
             when (control.kind) {
-                ControlKind.SINGLECHOICE -> {
-                    var expanded by remember(control.id) { mutableStateOf(false) }
-                    Box {
-                        OutlinedButton(onClick = { expanded = true }, modifier = modifier) {
-                            Text(control.choices.find { it.value == value }?.label ?: control.label)
-                        }
-                        DropdownMenu(expanded, { expanded = false }) {
-                            if (!control.required) DropdownMenuItem(text = { Text("All ${control.label.lowercase()}") }, onClick = { changed(control.id, ""); expanded = false })
-                            control.choices.forEach { choice -> DropdownMenuItem(text = { Text(choice.label) }, onClick = { changed(control.id, choice.value); expanded = false }) }
-                        }
-                    }
-                }
+                ControlKind.SINGLECHOICE -> DiscoveryChoiceFilter(control, value, modifier, television, scale) { changed(control.id, it) }
                 ControlKind.TEXT, ControlKind.NUMBER, ControlKind.DATE -> DiscoveryTextFilter(control, value, modifier) { changed(control.id, it) }
                 ControlKind.TOGGLE -> FilterChip(value == "true", { changed(control.id, (value != "true").toString()) }, label = { Text(control.label) }, modifier = modifier)
-                ControlKind.MULTICHOICE -> Text("${control.label}: multiple selections are unavailable", modifier.focusable())
+                ControlKind.MULTICHOICE -> DiscoveryMultiChoiceFilter(control, query.selections(control.id), modifier,
+                    television, scale) { multipleChanged(control.id, it) }
             }
         }
     }

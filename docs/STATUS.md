@@ -41,15 +41,15 @@ physical TV rendering and richer provider controls remain qualification work.
 ## Current evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
-core is `0adeb98`; experimental backend is `cc72fbc`; gateway is `8deb493`.
+core is `47b85b5`; experimental backend is `5aa2f1c`; gateway is `8deb493`.
 The running QA server retains backend `7c3f042` and gateway `c85cd27` during manual testing. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 425 Live/SDK checks passed (10 ignored), and 415 default checks passed (8 ignored) at `cc72fbc`; this includes the paused-import identity regressions. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 73 desktop checks,
+Backend: 427 Live/SDK checks passed (10 ignored) at `5aa2f1c`; the last default-feature run at `cc72fbc` passed 415 (8 ignored). This includes the paused-import identity regressions. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 80 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
 
-The current QA APK is installed on the physical Onn TV over trusted LAN HTTPS.
+The installed Onn TV baseline predates the queued candidate and uses trusted LAN HTTPS.
 A fixed 1080p60 stream measured 59.99–60 compositor FPS with zero reported decoder
 drops, FFmpeg AAC audio and Amlogic hardware AVC video. A real native VixSrc episode
 was visually verified at its approximately 24 FPS source cadence with zero drops.
@@ -178,3 +178,25 @@ Four native IPTV layout captures were inspected. Image-pixel verification and
 heading/back-link rendering; the earlier missing-heading diagnosis was incorrect.
 No rendering workaround is retained. Full parity, physical input and desktop GPU
 performance remain unqualified.
+
+Profile-owned Stremio discovery now supports advertised multiple selections across
+core/backend/KMP. Scalar clients remain compatible. KMP uses explicit scoped
+catalogs, resets foreign filters on switching, and sends one catalog request per
+page. Its sheet applies drafts once, respects limits and restores TV focus; seven
+new checks include actual Compose input/focus and a real native Rust/SQLite bridge
+with only add-on IO replaced. Simkl advanced parameters remain limited to its
+verified capabilities. New sheet states and three inspected common-layout captures
+are recorded in GAP-057; TV-web/Roku multiple-choice UI remains migration work.
+
+Core `47b85b5` passed 62 engine and 39 native checks (3 native ignored); backend
+`5aa2f1c` passed 427 checks (10 ignored). Its separately built Linux/Android API26
+release libraries were copied by verified hashes, with unchanged UniFFI bindings.
+KMP passed 80 desktop checks, Android QA/release assembly, Wasm compilation and
+packaged JVM/SQLite/FFmpeg checks; packaged native bytes were verified. Current
+TV/server installations retain their previous sources during manual testing.
+
+Required catalog-specific search inputs are visible and apply their draft once;
+missing required fields leave controls usable without a catalog request. Add-on
+configuration refresh clears stale discovery controls/cards/cursors. The native
+bridge check also switches to a search-only catalog, clears its previous genres
+and performs one search request.

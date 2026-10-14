@@ -23,7 +23,7 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Unit,
-    genres: List<String> = emptyList(), membership: Map<String, Set<String>> = emptyMap(), initialCard: Int = 0, filters: (@Composable (FocusRequester) -> Unit)? = null, more: (() -> Unit)? = null, error: String? = null) {
+    genres: List<String> = emptyList(), membership: Map<String, Set<String>> = emptyMap(), initialCard: Int = 0, filters: (@Composable (FocusRequester, Float) -> Unit)? = null, more: (() -> Unit)? = null, error: String? = null) {
     var genre by remember { mutableStateOf<String?>(null) }
     val activeGenre = genre?.takeIf { it in genres }
     val selected = cards.filter { activeGenre == null || activeGenre in membership[it.identity.id].orEmpty() }
@@ -49,7 +49,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
         val scale = maxWidth / 1920.dp
         Column(Modifier.focusProperties { onEnter = { filterFocus.requestFocus() } }.focusGroup()
             .padding(start = 96.dp * scale, top = 8.dp * scale)) {
-            if (filters != null) filters(filterFocus) else TvFocusScroll {
+            if (filters != null) filters(filterFocus, scale) else TvFocusScroll {
                 LazyRow(modifier = Modifier.focusProperties { onEnter = { filterFocus.requestFocus() } }
                     .onPreviewKeyEvent {
                         if (it.key == Key.DirectionDown && selected.isNotEmpty()) {

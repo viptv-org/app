@@ -23,7 +23,8 @@ import org.viptv.engine.wire.HomeSnapshot
 @Composable
 fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, loadedCards: List<Card>? = null, controls: org.viptv.app.connection.DiscoveryControls? = null,
     query: org.viptv.app.connection.BrowseQuery = org.viptv.app.connection.BrowseQuery("movie"), busy: Boolean = false, error: String? = null,
-    filterChanged: (String, String) -> Unit = { _, _ -> }, more: (() -> Unit)? = null) {
+    filterChanged: (String, String) -> Unit = { _, _ -> }, more: (() -> Unit)? = null,
+    multipleChanged: (String, List<String>) -> Unit = { _, _ -> }) {
     var sort by remember(screen) { mutableStateOf("Popular") }
     var menu by remember { mutableStateOf(false) }
     val cards = remember(home, loadedCards, screen, sort) {
@@ -37,7 +38,9 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         when (sort) { "A–Z" -> loaded.sortedBy { it.title.lowercase() }; "Z–A" -> loaded.sortedByDescending { it.title.lowercase() }; else -> loaded }
     }
     if (television) {
-        TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, more = more, error = error, filters = controls?.let { { first -> DiscoveryFilters(it, query, screen == Screen.Discover, filterChanged, first) } })
+        TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, more = more, error = error,
+            filters = controls?.let { { first, scale -> DiscoveryFilters(it, query, screen == Screen.Discover,
+                filterChanged, first, television = true, scale = scale, multipleChanged = multipleChanged) } })
         return
     }
     val grid = rememberLazyGridState()
@@ -49,7 +52,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
             Text(screen.name, fontSize = if (television) 36.sp else 28.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(18.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                if (controls != null) DiscoveryFilters(controls, query, screen == Screen.Discover, filterChanged)
+                if (controls != null) DiscoveryFilters(controls, query, screen == Screen.Discover, filterChanged, multipleChanged = multipleChanged)
                 else Text("All genres", Modifier.background(Palette.text, RoundedCornerShape(18.dp))
                     .padding(horizontal = 14.dp, vertical = 8.dp), color = Palette.background,
                     fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)

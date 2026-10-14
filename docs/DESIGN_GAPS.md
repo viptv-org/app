@@ -252,7 +252,7 @@ Add-on settings contain a provisional capability-driven choice of the profile’
 
 Live channels and guide programs are host-provided records. Missing guide, unavailable connections, loading and retry states use provisional messages; guide selection fetches only the selected channel. Group controls retain supplied geometry while binding opaque host group IDs. Channels and guide lists request subsequent bounded pages automatically near the end; no manual pagination action is shown. Guide clocks render provider epoch timestamps in the device time zone, including midnight and DST transitions.
 
-Discovery text/number/date filters keep a draft and use a provisional Apply action to prevent incomplete values and per-keystroke requests. Multiple-choice discovery transport remains unsupported and is explicitly labeled rather than silently dropping a control.
+Discovery text/number/date filters keep a draft and use a provisional Apply action to prevent incomplete values and per-keystroke requests. Stremio multiple-choice discovery now uses real advertised choices and selection limits; its additional sheet states are tracked in GAP-057. Simkl discovery remains single-valued for its currently documented feeds.
 
 ### GAP-051 — Combined library filters
 
@@ -322,3 +322,19 @@ marked the M3U heading missing; the image pixels contradict that diagnosis.
 No rendering workaround was retained. These captures do not qualify Android
 input, OS keyboard/status-bar placement or default desktop GPU performance.
 No device app was replaced.
+
+### GAP-057 — Provider discovery selection sheets
+
+Provider-owned multiple-choice filters use a right sheet on desktop/TV and a bottom
+sheet on phones. Checkbox edits stay local until Apply; required selections and
+provider limits are respected. Cancel preserves the active query. TV starts on an
+enabled option, including a selection below the initial viewport, and returns to
+the filter trigger after closing. Rapid Apply input submits once.
+
+The sheet, count/limit/required/default copy, disabled choices at the limit, catalog labels
+with friendly connection names, and missing-required-filter errors have no exact
+supplied boards. These are provisional states; no full design parity is claimed.
+`docs/evidence/discovery-multichoice-{desktop,phone,tv}.png` shows isolated common
+Compose layouts with synthetic genre choices, not a live Simkl capability.
+Three real Compose input/focus checks cover Apply/limit behavior, required catalog search input and TV initial focus;
+Android input, physical TV rendering and browser popup placement remain separate.

@@ -1,11 +1,11 @@
 {
   "status": "experimental, incomplete overall",
-  "core": "0adeb981318c5cc4eb10e7809808f0f36c6fe2a7",
+  "core": "47b85b5386617f455ade8b294a7a844b54f537c0",
   "kite_renderer": "cbe2731345ea8270705f1df6e0f8f27485c42417",
-  "backend_tests_passed": 425,
+  "backend_tests_passed": 427,
   "backend_tests_ignored": 10,
-  "desktop_tests_passed": 73,
-  "android_release_sha256": "1526bb7ce5daf16921b6f7a7dbf2bb248796f62b64153026ba1e2dc7ae7de05d",
+  "desktop_tests_passed": 80,
+  "android_release_sha256": "0be01aa5d8476f986d61c84b19e5e1881532cecfb07b5153ce30c754c9282d40",
   "android_abis": [
     "armeabi-v7a",
     "arm64-v8a",
@@ -74,7 +74,7 @@
     "includes_media3_ffmpeg_audio": true,
     "includes_latest_core_contract": false
   },
-  "backend": "cc72fbc9b7bb49ffebb784c18385d90ec8dda01b",
+  "backend": "5aa2f1cff35a6bf567a182643f3da16d6bf2a370",
   "current_ui_goal": {
     "status": "implemented; broader goal remains incomplete",
     "hero_titles": 5,
@@ -149,7 +149,7 @@
   },
   "current_core_build": {
     "qa_apk": "passed",
-    "desktop_tests": 73,
+    "desktop_tests": 80,
     "wasm_compile": "passed",
     "physical_tv_installed": false,
     "real_server_home_ready": true
@@ -210,9 +210,9 @@
   },
   "updated_date": "2026-10-14",
   "pending_tv_candidate": {
-    "apk_sha256": "6fc35e3e90048c7a9cf67ca1d07f7b1ca1212c306ae8b2002dabf27f89adcadf",
+    "apk_sha256": "df0039ad7cc4ea367635e97ec8200627e31e98e29a99478a935b64465ff8e25d",
     "build": "passed",
-    "desktop_tests_passed": 73,
+    "desktop_tests_passed": 80,
     "ffmpeg_packaging": "three ABIs/16 KiB passed",
     "installed_on_physical_tv": false,
     "changes": [
@@ -223,7 +223,8 @@
       "Desktop Back follows screen return history; unavailable chrome actions disabled",
       "Preserve required provider audio ordinals in native and direct playback; capability negotiation for new backend",
       "Phone/desktop browser and device pairing share TV challenge lifecycle; explicit server validation and Back cancellation",
-      "Profile-local M3U/Xtream native entry, PIN-before-assignment, cancellation-safe engine open and HTTP provider media support"
+      "Profile-local M3U/Xtream native entry, PIN-before-assignment, cancellation-safe engine open and HTTP provider media support",
+      "Provider-owned multi-choice discovery sheets, explicit catalog ownership, one catalog request per page and catalog-change filter reset"
     ]
   },
   "local_runtime_services": {
@@ -325,7 +326,7 @@
     "failed": 0,
     "test_only_followup": "two missing SocketAddr imports; runtime unchanged"
   },
-  "backend_full_suite_revision": "cc72fbc9b7bb49ffebb784c18385d90ec8dda01b",
+  "backend_full_suite_revision": "5aa2f1cff35a6bf567a182643f3da16d6bf2a370",
   "simkl_paused_identity": {
     "revision": "b412561505c8116866334d90dba9426d0049b99c",
     "focused_tests_passed": 8,
@@ -376,7 +377,7 @@
     "capture_visual_acceptance": "four layout files inspected; full supplied-design parity not certified",
     "android_qa_assembly": "passed",
     "android_release_assembly": "passed",
-    "native_core": "separately built core0ade release libraries reused; packaged allocated sections verified; no second Rust compile",
+    "native_core": "separately built core47b release libraries reused; packaged source sections verified; no second Rust compile",
     "header_paint_probe": {
       "offscreen_frames": 12,
       "active_tab_pointer_press_release": true,
@@ -404,5 +405,58 @@
     "live_checks_ignored": 1,
     "real_xtream_subscription_qualified": false,
     "live_services_restarted": false
+  },
+  "discovery_multichoice": {
+    "core": "47b85b5386617f455ade8b294a7a844b54f537c0",
+    "backend": "5aa2f1cff35a6bf567a182643f3da16d6bf2a370",
+    "new_kmp_checks_passed": 7,
+    "engine_checks_passed": 62,
+    "native_checks_passed": 39,
+    "native_checks_ignored": 3,
+    "scalar_wire_compatible": true,
+    "one_json_values_parameter": true,
+    "repeated_escaped_provider_keys": true,
+    "provider_io_rejected_before_invalid_selection": true,
+    "explicit_catalog_owner": true,
+    "catalog_switch_clears_foreign_filters": true,
+    "native_pages_and_requests": {
+      "pages": 2,
+      "requests": 2,
+      "owner_mix": false
+    },
+    "ui": "draft right/bottom sheet; one Apply, selection limits, initial visible enabled TV target and trigger restoration",
+    "ui_status": "provisional GAP-057; three common layouts inspected",
+    "captures": [
+      "docs/evidence/discovery-multichoice-desktop.png",
+      "docs/evidence/discovery-multichoice-phone.png",
+      "docs/evidence/discovery-multichoice-tv.png"
+    ],
+    "simkl": "single-value documented feeds; no invented advanced controls",
+    "tv_web_roku_multichoice_ui": "pending",
+    "physical_tv_installed": false,
+    "live_services_restarted": false,
+    "search_only_catalog_requests": 1,
+    "required_search_control": "visible per selected catalog; draft applies once; missing requirements avoid catalog IO",
+    "addon_changes": "invalidate discovery controls/cards/cursor before refreshing configuration",
+    "v3_owner_contract": "connection_id is populated by native/current and QA7c hosts; remote addon_id comes from exact matching descriptor; legacy /api/catalogs is a separate shape"
+  },
+  "native_runtime_current": {
+    "core": "47b85b5386617f455ade8b294a7a844b54f537c0",
+    "profile": "release",
+    "features": [
+      "vsources-runtime",
+      "live-runtime"
+    ],
+    "android_api": 26,
+    "ndk": "28.2.13676358",
+    "bindings_changed": false,
+    "separate_artifact_build_reused": true,
+    "private_receipt": "/tmp/viptv-multichoice-native-artifacts.json",
+    "packaged_linux_sha256": "a9c81fc3d400118cdfbe2f963a49b4293800fddbe2c5ed3ae1a56b8adb9d905c",
+    "packaged_android_source_sections_match": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86_64"
+    ]
   }
 }

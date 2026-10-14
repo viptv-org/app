@@ -4,6 +4,7 @@ import org.viptv.app.connection.*
 
 internal suspend fun ApplicationController.loadAddons() {
     val profile = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
+    mutable.value = mutable.value.copy(browseControls = null, browseCards = emptyList(), browseNext = null)
     val device = local
     if (device != null) mutable.value = mutable.value.copy(addons = device.addons(), enabledAddonIds = device.enabledAddons(profile), browsingConfiguration = device.browsingConfiguration(profile))
     else requireNotNull(connection).addons(profile).let { result ->
