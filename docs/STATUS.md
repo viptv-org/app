@@ -173,7 +173,8 @@ and opaque sources retain profile/revision boundaries. Legacy account providers
 remain viewable and cannot be deleted by a paired profile. M3U playback headers
 are retained. No real Xtream subscription or live runtime activation is claimed.
 
-Four native IPTV layout captures were inspected. Desktop and phone Xtream render
-the form; the common-phone M3U preview intermittently omits heading/back-link
-text on isolated Xvfb. This failing diagnostic is preserved in GAP-056, with no
-visual acceptance claim. No rendering-layer workaround is retained.
+Four native IPTV layout captures were inspected. Image-pixel verification and
+12 windowless Compose frames, including an active-tab click, confirm stable
+heading/back-link rendering; the earlier missing-heading diagnosis was incorrect.
+No rendering workaround is retained. Full parity, physical input and desktop GPU
+performance remain unqualified.

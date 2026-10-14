@@ -314,11 +314,11 @@ entry currently opens Live channels. Xtream VOD entry is not implied.
 `native-iptv-{desktop,phone}-{xtream,m3u}.png` under `docs/evidence` shows the
 packaged Linux/common-phone layout with reserved-domain fixtures. Phone captures
 are 390×844 common layouts, not Android keyboard/status-bar qualification. Review
-uses Skiko SOFTWARE_COMPAT on an isolated Xvfb display. The phone M3U capture
-retains the observed missing heading/back-link text; it is a failing diagnostic,
-not approved visual parity. Repeated captures and a tab click reproduced
-intermittent header painting with automatic GL fallback and both software
-renderers. Root/window screenshots and FFmpeg capture also varied. Adding an
-ordinary or offscreen form layer did not fix it; those experimental layers were
-removed. The cause remains under investigation. These captures do not qualify
-the default desktop renderer or physical Android input. No device app was replaced.
+uses Skiko SOFTWARE_COMPAT on an isolated Xvfb display. All four image files
+contain their headings and back links. A separate windowless Compose scene
+rendered 12 frames with an active-tab pointer press/release; the header's decoded
+pixels were identical in every frame. An earlier visual inspection incorrectly
+marked the M3U heading missing; the image pixels contradict that diagnosis.
+No rendering workaround was retained. These captures do not qualify Android
+input, OS keyboard/status-bar placement or default desktop GPU performance.
+No device app was replaced.

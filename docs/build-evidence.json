@@ -367,18 +367,30 @@
     "real_xtream_playback_qualified": false,
     "physical_tv_installed": false,
     "provisional_ui": "GAP-056",
-    "capture_renderer_issue": "isolated Xvfb intermittently omits header paint; observed with automatic GL fallback and explicit SOFTWARE_COMPAT/SOFTWARE_FAST; unresolved",
     "captures": [
       "docs/evidence/native-iptv-desktop-xtream.png",
       "docs/evidence/native-iptv-desktop-m3u.png",
       "docs/evidence/native-iptv-phone-xtream.png",
       "docs/evidence/native-iptv-phone-m3u.png"
     ],
-    "capture_visual_acceptance": false,
-    "failing_capture": "docs/evidence/native-iptv-phone-m3u.png",
+    "capture_visual_acceptance": "four layout files inspected; full supplied-design parity not certified",
     "android_qa_assembly": "passed",
     "android_release_assembly": "passed",
-    "native_core": "separately built core0ade release libraries reused; packaged allocated sections verified; no second Rust compile"
+    "native_core": "separately built core0ade release libraries reused; packaged allocated sections verified; no second Rust compile",
+    "header_paint_probe": {
+      "offscreen_frames": 12,
+      "active_tab_pointer_press_release": true,
+      "unchanged_header_pixels": true,
+      "header_light_pixels": 3944,
+      "header_sha256": "f755d4fb087083086260589b5d89bf00fb7284029d4796847edd3de814353923",
+      "physical_tv_controls_used": false
+    },
+    "android_network_policy": {
+      "provider_http_media": "allowed in QA/release manifests; QA base-config enabled",
+      "qa_api_domains": "explicitly deny cleartext and retain QA CA",
+      "remote_account_origin": "still validated HTTPS; redirects disabled",
+      "compiled_apk_policy_inspected": true
+    }
   },
   "remote_xtream": {
     "revision": "cc72fbc9b7bb49ffebb784c18385d90ec8dda01b",
