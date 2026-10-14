@@ -154,7 +154,7 @@
     "physical_tv_installed": false,
     "real_server_home_ready": true
   },
-  "playback_gateway": "dda7c0535c8653b7afed45c86c237e2d459c9d7f",
+  "playback_gateway": "8deb493c5d428d64298e339f7ae02ebc195e1fdc",
   "roku": {
     "commit": "616ac26da2d0195860df245def4c32f06f9a643d",
     "local_checks_passed": 71,
@@ -299,5 +299,12 @@
     "application_revision": "2e7ba63cfc088269195f7a4bf881bcb8e82a275a",
     "build_steps_started": false,
     "result": "blocked by GitHub account payments or spending limit; latest Windows/macOS qualification unavailable"
+  },
+  "gateway_all_features": {
+    "revision": "8deb493c5d428d64298e339f7ae02ebc195e1fdc",
+    "passed": 255,
+    "ignored": 59,
+    "failed": 0,
+    "test_only_followup": "two missing SocketAddr imports; runtime unchanged"
   }
 }

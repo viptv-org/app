@@ -41,10 +41,10 @@ physical TV rendering and richer provider controls remain qualification work.
 ## Current evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
-core is `0adeb98`; experimental backend is `70b6741`; gateway is `dda7c05`.
+core is `0adeb98`; experimental backend is `70b6741`; gateway is `8deb493`.
 The running QA server retains backend `7c3f042` and gateway `c85cd27` during manual testing. The compatible
 TV-web WASM bridge is core `4f461e8` and preserves older TV browser compatibility.
-Backend: 415 checks passed. Gateway: 230 passed. KMP: 69 desktop checks,
+Backend: 415 checks passed. Gateway: 230 default checks passed; all-features 255 passed / 59 ignored after a two-import test compilation fix. KMP: 69 desktop checks,
 Android QA assembly and Wasm compilation passed. Hosted run 38499843865 passed
 Android, Web, Linux, Windows, macOS and renderer gates; GUI playback on Windows
 and macOS has not been qualified.
