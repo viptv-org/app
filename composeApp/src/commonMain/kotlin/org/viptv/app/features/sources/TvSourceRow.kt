@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
@@ -30,16 +31,16 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
         if (info?.quality != null) Column(Modifier.width(116.dp * scale)) {
             Text(info.quality, color = color, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, fontWeight = FontWeight.ExtraBold)
-            info.format?.let { Text(it, color = color.copy(alpha = 0.75f), fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
+            info.format?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, color = color.copy(alpha = 0.75f), fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-                Text(source.label, color = color, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(source.label, Modifier.weight(1f), overflow = TextOverflow.Ellipsis, color = color, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 if (info?.bestMatch == true) Text("Best match", Modifier.background(color, RoundedCornerShape(5.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
                     color = if (focused) Palette.text else Palette.background, fontSize = (18 * scale).sp, lineHeight = (20 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            source.detail?.let { Text(it, color = color.copy(alpha = 0.75f), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, maxLines = 1) }
+            source.technicalDetail()?.let { Text(it, color = color.copy(alpha = 0.75f), fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1) }
         }
-        info?.addon?.let { Text(it, color = color.copy(alpha = 0.75f), fontSize = (20 * scale).sp) }
+        info?.addon?.let { Text(it, Modifier.widthIn(max = 170.dp * scale), maxLines = 1, overflow = TextOverflow.Ellipsis, color = color.copy(alpha = 0.75f), fontSize = (20 * scale).sp) }
     }
 }

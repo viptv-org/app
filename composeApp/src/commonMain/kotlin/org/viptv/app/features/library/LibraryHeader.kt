@@ -38,5 +38,5 @@ internal fun LibraryHeader(snapshot: LibrarySnapshot?, query: LibraryQuery, chan
         }
         LibraryTypeFilters(snapshot, query, change, false, scale, null, null)
     }
-    if (filters && snapshot != null) LibraryFilterDialog(query, snapshot.controls, television, scale, { filters = false }, change)
+    if (filters && snapshot != null) LibraryFilterSheet(query, snapshot.controls, television, scale, { filters = false }, change)
 }

@@ -27,6 +27,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
     val card = requireNotNull(mutable.value.sourceTitle)
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId,
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
+        diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
         remoteSeek = if (lease?.reopensForSeek == true) { target ->
             if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
                 saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)

@@ -27,6 +27,10 @@ android {
     sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/rustJni").get().asFile)
 }
 dependencies {
+    listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-ui").forEach { module ->
+        "qaImplementation"("androidx.media3:$module:1.11.1")
+        "debugImplementation"("androidx.media3:$module:1.11.1")
+    }
     implementation(project(":composeApp"))
     implementation("androidx.activity:activity-compose:1.10.1")
     "qaImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")

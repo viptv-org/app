@@ -26,8 +26,12 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card?, extras: TvPlaybackExtras,
     chooseSources: (() -> Unit)?, playEpisode: ((Card) -> Unit)?, retry: (() -> Unit)?, backChanged: ((() -> Unit)?) -> Unit,
     previewFrame: String? = null, scene: TvPlayerScene = TvPlayerScene.Controls, initialFacts: List<PlayerFact> = emptyList(),
-    externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null) {
-    val state = remember(input) { TvPlayerState(input, initialFacts, scene) }
+    externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
+    playbackKey: Any? = input) {
+    val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
+    var retainedInput by remember(playbackKey) { mutableStateOf(input) }
+    SideEffect { if (input != null) retainedInput = input }
+    val rendering = input ?: retainedInput
     val root = remember { FocusRequester() }; val timeline = remember { FocusRequester() }; val audio = remember { FocusRequester() }
     val latestClose by rememberUpdatedState(close)
     val scope = rememberCoroutineScope()
@@ -47,7 +51,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     }
     val skipActive = extras.skip?.let { state.position in it.startMillis until it.endMillis } == true && !state.visible
     LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive) {
-        if (state.visible && !state.buffering && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes) {
+        if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes) {
             if (!state.focusAudio && (state.duration ?: 0) > 0) timeline.requestFocus() else audio.requestFocus()
         }
         else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive) root.requestFocus()
@@ -78,15 +82,17 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     }.focusable()) {
         val scale = maxWidth / 1920.dp
         // Keep the source registered while paused; Haze records only while an effect consumes it.
-        val video = rememberTvVideoFrame(state.showNext, scale).tvBackdropSource(true)
+        val video = rememberTvVideoFrame(state.showNext, scale)
         Box(video) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            if (input != null) PlayerSurface(input, paused, Modifier.fillMaxSize(), { state.observe(it); observe(it) }, state.commands)
+            if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), {
+                if (input === rendering) { state.observe(it); observe(it) }
+            }, state.commands)
         }
         if (state.showNext) Box(video.background(Color.Black.copy(alpha = 0.25f)))
         when {
             state.failed -> TvPlayerFailure(extras, state.position, error, scale, retry, chooseSources, close)
-            state.buffering -> TvPlayerBuffer(title, extras, scale)
+            state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale, { playEpisode?.invoke(extras.nextEpisode) }, { state.showNext = false; state.visible = false }, extras.creditsLabel)
             else -> {
                 TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes) {
@@ -97,6 +103,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                 if (!state.visible && skip != null && state.position in skip.startMillis until skip.endMillis) TvSkipPrompt(skip, state.position, scale) { state.send(PlayerCommand.Seek(skip.endMillis), previewCommand) }
             }
         }
+        if (state.hasPresented && (state.buffering || input == null && rendering != null))
+            androidx.compose.material3.CircularProgressIndicator(Modifier.align(androidx.compose.ui.Alignment.Center).size(48.dp * scale), color = Palette.text)
         if (state.showTracks) TvPlaybackTrackPicker(state.tracks, state.subtitleSize, scale,
             { state.send(it, previewCommand) }, { state.showTracks = false; state.reveal() }, trackFocus,
             dismissChanged = { state.dismissTracks = it })

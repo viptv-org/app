@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.features.home.TvCatalogCard
+import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -30,7 +31,9 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
         "Last watched" -> filtered.sortedByDescending { lastWatched[it.identity.id] ?: Long.MIN_VALUE }
         else -> filtered
     }.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
+    val grid = rememberLazyGridState()
     val empty = libraryEmptyState(snapshot, query, available)
+    AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
@@ -48,7 +51,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 TvAction(Modifier.height(64.dp * scale), scale, primary = true, activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
                     contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
             } else TvFocusScroll {
-                LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f),
+                LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
                     horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
                     contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                     itemsIndexed(visible, key = { _, card -> card.provider_id + ":" + card.identity.kind + ":" + card.identity.id }) { index, card ->
@@ -57,7 +60,6 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                     }
                 }
             }
-            more?.let { TvAction(Modifier.height(64.dp * scale), scale, enabled = !busy, activate = it, contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text("Load more", color = it, fontSize = (24 * scale).sp) } }
         }
     }
 }

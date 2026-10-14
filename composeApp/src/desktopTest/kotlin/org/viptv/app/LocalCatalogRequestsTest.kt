@@ -10,8 +10,8 @@ class LocalCatalogRequestsTest {
         val requests = JsonArray((0 until 12).map { buildJsonObject {
             put("id", "row-$it"); put("url", "https://example.invalid/$it")
         } })
-        val results = kotlinx.coroutines.withTimeout(3000) {
-            fetchLocalCatalogRows(requests) { kotlinx.coroutines.awaitCancellation() }
+        val results = kotlinx.coroutines.withTimeout(1000) {
+            fetchLocalCatalogRows(requests, timeoutMillis = 150) { kotlinx.coroutines.awaitCancellation() }
         }
         assertEquals(12, results.size)
         assertTrue(results.all { "body" !in it.jsonObject })

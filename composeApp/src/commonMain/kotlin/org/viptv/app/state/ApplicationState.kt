@@ -26,6 +26,7 @@ data class ApplicationState(
     val home: HomeSnapshot? = null,
     val results: List<Card> = emptyList(),
     val library: List<Card> = emptyList(),
+    val favoriteKeys: Set<Pair<String, String>>? = null,
     val libraryQuery: org.viptv.engine.wire.LibraryQuery = defaultLibraryQuery(),
     val libraryPage: org.viptv.engine.wire.LibrarySnapshot? = null,
     val browseQuery: BrowseQuery = BrowseQuery("movie"),
@@ -63,3 +64,9 @@ data class ApplicationState(
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
 )
+
+internal fun ApplicationState.isSaved(card: Card?): Boolean {
+    val identity = card?.parent_identity ?: card?.identity ?: return false
+    return favoriteKeys?.contains(identity.kind to identity.id)
+        ?: library.any { it.identity.kind == identity.kind && it.identity.id == identity.id }
+}

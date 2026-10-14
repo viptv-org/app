@@ -29,44 +29,60 @@ import androidx.compose.ui.layout.ContentScale
 fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black,
     television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
-    playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}) {
+    playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}, playbackKey: Any? = input) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
-            previewFrame = previewFrame, initialFacts = listOfNotNull(preview))
+            previewFrame = previewFrame, initialFacts = listOfNotNull(preview), playbackKey = playbackKey)
         return
     }
-    val commands = remember(input) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
-    var position by remember(input) { mutableStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: preview?.positionMillis ?: 0) }
-    var duration by remember(input) { mutableStateOf(preview?.durationMillis) }
-    var tracks by remember(input) { mutableStateOf(PlaybackTracks()) }
+    val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
+    var position by remember(playbackKey) { mutableStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: preview?.positionMillis ?: 0) }
+    var duration by remember(playbackKey) { mutableStateOf(input?.durationMillis ?: preview?.durationMillis) }
+    var tracks by remember(playbackKey) { mutableStateOf(PlaybackTracks()) }
+    var seekTarget by remember(playbackKey) { mutableStateOf<Long?>(null) }
+    var seekMark by remember(playbackKey) { mutableStateOf(kotlin.time.TimeSource.Monotonic.markNow()) }
+    var retainedInput by remember(playbackKey) { mutableStateOf(input) }
+    SideEffect { if (input != null) retainedInput = input }
+    val rendering = input ?: retainedInput
     var showTracks by remember { mutableStateOf(false) }
-    var locked by remember(input) { mutableStateOf(false) }
+    var locked by remember(playbackKey) { mutableStateOf(false) }
     var visible by remember { mutableStateOf(true) }
     var interaction by remember { mutableStateOf(0) }
     var volume by remember { mutableStateOf(1f) }
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
     var controlError by remember { mutableStateOf<String?>(null) }
-    var buffering by remember(input) { mutableStateOf(input != null) }
+    var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     LaunchedEffect(paused) { if (paused) visible = true }
     LaunchedEffect(visible, paused, interaction, buffering) {
         if (visible && !paused && !buffering && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
-    fun seek(value: Long) { if (input?.live != true) send(PlayerCommand.Seek(value.coerceIn(0, duration ?: Long.MAX_VALUE))) }
+    fun seek(value: Long) { if (input?.live != true) {
+        val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
+        seekTarget = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
+        send(PlayerCommand.Seek(target))
+    } }
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        if (input != null) PlayerSurface(input, paused, Modifier.fillMaxSize(), { fact ->
+        if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), { fact ->
+            if (input === rendering) {
             when (fact) {
                 is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
                 is PlayerFact.Tracks -> tracks = fact.options
-                is PlayerFact.Progress -> { position = fact.positionMillis; duration = fact.durationMillis }
+                is PlayerFact.Progress -> {
+                    duration = fact.durationMillis ?: duration
+                    if (seekTarget == null || kotlin.math.abs(fact.positionMillis - seekTarget!!) <= 1500 || seekMark.elapsedNow().inWholeSeconds >= 10) {
+                        position = fact.positionMillis; seekTarget = null
+                    }
+                }
                 is PlayerFact.Status -> buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
             is PlayerFact.Presentation -> Unit
                 PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
                 PlayerFact.Failed -> buffering = false
             }
             observe(fact)
+            }
         }, commands)
         PlayerOverlayHost(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown) false else when (event.key) {

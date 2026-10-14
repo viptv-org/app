@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.state.Screen
+import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
@@ -39,6 +40,8 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, more = more, error = error, filters = controls?.let { { first -> DiscoveryFilters(it, query, screen == Screen.Discover, filterChanged, first) } })
         return
     }
+    val grid = rememberLazyGridState()
+    AutomaticPage(cards.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp && !television
         val gutter = if (television) 70.dp else if (compact) 16.dp else 40.dp
@@ -70,12 +73,11 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
             if (busy || (loadedCards == null && home == null)) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             else if (cards.isEmpty()) Text("No ${if (screen == Screen.Series) "series" else if (screen == Screen.Movies) "movies" else "titles"} are available for these filters.", color = Palette.secondary)
             LazyVerticalGrid(GridCells.Adaptive(if (television) 220.dp else if (compact) 155.dp else 172.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
+                state = grid, horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
                 contentPadding = PaddingValues(bottom = if (compact) 88.dp else 24.dp)) {
                 items(cards, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) {
                     MediaCard(it, width = if (television) 220 else if (compact) 155 else 172, portrait = true, showLabels = compact || television, open = open)
                 }
-                more?.let { next -> item(span = { GridItemSpan(maxLineSpan) }) { TextButton(next, enabled = !busy) { Text("Load more") } } }
             }
         }
     }

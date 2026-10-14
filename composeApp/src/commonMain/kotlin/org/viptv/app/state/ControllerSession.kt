@@ -30,6 +30,7 @@ fun ApplicationController.restore() = run {
 
 
 fun ApplicationController.connect(origin: String, username: String, password: String) {
+    libraryImportRefresh?.cancel()
     val finishing = if (completionSeen) progressJob else saveProgress(false, final = true)
     val stopping = releaseRemotePlayback()
     val priorRemote = connection
@@ -55,6 +56,7 @@ fun ApplicationController.useLocal(path: String) {
 }
 
 fun ApplicationController.disconnect() {
+    libraryImportRefresh?.cancel()
     cancelDetailPaging()
     val stopping = releaseRemotePlayback()
     val priorRemote = connection
@@ -71,6 +73,7 @@ fun ApplicationController.disconnect() {
 }
 
 fun ApplicationController.signOut() = run {
+    libraryImportRefresh?.cancel()
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
     connection?.signOut()
@@ -86,7 +89,8 @@ internal fun ApplicationController.accept(value: Bootstrap) {
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
-    value.library?.let { updateLibrary(it) }
+    value.library?.let { updateLibrary(it, value.libraryMembership?.identities ?: it.map { card -> card.identity }) }
+    startLibraryImportRefresh(value.libraryImport)
     if (value.library != null) return
     val profile = value.selected ?: return
     val remote = connection
@@ -94,8 +98,9 @@ internal fun ApplicationController.accept(value: Bootstrap) {
     libraryHydration = scope.launch {
         try {
             val cards = device?.library(profile) ?: remote?.library(profile) ?: return@launch
+            val identities = remote?.libraryMembership(profile)?.identities ?: cards.map { it.identity }
             if (mutable.value.selectedProfile == profile && connection === remote && local === device)
-                updateLibrary(cards)
+                updateLibrary(cards, identities)
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { /* The library route offers an explicit retry; Home remains usable. */ }
     }

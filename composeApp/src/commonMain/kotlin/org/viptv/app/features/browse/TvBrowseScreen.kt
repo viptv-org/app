@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.features.home.TvCatalogCard
+import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -43,6 +44,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
             enterResults = false
         }
     }
+    AutomaticPage(selected.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         Column(Modifier.focusProperties { onEnter = { filterFocus.requestFocus() } }.focusGroup()
@@ -76,7 +78,6 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                         TvCatalogCard(card, scale, true, Modifier.then(if (index == targetIndex) Modifier.focusRequester(first) else Modifier)
                             .focusProperties { if (index < 7) up = filterFocus }, {}, open)
                     }
-                    more?.let { next -> item(span = { GridItemSpan(maxLineSpan) }) { TextButton(next, enabled = !busy) { Text("Load more") } } }
                 }
             }
         }

@@ -9,7 +9,8 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     val subtitleContent: (suspend (String) -> ByteArray)? = null,
     val timelineOffsetMillis: Long = 0, val durationMillis: Long? = null,
     val remoteSeek: ((Long) -> Unit)? = null,
-    val preferences: org.viptv.app.connection.ProfilePreferences = org.viptv.app.connection.ProfilePreferences(), val live: Boolean = false) {
+    val preferences: org.viptv.app.connection.ProfilePreferences = org.viptv.app.connection.ProfilePreferences(), val live: Boolean = false,
+    val diagnostics: ((String) -> Unit)? = null, val mimeType: String? = null) {
     private val subtitleChoices = kotlinx.coroutines.flow.MutableStateFlow(providerSubtitles)
     val providerSubtitles = subtitleChoices.asStateFlow()
     internal fun updateProviderSubtitles(values: List<org.viptv.engine.wire.SubtitleCandidate>) { subtitleChoices.value = values }
@@ -31,3 +32,9 @@ enum class PresentationProof { BrowserCompositorPresented, AndroidWindowGpuCompl
 
 @Composable
 expect fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>)
+
+internal fun playbackMimeType(format: String?): String? = when (format?.lowercase()) {
+    "hls", "m3u8" -> "application/x-mpegURL"
+    "dash", "mpd" -> "application/dash+xml"
+    else -> null
+}

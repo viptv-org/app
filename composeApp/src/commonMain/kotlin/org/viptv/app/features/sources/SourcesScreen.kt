@@ -7,7 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,13 +26,16 @@ import org.viptv.engine.wire.SourceCandidate
 
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
-    choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false) {
+    choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back, detail,
-            info = sources.associate { it.id to TvSourceInfo(quality = it.quality_height?.let { height -> if (height == 2160L) "4K" else "${height}p" }) },
-            loadingMore = loadingMore)
+            info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
+            loadingMore = loadingMore, selectedSource = selectedSource)
         return
     }
+    var quality by remember { mutableStateOf<String?>(null) }
+    var provider by remember { mutableStateOf<String?>(null) }
+    val visible = sources.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         if (detail != null) DetailsScreen(detail, false, null, back, {}, television, tablet)
@@ -52,23 +56,26 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                         fontWeight = FontWeight.Bold)
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
-                Text(listOfNotNull(title?.title, if (busy) { if (sources.isEmpty()) "Loading sources…" else "Opening stream…" } else sourceSummary(sources)).joinToString(" · "),
+                Text(listOfNotNull(sourceHeading(title, detail), if (busy) { if (sources.isEmpty()) "Loading sources…" else "Opening stream…" } else sourceSummary(sources)).joinToString(" · "),
                     color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
             }
+            SourceFilters(sources, quality, provider, { quality = it }, { provider = it })
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp)) {
                 error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
-                if (!busy && !loadingMore && sources.isEmpty() && error == null) item {
-                    Text("No direct streams found. Enable an add-on that supplies sources.", Modifier.padding(20.dp), color = Palette.secondary)
+                if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
+                    Text(if (sources.isNotEmpty()) "No sources match these filters." else "No streams found. Enable a provider that supplies sources.", Modifier.padding(20.dp), color = Palette.secondary)
                 }
-                items(sources, key = { it.id }) { SourceRow(it, television, choose, enabled = !busy) }
+                items(visible, key = { it.id }) { SourceRow(it, television, choose, enabled = !busy, selected = it.id == selectedSource) }
             }
+            HorizontalDivider(color = Palette.secondary.copy(alpha = .12f))
+            Text("Select a source to start playback.", Modifier.padding(horizontal = 20.dp, vertical = 16.dp), color = Palette.secondary, fontSize = 12.sp)
         }
     }
 }
 
 internal fun sourceSummary(sources: List<SourceCandidate>): String {
-    val providers = sources.map { it.provider_id }.distinct().size
-    return "${sources.size} ${if (sources.size == 1) "source" else "sources"} from $providers ${if (providers == 1) "add-on" else "add-ons"}"
+    val providers = sources.map { it.sourceFilterId() }.distinct().size
+    return "${sources.size} ${if (sources.size == 1) "source" else "sources"} from $providers ${if (providers == 1) "provider" else "providers"}"
 }

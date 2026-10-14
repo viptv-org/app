@@ -14,7 +14,24 @@ Jewel was considered for custom decorations. Its decoration layer requires JetBr
 
 Sources: [Compose Foundation window source](https://github.com/JetBrains/compose-multiplatform-core/tree/jb-main/compose/foundation/foundation/src/desktopMain/kotlin/androidx/compose/foundation/window), [Compose Icons](https://github.com/composablehorizons/compose-icons), [Jewel](https://github.com/JetBrains/jewel), [ComposeWindowStyler](https://github.com/MayakaApps/ComposeWindowStyler), [Coil image loaders](https://coil-kt.github.io/coil/image_loaders/).
 
-Playback transport controls use the installed KitePlayer 0.3.0 APIs for seek, volume, speed and track selection. Native player snapshots supply the displayed progress, volume/speed and audio/subtitle choices. Browser transport remains HTML video/HLS and handles seek, volume and speed separately; browser track selection and overlay composition are unqualified. The thin timeline uses Material3 Slider's custom thumb/track slots rather than custom drag handling. References: [KitePlayer](https://github.com/yuroyami/kiteplayer), [Slider customization](https://developer.android.com/develop/ui/compose/components/slider), [Android immersive playback](https://developer.android.com/develop/ui/views/layout/immersive).
+Android playback uses AndroidX Media3 1.11.1 with a native SurfaceView, HLS/DASH/progressive
+media, and the shared Compose controls. The platform adapter handles seeking, paused state,
+audio/embedded/provider subtitles, volume, speed, gateway timeline offsets and scoped content headers.
+Desktop retains the pinned Kite fork; browser playback remains HTML video/HLS.
+
+On the physical Onn 4K Pro, Kite's hardware surface measured 48–56 FPS at the compositor
+on the public Mux 720p60 HLS sample. The integrated Media3 adapter and shared Compose controls
+measured 60.00 FPS in all four fixed-720p samples and 60.00–60.01 FPS in four fixed-1080p60
+samples, with zero decoder-reported drops. Samples exclude screen recording; startup is
+excluded from steady playback metrics. Removing Android's unused Kite/FFmpeg dependency
+reduced the three-ABI QA APK from 126 MiB to 66 MiB before adding the audio extension (71 MiB with FFmpeg audio). These measurements qualify those H.264/AAC
+streams on this TV; other codecs and desktop remain separate qualifications.
+Kite's former copy-back path rendered only a few FPS and accumulated seconds of A/V lag;
+its preserved fork additionally supports AVC Annex-B transport-stream configuration.
+Sources: [Media3 surface guidance](https://developer.android.com/media/media3/ui/surface),
+[Media3 track selection](https://developer.android.com/media/media3/exoplayer/track-selection),
+[Kite source provenance](../native/kiteplayer/SOURCE.json).
+
 
 Android TV switches use `com.composables:composeunstyled-toggle-switch:2.10.0`.
 The published component supports a separately sized track and thumb, so both
@@ -52,3 +69,11 @@ ZIP's CSS line height without clipping glyphs.
 The TV retry button uses Compose `dropShadow` with shape, radius, color and offset
 parameters. This avoids substituting a Material elevation shadow for the ZIP's
 specified CSS-style shadow. The API was checked through Context7's [official shadow documentation](https://developer.android.com/develop/ui/compose/graphics/draw/shadows).
+
+Android includes the official Media3 1.11.1 FFmpeg audio bridge with source hashes and three
+16-KiB-aligned native ABI libraries. FFmpeg 6.0.1 is built with fourteen audio decoders and
+no software video decoders; the factory prefers the extension for supported audio formats.
+The physical TV reported `ffmpegLavc60.3.100-aac` for audio and `c2.amlogic.avc.decoder`
+for video while the compositor sustained 59.99–60.00 FPS at fixed 1080p60 with zero reported
+drops. Source/binary integrity and packaged JNI callbacks/notices are checked by
+`tools/check_media3_audio.py`; provenance is in `native/media3-ffmpeg`.

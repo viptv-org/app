@@ -1,0 +1,28 @@
+{
+  "ffmpeg": "6.0.1",
+  "sourceSha256": "9b16b8731d78e596b4be0d720428ca42df642bb2d78342881ff7f5bc29fc9623",
+  "decoders": [
+    "aac",
+    "mp3",
+    "ac3",
+    "eac3",
+    "dca",
+    "truehd",
+    "flac",
+    "alac",
+    "vorbis",
+    "opus",
+    "amrnb",
+    "amrwb",
+    "pcm_mulaw",
+    "pcm_alaw"
+  ],
+  "ndk": "28.2.13676358",
+  "api": 24,
+  "pageSize": 16384,
+  "sha256": {
+    "armeabi-v7a": "c6dc323254609053f5f851a5b8a927bb31670ebeacbc87a185babb76779ada77",
+    "arm64-v8a": "66031c23b95da2c8118c6a1586490b68e3c89644b0e169d91b490157cb04fda8",
+    "x86_64": "6189ced41aefa4434b33f3fa2f10eec756a53208ff5b7150ee0a2acda8e2821d"
+  }
+}

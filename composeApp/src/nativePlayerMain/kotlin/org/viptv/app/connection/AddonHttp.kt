@@ -23,6 +23,8 @@ internal suspend fun addonJson(client: HttpClient, url: String): String = addonB
 
 internal suspend fun addonBytes(client: HttpClient, url: String): ByteArray {
     var current = URI(url)
+    val started = System.nanoTime()
+    val kind = when { current.path.contains("/catalog/") -> "catalog"; current.path.contains("/meta/") -> "metadata"; current.path.contains("/manifest") -> "manifest"; else -> "addon" }
     repeat(4) { redirects ->
         val reply: AddonReply = client.prepareGet(current.toString()) {
             header(HttpHeaders.UserAgent, "VIPTV-Experiment/0.1")
@@ -31,7 +33,14 @@ internal suspend fun addonBytes(client: HttpClient, url: String): ByteArray {
                 return@execute AddonReply.Moved(response.headers[HttpHeaders.Location]
                     ?: throw LocalFailure("This add-on sent an invalid redirect."))
             }
-            AddonReply.Content(readContent(response))
+            try {
+                val body = readContent(response)
+                addonFetchFact(kind, response.status.value, started, body.size)
+                AddonReply.Content(body)
+            } catch (error: Exception) {
+                addonFetchFact(kind, response.status.value, started, error = error::class.simpleName)
+                throw error
+            }
         }
         when (reply) {
             is AddonReply.Content -> return reply.body

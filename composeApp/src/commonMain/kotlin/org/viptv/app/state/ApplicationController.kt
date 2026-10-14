@@ -8,7 +8,8 @@ import org.viptv.app.player.PlayerFact
 import kotlinx.coroutines.sync.Mutex
 import kotlin.time.TimeSource
 
-class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore()) {
+class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore(),
+    internal val playbackDiagnostics: ((String) -> Unit)? = null) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal var connection: RemoteConnection? = null
@@ -20,6 +21,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveGuideJob: Job? = null
     internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
+    internal var libraryImportRefresh: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null

@@ -3,6 +3,7 @@ package org.viptv.app.features.live
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,12 +21,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, television: Boolean, scale: Float,
     select: (LiveChannel, LiveProgram?) -> Unit, watch: (LiveChannel) -> Unit,
-    first: FocusRequester? = null, up: FocusRequester? = null) {
+    first: FocusRequester? = null, up: FocusRequester? = null, more: (() -> Unit)? = null, busy: Boolean = false) {
+    val rows = rememberLazyListState()
+    AutomaticPage(channels.size, busy, more) { rows.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     val span = if (television) 120 else 150
     BoxWithConstraints(Modifier.fillMaxWidth().clipToBounds()) {
         val channelWidth = if (television) 300.dp * scale else 192.dp
@@ -49,7 +53,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                         fontWeight = if (television) FontWeight.SemiBold else FontWeight.Normal) }
                 }
             }
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(spacing)) {
+            LazyColumn(state = rows, verticalArrangement = Arrangement.spacedBy(spacing)) {
                 items(channels, key = { it.card.provider_id + ":" + it.card.identity.id }) { channel ->
                     Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                         if (television) TvLiveChannelLabel(channel, scale,

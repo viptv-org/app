@@ -15,11 +15,12 @@ import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.state.*
 
-/** QA-only standalone source qualification. No playback or persistent user profile is modified. */
+/** QA-only source qualification in an isolated local profile; optional playback never uses account tracking. */
 class NativeSourceQaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidSecrets.attach(applicationContext)
+        org.viptv.app.connection.observeAddonFetches { Log.i("VIPTV_ADDON_QA", it) }
         val database = cacheDir.resolve("source-qa-${java.util.UUID.randomUUID()}.sqlite").absolutePath
         setContent {
             val scope = rememberCoroutineScope()
@@ -27,8 +28,9 @@ class NativeSourceQaActivity : ComponentActivity() {
                 override suspend fun read(): SavedRemoteSession? = null
                 override suspend fun save(session: SavedRemoteSession) = Unit
                 override suspend fun clear() = Unit
-            }) }
+            }, playbackDiagnostics = { Log.i("VIPTV_PLAYBACK_QA", it) }) }
             val state by controller.state.collectAsState()
+            var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
             LaunchedEffect(Unit) {
                 controller.state.first { !it.starting && !it.busy }
                 controller.useLocal(database)
@@ -41,7 +43,10 @@ class NativeSourceQaActivity : ComponentActivity() {
                 controller.state.first { !it.busy }
                 val key = intent.getStringExtra("qa_tmdb_key") ?: return@LaunchedEffect
                 intent.removeExtra("qa_tmdb_key")
-                controller.configureSourceIntegration("vsources", buildJsonObject { put("tmdb_api_key", key) })
+                controller.configureSourceIntegration("vsources", buildJsonObject {
+                    put("tmdb_api_key", key)
+                    intent.getStringExtra("qa_provider")?.let { put("providers", kotlinx.serialization.json.JsonArray(listOf(kotlinx.serialization.json.JsonPrimitive(it)))) }
+                })
                 controller.state.first { !it.busy }
                 controller.search("Ted Lasso")
                 val results = controller.state.first { !it.busy }.results
@@ -51,13 +56,29 @@ class NativeSourceQaActivity : ComponentActivity() {
                 controller.chooseSource(detail.episodes.firstOrNull { it.identity.episode?.season == 1L && it.identity.episode?.episode == 1L } ?: detail.item)
                 controller.state.first { !it.findingSources }
                 Log.i("VIPTV_SOURCE_QA", "standalone=true sources=${controller.state.value.sources.size} error=${controller.state.value.error != null}")
+                if (intent.getBooleanExtra("qa_auto_play", false)) {
+                    val index = intent.getIntExtra("qa_source_index", 0)
+                    controller.state.value.sources.getOrNull(index)?.let { source ->
+                        Log.i("VIPTV_SOURCE_QA", "selected_index=$index quality_height=${source.quality_height} provider=${source.presentation?.provider_name}")
+                        controller.playSource(source)
+                    }
+                }
             }
+            LaunchedEffect(state.home) { state.home?.let { home ->
+                Log.i("VIPTV_SOURCE_QA", "home_ready_rows=${home.rows.count { it.state == org.viptv.engine.wire.RowState.READY }} home_cards=${home.rows.sumOf { it.cards.size }}")
+            } }
             LaunchedEffect(state.presentation) { state.presentation?.let {
                 Log.i("VIPTV_SOURCE_QA", "presentation=${it.proof} exact=${it.exact}")
             } }
             LaunchedEffect(state.error) { if (state.error != null) Log.w("VIPTV_SOURCE_QA", "client_error=true") }
-            BackHandler { controller.navigate(Screen.Home) }
-            App(television = true, providedController = controller, localDatabase = database)
+            LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, true) }
+            BackHandler { entryBack?.invoke() ?: when (state.screen) {
+                Screen.Player -> controller.closePlayer()
+                Screen.Sources -> controller.backSources()
+                Screen.Details -> controller.backDetails()
+                else -> controller.navigate(Screen.Home)
+            } }
+            App(television = true, providedController = controller, localDatabase = database, entryBackChanged = { entryBack = it })
         }
     }
 }

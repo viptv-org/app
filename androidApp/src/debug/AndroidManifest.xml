@@ -3,5 +3,7 @@
   <profileable android:shell="true" />
   <activity android:name="org.viptv.experiment.NativeQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
   <activity android:name="org.viptv.experiment.NativeSourceQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+  <activity android:name="org.viptv.experiment.Media3PlaybackQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+  <activity android:name="org.viptv.experiment.NativePlaybackQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
  </application>
 </manifest>

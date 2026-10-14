@@ -23,5 +23,6 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.label, episodes = episodes,
             nextEpisode = if (index >= 0) episodes.getOrNull(index + 1) else null, fallbackLabel = fallback?.label),
         chooseSources = controller::closePlayer, playEpisode = { controller.closePlayer(); controller.chooseSource(it) },
-        retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged)
+        retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
+        playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity)
 }

@@ -22,6 +22,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         TvDetailsScreen(detail, busy, error, sources, extras = TvDetailExtras(recommendations = detail?.recommendations.orEmpty()), open = open, save = save, saved = saved, loadPage = loadPage)
         return
     }
+    if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
     if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage); return }
     if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }

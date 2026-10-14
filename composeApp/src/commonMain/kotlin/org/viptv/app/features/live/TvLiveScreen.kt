@@ -2,6 +2,7 @@ package org.viptv.app.features.live
 
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
@@ -11,12 +12,13 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, watch: (LiveChannel) -> Unit,
     manage: () -> Unit, categories: List<String> = channels.mapNotNull { it.category }.distinct(), groupLabels: Map<String, String> = emptyMap(),
-    groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null) {
+    groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false) {
     var category by remember { mutableStateOf("All") }
     val categoryIds = if (groupLabels.isNotEmpty()) groupLabels.keys.toList() else categories
     val activeCategory = category.takeIf { it == "All" || it in categoryIds } ?: "All"
@@ -32,6 +34,8 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         program = channel?.programs?.find { it.id == program?.id } ?: channel?.current(now)
         channel?.let(guideRequested)
     }
+    val channelList = rememberLazyListState()
+    AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize().focusProperties { onEnter = { if (visible.isNotEmpty()) first.requestFocus() else filter.requestFocus() } }.focusGroup()) {
         val scale = maxWidth / 1920.dp
         // The shared TV navigation occupies the first 132 design pixels.
@@ -46,13 +50,12 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                     Text("Manage add-ons", color = it, fontSize = (24 * scale).sp)
                 }
             } else if (hasGuide) LiveGuide(visible, start!!, now, true, scale,
-                { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, filter)
-            else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+                { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, filter, more = more, busy = busy)
+            else LazyColumn(state = channelList, verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
                 itemsIndexed(visible, key = { _, item -> item.card.provider_id + ":" + item.card.identity.id }) { index, item ->
                     TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) filter else null,
                         { channel = item; program = item.current(now); guideRequested(item) }, { watch(item) })
                 }
-                more?.let { load -> item { TvAction(Modifier.fillMaxWidth().height(64.dp * scale), scale, activate = load) { Text("Load more channels", color = it) } } }
             }
         }
     }

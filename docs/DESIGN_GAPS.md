@@ -251,7 +251,7 @@ Add-on settings contain a provisional capability-driven choice of the profile’
 
 ### GAP-050 — Live catalog loading and pagination
 
-Live channels and guide programs are host-provided records. Missing guide, unavailable connections, loading and retry states use provisional messages; guide selection fetches only the selected channel. Group controls retain supplied geometry while binding opaque host group IDs. A provisional Load more channels action handles host pagination. Guide clocks render provider epoch timestamps in the device time zone, including midnight and DST transitions.
+Live channels and guide programs are host-provided records. Missing guide, unavailable connections, loading and retry states use provisional messages; guide selection fetches only the selected channel. Group controls retain supplied geometry while binding opaque host group IDs. Channels and guide lists request subsequent bounded pages automatically near the end; no manual pagination action is shown. Guide clocks render provider epoch timestamps in the device time zone, including midnight and DST transitions.
 
 Discovery text/number/date filters keep a draft and use a provisional Apply action to prevent incomplete values and per-keystroke requests. Multiple-choice discovery transport remains unsupported and is explicitly labeled rather than silently dropping a control.
 
@@ -259,10 +259,8 @@ Discovery text/number/date filters keep a draft and use a provisional Apply acti
 
 The user requested sorting inside the filter panel. A shared provisional panel
 now presents host-supplied sorting, watched state, genre, added date and linked
-watchlist status/personal-rating/episode filters. Saved titles and linked watchlists
-have a list picker. Phone controls use two rows to avoid clipping. Loading,
-partial metadata, empty filtered results and the paginated Load more action need
-matching updated boards. The supplied SkListFilter informs the available fields;
+watchlist status/personal-rating/episode filters. Simkl imports join the main Library; there is no separate Simkl collection. Filters open as a right sheet on TV/desktop and bottom sheet on phones. Phone controls use two rows to avoid clipping. Loading,
+partial metadata and empty filtered results need matching updated boards. Further pages load automatically near the viewport end. The supplied SkListFilter informs the available fields;
 its separate sorting/PRO examples are not claimed as implemented provider APIs.
 
 ### GAP-052 — Bounded episode page loading
@@ -272,3 +270,17 @@ updated requirement, episodes load automatically in bounded background pages.
 There is no Load more episodes action. Images remain viewport-lazy and selecting
 a season prioritizes its missing records. Network-failure copy remains provisional;
 reselecting a season retries its remaining page.
+
+### GAP-053 — Source provider filter
+
+The current Sources board has quality chips. The requested additional provider filter
+uses a second chip row, with host-owned source IDs and supplied provider display names.
+Structured format/codec/audio/size fields render only when returned by the provider.
+The added filter row needs a matching supplied board; the surrounding drawer follows Tv3Sources.
+
+### GAP-054 — Detail loading layout
+
+Full-layout placeholders now occupy the title, metadata, description, actions, season selector
+and episode cards while native detail data loads. The supplied set has Home and Sources
+loading boards, but no matching Info skeleton board. These static placeholders need review
+and a supplied loading design; static drawing avoids a continuous TV animation workload.

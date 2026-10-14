@@ -70,7 +70,7 @@ fun App(
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(state.screen, controller::navigate)
                         when (state.screen) {
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome,
-                                play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.library.any { it.identity.kind == (card.parent_identity ?: card.identity).kind && it.identity.id == (card.parent_identity ?: card.identity).id } })
+                                play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) })
                             Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null)
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
@@ -78,9 +78,9 @@ fun App(
                             }
                             Screen.Details -> Box(Modifier.fillMaxSize()) {
                                 if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true)
-                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.library.any { it.identity.kind == state.detail?.item?.identity?.kind && it.identity.id == state.detail?.item?.identity?.id }, open = controller::open, loadPage = controller::detailPage)
+                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage)
                             }
-                            Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources)
+                            Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id)
                             Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode, busy = state.busy, error = state.error)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
                             Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)

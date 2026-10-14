@@ -16,7 +16,6 @@ import org.viptv.engine.wire.QueryControl
 @Composable
 internal fun LibraryFilterField(control: QueryControl, value: String, change: (String) -> Unit,
     television: Boolean, scale: Float, first: FocusRequester? = null) {
-    if (television && first != null) org.viptv.app.components.TvRequestedFocus(first, control.id)
     var menu by remember { mutableStateOf(false) }
     val selected = control.choices.find { it.value == value }?.label ?: value.ifBlank { "Any" }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {

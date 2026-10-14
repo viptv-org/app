@@ -90,8 +90,8 @@ if not env.get("ANDROID_HOME") and not env.get("ANDROID_SDK_ROOT") and propertie
     if sdk:
         env["ANDROID_HOME"] = sdk.replace("\\:", ":").replace("\\\\", "\\")
 wrapper = source / ("gradlew.bat" if os.name == "nt" else "gradlew")
-tasks = [f":kiteplayer-compose-{module}:publish{variant}PublicationToViptvRendererRepository"
-         for module in ("video", "ui") for variant in ("KotlinMultiplatform", "Jvm", "Android")]
+tasks = [f":{module.split(':')[-1]}:publish{variant}PublicationToViptvRendererRepository"
+         for module in pin["modules"] for variant in ("KotlinMultiplatform", "Jvm", "Android")]
 subprocess.run([str(wrapper), "--no-configuration-cache", "-I",
                 "verification/viptv-renderer/publish.gradle", f"-PVERSION={pin['version']}",
                 *tasks], cwd=source, env=env, check=True)

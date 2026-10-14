@@ -1,18 +1,20 @@
 package org.viptv.app.features.live
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 
 @Composable
 fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, now: Int?, watch: (LiveChannel) -> Unit, manage: () -> Unit, groupLabels: Map<String, String> = emptyMap(),
-    groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null) {
-    if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more); return }
+    groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false) {
+    if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy); return }
     var fullGuide by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("All") }
     var selected by remember(channels) { mutableStateOf(channels.firstOrNull()) }
@@ -24,6 +26,8 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
         selectedProgram = null
     }
     LaunchedEffect(selected?.id) { selected?.let(guideRequested) }
+    val channelList = rememberLazyListState()
+    AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else 1f
@@ -42,13 +46,12 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                 TextButton(manage) { Text("Manage add-ons") }
             } else if (!phone && start != null && visible.any { it.programs.isNotEmpty() }) {
                 Box(Modifier.weight(1f)) { LiveGuide(visible, start, now, television, scale,
-                    { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch) }
-            } else LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp)) {
+                    { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy) }
+            } else LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp)) {
                 items(visible, key = { it.card.provider_id + ":" + it.card.identity.id }) {
                     LiveChannelRow(it, now, { watch(it) }, { notice = true })
                 }
             }
-            more?.let { TextButton(it) { Text("Load more channels") } }
         }
     }
     if (notice) AlertDialog(onDismissRequest = { notice = false }, title = { Text("Channel favourites") },

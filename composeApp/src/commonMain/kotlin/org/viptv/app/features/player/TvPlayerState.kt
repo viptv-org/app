@@ -3,16 +3,21 @@ package org.viptv.app.features.player
 import androidx.compose.runtime.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.viptv.app.player.*
+import kotlin.time.TimeSource
+import kotlin.time.Duration.Companion.seconds
 
 /** View state and remote interaction; playback position changes only through player observations. */
 internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, scene: TvPlayerScene) {
     val live = input?.live == true
     val commands = MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16)
     var position by mutableLongStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: 0)
-    var duration by mutableStateOf<Long?>(null)
+    var duration by mutableStateOf<Long?>(input?.durationMillis)
     var tracks by mutableStateOf(PlaybackTracks())
     var subtitleSize by mutableFloatStateOf(1f)
     var buffering by mutableStateOf(input != null || scene == TvPlayerScene.Buffer)
+    var hasPresented by mutableStateOf(input == null && scene != TvPlayerScene.Buffer)
+    private var seekTarget: Long? = null
+    private var seekStarted = TimeSource.Monotonic.markNow()
     var failed by mutableStateOf(scene == TvPlayerScene.Error)
     var visible by mutableStateOf(scene !in listOf(TvPlayerScene.Skip, TvPlayerScene.Buffer, TvPlayerScene.Error, TvPlayerScene.Next))
     var showTracks by mutableStateOf(scene == TvPlayerScene.Tracks)
@@ -29,11 +34,17 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
 
     fun observe(fact: PlayerFact) {
         when (fact) {
-            is PlayerFact.Progress -> { position = fact.positionMillis; duration = fact.durationMillis }
+            is PlayerFact.Progress -> {
+                duration = fact.durationMillis ?: duration
+                val target = seekTarget
+                if (target == null || kotlin.math.abs(fact.positionMillis - target) <= 1500 || seekStarted.elapsedNow() >= 10.seconds) {
+                    position = fact.positionMillis; seekTarget = null
+                }
+            }
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
-            is PlayerFact.Presentation -> Unit
+            is PlayerFact.Presentation -> { hasPresented = true; buffering = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
         }
@@ -41,6 +52,10 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     fun reveal(audio: Boolean = false) { focusAudio = audio; visible = true; interaction++ }
     fun send(command: PlayerCommand, preview: ((PlayerCommand) -> Unit)?) {
         if (live && command is PlayerCommand.Seek) return
+        if (command is PlayerCommand.Seek) {
+            seekTarget = command.positionMillis; position = command.positionMillis
+            seekStarted = TimeSource.Monotonic.markNow()
+        }
         commands.tryEmit(command); preview?.invoke(command); interaction++; controlError = null
     }
     fun step(direction: Int) {

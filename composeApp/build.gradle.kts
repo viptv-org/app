@@ -32,25 +32,33 @@ kotlin {
             dependsOn(commonMain.get())
             kotlin.srcDir(rootProject.file("native/core/generated/native-kotlin"))
             dependencies {
-                implementation("io.github.yuroyami:kiteplayer-compose:0.3.0")
-                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.3") {
-                    version { strictly("0.3.0-viptv-presentation.3") }
-                }
-                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.3") {
-                    version { strictly("0.3.0-viptv-presentation.3") }
-                }
                 implementation("io.ktor:ktor-client-core:3.4.0")
                 implementation("io.ktor:ktor-client-okhttp:3.4.0")
             }
         }
         androidMain {
             dependsOn(nativePlayerMain)
-            dependencies { implementation("net.java.dev.jna:jna:5.17.0@aar") }
+            dependencies {
+                implementation("net.java.dev.jna:jna:5.17.0@aar")
+                implementation(project(":media3-ffmpeg"))
+                listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-exoplayer-dash", "media3-ui").forEach { implementation("androidx.media3:$it:1.11.1") }
+            }
         }
         val desktopMain by getting {
             dependsOn(nativePlayerMain)
             resources.srcDir(layout.buildDirectory.dir("nativeResources"))
-            dependencies { implementation(compose.desktop.currentOs); implementation("net.java.dev.jna:jna:5.17.0") }
+            dependencies {
+                implementation("io.github.yuroyami:kiteplayer-compose:0.3.0")
+                implementation("io.github.yuroyami:kiteplayer-core:0.3.0-viptv-presentation.4") { version { strictly("0.3.0-viptv-presentation.4") } }
+                implementation("io.github.yuroyami:kiteplayer-output:0.3.0-viptv-presentation.4") { version { strictly("0.3.0-viptv-presentation.4") } }
+                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.4") {
+                    version { strictly("0.3.0-viptv-presentation.4") }
+                }
+                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.4") {
+                    version { strictly("0.3.0-viptv-presentation.4") }
+                }
+                implementation(compose.desktop.currentOs); implementation("net.java.dev.jna:jna:5.17.0")
+            }
         }
         wasmJsMain.dependencies {
             implementation(npm("hls.js", "1.7.3"))
@@ -72,7 +80,7 @@ val prepareKitePlayer by tasks.registering(Exec::class) {
     outputs.dir(rootProject.layout.buildDirectory.dir("kiteplayer/maven"))
 }
 tasks.matching {
-    it.name.startsWith("compile") && (it.name.contains("Desktop") || it.name.contains("Android"))
+    it.name.startsWith("compile") && it.name.contains("Desktop")
 }.configureEach { dependsOn(prepareKitePlayer) }
 
 val buildDesktopEngine by tasks.registering(Exec::class) {

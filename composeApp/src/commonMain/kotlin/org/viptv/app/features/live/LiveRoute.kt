@@ -23,7 +23,7 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
         Box(Modifier.fillMaxSize()) {
             LiveScreen(channels, television, if (channels.any { it.programs.isNotEmpty() }) 0 else null, clock.nowMinute, { controller.playLive(it.id) }, { controller.navigate(Screen.Settings) },
                 groupLabels = state.livePage?.groups.orEmpty().associate { it.id to it.label }, groupChanged = controller::filterLive,
-                guideRequested = { controller.showLiveGuide(it.id) }, more = if (state.livePage?.next_cursor != null) controller::moreLive else null)
+                guideRequested = { controller.showLiveGuide(it.id) }, more = if (state.livePage?.next_cursor != null) controller::moreLive else null, busy = state.busy)
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             val notice = state.error ?: state.livePage?.reason
             if (notice != null) Column(Modifier.padding(24.dp)) {

@@ -12,7 +12,6 @@ internal fun libraryEmptyState(snapshot: LibrarySnapshot?, query: LibraryQuery, 
         snapshot?.refresh_after_millis != null -> LibraryEmptyState("Loading matching titles…", "Results update as metadata becomes available.", false)
         !available -> LibraryEmptyState("My List is unavailable.", "This connection does not currently provide a list.", false)
         filtered -> LibraryEmptyState("No matching titles.", "Try changing or clearing the filters.", true)
-        query.source == "simkl" -> LibraryEmptyState("Your watchlist is empty.", "This linked account has no titles in its watchlists.", false)
         else -> LibraryEmptyState("Your list is empty.", "Use + on a movie or series to save it here.", false)
     }
 }

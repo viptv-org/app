@@ -5,14 +5,15 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.*
 
-internal suspend fun fetchLocalCatalogRows(requests: JsonArray, fetch: suspend (String) -> String): JsonArray = coroutineScope {
+internal suspend fun fetchLocalCatalogRows(requests: JsonArray, timeoutMillis: Long = 6000, fetch: suspend (String) -> String): JsonArray = coroutineScope {
     val capacity = Semaphore(3)
     val responses = requests.mapNotNull { it.jsonObject["url"]?.jsonPrimitive?.contentOrNull }.distinct().associateWith { url ->
         async {
-            try { withTimeout(1900) { capacity.withPermit { fetch(url) } } }
-            catch (_: TimeoutCancellationException) { null }
+            val started = System.nanoTime()
+            try { withTimeout(timeoutMillis) { capacity.withPermit { fetch(url) } } }
+            catch (_: TimeoutCancellationException) { addonFetchFact("catalog", 0, started, error = "timeout"); null }
             catch (error: CancellationException) { throw error }
-            catch (_: Exception) { null }
+            catch (error: Exception) { addonFetchFact("catalog", 0, started, error = error::class.simpleName); null }
         }
     }
     JsonArray(requests.map { item ->

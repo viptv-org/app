@@ -29,7 +29,7 @@ class NativeQaActivity : ComponentActivity() {
   }
   setContent {
    val scope = rememberCoroutineScope()
-   val controller = remember { ApplicationController(scope, store) }
+   val controller = remember { ApplicationController(scope, store, playbackDiagnostics = { Log.i("VIPTV_PLAYBACK_QA", it) }) }
    val state by controller.state.collectAsState()
    var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
    LaunchedEffect(Unit) {

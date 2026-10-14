@@ -7,9 +7,6 @@ import kotlinx.coroutines.*
 import org.viptv.engine.wire.SubtitleCandidate
 import java.io.File
 
-@androidx.compose.runtime.Composable
-internal expect fun subtitleCacheDirectory(): File
-
 internal suspend fun attachProviderSubtitle(player: KitePlayer, input: PlaybackInput, candidate: SubtitleCandidate, directory: File): TrackId {
     val content = shiftSubtitleBytes(requireNotNull(input.subtitleContent)(candidate.id), input.timelineOffsetMillis)
     var file: File? = null
