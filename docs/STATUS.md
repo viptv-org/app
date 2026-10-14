@@ -246,3 +246,9 @@ passed. All new revocations/imports used isolated fixtures. No real account hist
 or active session was changed. Updated runtime preparation remains separate from
 activation; broader dashboard, real-provider anime acceptance and full design
 parity remain unfinished.
+
+The immutable 7dde035 QA release harness and reused 8deb493 gateway are prepared
+with verified hashes, separate candidate/rollback manifests and an activation
+plan. The prior 5aa candidate remains intact. Neither new binary was launched;
+the existing API/gateway PIDs and live pointers remain unchanged. Build readiness
+does not establish live activation or current-device acceptance.

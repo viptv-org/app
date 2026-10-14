@@ -546,5 +546,25 @@
     "queued_approval_rejected_after_family_revocation": true,
     "live_approval_preserved": true,
     "real_sessions_mutated": false
+  },
+  "prepared_qa_runtime": {
+    "backend": "7dde035920f3570cbd2dce42f0c068af83f893f6",
+    "gateway": "8deb493c5d428d64298e339f7ae02ebc195e1fdc",
+    "directory": "/home/vynxc/.local/state/viptv-qa/candidates/backend-7dde035920f3_gateway-8deb493c5d42",
+    "api_sha256": "a543dab58e35c1696a87d6ea1671b3f3e20107f5faa75ba986399c908853ad8c",
+    "gateway_sha256": "9796d09a0625c52af0552eabc084053226c84367032711a46d573cbc829329f2",
+    "profile": "release",
+    "features": [
+      "live-runtime",
+      "vsources-runtime"
+    ],
+    "locked": true,
+    "jobs": 2,
+    "incremental": false,
+    "gateway_rebuilt": false,
+    "launched": false,
+    "active": false,
+    "old_candidate_preserved": true,
+    "live_service_pids_unchanged": true
   }
 }
