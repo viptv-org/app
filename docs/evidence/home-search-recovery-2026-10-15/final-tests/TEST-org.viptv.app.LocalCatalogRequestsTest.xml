@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="LocalCatalogRequestsTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:08.384Z" hostname="vynxcos" time="0.155">
+  <properties/>
+  <testcase name="identicalUrlsFetchOnceAndKeepIndependentRowIds[desktop]" classname="org.viptv.app.LocalCatalogRequestsTest" time="0.001"/>
+  <testcase name="cancellationIsNotConvertedToFailedRows[desktop]" classname="org.viptv.app.LocalCatalogRequestsTest" time="0.001"/>
+  <testcase name="queuedRequestsShareOneDeadlineInsteadOfSerialTimeoutWaves[desktop]" classname="org.viptv.app.LocalCatalogRequestsTest" time="0.152"/>
+  <testcase name="failedSharedRequestKeepsEveryFailedRow[desktop]" classname="org.viptv.app.LocalCatalogRequestsTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

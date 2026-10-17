@@ -1,0 +1,74 @@
+{
+  "image": "/mnt/ALPH/code/viptv-org/app/composeApp/build/nativeResources/linux-x86-64",
+  "elf_count": 1,
+  "external_sonames": [
+    "ld-linux-x86-64.so.2",
+    "libc.so.6",
+    "libdbus-1.so.3",
+    "libgcc_s.so.1",
+    "libm.so.6"
+  ],
+  "minimum_symbol_versions": {
+    "GCC": {
+      "version": "GCC_4.2.0",
+      "required_by": "libviptv_core.so"
+    },
+    "GLIBC": {
+      "version": "GLIBC_2.34",
+      "required_by": "libviptv_core.so"
+    }
+  },
+  "elf_files": [
+    {
+      "file": "libviptv_core.so",
+      "sha256": "0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "needed": [
+        "libdbus-1.so.3",
+        "libgcc_s.so.1",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libgcc_s.so.1": [
+          "GCC_3.0",
+          "GCC_3.3",
+          "GCC_4.2.0"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.29"
+        ],
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3",
+          "GLIBC_2.3.2",
+          "GLIBC_2.3.4",
+          "GLIBC_2.4",
+          "GLIBC_2.7",
+          "GLIBC_2.9",
+          "GLIBC_2.14",
+          "GLIBC_2.16",
+          "GLIBC_2.17",
+          "GLIBC_2.18",
+          "GLIBC_2.25",
+          "GLIBC_2.28",
+          "GLIBC_2.30",
+          "GLIBC_2.32",
+          "GLIBC_2.33",
+          "GLIBC_2.34"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ]
+      },
+      "external_needed": [
+        "libdbus-1.so.3",
+        "libgcc_s.so.1",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    }
+  ],
+  "scope": "Static Linux x86_64 ELF requirements; bundled providers excluded from external floors. Optional dlopen drivers/plugins and actual distribution installation are not qualified."
+}

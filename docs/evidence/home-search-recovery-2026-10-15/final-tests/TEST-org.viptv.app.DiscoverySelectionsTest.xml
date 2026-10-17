@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="DiscoverySelectionsTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:03.130Z" hostname="vynxcos" time="0.006">
+  <properties/>
+  <testcase name="catalogSwitchDoesNotSendPreviousCatalogFilters[desktop]" classname="org.viptv.app.DiscoverySelectionsTest" time="0.001"/>
+  <testcase name="remoteMultiValuesStayInOneJsonParameterAcrossPagesWhileScalarWireStaysCompatible[desktop]" classname="org.viptv.app.DiscoverySelectionsTest" time="0.005"/>
+  <testcase name="duplicateCatalogNamesKeepTheirOwnersAndDefaultBrowsingUsesOneCatalog[desktop]" classname="org.viptv.app.DiscoverySelectionsTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

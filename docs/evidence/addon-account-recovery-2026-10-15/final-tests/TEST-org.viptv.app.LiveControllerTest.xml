@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="LiveControllerTest[desktop]" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:04.709Z" hostname="vynxcos" time="0.055">
+  <properties/>
+  <testcase name="lateFavoriteResponseCannotChangeAnotherProfile[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.012"/>
+  <testcase name="emptyFavoriteSnapshotDoesNotScanEntireDirectoryAndRepeatedCursorFailsSafely[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.005"/>
+  <testcase name="favoriteToggleIsDeduplicatedUsesProfileRoutesAndDoesNotEnterVodLibrary[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.003"/>
+  <testcase name="failedGuideCanRetryButValidGuideUsesCacheAndForcedRetryDoesNotReloadChannels[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.004"/>
+  <testcase name="advertisedHostConnectionsSelectTheFeedAndResetItsGuideAndPaging[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.005"/>
+  <testcase name="lateGuideCannotPublishAfterSelectingADifferentFeed[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.009"/>
+  <testcase name="guideResponseIsFencedByCurrentChannelProfileAndVisibleLiveRoute[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.002"/>
+  <testcase name="siblingMutationResponsesCannotUndoEachOtherWhenSnapshotsArriveOutOfOrder[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.005"/>
+  <testcase name="favoritesFilterAutomaticallyTraversesEmptyFilteredPagesWithoutManualLoadMore[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.003"/>
+  <testcase name="sparseFavoritePaginationContinuesAcrossPagesWithNoNewVisibleMatches[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.004"/>
+  <testcase name="favoritesFromAnotherFeedScanOnlySelectedFeedAndNeverExposeItsChannels[desktop]" classname="org.viptv.app.LiveControllerTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -19,11 +19,11 @@ internal suspend fun ApplicationController.loadLibraryPage(query: LibraryQuery =
     val retainPages = refresh && previous != null && previous.cards.size > query.limit && page.next_cursor != null
     val combined = when {
         append && previous != null -> page.copy(
-            cards = (previous.cards + page.cards).distinctBy { it.provider_id to it.identity },
-            statistics = (previous.statistics + page.statistics).distinctBy { it.identity })
+            cards = (previous.cards + page.cards).distinctBy(::cardLookupKey),
+            statistics = (previous.statistics + page.statistics).distinctBy(::libraryStatisticsKey))
         retainPages && previous != null -> page.copy(next_cursor = previous.next_cursor,
-            cards = (page.cards + previous.cards).distinctBy { it.provider_id to it.identity },
-            statistics = (page.statistics + previous.statistics).distinctBy { it.identity })
+            cards = (page.cards + previous.cards).distinctBy(::cardLookupKey),
+            statistics = (page.statistics + previous.statistics).distinctBy(::libraryStatisticsKey))
         else -> page
     }
     mutable.value = mutable.value.copy(libraryQuery = page.query.copy(offset = 0), libraryPage = combined)

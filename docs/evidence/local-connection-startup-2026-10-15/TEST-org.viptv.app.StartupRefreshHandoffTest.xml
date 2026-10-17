@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="StartupRefreshHandoffTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T18:13:56.598Z" hostname="vynxcos" time="0.005">
+  <properties/>
+  <testcase name="changedConnectionOrLogoutBeforeTheGateDoesNotDispatchOrEraseItsReplacement[desktop]" classname="org.viptv.app.StartupRefreshHandoffTest" time="0.001"/>
+  <testcase name="replacementControllerNeverReplaysSnapshotReadDuringPreviousRotation[desktop]" classname="org.viptv.app.StartupRefreshHandoffTest" time="0.003"/>
+  <testcase name="failureToRevalidateSecureStorageNeverFallsBackToThePossiblyConsumedSnapshot[desktop]" classname="org.viptv.app.StartupRefreshHandoffTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

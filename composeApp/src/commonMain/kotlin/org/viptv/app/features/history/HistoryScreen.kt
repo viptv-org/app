@@ -1,5 +1,6 @@
 package org.viptv.app.features.history
 
+import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -45,7 +46,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                     Text(label, Modifier.padding(top = 12.dp, bottom = 4.dp), fontSize = 12.sp,
                         fontWeight = FontWeight.Medium, color = Palette.secondary)
                 }
-                items(entries, key = { it.entry.card.provider_id + ":" + it.entry.card.identity.kind + ":" + it.entry.card.identity.id }) {
+                items(entries, key = { cardLookupKey(it.entry.card) }) {
                     HistoryRow(it.entry, phone, open)
                 }
             }

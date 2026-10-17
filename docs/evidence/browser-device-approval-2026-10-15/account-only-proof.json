@@ -1,0 +1,81 @@
+{
+  "sign_in": true,
+  "approve": true,
+  "expired_restore": true,
+  "deny": true,
+  "scope": true,
+  "page_errors": 0,
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/lookup",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/approve",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/lookup",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/deny",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/deny",
+      "status": 200
+    }
+  ],
+  "phase": "complete"
+}

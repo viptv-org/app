@@ -5,7 +5,11 @@ plugins {
 android {
     namespace = "org.viptv.experiment"
     compileSdk = 37
-    defaultConfig { applicationId = "org.viptv.experiment"; minSdk = 26; targetSdk = 36; versionCode = 1; versionName = "0.1.0-experiment" }
+    defaultConfig {
+        applicationId = "org.viptv.experiment"; minSdk = 26; targetSdk = 36; versionCode = 1; versionName = "0.1.0-experiment"
+        // Package only ABIs with both the Rust engine and FFmpeg audio decoder.
+        ndk { abiFilters += setOf("armeabi-v7a", "arm64-v8a", "x86_64") }
+    }
     buildFeatures { compose = true }
     buildTypes {
         getByName("release") {
@@ -27,6 +31,10 @@ android {
     sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/rustJni").get().asFile)
 }
 dependencies {
+    // Diagnostic semantics inspection must compile against the shared app's UI
+    // version, rather than activity-compose's minimum Compose 1.0 API surface.
+    "qaImplementation"("org.jetbrains.compose.ui:ui:1.13.0-alpha02")
+    "debugImplementation"("org.jetbrains.compose.ui:ui:1.13.0-alpha02")
     listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-ui").forEach { module ->
         "qaImplementation"("androidx.media3:$module:1.11.1")
         "debugImplementation"("androidx.media3:$module:1.11.1")

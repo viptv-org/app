@@ -1,0 +1,26 @@
+{
+  "driver_pid": 3041940,
+  "avd": "viptv-16k-isolated",
+  "serial": "emulator-5586",
+  "apk_sha256": "347e9bfc1871c4da1ecfe43d56f1f9a66c3999ada6e52cb1823f7069baefd207",
+  "sustain_requested_ms": 2460000,
+  "started_utc": "2026-10-15T19:07:23.457203+00:00",
+  "fixture": "synthetic H264/AAC rolling HLS; actual normal-speed renderer; host offset is not elapsed time",
+  "stage": "failed",
+  "host_wall_ms": 1758100,
+  "host_sustain_wall_ms": 1733754,
+  "last_sample_age_ms": 1770,
+  "samples": 336,
+  "seeks": 57,
+  "latest": {
+    "elapsed_ms": 1731906,
+    "position_ms": 2325983,
+    "window_ms": 1710000,
+    "seeks": 56,
+    "renderer_position_ms": 16157,
+    "input_offset_ms": 600000,
+    "speed": 1.0,
+    "clock_error_ms": -174,
+    "host_sustain_wall_ms": 1731984
+  }
+}

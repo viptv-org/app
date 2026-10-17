@@ -1,0 +1,71 @@
+{
+  "read_only": true,
+  "large_batch_repeated": false,
+  "additional_metadata_reads": 2,
+  "mapping_rejections": [
+    {
+      "batch_index": 5,
+      "status": 200,
+      "seconds": 0.088,
+      "requested_metadata_id": "simkl:movie:2586723",
+      "title": "Inception",
+      "year": 1980,
+      "kind": "movie",
+      "id_namespaces": {
+        "simkl": 1
+      },
+      "verified_imdb_present": false,
+      "episode_coordinates_present": false
+    },
+    {
+      "batch_index": 7,
+      "status": 200,
+      "seconds": 0.085,
+      "requested_metadata_id": "simkl:movie:1907353",
+      "title": "Inception: Music from the Motion Picture",
+      "year": 2010,
+      "kind": "movie",
+      "id_namespaces": {
+        "simkl": 1
+      },
+      "verified_imdb_present": false,
+      "episode_coordinates_present": false
+    }
+  ],
+  "mapping_conclusion": "Both realmovie identities have onlySimkl namespace and noverifiedIMDb; currentcanonical source_identity requires authoritativeIMDb;422metadata_mapping_unavailable isexpected, not a parserregression.",
+  "mapping_code": [
+    ".worktrees/kmp-v2/backend/server/src/simkl/mapping.rs:resolve_id/resolve_request",
+    ".worktrees/kmp-v2/core/crates/viptv-engine/src/simkl/mapping.rs:source_identity"
+  ],
+  "mixed_format_events": [
+    {
+      "title": "Dark Matter",
+      "provider": "PenguPlay",
+      "accepted_streams": 36,
+      "error_code": "source_format_unsupported"
+    },
+    {
+      "title": "Marshals",
+      "provider": "PenguPlay",
+      "accepted_streams": 35,
+      "error_code": "source_format_unsupported"
+    },
+    {
+      "title": "Ted Lasso",
+      "provider": "PenguPlay",
+      "accepted_streams": 31,
+      "error_code": "source_format_unsupported"
+    }
+  ],
+  "mixed_format_conclusion": "Acceptedrecords were preserved alongside a partialunsupportedformaterror. Captured backend responses omit discardedupstreamobjects; rejectedtransportshape/count cannot be reconstructed. No speculativeparserchange warranted.",
+  "input_parse_comparison": "Backendroot and activeworktree sources/input.rs arebyteidentical at audit time.",
+  "failure_families": {
+    "mapping_rejected_starts": 2,
+    "unsupported_format_partial_events": 3,
+    "addon_dns_unavailable_events": 4,
+    "addon_timeout_events": 2,
+    "addon_unavailable_events": 1
+  },
+  "no_media_or_progress_mutations": true,
+  "limitations": "Read-onlycachedrealmetadata and originalbatchresponses; no newlargefetch or syntheticcases. Upstreamfailure classification and sourceformat gating are separate from publiclabel normalization."
+}

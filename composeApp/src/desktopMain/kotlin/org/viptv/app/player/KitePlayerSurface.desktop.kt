@@ -3,7 +3,6 @@ package org.viptv.app.player
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import io.github.yuroyami.kiteplayer.AudioConfig
-import io.github.yuroyami.kiteplayer.SubtitleConfig
 import io.github.yuroyami.kiteplayer.PlayerConfig
 import io.github.yuroyami.kiteplayer.PlayerEvent
 import io.github.yuroyami.kiteplayer.PlaybackException
@@ -29,8 +28,7 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
         val path = nativePlayerRenderPath()
         val player = rememberKitePlayer(PlayerConfig(frameEvents = path != KiteRenderPath.ComposeCanvas,
             audio = AudioConfig(preferredLanguages = listOfNotNull(input.preferences.preferred_audio_language)),
-            subtitles = SubtitleConfig(preferredLanguages = if (input.preferences.subtitles_enabled) listOfNotNull(input.preferences.preferred_subtitle_language) else emptyList(),
-                autoSelect = input.preferences.subtitles_enabled, autoSelectForced = input.preferences.subtitles_enabled)))
+            subtitles = desktopSubtitleConfig(input.preferences)))
         val subtitleDirectory = subtitleCacheDirectory()
         val latestObserve by rememberUpdatedState(observe)
         val candidates by input.providerSubtitles.collectAsState()

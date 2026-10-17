@@ -1,0 +1,10 @@
+{
+  "page_size": "16384",
+  "model": "sdk_google_atv64_amati_x86_64_16k",
+  "abi": "x86_64",
+  "fingerprint": "google/sdk_google_atv64_amati_x86_64_16k/emu64xa16k:16/BT2A.260319.001/15058170:user/dev-keys",
+  "compat_linker": "false",
+  "compat_package_disabled": "true",
+  "normal_pid": "3850",
+  "kernel": "Linux localhost 6.6.66-android15-8-gb66429556fb8-ab13070261 #1 SMP PREEMPT Fri Feb 14 22:29:59 UTC 2025 x86_64 Toybox"
+}

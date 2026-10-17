@@ -6,7 +6,7 @@ import org.viptv.engine.wire.SourceCandidate
 
 suspend fun RemoteConnection.rankSources(profile: String, candidates: List<SourceCandidate>): List<SourceCandidate> {
     if (candidates.isEmpty()) return emptyList()
-    val response = call("/api/v3/profiles/${profile.encodeURLPathPart()}/source-ranking", HttpMethod.Post,
+    val response = call("/api/profiles/${profile.encodeURLPathPart()}/source-ranking", HttpMethod.Post,
         buildJsonObject { put("ids", JsonArray(candidates.map { JsonPrimitive(it.id) })) }).jsonObject
     val known = candidates.associateBy { it.id }
     val ranked = response.getValue("streams").jsonArray.map { item ->

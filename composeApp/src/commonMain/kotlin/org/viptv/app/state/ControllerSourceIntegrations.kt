@@ -4,31 +4,40 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
 import org.viptv.app.connection.*
 
-internal suspend fun ApplicationController.loadSourceIntegrations() {
-    val profile = requireNotNull(mutable.value.selectedProfile)
+internal suspend fun ApplicationController.loadSourceIntegrations(operation: AddonOperationOwner? = null) {
+    val owner = operation ?: addonOperationOwner()
+    owner.requireCurrent(this)
+    val profile = requireNotNull(owner.profile)
     try {
-        val result = local?.sourceIntegrationSchemas(profile) ?: requireNotNull(connection).sourceIntegrationSchemas(profile)
+        val result = owner.device?.sourceIntegrationSchemas(profile) ?: requireNotNull(owner.remote).sourceIntegrationSchemas(profile)
+        owner.requireCurrent(this)
         mutable.value = mutable.value.copy(sourceIntegrations = result, sourceIntegrationError = null)
     } catch (error: CancellationException) { throw error }
-    catch (_: Exception) {
-        mutable.value = mutable.value.copy(sourceIntegrationError = "Could not load source integrations. Try again.")
+    catch (error: Exception) {
+        owner.requireCurrent(this)
+        if (error is RemoteFailure && error.status == 401) throw error
+        mutable.value = mutable.value.copy(sourceIntegrationError =
+            if (error is RemoteFailure && error.status == 403) error.message
+            else "Could not load source integrations. Try again.")
     }
 }
 
 fun ApplicationController.refreshSourceIntegrations() = run { loadSourceIntegrations() }
 
 fun ApplicationController.configureSourceIntegration(plugin: String, configuration: JsonObject) = run {
-    val profile = requireNotNull(mutable.value.selectedProfile)
+    val owner = addonOperationOwner()
+    val profile = requireNotNull(owner.profile)
     val revision = mutable.value.sourceIntegrations.revision
-    local?.configureSourceIntegration(profile, revision, plugin, configuration)
-        ?: requireNotNull(connection).configureSourceIntegration(profile, revision, plugin, configuration)
-    loadSourceIntegrations()
+    owner.device?.configureSourceIntegration(profile, revision, plugin, configuration)
+        ?: requireNotNull(owner.remote).configureSourceIntegration(profile, revision, plugin, configuration)
+    loadSourceIntegrations(owner)
 }
 
 fun ApplicationController.removeSourceIntegration(connectionId: String) = run {
-    val profile = requireNotNull(mutable.value.selectedProfile)
+    val owner = addonOperationOwner()
+    val profile = requireNotNull(owner.profile)
     val revision = mutable.value.sourceIntegrations.revision
-    local?.removeSourceIntegration(profile, revision, connectionId)
-        ?: requireNotNull(connection).removeSourceIntegration(profile, revision, connectionId)
-    loadSourceIntegrations()
+    owner.device?.removeSourceIntegration(profile, revision, connectionId)
+        ?: requireNotNull(owner.remote).removeSourceIntegration(profile, revision, connectionId)
+    loadSourceIntegrations(owner)
 }

@@ -6,6 +6,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.TimeSource
 
 internal fun ApplicationController.releaseRemotePlayback(): Job? {
+    cancelNextEpisode()
+    backgroundPlayback = null
     val trackingStop = if (firstFrameSeen) tracking?.transition(PlaybackEvent.Stop, lastProgress, ended = completionSeen) else null
     tracking = null
     val acknowledgment = frameAcknowledgment
@@ -22,7 +24,7 @@ internal fun ApplicationController.saveProgress(completed: Boolean, final: Boole
     if (input.live) return null
     val sourceTitle=mutable.value.sourceTitle ?: return null
     val parent = mutable.value.detail?.item?.takeIf {
-        it.identity.id == sourceTitle.parent_identity?.id && it.identity.kind == sourceTitle.parent_identity?.kind
+        it.identity.id == sourceTitle.parent_identity?.id && it.identity.kind == sourceTitle.parent_identity?.kind && it.metadata_origin == sourceTitle.metadata_origin
     }
     val title = if (parent != null) sourceTitle.copy(title = parent.title) else sourceTitle
     val snapshot=lastProgress ?: return null

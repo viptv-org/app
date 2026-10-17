@@ -1,0 +1,42 @@
+{
+  "desktop": {
+    "tests": 313,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "combined_build_seconds": 172,
+  "production_wasm_normal_android_linux_image": true,
+  "focused_gate_tests": 35,
+  "focused_matrix_scenarios": 30,
+  "android_apk": "artifacts/android-release-2026-10-15/addon-account-4b9cd905d844/viptv-android-release-local.apk",
+  "android_sha256": "4b9cd905d844815f273acf0ac712939b907635bc925841314383abe4d2610d5c",
+  "android_native_proof": "docs/evidence/addon-account-recovery-2026-10-15/native-4b9cd905d844/proof.json",
+  "linux_package_proof": "docs/evidence/linux-final313-clear-debian-2026-10-15/summary.json",
+  "endurance_proof": "docs/evidence/android-osd-endurance-2026-10-15/summary.json",
+  "endurance_scope": "Separate frozen5abd actual41min original-player/OSD/slider/tracking proof; not relabeled as normal4b9",
+  "source_files_sha256": {
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ApplicationController.kt": "a01a3c1feb1f2e880dc54709f5d99eee13a18fefe2e7204b0b038541bc15fdd1",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPageRequest.kt": "b57bf19b8f7443a39aa27fa5a8d1aaa08009116c1e919345e6625af683ddca03",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerNavigation.kt": "c36e62110e8f368fcff55d84bd71c877998364aed87fa375356bc0f61f07a23d",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerCatalog.kt": "291d4640291d0fff2b2859a55cc33d996414caf97cf98713181822a5f9134688",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerAddons.kt": "494cc5c0089ed39dc11eb7397b2684768e8686e9f32144657f123eaa40665062",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/AddonOperationOwner.kt": "41b7a105fb19cd5bd44900e9a3b4a092dbf57c9bc0c187dfff77f25b3b8dbcd7",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerSourceIntegrations.kt": "d8bdfeb9fda0af5e8bbfa05f1764ee567b3ca4202c0cf9ec46dbc7a4aa043549",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPreferences.kt": "f958444de1311bdddd033eb601241b558349a878f8b87588989fe286c25a37a5",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerBrowsingProvider.kt": "bc714785cb386953303d4e522132ed01d6ea4d5b9fcd6e996d908a64552f2c87",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/connection/LocalConnection.kt": "0c0100dbf835057fe92d5064697599a768e83bbece92561e9416c37af017ed90",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SettingsRoute.kt": "22b104b8e17d899f7552786720b1dd3cdd78584b31b20f7a9c9d9f56abbec26e",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SettingsScreen.kt": "7d08adcd548ffbcaab790b310a9107e24f53672751de61345711094c0f8859a1",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSettingsScreen.kt": "bb4bd7f80089b5f44196ba58a49d7b0d386724cd481a3250bbe66510aa658456",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSettingsAccount.kt": "9c56c40a2944deb1c18be496ef1b5ce3f29bd668d1e53b65a9b392a00e89a1cd",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AddonSettings.kt": "9e303cda370169d8b8ecf011317e8f346c360e6070a147c8f987caf13c13b7c6",
+    "composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalConnection.kt": "e70daf5c352a8f5fc9a40e99ab67e9427446d3b16078e01fb569ce3dee70e79c",
+    "tools/package_linux.py": "0b9128e749406fe87068546219b357fbef19b4c5447b70a4b5345c3b0528c694"
+  },
+  "physical_device_actions": false,
+  "deployed": false,
+  "linux_package_sha256": "a7a6327ac66024b607692a407aca2744870f9f6b787f1281027f826936ffdf2b",
+  "protected_wasm_files_unchanged": 109,
+  "recorded_at_utc": "2026-10-15T21:16:05.698404+00:00"
+}

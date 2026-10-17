@@ -7,7 +7,7 @@ import kotlinx.coroutines.ensureActive
 import org.w3c.dom.*
 
 internal suspend fun selectBrowserSubtitle(input: PlaybackInput, video: HTMLVideoElement, id: Int?,
-    tracks: MutableMap<Int, HTMLTrackElement>, blobs: MutableList<String>, failed: () -> Unit): String? {
+    tracks: MutableMap<Int, HTMLTrackElement>, blobs: MutableList<String>, suppressEmbedded: () -> Unit = {}, failed: () -> Unit): String? {
     val candidate = input.providerSubtitle(id)
     if (id != null) requireNotNull(candidate)
     var chosen = id?.let(tracks::get)
@@ -18,11 +18,16 @@ internal suspend fun selectBrowserSubtitle(input: PlaybackInput, video: HTMLVide
         chosen = (document.createElement("track") as HTMLTrackElement).apply {
             kind = "subtitles"; label = candidate.label; srclang = candidate.language; src = uri
             onload = { placeProviderCues(this, input.timelineOffsetMillis / 1000.0); null }
-            onerror = { _, _, _, _, _ -> failed(); null }
+            onerror = { _, _, _, _, _ -> if (track.mode == TextTrackMode.SHOWING) failed(); null }
             video.appendChild(this)
         }
         tracks[requireNotNull(id)] = chosen
     }
-    tracks.values.forEach { it.track.mode = if (it == chosen) TextTrackMode.SHOWING else TextTrackMode.DISABLED }
+    suppressEmbedded()
+    disableBrowserTextTracks(video)
+    chosen?.track?.mode = TextTrackMode.SHOWING
     return candidate?.id
 }
+
+@JsFun("""video => { for (const track of video.textTracks) track.mode = 'disabled'; }""")
+private external fun disableBrowserTextTracks(video: HTMLVideoElement)

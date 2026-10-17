@@ -11,6 +11,6 @@ import org.viptv.engine.wire.QueryControl
 @Composable
 internal fun DiscoveryTextFilter(control: QueryControl, value: String?, modifier: Modifier, apply: (String) -> Unit) {
     var draft by remember(control.id, value) { mutableStateOf(value.orEmpty()) }
-    OutlinedTextField(draft, { draft = it }, modifier.width(220.dp), label = { Text(control.label) }, singleLine = true,
+    OutlinedTextField(draft, { draft = it }, modifier.width(180.dp), label = { Text(control.label) }, singleLine = true,
         trailingIcon = { TextButton({ apply(draft.trim()) }, enabled = draft != value.orEmpty()) { Text("Apply") } })
 }

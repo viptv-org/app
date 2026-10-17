@@ -11,6 +11,7 @@ internal val desktopDestinations = listOf(
     Destination(Screen.Discover, "Discover", Lucide.Compass),
     Destination(Screen.Movies, "Movies", Lucide.Film),
     Destination(Screen.Series, "Series", Lucide.Tv),
+    Destination(Screen.Anime, "Anime", Lucide.Sparkles),
     Destination(Screen.Live, "Live", Lucide.RadioReceiver),
     Destination(Screen.Calendar, "Calendar", Lucide.Calendar),
     Destination(Screen.Library, "My List", Lucide.Bookmark),

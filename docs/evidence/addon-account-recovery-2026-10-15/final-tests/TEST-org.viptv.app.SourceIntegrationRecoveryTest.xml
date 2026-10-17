@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="SourceIntegrationRecoveryTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:22.291Z" hostname="vynxcos" time="0.009">
+  <properties/>
+  <testcase name="expiredSourceIntegrationSessionReturnsToSignInInsteadOfRetryingRetiredCredentials[desktop]" classname="org.viptv.app.SourceIntegrationRecoveryTest" time="0.005"/>
+  <testcase name="forbiddenSourceSettingsKeepPermissionCopyAndTheRetainedSnapshot[desktop]" classname="org.viptv.app.SourceIntegrationRecoveryTest" time="0.001"/>
+  <testcase name="temporaryFailureRetainsConfigurationAndSuccessfulRetryClearsOnlyItsError[desktop]" classname="org.viptv.app.SourceIntegrationRecoveryTest" time="0.002"/>
+  <testcase name="cancelledIntegrationLoadDoesNotBecomeAVisibleFailureOrReplaceTheSnapshot[desktop]" classname="org.viptv.app.SourceIntegrationRecoveryTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

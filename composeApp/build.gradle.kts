@@ -12,6 +12,9 @@ kotlin {
     android { namespace = "org.viptv.app.shared"; compileSdk = 37; minSdk = 26; androidResources.enable = true }
     jvm("desktop")
     wasmJs { browser(); binaries.executable() }
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework { baseName = "VIPTVShared"; isStatic = true }
+    }
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -39,6 +42,8 @@ kotlin {
         androidMain {
             dependsOn(nativePlayerMain)
             dependencies {
+                implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
+                implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
                 implementation("net.java.dev.jna:jna:5.17.0@aar")
                 implementation(project(":media3-ffmpeg"))
                 listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-exoplayer-dash", "media3-ui").forEach { implementation("androidx.media3:$it:1.11.1") }
@@ -60,6 +65,16 @@ kotlin {
                 implementation(compose.desktop.currentOs); implementation("net.java.dev.jna:jna:5.17.0")
             }
         }
+        // The manual nativePlayerMain dependsOn edges disable the default
+        // hierarchy template, so the iOS source set must be wired explicitly.
+        val iosMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation("io.ktor:ktor-client-darwin:3.4.0")
+            }
+        }
+        val iosArm64Main by getting { dependsOn(iosMain) }
+        val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
         wasmJsMain.dependencies {
             implementation(npm("hls.js", "1.7.3"))
             implementation("org.jetbrains.kotlinx:kotlinx-browser:0.5.0")
@@ -69,6 +84,7 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation("io.ktor:ktor-client-mock:3.4.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
         }
     }
 }
@@ -90,6 +106,13 @@ val buildDesktopEngine by tasks.registering(Exec::class) {
     outputs.dir(layout.buildDirectory.dir("nativeResources"))
 }
 tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopEngine) }
+// Same Java version can have different native dependencies across JDK vendors.
+// Compose's default runtime cache metadata does not distinguish those builds.
+tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJLinkTask>().configureEach {
+    inputs.property("viptvPackagingJdkHome", javaHome)
+    inputs.file(javaHome.map { file("$it/release") }).withPathSensitivity(PathSensitivity.NONE)
+}
+
 compose.resources { publicResClass = true; packageOfResClass = "org.viptv.app.resources" }
 compose.desktop {
     application {

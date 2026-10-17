@@ -42,6 +42,6 @@ class RemoteSourceIntegrationsTest {
             remote.removeSourceIntegration("12", snapshot.revision, "fixture:1")
         } finally { remote.close() }
         assertEquals(listOf(HttpMethod.Get, HttpMethod.Put, HttpMethod.Delete), requests.map { it.first })
-        assertTrue(requests.all { it.second.startsWith("/api/v3/profiles/12/source-integrations") })
+        assertTrue(requests.all { it.second.startsWith("/api/profiles/12/source-integrations") })
     }
 }

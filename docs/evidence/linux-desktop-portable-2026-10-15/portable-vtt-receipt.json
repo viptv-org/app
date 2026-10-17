@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "launcher": "/tmp/viptv-desktop-menu-final-360ec20d-extracted/opt/viptv-experiment/bin/VIPTV-Experiment",
+  "fixture": "generated20s960x540H264/30fps +twoAAC tracks; no media network",
+  "subtitle_format": "vtt",
+  "media_sha256": "a759e55b02f3595273edf4cd43fd9ad56c4e3c8d66e81af54a027410ea6bb82c",
+  "subtitle_sha256": "8a80b9897dee07961bf36df925425ed3bf7b89dc184a726e7e1a1d290a6c6b4d",
+  "result": {
+    "phase": "complete",
+    "passed": true,
+    "presentation": "DesktopDrawCompleted",
+    "position_ms": 8101,
+    "subtitle_scale": 1.25,
+    "audio_tracks": 2,
+    "subtitle_selected": true,
+    "control_failure": false,
+    "diagnostics": [
+      "path=ComposeCanvas decoded=117 submitted=47 drawn=46 decode_fps=28.913260219341975 av_drift_ms=21 rebuffers=0 audio_underruns=9 hw=software seekable=true",
+      "path=ComposeCanvas decoded=380 submitted=62 drawn=61 decode_fps=251.9607843137255 av_drift_ms=22 rebuffers=0 audio_underruns=9 hw=software seekable=true",
+      "path=ComposeCanvas decoded=380 submitted=62 drawn=61 decode_fps=0.0 av_drift_ms=22 rebuffers=0 audio_underruns=9 hw=software seekable=true"
+    ]
+  },
+  "screenshots": {
+    "playing": "/tmp/viptv-desktop-portable-menu-vtt-2026-10-15/playing.png",
+    "paused": "/tmp/viptv-desktop-portable-menu-vtt-2026-10-15/paused.png",
+    "caption-off": "/tmp/viptv-desktop-portable-menu-vtt-2026-10-15/caption-off.png",
+    "caption-on": "/tmp/viptv-desktop-portable-menu-vtt-2026-10-15/caption-on.png",
+    "caption-sized": "/tmp/viptv-desktop-portable-menu-vtt-2026-10-15/caption-sized.png"
+  },
+  "pixel_checks": {
+    "caption-off": {
+      "gold_pixels": 0,
+      "bounds": null
+    },
+    "caption-on": {
+      "gold_pixels": 5476,
+      "bounds": [
+        353,
+        629,
+        931,
+        667
+      ]
+    },
+    "caption-sized": {
+      "gold_pixels": 3705,
+      "bounds": [
+        401,
+        638,
+        882,
+        669
+      ]
+    }
+  },
+  "elapsed_seconds": 8.73,
+  "runtime_scope": "Linux bundled JVM under owned Xvfb/virtual silent audio; not physical display/audio/GPU/Windows/macOS acceptance",
+  "actual_desktop_ui_touched": false,
+  "loaded_jvm": "/tmp/viptv-desktop-menu-final-360ec20d-extracted/opt/viptv-experiment/lib/runtime/lib/server/libjvm.so",
+  "default_audio_sink_preserved": true
+}

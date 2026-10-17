@@ -1,0 +1,71 @@
+{
+  "field_text": "",
+  "install_enabled": false,
+  "previous_url_absent": true,
+  "labels": [
+    {
+      "text": "",
+      "desc": "Close sheet",
+      "click": "true",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[0,0][720,870]"
+    },
+    {
+      "text": "",
+      "desc": "Drag handle",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[332,909][388,916]"
+    },
+    {
+      "text": "Add an add-on",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,976][608,1018]"
+    },
+    {
+      "text": "",
+      "desc": "Close add-on form",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[629,976][671,1018]"
+    },
+    {
+      "text": "Add-on URL",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1071][175,1113]"
+    },
+    {
+      "text": "Add-on URL",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[56,1176][227,1218]"
+    },
+    {
+      "text": "Install",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[325,1294][396,1329]"
+    },
+    {
+      "text": "Only install add-ons you trust. You can remove one at any time.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1376][692,1460]"
+    }
+  ]
+}

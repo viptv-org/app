@@ -1,0 +1,6 @@
+[
+  {
+    "revision": 1,
+    "value": "{\"preferred_audio_language\":null,\"preferred_subtitle_language\":null,\"subtitles_enabled\":true,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.0,\"subtitle_text_color\":\"#FFFFFF\",\"subtitle_background_color\":\"#00000000\"}"
+  }
+]

@@ -31,7 +31,7 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -
         }
         val entries = listOf("General" to Lucide.Settings, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions,
             "Watch on TV" to Lucide.Tv, "Add-ons" to Lucide.Puzzle, "Notifications" to Lucide.Bell,
-            "Account" to Lucide.UserRound, "About" to Lucide.Info)
+            "Parental controls" to Lucide.LockKeyhole, "Account" to Lucide.UserRound, "Help" to Lucide.Info, "About" to Lucide.Info)
         entries.forEach { (label, icon) -> item {
             Surface(color = if (selected == label) Palette.raised else Palette.surface, shape = RoundedCornerShape(10.dp)) {
                 Row(Modifier.fillMaxWidth().clickable { select(label) }.padding(horizontal = 12.dp, vertical = 14.dp),

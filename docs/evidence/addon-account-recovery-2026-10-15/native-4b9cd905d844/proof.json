@@ -1,0 +1,130 @@
+{
+  "status": "passed on exact final immutable normal release APK",
+  "apk": "artifacts/android-release-2026-10-15/addon-account-4b9cd905d844/viptv-android-release-local.apk",
+  "apk_sha256": "4b9cd905d844815f273acf0ac712939b907635bc925841314383abe4d2610d5c",
+  "on_device_installed_apk_hash_verified": true,
+  "fixture": {
+    "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "console_port": 5590,
+    "api": 35,
+    "ram_mib": 2560,
+    "cores": 2,
+    "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+    "display": "720x1600 density280; bounded portrait phone fixture",
+    "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+    "observed_minimum_phone_ram_mib": 2560,
+    "requested_ram_mib": 1536,
+    "first_launch_stopped_for_resource_coordination": true
+  },
+  "synthetic_provider": true,
+  "provider_transport": "Supported HTTP on own127.0.0.1 server via exact5590 adb reverse; normal release cleartext policy; no TLS bypass or QA network-security override",
+  "credentials_used": false,
+  "public_provider_or_manual_api_calls": false,
+  "checks": {
+    "status": "passed",
+    "synthetic_provider": true,
+    "url": "http://127.0.0.1:45017/manifest.json",
+    "add_text_bounds": [
+      281,
+      523,
+      489,
+      559
+    ],
+    "advanced_text_bounds": [
+      28,
+      651,
+      320,
+      693
+    ],
+    "rapid_first_taps": 3,
+    "first_submit_manifest_requests": 1,
+    "failure_retains_exact_url_and_error": true,
+    "success_sheet_closes": true,
+    "success_error_cleared": true,
+    "success_reopen_url_blank": true,
+    "reopen_install_disabled": true,
+    "own_record_removed": true,
+    "original_preferences_unchanged": true,
+    "original_connections_unchanged": true,
+    "profile_descriptor_excluding_revision_unchanged": true,
+    "expected_profile_revision": {
+      "before": 2,
+      "after": 4
+    },
+    "server": {
+      "manifest_attempts": 2,
+      "events": [
+        {
+          "method": "GET",
+          "path": "/manifest.json",
+          "status": 503,
+          "manifest_attempts": 1,
+          "time": 1792098177.6146379
+        },
+        {
+          "method": "GET",
+          "path": "/manifest.json",
+          "status": 200,
+          "manifest_attempts": 2,
+          "time": 1792098183.866478
+        },
+        {
+          "method": "GET",
+          "path": "/catalog/movie/synthetic-phone.json",
+          "status": 200,
+          "manifest_attempts": 2,
+          "time": 1792098185.8929462
+        }
+      ]
+    }
+  },
+  "captures_visually_inspected": [
+    "initial.png",
+    "failure.png",
+    "installed.png",
+    "reopened-blank.png",
+    "removed.png"
+  ],
+  "selector_correction": "Native script initially checked enabled on the Install TextView child. Resumed at existing reopened sheet after checking its actionable ancestor enabled=false and EditText text exactly empty. No extra installation, manifest retry or product edit. Raw logs retained.",
+  "prior_apk_gap_preserved": "../native-0a3156ab59ed/proof.json",
+  "scope": "Private Default profile on owned API35 emulator5590 only. No physical device, user5554, shared backend, production deployment, or served Wasm changes. This synthetic provider flow does not qualify real third-party providers or hardware playback.",
+  "source_changes_during_this_run": false,
+  "cleanup": {
+    "fixture_cleanup": "fixture-cleanup.json",
+    "owned_shutdown": "owned-shutdown.json",
+    "owned_processes_gone": true
+  },
+  "files_sha256": {
+    "initial.png": "cd77fdaa27928e704e94650bbe72b0b5ff3ed7c4a2b41363417e268f3d95477c",
+    "initial.xml": "0dbdb51659ada761a297370b84a32078154561b2c3e34c2caca0eda033ff3c95",
+    "failure.png": "dc8c82d984a145e12c89765866128dfcb062aa8c35f580f07eddb3c4d9c8d40e",
+    "failure.xml": "fbe7dc6ecaed918456224c3a84056b4b57b33bfa4ac2ce96d76d03ec7b867df1",
+    "installed.png": "99c06474a73ebe03b778eb2c699645ad7ccdc42701b83ba198022f6f8d610edd",
+    "installed.xml": "fa145352fb5b55ba04e63b38b6c296c97082b5eba8e9b1e4bf97a029a096c485",
+    "reopened-blank.png": "04d73f7545dbae875c1948e895611552163fb175e37ad490b86bb9848b868524",
+    "reopened-blank.xml": "9065aa274a0f3a69286fa771935fd88071f2ff6d37d186f3bc9963c7da0196c7",
+    "removed.png": "88bb013efc4a406b18e087c453b0cedff6581719e33573126ba29f767c5b1a62",
+    "removed.xml": "0dbdb51659ada761a297370b84a32078154561b2c3e34c2caca0eda033ff3c95",
+    "baseline.json": "06fe3d2f5351f964495f8444a00a562f4d7afbc6bc01f65ad459d13137eeaa45",
+    "after-removal.json": "9b77892b0ec141770bc0507f4189dea925d45dddaf84c01e2bdbaf9dd7d3da42",
+    "failure.json": "c76f6888576c6f8a34577d77d769c463a0fd86be474b9b18b1e72ba5a5f0b696",
+    "installed.json": "85b5f58efb20890f1b9258363b830259cc9c6a4bbbb22ded86e19752d31c151a",
+    "reopened.json": "f5d732a3972bf660c8c0a02bd86dc7ddbd4017116df011ba32f6621f54645007",
+    "flow-result.json": "1d8cd66fdebc10495c422b0504c60638096a085032ee31138b13bcc05de1f9c6",
+    "installed-apk-sha256.txt": "f8aafd41719ac2380db7f43916803ba9bbcbf2bb77e5ec3dd01ed0bf78ec1106",
+    "install.txt": "781a31c82430c97897af612ece5e0ca2205e301cb5ff121ce2660541ea5182c7",
+    "server-events.json": "5eb1d2bc0f2a24b40bdeab9a72e77e4ab4815e5e19832891fb9b671b681f4eac",
+    "server.json": "d17407a6915b1fa390e7295464116a72447d8a97f14bb6c772f813d9e9a8f596",
+    "server.py": "dd3b3cba90f023acbc279faee88290777a5d1cd38ea73ac5232fda0f39b5bcb1",
+    "submit_failure.py": "31557fbf47818ad580dc29b03c829f22113487723daec498a343f62c7579d85e",
+    "final_flow.py": "8e36512fbe786d4bf0ca788f1b1a43297750b50743bf97ea69a3aa223e64df7a",
+    "finish_current.py": "633659bb6769cc9671c09e45df4f805462e2d171c7a30aff6a28e21308f4f9b1",
+    "flow.log": "1fc3385f38a4da5b68b6c4a180fe81e9354d5ce3906efed3fe37377d84623d2d",
+    "finish.log": "bfed58fbf1ac7464d28d810fcd4f8e811f6498075d54b3914cffc062576217f6",
+    "reopen-debug.json": "a868c1afc70fec3305845ced05c5d58c5b5faaaf5783ec80193ebf0ac92e7bcb",
+    "fixture-cleanup.json": "75e4789eab7541959eee8b858ff027b9870c80b7d4d666afa1918c1fb42cba6e",
+    "owned-shutdown.json": "1fd36499f2167149a9c8c2bd47db52c4dcb19cf78b8790dda7e3b66ac7276155"
+  }
+}

@@ -10,9 +10,9 @@ import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLTrackElement
 import org.w3c.dom.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.ensureActive
+
+private var nextCaptionStyle = 0
+private class BrowserVideoLifetime { var active = false; var playRequest = 0L }
 
 @OptIn(ExperimentalComposeUiApi::class, kotlin.js.ExperimentalWasmJsInterop::class)
 @Composable
@@ -23,20 +23,34 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
         style.width = "100%"; style.height = "100%"; style.objectFit = "contain"
         setAttribute("playsinline", "")
     } }
+    val lifetime = remember(video) { BrowserVideoLifetime() }
+    var hlsController by remember(video) { mutableStateOf<Hls?>(null) }
+    val captionId = remember(video) { "viptv-caption-${++nextCaptionStyle}" }
+    val captionStyle = remember(video) { document.createElement("style") as HTMLStyleElement }
+    var captionScale by remember { mutableStateOf(input.preferences.subtitle_font_scale.toFloat().takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f) }
     val tracks = remember(video) { mutableMapOf<Int, HTMLTrackElement>() }
     val blobs = remember(video) { mutableListOf<String>() }
     var selected by remember(video) { mutableStateOf<String?>(null) }
-    var subtitleTouched by remember(video) { mutableStateOf(false) }
-    var subtitleJob by remember(video) { mutableStateOf<Job?>(null) }
+    var subtitleTouched by remember { mutableStateOf(false) }
+    var requestedSubtitle by remember { mutableStateOf<org.viptv.engine.wire.SubtitleCandidate?>(null) }
+    var subtitleRequest by remember { mutableStateOf(0L) }
     val latestObserve by rememberUpdatedState(observe)
+    LaunchedEffect(captionStyle, captionScale, input.preferences) {
+        val declarations = browserCaptionDeclarations(input.preferences, captionScale)
+        captionStyle.textContent = if (declarations.isEmpty()) "" else "#$captionId::cue {$declarations}"
+        latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate, captionScale))
+    }
     val candidates by input.providerSubtitles.collectAsState()
-    LaunchedEffect(candidates) { latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected)))) }
+    LaunchedEffect(video, candidates) { latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected)))) }
     Box(modifier)
     DisposableEffect(video) {
         val container = requireNotNull(document.getElementById("viptv-video-layer") as? HTMLElement)
+        video.id = captionId
         container.appendChild(video)
-        var hls: Hls? = null
+        container.appendChild(captionStyle)
+        lifetime.active = true
         var disposed = false
+        var removeHlsErrors: (() -> Unit)? = null
         observeBrowserFrame(video) { if (!disposed) {
             latestObserve(input.mediaProgress((video.currentTime * 1000).toLong(), video.duration.takeIf { it.isFinite() }?.let { (it * 1000).toLong() }))
             latestObserve(PlayerFact.Presentation(PresentationProof.BrowserCompositorPresented))
@@ -53,10 +67,22 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
         video.ontimeupdate = { latestObserve(input.mediaProgress((video.currentTime * 1000).toLong(), video.duration.takeIf { it.isFinite() }?.let { (it * 1000).toLong() })); null }
         video.onerror = { _, _, _, _, _ -> latestObserve(PlayerFact.Failed); null }
         video.onended = { latestObserve(PlayerFact.Status("Ended")); null }
-        val playlist = input.uri.substringBefore('?').endsWith(".m3u8", ignoreCase = true)
-        if (playlist && video.canPlayType("application/vnd.apple.mpegurl").toString().isEmpty() && Hls.isSupported()) {
-            hls = Hls(hlsPreferences(input.preferences.preferred_audio_language.orEmpty(),
-                if (input.preferences.subtitles_enabled) input.preferences.preferred_subtitle_language.orEmpty() else "")).also {
+        val playlist = input.isHlsPlaylist()
+        // Chrome reports native HLS as "maybe", but that path can fail to demux
+        // gateway playlists and jump to a live edge on resumed VOD. Prefer the
+        // controlled MSE implementation; native HLS remains the fallback.
+        if (playlist && Hls.isSupported()) {
+            // A gateway VOD playlist can initially omit ENDLIST. Keep the
+            // requested VOD origin instead of letting Hls choose a live-sync edge.
+            hlsController = Hls(hlsPreferences(input.preferences.preferred_audio_language.orEmpty(),
+                if (input.preferences.subtitles_enabled) input.preferences.preferred_subtitle_language.orEmpty() else "",
+                if (input.live) -1.0 else input.positionMillis.coerceAtLeast(0) / 1000.0)).also {
+                val controller = it
+                val event = Hls.Events.ERROR
+                val listener = listenForFatalHlsError(controller, event) {
+                    if (!disposed) latestObserve(PlayerFact.Failed)
+                }
+                removeHlsErrors = { removeHlsErrorListener(controller, event, listener) }
                 it.subtitleDisplay = input.preferences.subtitles_enabled
                 it.loadSource(input.uri); it.attachMedia(video)
             }
@@ -64,29 +90,34 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
         latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(null))))
         onDispose {
             disposed = true
+            lifetime.active = false; lifetime.playRequest++
+            tracks.values.forEach { track ->
+                track.onload = null; track.onerror = null
+                track.track.mode = TextTrackMode.DISABLED
+            }
             blobs.forEach(::revokeSubtitleBlob)
             blobs.clear(); tracks.clear()
             video.onloadedmetadata = null; video.ontimeupdate = null; video.onerror = null; video.onended = null
             video.onplay = null; video.onpause = null; video.onwaiting = null; video.oncanplay = null
-            hls?.destroy()
+            removeHlsErrors?.invoke(); removeHlsErrors = null
+            hlsController?.destroy(); hlsController = null
             video.pause(); video.removeAttribute("src"); video.load()
             container.removeChild(video)
+            container.removeChild(captionStyle)
         }
     }
-    LaunchedEffect(candidates, subtitleTouched) {
-        if (subtitleTouched) return@LaunchedEffect
-        val candidate = preferredProviderSubtitle(input, candidates) ?: return@LaunchedEffect
-        val id = Int.MIN_VALUE + candidates.indexOfFirst { it.id == candidate.id }
-        val prior = subtitleJob
-        prior?.cancel()
-        subtitleJob = launch {
-            try {
-                prior?.join()
-                selected = selectBrowserSubtitle(input, video, id, tracks, blobs) { latestObserve(PlayerFact.ControlFailed) }
-                latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
-            } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
-        }
+    // One effect owns selection, including cancellation while caption content
+    // loads. The explicit choice (including Off) survives a gateway seek.
+    LaunchedEffect(video, input, candidates, subtitleTouched, requestedSubtitle, subtitleRequest) {
+        val candidate = if (subtitleTouched) requestedSubtitle?.let { matchingProviderSubtitle(it, candidates) }
+            else preferredProviderSubtitle(input, candidates)
+        if (candidate == null && (!subtitleTouched || requestedSubtitle != null)) return@LaunchedEffect
+        val id = candidate?.let { input.providerTrackId(it.id) }
+        try {
+            selected = selectBrowserSubtitle(input, video, id, tracks, blobs, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { latestObserve(PlayerFact.ControlFailed) }
+            latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
     }
     LaunchedEffect(video, commands) {
         commands.collect { command ->
@@ -95,30 +126,26 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                     is PlayerCommand.Seek -> if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
                         else video.currentTime = command.positionMillis.coerceAtLeast(0) / 1000.0
                     is PlayerCommand.Volume -> video.volume = command.value.coerceIn(0f, 1f).toDouble()
-                    is PlayerCommand.SubtitleSize -> latestObserve(PlayerFact.ControlFailed)
+                    is PlayerCommand.SubtitleSize -> captionScale = command.value.takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f
                     is PlayerCommand.SelectTrack -> {
+                        require(command.kind == PlaybackTrackKind.Subtitle)
+                        val candidate = command.id?.let { requireNotNull(input.providerSubtitle(it)) }
+                        requestedSubtitle = candidate
                         subtitleTouched = true
-                        val prior = subtitleJob
-                        prior?.cancel()
-                        subtitleJob = launch {
-                            try {
-                                prior?.join()
-                                require(command.kind == PlaybackTrackKind.Subtitle)
-                                selected = selectBrowserSubtitle(input, video, command.id, tracks, blobs) { latestObserve(PlayerFact.ControlFailed) }
-                                latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
-                            } catch (error: CancellationException) { throw error }
-                            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
-                        }
+                        subtitleRequest++
                     }
                     is PlayerCommand.Speed -> video.playbackRate = command.value.coerceIn(0.25, 2.0)
                 }
-                latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate))
+                latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate, captionScale))
             } catch (error: CancellationException) { throw error }
             catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
         }
     }
     LaunchedEffect(paused, video) {
+        val request = ++lifetime.playRequest
         if (paused) video.pause()
-        else requestBrowserPlay(video, { latestObserve(PlayerFact.Status("Paused")) }, { latestObserve(PlayerFact.Failed) })
+        else requestBrowserPlay(video,
+            { if (lifetime.active && lifetime.playRequest == request) latestObserve(PlayerFact.Status("Paused")) },
+            { if (lifetime.active && lifetime.playRequest == request) latestObserve(PlayerFact.Failed) })
     }
 }

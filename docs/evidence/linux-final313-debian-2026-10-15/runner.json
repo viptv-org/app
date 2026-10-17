@@ -1,0 +1,26 @@
+{
+  "prefix": [
+    "podman",
+    "--root",
+    "/tmp/viptv-debian-install-2026-10-15/storage",
+    "--runroot",
+    "/tmp/viptv-debian-install-2026-10-15/runroot",
+    "--storage-driver",
+    "vfs",
+    "--tmpdir",
+    "/tmp/viptv-debian-install-2026-10-15/tmp",
+    "--cgroup-manager",
+    "cgroupfs",
+    "--events-backend",
+    "file"
+  ],
+  "environment": {
+    "HOME": "/tmp/viptv-debian-install-2026-10-15/home",
+    "XDG_CONFIG_HOME": "/tmp/viptv-debian-install-2026-10-15/config",
+    "XDG_DATA_HOME": "/tmp/viptv-debian-install-2026-10-15/data",
+    "XDG_CACHE_HOME": "/tmp/viptv-debian-install-2026-10-15/cache",
+    "XDG_STATE_HOME": "/tmp/viptv-debian-install-2026-10-15/state",
+    "XDG_RUNTIME_DIR": "/tmp/viptv-debian-install-2026-10-15/runtime",
+    "REGISTRY_AUTH_FILE": "/tmp/viptv-debian-install-2026-10-15/auth.json"
+  }
+}

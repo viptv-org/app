@@ -1,0 +1,26 @@
+{
+  "manifest_attempts": 2,
+  "events": [
+    {
+      "method": "GET",
+      "path": "/manifest.json",
+      "status": 503,
+      "manifest_attempts": 1,
+      "time": 1792098177.6146379
+    },
+    {
+      "method": "GET",
+      "path": "/manifest.json",
+      "status": 200,
+      "manifest_attempts": 2,
+      "time": 1792098183.866478
+    },
+    {
+      "method": "GET",
+      "path": "/catalog/movie/synthetic-phone.json",
+      "status": 200,
+      "manifest_attempts": 2,
+      "time": 1792098185.8929462
+    }
+  ]
+}

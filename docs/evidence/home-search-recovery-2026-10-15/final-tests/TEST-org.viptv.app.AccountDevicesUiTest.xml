@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="AccountDevicesUiTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:47:59.685Z" hostname="vynxcos" time="0.691">
+  <properties/>
+  <testcase name="compactDeviceListKeepsActionsInsideTheViewport[desktop]" classname="org.viptv.app.AccountDevicesUiTest" time="0.094"/>
+  <testcase name="devicesLoadOnceAndCurrentBrowserHasNoPerDeviceSignOut[desktop]" classname="org.viptv.app.AccountDevicesUiTest" time="0.096"/>
+  <testcase name="signOutRequiresConfirmationAndCancelDoesNotPublishAMutation[desktop]" classname="org.viptv.app.AccountDevicesUiTest" time="0.501"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

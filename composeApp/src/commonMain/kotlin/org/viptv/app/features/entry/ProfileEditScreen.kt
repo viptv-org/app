@@ -14,15 +14,17 @@ fun ProfileEditScreen(
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
     setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
     television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {}, pinAvailable: Boolean = true,
+    editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null, maturity: String? = null, language: String? = null,
 ) {
     if (television) {
-        TvProfileEditScreen(profile, count, busy, error, back, rename, setPin, setAvatar, delete, backChanged = backChanged, pinAvailable = pinAvailable)
+        TvProfileEditScreen(profile, count, busy, error, back, rename, setPin, setAvatar, delete, backChanged = backChanged, pinAvailable = pinAvailable, editingCurrent = editingCurrent, openSettings = openSettings, maturity = maturity, language = language)
         return
     }
     if (compact) {
-        MobileProfileEdit(profile, count, busy, error, back, rename, setPin, setAvatar, delete, pinAvailable = pinAvailable)
+        MobileProfileEdit(profile, count, busy, error, back, rename, setPin, setAvatar, delete, pinAvailable = pinAvailable, editingCurrent = editingCurrent, openSettings = openSettings)
         return
     }
+    var guidance by remember(profile?.id) { mutableStateOf<Boolean?>(null) }
     var name by remember(profile?.id) { mutableStateOf(profile?.name.orEmpty()) }
     var oldPin by remember(profile?.id) { mutableStateOf("") }
     var newPin by remember(profile?.id) { mutableStateOf("") }
@@ -34,7 +36,7 @@ fun ProfileEditScreen(
         ProfileAvatar(profile, 88.dp, 18.dp)
         TextButton(onClick = { pickingAvatar = true }) { Text("Change avatar") }
         OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-        if (profile?.locked == true) OutlinedTextField(oldPin, { if (it.length <= 8 && it.all(Char::isDigit)) oldPin = it },
+        if (profile.requiresLocalPin(pinAvailable)) OutlinedTextField(oldPin, { if (it.length <= 8 && it.all(Char::isDigit)) oldPin = it },
             label = { Text("Current PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
         if (pinAvailable) { OutlinedTextField(newPin, { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
             label = { Text(if (profile?.locked == true) "New PIN (blank to remove)" else "Set PIN (optional)") },
@@ -49,13 +51,16 @@ fun ProfileEditScreen(
             enabled = !busy && (newPin.length in 4..8 || (profile?.locked == true && newPin.isEmpty()))) {
             Text(if (profile?.locked == true && newPin.isEmpty()) "Remove PIN" else "Save PIN")
         }
+        TextButton({ guidance = true }, enabled = !busy) { Text("Audio & subtitles") }
+        TextButton({ guidance = false }, enabled = !busy) { Text("Maturity rating") }
         if (count > 1 && profile?.canDelete != false) TextButton(onClick = { confirmingDelete = true }, enabled = !busy) { Text("Delete profile") }
     }
     if (confirmingDelete) AlertDialog(onDismissRequest = { confirmingDelete = false },
         title = { Text("Delete ${profile?.name}?") }, text = { Text("This removes this profile’s history and add-on choices.") },
         confirmButton = { TextButton(onClick = { delete(oldPin); confirmingDelete = false }) { Text("Delete") } },
         dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") } })
-    if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }) { avatarId, pin ->
+    if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }, { avatarId, pin ->
         setAvatar(avatarId, pin); pickingAvatar = false
-    }
+    }, pinAvailable = pinAvailable)
+    guidance?.let { ProfilePreferenceGuidance(it, pinAvailable, editingCurrent, profile?.name, { guidance = null }, openSettings) }
 }

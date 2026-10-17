@@ -18,7 +18,7 @@ import org.viptv.app.theme.Palette
 internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, genres: () -> Unit) {
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series).forEach { (label, destination) ->
+        listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series, "Anime" to Screen.Anime).forEach { (label, destination) ->
             Surface(onClick = { navigate(destination) }, shape = RoundedCornerShape(20.dp),
                 color = if (destination == screen) Palette.text else Palette.raised.copy(alpha = 0.8f),
                 contentColor = if (destination == screen) Palette.background else Palette.text) {

@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "artifact": "artifacts/linux-desktop-2026-10-15/final313-clear-r2-a7a6327ac660/viptv-experiment_0.1.0-2_amd64.deb",
+  "sha256": "a7a6327ac66024b607692a407aca2744870f9f6b787f1281027f826936ffdf2b",
+  "bytes": 134651500,
+  "debian_revision": 2,
+  "application_jars": {
+    "lib/app/composeApp-desktop-32a9ada4796b62a879e454b104229e3.jar": "e6635facc6ecc80963ca77ac11a4e44e45ba951e252c0146c87e3b977e291568"
+  },
+  "native_sha256": "0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+  "source_snapshot": "artifacts/linux-desktop-2026-10-15/final313-clear-r2-a7a6327ac660/source-snapshot",
+  "source_manifest_files": 792,
+  "image_manifest_files": 209,
+  "source_gate": "source-final-gate.log; BUILD SUCCESSFUL2m52s, root reported313desktop +isolatedWasm/normalAndroid/Linuximage",
+  "base_image": "docker.io/library/debian@sha256:918311b7b6c4c6f68b232ba516584925f6c78ad82b6fd534b98979df6438e483",
+  "base_debian": "13.7 trixie-slim x86_64",
+  "rootless": true,
+  "privileged": false,
+  "artifact_read_only": true,
+  "menu_directory_absent_before_install": true,
+  "apt_update_exit_code": 0,
+  "apt_install_exit_code": 0,
+  "dpkg_status": "viptv-experiment 0.1.0-2 ii",
+  "dpkg_audit_empty": true,
+  "installed_file_verification_clean": true,
+  "native_smoke_before_gui_dependencies": true,
+  "bundled_jvm": "21.0.12.1; mapped from /opt/viptv-experiment/lib/runtime/lib/server/libjvm.so",
+  "private_vault_checks_passed": true,
+  "original_main_screenshots_visually_reviewed": true,
+  "skiko_renderer": "SOFTWARE under owned Xvfb",
+  "cleanup": {
+    "container_id": "41ef9c184899c77b46170a8025cff82eb36ba6ebb0f3dab23d9cb8ceb8e236ce",
+    "own_store_containers": [],
+    "user_unit": "inactive",
+    "owned_pid_exists": {
+      "3128354": false,
+      "3128352": false,
+      "3128321": false
+    },
+    "cached_own_base_image_retained": true
+  },
+  "host_packages_changed": false,
+  "user_wallet_display_audio_accessed": false,
+  "host_manual_services_or_default_containers_touched": false,
+  "prior_artifact_relationship": "Original ebc3 revision1 failure, c4ec revision2 installer-only old287 snapshot and d869 pre-clear final313 snapshot remain separately preserved. This post-clear a7a6327ac660 artifact is freshly qualified.",
+  "scope": "Fresh Debian13.7 x86_64 normal package-manager install, menu registration, installed native/JVM/SQLite, private vault and original Main. No new playback claim; historical97e VTT component continuity is separate. PhysicalGPU/display/audio, Windows/macOS and distribution signing not qualified."
+}

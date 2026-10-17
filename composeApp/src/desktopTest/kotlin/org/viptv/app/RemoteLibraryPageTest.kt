@@ -19,7 +19,7 @@ class RemoteLibraryPageTest {
         var requests = 0
         val client = HttpClient(MockEngine { request ->
             requests++
-            assertEquals("/api/v3/profiles/12/library", request.url.encodedPath)
+            assertEquals("/api/profiles/12/library", request.url.encodedPath)
             assertEquals("Sci-Fi & Fantasy", request.url.parameters["genre"])
             assertEquals("name_desc", request.url.parameters["sort"])
             respond(Json.encodeToString(snapshot), headers = headersOf(HttpHeaders.ContentType, "application/json"))

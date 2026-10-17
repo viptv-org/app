@@ -1,0 +1,11 @@
+{
+  "guest_pid": 3041048,
+  "fixture_pid": 3041530,
+  "guest_process_gone": true,
+  "fixture_process_gone": true,
+  "original_driver_process_gone": true,
+  "resumed_driver_process_gone": true,
+  "reverse_removed": true,
+  "other_devices_untouched": true,
+  "global_adb_actions": false
+}

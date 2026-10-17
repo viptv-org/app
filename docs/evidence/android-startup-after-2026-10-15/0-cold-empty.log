@@ -1,0 +1,24 @@
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2350) has no WPC
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2361): activity_enter_ms=138
+I/VIPTV_PERFORMANCE_QA( 2361): first_draw_ms=375
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +691ms
+I/VIPTV_PERFORMANCE_QA( 2361): interactive_shell_ms=378
+I/VIPTV_PERFORMANCE_QA( 2361): interactive_shell_from_activity_ms=240
+I/VIPTV_PERFORMANCE_QA( 2361): profile_to_home_ms=906
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +3s801ms
+I/VIPTV_PERFORMANCE_QA( 2361): PASS mode=cold-empty file=performance-cold-empty.json
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2350) has no WPC
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2361): activity_enter_ms=138
+I/VIPTV_PERFORMANCE_QA( 2361): first_draw_ms=375
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +691ms
+I/VIPTV_PERFORMANCE_QA( 2361): interactive_shell_ms=378
+I/VIPTV_PERFORMANCE_QA( 2361): interactive_shell_from_activity_ms=240
+I/VIPTV_PERFORMANCE_QA( 2361): profile_to_home_ms=906
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +3s801ms
+I/VIPTV_PERFORMANCE_QA( 2361): PASS mode=cold-empty file=performance-cold-empty.json

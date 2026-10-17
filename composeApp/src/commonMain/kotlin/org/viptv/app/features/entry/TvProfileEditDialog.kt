@@ -9,11 +9,15 @@ import org.viptv.app.connection.Profile
 
 @Composable
 internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?, busy: Boolean, dismiss: () -> Unit,
-    rename: (String, String) -> Unit, setPin: (String, String) -> Unit, delete: (String) -> Unit) {
+    rename: (String, String) -> Unit, setPin: (String, String) -> Unit, delete: (String) -> Unit, pinAvailable: Boolean = true, editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null) {
+    if(action==TvProfileEditAction.Language||action==TvProfileEditAction.Maturity){
+        ProfilePreferenceGuidance(action==TvProfileEditAction.Language,pinAvailable,editingCurrent,profile?.name,dismiss,openSettings)
+        return
+    }
     var name by remember { mutableStateOf(profile?.name.orEmpty()) }
     var currentPin by remember { mutableStateOf("") }; var newPin by remember { mutableStateOf("") }
     val editable = action in listOf(TvProfileEditAction.Name, TvProfileEditAction.Pin, TvProfileEditAction.Delete)
-    val authorized = profile?.locked != true || currentPin.length in 4..8
+    val authorized = !profile.requiresLocalPin(pinAvailable) || currentPin.length in 4..8
     val valid = when (action) {
         TvProfileEditAction.Name -> name.isNotBlank() && name != profile?.name
         TvProfileEditAction.Pin -> newPin.length in 4..8 || (profile?.locked == true && newPin.isEmpty())
@@ -27,7 +31,7 @@ internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?,
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (!editable) Text("This connection does not provide this profile preference yet.")
             if (action == TvProfileEditAction.Name) OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-            if (editable && profile?.locked == true) OutlinedTextField(currentPin,
+            if (editable && profile.requiresLocalPin(pinAvailable)) OutlinedTextField(currentPin,
                 { if (it.length <= 8 && it.all(Char::isDigit)) currentPin = it }, label = { Text("Current PIN") },
                 visualTransformation = PasswordVisualTransformation(), singleLine = true)
             if (action == TvProfileEditAction.Pin) {
@@ -36,7 +40,7 @@ internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?,
                     visualTransformation = PasswordVisualTransformation(), singleLine = true)
                 Text("A PIN keeps profiles separate in the app. The device owner can access local files.")
             }
-            if (action == TvProfileEditAction.Delete) Text("This removes this profile’s history and add-on choices from this device.")
+            if (action == TvProfileEditAction.Delete) Text("This removes this profile’s history and add-on choices.")
         }
     }, confirmButton = {
         if (editable) TextButton(enabled = !busy && authorized && valid, onClick = {

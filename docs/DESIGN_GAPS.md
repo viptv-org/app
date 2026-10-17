@@ -5,7 +5,7 @@
 | GAP-001 | Local/remote connection selection | Native local mode; browser remains remote-only | Initial provisional implementation: `features/entry/ConnectScreen.kt`; capture `docs/provisional/connection-desktop.png` |
 | GAP-002 | Profile integration assignment | One browsing integration; multiple sources/subtitles | Initial per-profile add-on switch in `features/settings/SettingsScreen.kt`; capture `docs/provisional/addon-settings-android.png`; full capability controls pending |
 | GAP-003 | Simkl TV connection | Dashboard linking replaces direct provider PIN flow | Implemented native explanation and browser linking in `features/settings/LinkedAccounts.kt`; supplied-design review pending |
-| GAP-004 | Server and integration failures | Empty, unauthorized and unavailable are distinct | Pending implementation |
+| GAP-004 | Server and integration failures | Empty, unauthorized and unavailable are distinct | Supported Home/server/source/account recovery implemented and render-tested; safe401 retirement,403 permission copy, cached retry, linked-account Retry and initial connection errors. See HOME_SEARCH_RECOVERY.md and INTEGRATION_SETTINGS_RECOVERY.md; full visual parity remains unqualified. |
 | GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Browser device management implemented from W3Account; broader administration remains pending |
 | GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt`; settings capture `docs/provisional/addon-settings-android.png` |
 | GAP-007 | Local History clear confirmation | Current History boards show Clear without its confirmation state | Provisional confirmation in `features/history/HistoryScreen.kt` |
@@ -242,7 +242,20 @@ The supplied boards do not include a form for plugin-owned credentials and provi
 
 ### GAP-048 — Profile preference forms
 
-Phone, tablet, desktop and Web use a provisional shared preference form for language tags, subtitle default, source selection and quality. TV uses the supplied settings geometry with real profile persistence for supported fields. Next-episode prompts, intro skipping, display rate switching and persisted subtitle styling remain unavailable until their host/player contracts exist.
+Compact native Playback and Subtitles & audio now use separate supported board
+forms with a live style preview, size/colour/background controls and languages.
+Wide desktop and Web retain the provisional shared form. TV retains the supplied
+settings geometry with real profile persistence; failed loads now expose the
+actual safe error and focused retry. Six focused common Compose tests and three
+inspected captures are recorded in `PREFERENCE_SETTINGS_COMPLETION.md`.
+
+The current eight fields support persisted subtitle styling and profile source/
+language preferences. Explicit next prompts are also implemented in the player.
+Intro markers, persisted prompt/resume toggles, mobile-data modes, Shadow style
+and display-rate switching have no corresponding current host preference field
+and are not simulated. Custom-value dialogs, Save/retry, unavailable controls and
+portrait variants remain provisional beyond the supplied boards. Physical phone
+and full board parity remain unproven.
 
 ### GAP-049 — Profile metadata provider choice
 
@@ -369,3 +382,82 @@ captures: `browser-account-real.png`, `browser-account-parent-refusal.png` and
 unrelated configuration. Loaded rows and their supplied geometry were inspected;
 permission/refusal and confirmation variants remain provisional. Synthetic account
 records do not establish provider metadata or general browser/OS parity.
+
+### GAP-059 — Unified text search and expanded source rows
+
+The approved 2026-10-15 direction retains integration capabilities and combines
+Simkl and Stremio text search on one screen. Existing carousel components present
+Simkl Anime/Movies/TV rows and one row per searchable Stremio add-on. Single-row,
+empty, partial-provider failure and unavailable-provider states use the existing
+search typography; dedicated supplied boards for these combinations are absent.
+Discovery/filter redesign is deferred. The requested Anime destination reuses the
+current browse screen and provider-declared controls.
+
+Source cards retain the existing design but grow to display the complete label
+and release description. Rendered regression evidence is in
+`evidence/android-tv-fixes-2026-10-15/dynamic-source-rows.png`. This is layout and
+input evidence, not a physical-TV performance acceptance.
+
+### GAP-060 — Account entry and household controls
+
+Browser registration, one-time recovery-code acknowledgment, recovery, parent PIN
+and per-profile age restriction forms use the existing entry/settings tokens.
+There are no exact supplied boards for recovery-code safety, retry after a lost
+bootstrap, parent authorization or age-policy errors. These states are provisional.
+Real desktop and phone production-Wasm evidence is recorded in
+`evidence/browser-account-entry-2026-10-15`; code/password screens are deliberately
+excluded from committed images. This does not establish complete board parity.
+
+Account identity now displays actual server data; native account administration
+opens the connected dashboard. General, Help, About, bundled license and Watch on
+TV pages replace supported placeholder destinations. They retain existing type,
+spacing and navigation components; fresh routing/visual qualification remains.
+Restricted-profile device approval reuses the same PIN dialog and retries the
+explicit pending action. Real phone browser checks now cover incorrect PIN,
+lookup retry without approval, grant expiry before explicit approval, and
+truthful sign-out refusal/retry with zero page errors. Evidence is in
+`evidence/browser-device-approval-2026-10-15`.
+
+### GAP-061 — Per-title parent approvals
+
+Browser household settings now expose an approved-title list for each restricted
+profile, paged in groups of500. The title search retains provider rows and shows
+server capability messages. Adding/removing an approval requires explicit
+confirmation; unsupported results remain disabled, while old saved approvals can
+still be removed without guessing a provider. Source authority is never inferred
+from preview text.
+
+The screen uses existing Material typography, surfaces, spacing and dialogs; it
+has no exact supplied design board. `evidence/parent-title-approvals-2026-10-15/`
+records its inspected common Compose layout. Three UI tests cover the parent
+forms, compact controls, and approval/cancel behavior; six controller tests cover
+typed transport, unsupported results, revocation cache invalidation, expired
+authority, canceled navigation and paging. Real provider-backed/private-origin browser qualification is recorded separately
+in `evidence/parent-title-approvals-2026-10-15/final/`.
+
+The approved-title page additionally has a real390px browser capture and routing
+proof for current-profile list loading, no-provider search, Help, application/font
+licenses and the TV sign-in address. The compact subpage uses the single existing Back affordance to return to
+parent controls. Its refreshed browser flow and screenshot verify that route.
+
+Final real Chromium qualification additionally passed cross-profile administration:
+the selected restricted child had no provider assignments, while a different
+managed child alone had the private synthetic provider. The actual household PIN
+unlock, target-profile search, incarnation/expected-Card approval, authoritative
+saved-list reload and exact revoke all passed. The selected profile stayed
+unchanged; 12 UI API calls and zero page errors. The inspected capture and
+sanitized proof are in the `final/` subdirectory. The backend normal all-target
+gate passed503 tests (8 existing ignored), and SDK runtime passed505 (9 existing
+ignored), with no failures. This closes that functional qualification gap; exact
+supplied-board parity remains open.
+
+### GAP-062 — Phone player episode and capability states
+
+`M3Player`, `M3PlayerNext` and `M3PlayerError` now have actual phone episode/next
+and recovery actions, with inspected common Compose captures and six passing
+focus/dispatch/isolation regressions. See `PHONE_PLAYER_ACTIONS.md`. The supplied
+player has an Episodes entry but no exact phone player episode-picker board;
+the loaded-episode side panel is provisional. Pending/unavailable Next status,
+portrait wrapping and failure states without retry/source capabilities are also
+additional truthful states. No autoplay, intro boundaries or cast service is
+invented. Physical phone rendering and exact full-board parity remain open.

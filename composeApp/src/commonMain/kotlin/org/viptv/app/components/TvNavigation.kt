@@ -27,7 +27,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         Box(Modifier.fillMaxWidth().height(132.dp * scale)) {
         val initial = remember { FocusRequester() }
         LaunchedEffect(selected) {
-            if (selected in listOf(Screen.Movies, Screen.Series, Screen.Live, Screen.Calendar, Screen.Library)) initial.requestFocus()
+            if (selected in listOf(Screen.Movies, Screen.Series, Screen.Anime, Screen.Live, Screen.Calendar, Screen.Library)) initial.requestFocus()
         }
         var menu by remember { mutableStateOf(false) }
         Box(Modifier.offset(96.dp * scale, 44.dp * scale)) {

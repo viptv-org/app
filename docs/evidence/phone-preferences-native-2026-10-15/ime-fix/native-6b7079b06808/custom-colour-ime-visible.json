@@ -1,0 +1,77 @@
+{
+  "keyboard_source": [
+    "InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null",
+    "mSource=InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null"
+  ],
+  "ime_top": 1000,
+  "actions": {
+    "Cancel": [
+      307,
+      662,
+      428,
+      746
+    ],
+    "Use value": [
+      442,
+      662,
+      598,
+      746
+    ]
+  },
+  "field_bounds": [
+    122,
+    473,
+    598,
+    620
+  ],
+  "labels": [
+    {
+      "text": "Text colour",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[122,389][339,445]"
+    },
+    {
+      "text": "#ABC123",
+      "desc": "",
+      "click": "true",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[122,473][598,620]"
+    },
+    {
+      "text": "Text colour",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[150,473][269,501]"
+    },
+    {
+      "text": "Use #RRGGBB.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[150,592][308,620]"
+    },
+    {
+      "text": "Cancel",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[328,687][407,722]"
+    },
+    {
+      "text": "Use value",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[463,687][577,722]"
+    }
+  ]
+}

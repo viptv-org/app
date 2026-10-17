@@ -35,6 +35,7 @@ fun App(
     desktopChrome: Boolean = false,
     desktopMenuOpen: Boolean = false,
     providedController: ApplicationController? = null,
+    manageControllerLifecycle: Boolean = true,
     imageDiagnostics: ((String) -> Unit)? = null,
     entryBackChanged: ((() -> Unit)?) -> Unit = {},
 ) {
@@ -43,17 +44,30 @@ fun App(
     val controller = providedController ?: remember { ApplicationController(scope) }
     val state by controller.state.collectAsState()
     val routes = rememberSaveableStateHolder()
-    LaunchedEffect(controller) { controller.restore() }
-    DisposableEffect(controller) { onDispose { controller.disconnect() } }
+    LaunchedEffect(controller, manageControllerLifecycle, localDatabase) { if (manageControllerLifecycle) controller.restore(localDatabase) }
+    DisposableEffect(controller, manageControllerLifecycle) { onDispose { if (manageControllerLifecycle) controller.disconnect() } }
     ViptvTheme(television) {
         BoxWithConstraints(Modifier.fillMaxSize().background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
-            if (television && state.starting) { TvSplash(); return@BoxWithConstraints }
+            if (state.starting) {
+                if (television) {
+                    DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
+                    TvSplash(controller::disconnect)
+                } else {
+                    // Restore-in-progress placeholder: never flash the login
+                    // screen while the browser session is being validated.
+                    Box(Modifier.fillMaxSize().background(Palette.background))
+                }
+                return@BoxWithConstraints
+            }
             val compact = maxWidth < 640.dp && !television
             val tablet = !compact && !television && !browser && !desktopChrome
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
+                    register = if (browser) ({ username, name, password -> controller.registerAccount(browserOrigin().orEmpty(), username, name, password) }) else null,
+                    recover = if (browser) ({ username, code, password -> controller.recoverAccount(browserOrigin().orEmpty(), username, code, password) }) else null,
                     iptv = if (browser) null else localDatabase?.let { path -> IptvEntryActions({ credentials -> controller.connectIptv(path, credentials) }, controller::cancelIptvEntry) })
+                Screen.RecoveryCodes -> RecoveryCodesScreen(state.recoveryKit, state.busy, state.error, controller::finishAccountEntry, controller::disconnect)
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television)
@@ -63,7 +77,10 @@ fun App(
                     state.busy, state.error, controller::submitProfilePin, { controller.navigate(Screen.Profiles) }, television)
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
                     state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
-                    controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile, television, entryBackChanged, pinAvailable = state.localMode)
+                    controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile, television, entryBackChanged, pinAvailable = state.localMode,
+                    editingCurrent = state.profileToEdit == state.selectedProfile, openSettings = controller::profileSettings,
+                    language = state.preferences?.takeIf { state.profileToEdit == state.selectedProfile }?.preferences?.let { it.preferred_audio_language ?: "Original audio" },
+                    maturity = state.profileManagement?.profiles?.find { it.id == state.profileToEdit }?.let { if(it.kids)it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction" })
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
                   Column(Modifier.fillMaxSize()) {
@@ -74,24 +91,25 @@ fun App(
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(state.screen, controller::navigate)
                         when (state.screen) {
-                            Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome,
+                            Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) })
-                            Screen.Discover, Screen.Movies, Screen.Series -> BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
-                                multipleChanged = controller::browseSelections)
+                            Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime -> BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
+                                multipleChanged = controller::browseSelections, browser = browser)
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
-                                    controller::search, controller::open, television, controller::editSearch)
+                                    controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)
                             }
                             Screen.Details -> Box(Modifier.fillMaxSize()) {
                                 if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true)
-                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage)
+                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart)
                             }
                             Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id)
-                            Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode, busy = state.busy, error = state.error)
+                            Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
+                                type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
                             Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
                             Screen.History -> HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                            Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television)
+                            Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }

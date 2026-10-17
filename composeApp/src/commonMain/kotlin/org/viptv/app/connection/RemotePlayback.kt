@@ -11,7 +11,7 @@ internal expect fun playbackClientFacts(): JsonObject
 
 
 internal class RemotePlaybackLease(val input: PlaybackInput, val renewSeconds: Long, private val remote: RemoteConnection, val gateway: Boolean = true, val reopensForSeek: Boolean = gateway) {
-    private val path = "/api/v2/playback/${input.id.encodeURLPathPart()}"
+    private val path = "/api/playback/${input.id.encodeURLPathPart()}"
     suspend fun firstFrame() { if (gateway) remote.call("$path/first-frame", HttpMethod.Post, buildJsonObject {}) }
     suspend fun renew() { remote.call("$path/heartbeat", HttpMethod.Post) }
     suspend fun close() { remote.call(path, HttpMethod.Delete) }
@@ -24,7 +24,7 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
         else JsonObject(clientFacts - "supports_required_audio_index")
     try {
         return withTimeout(60_000) {
-            var response = call("/api/v2/playback", HttpMethod.Post, buildJsonObject {
+            var response = call("/api/playback", HttpMethod.Post, buildJsonObject {
                 put("request_id", requestId); put("stream_id", source.id)
                 put("client", negotiatedFacts)
                 put("force_gateway", forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true)
@@ -35,7 +35,7 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
                 if (response.getValue("status").jsonPrimitive.content in listOf("failed", "stopped", "expired"))
                     throw RemoteFailure(502, "This source could not play through the server gateway.")
                 delay(250)
-                response = call("/api/v2/playback/${requireNotNull(playbackId).encodeURLPathPart()}").jsonObject
+                response = call("/api/playback/${requireNotNull(playbackId).encodeURLPathPart()}").jsonObject
             }
             val delivery = response.getValue("delivery").jsonObject
             val kind = delivery.getValue("kind").jsonPrimitive.content
@@ -52,8 +52,8 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
         withContext(NonCancellable) {
             withTimeoutOrNull(5_000) {
                 try {
-                    playbackId?.let { call("/api/v2/playback/${it.encodeURLPathPart()}", HttpMethod.Delete) }
-                        ?: call("/api/v2/playback-requests/${requestId.encodeURLPathPart()}", HttpMethod.Delete)
+                    playbackId?.let { call("/api/playback/${it.encodeURLPathPart()}", HttpMethod.Delete) }
+                        ?: call("/api/playback-requests/${requestId.encodeURLPathPart()}", HttpMethod.Delete)
                 } catch (_: Exception) { }
             }
         }

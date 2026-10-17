@@ -1,0 +1,9 @@
+{
+  "ro.build.version.sdk": "26",
+  "ro.build.version.release": "8.0.0",
+  "ro.build.fingerprint": "Android/sdk_gphone_x86_64/generic_x86_64:8.0.0/OSR1.180418.026/6741039:userdebug/dev-keys",
+  "ro.product.cpu.abilist": "x86_64,x86",
+  "ro.build.characteristics": "emulator",
+  "ro.kernel.qemu.avd_name": "viptv-api26-isolated",
+  "uimode": "Current UI Mode Service state:\n  mDockState=0 mLastBroadcastState=0\n  mNightMode=1 mNightModeLocked=false mCarModeEnabled=false mComputedNightMode=false mCarModeEnableFlags=0 mEnableCarDockLaunch=true\n  mCurUiMode=0x11 mUiModeLocked=false mSetUiMode=0x11\n  mHoldingConfiguration=false mSystemReady=true\n  mTwilightService.getLastTwilightState()=null\n"
+}

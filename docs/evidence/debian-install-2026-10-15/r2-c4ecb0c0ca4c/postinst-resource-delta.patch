@@ -1,0 +1,12 @@
+--- verified-JDK21-template.postinst
++++ postinst-resource
+@@ -22,6 +22,9 @@
+ 
+ case "$1" in
+     configure)
++        if [ ! -d /usr/share/desktop-directories ]; then
++            install -d -m0755 /usr/share/desktop-directories
++        fi
+ DESKTOP_COMMANDS_INSTALL
+ LAUNCHER_AS_SERVICE_COMMANDS_INSTALL
+     ;;

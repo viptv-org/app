@@ -56,6 +56,10 @@ internal fun DesktopSignIn(
                     Text("Sign in to VIPTV", color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(9.dp))
                     Text("Pick whichever is easiest. They all reach the same account.", color = Palette.secondary, fontSize = 14.sp)
+                    error?.let {
+                        Spacer(Modifier.height(12.dp))
+                        Text(it, color = Palette.danger, fontSize = 14.sp, lineHeight = 20.sp)
+                    }
                     Spacer(Modifier.height(16.dp))
                     SignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
                     SignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }

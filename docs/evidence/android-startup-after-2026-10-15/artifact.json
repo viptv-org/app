@@ -1,0 +1,15 @@
+{
+  "apk_sha256": "0c443d9b90c266138048b19d4e6d5d81d0f667adcb2be5baa8a412252f7a5c3a",
+  "bytes": 76009561,
+  "jni_sha256": {
+    "lib/arm64-v8a/libviptv_core.so": "eab0aae52a8efb6e488c5c9b7848a1d5443528083da9ec4577f3bf85eddc2313",
+    "lib/armeabi-v7a/libviptv_core.so": "0fe60a3b80862f6a7da380b5818480b7e375347128dda24f245c8c169bafea10",
+    "lib/x86_64/libviptv_core.so": "ff6828fe0d0c1a735827b5d399cdbf95be3bdceb8f8c23b7e20ea37d19f94fdf"
+  },
+  "build": "optimized minified qa; existing final engines packaged; Gradle workers2; not a user install candidate",
+  "agp_stripped_jni_sha256": {
+    "arm64-v8a": "eab0aae52a8efb6e488c5c9b7848a1d5443528083da9ec4577f3bf85eddc2313",
+    "armeabi-v7a": "0fe60a3b80862f6a7da380b5818480b7e375347128dda24f245c8c169bafea10",
+    "x86_64": "ff6828fe0d0c1a735827b5d399cdbf95be3bdceb8f8c23b7e20ea37d19f94fdf"
+  }
+}

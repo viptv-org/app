@@ -1,0 +1,79 @@
+--------- beginning of main
+--------- beginning of system
+I/VIPTV_PLAYBACK_QA( 6505): sidecar_active=false sidecar_cues=0 sidecar_position_ms=0
+I/VIPTV_PLAYBACK_QA( 6505): opening_position_ms=8000 opening_timeline_offset_ms=0 opening_live=false
+I/VIPTV_PLAYBACK_QA( 6505): ffmpeg_audio_available=true ffmpeg_version=Lavc60.3.100
+I/VIPTV_PLAYBACK_QA( 6505): status=Opening
+I/VIPTV_PLAYBACK_QA( 6505): timeline_default_ms=0 timeline_position_ms=8000 timeline_offset_ms=0 timeline_placeholder=true timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 6505): status=Opening
+I/VIPTV_PLAYBACK_QA( 6505): status=Buffering
+I/VIPTV_PLAYBACK_QA( 6505): timeline_default_ms=0 timeline_position_ms=8000 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=8000 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): presentation=NativeRendererPresented exact=false
+I/VIPTV_PLAYBACK_QA( 6505): status=Playing
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=8000 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=8244 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=8430 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=8618 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=8824 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9018 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9225 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9420 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9625 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 6505): engine=Media3 rendered=27 dropped=0 fps=13.177159590043924 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 6505): timeline_default_ms=0 timeline_position_ms=9786 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9827 duration_ms=22000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10021 duration_ms=22000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10220 duration_ms=22000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10424 duration_ms=22000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10621 duration_ms=22000
+I/VIPTV_PLAYBACK_QA( 6505): status=Paused
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10797 duration_ms=22000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10797 duration_ms=22000
+I/VIPTV_PLAYBACK_QA( 6505): engine=Media3 rendered=43 dropped=0 fps=8.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 6505): timeline_default_ms=0 timeline_position_ms=10797 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10797 duration_ms=24000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10797 duration_ms=24000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10797 duration_ms=24000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=10797 duration_ms=24000
+I/VIPTV_PLAYBACK_QA( 6505): discontinuity_reason=1 discontinuity_old_ms=10797 discontinuity_new_ms=9797
+I/VIPTV_PLAYBACK_QA( 6505): status=Buffering
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=24000
+I/VIPTV_PLAYBACK_QA( 6505): status=Paused
+I/VIPTV_PLAYBACK_QA( 6505): engine=Media3 rendered=44 dropped=0 fps=0.5 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 6505): timeline_default_ms=0 timeline_position_ms=5797 timeline_offset_ms=4000 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=26000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=26000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=26000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=26000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=26000
+I/VIPTV_PLAYBACK_QA( 6505): engine=Media3 rendered=44 dropped=0 fps=0.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=28000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=28000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=28000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=28000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=28000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=28000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=28000
+I/VIPTV_PLAYBACK_QA( 6505): engine=Media3 rendered=44 dropped=0 fps=0.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_PLAYBACK_QA( 6505): position_ms=9797 duration_ms=30000
+--------- beginning of crash
+E/AndroidRuntime( 6505): FATAL EXCEPTION: main
+E/AndroidRuntime( 6505): Process: org.viptv.experiment, PID: 6505
+E/AndroidRuntime( 6505): java.lang.RuntimeException: Unable to start activity ComponentInfo{org.viptv.experiment/org.viptv.experiment.NativePlaybackQaActivity}: java.lang.IllegalArgumentException: Required value was null.
+E/AndroidRuntime( 6505): 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2817)
+E/AndroidRuntime( 6505): 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2892)
+E/AndroidRuntime( 6505): 	at android.app.ActivityThread.-wrap11(Unknown Source:0)
+E/AndroidRuntime( 6505): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1593)
+E/AndroidRuntime( 6505): 	at android.os.Handler.dispatchMessage(Handler.java:105)
+E/AndroidRuntime( 6505): 	at android.os.Looper.loop(Looper.java:164)
+E/AndroidRuntime( 6505): 	at android.app.ActivityThread.main(ActivityThread.java:6541)
+E/AndroidRuntime( 6505): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime( 6505): 	at com.android.internal.os.Zygote$MethodAndArgsCaller.run(Zygote.java:240)
+E/AndroidRuntime( 6505): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:767)
+E/AndroidRuntime( 6505): Caused by: java.lang.IllegalArgumentException: Required value was null.
+E/AndroidRuntime( 6505): 	at org.viptv.experiment.NativePlaybackQaActivity.onCreate(NativePlaybackQaActivity.kt:20)
+E/AndroidRuntime( 6505): 	at android.app.Activity.performCreate(Activity.java:6975)
+E/AndroidRuntime( 6505): 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1213)
+E/AndroidRuntime( 6505): 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2770)
+E/AndroidRuntime( 6505): 	... 9 more

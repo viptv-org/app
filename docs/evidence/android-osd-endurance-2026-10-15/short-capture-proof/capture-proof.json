@@ -1,0 +1,46 @@
+{
+  "request": {
+    "id": "final-105014",
+    "expected_text": "10:54",
+    "position_ms": 654189,
+    "duration_ms": 3300000,
+    "renderer_title_ms": 654189,
+    "progress_ms": 654189,
+    "player_id": 28569062,
+    "app_pid": 2513,
+    "paused": true,
+    "semantics": {
+      "texts": [
+        "Lifecycle fixture",
+        "Ends at 4:54 PM",
+        "Audio & subtitles",
+        "Source",
+        "10:54",
+        "\u221244:05"
+      ],
+      "sliders": [
+        {
+          "current": 0.19823908805847168,
+          "min": 0,
+          "max": 1,
+          "steps": 0,
+          "bounds": "Rect.fromLTRB(27.0, 461.0, 933.0, 483.0)"
+        }
+      ]
+    }
+  },
+  "ack": {
+    "id": "final-105014",
+    "position_ms": 654189,
+    "player_id": 28569062,
+    "slider_fraction": 0.19823908805847168,
+    "text_verified": true,
+    "slider_verified": true,
+    "accessibility_verified": true,
+    "screenshot_written": true
+  },
+  "lease_closes_before_ack": 0,
+  "screenshot_sha256": "89b84abbc349a67df403c8b9ab8adf76cf0926eecea6374a1c8d06b643d6cee6",
+  "xml_sha256": "973623b15cd45f0ae261517a5d144400bbe0a2e26521e9266bff1405965c251d",
+  "original_app_pid_still_present": true
+}

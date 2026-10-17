@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="RequiredAudioSelectionTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:22.058Z" hostname="vynxcos" time="0.001">
+  <properties/>
+  <testcase name="absentRequirementRemainsCompatibleButInvalidRequirementCannotBecomeDefaultAudio[desktop]" classname="org.viptv.app.RequiredAudioSelectionTest" time="0.0"/>
+  <testcase name="resolvesAudioOrdinalsToPlayerIdsAndPreservesManualSelection[desktop]" classname="org.viptv.app.RequiredAudioSelectionTest" time="0.001"/>
+  <testcase name="unsupportedAndAbsentRequiredTracksNeverShiftToAnotherAudioStream[desktop]" classname="org.viptv.app.RequiredAudioSelectionTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

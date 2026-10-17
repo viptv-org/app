@@ -1,0 +1,35 @@
+{
+  "capture_sources": 703,
+  "distinct_reported_names": 67,
+  "quality_mismatches_found": 0,
+  "quality_unknown_reviewed": 62,
+  "name_vs_filename_conflicts_reviewed": 18,
+  "golden_real_cases": 24,
+  "pre_fix_findings": [
+    {
+      "capture_index": 595,
+      "field": "audio_languages",
+      "observed": [
+        "en",
+        "ru"
+      ],
+      "expected": [
+        "en",
+        "ru",
+        "uk"
+      ],
+      "reason": "Provider Ukrainian flag omitted despite knownuk language support.",
+      "observed_scope": "24realrows withUAflag;11missinguk beforefix."
+    },
+    {
+      "capture_index": 512,
+      "field": "audio_languages",
+      "observed": [
+        "en"
+      ],
+      "expected": [],
+      "reason": "EngSubbeD isEnglish subtitles only; noEnglishaudio evidence."
+    }
+  ],
+  "limitations": "Release labels report hints only; no media probe was performed in this audit. Unsupported/missing resolution labels remain unknown. Multiple country flags can be ambiguous audio evidence; no decoder facts inferred."
+}

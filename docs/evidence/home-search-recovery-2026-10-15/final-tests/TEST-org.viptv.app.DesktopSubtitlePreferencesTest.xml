@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="DesktopSubtitlePreferencesTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:01.914Z" hostname="vynxcos" time="0.003">
+  <properties/>
+  <testcase name="defaultsPreserveAuthoredStylesAndExplicitOverridesCarryArgbAlpha[desktop]" classname="org.viptv.app.DesktopSubtitlePreferencesTest" time="0.003"/>
+  <testcase name="invalidValuesKeepAuthoredStylesAndScaleRemainsWithinSupportedRange[desktop]" classname="org.viptv.app.DesktopSubtitlePreferencesTest" time="0.0"/>
+  <testcase name="subtitlesOffRetainsStylingWithoutAutomaticSelection[desktop]" classname="org.viptv.app.DesktopSubtitlePreferencesTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

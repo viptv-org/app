@@ -1,0 +1,144 @@
+{
+  "recorded_at_utc": "2026-10-15T10:26:56.288183+00:00",
+  "status": "desktop release native matches current source/bindings; Android rebuild pending",
+  "base_core_revision": "47b85b5386617f455ade8b294a7a844b54f537c0",
+  "uncommitted_overlay": true,
+  "source_files": {
+    "Cargo.lock": "ff9a707de14da56d01a4d35d5058dd06b5c31360dbb0ed9c6ddf08e723eb104e",
+    "crates/viptv-core/src/local_engine.rs": "1ddc1b21ec4f6ebc4479de5bccdfda3aa0affc2390f8cd59367b89a72b4962ef",
+    "crates/viptv-core/src/local_engine/addons/tests.rs": "2213b820f993eecb6c26d1b7eacf8f05c609d593365395fb0e5c587c39b9d53a",
+    "crates/viptv-core/src/local_engine/browse.rs": "8d35224b402602e7b65dafb3db00d266e40ccbe23b4505b605b1a12359de7a30",
+    "crates/viptv-core/src/local_engine/detail.rs": "6832016042a21f3442eb001092cca39ccba9afad8b5e2bbc46b1361852cb2948",
+    "crates/viptv-core/src/local_engine/detail_cache.rs": "27a5a95cda9af4ab3d90d69b5c63d3934a6e665b724e615af54c110f38082670",
+    "crates/viptv-core/src/local_engine/live.rs": "eb02d95aa6af08f91df3ca69007748f43b3d396f76290d66a0f0ffcac61fa1c5",
+    "crates/viptv-core/src/local_engine/live/directory.rs": "50dbccca573cefca871b2eb8420bf3b1b719aeb79f207c3246a08ae544fa7dbe",
+    "crates/viptv-core/src/local_engine/live/favorites.rs": "88f61269560018b01ee6efbba4f3ef37d39c102c8bf97372e646321737dd4465",
+    "crates/viptv-core/src/local_engine/live/favorites_tests.rs": "41989803ca655ea85f1d5749b1c693a7174bc5ec7802c7f93f4751b2eb7d1798",
+    "crates/viptv-core/src/local_engine/profiles.rs": "97d0aafdd60ca5e2111e9e6bb078804d37d9c108dc6aebf5fca6559f44378cb0",
+    "crates/viptv-core/src/local_engine/profiles/tests.rs": "0b501c31901121e7995be181202a95e35f6aca19fd8f2ddd8fdd1df664983422",
+    "crates/viptv-core/src/local_engine/search.rs": "f656ce435d1ca1198e38461ae2dd297caaa6622a5c239f9698fdab7baf5c20c5",
+    "crates/viptv-core/src/local_engine/source_integrations.rs": "d41ef74d2284cc2f8b171bb60f37ceccf6eff62af4faadca44bd69fb3ee2c855",
+    "crates/viptv-core/src/local_engine/source_integrations/lifecycle_tests.rs": "6bfaaf972083cb3841004904d3410415a90007848168099348970ed338f67d0e",
+    "crates/viptv-core/src/local_engine/sources.rs": "9dda19931b19b2f75968de7708c7d25124718bff9b19b857e2170ae41761619b",
+    "crates/viptv-core/src/local_engine/sources/tests.rs": "b6cb935060f62241a1d45daf44dfa9e269269a5fc9327c4452f1b3ea313c175e",
+    "crates/viptv-core/src/local_engine/subtitles.rs": "910fccab25c54d3abb45d580cddf7df273b0d732488373bbdc3c970a22363414",
+    "crates/viptv-engine/Cargo.toml": "e0132b9a189823ab827e2984561162d62a3f804884a6bd0787395c063b70334c",
+    "crates/viptv-engine/src/registry.rs": "b564ffe1280c3caf75771e9b688aa177183cc392dbe2e32340a0b55d0f3721e9",
+    "crates/viptv-engine/src/store.rs": "59fbb7f8ca3353ea6cdbf9947ff232b9985ea120afd3324959b3130f067beceb",
+    "crates/viptv-engine/src/store/connections.rs": "88d8fd4b69250f446e84b93bf4323debf57924d72788afb2d8ea891473711c21",
+    "crates/viptv-engine/src/store/live_favorites.rs": "467cc479c14742ceb9d93999b84d231af30195e64aa3081a4b89422db3734d39",
+    "crates/viptv-engine/src/store/profiles.rs": "ff3ccfa85dc6bd9df51f8e10177c29b1c546f5a00ee70bc969496a6c6799c80b",
+    "crates/viptv-engine/src/stremio.rs": "ded9a5d3cafaf420366104bb7c56a4ceef72a3138f07695493fb7e199e6e5fc0",
+    "crates/viptv-engine/src/stremio/source_metadata.rs": "18ba56b857b90945a1840ed71a2697bf88ad84cbe08e274ab086593d05f193ce",
+    "crates/viptv-engine/src/stremio/streams.rs": "8fa67a21f4dd7adbe2abd70310ba6ddf81cceeeeb4d1db127d8b9f43b8ff12d3",
+    "crates/viptv-engine/tests/search_registry.rs": "8a68374ba81e289af9f10da8b3851f0880bb0945f0581af8ec95b4fdb4c02842",
+    "crates/viptv-engine/tests/source_metadata.rs": "7ac0e0c7ff74bda8a4fa738b2dd571d1ecef9575cb2ec301a3edb9b002932d8c",
+    "crates/viptv-engine/tests/streams.rs": "def1b553a31f0703312285ef0a1721c331b71e4b797778f9023073f726bd7480",
+    "docs/native-source-discovery.md": "2fcbe89ce52b0a6438e0e8677b56b4ea3366bdce39e21dd63b5e69da0804e616",
+    "docs/source-metadata.md": "d5d5a2a711013c58c46343656171d5758efbb0517aa23747aa024188c9200dcd",
+    "generated/native-kotlin/uniffi/viptv_core/viptv_core.kt": "641b6d66b9baa8a67c1ce8169210d200a0a1e223660583543dde5f25ce808752",
+    "tests/source-metadata-captured.json": "061ee049fc65d056f687f326f6b21576cf79faa0a22febb340ad1e3355c31982",
+    "tests/source-metadata-vectors.json": "30dba1ff5b87f6cf9ebef697f8a1324f80bf233cb34d13453a85e46d265f9618"
+  },
+  "generated_api": [
+    "project_sources_partial(operation,responses,finish)",
+    "cancel_source_discovery(profile,operation)",
+    "detail_page_for_provider(profile,kind,id,provider,offset,limit)",
+    "live_favorites(profile)",
+    "set_live_favorite(profile,channel,saved)"
+  ],
+  "existing_native_api_checksums_unchanged": true,
+  "existing_api_checksum_count": 110,
+  "native_source_snapshot_matches_canonical": true,
+  "backend_engine_store_snapshot_matches_canonical": true,
+  "backend_pinned_core_unchanged": true,
+  "build_jobs": 1,
+  "artifacts": {
+    "linux-x86-64": {
+      "path": "composeApp/build/nativeResources/linux-x86-64/libviptv_core.so",
+      "sha256": "cc74fb5a01365ad105a59ed8f1ca165ddc44b1958988f384af982af56451a8b7",
+      "bytes": 34462168
+    }
+  },
+  "validation": {
+    "core_lib_passed": 55,
+    "core_lib_ignored": 3,
+    "core_lib_execution_seconds": 0.93,
+    "engine_lib_passed": 5,
+    "engine_lib_execution_seconds": 0.09,
+    "kotlin_tests": {
+      "LiveControllerTest": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0
+      },
+      "LocalProfileDeletionTest": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0
+      },
+      "NativeProgressiveSourcesTest": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0
+      },
+      "NativeMetadataOriginTest": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0
+      }
+    },
+    "cached_current_parser_corpus": {
+      "cases": 942,
+      "synthetic": 802,
+      "captured": 140,
+      "elapsed_ms": 537,
+      "network_requests": 0,
+      "execution": "reused compiled parser corpus binary; parser source unchanged"
+    },
+    "shared_desktop_suite_passed": 174,
+    "isolated_production_wasm": "passed; root shared gate3m17s",
+    "feed_tv_followup": {
+      "LiveControllerTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 0.191
+      },
+      "LiveUiTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 1.758
+      },
+      "LocalProfileDeletionTest": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 0.227
+      }
+    },
+    "tv_scene_visual_review": "passed: favorite action above filters, filters above guide; fixture has no guide artwork/programs",
+    "subsequent_origin_phase": "canonical DTO/Store work is in progress and not yet adopted into this qualified Live/native snapshot"
+  },
+  "adapter_files": {
+    "composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalConnection.kt": "e353ac56a7c6ea0bb25a6897c4896c28b6e3a4e16ad36aaaf0950bfc163b0355",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/connection/LocalConnection.kt": "82034603c93c11b70d436ae6d47066c4b2a4808d458b4086f9eaa6d215381739",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/connection/LiveFavorites.kt": "3ebaa7b1556ea931b386098cbe907c966191cfdc1798ac0c9781ce9491f65aea",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLive.kt": "9e0f514213f39f2eda5708a39c7b1f6963e93af6e1bb7adbf0e2335a08b9e3f7",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLiveFavorites.kt": "7d3e861eaf6a3d62ce0b16debd6453c1a8eed07bf5b290e8f172851a08b8c25c",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerProfiles.kt": "1d5e05751b29e6a3fa7be16afd613377f88737436a31a040c8cf007a16dfc041",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/LiveControllerTest.kt": "ff82e5819d8535890570cdc7342d8b9f21fccdf117b13c33fe533ae5d9931daf",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/LocalProfileDeletionTest.kt": "34af4f5e001e39aeef40e1b962294c7894e42ac25d80841f1d92e6faa4d8b252"
+  },
+  "device_actions": false,
+  "live_services_changed": false,
+  "wasm_rebuilt": false,
+  "android_artifacts_current": false,
+  "desktop_release_build_seconds": 95,
+  "tv_scene_capture": {
+    "path": "docs/evidence/live-favorites-2026-10-15/tv-live-favorites.png",
+    "sha256": "801c14ec4a9cf2552879c9d7362a0effdbcfe61d67639cd2e681b32aefc7c6af"
+  },
+  "qualified_at_utc": "2026-10-15T10:48:36.191507+00:00"
+}

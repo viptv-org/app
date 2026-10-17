@@ -1,0 +1,7 @@
+{
+  "avd": "viptv-16k-isolated",
+  "serial": "emulator-5586",
+  "stopped": true,
+  "reply": "OK: killing emulator, bye bye\r\nOK\r\n",
+  "remaining_adb_inventory": "List of devices attached\nemulator-5554\tdevice\n\n"
+}

@@ -1,0 +1,7 @@
+Failure retains same URL/error; three rapid taps produced exactly one manifest request
+
+Traceback (most recent call last):
+  File "/tmp/viptv-phone-addons-7zpqi9on/native-4b9cd905d844/final_flow.py", line 23, in <module>
+    labels=qa.labels();install=next(n for n in labels if n['text']=='Install');assert install['enabled']=='false';assert url not in(fields[0].get('text')or'');assert not any(n['text']==url for n in labels)
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

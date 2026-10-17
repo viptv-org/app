@@ -1,0 +1,24 @@
+Picked up JAVA_TOOL_OPTIONS: -Djava.io.tmpdir=/tmp/viptv-desktop-cold-restore-vtt-2026-10-15/tmp -Duser.home=/tmp/viptv-desktop-cold-restore-vtt-2026-10-15/home
+[SKIKO] warn: Fallback to next API
+org.jetbrains.skiko.RenderException: Cannot create Linux GL context
+VIPTV_DESKTOP_QA: state=Idle
+VIPTV_DESKTOP_QA: state=Opening
+VIPTV_DESKTOP_QA: state=Playing
+VIPTV_DESKTOP_QA: state=Playing
+VIPTV_DESKTOP_QA: phase=playing
+VIPTV_DESKTOP_QA: state=Paused
+VIPTV_DESKTOP_QA: path=ComposeCanvas decoded=117 submitted=47 drawn=47 decode_fps=25.465230166503428 av_drift_ms=11 rebuffers=0 audio_underruns=9 hw=software seekable=true
+VIPTV_DESKTOP_QA: phase=paused
+VIPTV_DESKTOP_QA: state=Playing
+VIPTV_DESKTOP_QA: state=Buffering
+VIPTV_DESKTOP_QA: state=Paused
+VIPTV_DESKTOP_QA: state=Paused
+VIPTV_DESKTOP_QA: phase=caption-off
+VIPTV_DESKTOP_QA: path=ComposeCanvas decoded=381 submitted=63 drawn=63 decode_fps=252.2343594836147 av_drift_ms=8 rebuffers=0 audio_underruns=9 hw=software seekable=true
+VIPTV_DESKTOP_QA: state=Paused
+VIPTV_DESKTOP_QA: phase=caption-on
+VIPTV_DESKTOP_QA: state=Paused
+VIPTV_DESKTOP_QA: phase=caption-sized
+VIPTV_DESKTOP_QA: path=ComposeCanvas decoded=381 submitted=63 drawn=63 decode_fps=0.0 av_drift_ms=8 rebuffers=0 audio_underruns=9 hw=software seekable=true
+VIPTV_DESKTOP_QA: state=Paused
+VIPTV_DESKTOP_QA: phase=complete

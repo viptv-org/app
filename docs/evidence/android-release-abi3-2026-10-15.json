@@ -1,0 +1,367 @@
+{
+  "recorded_at_utc": "2026-10-15T13:54:24.630979+00:00",
+  "status": "immutable local release-variant candidate signed with existing Android Debug certificate; not a distribution release, not installed/deployed",
+  "apk": "artifacts/android-release-2026-10-15/abi3-3b047c819950/viptv-android-release-local.apk",
+  "sha256": "3b047c819950adf15ac33563033da4c9147ca734fa5387b47f567a971fae56a6",
+  "bytes": 75396763,
+  "build": {
+    "variant": "release",
+    "minify": true,
+    "shrink_resources": true,
+    "gradle_workers": 2,
+    "command": "Root combined gate:236 desktop tests + isolated production Wasm + normal assembleRelease; frozen buildAndroidEngine excluded; /tmp/viptv-profile-final-gate.log",
+    "native_build_skipped": "four existing final source-provenance-verified native packaging inputs; Android3ABIs byte/section verified below",
+    "duration_seconds": 158,
+    "success": true
+  },
+  "documentation": {
+    "context7": "Resolved /websites/developer_android_build then fetched signing/build variants and ABI docs (3commands total); direct official AGP9.1 Ndk reference supplied precise abiFilters semantics absent from returned snippets.",
+    "sources": [
+      "https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/Ndk",
+      "https://developer.android.com/ndk/guides/abis",
+      "https://developer.android.com/build/building-cmdline"
+    ]
+  },
+  "signing": {
+    "verified": true,
+    "scheme_v2": true,
+    "certificate_subject": "C=US, O=Android, CN=Android Debug",
+    "certificate_sha256": "e429b1c898d11630a75117d119672e3d8d82e9dafb4240a48006cb0efb138777",
+    "configuration": "preexisting release.signingConfig=signingConfigs.debug; no distribution keystore was requested/accessed"
+  },
+  "zipalign_16k_apk_check": true,
+  "manifest": {
+    "application_id": "org.viptv.experiment",
+    "version_code": "1",
+    "version_name": "0.1.0-experiment",
+    "min_sdk": "26",
+    "target_sdk": "36",
+    "activities": [
+      "org.viptv.experiment.MainActivity"
+    ],
+    "debuggable": false,
+    "qa_network_security_config": false,
+    "profileable_shell": false
+  },
+  "supported_abis": [
+    "armeabi-v7a",
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "native_library_inventory": {
+    "arm64-v8a": [
+      "libandroidx.graphics.path.so",
+      "libffmpegJNI.so",
+      "libjnidispatch.so",
+      "libviptv_core.so"
+    ],
+    "armeabi-v7a": [
+      "libandroidx.graphics.path.so",
+      "libffmpegJNI.so",
+      "libjnidispatch.so",
+      "libviptv_core.so"
+    ],
+    "x86_64": [
+      "libandroidx.graphics.path.so",
+      "libffmpegJNI.so",
+      "libjnidispatch.so",
+      "libviptv_core.so"
+    ]
+  },
+  "engine_libraries": {
+    "armeabi-v7a": {
+      "unstripped_sha256": "31cb5443fd1e6675a6ad15169bccb37abcece5fb78307531eef07dfd6c7aea43",
+      "packaged_sha256": "3ded5c0e07d7a9c7d33a1ed5670cd7eb1bb71f5e3a02669fabebf745624a162a",
+      "all_allocated_sections_match": true,
+      "allocated_section_count": 21,
+      "machine": 40,
+      "loadable_section_fingerprint": "1021992bb1d038ca4279325c24b2989b0c63adc2682286c6e51a8163b7579ac3",
+      "current_checksum_exports_verified": 121
+    },
+    "arm64-v8a": {
+      "unstripped_sha256": "891148f0df0ad14df83c3b0d1cb55a25cadfb76c9fec8053eabfec29a116b1a1",
+      "packaged_sha256": "5bdf226abfc95104720be80a25a09cbb68ee1c0a98f17d04756ae479a58ea39b",
+      "all_allocated_sections_match": true,
+      "allocated_section_count": 22,
+      "machine": 183,
+      "loadable_section_fingerprint": "48749ed492e67956ac22856bc634b38bebf816be7d9bb76fab85d806b66630e1",
+      "current_checksum_exports_verified": 121
+    },
+    "x86_64": {
+      "unstripped_sha256": "831733850c748d83ffbbbb221859a87af7074ce23d34762b85e048506d31ae7c",
+      "packaged_sha256": "753c5192639dd10ab2ee35078d45b9c65b2e2e1f90510773cf9a51a9fe274195",
+      "all_allocated_sections_match": true,
+      "allocated_section_count": 22,
+      "machine": 62,
+      "loadable_section_fingerprint": "ff73f90f3a13f28accef8e42cbba8078bc10f342fbd4bdce7f8080b5e9a09dc3",
+      "current_checksum_exports_verified": 121
+    }
+  },
+  "ffmpeg_libraries": {
+    "armeabi-v7a": {
+      "sha256": "c6dc323254609053f5f851a5b8a927bb31670ebeacbc87a185babb76779ada77",
+      "pinned_source_packaged_match": true
+    },
+    "arm64-v8a": {
+      "sha256": "66031c23b95da2c8118c6a1586490b68e3c89644b0e169d91b490157cb04fda8",
+      "pinned_source_packaged_match": true
+    },
+    "x86_64": {
+      "sha256": "6189ced41aefa4434b33f3fa2f10eec756a53208ff5b7150ee0a2acda8e2821d",
+      "pinned_source_packaged_match": true
+    }
+  },
+  "native_elf_load_alignment": {
+    "lib/arm64-v8a/libandroidx.graphics.path.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 23360,
+          "memory_size": 1216,
+          "end_modulo_16k": 8192
+        }
+      ]
+    },
+    "lib/arm64-v8a/libffmpegJNI.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 1631792,
+          "memory_size": 129488,
+          "end_modulo_16k": 8192
+        }
+      ]
+    },
+    "lib/arm64-v8a/libjnidispatch.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 179096,
+          "memory_size": 1128,
+          "end_modulo_16k": 0
+        }
+      ]
+    },
+    "lib/arm64-v8a/libviptv_core.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 21841056,
+          "memory_size": 785248,
+          "end_modulo_16k": 0
+        }
+      ]
+    },
+    "lib/armeabi-v7a/libandroidx.graphics.path.so": {
+      "bits": 32,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 21584,
+          "memory_size": 2992,
+          "end_modulo_16k": 8192
+        }
+      ]
+    },
+    "lib/armeabi-v7a/libffmpegJNI.so": {
+      "bits": 32,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 1527040,
+          "memory_size": 94976,
+          "end_modulo_16k": 0
+        }
+      ]
+    },
+    "lib/armeabi-v7a/libjnidispatch.so": {
+      "bits": 32,
+      "pt_load_alignments": [
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 130456,
+          "memory_size": 616,
+          "end_modulo_16k": 0
+        }
+      ]
+    },
+    "lib/armeabi-v7a/libviptv_core.so": {
+      "bits": 32,
+      "pt_load_alignments": [
+        4096,
+        4096,
+        4096,
+        4096
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 15328512,
+          "memory_size": 465664,
+          "end_modulo_16k": 0
+        }
+      ]
+    },
+    "lib/x86_64/libandroidx.graphics.path.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 23488,
+          "memory_size": 1088,
+          "end_modulo_16k": 8192
+        }
+      ]
+    },
+    "lib/x86_64/libffmpegJNI.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 1722336,
+          "memory_size": 124960,
+          "end_modulo_16k": 12288
+        }
+      ]
+    },
+    "lib/x86_64/libjnidispatch.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 129792,
+          "memory_size": 1280,
+          "end_modulo_16k": 0
+        }
+      ]
+    },
+    "lib/x86_64/libviptv_core.so": {
+      "bits": 64,
+      "pt_load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "gnu_relro": [
+        {
+          "virtual_address": 24222464,
+          "memory_size": 816384,
+          "end_modulo_16k": 4096
+        }
+      ]
+    }
+  },
+  "existing_native_api_checksums": {
+    "base_unchanged": 110,
+    "additive": 11,
+    "current_total": 121,
+    "compiled_desktop_matched": 121
+  },
+  "source_hashes": {
+    "androidApp/build.gradle.kts": "a86d18277ddd6fb91db67554e153dea8b24dd7778290c15718b3b964229b4cad",
+    "androidApp/src/main/kotlin/org/viptv/experiment/MainActivity.kt": "1d758c30b7b58311571a6a8e2e58ecd3622cf7bd65e5d70551f4d355a6750b60",
+    "native/core/generated/native-kotlin/uniffi/viptv_core/viptv_core.kt": "2844268eaadc802e27d73f8a11e36f9a1810296b427aacad0f6ca42073f829d6",
+    "composeApp/src/commonMain/kotlin/org/viptv/engine/wire/EngineWire.kt": "b2993d7a79c29c4d4c19dbe6b3dfc8828a1b67957202d01dee9644a42903a2b7",
+    "composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalDetails.kt": "e5f0bcb6e89e8e9d5df012453d9d46bf976d447a42fa5f98de692c72f870af01",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerCatalog.kt": "0d7b47a60b5a9c66f47fea51dd46f7d1e57b6efd9e2c0cca7c9c4b9032472691",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerCalendar.kt": "b970424e51c0f324e8440dc990c2eeb6173090c55cf0ec1ac4861f89f6bec686",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerProfiles.kt": "268d704fd74bbe139ea3b89ea09343d8dc46974dede5c770da497ddba14b8a1b"
+  },
+  "physical_device_actions": false,
+  "installed": false,
+  "deployed": false,
+  "earlier_candidates_overwritten": false,
+  "adopted_source_files_verified": 66,
+  "features_included": [
+    "public IMDb split-capability metadata delegation",
+    "typed full-document off-page episode proof",
+    "on-page delegated episode contradiction rejection",
+    "profile administration common/controller fixes",
+    "calendar completion state",
+    "MainActivity pause-only resume"
+  ],
+  "previous_immutable_candidate_sha256": "755cb5bc1722a241878542d9a7f02f6bd7635587a33570f33de6229b207660f3",
+  "debug_qa_activity_names_absent_from_dex": [
+    "NativeQaActivity",
+    "NativeSourceQaActivity",
+    "Media3PlaybackQaActivity",
+    "NativePlaybackQaActivity",
+    "SidecarPlaybackQaActivity",
+    "LifecycleQaActivity",
+    "PerformanceQaActivity",
+    "BrowserLaunchQaActivity",
+    "BrowserLaunchReceiverQaActivity",
+    "TranslucentPauseQaActivity"
+  ],
+  "partial_extra_abi_directories": [],
+  "elf_compatibility_scope": {
+    "all_64bit_pt_load_alignment_16k": true,
+    "armv7_rust_pt_load_alignment_bytes": 4096,
+    "runtime_16k_qualified": false,
+    "limitation": "No 16 KiB runtime qualification performed. Static checks find no rounded-RELRO overlap with writable allocated data or PF_W LOAD memory across all eight 64-bit libraries; nonaligned logical-end modulo alone is not a demonstrated defect.",
+    "reference": "https://developer.android.com/guide/practices/page-sizes#check-relro",
+    "relro_layout_collision_found": false,
+    "relro_libraries_checked": 8,
+    "relro_layout_evidence": "android-release-abi3-relro-layout-2026-10-15.json"
+  },
+  "media3_integrity_check": "PASS tools/check_media3_audio.py: pinnedsource/JNI hashes,3ABIs,16KiB alignment,callback preserved,licenses present",
+  "final_full_desktop_tests": {
+    "tests": 236,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 83,
+    "evidence": "Current JUnit XML checked after final combined gate; root log /tmp/viptv-profile-final-gate.log"
+  },
+  "sibling_build_gate": "Isolated production Wasm including browser HLS startPosition passed in this same root gate; it is a separate artifact from Android runtime.",
+  "artifact_archive_immutable": true,
+  "earlier_immutable_candidates": {
+    "755cb5bc1722a241878542d9a7f02f6bd7635587a33570f33de6229b207660f3": "preserved",
+    "542c5e73a767e9613a3db9e077e30b067b47a75f1e32b5ff054e92bbf64c7310": "preserved"
+  }
+}

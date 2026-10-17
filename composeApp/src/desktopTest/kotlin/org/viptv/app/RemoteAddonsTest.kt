@@ -21,7 +21,7 @@ class RemoteAddonsTest {
         val mutations = mutableListOf<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("https://watch.example", request.headers[HttpHeaders.Origin])
-            assertEquals("/api/v3/profiles/12/integrations", request.url.encodedPath)
+            assertEquals("/api/profiles/12/integrations", request.url.encodedPath)
             if (request.method == HttpMethod.Put) mutations += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             else assertEquals(HttpMethod.Get, request.method)
             respond(configuration, headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -42,11 +42,11 @@ class RemoteAddonsTest {
         val client = HttpClient(MockEngine { request ->
             val result = when {
                 request.url.encodedPath.endsWith("/integrations") -> { if (request.method == HttpMethod.Put) writes += "assign"; configuration }
-                request.url.encodedPath == "/api/v2/addons" && request.method == HttpMethod.Post -> {
+                request.url.encodedPath == "/api/addons" && request.method == HttpMethod.Post -> {
                     assertEquals("https://fixture.example/manifest.json", Json.parseToJsonElement((request.body as TextContent).text).jsonObject.getValue("manifest_url").jsonPrimitive.content)
                     writes += "install"; """{"id":2}"""
                 }
-                request.url.encodedPath == "/api/v2/addons/2" -> { assertEquals(HttpMethod.Delete, request.method); writes += "remove"; """{"ok":true}""" }
+                request.url.encodedPath == "/api/addons/2" -> { assertEquals(HttpMethod.Delete, request.method); writes += "remove"; """{"ok":true}""" }
                 else -> {
                     assertEquals(HttpMethod.Get, request.method)
                     pageCount++

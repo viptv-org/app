@@ -1,0 +1,26 @@
+{
+  "install-gate": {
+    "exit_code": 0,
+    "seconds": 0.083
+  },
+  "installed-menu": {
+    "exit_code": 0,
+    "seconds": 0.084
+  },
+  "native-smoke": {
+    "exit_code": 0,
+    "seconds": 0.452
+  },
+  "qa-dependencies": {
+    "exit_code": 0,
+    "seconds": 27.185
+  },
+  "vault-main-probe": {
+    "exit_code": 0,
+    "seconds": 15.454
+  },
+  "installed-file-integrity": {
+    "exit_code": 0,
+    "seconds": 0.338
+  }
+}

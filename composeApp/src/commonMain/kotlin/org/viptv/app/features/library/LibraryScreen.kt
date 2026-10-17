@@ -1,5 +1,6 @@
 package org.viptv.app.features.library
 
+import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,7 +63,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
             } else LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(if (television) 220.dp else 176.dp),
                 state = grid, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(visible.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) {
+                items(visible.distinctBy(::cardLookupKey), key = ::cardLookupKey) {
                     MediaCard(it, if (phone) 112 else 176, portrait = true, showLabels = !phone, open = open)
                 }
             }

@@ -4,8 +4,8 @@ package org.viptv.app.connection
 import kotlinx.serialization.json.*
 import org.viptv.app.features.calendar.CalendarDay
 
-internal actual fun calendarWindow(): CalendarWindow {
-    val value = Json.parseToJsonElement(calendarWindowJson()).jsonObject
+internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
+    val value = Json.parseToJsonElement(calendarWindowJson(offsetDays)).jsonObject
     return CalendarWindow(value.getValue("start").jsonPrimitive.content, value.getValue("end").jsonPrimitive.content,
         value.getValue("days").jsonArray.map { raw -> val d = raw.jsonObject
             CalendarDay(d.getValue("id").jsonPrimitive.content, d.getValue("weekday").jsonPrimitive.content,
@@ -16,14 +16,14 @@ internal actual fun calendarLabel(date: String): CalendarLabel? {
     val value = Json.parseToJsonElement(raw).jsonObject
     return CalendarLabel(value.getValue("day").jsonPrimitive.content, value.getValue("time").jsonPrimitive.content, value.getValue("aired").jsonPrimitive.boolean)
 }
-@JsFun("""() => {
+@JsFun("""(offsetDays) => {
  const now = new Date(), id = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
- const shifted = n => new Date(now.getFullYear(),now.getMonth(),now.getDate()+n);
+ const shifted = n => new Date(now.getFullYear(),now.getMonth(),now.getDate()+offsetDays+n);
  return JSON.stringify({start:id(shifted(-4)),end:id(shifted(4)),days:Array.from({length:7},(_,i) => {
-  const n=i-3,d=shifted(n); return {id:id(d),weekday:d.toLocaleDateString(undefined,{weekday:'short'}),number:String(d.getDate()),label:n===0?'Today':d.toLocaleDateString(undefined,{weekday:'long'}),fullDate:d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})};
+  const n=i-3,d=shifted(n); return {id:id(d),weekday:d.toLocaleDateString(undefined,{weekday:'short'}),number:String(d.getDate()),label:id(d)===id(now)?'Today':d.toLocaleDateString(undefined,{weekday:'long'}),fullDate:d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})};
  })});
 }""")
-private external fun calendarWindowJson(): String
+private external fun calendarWindowJson(offsetDays: Int): String
 @JsFun("""(value) => {
  const d=new Date(value); if(!Number.isFinite(d.getTime())) return 'null';
  const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');

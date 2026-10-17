@@ -9,7 +9,7 @@ data class RemoteAddons(val addons: List<IntegrationConnection>, val enabled: Se
 private data class RemoteConfiguration(val profile: ProfileConfiguration, val connections: List<IntegrationConnection>)
 
 private suspend fun RemoteConnection.addonConfiguration(profile: String): RemoteConfiguration {
-    val response = call("/api/v3/profiles/${profile.encodeURLPathPart()}/integrations").jsonObject
+    val response = call("/api/profiles/${profile.encodeURLPathPart()}/integrations").jsonObject
     return RemoteConfiguration(addonCodec.decodeFromJsonElement(response.getValue("configuration")),
         addonCodec.decodeFromJsonElement(response.getValue("connections")))
 }
@@ -21,7 +21,7 @@ suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
     var cursor: String? = null
     val visited = mutableSetOf<String>()
     do {
-        val page = call("/api/v2/addons?limit=200" + (cursor?.let { "&cursor=${it.encodeURLParameter()}" } ?: "")).jsonObject
+        val page = call("/api/addons?limit=200" + (cursor?.let { "&cursor=${it.encodeURLParameter()}" } ?: "")).jsonObject
         page.getValue("items").jsonArray.forEach { element ->
             val row = element.jsonObject
             val id = "addon:${row.getValue("id").jsonPrimitive.content}"
@@ -38,7 +38,7 @@ suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
 }
 
 suspend fun RemoteConnection.installAddon(profile: String, address: String) {
-    val row = call("/api/v2/addons", HttpMethod.Post, buildJsonObject { put("manifest_url", address) }).jsonObject
+    val row = call("/api/addons", HttpMethod.Post, buildJsonObject { put("manifest_url", address) }).jsonObject
     setAddonEnabled(profile, "addon:${row.getValue("id").jsonPrimitive.content}", true)
 }
 
@@ -49,7 +49,7 @@ suspend fun RemoteConnection.setAddonEnabled(profile: String, id: String, enable
         ?: throw RemoteFailure(409, "This add-on is disabled for the account or is no longer available.")
     val assignments = config.profile.assignments.filter { it.connection_id != id && config.connections.any { c -> c.id == it.connection_id } }.toMutableList()
     if (enabled) assignments += ProfileAssignment(id, connection.capabilities)
-    call("/api/v3/profiles/${profile.encodeURLPathPart()}/integrations", HttpMethod.Put, buildJsonObject {
+    call("/api/profiles/${profile.encodeURLPathPart()}/integrations", HttpMethod.Put, buildJsonObject {
         put("revision", config.profile.scope.revision)
         put("browsing_plugin", config.profile.browsing_plugin)
         put("assignments", addonCodec.encodeToJsonElement(assignments))
@@ -57,7 +57,7 @@ suspend fun RemoteConnection.setAddonEnabled(profile: String, id: String, enable
 }
 
 suspend fun RemoteConnection.removeAddon(id: String) {
-    call("/api/v2/addons/${addonNumericId(id)}", HttpMethod.Delete)
+    call("/api/addons/${addonNumericId(id)}", HttpMethod.Delete)
 }
 
 private fun addonNumericId(id: String): Long = id.removePrefix("addon:").toLongOrNull()

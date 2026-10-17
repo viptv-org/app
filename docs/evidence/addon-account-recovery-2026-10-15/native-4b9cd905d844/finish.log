@@ -1,0 +1,2 @@
+Success closes sheet; reopening shows blank URL and disabled Install
+Own record removed; prefs/connections restored; expected profile revision {'before': 2, 'after': 4}

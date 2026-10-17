@@ -1,0 +1,25 @@
+{
+  "loadavg": [
+    16.1572265625,
+    16.068359375,
+    14.3466796875
+  ],
+  "logical_cpus": 20,
+  "memory": {
+    "MemTotal": "32679872 kB",
+    "MemAvailable": "14446424 kB",
+    "SwapFree": "5416624 kB"
+  },
+  "fixture": {
+    "home_cards": 120,
+    "calendar_entries": 1200,
+    "bootstrap_delay_ms": 750,
+    "later_calendar_page_delay_ms": 700,
+    "artwork": "same generated640x360JPEG reused across cards"
+  },
+  "artifact_source_jni_sha256": {
+    "arm64-v8a": "e8bb2c3058396a3d02d8fb129fddccd91ab449f06dd07fead44fb2a789b2a290",
+    "x86_64": "651a01d760f4ba5e0a16101ffd4300f8c678d59e1f58a90ac606fef49ddcf229",
+    "armeabi-v7a": "a9d80a9bbb90834309767464c3e0959c45689e9b32557f76d71bfaa42e95c9a0"
+  }
+}

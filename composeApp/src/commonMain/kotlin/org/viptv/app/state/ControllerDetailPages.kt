@@ -17,18 +17,17 @@ fun ApplicationController.detailPage(offset: Long) {
     val homeScope = mutable.value.home?.scope
     fun current() = generation == operation && mutable.value.screen == Screen.Details &&
         mutable.value.selectedProfile == profile && mutable.value.home?.scope == homeScope &&
-        mutable.value.detail?.item?.identity == previous.item.identity && connection === remote && local === device
+        mutable.value.detail?.item?.let(::cardLookupKey) == cardLookupKey(previous.item) && connection === remote && local === device
     mutable.value = mutable.value.copy(detailLoadingOffset = offset, detailPageError = null)
     detailPagingJob = scope.launch {
         try {
             val page = device?.detailPage(profile, previous.item, offset.toInt(), 96)
                 ?: requireNotNull(remote).detail(previous.item, offset.toInt(), 96)
             if (!current()) return@launch
-            require(page.item.provider_id == previous.item.provider_id &&
-                page.item.identity.kind == previous.item.identity.kind && page.item.identity.id == previous.item.identity.id)
+            require(cardLookupKey(page.item) == cardLookupKey(previous.item))
             val loaded = requireNotNull(mutable.value.detail)
             mutable.value = mutable.value.copy(detail = loaded.copy(
-                episodes = (loaded.episodes + page.episodes).distinctBy { it.provider_id to it.identity },
+                episodes = (loaded.episodes + page.episodes).distinctBy(::cardLookupKey),
                 next_cursor = page.next_cursor,
                 recommendations = page.recommendations.ifEmpty { loaded.recommendations },
                 seasons = page.seasons.ifEmpty { loaded.seasons }))

@@ -16,7 +16,8 @@ import org.viptv.app.theme.Palette
 fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false, phone: Boolean = false,
     television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
     pairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
-    cancelPairing: () -> Unit = {}, iptv: IptvEntryActions? = null) {
+    cancelPairing: () -> Unit = {}, iptv: IptvEntryActions? = null,
+    register: ((String, String, String) -> Unit)? = null, recover: ((String, String, String) -> Unit)? = null) {
     if (television) {
         TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing, iptv = iptv)
         return
@@ -27,6 +28,11 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
     }
     if (desktop || !browser && !phone) {
         DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged, iptv)
+        return
+    }
+    var accountMode by remember { mutableStateOf<String?>(null) }
+    if (browser && accountMode != null && register != null && recover != null) {
+        BrowserAccountForm(accountMode == "recover", busy, error, { accountMode = null }, register, recover)
         return
     }
     var server by remember { mutableStateOf(origin) }
@@ -44,6 +50,10 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
             error?.let { Text(it, color = Palette.danger) }
             Button(onClick = { connect(server, username, password); password = "" }, enabled = !busy && server.isNotBlank() && username.isNotBlank() && password.isNotEmpty(), modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(12.dp)) {
                 Text(if (busy) "Signing in…" else "Sign in")
+            }
+            if (browser && register != null && recover != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                TextButton({ accountMode = "register" }, enabled = !busy) { Text("Create account") }
+                TextButton({ accountMode = "recover" }, enabled = !busy) { Text("Use recovery code") }
             }
             if (local != null) TextButton(onClick = local, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Use this device without an account") }
         }

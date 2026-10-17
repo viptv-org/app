@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="HomeRecoveryUiTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:15:57.258Z" hostname="vynxcos" time="1.393">
+  <properties/>
+  <testcase name="tvInitialFailureFocusesRetryAndRecoversWithoutAnEndlessLoadingState[desktop]" classname="org.viptv.app.HomeRecoveryUiTest" time="0.698"/>
+  <testcase name="idleHomeWithoutSnapshotOffersRecoveryOnPhoneAndTv[desktop]" classname="org.viptv.app.HomeRecoveryUiTest" time="0.225"/>
+  <testcase name="phoneRefreshFailureRetainsCachedShelfAndOffersOneDisabledRetryWhileBusy[desktop]" classname="org.viptv.app.HomeRecoveryUiTest" time="0.211"/>
+  <testcase name="completeEmptyTvHomeDistinguishesUnconfiguredCatalogsFromEmptyResults[desktop]" classname="org.viptv.app.HomeRecoveryUiTest" time="0.259"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

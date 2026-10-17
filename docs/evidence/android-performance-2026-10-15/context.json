@@ -1,0 +1,20 @@
+{
+  "loadavg": [
+    "17.67",
+    "17.83",
+    "20.18"
+  ],
+  "logical_cpus": 20,
+  "memory": {
+    "MemTotal": "32679872 kB",
+    "MemAvailable": "14214488 kB",
+    "SwapFree": "5904736 kB"
+  },
+  "fixture": {
+    "home_cards": 120,
+    "calendar_entries": 1200,
+    "bootstrap_delay_ms": 750,
+    "later_calendar_page_delay_ms": 700,
+    "artwork": "one generated640x360JPEG reused across cards"
+  }
+}

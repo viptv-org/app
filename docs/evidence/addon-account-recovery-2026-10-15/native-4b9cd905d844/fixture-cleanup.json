@@ -1,0 +1,10 @@
+{
+  "removed_only_reverse_port": 45017,
+  "stopped_only_server_pid": 3127684,
+  "server_start_ticks": 34463709,
+  "server_argv": [
+    "python3",
+    "/tmp/viptv-phone-addons-7zpqi9on/native-4b9cd905d844/server.py"
+  ],
+  "server_gone": true
+}

@@ -1,0 +1,115 @@
+[
+  {
+    "mode": "cold-empty",
+    "marks_ms": {
+      "activity_enter_ms": 92,
+      "first_draw_ms": 326,
+      "interactive_shell_ms": 327,
+      "profile_to_home_ms": 855
+    },
+    "am_total_ms": 919,
+    "am_wait_ms": 980,
+    "request_counts": {
+      "GET /qa/status": 1,
+      "POST /api/auth/device/login": 1,
+      "GET /api/v3/bootstrap": 2,
+      "POST /api/auth/profile": 1,
+      "GET /assets/fixture.jpg": 10,
+      "POST /qa/performance": 1
+    },
+    "system_fully_drawn_ms": 3426
+  },
+  {
+    "mode": "cold-restored",
+    "marks_ms": {
+      "activity_enter_ms": 83,
+      "first_draw_ms": 190,
+      "interactive_shell_ms": 1386,
+      "useful_home_ms": 1652,
+      "calendar_first_page_ms": 131,
+      "calendar_scroll_ms": 8376,
+      "calendar_final_index": 80,
+      "warm_route_home_ms": 50
+    },
+    "am_total_ms": 508,
+    "am_wait_ms": 512,
+    "request_counts": {
+      "GET /qa/status": 1,
+      "GET /api/v3/bootstrap": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1,
+      "GET /api/v3/calendar": 4
+    },
+    "system_fully_drawn_ms": 1912,
+    "calendar_frames": {
+      "count": 490,
+      "p50_ms": 16.737136,
+      "p95_ms": 17.044457,
+      "p99_ms": 17.71227,
+      "platform_deadline_misses": 3,
+      "dropped_reports": 0
+    }
+  },
+  {
+    "mode": "cold-restored",
+    "marks_ms": {
+      "activity_enter_ms": 52,
+      "first_draw_ms": 168,
+      "interactive_shell_ms": 1398,
+      "useful_home_ms": 1611,
+      "calendar_first_page_ms": 163,
+      "calendar_scroll_ms": 8396,
+      "calendar_final_index": 80,
+      "warm_route_home_ms": 34
+    },
+    "am_total_ms": 386,
+    "am_wait_ms": 428,
+    "request_counts": {
+      "GET /qa/status": 1,
+      "GET /api/v3/bootstrap": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1,
+      "GET /api/v3/calendar": 4
+    },
+    "system_fully_drawn_ms": 1829,
+    "calendar_frames": {
+      "count": 490,
+      "p50_ms": 16.739595,
+      "p95_ms": 16.998636,
+      "p99_ms": 17.356911,
+      "platform_deadline_misses": 2,
+      "dropped_reports": 0
+    }
+  },
+  {
+    "mode": "cold-restored",
+    "marks_ms": {
+      "activity_enter_ms": 52,
+      "first_draw_ms": 158,
+      "interactive_shell_ms": 1344,
+      "useful_home_ms": 1601,
+      "calendar_first_page_ms": 117,
+      "calendar_scroll_ms": 8389,
+      "calendar_final_index": 80,
+      "warm_route_home_ms": 30
+    },
+    "am_total_ms": 369,
+    "am_wait_ms": 376,
+    "request_counts": {
+      "GET /qa/status": 1,
+      "GET /api/v3/bootstrap": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1,
+      "GET /api/v3/calendar": 4
+    },
+    "system_fully_drawn_ms": 1778,
+    "calendar_frames": {
+      "count": 490,
+      "p50_ms": 16.738404,
+      "p95_ms": 17.097874,
+      "p99_ms": 18.60522,
+      "platform_deadline_misses": 2,
+      "dropped_reports": 0
+    }
+  }
+]

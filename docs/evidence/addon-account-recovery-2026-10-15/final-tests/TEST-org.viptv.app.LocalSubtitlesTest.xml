@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="LocalSubtitlesTest[desktop]" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:05.451Z" hostname="vynxcos" time="0.264">
+  <properties/>
+  <testcase name="realHttpDiscoveryPreservesBytesAndRejectsRevokedScope[desktop]" classname="org.viptv.app.LocalSubtitlesTest" time="0.264"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

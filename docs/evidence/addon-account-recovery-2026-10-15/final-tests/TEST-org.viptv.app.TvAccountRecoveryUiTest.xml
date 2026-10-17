@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="TvAccountRecoveryUiTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:28.622Z" hostname="vynxcos" time="3.25">
+  <properties/>
+  <testcase name="cachedIdentityRemainsVisibleOnFailureAndDashboardFallbackStillWorks[desktop]" classname="org.viptv.app.TvAccountRecoveryUiTest" time="0.656"/>
+  <testcase name="localAccountNeverRequestsRemoteIdentityOrShowsServerRecovery[desktop]" classname="org.viptv.app.TvAccountRecoveryUiTest" time="0.109"/>
+  <testcase name="failedAccountFocusesRetryThenReplacesTheLoadingStateWithActualIdentity[desktop]" classname="org.viptv.app.TvAccountRecoveryUiTest" time="0.441"/>
+  <testcase name="tvAddonFailureRetainsAddressAndOnlyCommittedSuccessClosesTheDialog[desktop]" classname="org.viptv.app.TvAccountRecoveryUiTest" time="2.044"/>
+  <system-out><![CDATA[FocusRelatedWarning: 
+   FocusRequester is not initialized. Here are some possible fixes:
+
+   1. Remember the FocusRequester: val focusRequester = remember { FocusRequester() }
+   2. Did you forget to add a Modifier.focusRequester() ?
+   3. Are you attempting to request focus during composition? Focus requests should be made in
+   response to some event. Eg Modifier.clickable { focusRequester.requestFocus() }
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

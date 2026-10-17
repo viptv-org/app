@@ -1,0 +1,9 @@
+{
+  "avd": "viptv-16k-isolated",
+  "serial": "emulator-5586",
+  "stopped": true,
+  "emulator_process_gone": true,
+  "fixture_started": false,
+  "other_devices_untouched": true,
+  "scope": "latest normal 6b startup follow-up only"
+}

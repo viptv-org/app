@@ -1,0 +1,710 @@
+{
+  "recorded_at_utc": "2026-10-15T12:34:58.431474+00:00",
+  "status": "read-only local optimized QA artifact audit; not a release or physical installation",
+  "apk": "/tmp/viptv-startup-after-qa/startup-final-origin.apk",
+  "apk_sha256": "0c443d9b90c266138048b19d4e6d5d81d0f667adcb2be5baa8a412252f7a5c3a",
+  "apk_bytes": 76009561,
+  "method": "Compare all SHF_ALLOC section names, type, flags, virtual address, size, alignment, entry size and file-backed content SHA256. SHT_NOBITS sections compare allocation metadata. File offsets/debug/nonallocated sections are excluded because AGP strips symbols; whole ELF hashes are separately retained.",
+  "existing_native_api_checksums": {
+    "base_revision": "47b85b5386617f455ade8b294a7a844b54f537c0",
+    "unchanged_existing": 110,
+    "current_total": 121,
+    "additive": 11,
+    "compiled_desktop_checksum_functions_matched": 121
+  },
+  "engine_libraries": {
+    "armeabi-v7a": {
+      "source_path": "androidApp/build/generated/rustJni/armeabi-v7a/libviptv_core.so",
+      "unstripped_sha256": "a9d80a9bbb90834309767464c3e0959c45689e9b32557f76d71bfaa42e95c9a0",
+      "apk_sha256": "0fe60a3b80862f6a7da380b5818480b7e375347128dda24f245c8c169bafea10",
+      "unstripped_bytes": 24442388,
+      "apk_bytes": 15802604,
+      "elf_machine": 40,
+      "allocated_section_count": 21,
+      "allocated_sections_match": true,
+      "allocated_sections": {
+        ".note.android.ident": {
+          "type": 7,
+          "flags": 2,
+          "address": 372,
+          "size": 152,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "5b94e0c04fec0aac34b2a4cc4cf9ae93283286bf0f87c2287a4af17e1dee13aa"
+        },
+        ".dynsym": {
+          "type": 11,
+          "flags": 2,
+          "address": 524,
+          "size": 9024,
+          "alignment": 4,
+          "entry_size": 16,
+          "data_sha256": "fd13da3bbc948c37fe0023728392fbaa030c7f59f22fcd4074f068d25ff58232"
+        },
+        ".gnu.version": {
+          "type": 1879048191,
+          "flags": 2,
+          "address": 9548,
+          "size": 1128,
+          "alignment": 2,
+          "entry_size": 2,
+          "data_sha256": "53db9a0280bb7dd80924a83507e506395f0dae5c9f285736b327182c093848dd"
+        },
+        ".gnu.version_r": {
+          "type": 1879048190,
+          "flags": 2,
+          "address": 10676,
+          "size": 96,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "3f2cc7c36a533993611159bdd1c659250d3adf0928e2ac05ba85c156e8a9e6ed"
+        },
+        ".gnu.hash": {
+          "type": 1879048182,
+          "flags": 2,
+          "address": 10772,
+          "size": 3284,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "770bfad62b83ce4fa52909670e358a677f7e069b9e4cc44a7e97abe513fe6c02"
+        },
+        ".dynstr": {
+          "type": 3,
+          "flags": 2,
+          "address": 14056,
+          "size": 26680,
+          "alignment": 1,
+          "entry_size": 0,
+          "data_sha256": "33cae0977085e462242c3d37697fe25baab7a2b596952f4863d116fa50615925"
+        },
+        ".rel.dyn": {
+          "type": 9,
+          "flags": 2,
+          "address": 40736,
+          "size": 311904,
+          "alignment": 4,
+          "entry_size": 8,
+          "data_sha256": "edf185739b2cbb5a948d246b25b5e8fc52fcc7ec76e7e580a8a46ca025ef37e8"
+        },
+        ".ARM.exidx": {
+          "type": 1879048193,
+          "flags": 130,
+          "address": 352640,
+          "size": 190304,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "bb23607c88bf152da54a7b1df6a2109d34424f452a7c0347604bf3ca3d8dc489"
+        },
+        ".rel.plt": {
+          "type": 9,
+          "flags": 66,
+          "address": 542944,
+          "size": 808,
+          "alignment": 4,
+          "entry_size": 8,
+          "data_sha256": "2f6c4f65d5628825435d5bc97828c3540e1276709a8fceb3b87d137857c5a4a0"
+        },
+        ".ARM.extab": {
+          "type": 1,
+          "flags": 2,
+          "address": 543752,
+          "size": 1076348,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "cc1fa330dd5196ac4983789dc93ba148f5eff2ac780a3708ff2e6d18cda16b69"
+        },
+        ".rodata": {
+          "type": 1,
+          "flags": 50,
+          "address": 1620160,
+          "size": 1415944,
+          "alignment": 64,
+          "entry_size": 0,
+          "data_sha256": "1322da3c6a0723229787192a15cec605406c2111551430489575c256e57daada"
+        },
+        ".text": {
+          "type": 1,
+          "flags": 6,
+          "address": 3040256,
+          "size": 12281104,
+          "alignment": 128,
+          "entry_size": 0,
+          "data_sha256": "daddd69d354c4207dda01fa7c8bb923d5649c04ececccaffa16b9bbb57179940"
+        },
+        ".plt": {
+          "type": 1,
+          "flags": 6,
+          "address": 15321360,
+          "size": 1648,
+          "alignment": 16,
+          "entry_size": 0,
+          "data_sha256": "8b235431cfa3afda32fdfbed7a02def5ede9dfca2ae7a07cafa813e4c2c3ebd2"
+        },
+        ".data.rel.ro": {
+          "type": 1,
+          "flags": 3,
+          "address": 15327104,
+          "size": 459840,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "4f6ba5253929afcf865cad5bedc3b1c95f1b25eb8a4923d279a7325a42825272"
+        },
+        ".fini_array": {
+          "type": 15,
+          "flags": 3,
+          "address": 15786944,
+          "size": 8,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "8d06e0b4f33cd19c0343661727e974e9867b9fbf9f44f7dd4aeb804721ce6f25"
+        },
+        ".dynamic": {
+          "type": 6,
+          "flags": 3,
+          "address": 15786952,
+          "size": 192,
+          "alignment": 4,
+          "entry_size": 8,
+          "data_sha256": "58a09138ff8201c2280a0940864307a24438ba11bfe589fe5e9017a8956291c2"
+        },
+        ".got": {
+          "type": 1,
+          "flags": 3,
+          "address": 15787144,
+          "size": 1228,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "3dde84ac29c4643073296a12aa0214904e82e5e3d38a8067198a1052904730f2"
+        },
+        ".got.plt": {
+          "type": 1,
+          "flags": 3,
+          "address": 15788372,
+          "size": 416,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "836de4b222100b63cd9cb7e615d78efdbc1c63984b11863050da253f003592ec"
+        },
+        ".relro_padding": {
+          "type": 8,
+          "flags": 3,
+          "address": 15788788,
+          "size": 1292,
+          "alignment": 1,
+          "entry_size": 0,
+          "data_sha256": null
+        },
+        ".data": {
+          "type": 1,
+          "flags": 3,
+          "address": 15792888,
+          "size": 20272,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "b28369d34c65ec96381fdb413b71fea3c05be0ce341e9c947e690f1c95cda070"
+        },
+        ".bss": {
+          "type": 8,
+          "flags": 3,
+          "address": 15813184,
+          "size": 3065,
+          "alignment": 32,
+          "entry_size": 0,
+          "data_sha256": null
+        }
+      },
+      "all_current_checksum_symbols_exported": 121
+    },
+    "arm64-v8a": {
+      "source_path": "androidApp/build/generated/rustJni/arm64-v8a/libviptv_core.so",
+      "unstripped_sha256": "e8bb2c3058396a3d02d8fb129fddccd91ab449f06dd07fead44fb2a789b2a290",
+      "apk_sha256": "eab0aae52a8efb6e488c5c9b7848a1d5443528083da9ec4577f3bf85eddc2313",
+      "unstripped_bytes": 33103688,
+      "apk_bytes": 22655808,
+      "elf_machine": 183,
+      "allocated_section_count": 22,
+      "allocated_sections_match": true,
+      "allocated_sections": {
+        ".note.android.ident": {
+          "type": 7,
+          "flags": 2,
+          "address": 624,
+          "size": 152,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "5b94e0c04fec0aac34b2a4cc4cf9ae93283286bf0f87c2287a4af17e1dee13aa"
+        },
+        ".dynsym": {
+          "type": 11,
+          "flags": 2,
+          "address": 776,
+          "size": 13680,
+          "alignment": 8,
+          "entry_size": 24,
+          "data_sha256": "b7ecaca582f576eeab53915c41bdca38369bebc1ac5bbc530ff92528cc8fb53d"
+        },
+        ".gnu.version": {
+          "type": 1879048191,
+          "flags": 2,
+          "address": 14456,
+          "size": 1140,
+          "alignment": 2,
+          "entry_size": 2,
+          "data_sha256": "a41bb125f22dcd90847c852127ad3c231fac83732d11272125615981095a420f"
+        },
+        ".gnu.version_r": {
+          "type": 1879048190,
+          "flags": 2,
+          "address": 15596,
+          "size": 96,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "b6c14b2968677b6ddeb373e904ab50b8832852878230ab4e9c89499679f1a844"
+        },
+        ".gnu.hash": {
+          "type": 1879048182,
+          "flags": 2,
+          "address": 15696,
+          "size": 3284,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "82291bf8456a1c306aeb437c57a18d37d5325c5e78954ec46d2465c7dac8d2fe"
+        },
+        ".dynstr": {
+          "type": 3,
+          "flags": 2,
+          "address": 18980,
+          "size": 26763,
+          "alignment": 1,
+          "entry_size": 0,
+          "data_sha256": "b47461e3769af3884b8a187996390c367d17d92c8f2761742b3e36e9cf87e631"
+        },
+        ".rela.dyn": {
+          "type": 4,
+          "flags": 2,
+          "address": 45744,
+          "size": 916512,
+          "alignment": 8,
+          "entry_size": 24,
+          "data_sha256": "1f70f317816b9055e1451e4d50043e96d2d70ba80e7870b86a377121246448f3"
+        },
+        ".rela.plt": {
+          "type": 4,
+          "flags": 66,
+          "address": 962256,
+          "size": 2592,
+          "alignment": 8,
+          "entry_size": 24,
+          "data_sha256": "344c48808b1f51a72aeaa273e5ac34cd7accc0340c9c86f5bbb616be65c9cc77"
+        },
+        ".gcc_except_table": {
+          "type": 1,
+          "flags": 2,
+          "address": 964848,
+          "size": 1087284,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "d637f4935c0ff1c0281c2fb86309a966d4dfb59065851c48828c424e2e530794"
+        },
+        ".rodata": {
+          "type": 1,
+          "flags": 50,
+          "address": 2056192,
+          "size": 1635660,
+          "alignment": 4096,
+          "entry_size": 0,
+          "data_sha256": "a6ad1018f094ed82fe558440a0f4ff26a6e37d952cbd161101ad2efdc48878d8"
+        },
+        ".eh_frame_hdr": {
+          "type": 1,
+          "flags": 2,
+          "address": 3691852,
+          "size": 240460,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "dd0bdc92bd4c9361dfeca63fb1bfa317071226e727090471e5f849f9c7647cd7"
+        },
+        ".eh_frame": {
+          "type": 1,
+          "flags": 2,
+          "address": 3932312,
+          "size": 1917620,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "1a9899727fa8bf7506a22ada8e0b9811e30d6252da4563e8baa2800900ed452e"
+        },
+        ".text": {
+          "type": 1,
+          "flags": 6,
+          "address": 5866368,
+          "size": 15979084,
+          "alignment": 64,
+          "entry_size": 0,
+          "data_sha256": "87a44da0ad9b04df42d88028b2a31a174883259dd893316aa39b5a04887760f9"
+        },
+        ".plt": {
+          "type": 1,
+          "flags": 6,
+          "address": 21845456,
+          "size": 1760,
+          "alignment": 16,
+          "entry_size": 0,
+          "data_sha256": "a0c8a728f5dfb7f8dc71ec123f03a7b1cc913d628996f39a98b7f87e91abce69"
+        },
+        ".data.rel.ro": {
+          "type": 1,
+          "flags": 3,
+          "address": 21863600,
+          "size": 780544,
+          "alignment": 16,
+          "entry_size": 0,
+          "data_sha256": "3b2100ccf5a7a018d043988c3d278cb3e1a340587e1eeb2eefa35bac41a7ccca"
+        },
+        ".fini_array": {
+          "type": 15,
+          "flags": 3,
+          "address": 22644144,
+          "size": 16,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        ".dynamic": {
+          "type": 6,
+          "flags": 3,
+          "address": 22644160,
+          "size": 384,
+          "alignment": 8,
+          "entry_size": 16,
+          "data_sha256": "086eca71ccfa0f1927dd6ebdb22d7f602df6c7d94bcf28366e2d7f0a86dc1b9b"
+        },
+        ".got": {
+          "type": 1,
+          "flags": 3,
+          "address": 22644544,
+          "size": 2448,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "b950d7a5a24da82ff7cbb5fc041dccee7bf6e22c70b4d0ae2b8889b9a96f92a9"
+        },
+        ".got.plt": {
+          "type": 1,
+          "flags": 3,
+          "address": 22646992,
+          "size": 888,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "0cfbe34abd74a7f00377aac489c1d1d1b725d46c573c9a4463263a3683133dfe"
+        },
+        ".relro_padding": {
+          "type": 8,
+          "flags": 3,
+          "address": 22647880,
+          "size": 3000,
+          "alignment": 1,
+          "entry_size": 0,
+          "data_sha256": null
+        },
+        ".data": {
+          "type": 1,
+          "flags": 3,
+          "address": 22664264,
+          "size": 38600,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "10f93b8578cd26b1eef5b39896ec1caac2b7fd59efdb704c81a63db0e1c01d00"
+        },
+        ".bss": {
+          "type": 8,
+          "flags": 3,
+          "address": 22702976,
+          "size": 12056,
+          "alignment": 128,
+          "entry_size": 0,
+          "data_sha256": null
+        }
+      },
+      "all_current_checksum_symbols_exported": 121
+    },
+    "x86_64": {
+      "source_path": "androidApp/build/generated/rustJni/x86_64/libviptv_core.so",
+      "unstripped_sha256": "651a01d760f4ba5e0a16101ffd4300f8c678d59e1f58a90ac606fef49ddcf229",
+      "apk_sha256": "ff6828fe0d0c1a735827b5d399cdbf95be3bdceb8f8c23b7e20ea37d19f94fdf",
+      "unstripped_bytes": 33160808,
+      "apk_bytes": 24999512,
+      "elf_machine": 62,
+      "allocated_section_count": 22,
+      "allocated_sections_match": true,
+      "allocated_sections": {
+        ".note.android.ident": {
+          "type": 7,
+          "flags": 2,
+          "address": 624,
+          "size": 152,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "5b94e0c04fec0aac34b2a4cc4cf9ae93283286bf0f87c2287a4af17e1dee13aa"
+        },
+        ".dynsym": {
+          "type": 11,
+          "flags": 2,
+          "address": 776,
+          "size": 13632,
+          "alignment": 8,
+          "entry_size": 24,
+          "data_sha256": "c06577cebaacea242c86bbf2172bc2ec18fd87261e1eb2b6a834d118f4cab4f1"
+        },
+        ".gnu.version": {
+          "type": 1879048191,
+          "flags": 2,
+          "address": 14408,
+          "size": 1136,
+          "alignment": 2,
+          "entry_size": 2,
+          "data_sha256": "73fe2c92eff656d9b065dacd2632ea8e0f6835cc780af0907506af7dc4bb6608"
+        },
+        ".gnu.version_r": {
+          "type": 1879048190,
+          "flags": 2,
+          "address": 15544,
+          "size": 96,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "e228c2c401b79097363ae4dc7b127e14e4a5ed12baae0e738140ed41fa3b53de"
+        },
+        ".gnu.hash": {
+          "type": 1879048182,
+          "flags": 2,
+          "address": 15640,
+          "size": 3284,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "2566b526cd6bebf25381e7da4d1f2c7677cf08cd57e59fe3e281b7bb20678bd3"
+        },
+        ".dynstr": {
+          "type": 3,
+          "flags": 2,
+          "address": 18924,
+          "size": 26731,
+          "alignment": 1,
+          "entry_size": 0,
+          "data_sha256": "42b4d9c0aac930cb28be0a8c6ae7ffdf0d5ec82cf6749f1490beff95456e1a82"
+        },
+        ".rela.dyn": {
+          "type": 4,
+          "flags": 2,
+          "address": 45656,
+          "size": 1001952,
+          "alignment": 8,
+          "entry_size": 24,
+          "data_sha256": "21a9041764ca5af4766588ac8b563d2880f221b11badfcd41bda7a8cd80c5a14"
+        },
+        ".rela.plt": {
+          "type": 4,
+          "flags": 66,
+          "address": 1047608,
+          "size": 1200,
+          "alignment": 8,
+          "entry_size": 24,
+          "data_sha256": "412891914c3410c677a77f59ad8202f68de5ecacb9cd3aa362062975dd4b3406"
+        },
+        ".gcc_except_table": {
+          "type": 1,
+          "flags": 2,
+          "address": 1048808,
+          "size": 1088136,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "1e26a56f693eea6cf04b697f45eb46db5e1c8c9062238189aba2a09ec5a8f2c5"
+        },
+        ".rodata": {
+          "type": 1,
+          "flags": 50,
+          "address": 2138112,
+          "size": 1798352,
+          "alignment": 4096,
+          "entry_size": 0,
+          "data_sha256": "14bcb683612af805cb20aece1e2591c0d6c3f5692708db7eac8d476aa17b40dd"
+        },
+        ".eh_frame_hdr": {
+          "type": 1,
+          "flags": 2,
+          "address": 3936464,
+          "size": 241396,
+          "alignment": 4,
+          "entry_size": 0,
+          "data_sha256": "313f77712514522446e343207dd5d1697e62f5b490bcc823a26d7955fedff450"
+        },
+        ".eh_frame": {
+          "type": 1,
+          "flags": 2,
+          "address": 4177864,
+          "size": 1836760,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "55222bf10c4ea6bf09b3bf571f7ade671d769b283a28e0e3044d2d290b82bf62"
+        },
+        ".text": {
+          "type": 1,
+          "flags": 6,
+          "address": 6031040,
+          "size": 18129738,
+          "alignment": 64,
+          "entry_size": 0,
+          "data_sha256": "f2687f9e0254d731bf4f473d999a50a561e951e5772f449933433b5dc937acf5"
+        },
+        ".plt": {
+          "type": 1,
+          "flags": 6,
+          "address": 24160784,
+          "size": 816,
+          "alignment": 16,
+          "entry_size": 0,
+          "data_sha256": "0391b757367cc00798de1a49b8c9f2898d175b8f6faa71c9c0d39dc394f64f8f"
+        },
+        ".data.rel.ro": {
+          "type": 1,
+          "flags": 3,
+          "address": 24177984,
+          "size": 782544,
+          "alignment": 16,
+          "entry_size": 0,
+          "data_sha256": "a604f263317f3647db7bca58262b249db120cddbbf1da42299b7c659c8bf0b12"
+        },
+        ".fini_array": {
+          "type": 15,
+          "flags": 3,
+          "address": 24960528,
+          "size": 16,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        ".dynamic": {
+          "type": 6,
+          "flags": 3,
+          "address": 24960544,
+          "size": 384,
+          "alignment": 8,
+          "entry_size": 16,
+          "data_sha256": "f809c48bec62abd52580690878526979f71463bc08e791a582545f693c13e684"
+        },
+        ".got": {
+          "type": 1,
+          "flags": 3,
+          "address": 24960928,
+          "size": 30184,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "43504d29b52e15d97222454249080ff9aad40d2b9fea311e3cfa17faf4a3cedd"
+        },
+        ".got.plt": {
+          "type": 1,
+          "flags": 3,
+          "address": 24991112,
+          "size": 424,
+          "alignment": 8,
+          "entry_size": 0,
+          "data_sha256": "193b3a026bf7f443c83fa0bdc68bcae90b9c27aeae9c083a22fbd0c8e5efa59a"
+        },
+        ".relro_padding": {
+          "type": 8,
+          "flags": 3,
+          "address": 24991536,
+          "size": 2256,
+          "alignment": 1,
+          "entry_size": 0,
+          "data_sha256": null
+        },
+        ".data": {
+          "type": 1,
+          "flags": 3,
+          "address": 25007920,
+          "size": 38648,
+          "alignment": 16,
+          "entry_size": 0,
+          "data_sha256": "039d48f5babe8e1baea0495f9daeba7691325ad12d26811a79d813738addf0e5"
+        },
+        ".bss": {
+          "type": 8,
+          "flags": 3,
+          "address": 25046656,
+          "size": 12176,
+          "alignment": 128,
+          "entry_size": 0,
+          "data_sha256": null
+        }
+      },
+      "all_current_checksum_symbols_exported": 121
+    }
+  },
+  "ffmpeg_libraries": {
+    "armeabi-v7a": {
+      "sha256": "c6dc323254609053f5f851a5b8a927bb31670ebeacbc87a185babb76779ada77",
+      "matches_pinned_source_and_packaged_bytes": true,
+      "bytes": 1590008,
+      "elf_machine": 40
+    },
+    "arm64-v8a": {
+      "sha256": "66031c23b95da2c8118c6a1586490b68e3c89644b0e169d91b490157cb04fda8",
+      "matches_pinned_source_and_packaged_bytes": true,
+      "bytes": 1728776,
+      "elf_machine": 183
+    },
+    "x86_64": {
+      "sha256": "6189ced41aefa4434b33f3fa2f10eec756a53208ff5b7150ee0a2acda8e2821d",
+      "matches_pinned_source_and_packaged_bytes": true,
+      "bytes": 1814808,
+      "elf_machine": 62
+    }
+  },
+  "library_inventory": {
+    "arm64-v8a": [
+      "libandroidx.graphics.path.so",
+      "libffmpegJNI.so",
+      "libjnidispatch.so",
+      "libviptv_core.so"
+    ],
+    "armeabi-v7a": [
+      "libandroidx.graphics.path.so",
+      "libffmpegJNI.so",
+      "libjnidispatch.so",
+      "libviptv_core.so"
+    ],
+    "armeabi": [
+      "libjnidispatch.so"
+    ],
+    "mips": [
+      "libjnidispatch.so"
+    ],
+    "mips64": [
+      "libjnidispatch.so"
+    ],
+    "x86": [
+      "libandroidx.graphics.path.so",
+      "libjnidispatch.so"
+    ],
+    "x86_64": [
+      "libandroidx.graphics.path.so",
+      "libffmpegJNI.so",
+      "libjnidispatch.so",
+      "libviptv_core.so"
+    ]
+  },
+  "physical_device_actions": false,
+  "services_changed": false,
+  "builds_run": false,
+  "qualified_complete_abis": [
+    "armeabi-v7a",
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "dependency_only_partial_abi_directories": [
+    "armeabi",
+    "mips",
+    "mips64",
+    "x86"
+  ],
+  "abi_limitation": "Dependency-only armeabi/mips/mips64/x86 directories do not contain both engine and FFmpeg and are not qualified application ABI coverage; androidApp currently has no explicit abiFilters.",
+  "media3_source_pin_jni_callbacks_notices_alignment_check": "PASS tools/check_media3_audio.py against this immutable APK (three ABIs, pinned hashes, growOutputBuffer retained, licenses, 16KiB PT_LOAD alignment)"
+}

@@ -1,0 +1,6 @@
+Picked up JAVA_TOOL_OPTIONS: -Dskiko.renderApi=SOFTWARE -Xmx512m -Duser.home=/qualification/vault/installed-c4ec/home -Djava.io.tmpdir=/qualification/vault/installed-c4ec/tmp
+[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate
+[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.

@@ -12,6 +12,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import java.awt.Dimension
 import org.viptv.app.state.*
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -32,7 +33,10 @@ private fun launchApplication() = application {
         val mac = remember { System.getProperty("os.name").startsWith("Mac") }
         val base = remember { desktopDataDirectory() }
         var menuOpen by remember { mutableStateOf(false) }
-        LaunchedEffect(window) { windowState.isMinimized = false; window.toFront() }
+        LaunchedEffect(window) {
+            windowState.isMinimized = false; window.toFront()
+            window.minimumSize = Dimension(420, 360)
+        }
         val minimize = { windowState.isMinimized = true }
         val maximize = {
             windowState.placement = if (windowState.placement == WindowPlacement.Maximized)

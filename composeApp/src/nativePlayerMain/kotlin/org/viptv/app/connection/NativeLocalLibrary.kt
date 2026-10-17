@@ -39,12 +39,17 @@ internal suspend fun NativeLocalConnection.fetchLocalLibrary(profile: String): L
         cards
     }
 
-internal suspend fun NativeLocalConnection.fetchLocalSaveFavorite(profile: String, card: Card) = withContext(Dispatchers.IO) {
+internal suspend fun NativeLocalConnection.fetchLocalSaveFavorite(profile: String, card: Card) {
+    val prepared = prepareMetadataCard(profile, card)
+    withContext(Dispatchers.IO) {
         val revision = json.decodeFromString<ProfileConfiguration>(engine.profile(profile)).scope.revision.toULong()
-        engine.saveFavorite(profile, revision, json.encodeToString(card))
+        engine.saveFavorite(profile, revision, json.encodeToString(prepared))
     }
+
+}
 
 internal suspend fun NativeLocalConnection.fetchLocalRemoveFavorite(profile: String, card: Card) = withContext(Dispatchers.IO) {
         val revision = json.decodeFromString<ProfileConfiguration>(engine.profile(profile)).scope.revision.toULong()
-        engine.removeFavorite(profile, revision, card.identity.kind, card.identity.id)
+        if (card.metadata_origin != null) engine.removeFavoriteForOrigin(profile, revision, json.encodeToString(card))
+        else engine.removeFavorite(profile, revision, card.identity.kind, card.identity.id)
     }

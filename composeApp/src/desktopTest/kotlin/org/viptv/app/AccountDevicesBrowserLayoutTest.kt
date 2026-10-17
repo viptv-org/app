@@ -32,7 +32,7 @@ class AccountDevicesBrowserLayoutTest {
             val rows = nodes.filter { it.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Living room TV" } == true }
             assertEquals(1,rows.size)
             assertTrue(rows.single().boundsInRoot.right <= 1105f)
-            assertEquals(0,addonLoads)
+            assertEquals(1,addonLoads,"Add-on configuration preloads so counts are known before the section opens")
             System.getenv("VIPTV_ACCOUNT_CAPTURE_DIR")?.let { directory ->
                 File(directory).mkdirs()
                 scene.render(21 * 16_666_667L).use { image -> image.encodeToData()!!.use {
@@ -42,7 +42,7 @@ class AccountDevicesBrowserLayoutTest {
             val addonAction = nodes.single { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Add-ons" } == true && node.config.contains(SemanticsActions.OnClick) }
             addonAction.config[SemanticsActions.OnClick].action!!.invoke()
             repeat(12) { scene.render((it+30)*16_666_667L).close();Thread.sleep(4) }
-            assertEquals(1,addonLoads,"Add-on configuration loads when its section opens")
+            assertEquals(2,addonLoads,"Add-on configuration refreshes when its section opens (1 eager + 1 on open)")
         } finally { scene.close() }
     }
 

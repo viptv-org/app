@@ -1,0 +1,10 @@
+{
+  "owned_avd": "viptv-api26-isolated",
+  "owned_serial": "emulator-5592",
+  "fixture_port": 18592,
+  "emulator_process_gone": true,
+  "fixture_running": false,
+  "reverse_removed": true,
+  "no_global_adb_server_actions": true,
+  "other_devices_untouched": true
+}

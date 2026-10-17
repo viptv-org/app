@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "apk_sha256": "4cb59ab8ea453d8e20dfc5b731fe8b430bc1818c7a95e55a9c8d59bbed4f3193",
+  "variant": "normal release",
+  "avd": "viptv-api26-isolated",
+  "serial": "emulator-5592",
+  "sdk": 26,
+  "ui_mode": "normal 0x11",
+  "first_entry_mode_reset": "Owned fresh app data via pm clear; Success, then welcome observed before Use without account",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "pm_clear": "Success\n",
+  "real_native_local_home": true,
+  "cold_restore_profiles_before_home": true,
+  "cold_restore_without_welcome": true,
+  "unprotected_default_selected_explicitly": true,
+  "home_labels": [
+    "V",
+    "Home",
+    "Live",
+    "My List",
+    "Search",
+    "No catalogs are configured for this profile."
+  ],
+  "cold_profile_labels": [
+    "Who\u2019s watching?",
+    "D",
+    "Default",
+    "Add profile",
+    "Manage profiles"
+  ],
+  "framework_first_launch_ms": 540,
+  "framework_cold_reopen_ms": 423,
+  "scope": "latest normal first local entry and cold Profiles gate only; unchanged debug/native player scenarios not repeated",
+  "visual_review": "Actual API26 native local Home and cold Profiles gate inspected"
+}

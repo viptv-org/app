@@ -1,0 +1,23 @@
+   Compiling viptv-core v0.1.0 (/mnt/ALPH/code/viptv-org/app/native/core/crates/viptv-core)
+warning: field `job_id` is never read
+  --> crates/viptv-core/src/local_engine/sources.rs:43:16
+   |
+31 | pub(super) struct Playable {
+   |                   -------- field in this struct
+...
+43 |     pub(super) job_id: Option<String>,
+   |                ^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `admit_integration_job` is never used
+   --> crates/viptv-core/src/local_engine/source_integrations.rs:294:8
+    |
+286 | impl LocalEngine {
+    | ---------------- method in this implementation
+...
+294 |     fn admit_integration_job(&self, scope: Scope) -> Result<(String, Arc<Job>), CoreError> {
+    |        ^^^^^^^^^^^^^^^^^^^^^
+
+warning: `viptv-core` (lib) generated 2 warnings
+    Finished `release` profile [optimized] target(s) in 41.03s

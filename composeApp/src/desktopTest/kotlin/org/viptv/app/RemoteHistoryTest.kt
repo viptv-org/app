@@ -24,7 +24,7 @@ class RemoteHistoryTest {
         val payloads = mutableListOf<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals(HttpMethod.Put, request.method)
-            assertEquals("/api/v3/profiles/12/progress", request.url.encodedPath)
+            assertEquals("/api/profiles/12/progress", request.url.encodedPath)
             payloads += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond("{\"ok\":true}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }

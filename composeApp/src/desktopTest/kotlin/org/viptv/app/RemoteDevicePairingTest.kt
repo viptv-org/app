@@ -30,7 +30,7 @@ class RemoteDevicePairingTest {
                         else -> """{"access_token":"approved-access","refresh_token":"approved-refresh"}""" to HttpStatusCode.OK
                     }
                 }
-                "/api/v3/bootstrap" -> {
+                "/api/bootstrap" -> {
                     bootstraps++; assertEquals("Bearer approved-access", request.headers[HttpHeaders.Authorization])
                     """{"identity":{"profiles":[],"profile_id":null},"home":null}""" to HttpStatusCode.OK
                 }
@@ -70,7 +70,7 @@ class RemoteDevicePairingTest {
             val body = when (request.url.encodedPath) {
                 "/api/auth/device/code" -> challenge
                 "/api/auth/device/token" -> """{"access_token":"approved-access","refresh_token":"approved-refresh"}"""
-                "/api/v3/bootstrap" -> {
+                "/api/bootstrap" -> {
                     assertNull(store.saved)
                     active = false
                     """{"identity":{"profiles":[],"profile_id":null},"home":null}"""

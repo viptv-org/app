@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="NativeDiscoverySelectionsTest[desktop]" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:08.894Z" hostname="vynxcos" time="0.013">
+  <properties/>
+  <testcase name="explicitCatalogKeepsMultiValuesAndPagingInOneRequestWithoutMixingOwners[desktop]" classname="org.viptv.app.NativeDiscoverySelectionsTest" time="0.013"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

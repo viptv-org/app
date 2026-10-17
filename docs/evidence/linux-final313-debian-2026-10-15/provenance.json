@@ -1,0 +1,23 @@
+{
+  "debian_install_evidence": "docs/evidence/linux-final313-debian-2026-10-15",
+  "source_gate_sha256": "cdc03f5f8b82d40f494fbc68d4c378e1a6a9e7b018ad3f6d89424bb9192773bb",
+  "image_manifest_sha256": "1b03840ee9a1fc5f5368e9c964c8f5fc53437088950d076cf3e6d8df8b935671",
+  "source_manifest_sha256": "a5d8c2a4319b7377a35cf488b4d3d23c21ee69b53656a2402201f512dc1a1a3e",
+  "isolated_dpkg": {
+    "name": "dpkg-1.23.7-1-x86_64.pkg.tar.zst",
+    "sha256": "22c53a697365fa0b67892de39199e365436e374e687472b276cf80dfbfb8806a",
+    "signature_verified": true,
+    "source": "existing verified build cache",
+    "package_database": "local extra.db signed package metadata",
+    "license": "GPL-2.0-or-later",
+    "system_packages_modified": false
+  },
+  "jdk_archive_sha256": "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94",
+  "packaging_script_sha256": {
+    "package_linux.py": "0b9128e749406fe87068546219b357fbef19b4c5447b70a4b5345c3b0528c694",
+    "audit_linux_runtime.py": "a1ca98145ec68e52cfc0a6fbbbfc115033b258a1b27f7700598249954cde537e",
+    "verify_desktop.py": "1be19aa54e460b9044d8ec62b6af116c066c55300f5f5f4e0909da4bae547d47"
+  },
+  "signed_distribution": false,
+  "scope": "Fresh Debian13.7 x86_64 normal package-manager install, menu registration, installed native/JVM/SQLite, private vault and original Main. No new playback claim; historical97e VTT component continuity is separate. PhysicalGPU/display/audio, Windows/macOS and distribution signing not qualified."
+}

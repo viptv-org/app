@@ -1,0 +1,5 @@
+{
+  "complete": false,
+  "cause": "Prior qualification worker and owned processes stopped before apt completion. No exit code recorded. Podman inspect stale running; crun exec returned container is not running. Fresh untouched container used for subsequent qualification.",
+  "package_sha256": "c4ecb0c0ca4ceb3fcd79cd9d9fe249432025368998c9098204334baa38498128"
+}

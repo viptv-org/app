@@ -1,0 +1,102 @@
+{
+  "default_collection": "(objectpath '/org/freedesktop/secrets/collection/login',)",
+  "write-local": {
+    "exit_code": 0,
+    "stdout": [
+      "rebuilt_native_mapped:true",
+      "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "local_write_read_passed",
+      "elapsed_ms:164"
+    ],
+    "stderr": [],
+    "seconds": 0.231
+  },
+  "read-local": {
+    "exit_code": 0,
+    "stdout": [
+      "rebuilt_native_mapped:true",
+      "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "local_fresh_process_read_passed",
+      "elapsed_ms:154"
+    ],
+    "stderr": [],
+    "seconds": 0.233
+  },
+  "legacy-remote": {
+    "exit_code": 0,
+    "stdout": [
+      "rebuilt_native_mapped:true",
+      "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "legacy_remote_save_read_replace_clear_passed",
+      "elapsed_ms:200"
+    ],
+    "stderr": [],
+    "seconds": 0.273
+  },
+  "credential-matching": {
+    "exit_code": 0,
+    "stdout": [
+      "rebuilt_native_mapped:true",
+      "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "legacy_identity_exact_priority_ambiguous_rejection_passed",
+      "elapsed_ms:183"
+    ],
+    "stderr": [],
+    "seconds": 0.251
+  },
+  "lock_result": "([objectpath '/org/freedesktop/secrets/collection/login'], objectpath '/')",
+  "locked-access": {
+    "exit_code": 0,
+    "stdout": [
+      "rebuilt_native_mapped:true",
+      "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "get_ms:5",
+      "put_ms:4",
+      "delete_ms:6",
+      "vault_access_failures:3",
+      "elapsed_ms:145"
+    ],
+    "stderr": [],
+    "seconds": 0.218
+  },
+  "cancel-startup": {
+    "exit_code": 0,
+    "stdout": [
+      "rebuilt_native_mapped:true",
+      "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "startup_vault_wait_active:false",
+      "startup_vault_notice:false",
+      "startup_vault_error_present:false",
+      "disconnect_ms:3",
+      "disconnect_screen:Connect",
+      "disconnect_starting:false",
+      "profiles_immediately_after_cancel:0",
+      "canceled_restore_job_completed:true",
+      "new_local_choice_busy:false",
+      "new_local_choice_factory_calls:1",
+      "private_profiles_after_cancel:1",
+      "new_local_choice_screen:Profiles",
+      "new_local_choice_notice:true",
+      "elapsed_ms:2775"
+    ],
+    "stderr": [
+      "SLF4J(W): No SLF4J providers were found.",
+      "SLF4J(W): Defaulting to no-operation (NOP) logger implementation",
+      "SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details."
+    ],
+    "seconds": 2.846
+  },
+  "prompter_owned_after_locked_operations": "(false,)",
+  "read": {
+    "exit_code": 0,
+    "stdout": [
+      "rebuilt_native_mapped:true",
+      "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "native_vault_call_started",
+      "vault_call_failed:uniffi.viptv_core.CoreException$Bridge",
+      "elapsed_ms:147"
+    ],
+    "stderr": [],
+    "seconds": 0.219
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "apk": "app/artifacts/android-osd-endurance-2026-10-15/5abd366c036b/viptv-osd-endurance-debug.apk",
+  "sha256": "5abd366c036b58260e4ce3dd2d026a0c717e45950341747593e59f1be88f353a",
+  "bytes": 118897170,
+  "build_seconds": 48,
+  "scope": "QA-only paused original-player semantics/capture acknowledgement; current production snapshot frozen at cut"
+}

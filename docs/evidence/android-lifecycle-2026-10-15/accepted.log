@@ -1,0 +1,28 @@
+--------- beginning of main
+I/VIPTV_LIFECYCLE_QA( 2319): activity_created id=180626527 restored=false
+I/VIPTV_LIFECYCLE_QA( 2319): initial_profile_focus=first
+I/VIPTV_LIFECYCLE_QA( 2319): activity_created id=253838737 restored=true
+I/VIPTV_LIFECYCLE_QA( 2319): player sidecar_active=false sidecar_cues=0 sidecar_position_ms=600000
+I/VIPTV_LIFECYCLE_QA( 2319): player opening_position_ms=0 opening_timeline_offset_ms=600000 opening_live=false
+I/VIPTV_LIFECYCLE_QA( 2319): player ffmpeg_audio_available=true ffmpeg_version=Lavc60.3.100
+I/VIPTV_LIFECYCLE_QA( 2319): player timeline_default_ms=0 timeline_position_ms=0 timeline_offset_ms=0 timeline_placeholder=true timeline_live=false timeline_dynamic=true
+I/VIPTV_LIFECYCLE_QA( 2319): player timeline_default_ms=0 timeline_position_ms=0 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_LIFECYCLE_QA( 2319): player engine=Media3 rendered=14 dropped=0 fps=6.241640659830584 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=c2.goldfish.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_LIFECYCLE_QA( 2319): player engine=Media3 rendered=63 dropped=0 fps=24.378109452736318 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=c2.goldfish.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_LIFECYCLE_QA( 2319): player engine=Media3 rendered=111 dropped=0 fps=23.988005997001498 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=c2.goldfish.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_LIFECYCLE_QA( 2319): player timeline_default_ms=0 timeline_position_ms=1005 timeline_offset_ms=4000 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_LIFECYCLE_QA( 2319): capture_elapsed expected=10:05 position_ms=605038 window_offset_ms=4000
+I/VIPTV_LIFECYCLE_QA( 2319): player engine=Media3 rendered=123 dropped=0 fps=5.994005994005994 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=c2.goldfish.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_LIFECYCLE_QA( 2319): player timeline_default_ms=0 timeline_position_ms=1038 timeline_offset_ms=4000 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_LIFECYCLE_QA( 2319): player engine=Media3 rendered=123 dropped=0 fps=0.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=c2.goldfish.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_LIFECYCLE_QA( 2319): player timeline_default_ms=0 timeline_position_ms=1038 timeline_offset_ms=4000 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_LIFECYCLE_QA( 2319): player sidecar_active=false sidecar_cues=0 sidecar_position_ms=605038
+I/VIPTV_LIFECYCLE_QA( 2319): activity_created id=144943452 restored=true
+I/VIPTV_LIFECYCLE_QA( 2319): player sidecar_active=false sidecar_cues=0 sidecar_position_ms=605038
+I/VIPTV_LIFECYCLE_QA( 2319): await_home paused=true
+I/VIPTV_LIFECYCLE_QA( 2319): player engine=Media3 rendered=124 dropped=0 fps=0.24715768660405338 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=c2.goldfish.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_LIFECYCLE_QA( 2319): background_paused position_ms=605038 was_paused=true
+I/VIPTV_LIFECYCLE_QA( 2319): await_home paused=false
+I/VIPTV_LIFECYCLE_QA( 2319): player engine=Media3 rendered=133 dropped=0 fps=4.495504495504496 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=c2.goldfish.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_LIFECYCLE_QA( 2319): background_paused position_ms=605481 was_paused=false
+I/VIPTV_LIFECYCLE_QA( 2319): PASS profile_focus=true details_retained=true player_retained=true user_pause_retained=true background_paused=true foreground_resumed=true auth_refreshes=1 bootstraps=4 lease_opens=1 title_clock=true

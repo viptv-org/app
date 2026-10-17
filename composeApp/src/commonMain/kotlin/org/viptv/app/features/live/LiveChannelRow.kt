@@ -35,7 +35,7 @@ internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, 
                 }
                 next?.let { Text("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
             }
-            IconButton(favourite, Modifier.size(28.dp)) { Icon(Lucide.Star, "Favourite channel", Modifier.size(18.dp), tint = Palette.secondary) }
+            IconButton(favourite, Modifier.size(28.dp), enabled = !channel.favoritePending) { Icon(Lucide.Star, if (channel.favorite) "Remove favourite channel" else "Favourite channel", Modifier.size(18.dp), tint = if (channel.favorite) Palette.accent else Palette.secondary) }
         }
         HorizontalDivider(color = Palette.raised)
     }

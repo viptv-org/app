@@ -1,0 +1,513 @@
+VIPTV_ISOLATED_WEB_OUTPUT=/tmp/viptv-kmp-browser-completion-OaZSX6/dist
+WARNING: We recommend using a newer Android Gradle plugin to use compile SDK version 37.0
+
+This Android Gradle plugin (9.1.0) was tested up to compile SDK version 36.1.
+
+You are strongly encouraged to update your project to use a newer
+Android Gradle plugin that has been tested with compile SDK version 37.0.
+
+If you are already using the latest version of the Android Gradle plugin,
+you may need to wait until a newer version with support for compile SDK version 37.0 is available.
+
+For more information refer to the compatibility table:
+https://d.android.com/r/tools/api-level-support
+
+To suppress this warning, add/update
+    android.suppressUnsupportedCompileSdk=37.0
+to this project's gradle.properties.
+Configuration 'wasmJsNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+Configuration 'wasmJsTestNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+> Task :androidApp:preBuild
+> Task :androidApp:preDebugBuild
+> Task :androidApp:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :androidApp:generateDebugResources UP-TO-DATE
+> Task :androidApp:packageDebugResources UP-TO-DATE
+> Task :composeApp:androidPreBuild UP-TO-DATE
+> Task :composeApp:preAndroidMainBuild UP-TO-DATE
+> Task :composeApp:generateAndroidMainEmptyResourceFiles UP-TO-DATE
+
+> Task :media3-ffmpeg:verifyAudioDecoder
+PASS: pinned Media3 audio decoder, three ABIs, 16 KB ELF alignment
+
+> Task :media3-ffmpeg:preBuild
+> Task :media3-ffmpeg:preDebugBuild
+> Task :media3-ffmpeg:processDebugNavigationResources UP-TO-DATE
+> Task :androidApp:processDebugNavigationResources UP-TO-DATE
+> Task :androidApp:parseDebugLocalResources UP-TO-DATE
+> Task :androidApp:generateDebugRFile UP-TO-DATE
+> Task :composeApp:kmpPartiallyResolvedDependenciesChecker
+> Task :composeApp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :composeApp:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForCommonMain UP-TO-DATE
+> Task :composeApp:prepareComposeResourcesTaskForCommonMain UP-TO-DATE
+> Task :composeApp:generateResourceAccessorsForCommonMain UP-TO-DATE
+> Task :composeApp:convertXmlValueResourcesForNativePlayerMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForNativePlayerMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForNativePlayerMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForNativePlayerMain NO-SOURCE
+> Task :composeApp:generateActualResourceCollectorsForAndroidMain UP-TO-DATE
+> Task :composeApp:copyAndroidMainComposeResourcesToAndroidAssets UP-TO-DATE
+> Task :composeApp:packageAndroidMainResources UP-TO-DATE
+> Task :composeApp:parseAndroidMainLocalResources UP-TO-DATE
+> Task :composeApp:generateAndroidMainRFile UP-TO-DATE
+> Task :composeApp:generateComposeResClass UP-TO-DATE
+> Task :composeApp:generateExpectResourceCollectorsForCommonMain UP-TO-DATE
+> Task :media3-ffmpeg:preReleaseBuild
+> Task :media3-ffmpeg:generateReleaseResources UP-TO-DATE
+> Task :media3-ffmpeg:packageReleaseResources UP-TO-DATE
+> Task :media3-ffmpeg:processReleaseNavigationResources UP-TO-DATE
+> Task :media3-ffmpeg:parseReleaseLocalResources UP-TO-DATE
+> Task :media3-ffmpeg:generateReleaseRFile UP-TO-DATE
+> Task :media3-ffmpeg:compileReleaseKotlin NO-SOURCE
+> Task :media3-ffmpeg:javaPreCompileRelease UP-TO-DATE
+> Task :media3-ffmpeg:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :media3-ffmpeg:bundleLibCompileToJarRelease UP-TO-DATE
+
+> Task :composeApp:compileAndroidMain
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/AccountInfo.kt:10:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentTitles.kt:36:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentTitles.kt:39:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentTitles.kt:53:9 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/PlaybackFrameAcknowledgment.kt:16:26 'typealias IOException = IOException' is deprecated. Use kotlinx.io.IOException instead.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteDiscovery.kt:25:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteDiscovery.kt:35:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteLibrary.kt:26:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteLibrary.kt:29:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteNextEpisode.kt:31:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteProfiles.kt:25:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSearch.kt:24:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSubtitles.kt:23:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/AvatarPicker.kt:41:73 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/BrowserAccountForm.kt:37:94 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/BrowserAccountForm.kt:41:40 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/BrowserAccountForm.kt:43:97 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ConnectScreen.kt:49:138 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopEmailPanel.kt:30:9 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopPasswordPanel.kt:45:48 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopPasswordPanel.kt:45:79 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceApprovalPage.kt:274:65 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceApprovalPage.kt:287:52 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceApprovalPage.kt:296:81 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceCodeInput.kt:84:9 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/IptvInputs.kt:36:48 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/IptvInputs.kt:36:79 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobilePasswordPanel.kt:41:39 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobilePasswordPanel.kt:41:70 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobileProfileEdit.kt:138:57 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/PairingBrowser.kt:26:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfileEditScreen.kt:40:69 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfileEditScreen.kt:43:36 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilePinScreen.kt:29:61 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt:27:21 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt:27:44 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt:34:5 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvIptvDialog.kt:13:48 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvIptvDialog.kt:13:84 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditDialog.kt:36:40 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditDialog.kt:40:44 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditDialog.kt:51:17 'when' is exhaustive so 'else' is redundant here.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/live/TvLiveScreen.kt:56:58 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Int'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchField.kt:24:5 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/ParentControlDialogs.kt:54:32 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SourceIntegrationForm.kt:26:62 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SourceIntegrationForm.kt:26:98 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerCalendar.kt:110:33 Unnecessary safe call on a non-null receiver of type 'MediaIdentity'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLibraryPage.kt:24:24 Condition is always 'true'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPlayback.kt:45:118 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerProgress.kt:27:109 Unnecessary safe call on a non-null receiver of type 'MediaIdentity'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/DeviceApprovalController.kt:133:17 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalConnection.kt:161:92 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/native/core/generated/native-kotlin/uniffi/viptv_core/viptv_core.kt:84:46 Redundant call of conversion method.
+
+> Task :composeApp:bundleAndroidMainClassesToCompileJar
+> Task :androidApp:compileDebugKotlin
+> Task :androidApp:javaPreCompileDebug UP-TO-DATE
+> Task :androidApp:compileDebugJavaWithJavac NO-SOURCE
+> Task :androidApp:generateDebugAssets UP-TO-DATE
+> Task :composeApp:generateAndroidMainAssets UP-TO-DATE
+> Task :composeApp:mergeAndroidMainAssets UP-TO-DATE
+> Task :media3-ffmpeg:generateDebugAssets UP-TO-DATE
+> Task :media3-ffmpeg:mergeDebugAssets UP-TO-DATE
+> Task :androidApp:mergeDebugAssets UP-TO-DATE
+> Task :androidApp:compressDebugAssets UP-TO-DATE
+> Task :androidApp:processDebugJavaRes UP-TO-DATE
+> Task :composeApp:processAndroidMainJavaRes
+> Task :media3-ffmpeg:generateDebugResources UP-TO-DATE
+> Task :media3-ffmpeg:packageDebugResources UP-TO-DATE
+> Task :media3-ffmpeg:parseDebugLocalResources UP-TO-DATE
+> Task :media3-ffmpeg:generateDebugRFile UP-TO-DATE
+> Task :media3-ffmpeg:compileDebugKotlin NO-SOURCE
+> Task :media3-ffmpeg:processDebugJavaRes NO-SOURCE
+> Task :androidApp:mergeDebugJavaResource
+> Task :androidApp:checkDebugDuplicateClasses UP-TO-DATE
+> Task :androidApp:desugarDebugFileDependencies UP-TO-DATE
+> Task :androidApp:mergeExtDexDebug UP-TO-DATE
+> Task :composeApp:bundleLibRuntimeToDirAndroidMain
+> Task :media3-ffmpeg:javaPreCompileDebug UP-TO-DATE
+> Task :media3-ffmpeg:compileDebugJavaWithJavac UP-TO-DATE
+> Task :media3-ffmpeg:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :androidApp:mergeLibDexDebug
+> Task :composeApp:writeAndroidMainAarMetadata UP-TO-DATE
+> Task :media3-ffmpeg:writeDebugAarMetadata UP-TO-DATE
+> Task :androidApp:checkDebugAarMetadata UP-TO-DATE
+> Task :androidApp:mapDebugSourceSetPaths UP-TO-DATE
+> Task :androidApp:compileDebugNavigationResources UP-TO-DATE
+> Task :androidApp:mergeDebugResources UP-TO-DATE
+> Task :androidApp:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :androidApp:extractDeepLinksDebug UP-TO-DATE
+> Task :composeApp:processAndroidMainManifest UP-TO-DATE
+> Task :media3-ffmpeg:extractDeepLinksDebug UP-TO-DATE
+> Task :media3-ffmpeg:processDebugManifest UP-TO-DATE
+> Task :androidApp:processDebugMainManifest UP-TO-DATE
+> Task :androidApp:processDebugManifest UP-TO-DATE
+> Task :androidApp:processDebugManifestForPackage UP-TO-DATE
+> Task :composeApp:mapAndroidMainSourceSetPaths UP-TO-DATE
+> Task :composeApp:compileAndroidMainLibraryResources UP-TO-DATE
+> Task :media3-ffmpeg:mapDebugSourceSetPaths UP-TO-DATE
+> Task :media3-ffmpeg:compileDebugLibraryResources UP-TO-DATE
+> Task :androidApp:processDebugResources UP-TO-DATE
+> Task :androidApp:dexBuilderDebug
+> Task :androidApp:mergeProjectDexDebug
+> Task :androidApp:mergeDebugJniLibFolders UP-TO-DATE
+> Task :composeApp:mergeAndroidMainJniLibFolders UP-TO-DATE
+> Task :composeApp:mergeAndroidMainNativeLibs NO-SOURCE
+> Task :composeApp:copyAndroidMainJniLibsProjectOnly UP-TO-DATE
+> Task :media3-ffmpeg:mergeDebugJniLibFolders UP-TO-DATE
+> Task :media3-ffmpeg:mergeDebugNativeLibs UP-TO-DATE
+> Task :media3-ffmpeg:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :androidApp:mergeDebugNativeLibs UP-TO-DATE
+> Task :androidApp:stripDebugDebugSymbols UP-TO-DATE
+> Task :androidApp:validateSigningDebug UP-TO-DATE
+> Task :androidApp:writeDebugAppMetadata UP-TO-DATE
+> Task :androidApp:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :androidApp:packageDebug
+> Task :androidApp:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :androidApp:assembleDebug
+
+> Task :composeApp:checkDesktopMainComposeLibrariesCompatibility
+w: Skiko dependencies' versions are incompatible.
+    io.coil-kt.coil3:coil-core-jvm:3.6.3
+    \--- org.jetbrains.skiko:skiko:0.150.1 -> 0.153.0
+
+This may lead to compilation errors or unexpected behavior at runtime.
+Such version mismatch might be caused by dependency constraints in one of the included libraries.
+You can inspect resulted dependencies tree via `./gradlew :composeApp:dependencies  --configuration desktopRuntimeClasspath`.
+See more details in Gradle documentation: https://docs.gradle.org/current/userguide/viewing_debugging_dependencies.html#sec:listing-dependencies
+If the mismatch is expected, you can exclude a library from this check:
+    compose { dependencyCompatibility { exclude("<group>") } }
+
+Note: Skiko is considered implementation detail in Compose Multiplatform and might be incompatible across versions.
+Please align Skiko dependencies to the same version. If possible, avoid direct Skiko references and use Compose APIs instead.
+
+
+> Task :composeApp:convertXmlValueResourcesForDesktopMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForDesktopMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForDesktopMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForDesktopMain NO-SOURCE
+> Task :composeApp:generateActualResourceCollectorsForDesktopMain UP-TO-DATE
+> Task :composeApp:prepareKitePlayer UP-TO-DATE
+> Task :composeApp:compileKotlinDesktop UP-TO-DATE
+> Task :composeApp:compileDesktopMainJava NO-SOURCE
+
+> Task :composeApp:checkDesktopTestComposeLibrariesCompatibility
+w: Skiko dependencies' versions are incompatible.
+    io.coil-kt.coil3:coil-core-jvm:3.6.3
+    \--- org.jetbrains.skiko:skiko:0.150.1 -> 0.153.0
+
+This may lead to compilation errors or unexpected behavior at runtime.
+Such version mismatch might be caused by dependency constraints in one of the included libraries.
+You can inspect resulted dependencies tree via `./gradlew :composeApp:dependencies  --configuration desktopTestRuntimeClasspath`.
+See more details in Gradle documentation: https://docs.gradle.org/current/userguide/viewing_debugging_dependencies.html#sec:listing-dependencies
+If the mismatch is expected, you can exclude a library from this check:
+    compose { dependencyCompatibility { exclude("<group>") } }
+
+Note: Skiko is considered implementation detail in Compose Multiplatform and might be incompatible across versions.
+Please align Skiko dependencies to the same version. If possible, avoid direct Skiko references and use Compose APIs instead.
+
+
+> Task :composeApp:assembleDesktopMainResources UP-TO-DATE
+> Task :composeApp:desktopProcessResources UP-TO-DATE
+> Task :composeApp:processDesktopMainResources SKIPPED
+> Task :composeApp:desktopMainClasses UP-TO-DATE
+> Task :composeApp:desktopJar UP-TO-DATE
+> Task :composeApp:convertXmlValueResourcesForCommonTest NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForCommonTest NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForCommonTest NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForCommonTest NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForDesktopTest NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForDesktopTest NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForDesktopTest NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForDesktopTest NO-SOURCE
+> Task :composeApp:compileTestKotlinDesktop UP-TO-DATE
+> Task :composeApp:compileDesktopTestJava NO-SOURCE
+> Task :composeApp:assembleDesktopTestResources UP-TO-DATE
+> Task :composeApp:desktopTestProcessResources UP-TO-DATE
+> Task :composeApp:processDesktopTestResources SKIPPED
+> Task :composeApp:desktopTestClasses UP-TO-DATE
+> Task :composeApp:desktopTest
+> Task :kotlinWasmKotlinNpmCachesSetup
+> Task :kotlinWasmNodeJsSetup UP-TO-DATE
+> Task :kotlinWasmRestoreYarnLock UP-TO-DATE
+> Task :kotlinWasmYarnSetup UP-TO-DATE
+> Task :composeApp:wasmJsPackageJson UP-TO-DATE
+> Task :composeApp:wasmJsTestPackageJson UP-TO-DATE
+> Task :composeApp:wasmJsPublicPackageJson UP-TO-DATE
+> Task :composeApp:wasmJsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinWasmPackageJsonUmbrella UP-TO-DATE
+> Task :wasmRootPackageJson UP-TO-DATE
+> Task :kotlinWasmNpmInstall UP-TO-DATE
+> Task :kotlinWasmToolingSetup UP-TO-DATE
+> Task :kotlinWasmStoreYarnLock UP-TO-DATE
+> Task :composeApp:wasmJsResolveResourcesFromDependencies UP-TO-DATE
+> Task :composeApp:convertXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForWasmJsMain NO-SOURCE
+> Task :composeApp:assembleWasmJsMainResources UP-TO-DATE
+> Task :composeApp:wasmJsResolveSelfResourcesCopyHierarchicalMultiplatformResources UP-TO-DATE
+> Task :composeApp:wasmJsAggregateResources UP-TO-DATE
+> Task :composeApp:wasmJsProcessResources UP-TO-DATE
+
+> Task :composeApp:checkWasmJsMainComposeLibrariesCompatibility
+w: Skiko dependencies' versions are incompatible.
+    io.coil-kt.coil3:coil-core-wasm-js:3.6.3
+    \--- org.jetbrains.skiko:skiko:0.150.1 -> 0.153.0
+
+This may lead to compilation errors or unexpected behavior at runtime.
+Such version mismatch might be caused by dependency constraints in one of the included libraries.
+You can inspect resulted dependencies tree via `./gradlew :composeApp:dependencies  --configuration wasmJsRuntimeClasspath`.
+See more details in Gradle documentation: https://docs.gradle.org/current/userguide/viewing_debugging_dependencies.html#sec:listing-dependencies
+If the mismatch is expected, you can exclude a library from this check:
+    compose { dependencyCompatibility { exclude("<group>") } }
+
+Note: Skiko is considered implementation detail in Compose Multiplatform and might be incompatible across versions.
+Please align Skiko dependencies to the same version. If possible, avoid direct Skiko references and use Compose APIs instead.
+
+
+> Task :composeApp:generateResourceAccessorsForWasmJsMain NO-SOURCE
+> Task :composeApp:generateActualResourceCollectorsForWasmJsMain UP-TO-DATE
+
+> Task :composeApp:compileKotlinWasmJs
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/AccountInfo.kt:10:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentTitles.kt:36:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentTitles.kt:39:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentTitles.kt:53:9 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/PlaybackFrameAcknowledgment.kt:16:26 'typealias IOException = IOException' is deprecated. Use kotlinx.io.IOException instead.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteDiscovery.kt:25:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteDiscovery.kt:35:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteLibrary.kt:26:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteLibrary.kt:29:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteNextEpisode.kt:31:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteProfiles.kt:25:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSearch.kt:24:5 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSubtitles.kt:23:12 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/AvatarPicker.kt:41:73 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/BrowserAccountForm.kt:37:94 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/BrowserAccountForm.kt:41:40 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/BrowserAccountForm.kt:43:97 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ConnectScreen.kt:49:138 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopEmailPanel.kt:30:9 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopPasswordPanel.kt:45:48 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopPasswordPanel.kt:45:79 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceApprovalPage.kt:274:65 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceApprovalPage.kt:287:52 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceApprovalPage.kt:296:81 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceCodeInput.kt:84:9 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/IptvInputs.kt:36:48 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/IptvInputs.kt:36:79 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobilePasswordPanel.kt:41:39 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobilePasswordPanel.kt:41:70 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobileProfileEdit.kt:138:57 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/PairingBrowser.kt:26:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfileEditScreen.kt:40:69 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfileEditScreen.kt:43:36 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilePinScreen.kt:29:61 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt:27:21 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt:27:44 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt:34:5 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvIptvDialog.kt:13:48 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvIptvDialog.kt:13:84 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditDialog.kt:36:40 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditDialog.kt:40:44 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditDialog.kt:51:17 'when' is exhaustive so 'else' is redundant here.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/live/TvLiveScreen.kt:56:58 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Int'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchField.kt:24:5 'fun BasicTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., readOnly: Boolean = ..., textStyle: TextStyle = ..., keyboardOptions: KeyboardOptions = ..., keyboardActions: KeyboardActions = ..., singleLine: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., visualTransformation: VisualTransformation = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., interactionSource: MutableInteractionSource? = ..., cursorBrush: Brush = ..., decorationBox: ComposableFunction1<ComposableFunction0<Unit>, Unit> = ...): Unit' is deprecated. This overload of BasicTextField is deprecated in favor of the overload that uses TextFieldState to hoist its state.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/ParentControlDialogs.kt:54:32 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SourceIntegrationForm.kt:26:62 'constructor(mask: Char = ...): PasswordVisualTransformation' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to BasicSecureTextField and other SecureTextField composables for password inputs.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SourceIntegrationForm.kt:26:98 'fun interface VisualTransformation : Any' is deprecated. The TextField flavors that use VisualTransformation are deprecated. Please refer to OutputTransformation.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerCalendar.kt:110:33 Unnecessary safe call on a non-null receiver of type 'MediaIdentity'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLibraryPage.kt:24:24 Condition is always 'true'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPlayback.kt:45:118 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerProgress.kt:27:109 Unnecessary safe call on a non-null receiver of type 'MediaIdentity'.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/commonMain/kotlin/org/viptv/app/state/DeviceApprovalController.kt:133:17 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/features/settings/AddonUrlField.kt:25:67 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/features/settings/AddonUrlField.kt:30:17 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/features/settings/AddonUrlField.kt:32:56 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/features/settings/AddonUrlField.kt:33:55 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt:61:13 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt:63:71 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt:64:71 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt:65:76 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt:66:106 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt:67:176 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt:69:70 Expression is unused.
+w: file:///mnt/ALPH/code/viptv-org/app/composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserProviderSubtitle.kt:20:86 Expression is unused.
+
+> Task :composeApp:wasmJsMainClasses
+> Task :composeApp:compileProductionExecutableKotlinWasmJs
+> Task :composeApp:kotlinWasmBinaryenSetup UP-TO-DATE
+> Task :composeApp:compileProductionExecutableKotlinWasmJsOptimize
+> Task :composeApp:unpackSkikoRuntimeForWasmJs UP-TO-DATE
+> Task :composeApp:wasmJsProductionExecutableCompileSync
+
+> Task :composeApp:wasmJsBrowserProductionWebpack
+Critical dependency: the request of a dependency is an expression
+asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  composeApp.js (1.46 MiB)
+  24258118d50a339380be.wasm (8.35 MiB)
+  038b81db9c40989b0001.wasm (8.38 MiB)
+entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  main (1.46 MiB)
+      composeApp.js
+webpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/
+assets by status 8.38 MiB [cached] 1 asset
+asset 24258118d50a339380be.wasm 8.35 MiB [emitted] [immutable] [from: kotlin/VIPTV-composeApp.wasm] [big] (auxiliary name: main)
+asset composeApp.js 1.46 MiB [emitted] [compared for emit] [minimized] [big] (name: main) 2 related assets
+runtime modules 4.83 KiB 7 modules
+orphan modules 1.8 MiB [orphan] 3 modules
+built modules 2.5 MiB (javascript) 16.7 MiB (asset) [built]
+  javascript modules 2.5 MiB
+    ./kotlin/VIPTV-composeApp.mjs 3.12 KiB [built] [code generated]
+    ./kotlin/VIPTV-composeApp.import-object.mjs + 3 modules 1.88 MiB [built] [code generated]
+    ./kotlin/skiko.mjs 634 KiB [built] [code generated]
+    ./kotlin/ lazy strict namespace object 160 bytes [built] [code generated]
+  asset modules 16.7 MiB (asset) 84 bytes (javascript)
+    ./kotlin/VIPTV-composeApp.wasm 8.35 MiB (asset) 42 bytes (javascript) [built] [code generated]
+    ./kotlin/skiko.wasm 8.38 MiB (asset) 42 bytes (javascript) [built] [code generated]
+webpack 5.108.1 compiled with 4 warnings in 4672 ms
+
+> Task :composeApp:wasmJsBrowserDistribution
+> Task :androidApp:preReleaseBuild
+> Task :androidApp:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :media3-ffmpeg:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :media3-ffmpeg:mergeReleaseNativeLibs UP-TO-DATE
+> Task :media3-ffmpeg:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :androidApp:mergeReleaseNativeLibs UP-TO-DATE
+> Task :androidApp:stripReleaseDebugSymbols UP-TO-DATE
+> Task :androidApp:extractReleaseNativeSymbolTables UP-TO-DATE
+> Task :androidApp:mergeReleaseNativeDebugMetadata UP-TO-DATE
+> Task :composeApp:bundleAndroidMainClassesToRuntimeJar
+> Task :composeApp:createFullJarAndroidMain
+> Task :media3-ffmpeg:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :media3-ffmpeg:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :androidApp:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :androidApp:generateReleaseResources UP-TO-DATE
+> Task :androidApp:packageReleaseResources UP-TO-DATE
+> Task :androidApp:processReleaseNavigationResources UP-TO-DATE
+> Task :androidApp:parseReleaseLocalResources UP-TO-DATE
+> Task :androidApp:generateReleaseRFile UP-TO-DATE
+> Task :androidApp:compileReleaseKotlin
+> Task :androidApp:javaPreCompileRelease UP-TO-DATE
+> Task :androidApp:compileReleaseJavaWithJavac NO-SOURCE
+> Task :composeApp:prepareAndroidMainArtProfile UP-TO-DATE
+> Task :media3-ffmpeg:prepareReleaseArtProfile UP-TO-DATE
+> Task :androidApp:mergeReleaseArtProfile UP-TO-DATE
+> Task :media3-ffmpeg:writeReleaseAarMetadata UP-TO-DATE
+> Task :androidApp:checkReleaseAarMetadata UP-TO-DATE
+> Task :androidApp:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :androidApp:compileReleaseNavigationResources UP-TO-DATE
+> Task :androidApp:mergeReleaseResources UP-TO-DATE
+> Task :androidApp:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :androidApp:extractDeepLinksRelease UP-TO-DATE
+> Task :media3-ffmpeg:extractDeepLinksRelease UP-TO-DATE
+> Task :media3-ffmpeg:processReleaseManifest UP-TO-DATE
+> Task :androidApp:processReleaseMainManifest UP-TO-DATE
+> Task :androidApp:processReleaseManifest UP-TO-DATE
+> Task :androidApp:processReleaseManifestForPackage UP-TO-DATE
+> Task :media3-ffmpeg:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :media3-ffmpeg:compileReleaseLibraryResources UP-TO-DATE
+> Task :androidApp:processReleaseResources UP-TO-DATE
+> Task :media3-ffmpeg:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :androidApp:expandReleaseArtProfileWildcards
+> Task :androidApp:extractProguardFiles UP-TO-DATE
+> Task :androidApp:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :androidApp:processReleaseJavaRes UP-TO-DATE
+> Task :media3-ffmpeg:processReleaseJavaRes NO-SOURCE
+> Task :androidApp:mergeReleaseJavaResource
+> Task :androidApp:mergeReleaseStartupProfile UP-TO-DATE
+> Task :androidApp:minifyReleaseWithR8
+> Task :androidApp:produceReleaseComposeMapping
+> Task :androidApp:reportReleaseComposeMappingErrors
+> Task :androidApp:mergeReleaseComposeMapping
+> Task :androidApp:compileReleaseArtProfile
+> Task :androidApp:generateReleaseAssets UP-TO-DATE
+> Task :media3-ffmpeg:generateReleaseAssets UP-TO-DATE
+> Task :media3-ffmpeg:mergeReleaseAssets UP-TO-DATE
+> Task :androidApp:mergeReleaseAssets UP-TO-DATE
+> Task :androidApp:compressReleaseAssets UP-TO-DATE
+> Task :androidApp:extractReleaseVersionControlInfo UP-TO-DATE
+> Task :composeApp:prepareLintJarForPublish UP-TO-DATE
+> Task :media3-ffmpeg:createFullJarRelease UP-TO-DATE
+> Task :media3-ffmpeg:extractProguardFiles UP-TO-DATE
+> Task :media3-ffmpeg:generateReleaseLintModel UP-TO-DATE
+> Task :media3-ffmpeg:prepareLintJarForPublish UP-TO-DATE
+> Task :androidApp:generateReleaseLintVitalReportModel
+> Task :composeApp:checkAndroidMainAarMetadata UP-TO-DATE
+> Task :composeApp:extractAndroidMainAnnotations UP-TO-DATE
+> Task :composeApp:mergeAndroidMainJavaResource
+> Task :composeApp:syncAndroidMainLibJars
+> Task :composeApp:bundleAndroidMainLocalLintAar
+> Task :media3-ffmpeg:checkReleaseAarMetadata UP-TO-DATE
+> Task :media3-ffmpeg:stripReleaseDebugSymbols UP-TO-DATE
+> Task :media3-ffmpeg:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :media3-ffmpeg:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :media3-ffmpeg:extractReleaseAnnotations UP-TO-DATE
+> Task :media3-ffmpeg:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :media3-ffmpeg:mergeReleaseJavaResource UP-TO-DATE
+> Task :media3-ffmpeg:syncReleaseLibJars UP-TO-DATE
+> Task :media3-ffmpeg:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :media3-ffmpeg:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :media3-ffmpeg:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :androidApp:lintVitalAnalyzeRelease
+> Task :media3-ffmpeg:generateReleaseLintVitalModel UP-TO-DATE
+> Task :androidApp:lintVitalReportRelease UP-TO-DATE
+> Task :androidApp:lintVitalRelease
+> Task :androidApp:convertShrunkResourcesToBinaryRelease UP-TO-DATE
+> Task :androidApp:optimizeReleaseResources UP-TO-DATE
+> Task :androidApp:collectReleaseDependencies UP-TO-DATE
+> Task :androidApp:sdkReleaseDependencyData UP-TO-DATE
+> Task :androidApp:validateSigningRelease UP-TO-DATE
+> Task :androidApp:writeReleaseAppMetadata UP-TO-DATE
+> Task :androidApp:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :androidApp:packageRelease
+> Task :androidApp:createReleaseApkListingFileRedirect UP-TO-DATE
+> Task :androidApp:assembleRelease
+> Task :composeApp:checkRuntime
+> Task :composeApp:createRuntimeImage UP-TO-DATE
+> Task :composeApp:prepareAppResources NO-SOURCE
+> Task :composeApp:unpackDefaultComposeDesktopJvmApplicationResources UP-TO-DATE
+
+> Task :composeApp:createDistributableImpl
+The distribution is written to /mnt/ALPH/code/viptv-org/app/composeApp/build/compose/binaries/main/app
+
+> Task :composeApp:createDistributable
+
+[Incubating] Problems report is available at: file:///mnt/ALPH/code/viptv-org/app/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 3m 19s
+216 actionable tasks: 42 executed, 174 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.3.1/userguide/configuration_cache_enabling.html

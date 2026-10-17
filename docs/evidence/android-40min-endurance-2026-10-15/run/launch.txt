@@ -1,0 +1,7 @@
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.viptv.experiment/.LifecycleQaActivity (has extras) }
+Status: ok
+LaunchState: COLD
+Activity: org.viptv.experiment/.LifecycleQaActivity
+TotalTime: 880
+WaitTime: 891
+Complete

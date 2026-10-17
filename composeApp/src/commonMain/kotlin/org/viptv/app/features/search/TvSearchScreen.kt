@@ -27,15 +27,16 @@ import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.app.connection.SearchResultRow
 
 @Composable
 internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean,
     error: String?, query: (String) -> Unit, open: (Card) -> Unit, editQuery: ((String) -> String) -> Unit,
-    suggestions: List<String> = emptyList()) {
+    suggestions: List<String> = emptyList(), searchRows: List<SearchResultRow> = emptyList()) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         var focusedId by rememberSaveable(term) { mutableStateOf<String?>(null) }
-        val restoreId = remember { focusedId }
+        val restoreId = remember(term) { focusedId }
         val rows = rememberLazyListState()
         val scope = rememberCoroutineScope()
         var activeRow by remember { mutableIntStateOf(-1) }
@@ -46,9 +47,11 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 rowMotion = scope.launch { rows.animateScrollToItem(index) }
             }
         }
-        val unique = results.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
+        val unique = results.distinctBy(::searchCardKey)
         val titles = unique.filter { it.identity.kind !in listOf("channel", "tv") }
-        val channels = unique.filter { it.identity.kind in listOf("channel", "tv") }
+        val channels = if (searchRows.isEmpty()) unique.filter { it.identity.kind in listOf("channel", "tv") } else emptyList()
+        val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows) else searchGroups(titles, addons)
+        val hasResults = if (searchRows.isNotEmpty()) searchRows.any { it.cards.isNotEmpty() } else unique.isNotEmpty()
         TvFocusScroll(manual = true) {
         Row(Modifier.fillMaxSize().padding(start = 96.dp * scale, end = 96.dp * scale, top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(84.dp * scale)) {
             Column(Modifier.width(520.dp * scale)) {
@@ -78,18 +81,18 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 }
             }
             LazyColumn(Modifier.weight(1f), state = rows, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
-                if (busy && unique.isEmpty()) item { TvSearchLoading(scale) }
+                if (busy && !hasResults && groups.none { it.message != null }) item { TvSearchLoading(scale) }
                 error?.let { item { Text(it, color = Palette.danger) } }
-                val groups = searchGroups(titles, addons)
                 groups.forEachIndexed { rowIndex, group -> item(key = group.id) {
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp * scale)) {
                         Text(group.label,
                             Modifier.height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
                             letterSpacing = (-.3f * scale).sp, fontWeight = FontWeight.SemiBold)
+                        (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, fontSize = (22 * scale).sp, color = Palette.secondary) }
                         TvFocusScroll {
                         LazyRow(modifier = Modifier.focusRestorer(), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                            items(group.cards, key = { it.identity.kind + ":" + it.identity.id }) { card ->
-                                val key = "${card.provider_id}:${card.identity.kind}:${card.identity.id}"
+                            items(group.cards, key = ::searchCardKey) { card ->
+                                val key = searchFocusKey(group, card)
                                 val requester = remember { FocusRequester() }
                                 if (key == restoreId) LaunchedEffect(Unit) { withFrameNanos { }; requester.requestFocus() }
                                 MediaCard(card, (212 * scale).toInt(), portrait = true, showLabels = true, labelScale = scale * 1.7f,
@@ -111,7 +114,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                         }
                     }
                 }
-                if (!busy && error == null && unique.isEmpty()) item {
+                if (!busy && error == null && !hasResults && groups.none { it.message != null }) item {
                     Text(if (term.isBlank()) "Search movies, series and channels" else "No matches. Try another search.", fontSize = (24 * scale).sp, color = Palette.secondary)
                 }
             }

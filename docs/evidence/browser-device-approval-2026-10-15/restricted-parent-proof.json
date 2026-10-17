@@ -1,0 +1,136 @@
+{
+  "phase": "complete",
+  "wrong_pin": true,
+  "lookup_retry": true,
+  "explicit_approval": true,
+  "expired_grant_retry": true,
+  "truthful_signout": true,
+  "page_errors": 0,
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/lookup",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/parent/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/parent/unlock",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/parent/unlock",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/lookup",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/approve",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/parent/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/parent/unlock",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/approve",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/parent/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/parent/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/parent/unlock",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 200
+    }
+  ]
+}

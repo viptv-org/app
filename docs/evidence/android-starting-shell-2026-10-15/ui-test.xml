@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="StartupShellUiTest[desktop]" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-15T11:26:53.135Z" hostname="vynxcos" time="1.907">
+  <properties/>
+  <testcase name="safeStartingScreenAllowsConnectionChangeBeforeAnimationAndHidesCachedPrivateContent[desktop]" classname="org.viptv.app.StartupShellUiTest" time="1.905"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

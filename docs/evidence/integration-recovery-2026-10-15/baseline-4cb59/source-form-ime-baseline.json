@@ -1,0 +1,27 @@
+{
+  "apk_sha256": "4cb59ab8ea453d8e20dfc5b731fe8b430bc1818c7a95e55a9c8d59bbed4f3193",
+  "device": "owned API35 emulator5590,720x1600,density280",
+  "form": "actual VIPTV Sources schema with write-only TMDB field and supplied provider choices",
+  "ime_top": 1000,
+  "action_control_bounds": {
+    "Cancel": [
+      361,
+      1144,
+      482,
+      1228
+    ],
+    "Save": [
+      496,
+      1144,
+      598,
+      1228
+    ]
+  },
+  "actions_obscured": true,
+  "keyboard_sources": [
+    "InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null",
+    "mSource=InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null"
+  ],
+  "credential_submitted": false,
+  "network_credentials_used": false
+}

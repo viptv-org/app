@@ -1,0 +1,6 @@
+{
+  "owned_reverse_port": 42475,
+  "reverse_cleanup": "Owned transport stopped; mapping removed with exact5590 transport",
+  "stopped_only_server_pid": 3121654,
+  "server_gone": true
+}

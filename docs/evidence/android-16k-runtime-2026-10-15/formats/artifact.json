@@ -1,0 +1,6 @@
+{
+  "apk_sha256": "6eced38254399cafec14bdfab6f9ccdff9d615c929ff9f2e74155d5368da38c3",
+  "variant": "debug",
+  "app_page_size": 16384,
+  "compatibility_fallback": false
+}

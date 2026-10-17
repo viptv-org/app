@@ -1,0 +1,18 @@
+{
+  "read_only": true,
+  "backend_gateway_rows": 1,
+  "gateway_integration_records": 4,
+  "comparison": [
+    {
+      "backend_enabled": true,
+      "master_key_id_available": true,
+      "backend_key_has_valid_integration_shape": true,
+      "gateway_hash_match": true,
+      "matched_key_active": false,
+      "matched_namespace_allowed": true,
+      "matched_key_revoked": false,
+      "matched_key_expired": true
+    }
+  ],
+  "manual_configuration_changed": false
+}

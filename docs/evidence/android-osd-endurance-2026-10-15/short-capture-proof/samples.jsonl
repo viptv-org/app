@@ -1,0 +1,12 @@
+{"elapsed_ms": 5809, "position_ms": 617161, "window_ms": 4000, "seeks": 1, "renderer_position_ms": 13180, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -19, "host_sustain_wall_ms": 5808}
+{"elapsed_ms": 10809, "position_ms": 622174, "window_ms": 4000, "seeks": 1, "renderer_position_ms": 18174, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": 0, "host_sustain_wall_ms": 10807}
+{"elapsed_ms": 15809, "position_ms": 626981, "window_ms": 4000, "seeks": 1, "renderer_position_ms": 23174, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -193, "host_sustain_wall_ms": 15808}
+{"elapsed_ms": 20810, "position_ms": 631990, "window_ms": 4000, "seeks": 1, "renderer_position_ms": 28174, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -184, "host_sustain_wall_ms": 20808}
+{"elapsed_ms": 25810, "position_ms": 637001, "window_ms": 4000, "seeks": 1, "renderer_position_ms": 33175, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -174, "host_sustain_wall_ms": 25809}
+{"elapsed_ms": 30810, "position_ms": 642003, "window_ms": 8000, "seeks": 1, "renderer_position_ms": 34176, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -173, "host_sustain_wall_ms": 30809}
+{"elapsed_ms": 36463, "position_ms": 629139, "window_ms": 14000, "seeks": 2, "renderer_position_ms": 15148, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -9, "host_sustain_wall_ms": 36463}
+{"elapsed_ms": 41463, "position_ms": 634140, "window_ms": 20000, "seeks": 2, "renderer_position_ms": 14151, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -11, "host_sustain_wall_ms": 41463}
+{"elapsed_ms": 46463, "position_ms": 638957, "window_ms": 24000, "seeks": 2, "renderer_position_ms": 15150, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -193, "host_sustain_wall_ms": 46464}
+{"elapsed_ms": 51463, "position_ms": 643966, "window_ms": 30000, "seeks": 2, "renderer_position_ms": 14149, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -183, "host_sustain_wall_ms": 51463}
+{"elapsed_ms": 56463, "position_ms": 648972, "window_ms": 34000, "seeks": 2, "renderer_position_ms": 15146, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -174, "host_sustain_wall_ms": 56463}
+{"elapsed_ms": 61464, "position_ms": 653983, "window_ms": 40000, "seeks": 2, "renderer_position_ms": 14147, "input_offset_ms": 600000, "speed": 1.0, "clock_error_ms": -164, "host_sustain_wall_ms": 61465}

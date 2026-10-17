@@ -1,0 +1,23 @@
+--------- beginning of crash
+E/AndroidRuntime( 3055): FATAL EXCEPTION: main
+E/AndroidRuntime( 3055): Process: com.google.android.apps.mediashell, PID: 3055
+E/AndroidRuntime( 3055): java.lang.UnsatisfiedLinkError: dlopen failed: "/product/priv-app/AndroidMediaShell/AndroidMediaShell.apk!/lib/x86_64/libcast_service.so" program alignment (4096) cannot be smaller than system page size (16384)
+E/AndroidRuntime( 3055): 	at java.lang.Runtime.loadLibrary0(Runtime.java:1090)
+E/AndroidRuntime( 3055): 	at java.lang.Runtime.loadLibrary0(Runtime.java:1012)
+E/AndroidRuntime( 3055): 	at java.lang.System.loadLibrary(System.java:1765)
+E/AndroidRuntime( 3055): 	at com.google.android.apps.mediashell.NativeLibraryInitializer.ensureInitialized(NativeLibraryInitializer.java:22)
+E/AndroidRuntime( 3055): 	at com.google.android.apps.mediashell.CastReceiverService.buildCastReceiver(CastReceiverService.java:237)
+E/AndroidRuntime( 3055): 	at com.google.android.apps.mediashell.CastReceiverService.$r8$lambda$QWOVeqwF2n-BJkwMVYuZeZSW7u0(Unknown Source:0)
+E/AndroidRuntime( 3055): 	at com.google.android.apps.mediashell.CastReceiverService$$ExternalSyntheticLambda3.get(Unknown Source:2)
+E/AndroidRuntime( 3055): 	at com.google.android.apps.mediashell.CastReceiverService.startReceiver(CastReceiverService.java:257)
+E/AndroidRuntime( 3055): 	at com.google.android.apps.mediashell.CastReceiverService.onStartCommand(CastReceiverService.java:175)
+E/AndroidRuntime( 3055): 	at android.app.ActivityThread.handleServiceArgs(ActivityThread.java:5453)
+E/AndroidRuntime( 3055): 	at android.app.ActivityThread.-$$Nest$mhandleServiceArgs(Unknown Source:0)
+E/AndroidRuntime( 3055): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2647)
+E/AndroidRuntime( 3055): 	at android.os.Handler.dispatchMessage(Handler.java:110)
+E/AndroidRuntime( 3055): 	at android.os.Looper.loopOnce(Looper.java:248)
+E/AndroidRuntime( 3055): 	at android.os.Looper.loop(Looper.java:338)
+E/AndroidRuntime( 3055): 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+E/AndroidRuntime( 3055): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime( 3055): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+E/AndroidRuntime( 3055): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)

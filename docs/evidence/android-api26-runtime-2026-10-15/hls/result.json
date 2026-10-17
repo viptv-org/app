@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "sdk": 26,
+  "avd": "viptv-api26-isolated",
+  "immutable_debug_sha256": "7699e92dc23a037933402abebfcf30bcba40b378ea4d37c212efddd3424cf414",
+  "scope": "real NativePlaybackQaActivity and TvPlayerScreen on normal-mode API26 OS; not MainActivity/controller TV lifecycle",
+  "stages": [
+    {
+      "stage": "playing",
+      "position_ms": 10502,
+      "sample_count": 14
+    },
+    {
+      "stage": "user_paused",
+      "position_ms": 10677,
+      "sample_count": 15
+    },
+    {
+      "stage": "paused_stable",
+      "position_ms": 10677,
+      "sample_count": 17
+    },
+    {
+      "stage": "paused_seek",
+      "position_ms": 9677,
+      "sample_count": 21
+    },
+    {
+      "stage": "paused_home_return",
+      "position_ms": 9677,
+      "sample_count": 48
+    },
+    {
+      "stage": "playing_resumed",
+      "position_ms": 11246,
+      "sample_count": 57
+    },
+    {
+      "stage": "playing_background_stopped",
+      "position_ms": 11394,
+      "sample_count": 60
+    },
+    {
+      "stage": "playing_home_return",
+      "position_ms": 13069,
+      "sample_count": 87
+    }
+  ],
+  "paused_seek_delta_ms": -1000,
+  "first_return_position_ms": 11394,
+  "opening_count": 1,
+  "wall_ms": 23540,
+  "ffmpeg_aac": true,
+  "h264_rendered": true,
+  "first_frame": true,
+  "user_paused_home_return": true,
+  "playing_home_return": true
+}

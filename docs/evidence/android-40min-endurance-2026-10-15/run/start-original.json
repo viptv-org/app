@@ -1,0 +1,9 @@
+{
+  "driver_pid": 3041940,
+  "avd": "viptv-16k-isolated",
+  "serial": "emulator-5586",
+  "apk_sha256": "347e9bfc1871c4da1ecfe43d56f1f9a66c3999ada6e52cb1823f7069baefd207",
+  "sustain_requested_ms": 2460000,
+  "started_utc": "2026-10-15T19:07:23.457203+00:00",
+  "fixture": "synthetic H264/AAC rolling HLS; actual normal-speed renderer; host offset is not elapsed time"
+}

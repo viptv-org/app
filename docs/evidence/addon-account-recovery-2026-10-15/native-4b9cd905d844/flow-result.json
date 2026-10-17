@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "synthetic_provider": true,
+  "url": "http://127.0.0.1:45017/manifest.json",
+  "add_text_bounds": [
+    281,
+    523,
+    489,
+    559
+  ],
+  "advanced_text_bounds": [
+    28,
+    651,
+    320,
+    693
+  ],
+  "rapid_first_taps": 3,
+  "first_submit_manifest_requests": 1,
+  "failure_retains_exact_url_and_error": true,
+  "success_sheet_closes": true,
+  "success_error_cleared": true,
+  "success_reopen_url_blank": true,
+  "reopen_install_disabled": true,
+  "own_record_removed": true,
+  "original_preferences_unchanged": true,
+  "original_connections_unchanged": true,
+  "profile_descriptor_excluding_revision_unchanged": true,
+  "expected_profile_revision": {
+    "before": 2,
+    "after": 4
+  },
+  "server": {
+    "manifest_attempts": 2,
+    "events": [
+      {
+        "method": "GET",
+        "path": "/manifest.json",
+        "status": 503,
+        "manifest_attempts": 1,
+        "time": 1792098177.6146379
+      },
+      {
+        "method": "GET",
+        "path": "/manifest.json",
+        "status": 200,
+        "manifest_attempts": 2,
+        "time": 1792098183.866478
+      },
+      {
+        "method": "GET",
+        "path": "/catalog/movie/synthetic-phone.json",
+        "status": 200,
+        "manifest_attempts": 2,
+        "time": 1792098185.8929462
+      }
+    ]
+  }
+}

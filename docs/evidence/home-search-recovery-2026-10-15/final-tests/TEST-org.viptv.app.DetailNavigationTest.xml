@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="DetailNavigationTest[desktop]" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:01.920Z" hostname="vynxcos" time="0.0">
+  <properties/>
+  <testcase name="sourceBackReturnsToLiveWithoutStartingAnotherCatalogRequest[desktop]" classname="org.viptv.app.DetailNavigationTest" time="0.0"/>
+  <testcase name="relatedTitleBackRestoresPriorDetailThenOriginalSearch[desktop]" classname="org.viptv.app.DetailNavigationTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

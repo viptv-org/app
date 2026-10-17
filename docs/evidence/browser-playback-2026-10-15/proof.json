@@ -1,0 +1,405 @@
+{
+  "phase": "complete",
+  "detail": true,
+  "source": true,
+  "first_frame": true,
+  "pause": true,
+  "captions": true,
+  "caption_size": true,
+  "seek": true,
+  "cleanup": true,
+  "page_errors": [],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/meta/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/streams",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/streams/<id>",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/source-ranking",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/<id>/first-frame",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/<id>/progress",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitle-content/<id>",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/<id>/progress",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitle-content/<id>",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/<id>/first-frame",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/<id>/progress",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    }
+  ],
+  "source_origin": true,
+  "subtitle_origins": [
+    true,
+    true
+  ],
+  "media_requests": [
+    {
+      "name": "index.m3u8",
+      "status": 200
+    },
+    {
+      "name": "segment-000000000.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000001.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000002.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000003.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000004.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000005.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000006.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000007.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000008.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000009.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000010.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000011.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000012.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000013.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000014.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000015.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000016.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000017.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000018.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000019.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000020.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000021.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000022.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000023.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000024.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000025.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000026.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000027.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000028.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000029.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000030.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000031.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000032.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000033.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000034.ts",
+      "status": 200
+    },
+    {
+      "name": "index.m3u8",
+      "status": 200
+    },
+    {
+      "name": "segment-000000000.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000001.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000002.ts",
+      "status": 200
+    }
+  ],
+  "timeline_offset": 28.778,
+  "initial_offset": 0,
+  "original_duration": 52.208333,
+  "media": {
+    "width": 854,
+    "height": 480,
+    "duration": 52.208335999999996,
+    "presented": 97
+  },
+  "progress_origins": [
+    true,
+    true,
+    true
+  ],
+  "seek_paused_sample": {
+    "position": 0,
+    "paused": true,
+    "buffered": [
+      [
+        0.021333,
+        5.021332
+      ]
+    ],
+    "seekable": [
+      [
+        0,
+        5.034666
+      ]
+    ]
+  },
+  "rebased_captions": [
+    {
+      "text": "Browser fixture after seek",
+      "start": 0,
+      "end": 11.222000000000001
+    }
+  ],
+  "before_resume": {
+    "position": 0,
+    "paused": true,
+    "wall": 9610.900000035763
+  },
+  "after_seek": {
+    "position": 1.288941,
+    "duration": 5.034666,
+    "presented": 36,
+    "wall": 11006.800000011921,
+    "original_position": 30.066941
+  },
+  "saved_progress": 0.5795663499846767,
+  "saved_original_position": 30.25819299559455,
+  "recorded_at_utc": "2026-10-15T13:43:50.897793+00:00",
+  "scope": "Actual production Wasm Chromium UI, isolated test-only API host and normal gateway, synthetic provider and public Sintel trailer. No route interception or TLS bypass.",
+  "backend_test_binary_sha256": "9768126a3f9f40c6be39820ce443a20bfb7044aacb319ad75bc888d9b3fd2acc",
+  "gateway_binary_sha256": "9796d09a0625c52af0552eabc084053226c84367032711a46d573cbc829329f2",
+  "saved_position_difference_seconds": 0.19125199559454842,
+  "resume_wall_seconds": 1.395899999976158,
+  "bundle_sha256": {
+    "e8e56a3e8f1a9525ef40.wasm": "6279b63f985de9e9f66e90c65bf7b7e1c59261e378525e02db6382c4fb84fc34",
+    "55b0b65b0f3857dc7f47.wasm": "cae7c0959b31fa93a4f4f9a53cdb9c9635d04f3f110499cf90991b523b2ff73c",
+    "index.html": "f43bb471f0393b962a4a3e397c3e4f0ff050406d9573abc892413e788e709e9b",
+    "composeApp.js": "921835102477c95799b0ef7ed2a3bc080882b7aaea688bc077f09b56d010043b",
+    "038b81db9c40989b0001.wasm": "8888eca6fff9a73ecdffba02379b52ba019b6f97c4006650b5124764cbf48fb6",
+    "b2688e8c4d94bfad6def.wasm": "9605023598a7509a520defe9179cd2d7020049c557e0f591c31ba376b124fbe6"
+  },
+  "source_sha256": {
+    "composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt": "21e0bdf1d023de9a6db65afa1dce3ae7189fedcbb2c04b2d7a8bc4ded1b24ec2",
+    "composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/HlsPreferences.kt": "a6dd865f72c1903bdaf4e602a879fd241f1b095c915787cef49307a96a5d2b6d",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/player/BrowserCaptionStyle.kt": "d50586c4056d8b5af5b8f90e4b5b2415507e88af167931327adacbd6a3c2b0eb"
+  },
+  "manual_qa_preservation": {
+    "checked_at_utc": "2026-10-15T13:48:45.835488+00:00",
+    "default_wasm_files_unchanged": 109,
+    "api_health_status": 200,
+    "gateway_health_status": 200,
+    "tls_verify_result": 0,
+    "physical_device_actions": false,
+    "owned_fixture_stopped": true
+  }
+}

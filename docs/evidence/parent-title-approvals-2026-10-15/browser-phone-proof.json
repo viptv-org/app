@@ -1,0 +1,65 @@
+{
+  "phase": "complete",
+  "titles": true,
+  "help": true,
+  "licenses": true,
+  "pairing_link": true,
+  "page_errors": 0,
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/account/devices",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/parent/unlock",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles/9/approvals",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/parent/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200
+    }
+  ]
+}

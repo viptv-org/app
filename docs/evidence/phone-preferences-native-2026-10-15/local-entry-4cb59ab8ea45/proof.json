@@ -1,0 +1,64 @@
+{
+  "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-release-2026-10-15/local-entry-4cb59ab8ea45/viptv-android-release-local.apk",
+  "apk_sha256": "4cb59ab8ea453d8e20dfc5b731fe8b430bc1818c7a95e55a9c8d59bbed4f3193",
+  "fixture": {
+    "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "console_port": 5590,
+    "api": 35,
+    "ram_mib": 2560,
+    "cores": 2,
+    "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+    "display": "720x1600 density280; bounded portrait phone fixture",
+    "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+    "observed_minimum_phone_ram_mib": 2560,
+    "requested_ram_mib": 1536,
+    "first_launch_stopped_for_resource_coordination": true
+  },
+  "initial_mode": "None from the preceding confirmed Leave; first new launch showed local entry",
+  "rapid_profile_selection": {
+    "events": "Single guarded adb shell: tap Use without an account, then6 Default taps at222,708 with0.1s pauses. Home observed after this0.697s burst; no UIA idle wait between events.",
+    "adb_call_duration_seconds": 0.6965381880290806,
+    "no_UIA_idle_wait_between_taps": true,
+    "preliminary_pair": "An earlier single zero-delay Default tap arrived before protected Profiles publication and was safely ignored; reset Local by confirmed Leave before this bounded first-available-frame attempt",
+    "home_reached": true
+  },
+  "cold_launch_returns_profiles": true,
+  "explicit_Default_selection_required": true,
+  "native_preferences_revision": 3,
+  "all_eight_native_preferences_unchanged": {
+    "preferred_audio_language": "fr-CA",
+    "preferred_subtitle_language": "pt-BR",
+    "subtitles_enabled": false,
+    "source_selection": "best",
+    "max_quality_height": 1080,
+    "subtitle_font_scale": 1.25,
+    "subtitle_text_color": "#1A2B3C",
+    "subtitle_background_color": "#80445566"
+  },
+  "ui_verified": [
+    "Best match",
+    "1080p",
+    "fr-CA",
+    "pt-BR"
+  ],
+  "scope": "Owned API35 private Default local profile only; no IME rerun, source edits, real accounts, physical TV, user emulator or shared service changes.",
+  "status": "passed on actual normal release API35 native fixture",
+  "visual_inspection": "All5 captures inspected",
+  "previous_ime_proof": "../ime-fix/native-6b7079b06808/proof.json",
+  "ime_sources_unchanged": true,
+  "files_sha256": {
+    "4cb59-first-entry.json": "68ed9d5913c045ccc1591478accbeb102a447fbff93c3e49440de61951b4c057",
+    "4cb59-rapid-home.json": "7b1f5f3e2b4a0a5ad8f945cf0ac053867815247f52c36103c57b2c245f2279ba",
+    "4cb59-cold-profiles.json": "1d49b7fa6a8cb241aac932460ce299b0b61ede20f402fa1afe86e1b7c912a629",
+    "4cb59-first-local-entry.png": "6a40917a6bb241389f4d91e4e6c4e3cee0ff806be55c9c56be6631a40e464293",
+    "4cb59-rapid-first-profile-home.png": "5905bb126f986f0db7a29dbe638c75938d88aaff231843959089b449f98f82bf",
+    "4cb59-cold-local-profiles.png": "f63893f164010b332841a049f632f3a12458bbc87565d478d95f953dc6006e00",
+    "4cb59-cold-playback-prefs.png": "08ff85eb61f5e44ac2a244341fb634e5a4d476ac5f891cbe3c498eb9ecaf6885",
+    "4cb59-cold-subtitle-prefs.png": "70c492554f33a752549d1e9185246af85d593e99b2a28f19be17085246b8caaa",
+    "owned-shutdown.json": "05609cbb13b9b817989cfc69e6fbc766bb81e0e2f1c8ce75d3fc13b9e37f7855"
+  },
+  "owned_emulator_stopped": true,
+  "shutdown_proof": "owned-shutdown.json"
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="PhoneAddonSettingsUiTest[desktop]" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:54:33.483Z" hostname="vynxcos" time="7.444">
+  <properties/>
+  <testcase name="populatedPhonePreservesProfileSwitchesAndRemovalWhileAddStaysBeforeAdvanced[desktop]" classname="org.viptv.app.PhoneAddonSettingsUiTest" time="1.558"/>
+  <testcase name="wideLayoutKeepsItsInlineInstallInsteadOfACompactAddSheet[desktop]" classname="org.viptv.app.PhoneAddonSettingsUiTest" time="0.332"/>
+  <testcase name="unavailableAddonManagementDoesNotHideIndependentSourceConfiguration[desktop]" classname="org.viptv.app.PhoneAddonSettingsUiTest" time="0.137"/>
+  <testcase name="emptyPhoneKeepsPrimaryAddAheadOfAdvancedConfigurationAndSourceFormReachable[desktop]" classname="org.viptv.app.PhoneAddonSettingsUiTest" time="0.59"/>
+  <testcase name="completedInstallClosesOnlyItsCurrentSheetAndImmediateRepeatCannotSubmitTwice[desktop]" classname="org.viptv.app.PhoneAddonSettingsUiTest" time="2.59"/>
+  <testcase name="phoneInstallFailureRetainsDraftAndBusyControlsCannotSubmitAgainOrClose[desktop]" classname="org.viptv.app.PhoneAddonSettingsUiTest" time="1.356"/>
+  <testcase name="busyControllerRejectsStalePhonePropsWithoutLeavingTheNewSheetLatched[desktop]" classname="org.viptv.app.PhoneAddonSettingsUiTest" time="0.88"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

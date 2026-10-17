@@ -1,0 +1,3 @@
+Picked up JAVA_TOOL_OPTIONS: -Dskiko.renderApi=SOFTWARE -Xmx512m -Duser.home=/qualification/vault/installed-c4ec/home -Djava.io.tmpdir=/qualification/vault/installed-c4ec/tmp
+[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate
+[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate

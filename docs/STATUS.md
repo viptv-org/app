@@ -1,4 +1,48 @@
-# VIPTV experimental implementation — 2026-10-14
+# VIPTV experimental implementation — 2026-10-15
+
+The latest validation uses **real Simkl and real source providers**. Twelve title/
+episode requests returned **703 source records in 30.028 seconds**, with partial
+provider failures retained. Current shared core parses the captured labels in
+261 ms. An independent label audit found and fixed missing Ukrainian flag hints
+and English subtitles incorrectly treated as audio. All 24 reviewed real cases
+pass. Normal Android **4bcd7ac0af69** contains the fixes in all three native ABIs;
+earlier APKs and Linux packages predate them. Current KMP against the real backend
+also passed five sequential plus two concurrent restores (eight distinct refresh
+tokens), 40 parallel authenticated reads, and real Simkl search/detail. See
+[real integration evidence](evidence/real-source-batch-2026-10-15/README.md).
+This does not turn earlier synthetic playback checks into real-provider proof.
+Two actual playback admissions exposed an expired integration key in the manual
+gateway; its configuration remains untouched while isolated real playback is
+being qualified.
+
+The current local Android TV/backend/search fixes, approved product direction and candidate evidence are recorded in [ANDROID_TV_FIXES_2026-10-15.md](ANDROID_TV_FIXES_2026-10-15.md). These uncommitted candidates supersede the source behavior described below where stated; the manually tested runtime has not been updated.
+
+The active continuation ledger is [REMAINING_KMP_WORK.md](REMAINING_KMP_WORK.md).
+The latest combined gate passed **313 desktop tests** and built isolated production
+Wasm, normal Android release and the Linux app image. Android candidate
+**4b9cd905d844** adds reliable add-on installation completion, phone add-action
+placement, TV Account retry, and protection against stale page/configuration
+responses. Its actual API35 synthetic-provider test verifies failure, retry,
+current success, blank reopening and removal with preferences preserved.
+Linux revision 2 Deb **a7a6327ac660** fixes minimal-Debian menu installation and
+passes normal installation, bundled JVM/native, private keyring and original
+Main checks in fresh Debian 13.7. See [current recovery scope](ADDON_ACCOUNT_RECOVERY.md).
+
+A separate frozen debug 5abd Android run completed **41 actual minutes**, 80 exact
+seeks, 477 clock samples and repeated Home/background cycles. The original paused
+player visibly showed 50:53; elapsed text, slider, renderer and saved progress
+matched before acknowledgment and the single lease close. Maximum sampled
+clock difference was 208 ms. Earlier capture failures and the interrupted attempt
+remain preserved; later normal candidates are not relabeled. See
+[full original-player evidence](ANDROID_OSD_40MIN_ENDURANCE.md).
+
+Plugin capabilities and unified text search remain intact; discovery redesign
+stays deferred. The earlier backend gate passed 503 default / 505 SDK checks;
+the subsequent shared parser fixes have separate real-label evidence above.
+Manual API/gateway and the protected 109-file Wasm distribution are preserved;
+no deployment, main merge or physical-device installation occurred. The current
+ledger retains physical/performance, full 197-board, broader format and
+Windows/macOS qualification work.
 
 The implementation is incomplete overall. Work remains on experimental branches;
 main branches, repositories and history are preserved. The current uploaded ZIP
@@ -38,7 +82,7 @@ Roku's provider caption controller uses managed replacement; physical decoding
 and design parity remain unqualified. TV-web provider captions use normalized VTT on the original title clock; their
 physical TV rendering and richer provider controls remain qualification work.
 
-## Current evidence
+## Earlier checkpoint evidence
 
 The detailed receipts and immutable pins are in `build-evidence.json`. Native
 core is `47b85b5`; experimental backend is `7dde035`; gateway is `8deb493`.

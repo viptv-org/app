@@ -14,8 +14,18 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     val requiredAudioIndex: Int? = null) {
     init { require(requiredAudioIndex == null || requiredAudioIndex >= 0) }
     private val subtitleChoices = kotlinx.coroutines.flow.MutableStateFlow(providerSubtitles)
+    private val subtitleIds = kotlinx.coroutines.flow.MutableStateFlow(providerSubtitles.map { it.id }.distinct())
     val providerSubtitles = subtitleChoices.asStateFlow()
-    internal fun updateProviderSubtitles(values: List<org.viptv.engine.wire.SubtitleCandidate>) { subtitleChoices.value = values }
+    internal fun updateProviderSubtitles(values: List<org.viptv.engine.wire.SubtitleCandidate>) {
+        while (true) {
+            val previous = subtitleIds.value
+            if (subtitleIds.compareAndSet(previous, (previous + values.map { it.id }).distinct())) break
+        }
+        subtitleChoices.value = values
+    }
+    internal fun providerTrackId(id: String): Int = Int.MIN_VALUE + subtitleIds.value.indexOf(id).also { require(it >= 0) }
+    internal fun providerSubtitleId(track: Int): String? = (track.toLong() - Int.MIN_VALUE.toLong())
+        .takeIf { it >= 0 && it < subtitleIds.value.size }?.let { subtitleIds.value[it.toInt()] }
     override fun toString() = "PlaybackInput(id=$id, media=<private>)"
 }
 

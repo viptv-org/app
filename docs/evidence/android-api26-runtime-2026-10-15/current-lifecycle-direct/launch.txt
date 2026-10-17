@@ -1,0 +1,7 @@
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.viptv.experiment/.Api26LifecycleQaActivity (has extras) }
+Status: ok
+Activity: org.viptv.experiment/.Api26LifecycleQaActivity
+ThisTime: 677
+TotalTime: 677
+WaitTime: 680
+Complete

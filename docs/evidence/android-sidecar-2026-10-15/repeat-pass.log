@@ -1,0 +1,5 @@
+--------- beginning of main
+I/VIPTV_SIDECAR_QA( 2251): phase=srt position_ms=618839
+I/VIPTV_SIDECAR_QA( 2251): phase=vtt position_ms=618839
+I/VIPTV_SIDECAR_QA( 2251): phase=ass position_ms=618839
+I/VIPTV_SIDECAR_QA( 2251): PASS position_ms=618839 window_offset_ms=4000 media_item_transitions=1 formats=srt,vtt,ass audio_preserved=true embedded_restored=true seek_aligned=true cancellation_isolated=true replacement_isolated=true malformed_preserved=true off=true

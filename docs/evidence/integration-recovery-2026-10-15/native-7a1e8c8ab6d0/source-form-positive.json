@@ -1,0 +1,95 @@
+{
+  "ime_editor": {
+    "ime_visible": true,
+    "input_type_hex": "0x81",
+    "input_class": 1,
+    "variation_hex": "0x80",
+    "password_classification": true,
+    "auto_correct_flag": false,
+    "auto_complete_flag": false,
+    "no_suggestions_flag": false,
+    "package": "org.viptv.experiment"
+  },
+  "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-release-2026-10-15/recovery-7a1e8c8ab6d0/viptv-android-release-local.apk",
+  "apk_sha256": "7a1e8c8ab6d003a5ee4c79b0e16376546aadf95ca466ea9f2d2940927e8c04df",
+  "fixture": {
+    "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "console_port": 5590,
+    "api": 35,
+    "ram_mib": 2560,
+    "cores": 2,
+    "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+    "display": "720x1600 density280; bounded portrait phone fixture",
+    "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+    "observed_minimum_phone_ram_mib": 2560,
+    "requested_ram_mib": 1536,
+    "first_launch_stopped_for_resource_coordination": true
+  },
+  "ime_top": 1070,
+  "action_control_bounds": {
+    "Cancel": [
+      361,
+      944,
+      482,
+      1028
+    ],
+    "Save": [
+      496,
+      944,
+      598,
+      1028
+    ]
+  },
+  "field_bounds": [
+    122,
+    262,
+    598,
+    374
+  ],
+  "masked": true,
+  "keyboard_sources": [
+    "InsetsSource id=3 type=ime frame=[0,1070][720,1600] visibleFrame=[0,1070][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null",
+    "mSource=InsetsSource id=3 type=ime frame=[0,1070][720,1600] visibleFrame=[0,1070][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null"
+  ],
+  "save_submitted": false,
+  "real_credentials_used": false,
+  "cancel_worked_with_keyboard_open": true,
+  "keyboard_dismissal_workaround": false,
+  "reopened_draft_empty": true,
+  "native_preferences_before": [
+    {
+      "revision": 3,
+      "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+    }
+  ],
+  "native_preferences_after": [
+    {
+      "revision": 3,
+      "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+    }
+  ],
+  "native_connections_before": [
+    {
+      "count": 0
+    }
+  ],
+  "native_connections_after": [
+    {
+      "count": 0
+    }
+  ],
+  "observed_schema_labels_before": [
+    "M3U live TV",
+    "VIPTV Sources",
+    "Xtream live TV"
+  ],
+  "observed_schema_labels_after": [
+    "M3U live TV",
+    "VIPTV Sources",
+    "Xtream live TV"
+  ],
+  "observed_schema_count_before": 3,
+  "observed_schema_count_after": 3
+}

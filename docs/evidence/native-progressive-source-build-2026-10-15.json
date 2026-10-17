@@ -1,0 +1,98 @@
+{
+  "recorded_at_utc": "2026-10-15T09:25:22.346645+00:00",
+  "status": "desktop and three Android native packaging libraries rebuilt; no installation or deployment",
+  "base_core_revision": "47b85b5386617f455ade8b294a7a844b54f537c0",
+  "uncommitted_overlay": true,
+  "source_files": {
+    "crates/viptv-engine/Cargo.toml": "e0132b9a189823ab827e2984561162d62a3f804884a6bd0787395c063b70334c",
+    "crates/viptv-engine/src/stremio.rs": "ded9a5d3cafaf420366104bb7c56a4ceef72a3138f07695493fb7e199e6e5fc0",
+    "crates/viptv-engine/src/stremio/streams.rs": "8fa67a21f4dd7adbe2abd70310ba6ddf81cceeeeb4d1db127d8b9f43b8ff12d3",
+    "crates/viptv-engine/src/stremio/source_metadata.rs": "18ba56b857b90945a1840ed71a2697bf88ad84cbe08e274ab086593d05f193ce",
+    "crates/viptv-engine/tests/streams.rs": "def1b553a31f0703312285ef0a1721c331b71e4b797778f9023073f726bd7480",
+    "crates/viptv-engine/tests/source_metadata.rs": "7ac0e0c7ff74bda8a4fa738b2dd571d1ecef9575cb2ec301a3edb9b002932d8c",
+    "tests/source-metadata-vectors.json": "30dba1ff5b87f6cf9ebef697f8a1324f80bf233cb34d13453a85e46d265f9618",
+    "tests/source-metadata-captured.json": "061ee049fc65d056f687f326f6b21576cf79faa0a22febb340ad1e3355c31982",
+    "Cargo.lock": "ff9a707de14da56d01a4d35d5058dd06b5c31360dbb0ed9c6ddf08e723eb104e",
+    "crates/viptv-engine/src/registry.rs": "b564ffe1280c3caf75771e9b688aa177183cc392dbe2e32340a0b55d0f3721e9",
+    "crates/viptv-engine/tests/search_registry.rs": "8a68374ba81e289af9f10da8b3851f0880bb0945f0581af8ec95b4fdb4c02842",
+    "crates/viptv-core/src/local_engine/search.rs": "f656ce435d1ca1198e38461ae2dd297caaa6622a5c239f9698fdab7baf5c20c5",
+    "crates/viptv-core/src/local_engine/addons/tests.rs": "2213b820f993eecb6c26d1b7eacf8f05c609d593365395fb0e5c587c39b9d53a",
+    "crates/viptv-core/src/local_engine/sources.rs": "159228c99d4f80345f75f084dcf5c1907ed8fee3455364beb88aad908d6c4511",
+    "crates/viptv-core/src/local_engine/sources/tests.rs": "b6cb935060f62241a1d45daf44dfa9e269269a5fc9327c4452f1b3ea313c175e",
+    "generated/native-kotlin/uniffi/viptv_core/viptv_core.kt": "29995ceb37d09c77b006fe7e89b21c67fc010421a31b2d2d068bded56fda73bc",
+    "crates/viptv-core/src/local_engine.rs": "600ed9fcfc028dabecb90a2e046088cc948ae44614996bf7b89df493daab971b",
+    "crates/viptv-core/src/local_engine/source_integrations.rs": "6238214d2f87cdbab1090fe24b4029c26f444d9a604d19f7962dc113e7fec641",
+    "crates/viptv-core/src/local_engine/source_integrations/lifecycle_tests.rs": "23a80c4c526f727a12e3950953a451419ed4a85f5d2130a5d70a6c1d26bd6ef8",
+    "crates/viptv-core/src/local_engine/detail.rs": "b2f49e2d2f60e8c49d0d114759451e74fb00f96eb4b9d3fcd9f1c7589f462e62",
+    "crates/viptv-core/src/local_engine/detail_cache.rs": "27a5a95cda9af4ab3d90d69b5c63d3934a6e665b724e615af54c110f38082670"
+  },
+  "generated_api": [
+    "project_sources_partial(operation,responses,finish)",
+    "cancel_source_discovery(profile,operation)",
+    "detail_page_for_provider(profile,kind,id,provider,offset,limit)"
+  ],
+  "existing_native_api_checksums_unchanged": true,
+  "native_source_snapshot_matches_canonical": true,
+  "build_jobs": 1,
+  "desktop_release_build_seconds": 62,
+  "artifacts": {
+    "linux-x86-64": {
+      "path": "composeApp/build/nativeResources/linux-x86-64/libviptv_core.so",
+      "sha256": "e28bf4755fed0982d979ef34e20a627407f7fab2ad6a8027f8100585367cae67",
+      "bytes": 34398440
+    },
+    "armeabi-v7a": {
+      "path": "androidApp/build/generated/rustJni/armeabi-v7a/libviptv_core.so",
+      "sha256": "cf328d2d35a41c2f787231e9b732e2bae0d14281470b9b08d3a6359535b4ab93",
+      "bytes": 24197792
+    },
+    "arm64-v8a": {
+      "path": "androidApp/build/generated/rustJni/arm64-v8a/libviptv_core.so",
+      "sha256": "4a6acf6d96cf7c0c58b43927e533892024a53ec8f5f61e10d395c7e420c6011f",
+      "bytes": 32663064
+    },
+    "x86_64": {
+      "path": "androidApp/build/generated/rustJni/x86_64/libviptv_core.so",
+      "sha256": "ce95814b7d60090ba9ba6134516b354c6c2c10d19185aee23097219656c55021",
+      "bytes": 32761680
+    }
+  },
+  "validation": {
+    "native_core_tests_passed": 40,
+    "native_core_tests_ignored": 1,
+    "new_source_lifecycle_tests": 5,
+    "new_sdk_origin_tests": 3,
+    "all_feature_cargo_check": "passed",
+    "kotlin_native_tests": {
+      "passed": 7,
+      "failed": 0,
+      "classes": {
+        "NativeProgressiveSourcesTest": 6,
+        "NativeMetadataOriginTest": 1
+      },
+      "shared_desktop_suite_passed": 161
+    },
+    "production_wasm_isolated_build": "passed in root shared batch"
+  },
+  "android_artifacts_current": true,
+  "wasm_rebuilt": false,
+  "device_actions": false,
+  "live_services_changed": false,
+  "source_overlay_unchanged_through_build": true,
+  "release_build_elapsed_seconds": {
+    "linux-x86-64": 62,
+    "armeabi-v7a": 56.36,
+    "arm64-v8a": 53.98,
+    "x86_64": 54.48
+  },
+  "adapter_files": {
+    "composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalSources.kt": "057a344c7fdb6e4cfac4c60065e6831f7900c0f5c9688ef33d70a86c5feeb034",
+    "composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeMergedSources.kt": "de12d81557200972c85e13458b2559e8fe3203ec0736733ae19832b5e51a0770",
+    "composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeSourceIntegrations.kt": "690ca82acddf232a737dd5d5001828062cf7d551741a4b76890b74e18dcae219",
+    "composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalDetails.kt": "f6e92f36e1b2360231a4d4f59a6b13c44a4b0946d41f92d8835da9c2a70e0482",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPlayback.kt": "efbabab39e0241b655a27a49346a89aed542ae708df40454e2d63a05e79ae5b7",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/NativeProgressiveSourcesTest.kt": "54af498f8c410b8d00842e46b6ffae6b6be9571103f4e18e142fb29db1020890",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/NativeMetadataOriginTest.kt": "7d4badeaa767e520922f99402acdd106adfba8efba4ba0723d53be63ae471eba"
+  },
+  "qualified_at_utc": "2026-10-15T09:43:27.625293+00:00"
+}

@@ -2,6 +2,9 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -40,9 +43,12 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
         Box(Modifier.padding(end = if (collapsed) 0.dp else 14.dp)) { Brand(28.dp, 20.sp, 9.dp) }
         visible.forEach { destination ->
+            val interaction = remember { MutableInteractionSource() }
+            val hovered by interaction.collectIsHoveredAsState()
+            val focused by interaction.collectIsFocusedAsState()
             Text(destination.label, Modifier.clip(RoundedCornerShape(8.dp))
-                .clickable { navigate(destination.screen) }.padding(vertical = 10.dp),
-                color = if (selected == destination.screen) Palette.text else Palette.body,
+                .clickable(interactionSource = interaction, indication = null) { navigate(destination.screen) }.padding(vertical = 10.dp),
+                color = if (selected == destination.screen || hovered || focused) Palette.text else Palette.body,
                 fontSize = 14.sp,
                 fontWeight = if (selected == destination.screen) FontWeight.Bold else FontWeight.Medium)
         }
@@ -58,7 +64,7 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
         }
         IconButton(onClick = { navigate(Screen.Search) }) { Icon(Lucide.Search, "Search", Modifier.size(20.dp)) }
         Box {
-            Row(Modifier.clickable { profileMenu = true }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.clip(RoundedCornerShape(8.dp)).clickable { profileMenu = true }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (profile != null) org.viptv.app.features.entry.ProfileAvatar(profile, 28.dp, 7.dp)
                 else Icon(Lucide.UserRound, "Profile menu", Modifier.size(20.dp))
                 Icon(Lucide.ChevronDown, null, Modifier.size(14.dp))

@@ -1,0 +1,8 @@
+{
+  "apk": "app/artifacts/android-endurance-2026-10-15/347e9bfc1871/viptv-endurance-debug.apk",
+  "sha256": "347e9bfc1871c4da1ecfe43d56f1f9a66c3999ada6e52cb1823f7069baefd207",
+  "bytes": 118897170,
+  "build_seconds": 52,
+  "task": ":androidApp:assembleDebug --max-workers=1 -x :androidApp:buildAndroidEngine",
+  "scope": "Debug-only TV endurance QA cap/telemetry; production source frozen during cut"
+}

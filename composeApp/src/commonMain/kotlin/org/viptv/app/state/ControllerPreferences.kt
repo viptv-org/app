@@ -3,13 +3,18 @@ package org.viptv.app.state
 import kotlinx.coroutines.CancellationException
 import org.viptv.app.connection.*
 
-internal suspend fun ApplicationController.loadPreferences() {
+internal suspend fun ApplicationController.loadPreferences(owner: AddonOperationOwner? = null) {
+    owner?.requireCurrent(this)
     val profile = requireNotNull(mutable.value.selectedProfile)
     try {
         val snapshot = local?.profilePreferences(profile) ?: requireNotNull(connection).profilePreferences(profile)
+        owner?.requireCurrent(this)
         mutable.value = mutable.value.copy(preferences = snapshot, preferencesError = null)
     } catch (error: CancellationException) { throw error }
-    catch (_: Exception) { mutable.value = mutable.value.copy(preferencesError = "Could not load profile preferences. Try again.") }
+    catch (_: Exception) {
+        owner?.requireCurrent(this)
+        mutable.value = mutable.value.copy(preferencesError = "Could not load profile preferences. Try again.")
+    }
 }
 
 fun ApplicationController.refreshPreferences() = run { loadPreferences() }

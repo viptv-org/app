@@ -1,0 +1,946 @@
+{
+  "counts": {
+    "GET /media/index.m3u8": 7,
+    "POST /api/auth/device/login": 1,
+    "GET /api/v3/bootstrap": 4,
+    "POST /api/auth/profile": 1,
+    "POST /qa/expire": 1,
+    "POST /api/auth/device/refresh": 1,
+    "GET /qa/status": 10,
+    "GET /api/v3/search": 1,
+    "GET /api/v3/meta/movie/lifecycle-fixture": 1,
+    "POST /api/v2/streams": 1,
+    "GET /api/v2/streams/fixture-discovery": 1,
+    "POST /api/v3/profiles/one/source-ranking": 1,
+    "POST /api/v2/playback": 3,
+    "GET /api/v3/subtitles/movie/lifecycle-fixture": 3,
+    "GET /media/fixture-lease-1/index.m3u8": 12,
+    "GET /media/fixture-lease-1/segment-000.ts": 1,
+    "GET /media/fixture-lease-1/segment-001.ts": 1,
+    "POST /api/v2/playback/fixture-lease-1/first-frame": 1,
+    "GET /media/fixture-lease-1/segment-002.ts": 1,
+    "POST /api/v3/profiles/one/playback-events": 16,
+    "GET /media/fixture-lease-1/segment-003.ts": 1,
+    "GET /media/fixture-lease-1/segment-004.ts": 1,
+    "GET /media/fixture-lease-1/segment-005.ts": 1,
+    "GET /media/fixture-lease-1/segment-006.ts": 1,
+    "GET /media/fixture-lease-1/segment-007.ts": 1,
+    "GET /media/fixture-lease-1/segment-008.ts": 1,
+    "GET /media/fixture-lease-1/segment-009.ts": 1,
+    "GET /media/fixture-lease-1/segment-010.ts": 1,
+    "GET /media/fixture-lease-1/segment-011.ts": 1,
+    "GET /media/fixture-lease-1/segment-012.ts": 1,
+    "PUT /api/v3/profiles/one/progress": 14,
+    "GET /media/fixture-lease-1/segment-013.ts": 1,
+    "GET /media/fixture-lease-1/segment-014.ts": 1,
+    "GET /media/fixture-lease-1/segment-015.ts": 1,
+    "GET /media/fixture-lease-1/segment-016.ts": 1,
+    "GET /media/fixture-lease-1/segment-017.ts": 1,
+    "GET /media/fixture-lease-1/segment-018.ts": 1,
+    "DELETE /api/v2/playback/fixture-lease-1": 1,
+    "GET /media/fixture-lease-2/index.m3u8": 18,
+    "GET /media/fixture-lease-2/segment-006.ts": 1,
+    "GET /media/fixture-lease-2/segment-007.ts": 1,
+    "GET /media/fixture-lease-2/segment-008.ts": 1,
+    "POST /api/v2/playback/fixture-lease-2/first-frame": 1,
+    "GET /media/fixture-lease-2/segment-009.ts": 1,
+    "GET /media/fixture-lease-2/segment-010.ts": 1,
+    "GET /media/fixture-lease-2/segment-011.ts": 1,
+    "GET /media/fixture-lease-2/segment-012.ts": 1,
+    "GET /media/fixture-lease-2/segment-013.ts": 1,
+    "GET /media/fixture-lease-2/segment-014.ts": 1,
+    "GET /media/fixture-lease-2/segment-015.ts": 1,
+    "GET /media/fixture-lease-2/segment-016.ts": 1,
+    "GET /media/fixture-lease-2/segment-017.ts": 1,
+    "GET /media/fixture-lease-2/segment-018.ts": 1,
+    "GET /media/fixture-lease-2/segment-019.ts": 1,
+    "GET /media/fixture-lease-2/segment-020.ts": 1,
+    "GET /media/fixture-lease-2/segment-021.ts": 1,
+    "GET /media/fixture-lease-2/segment-022.ts": 1,
+    "GET /media/fixture-lease-2/segment-023.ts": 1,
+    "GET /media/fixture-lease-2/segment-024.ts": 1,
+    "GET /media/fixture-lease-2/segment-025.ts": 1,
+    "GET /media/fixture-lease-2/segment-026.ts": 1,
+    "GET /media/fixture-lease-2/segment-027.ts": 1,
+    "GET /media/fixture-lease-2/segment-028.ts": 1,
+    "GET /media/fixture-lease-2/segment-029.ts": 1,
+    "POST /api/v2/playback/fixture-lease-2/heartbeat": 1,
+    "GET /media/fixture-lease-2/segment-030.ts": 1,
+    "DELETE /api/v2/playback/fixture-lease-2": 1,
+    "GET /media/fixture-lease-3/index.m3u8": 18,
+    "GET /media/fixture-lease-3/segment-016.ts": 1,
+    "GET /media/fixture-lease-3/segment-017.ts": 1,
+    "POST /api/v2/playback/fixture-lease-3/first-frame": 1,
+    "GET /media/fixture-lease-3/segment-018.ts": 1,
+    "GET /media/fixture-lease-3/segment-019.ts": 1,
+    "GET /media/fixture-lease-3/segment-020.ts": 1,
+    "GET /media/fixture-lease-3/segment-021.ts": 1,
+    "GET /media/fixture-lease-3/segment-022.ts": 1,
+    "GET /media/fixture-lease-3/segment-023.ts": 1,
+    "GET /media/fixture-lease-3/segment-024.ts": 1,
+    "GET /media/fixture-lease-3/segment-025.ts": 1,
+    "GET /media/fixture-lease-3/segment-026.ts": 1,
+    "GET /media/fixture-lease-3/segment-027.ts": 1,
+    "GET /media/fixture-lease-3/segment-028.ts": 1,
+    "GET /media/fixture-lease-3/segment-029.ts": 1,
+    "GET /media/fixture-lease-3/segment-030.ts": 1,
+    "GET /media/fixture-lease-3/segment-031.ts": 1,
+    "GET /media/fixture-lease-3/segment-032.ts": 1,
+    "GET /media/fixture-lease-3/segment-033.ts": 1,
+    "GET /media/fixture-lease-3/segment-034.ts": 1,
+    "GET /media/fixture-lease-3/segment-035.ts": 1,
+    "GET /media/fixture-lease-3/segment-036.ts": 1,
+    "GET /media/fixture-lease-3/segment-037.ts": 1,
+    "GET /media/fixture-lease-3/segment-038.ts": 1,
+    "GET /media/fixture-lease-3/segment-039.ts": 1,
+    "POST /api/v2/playback/fixture-lease-3/heartbeat": 1,
+    "GET /media/fixture-lease-3/segment-040.ts": 1,
+    "DELETE /api/v2/playback/fixture-lease-3": 1
+  },
+  "events": [
+    {
+      "event": "start",
+      "sequence": 1,
+      "position_millis": 600000,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "pause",
+      "sequence": 2,
+      "position_millis": 605575,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "start",
+      "sequence": 3,
+      "position_millis": 605604,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "pause",
+      "sequence": 4,
+      "position_millis": 605757,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "start",
+      "sequence": 5,
+      "position_millis": 605814,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "pause",
+      "sequence": 6,
+      "position_millis": 605942,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "start",
+      "sequence": 7,
+      "position_millis": 606040,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "pause",
+      "sequence": 8,
+      "position_millis": 606210,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "stop",
+      "sequence": 9,
+      "position_millis": 606210,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "pause",
+      "sequence": 1,
+      "position_millis": 612000,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "start",
+      "sequence": 2,
+      "position_millis": 612000,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "pause",
+      "sequence": 3,
+      "position_millis": 642066,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "stop",
+      "sequence": 4,
+      "position_millis": 642066,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "pause",
+      "sequence": 1,
+      "position_millis": 632000,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "start",
+      "sequence": 2,
+      "position_millis": 632000,
+      "duration_millis": 1020000
+    },
+    {
+      "event": "stop",
+      "sequence": 3,
+      "position_millis": 662121,
+      "duration_millis": 1020000
+    }
+  ],
+  "progress": [
+    {
+      "position_millis": 605575,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 605757,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 605814,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 605942,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 606040,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 606210,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 606210,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 626215,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 641270,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 642066,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 642066,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 646258,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 661315,
+      "duration_millis": 1020000
+    },
+    {
+      "position_millis": 662121,
+      "duration_millis": 1020000
+    }
+  ],
+  "selected": "one",
+  "playlists": [
+    {
+      "elapsed_ms": 0,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 991,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 1989,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 2991,
+      "first_sequence": 0,
+      "last_exclusive": 11,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 3991,
+      "first_sequence": 0,
+      "last_exclusive": 11,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 4991,
+      "first_sequence": 0,
+      "last_exclusive": 12,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 6000,
+      "first_sequence": 0,
+      "last_exclusive": 12,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 195,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 214,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 1215,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 2210,
+      "first_sequence": 0,
+      "last_exclusive": 11,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 4209,
+      "first_sequence": 0,
+      "last_exclusive": 12,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 6211,
+      "first_sequence": 2,
+      "last_exclusive": 13,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 8213,
+      "first_sequence": 2,
+      "last_exclusive": 14,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 10211,
+      "first_sequence": 2,
+      "last_exclusive": 15,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 12212,
+      "first_sequence": 2,
+      "last_exclusive": 16,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 14216,
+      "first_sequence": 2,
+      "last_exclusive": 17,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 16214,
+      "first_sequence": 2,
+      "last_exclusive": 18,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 18215,
+      "first_sequence": 2,
+      "last_exclusive": 19,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 105,
+      "first_sequence": 6,
+      "last_exclusive": 16,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 118,
+      "first_sequence": 6,
+      "last_exclusive": 16,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 1116,
+      "first_sequence": 6,
+      "last_exclusive": 16,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 2115,
+      "first_sequence": 6,
+      "last_exclusive": 17,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 4117,
+      "first_sequence": 6,
+      "last_exclusive": 18,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 6118,
+      "first_sequence": 8,
+      "last_exclusive": 19,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 8117,
+      "first_sequence": 8,
+      "last_exclusive": 20,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 10118,
+      "first_sequence": 8,
+      "last_exclusive": 21,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 12117,
+      "first_sequence": 8,
+      "last_exclusive": 22,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 14118,
+      "first_sequence": 8,
+      "last_exclusive": 23,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 16118,
+      "first_sequence": 8,
+      "last_exclusive": 24,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 18128,
+      "first_sequence": 8,
+      "last_exclusive": 25,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 20118,
+      "first_sequence": 8,
+      "last_exclusive": 26,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 22118,
+      "first_sequence": 8,
+      "last_exclusive": 27,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 24120,
+      "first_sequence": 8,
+      "last_exclusive": 28,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 26119,
+      "first_sequence": 8,
+      "last_exclusive": 29,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 28120,
+      "first_sequence": 8,
+      "last_exclusive": 30,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 30128,
+      "first_sequence": 8,
+      "last_exclusive": 31,
+      "base_sequence": 6
+    },
+    {
+      "elapsed_ms": 67,
+      "first_sequence": 16,
+      "last_exclusive": 26,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 93,
+      "first_sequence": 16,
+      "last_exclusive": 26,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 1074,
+      "first_sequence": 16,
+      "last_exclusive": 26,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 2078,
+      "first_sequence": 16,
+      "last_exclusive": 27,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 4074,
+      "first_sequence": 16,
+      "last_exclusive": 28,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 6077,
+      "first_sequence": 18,
+      "last_exclusive": 29,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 8074,
+      "first_sequence": 18,
+      "last_exclusive": 30,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 10074,
+      "first_sequence": 18,
+      "last_exclusive": 31,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 12074,
+      "first_sequence": 18,
+      "last_exclusive": 32,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 14078,
+      "first_sequence": 18,
+      "last_exclusive": 33,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 16074,
+      "first_sequence": 18,
+      "last_exclusive": 34,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 18079,
+      "first_sequence": 18,
+      "last_exclusive": 35,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 20083,
+      "first_sequence": 18,
+      "last_exclusive": 36,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 22075,
+      "first_sequence": 18,
+      "last_exclusive": 37,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 24074,
+      "first_sequence": 18,
+      "last_exclusive": 38,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 26074,
+      "first_sequence": 18,
+      "last_exclusive": 39,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 28078,
+      "first_sequence": 18,
+      "last_exclusive": 40,
+      "base_sequence": 16
+    },
+    {
+      "elapsed_ms": 30083,
+      "first_sequence": 18,
+      "last_exclusive": 41,
+      "base_sequence": 16
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/api/auth/device/login",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/profile",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/refresh",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/search",
+      "query": "query=Lifecycle",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/meta/movie/lifecycle-fixture",
+      "query": "provider_id=stremio&addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/streams",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/streams/fixture-discovery",
+      "query": "after=0&wait_ms=10000",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/source-ranking",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/lifecycle-fixture",
+      "query": "metadata_provider_id=stremio&metadata_addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease-1/first-frame",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 1
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/fixture-lease-1",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/lifecycle-fixture",
+      "query": "metadata_provider_id=stremio&metadata_addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease-2/first-frame",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease-2/heartbeat",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/fixture-lease-2",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/lifecycle-fixture",
+      "query": "metadata_provider_id=stremio&metadata_addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease-3/first-frame",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease-3/heartbeat",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/fixture-lease-3",
+      "query": "",
+      "elapsed_ms": 0
+    }
+  ],
+  "measurements": [],
+  "delivery_kind": "gateway",
+  "leases": {
+    "fixture-lease-1": {
+      "base": 0,
+      "requested": 600.0,
+      "started": 332377.516081712
+    },
+    "fixture-lease-2": {
+      "base": 6,
+      "requested": 612.0,
+      "started": 332396.648055416
+    },
+    "fixture-lease-3": {
+      "base": 16,
+      "requested": 632.0,
+      "started": 332427.727466132
+    }
+  }
+}

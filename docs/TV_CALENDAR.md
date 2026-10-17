@@ -1,5 +1,7 @@
 # Android TV Calendar checkpoint
 
+Current connected functionality is recorded in [Calendar completion](CALENDAR_COMPLETION.md): category/week/date controls, progressive real schedules, exact metadata-resolved release actions and current render/focus receipts. The preview-era limitations below are historical and are superseded where that document records qualification.
+
 The supplied `SkTvCalendar` Simkl ZIP board is the TV Calendar source. It has
 64 px date pills at y=140, 1100×132 release rows starting at y=250, 18 px row gaps,
 and a 584 px details panel at x=1240. Dedicated TV components replace the generic

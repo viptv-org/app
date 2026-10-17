@@ -1,0 +1,57 @@
+{
+  "default_collection": "(objectpath '/org/freedesktop/secrets/collection/login',)",
+  "write-local": {
+    "exit_code": 0,
+    "stdout": [
+      "local_write_read_passed",
+      "elapsed_ms:307"
+    ],
+    "stderr": [],
+    "seconds": 0.388
+  },
+  "read-local": {
+    "exit_code": 0,
+    "stdout": [
+      "local_fresh_process_read_passed",
+      "elapsed_ms:292"
+    ],
+    "stderr": [],
+    "seconds": 0.386
+  },
+  "legacy-remote": {
+    "exit_code": 0,
+    "stdout": [
+      "legacy_remote_save_read_replace_clear_passed",
+      "elapsed_ms:385"
+    ],
+    "stderr": [],
+    "seconds": 0.464
+  },
+  "lock_result": "([objectpath '/org/freedesktop/secrets/collection/login'], objectpath '/')",
+  "cancel-startup": {
+    "exit_code": 0,
+    "stdout": [
+      "startup_vault_wait_active:true",
+      "disconnect_ms:5",
+      "disconnect_screen:Connect",
+      "disconnect_starting:false",
+      "canceled_restore_job_completed:false",
+      "new_local_choice_busy:true",
+      "new_local_choice_factory_calls:0",
+      "private_profiles_after_cancel:0",
+      "elapsed_ms:2907"
+    ],
+    "stderr": [],
+    "seconds": 3.3
+  },
+  "read": {
+    "exit_code": 0,
+    "stdout": [
+      "native_vault_call_started",
+      "vault_call_failed:uniffi.viptv_core.CoreException$Bridge",
+      "elapsed_ms:265"
+    ],
+    "stderr": [],
+    "seconds": 0.377
+  }
+}

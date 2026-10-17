@@ -1,0 +1,52 @@
+{
+  "apk": "artifacts/android-release-2026-10-15/player-preferences-b4394d8aab1c/viptv-android-release-local.apk",
+  "apk_sha256": "b4394d8aab1c7a6e543431841ab9c75750809f94d66c206bd78195a63405438f",
+  "device": {
+    "serial": "emulator-5590",
+    "owned_avd": "viptv-phone-prefs-jvx0yqu1",
+    "api": 35,
+    "size": "720x1600",
+    "density": 280,
+    "ram_mib": 2560,
+    "cores": 2
+  },
+  "scope": "Private native local Default profile only. No real accounts, providers, services, user emulator, physical TV or served Wasm mutations.",
+  "passed": [
+    "distinct native routes/single headings",
+    "Playback dialog cancel",
+    "unsaved draft discarded leaving route",
+    "explicit save and reopen",
+    "rapid consecutive subtitle size/background/colour edits",
+    "invalid custom colour disables apply",
+    "custom pt-BR + zh-Hant languages and hex/alpha colours",
+    "native SQLite all-eight-fields exact and one revision increment only on Save",
+    "force-stop/relaunch local preferences persist"
+  ],
+  "bug": "Baseline language dialog actions obscured by IME: keyboardtop1000, action text1092..1127. Fixed and requalified on6b7079 in the sibling ime-fix evidence.",
+  "files": {
+    "playback-proof.json": "6411badbdbbc6f676b9d31770dcd03ebdca2d1505162b6b7cf1e47f3ac347547",
+    "subtitles-proof.json": "a1fd88f01b37db4f935fb1dea12b26e3c84ff962470746d5d6728a02bec7f65d",
+    "relaunch-proof.json": "3acae6af6a819f5fe7bed2dbc65df4c0fd45c3f016b39352bede050a68ea78d6",
+    "native-before-subtitles.json": "245f5d6591a45e734106a4dcbba195908fd8e1220ee180211c5b28da644b75e2",
+    "native-after-cancel.json": "245f5d6591a45e734106a4dcbba195908fd8e1220ee180211c5b28da644b75e2",
+    "native-before-explicit-save.json": "245f5d6591a45e734106a4dcbba195908fd8e1220ee180211c5b28da644b75e2",
+    "native-after-subtitles-save.json": "bedb375d2ff0fb6db085cb9c97fa6a344b16fcac55e6d0d940578a1228601cda",
+    "subtitles-after-force-stop-bottom.png": "cd530914b10f0b2f5a6a3815f1c9b317fa5fcc522e0c9f35a083249dc0e7a88a",
+    "subtitles-after-force-stop-top.png": "5b2a4ef5051be82f427ee5a323e1b0b397739e71a44aee67de79985445e81512",
+    "playback-after-force-stop.png": "45aec31a6852cb9bbff0651b4030f65b475600e32fccc00f19ca3b0940c99c4c",
+    "subtitles-custom-reopened-bottom.png": "c319955231ca20d650fe835befc23ef61cba7c6183416edcf3fe319fa7734db3",
+    "subtitles-custom-reopened-top.png": "1aa119265bfb21ae640bea388cec857a050c36eb7c88a5f223f9387309f95245",
+    "subtitles-custom-unsaved.png": "0aae4fe29490e61ea8a5a4d25bbf9f34e8322eb40bcfcf573583f8ab600e05fe",
+    "subtitles-custom-language-keyboard-dismissed.png": "f96009f1cd9e6e9fc115a9d5f109d6f8ba505073259b8cb67916edb65b00fa2f",
+    "subtitles-language-recovery.png": "7becbbffbdeb6bdc830fdf6f3482702abeab22880df5ef79721a05630c2a67f9",
+    "subtitles-invalid-colour.png": "54273e5c766b1c4a30604a53b99cd7b9fb8fc7d9c89b1ac67e5eacb48b44fc5a",
+    "subtitles-rapid-style-draft.png": "7edd2d10043b873ec5b7efcba15b9bff44da46d02fadd331b407285a345b58f2",
+    "subtitles-initial.png": "98a6ff20e9c3ed0091a293c1fe1df54173692327e2a5a619a00f95b22371c2e6",
+    "playback-saved-reopened.png": "93af7cbd8699fa1a52fdd1184c99a8d39e58eb043bbb89cb6ad76ca40d004347",
+    "playback-draft.png": "46adbed04e11aeb2b0932ed9628b63a4e4ff92a54c3f43ae03acf6687598e9d4",
+    "playback-initial.png": "7faf545ba7a27c9712c87073666dc7b15395d2ef368772a7d6eb98e7864f56c6",
+    "baseline-subtitle-ime-occlusion.png": "f13b6e247712a97d0abc03fa2d3a610c6cccfe51f07e6b365b19fa06242692ae",
+    "baseline-subtitle-ime-occlusion.json": "1404962b0685ceb29e0ed10ca38ade9544c85b1676ae3aace0503812286a07cd"
+  },
+  "superseded_by": "../ime-fix/native-6b7079b06808/proof.json"
+}

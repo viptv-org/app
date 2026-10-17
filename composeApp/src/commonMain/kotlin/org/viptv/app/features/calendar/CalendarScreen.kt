@@ -20,8 +20,10 @@ import org.viptv.engine.wire.Card
 
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
-    open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null) {
-    if (television) { TvCalendarScreen(days, entries, open, manage, available = available, busy = busy, error = error); return }
+    open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
+    type: String = "series", week: Int = 0, controls: Boolean = false,
+    categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null) {
+    if (television) { TvCalendarScreen(days, entries, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch); return }
     var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -33,11 +35,12 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
         Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else if (television) 96.dp * scale else 40.dp,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
-            if (days.isNotEmpty()) CalendarDates(if (phone) days else days.filter { day -> entries.any { it.day == day.id } }, entries, selected, phone, scale) { day ->
+            if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"})
+            if (days.isNotEmpty()) CalendarDates(days, entries, selected, phone, scale) { day ->
                 selected = day; focused = entries.firstOrNull { it.day == day }
-                if (phone && entries.any { it.day == day }) scope.launch {
+                if (phone) scope.launch {
                     val index = days.takeWhile { it.id != day }.sumOf { preceding ->
-                        entries.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 0 }
+                        entries.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 2 }
                     }
                     list.animateScrollToItem(index)
                 }
@@ -52,18 +55,20 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                     verticalArrangement = Arrangement.spacedBy(if (phone) 4.dp else 18.dp * scale)) {
                     if (phone) days.forEach { day ->
                         val releases = visible.filter { it.day == day.id }.sortedBy { it.aired }
-                        if (releases.isNotEmpty()) {
+                        run {
                             item(key = "day:${day.id}") {
                                 Row(Modifier.padding(top = 12.dp, bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     Text(day.label, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                     Text(day.fullDate, fontSize = 12.sp, color = Palette.secondary)
                                 }
                             }
-                            items(releases, key = { it.id }) { CalendarRow(it, true, false, 1f, { focused = it }, { open(it.card) }) }
+                            if(releases.isEmpty())item(key="empty:${day.id}"){Text("No releases for this day.",color=Palette.secondary,fontSize=13.sp)}
+                            items(releases, key = { it.id }) { CalendarReleaseRow(it,true,scale,watch,{focused=it},{open(it.card)}) }
                         }
                     } else items(visible, key = { it.id }) {
-                        CalendarRow(it, false, television, scale, { focused = it }, { open(it.card) }, selected = focused?.id == it.id)
+                        CalendarReleaseRow(it,false,scale,watch,{focused=it},{open(it.card)})
                     }
+                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text("No releases for this day.",color=Palette.secondary)}
                 }
                 if (television && focused != null) Column(Modifier.width(584.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     val entry = requireNotNull(focused)
@@ -75,5 +80,13 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit) {
+    Column {
+        CalendarRow(entry,phone,false,if(phone)1f else scale,focus,open)
+        if(watch!=null)entry.actionLabel()?.let{label->TextButton({watch(entry)}){Text(label)}}
     }
 }

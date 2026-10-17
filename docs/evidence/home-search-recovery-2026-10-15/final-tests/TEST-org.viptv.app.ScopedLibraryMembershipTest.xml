@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ScopedLibraryMembershipTest[desktop]" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:18.711Z" hostname="vynxcos" time="0.0">
+  <properties/>
+  <testcase name="sameRawLookupRemappedToAnotherSharedIdentityDoesNotShareSavedState[desktop]" classname="org.viptv.app.ScopedLibraryMembershipTest" time="0.0"/>
+  <testcase name="legacyMembershipWireKeepsNewListsOptionalAndSelectorsOmitArtwork[desktop]" classname="org.viptv.app.ScopedLibraryMembershipTest" time="0.0"/>
+  <testcase name="privateMembershipSeparatesProvidersAndConnectorReinstallations[desktop]" classname="org.viptv.app.ScopedLibraryMembershipTest" time="0.0"/>
+  <testcase name="cardKeysRetainLineageAndClaimsWhileIgnoringPresentationAndIdOrder[desktop]" classname="org.viptv.app.ScopedLibraryMembershipTest" time="0.0"/>
+  <testcase name="publicMembershipDoesNotPromoteAnUnverifiedPrivatePreviewAlias[desktop]" classname="org.viptv.app.ScopedLibraryMembershipTest" time="0.0"/>
+  <testcase name="legacyRowsRemainSavedOnlyForOriginlessLegacyCards[desktop]" classname="org.viptv.app.ScopedLibraryMembershipTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

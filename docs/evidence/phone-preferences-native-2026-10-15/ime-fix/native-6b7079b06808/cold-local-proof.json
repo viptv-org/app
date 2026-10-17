@@ -1,0 +1,17 @@
+{
+  "cold_launch_restores_local_mode_to_profiles": true,
+  "requires_explicit_profile_selection": true,
+  "real_account_used": false,
+  "preferences_unchanged_after_restart": [
+    {
+      "revision": 3,
+      "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+    }
+  ],
+  "ui_verified": [
+    "Best match",
+    "1080p",
+    "fr-CA",
+    "pt-BR"
+  ]
+}

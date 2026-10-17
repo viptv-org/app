@@ -1,0 +1,21 @@
+{
+  "recorded_at_utc": "2026-10-15T17:39:08.342817+00:00",
+  "desktop": {
+    "suites": 87,
+    "tests": 253,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "wasm_production": "passed; isolated dist",
+  "android_debug": "passed; optional owned-runtime probes included",
+  "android_release": "passed; no QA activities",
+  "linux_app_image": "passed; portable runtime follow-up separately qualified",
+  "duration_seconds": 199,
+  "gradle_workers": 1,
+  "native_engine_builds_skipped": "All66 frozen native source hashes unchanged; current4 native inputs already rebuilt/audited.",
+  "normal_apk": "artifacts/android-release-2026-10-15/player-preferences-b4394d8aab1c/viptv-android-release-local.apk",
+  "normal_apk_sha256": "b4394d8aab1c7a6e543431841ab9c75750809f94d66c206bd78195a63405438f",
+  "command": "./gradlew :androidApp:assembleDebug :composeApp:desktopTest :composeApp:wasmJsBrowserDistribution :androidApp:assembleRelease :composeApp:createDistributable --init-script /tmp/viptv-isolated-web.gradle --max-workers=1 -x :composeApp:buildDesktopEngine -x :androidApp:buildAndroidEngine",
+  "protected_manual_wasm_files_unchanged": 109
+}

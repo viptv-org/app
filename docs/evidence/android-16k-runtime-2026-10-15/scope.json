@@ -1,0 +1,15 @@
+{
+  "system_image": "system-images;android-36;google-tv-ps16k;x86_64",
+  "image_revision": 4,
+  "avd": "viptv-16k-isolated",
+  "serial": "emulator-5586",
+  "ram_mib": 2048,
+  "normal_apk_sha256": "3b047c819950adf15ac33563033da4c9147ca734fa5387b47f567a971fae56a6",
+  "physical_device": false,
+  "user_devices_modified": false,
+  "emulated_16k_userspace": true,
+  "hardware_kernel_page_kib": 4,
+  "status": "PASS official emulated16KiB native/storage/audio/lifecycle/direct184s/managed62s; physicalARM64 notqualified",
+  "final_normal_apk_sha256": "b4394d8aab1c7a6e543431841ab9c75750809f94d66c206bd78195a63405438f",
+  "runtime_apk_sha256": "7699e92dc23a037933402abebfcf30bcba40b378ea4d37c212efddd3424cf414"
+}

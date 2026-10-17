@@ -1,0 +1,17 @@
+# Home and native search recovery — 2026-10-15
+
+This continuation keeps the approved capability system and unified text-search direction. Discovery/navigation redesign remains deferred. Work stays on the experimental overlay; no production rollout or physical-TV installation is implied.
+
+Home now receives actual controller loading/error state. Initial failure and idle-without-data states offer Retry instead of an endless skeleton. A TV Home without a hero now focuses its first ready shelf after actual layout, including when pending/failed rows precede it. Up and Back return to navigation without stealing focus back; all-failed catalogs expose focused Retry. A completed empty TV Home explains whether no catalogs were returned or configured catalogs are empty, with a focused recovery action. Cached refresh errors remain visible above existing shelves; on TV the compact notice stays above hero artwork. Refreshing cached Home shows progress.
+
+Local Home refresh retains its last usable snapshot until replacement succeeds. A failed provider request keeps that snapshot and the safe error; retry replaces it. Cancellation prevents late publication, and leaving Home while refresh is pending keeps the new destination and its search draft instead of pulling the user back. Existing policy invalidation still clears previously authorized content before refresh.
+
+Native search previously flattened Rust catalog rows into cards, losing failed and empty providers. The adapter now publishes the same grouped-search model used remotely: one carousel per add-on, successful cards plus partial-failure notices, and named failed providers when all their catalogs fail. Card identities and metadata origins stay unchanged; each catalog is fetched once. Simkl remains server-backed and retains its existing category rows. The old card-only adapter fallback remains available.
+
+An unreadable saved vault now produces a safe connection error without clearing credentials or opening the network. Canceled reads cannot publish errors into replacement state. Initial desktop and phone sign-in choices now display connection errors, including expired-session and secure-storage messages, before the user chooses a sign-in method. The Linux noninteractive-vault implementation and actual OS-service qualification are in [desktop vault recovery](DESKTOP_VAULT_RECOVERY.md).
+
+Verification includes actual Rust/SQLite/UniFFI search planning and projection with only provider HTTP substituted; real partial/all-failed add-on cases; controller cache/busy/retry/navigation/cancellation checks; and Compose renderer focus, disabled actions, empty states, cached shelves and initial sign-in messages. Captures are under `evidence/home-search-recovery-2026-10-15/captures`. These are provisional recovery states, not certification of supplied-design parity. The final combined gate has 287 passing desktop tests with zero failures/errors/skips; artifact and runtime receipts remain separate.
+
+Related work: [integration settings recovery](INTEGRATION_SETTINGS_RECOVERY.md), [local startup and refresh handoff](LOCAL_CONNECTION_STARTUP.md), and [remaining work](REMAINING_KMP_WORK.md).
+
+Secret source credentials and native password fields now request a password keyboard with autocorrect disabled, including while Show password is active. Actual IME editor classification and provider-free draft cancellation are recorded in the final integration recovery receipt. Browsing-provider settings now explain that text search uses all enabled search integrations.

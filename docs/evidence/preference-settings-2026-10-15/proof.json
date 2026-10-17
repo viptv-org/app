@@ -1,0 +1,38 @@
+{
+  "scope": "Common Compose real rendering, focus, draft interaction and dispatch; synthetic preferences only",
+  "boards": [
+    "Tv3SetPlayback",
+    "Tv3SetSubs",
+    "M3SetPlayback",
+    "M3SetSubs"
+  ],
+  "tests": 6,
+  "failures": 0,
+  "errors": 0,
+  "test_runtime_seconds": 4.342,
+  "build_wall_seconds": 20,
+  "log": "/tmp/viptv-preference-settings-focused.log",
+  "source_sha256": {
+    "SettingsRoute.kt": "40a7039301788c9d62bc39091296e0bd8f621fc0b0f6600ab24f96896f75d1b0",
+    "SettingsScreen.kt": "c1256dfe53309767f5f7cedd7c7ea89e8dac61bd72bed025d3f8f49a42a74cc2",
+    "TvSettingsScreen.kt": "ed8f0342fc7b9843166aefb0f2404d39a157bcfd06912b43bd3786e885f23c3c",
+    "TvPreferencesFailure.kt": "f93326c9e11a55cb4c86ac47f9fd2981b18861024b73408a1aeabbbe0c965bb9",
+    "PhoneProfilePreferences.kt": "58fa698a60fbee9fa521e904281b2c1993b9f3f062d50cc7ea6789a512248609",
+    "PhoneSubtitlePreferences.kt": "530ca46ea093e16fd05e06eb6fe9cb9fe5191bb309724b7677b4d4bc0b8951e8",
+    "PhonePreferenceControls.kt": "2cc59778d5758210de601d0b69ebcaa5946ebce537a1f3b822de3b67f6432dc8",
+    "PhonePreferenceDialog.kt": "c061bc8ba70d0ad27edba4fb9627bfe3b007904922489e00e272b2db00861891"
+  },
+  "inspected_captures": {
+    "phone-subtitle-preferences.png": "c44a2d181878210bbfee375d270de43101a5d28520ddab1898f75352d8b613f1",
+    "tv-preference-load-failure.png": "24956778051427272cffdbf27497c689957ca719752bea36562d3bdd17e69d38",
+    "phone-playback-preferences.png": "ffef57e50026af8eebb0f7664c3a7bb7a0ae0fa0b14c63ae4d12bb87ba1a20a5"
+  },
+  "limits": [
+    "Not a physical Android or real server persistence acceptance run",
+    "Wide desktop/browser generic form unchanged; compact native uses separate supported sections",
+    "No new preference fields/backend/native API",
+    "No invented skip markers, frame-rate/data-mode preferences, shadow style or autoplay",
+    "Save/retry/custom-value dialogs are provisional states beyond supplied boards",
+    "Parent merged253-platform gate recorded separately"
+  ]
+}

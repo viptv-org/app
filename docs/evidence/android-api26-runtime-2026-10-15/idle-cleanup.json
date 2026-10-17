@@ -1,0 +1,9 @@
+{
+  "idle_shutdown": true,
+  "avd": "viptv-api26-isolated",
+  "serial": "emulator-5592",
+  "fixture_port": 18592,
+  "emulator_process_gone": true,
+  "fixture_running": false,
+  "reason": "Release owned idle RAM while root prepares coordinated new artifacts; cold boot again for remaining API26 MainActivity qualification"
+}

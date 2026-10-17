@@ -127,7 +127,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 false, null, true, managingProfiles, phone, desktop,
                                 { go(Screen.Home) }, { if (television) { profileToEdit = it; go(Screen.ProfileEdit) } },
                                 { managingProfiles = true }, { managingProfiles = false }, {}, television)
-                            Screen.Movies, Screen.Series, Screen.Discover -> if (television) TvBrowseScreen(
+                            Screen.Movies, Screen.Series, Screen.Anime, Screen.Discover -> if (television) TvBrowseScreen(
                                 if (tvDetailVariant in listOf("Loading", "Empty")) emptyList() else PreviewTvHome.movies,
                                 tvDetailVariant == "Loading", { go(Screen.Details) }, PreviewTvHome.genres, PreviewTvHome.membership, 4)
                                 else BrowseScreen(current, PreviewData.home, television, open = { go(Screen.Details) })

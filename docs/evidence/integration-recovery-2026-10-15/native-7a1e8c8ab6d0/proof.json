@@ -1,0 +1,216 @@
+{
+  "status": "passed on final immutable normal APK7a1e8c8ab6d0",
+  "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-release-2026-10-15/recovery-7a1e8c8ab6d0/viptv-android-release-local.apk",
+  "apk_sha256": "7a1e8c8ab6d003a5ee4c79b0e16376546aadf95ca466ea9f2d2940927e8c04df",
+  "fixture": {
+    "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "console_port": 5590,
+    "api": 35,
+    "ram_mib": 2560,
+    "cores": 2,
+    "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+    "display": "720x1600 density280; bounded portrait phone fixture",
+    "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+    "observed_minimum_phone_ram_mib": 2560,
+    "requested_ram_mib": 1536,
+    "first_launch_stopped_for_resource_coordination": true
+  },
+  "source_form": {
+    "ime_editor": {
+      "ime_visible": true,
+      "input_type_hex": "0x81",
+      "input_class": 1,
+      "variation_hex": "0x80",
+      "password_classification": true,
+      "auto_correct_flag": false,
+      "auto_complete_flag": false,
+      "no_suggestions_flag": false,
+      "package": "org.viptv.experiment"
+    },
+    "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-release-2026-10-15/recovery-7a1e8c8ab6d0/viptv-android-release-local.apk",
+    "apk_sha256": "7a1e8c8ab6d003a5ee4c79b0e16376546aadf95ca466ea9f2d2940927e8c04df",
+    "fixture": {
+      "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+      "avd_name": "viptv-phone-prefs-jvx0yqu1",
+      "serial": "emulator-5590",
+      "console_port": 5590,
+      "api": 35,
+      "ram_mib": 2560,
+      "cores": 2,
+      "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+      "display": "720x1600 density280; bounded portrait phone fixture",
+      "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+      "observed_minimum_phone_ram_mib": 2560,
+      "requested_ram_mib": 1536,
+      "first_launch_stopped_for_resource_coordination": true
+    },
+    "ime_top": 1070,
+    "action_control_bounds": {
+      "Cancel": [
+        361,
+        944,
+        482,
+        1028
+      ],
+      "Save": [
+        496,
+        944,
+        598,
+        1028
+      ]
+    },
+    "field_bounds": [
+      122,
+      262,
+      598,
+      374
+    ],
+    "masked": true,
+    "keyboard_sources": [
+      "InsetsSource id=3 type=ime frame=[0,1070][720,1600] visibleFrame=[0,1070][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null",
+      "mSource=InsetsSource id=3 type=ime frame=[0,1070][720,1600] visibleFrame=[0,1070][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null"
+    ],
+    "save_submitted": false,
+    "real_credentials_used": false,
+    "cancel_worked_with_keyboard_open": true,
+    "keyboard_dismissal_workaround": false,
+    "reopened_draft_empty": true,
+    "native_preferences_before": [
+      {
+        "revision": 3,
+        "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+      }
+    ],
+    "native_preferences_after": [
+      {
+        "revision": 3,
+        "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+      }
+    ],
+    "native_connections_before": [
+      {
+        "count": 0
+      }
+    ],
+    "native_connections_after": [
+      {
+        "count": 0
+      }
+    ],
+    "observed_schema_labels_before": [
+      "M3U live TV",
+      "VIPTV Sources",
+      "Xtream live TV"
+    ],
+    "observed_schema_labels_after": [
+      "M3U live TV",
+      "VIPTV Sources",
+      "Xtream live TV"
+    ],
+    "observed_schema_count_before": 3,
+    "observed_schema_count_after": 3
+  },
+  "phone_signin": {
+    "apk_sha256": "7a1e8c8ab6d003a5ee4c79b0e16376546aadf95ca466ea9f2d2940927e8c04df",
+    "device": "owned API35 emulator5590/private Default fixture",
+    "normal_username_editor": {
+      "ime_visible": true,
+      "input_type_hex": "0x8001",
+      "input_class": 1,
+      "variation_hex": "0x0",
+      "password_classification": false,
+      "auto_correct_flag": true,
+      "auto_complete_flag": false,
+      "no_suggestions_flag": false,
+      "package": "org.viptv.experiment"
+    },
+    "masked_password_editor": {
+      "ime_visible": true,
+      "input_type_hex": "0x81",
+      "input_class": 1,
+      "variation_hex": "0x80",
+      "password_classification": true,
+      "auto_correct_flag": false,
+      "auto_complete_flag": false,
+      "no_suggestions_flag": false,
+      "package": "org.viptv.experiment"
+    },
+    "shown_password_editor": {
+      "ime_visible": true,
+      "input_type_hex": "0x81",
+      "input_class": 1,
+      "variation_hex": "0x80",
+      "password_classification": true,
+      "auto_correct_flag": false,
+      "auto_complete_flag": false,
+      "no_suggestions_flag": false,
+      "package": "org.viptv.experiment"
+    },
+    "hidden_again_editor": {
+      "ime_visible": true,
+      "input_type_hex": "0x81",
+      "input_class": 1,
+      "variation_hex": "0x80",
+      "password_classification": true,
+      "auto_correct_flag": false,
+      "auto_complete_flag": false,
+      "no_suggestions_flag": false,
+      "package": "org.viptv.experiment"
+    },
+    "show_password_keeps_password_classification": true,
+    "credentials_submitted": false,
+    "real_credentials_used": false,
+    "native_preferences_unchanged": [
+      {
+        "revision": 3,
+        "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+      }
+    ],
+    "returned_to_signin_options": true,
+    "returned_to_signin_options_verified": true
+  },
+  "source_editor_password_type_verified": true,
+  "password_autocorrect_and_autocomplete_flags_unset": true,
+  "source_prediction_bar_absent_visually_verified": true,
+  "show_password_keeps_password_editor_classification": true,
+  "normal_username_type_control": "0x8001 vs password0x81",
+  "captures_inspected": 4,
+  "scope": "Only owned API35 emulator5590/private Default profile; fake drafts only; no provider Save, login or real credentials submitted; no physical TV/user emulator/shared service/default Wasm mutation. Native account Retry remains qualified by common UI/controller tests.",
+  "merged_desktop_gate": {
+    "tests": 287,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "scoped_recovery_tests": 8,
+  "source_files_sha256": {
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerSourceIntegrations.kt": "80d853f9198ff8d2de212395698bb8cc3a2ab6372f301f7269ae534ad5c9d174",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/LinkedAccounts.kt": "aab879d673395ec4c2f998864ec6f81584ed06f9fa7d4cc96159f9b64ec28773",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SourceIntegrationForm.kt": "daffe31a8eb8a11676c4436dc7867f56a092d1510bea1efe232e95c63a195cf8",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt": "e59e85b956f6cb2bdd91179dc5e1b8d8c1d6a481f2c27e71e0944a30a578d4a1",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobilePasswordPanel.kt": "0fb691f73481a8c73410c17ee3a7e7c5074631c0729ff23bde2cb4de052cb741",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopPasswordPanel.kt": "bb8d6ca7f59c188506335c4611eaa30d838da6fb382905c36522b096d1ad18f4",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/IptvInputs.kt": "ff603f44c03e7cc3cb5d02d74a2ab4270aff0010b6f68fbda0755daf9f2ece8c",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/SourceIntegrationRecoveryTest.kt": "93f7dc608a6597a3c79af5ddfb176ccfc09abbefea5a80489014baebcb29e43f",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/LinkedAccountRecoveryUiTest.kt": "29c49950e9c90414f44ccb4f4c318ebf8c711a8995d4cca26cd5a7277617fe76",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/SourceIntegrationFormUiTest.kt": "a6c0434405a884b9d69e611dab61bf8715d4336dc5075e53808585e34df58378"
+  },
+  "baseline_4cb59": "../baseline-4cb59/source-form-ime-baseline.json",
+  "intermediate_layout_only": "../native-6cbcae7d7f6a/proof.json",
+  "files_sha256": {
+    "source-form-positive.json": "3f2c89d9a1c685d29e69986444c3c554533633d24af23eb8598f3c33db0d4a57",
+    "signin-ime-positive.json": "626f8cd130d132e6be93ba92baf27e4e530ff80149701f4b0e48e4941dc9aff0",
+    "source-form-ime-fixed.png": "f5f9c7a5984bbc9dfaa5b278e12b0cfde4e0f8d02efe5171bb1df5aadd5a8ba9",
+    "source-form-cancel-retains-unconfigured-state.png": "b290bd5f803784caa20e6845e7cb49f580bf311495b825fe51109d327f84484c",
+    "signin-password-ime-masked.png": "67c0bcd126d0b4fc0ab3d247596819ab57e870d6860845fa11651de5909863b1",
+    "signin-password-ime-visible.png": "4ba75d7477786380ab085113d2fc7bcbd68528f9cabc1ea03e24868a1a1d2aba",
+    "TEST-org.viptv.app.SourceIntegrationRecoveryTest.xml": "ae4994f1449db6cd828be724b00aa07d6ec87556a0f4884bad9cbeb509bd0945",
+    "TEST-org.viptv.app.LinkedAccountRecoveryUiTest.xml": "45eecff536d096315bd85b0454c4361d88822f3a4ca3d8f068b2f64cc4e22121",
+    "TEST-org.viptv.app.SourceIntegrationFormUiTest.xml": "f521482d0f3d00a91cbbb80cc4766b1830def8b72f93185a2b452aa70b355958",
+    "owned-shutdown.json": "0e712872fb83b8000557fe770cb4dc3448a39e162f69e48607a2c604bc5de185"
+  },
+  "owned_emulator_stopped": true,
+  "shutdown_proof": "owned-shutdown.json"
+}

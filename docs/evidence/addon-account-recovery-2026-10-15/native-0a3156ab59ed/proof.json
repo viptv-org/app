@@ -1,0 +1,82 @@
+{
+  "status": "native failure-retry-success-remove passed; post-success URL clearing defect confirmed",
+  "apk": "artifacts/android-release-2026-10-15/addon-account-0a3156ab59ed/viptv-android-release-local.apk",
+  "apk_sha256": "0a3156ab59ed8a3484598150bd2aa7f5b309294a919041a93c307c18c79b3d31",
+  "fixture": {
+    "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "console_port": 5590,
+    "api": 35,
+    "ram_mib": 2560,
+    "cores": 2,
+    "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+    "display": "720x1600 density280; bounded portrait phone fixture",
+    "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+    "observed_minimum_phone_ram_mib": 2560,
+    "requested_ram_mib": 1536,
+    "first_launch_stopped_for_resource_coordination": true
+  },
+  "synthetic_provider": true,
+  "provider_transport": "Supported plain HTTP on own127.0.0.1 server via exact5590 adb reverse; normal release cleartext policy, no TLS bypass or network-security override",
+  "credentials_used": false,
+  "public_provider_or_manual_api_calls": false,
+  "checks": {
+    "add_before_advanced": true,
+    "add_bounds": [
+      281,
+      523,
+      489,
+      559
+    ],
+    "advanced_bounds": [
+      28,
+      651,
+      320,
+      693
+    ],
+    "first_failure_503": true,
+    "rapid_taps": 3,
+    "first_submit_manifest_requests": 1,
+    "failure_keeps_exact_url_and_error": true,
+    "retry_same_url_succeeds": true,
+    "success_sheet_closed": true,
+    "success_error_cleared": true,
+    "installed_record_visible_and_stored": true,
+    "success_reopen_url_cleared": false,
+    "own_record_removed": true,
+    "original_preferences_unchanged": true,
+    "original_connections_unchanged": true,
+    "assignments_restored_empty": true
+  },
+  "known_gap": "Successful phone installation retains its completed URL when the Add sheet is reopened. Confirmed on this exact APK; source fix and a new APK must be qualified separately.",
+  "profile_revision": "0\u21922 is expected add/remove configuration bookkeeping; original name/avatar/browsing plugin and empty assignments retained",
+  "server": {
+    "manifest_attempts": 2,
+    "events": [
+      {
+        "method": "GET",
+        "path": "/manifest.json",
+        "status": 503,
+        "manifest_attempts": 1,
+        "time": 1792097460.5311086
+      },
+      {
+        "method": "GET",
+        "path": "/manifest.json",
+        "status": 200,
+        "manifest_attempts": 2,
+        "time": 1792097474.8884697
+      },
+      {
+        "method": "GET",
+        "path": "/catalog/movie/synthetic-phone.json",
+        "status": 200,
+        "manifest_attempts": 2,
+        "time": 1792097476.9166899
+      }
+    ]
+  },
+  "source_changes_during_this_run": false,
+  "physical_devices_or_user5554_touched": false
+}

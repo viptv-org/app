@@ -1,0 +1,80 @@
+I/VIPTV_API26_QA( 3686): activity_created id=2389246 restored=false
+I/VIPTV_API26_QA( 3686): native_reopen_pin=true page_size=4096
+I/VIPTV_API26_QA( 3686): profile_selected=one phone_mode=true sdk=26
+I/VIPTV_API26_QA( 3686): activity_created id=2033438 restored=true
+I/VIPTV_API26_QA( 3686): player sidecar_active=false sidecar_cues=0 sidecar_position_ms=600000
+I/VIPTV_API26_QA( 3686): player opening_position_ms=0 opening_timeline_offset_ms=600000 opening_live=false
+I/VIPTV_API26_QA( 3686): player ffmpeg_audio_available=true ffmpeg_version=Lavc60.3.100
+I/VIPTV_API26_QA( 3686): player timeline_default_ms=0 timeline_position_ms=0 timeline_offset_ms=0 timeline_placeholder=true timeline_live=false timeline_dynamic=true
+I/VIPTV_API26_QA( 3686): player timeline_default_ms=0 timeline_position_ms=0 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=25 dropped=0 fps=12.141816415735795 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_API26_QA( 3686): player timeline_default_ms=0 timeline_position_ms=1676 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=55 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_API26_QA( 3686): player timeline_default_ms=0 timeline_position_ms=3675 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=85 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_API26_QA( 3686): player timeline_default_ms=0 timeline_position_ms=1668 timeline_offset_ms=4000 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_API26_QA( 3686): capture_elapsed expected=10:05 position_ms=605704 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=87 dropped=0 fps=0.9995002498750625 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=87 dropped=0 fps=0.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player sidecar_active=false sidecar_cues=0 sidecar_position_ms=605704
+I/VIPTV_API26_QA( 3686): activity_created id=197770039 restored=true
+I/VIPTV_API26_QA( 3686): player sidecar_active=false sidecar_cues=0 sidecar_position_ms=605704
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=88 dropped=0 fps=0.2892681515765114 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): pause_only=true was_paused=true pauses=1 resumes=1 stops=0 starts=0 position_ms=605704
+I/VIPTV_API26_QA( 3686): await_home paused=true
+I/VIPTV_API26_QA( 3686): background_paused position_ms=605704 was_paused=true
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=91 dropped=0 fps=1.4992503748125936 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): pause_only=true was_paused=false pauses=1 resumes=1 stops=0 starts=0 position_ms=606186
+I/VIPTV_API26_QA( 3686): await_home paused=false
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=97 dropped=0 fps=3.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): background_paused position_ms=606337 was_paused=false
+I/VIPTV_API26_QA( 3686): player discontinuity_reason=1 discontinuity_old_ms=2542 discontinuity_new_ms=8000
+I/VIPTV_API26_QA( 3686): seek_verified managed=false lease=fixture-lease target_ms=612000 position_ms=612000 input_offset_ms=600000 window_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=105 dropped=0 fps=3.99800099950025 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=135 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=165 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=5757 position_ms=616968 window_ms=4000 seeks=1 clock_error_ms=-195
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=195 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=225 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=10757 position_ms=621969 window_ms=4000 seeks=1 clock_error_ms=-193
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=255 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=285 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=315 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=15757 position_ms=626989 window_ms=4000 seeks=1 clock_error_ms=-167
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=345 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=376 dropped=0 fps=15.5 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=20757 position_ms=631996 window_ms=4000 seeks=1 clock_error_ms=-163
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=405 dropped=0 fps=14.5 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=435 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=465 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=25757 position_ms=636999 window_ms=4000 seeks=1 clock_error_ms=-161
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=495 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=4000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=525 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=6000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=30758 position_ms=642009 window_ms=8000 seeks=1 clock_error_ms=-152
+I/VIPTV_API26_QA( 3686): player discontinuity_reason=1 discontinuity_old_ms=34181 discontinuity_new_ms=16000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=554 dropped=0 fps=14.492753623188406 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=8000
+I/VIPTV_API26_QA( 3686): seek_verified managed=false lease=fixture-lease target_ms=624000 position_ms=624000 input_offset_ms=600000 window_ms=8000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=579 dropped=0 fps=12.5 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=10000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=609 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=12000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=36412 position_ms=628927 window_ms=14000 seeks=2 clock_error_ms=-203
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=639 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=14000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=669 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=16000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=699 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=18000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=41412 position_ms=633943 window_ms=18000 seeks=2 clock_error_ms=-185
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=729 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=20000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=759 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=22000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=46412 position_ms=638951 window_ms=24000 seeks=2 clock_error_ms=-174
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=789 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=24000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=819 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=26000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=849 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=28000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=51412 position_ms=643954 window_ms=28000 seeks=2 clock_error_ms=-174
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=879 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=30000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=909 dropped=0 fps=14.992503748125937 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=32000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=56412 position_ms=648965 window_ms=34000 seeks=2 clock_error_ms=-162
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=939 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=34000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=969 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=36000
+I/VIPTV_API26_QA( 3686): player engine=Media3 rendered=999 dropped=0 fps=15.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-aac video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=38000
+I/VIPTV_API26_QA( 3686): sustain elapsed_ms=61412 position_ms=653968 window_ms=38000 seeks=2 clock_error_ms=-162
+I/VIPTV_API26_QA( 3686): sustain_pass=true wall_ms=61450 samples=12 seeks=2 replacements=0 origin_delta_ms=34000 page_size=4096
+I/VIPTV_API26_QA( 3686): saved_clock_verified renderer_ms=654171 saved_ms=653968 leases=1
+I/VIPTV_API26_QA( 3686): PASS sdk=26 normal_mode=true profile_selection=true details_retained=true player_retained=true user_pause_retained=true background_paused=true foreground_resumed=true pause_only_playing=true pause_only_user_paused=true auth_refreshes=1 bootstraps=4 lease_opens=1 title_clock=true

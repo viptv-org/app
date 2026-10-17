@@ -1,0 +1,109 @@
+{
+  "keyboard_source": [
+    "InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null",
+    "mSource=InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null"
+  ],
+  "ime_top": 1000,
+  "actions": {
+    "Cancel": [
+      307,
+      874,
+      428,
+      958
+    ],
+    "Use value": [
+      442,
+      874,
+      598,
+      958
+    ]
+  },
+  "field_bounds": [
+    122,
+    657,
+    598,
+    832
+  ],
+  "labels": [
+    {
+      "text": "Subtitle language",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[122,178][461,234]"
+    },
+    {
+      "text": "Spanish",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,290][272,325]"
+    },
+    {
+      "text": "Portuguese",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,388][314,423]"
+    },
+    {
+      "text": "French",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,486][260,521]"
+    },
+    {
+      "text": "German",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,584][269,619]"
+    },
+    {
+      "text": "en-GB",
+      "desc": "",
+      "click": "true",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[122,657][598,832]"
+    },
+    {
+      "text": "Language tag",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[150,657][296,685]"
+    },
+    {
+      "text": "For example en or pt-BR. Empty uses the default.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[150,776][570,832]"
+    },
+    {
+      "text": "Cancel",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[328,899][407,934]"
+    },
+    {
+      "text": "Use value",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[463,899][577,934]"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 package org.viptv.app.features.home
 
+import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,9 +27,12 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val portrait = row.id != "continue"
+    // Touch platforms (phone web/app) have no focus navigation; the swipe
+    // outline a focused card would show must not render during scrolling.
+    val showFocusOutline = television || !compact && !browser
     val width = if (portrait) { if (compact) 112 else if (television) (240 * scale).toInt() else if (tablet) 164 else 176 }
         else { if (compact) 240 else if (television) (384 * scale).toInt() else if (tablet) 300 else if (browser) 212 else 280 }
-    val cards = row.cards.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
+    val cards = row.cards.distinctBy(::cardLookupKey)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
@@ -44,8 +48,8 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
         }
         when (row.state) {
             RowState.READY -> LazyRow(state = list, horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
-                items(cards, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) {
-                    MediaCard(it, width, portrait = portrait, onFocus = focus, open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f, cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp)
+                items(cards, key = ::cardLookupKey) {
+                    MediaCard(it, width, portrait = portrait, onFocus = focus, open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f, cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp, showFocusOutline = showFocusOutline)
                 }
             }
             RowState.EMPTY -> Text("Nothing here yet.", color = Palette.secondary)

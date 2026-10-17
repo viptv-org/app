@@ -1,0 +1,1236 @@
+{
+  "counts": {
+    "GET /qa/status": 11,
+    "POST /api/auth/device/login": 1,
+    "GET /api/v3/bootstrap": 4,
+    "POST /api/auth/profile": 1,
+    "POST /qa/expire": 1,
+    "POST /api/auth/device/refresh": 1,
+    "GET /api/v3/search": 1,
+    "GET /api/v3/meta/movie/lifecycle-fixture": 1,
+    "POST /api/v2/streams": 1,
+    "GET /api/v2/streams/fixture-discovery": 1,
+    "POST /api/v3/profiles/one/source-ranking": 1,
+    "POST /api/v2/playback": 1,
+    "GET /api/v3/subtitles/movie/lifecycle-fixture": 1,
+    "GET /media/index.m3u8": 91,
+    "GET /media/segment-000.ts": 1,
+    "GET /media/segment-001.ts": 1,
+    "POST /api/v3/profiles/one/playback-events": 19,
+    "GET /media/segment-002.ts": 1,
+    "GET /media/segment-003.ts": 1,
+    "GET /media/segment-004.ts": 1,
+    "GET /media/segment-005.ts": 1,
+    "GET /media/segment-006.ts": 1,
+    "GET /media/segment-007.ts": 1,
+    "GET /media/segment-008.ts": 1,
+    "GET /media/segment-009.ts": 1,
+    "GET /media/segment-010.ts": 1,
+    "GET /media/segment-011.ts": 1,
+    "GET /media/segment-012.ts": 2,
+    "PUT /api/v3/profiles/one/progress": 21,
+    "GET /media/segment-013.ts": 2,
+    "GET /media/segment-014.ts": 2,
+    "GET /media/segment-015.ts": 2,
+    "GET /media/segment-016.ts": 2,
+    "GET /media/segment-017.ts": 2,
+    "GET /media/segment-018.ts": 2,
+    "GET /media/segment-019.ts": 2,
+    "GET /media/segment-020.ts": 2,
+    "GET /media/segment-021.ts": 2,
+    "GET /media/segment-022.ts": 2,
+    "GET /media/segment-023.ts": 2,
+    "POST /api/v2/playback/fixture-lease/heartbeat": 5,
+    "GET /media/segment-024.ts": 3,
+    "GET /media/segment-025.ts": 3,
+    "GET /media/segment-026.ts": 3,
+    "GET /media/segment-027.ts": 3,
+    "GET /media/segment-028.ts": 3,
+    "GET /media/segment-029.ts": 3,
+    "GET /media/segment-030.ts": 3,
+    "GET /media/segment-031.ts": 3,
+    "GET /media/segment-032.ts": 3,
+    "GET /media/segment-033.ts": 3,
+    "GET /media/segment-034.ts": 2,
+    "GET /media/segment-035.ts": 2,
+    "GET /media/segment-036.ts": 2,
+    "GET /media/segment-037.ts": 2,
+    "GET /media/segment-038.ts": 2,
+    "GET /media/segment-039.ts": 2,
+    "GET /media/segment-040.ts": 2,
+    "GET /media/segment-041.ts": 2,
+    "GET /media/segment-042.ts": 2,
+    "GET /media/segment-043.ts": 2,
+    "GET /media/segment-044.ts": 2,
+    "GET /media/segment-045.ts": 2,
+    "GET /media/segment-046.ts": 2,
+    "GET /media/segment-047.ts": 2,
+    "GET /media/segment-048.ts": 2,
+    "GET /media/segment-049.ts": 2,
+    "GET /media/segment-050.ts": 1,
+    "GET /media/segment-051.ts": 1,
+    "GET /media/segment-052.ts": 1,
+    "GET /media/segment-053.ts": 1,
+    "GET /media/segment-054.ts": 2,
+    "GET /media/segment-055.ts": 2,
+    "GET /media/segment-056.ts": 2,
+    "GET /media/segment-057.ts": 2,
+    "GET /media/segment-058.ts": 2,
+    "GET /media/segment-059.ts": 2,
+    "GET /media/segment-060.ts": 2,
+    "GET /media/segment-061.ts": 2,
+    "GET /media/segment-062.ts": 2,
+    "GET /media/segment-063.ts": 2,
+    "GET /media/segment-064.ts": 2,
+    "GET /media/segment-065.ts": 2,
+    "GET /media/segment-066.ts": 2,
+    "GET /media/segment-067.ts": 2,
+    "GET /media/segment-068.ts": 2,
+    "GET /media/segment-069.ts": 2,
+    "GET /media/segment-070.ts": 2,
+    "GET /media/segment-071.ts": 2,
+    "GET /media/segment-072.ts": 2,
+    "GET /media/segment-073.ts": 2,
+    "GET /media/segment-074.ts": 2,
+    "GET /media/segment-075.ts": 2,
+    "GET /media/segment-076.ts": 2,
+    "GET /media/segment-077.ts": 2,
+    "GET /media/segment-078.ts": 2,
+    "GET /media/segment-079.ts": 2,
+    "GET /media/segment-080.ts": 1,
+    "GET /media/segment-081.ts": 1,
+    "GET /media/segment-082.ts": 1,
+    "GET /media/segment-083.ts": 1,
+    "GET /media/segment-084.ts": 1,
+    "GET /media/segment-085.ts": 1,
+    "GET /media/segment-086.ts": 1,
+    "GET /media/segment-087.ts": 1,
+    "GET /media/segment-088.ts": 1,
+    "GET /media/segment-089.ts": 1,
+    "GET /media/segment-090.ts": 1,
+    "GET /media/segment-091.ts": 1,
+    "GET /media/segment-092.ts": 1,
+    "GET /media/segment-093.ts": 1,
+    "GET /media/segment-094.ts": 1,
+    "GET /media/segment-095.ts": 1,
+    "GET /media/segment-096.ts": 1,
+    "GET /media/segment-097.ts": 1
+  },
+  "events": [
+    {
+      "event": "start",
+      "sequence": 1,
+      "position_millis": 600000,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 2,
+      "position_millis": 605766,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 3,
+      "position_millis": 605839,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 4,
+      "position_millis": 606032,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 5,
+      "position_millis": 606092,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 6,
+      "position_millis": 606405,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 7,
+      "position_millis": 606492,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 8,
+      "position_millis": 606641,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 9,
+      "position_millis": 612000,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 10,
+      "position_millis": 642012,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 11,
+      "position_millis": 624000,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 12,
+      "position_millis": 654012,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 13,
+      "position_millis": 648000,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 14,
+      "position_millis": 678016,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 15,
+      "position_millis": 686000,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 16,
+      "position_millis": 716027,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 17,
+      "position_millis": 708000,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "pause",
+      "sequence": 18,
+      "position_millis": 738021,
+      "duration_millis": 3300000
+    },
+    {
+      "event": "start",
+      "sequence": 19,
+      "position_millis": 748000,
+      "duration_millis": 3300000
+    }
+  ],
+  "progress": [
+    {
+      "position_millis": 605766,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 606032,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 606092,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 606405,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 606492,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 606641,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 626382,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 641403,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 642012,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 638380,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 653402,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 654012,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 662589,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 677617,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 678016,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 700587,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 715621,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 716027,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 722395,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 737419,
+      "duration_millis": 3300000
+    },
+    {
+      "position_millis": 738021,
+      "duration_millis": 3300000
+    }
+  ],
+  "selected": "one",
+  "playlists": [
+    {
+      "elapsed_ms": 0,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 14,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 1011,
+      "first_sequence": 0,
+      "last_exclusive": 10,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 2011,
+      "first_sequence": 0,
+      "last_exclusive": 11,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 4010,
+      "first_sequence": 0,
+      "last_exclusive": 12,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 6011,
+      "first_sequence": 2,
+      "last_exclusive": 13,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 8014,
+      "first_sequence": 2,
+      "last_exclusive": 14,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 10014,
+      "first_sequence": 2,
+      "last_exclusive": 15,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 12014,
+      "first_sequence": 2,
+      "last_exclusive": 16,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 14014,
+      "first_sequence": 2,
+      "last_exclusive": 17,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 16015,
+      "first_sequence": 2,
+      "last_exclusive": 18,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 18016,
+      "first_sequence": 2,
+      "last_exclusive": 19,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 20016,
+      "first_sequence": 2,
+      "last_exclusive": 20,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 22016,
+      "first_sequence": 2,
+      "last_exclusive": 21,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 24017,
+      "first_sequence": 2,
+      "last_exclusive": 22,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 26017,
+      "first_sequence": 2,
+      "last_exclusive": 23,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 28018,
+      "first_sequence": 2,
+      "last_exclusive": 24,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 30018,
+      "first_sequence": 2,
+      "last_exclusive": 25,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 32019,
+      "first_sequence": 2,
+      "last_exclusive": 26,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 34019,
+      "first_sequence": 2,
+      "last_exclusive": 27,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 36018,
+      "first_sequence": 2,
+      "last_exclusive": 28,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 38018,
+      "first_sequence": 2,
+      "last_exclusive": 29,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 40018,
+      "first_sequence": 2,
+      "last_exclusive": 30,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 42019,
+      "first_sequence": 2,
+      "last_exclusive": 31,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 44020,
+      "first_sequence": 2,
+      "last_exclusive": 32,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 46019,
+      "first_sequence": 3,
+      "last_exclusive": 33,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 48018,
+      "first_sequence": 4,
+      "last_exclusive": 34,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 50020,
+      "first_sequence": 5,
+      "last_exclusive": 35,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 52019,
+      "first_sequence": 6,
+      "last_exclusive": 36,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 54019,
+      "first_sequence": 7,
+      "last_exclusive": 37,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 56019,
+      "first_sequence": 8,
+      "last_exclusive": 38,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 58020,
+      "first_sequence": 9,
+      "last_exclusive": 39,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 60019,
+      "first_sequence": 10,
+      "last_exclusive": 40,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 62021,
+      "first_sequence": 11,
+      "last_exclusive": 41,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 64019,
+      "first_sequence": 12,
+      "last_exclusive": 42,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 66020,
+      "first_sequence": 13,
+      "last_exclusive": 43,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 68021,
+      "first_sequence": 14,
+      "last_exclusive": 44,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 70022,
+      "first_sequence": 15,
+      "last_exclusive": 45,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 72021,
+      "first_sequence": 16,
+      "last_exclusive": 46,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 74021,
+      "first_sequence": 17,
+      "last_exclusive": 47,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 76022,
+      "first_sequence": 18,
+      "last_exclusive": 48,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 78023,
+      "first_sequence": 19,
+      "last_exclusive": 49,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 80021,
+      "first_sequence": 20,
+      "last_exclusive": 50,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 82022,
+      "first_sequence": 21,
+      "last_exclusive": 51,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 84022,
+      "first_sequence": 22,
+      "last_exclusive": 52,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 86021,
+      "first_sequence": 23,
+      "last_exclusive": 53,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 88022,
+      "first_sequence": 24,
+      "last_exclusive": 54,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 90022,
+      "first_sequence": 25,
+      "last_exclusive": 55,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 92022,
+      "first_sequence": 26,
+      "last_exclusive": 56,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 94023,
+      "first_sequence": 27,
+      "last_exclusive": 57,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 96023,
+      "first_sequence": 28,
+      "last_exclusive": 58,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 98022,
+      "first_sequence": 29,
+      "last_exclusive": 59,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 100023,
+      "first_sequence": 30,
+      "last_exclusive": 60,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 102023,
+      "first_sequence": 31,
+      "last_exclusive": 61,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 104022,
+      "first_sequence": 32,
+      "last_exclusive": 62,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 106023,
+      "first_sequence": 33,
+      "last_exclusive": 63,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 108022,
+      "first_sequence": 34,
+      "last_exclusive": 64,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 110023,
+      "first_sequence": 35,
+      "last_exclusive": 65,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 112023,
+      "first_sequence": 36,
+      "last_exclusive": 66,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 114024,
+      "first_sequence": 37,
+      "last_exclusive": 67,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 116024,
+      "first_sequence": 38,
+      "last_exclusive": 68,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 118023,
+      "first_sequence": 39,
+      "last_exclusive": 69,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 120024,
+      "first_sequence": 40,
+      "last_exclusive": 70,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 122025,
+      "first_sequence": 41,
+      "last_exclusive": 71,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 124026,
+      "first_sequence": 42,
+      "last_exclusive": 72,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 126026,
+      "first_sequence": 43,
+      "last_exclusive": 73,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 128026,
+      "first_sequence": 44,
+      "last_exclusive": 74,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 130026,
+      "first_sequence": 45,
+      "last_exclusive": 75,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 132025,
+      "first_sequence": 46,
+      "last_exclusive": 76,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 134026,
+      "first_sequence": 47,
+      "last_exclusive": 77,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 136025,
+      "first_sequence": 48,
+      "last_exclusive": 78,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 138025,
+      "first_sequence": 49,
+      "last_exclusive": 79,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 140025,
+      "first_sequence": 50,
+      "last_exclusive": 80,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 142065,
+      "first_sequence": 51,
+      "last_exclusive": 81,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 144028,
+      "first_sequence": 52,
+      "last_exclusive": 82,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 146028,
+      "first_sequence": 53,
+      "last_exclusive": 83,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 148027,
+      "first_sequence": 54,
+      "last_exclusive": 84,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 150028,
+      "first_sequence": 55,
+      "last_exclusive": 85,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 152030,
+      "first_sequence": 56,
+      "last_exclusive": 86,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 154028,
+      "first_sequence": 57,
+      "last_exclusive": 87,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 156029,
+      "first_sequence": 58,
+      "last_exclusive": 88,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 158030,
+      "first_sequence": 59,
+      "last_exclusive": 89,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 160031,
+      "first_sequence": 60,
+      "last_exclusive": 90,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 162031,
+      "first_sequence": 61,
+      "last_exclusive": 91,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 164033,
+      "first_sequence": 62,
+      "last_exclusive": 92,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 166033,
+      "first_sequence": 63,
+      "last_exclusive": 93,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 168034,
+      "first_sequence": 64,
+      "last_exclusive": 94,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 170034,
+      "first_sequence": 65,
+      "last_exclusive": 95,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 172036,
+      "first_sequence": 66,
+      "last_exclusive": 96,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 174036,
+      "first_sequence": 67,
+      "last_exclusive": 97,
+      "base_sequence": 0
+    },
+    {
+      "elapsed_ms": 176035,
+      "first_sequence": 68,
+      "last_exclusive": 98,
+      "base_sequence": 0
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/api/auth/device/login",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/profile",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/refresh",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/search",
+      "query": "query=Lifecycle",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/meta/movie/lifecycle-fixture",
+      "query": "provider_id=stremio&addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/streams",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/streams/fixture-discovery",
+      "query": "after=0&wait_ms=10000",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/source-ranking",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/lifecycle-fixture",
+      "query": "metadata_provider_id=stremio&metadata_addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease/heartbeat",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease/heartbeat",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease/heartbeat",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease/heartbeat",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 1
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease/heartbeat",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 1
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    }
+  ],
+  "measurements": [],
+  "delivery_kind": "direct",
+  "leases": {
+    "fixture-lease": {
+      "base": 0,
+      "requested": 600.0,
+      "started": 341646.90796586
+    }
+  },
+  "captures": {}
+}

@@ -21,7 +21,7 @@ class ClosingProgressTest {
     @Test fun disconnectSavesCapturedProfileEvenWhenUiScopeWasCancelled() = runBlocking {
         val saved = CompletableDeferred<JsonObject>()
         val client = HttpClient(MockEngine { request ->
-            assertEquals("/api/v3/profiles/12/progress", request.url.encodedPath)
+            assertEquals("/api/profiles/12/progress", request.url.encodedPath)
             saved.complete(Json.parseToJsonElement((request.body as TextContent).text).jsonObject)
             respond("{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }

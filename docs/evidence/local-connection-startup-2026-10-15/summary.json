@@ -1,0 +1,20 @@
+{
+  "recorded_at_utc": "2026-10-15T18:29:41.066024+00:00",
+  "desktop": {
+    "suites": 89,
+    "tests": 260,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "wasm_production": "passed; isolated output",
+  "android_debug_and_release": "passed",
+  "linux_app_image": "passed; separately packaged and runtime qualified",
+  "seconds": 177,
+  "workers": 1,
+  "native_rebuild": false,
+  "startup_refresh_before_observed_assertion": "expected:<[r1, r2]> but was:<[r1, r1]>",
+  "normal_apk": "artifacts/android-release-2026-10-15/local-startup-6b7079b06808/viptv-android-release-local.apk",
+  "normal_apk_sha256": "6b7079b06808580c94cae8b9d0cdd8093bc79a7b27e96129d6c1cb817c0baba7",
+  "protected_wasm_files_unchanged": 109
+}

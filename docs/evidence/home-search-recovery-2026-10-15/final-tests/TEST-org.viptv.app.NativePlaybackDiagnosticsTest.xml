@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="NativePlaybackDiagnosticsTest[desktop]" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:09.006Z" hostname="vynxcos" time="0.004">
+  <properties/>
+  <testcase name="networkFailureKeepsReasonWithoutSignedAddressOrHeaders[desktop]" classname="org.viptv.app.NativePlaybackDiagnosticsTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

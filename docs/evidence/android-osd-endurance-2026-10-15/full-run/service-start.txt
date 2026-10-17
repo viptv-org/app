@@ -1,0 +1,9 @@
+ActiveState=active
+SubState=running
+InvocationID=f93c94cc68fd49579c0225b32601d126
+RuntimeMaxUSec=50min
+MainPID=3088932
+Result=success
+ExecStart={ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 /tmp/viptv-osd-endurance-qa/supervised-run.py ; ignore_errors=no ; start_time=[Thu 2026-10-15 16:17:55 EDT] ; stop_time=[n/a] ; pid=3088932 ; code=(null) ; status=0/0 }
+ControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/viptv-osd-endurance-20261015T2017Z.service
+KillMode=control-group

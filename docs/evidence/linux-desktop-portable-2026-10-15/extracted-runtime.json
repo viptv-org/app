@@ -1,0 +1,21 @@
+{
+  "image": "/tmp/viptv-deb-qualification-3twzrtph/opt/viptv-experiment",
+  "launcher_sha256": "51bc95a8ead1e651eba4d5c15113597ef2ba9c989ad25d587132fcc8b60154d6",
+  "bundled_java_version": "21.0.12.1",
+  "bundled_java_modules": "java.base java.datatransfer java.xml java.prefs java.desktop java.logging jdk.crypto.ec",
+  "native_resource": {
+    "jar": "lib/app/composeApp-desktop-deac9739d98df052fa412e8cfc739c95.jar",
+    "sha256": "72ac71760676938b6211d5d5e58f30ee4b1ced524d07c0e8b1614c433f088798"
+  },
+  "current_native_input_sha256": "72ac71760676938b6211d5d5e58f30ee4b1ced524d07c0e8b1614c433f088798",
+  "pinned_renderer_jvm_jars": {
+    "kiteplayer-output-jvm-0.3.0-viptv-presentation.4.jar": "4d908ba961a28aaca11e4c6b03297bea10cbb2f5aa0e551578d448afbc6b44ff",
+    "kiteplayer-core-jvm-0.3.0-viptv-presentation.4.jar": "dc1960c7b2320ffcc2a07a8e53bd952b8b9390408ca7c9f4ab92175674f0c937",
+    "kiteplayer-compose-video-jvm-0.3.0-viptv-presentation.4.jar": "8ddedcef11d328764e59273a2b3315c6ec835c666b800db8138224adf1b0124e",
+    "kiteplayer-compose-ui-jvm-0.3.0-viptv-presentation.4.jar": "7b35f656de9e5957c75f4c4e3f781c361d5682f496c367cdda40446a14ed5abc"
+  },
+  "launcher_jvm_sqlite_smoke_passed": true,
+  "smoke_seconds": 0.348,
+  "physical_device_or_user_vault_access": false,
+  "scope": "Executed current host platform only; does not qualify unavailable Windows/macOS runners or package-manager installation."
+}

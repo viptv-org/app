@@ -1,0 +1,354 @@
+ M androidApp/build.gradle.kts
+ M androidApp/src/debug/AndroidManifest.xml
+ M androidApp/src/debug/kotlin/org/viptv/experiment/NativePlaybackQaActivity.kt
+ M androidApp/src/main/kotlin/org/viptv/experiment/MainActivity.kt
+ M composeApp/build.gradle.kts
+ M composeApp/src/androidMain/kotlin/org/viptv/app/player/AndroidPlaybackSession.kt
+ M composeApp/src/androidMain/kotlin/org/viptv/app/player/Media3ProviderSubtitles.kt
+ M composeApp/src/androidMain/kotlin/org/viptv/app/player/Media3Tracks.kt
+ M composeApp/src/androidMain/kotlin/org/viptv/app/player/PlatformNativePlayerSurface.android.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/App.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/components/Destinations.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/components/HomeFilters.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/components/Navigation.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/components/TvNavigation.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/LiveCatalog.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/LocalConnection.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/ProfilePreferences.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteCalendar.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteConnection.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteHistory.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteLibrary.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteProfiles.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSessionStore.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSources.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/browse/BrowseScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/browse/DiscoveryChoiceFilter.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/browse/TvBrowseScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/CalendarModels.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/CalendarScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/TvCalendarPreview.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/TvCalendarScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/AvatarPicker.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ConnectScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopPasswordPanel.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/IptvInputs.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobilePasswordPanel.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobileProfileEdit.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/MobileSignIn.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfileEditScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/SignInInput.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditDialog.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfileEditScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvProfiles.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvSignIn.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvSplash.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvWelcome.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/history/HistoryScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/home/HeroCarousel.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/home/HomeCatalogRow.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/home/HomeScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeShelf.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/library/LibraryScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/library/TvLibraryScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveChannelRow.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveFilters.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveModels.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LivePreview.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveRoute.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/TvLiveFilters.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/TvLivePreview.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/live/TvLiveScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhonePlaybackControls.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PlayerRoute.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PlayerScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchGroups.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/search/TvSearchScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AccountSettingsSidebar.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AddonSettings.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/BrowsingProviderSettings.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/LinkedAccounts.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneSettings.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/ProfilePreferencesSettings.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SettingsRoute.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SettingsScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SettingsSidebar.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SourceIntegrationForm.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvProfilePreferences.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSettingsAccount.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSettingsModels.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSettingsScreen.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSubtitleSettings.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/sources/SourcePresentation.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/sources/SourceRow.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/features/sources/TvSourceRow.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/images/ImageLoading.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/player/PlaybackTimeline.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/player/PlayerSurface.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/player/ProviderSubtitles.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/preview/UiPreview.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ApplicationController.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ApplicationState.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerAccounts.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerAddons.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerBrowse.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerBrowsingProvider.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerCatalog.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerDetailPages.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLibrary.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLibraryImport.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLibraryPage.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLive.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerNavigation.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPlayback.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPreferences.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerProfiles.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerProgress.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerSession.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerSourceIntegrations.kt
+ M composeApp/src/commonMain/kotlin/org/viptv/engine/wire/EngineWire.kt
+ M composeApp/src/desktopMain/kotlin/org/viptv/app/DesktopPlayerQa.kt
+ M composeApp/src/desktopMain/kotlin/org/viptv/app/player/KitePlayerSurface.desktop.kt
+ M composeApp/src/desktopTest/kotlin/org/viptv/app/PlaybackTimelineTest.kt
+ M composeApp/src/desktopTest/kotlin/org/viptv/app/RemoteProfilesTest.kt
+ M composeApp/src/desktopTest/kotlin/org/viptv/app/RemoteSourcePresentationTest.kt
+ M composeApp/src/desktopTest/kotlin/org/viptv/app/SourcePresentationTest.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/AccountAuthorization.native.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/CalendarDates.native.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalConnection.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalDetails.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalLibrary.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeLocalSources.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeMergedSources.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeRemoteSessionStore.kt
+ M composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeSourceIntegrations.kt
+ M composeApp/src/wasmJsMain/kotlin/org/viptv/app/Main.kt
+ M composeApp/src/wasmJsMain/kotlin/org/viptv/app/connection/BrowserTransport.kt
+ M composeApp/src/wasmJsMain/kotlin/org/viptv/app/connection/CalendarDates.wasm.kt
+ M composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserPlayerSurface.kt
+ M composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/BrowserProviderSubtitle.kt
+ M composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/Hls.kt
+ M composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/HlsPreferences.kt
+ M docs/AGENT_HANDOFF_2026-10-14.md
+ M docs/DESIGN_GAPS.md
+ M docs/STATUS.md
+ M docs/TV_CALENDAR.md
+ M docs/TV_PLAYER.md
+ M docs/TV_SEARCH.md
+ M docs/design-coverage.json
+ m native/core
+ M tools/verify_desktop.py
+?? androidApp/src/debug/kotlin/org/viptv/experiment/Api26LifecycleQaActivity.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/Api26LifecycleQaProbe.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/BrowserLaunchQaActivity.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/LifecycleQaActivity.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/LifecycleQaInspector.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/LifecycleQaProbe.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/PauseOnlyQaActivity.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/PerformanceQaActivity.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/PerformanceQaFrames.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/PerformanceQaSemantics.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/SidecarPlaybackQaActivity.kt
+?? androidApp/src/debug/kotlin/org/viptv/experiment/SidecarQaFixtures.kt
+?? androidApp/src/main/kotlin/org/viptv/experiment/ApplicationModel.kt
+?? composeApp/src/androidMain/kotlin/org/viptv/app/connection/AccountAuthorization.android.kt
+?? composeApp/src/androidMain/kotlin/org/viptv/app/player/AndroidPlaybackModel.kt
+?? composeApp/src/androidMain/kotlin/org/viptv/app/player/Media3SubtitleStyle.kt
+?? composeApp/src/androidMain/kotlin/org/viptv/app/player/TitleHlsMediaSource.kt
+?? composeApp/src/commonMain/composeResources/files/licenses/
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/AccountEntry.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/AccountInfo.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/DeviceApprovalApi.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/LiveFavorites.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/MediaLookupKeys.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentControls.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/ParentTitles.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteNextEpisode.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSearch.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/connection/RemoteSubtitles.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/CalendarControls.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/BrowserAccountForm.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceApprovalPage.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceCard.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DeviceCodeInput.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilePreferenceGuidance.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/RecoveryCodesScreen.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/home/HomeStatus.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveSourceSelector.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhoneEpisodePicker.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhoneNextEpisode.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhonePlayerFailure.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/ParentControlDialogs.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/ParentControlsNative.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/ParentControlsSettings.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/ParentTitlesSettings.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhonePreferenceControls.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhonePreferenceDialog.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneProfilePreferences.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneSubtitlePreferences.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SettingsInformation.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvPreferencesFailure.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/images/PublicArtworkMapper.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/player/BrowserCaptionStyle.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/player/HlsInput.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/player/SidecarCueTimeline.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/AddonOperationOwner.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerAccountEntry.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerCalendar.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerLiveFavorites.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerNextEpisode.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerPageRequest.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerParentControls.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerParentTitles.kt
+?? composeApp/src/commonMain/kotlin/org/viptv/app/state/DeviceApprovalController.kt
+?? composeApp/src/desktopMain/kotlin/org/viptv/app/DesktopPlaybackProbe.kt
+?? composeApp/src/desktopMain/kotlin/org/viptv/app/connection/AccountAuthorization.desktop.kt
+?? composeApp/src/desktopMain/kotlin/org/viptv/app/player/DesktopSubtitlePreferences.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/AccountBrowserTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/AccountBrowserUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/AccountEntryTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/AccountIdentityTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/AddonInstallCompletionTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/AddonRefreshOwnershipTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/BrowseTimeframeTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/BrowserCaptionStyleTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/BrowserHlsInputTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/CalendarActionsTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/CalendarControlsUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/DesktopSubtitlePreferencesTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/DeviceApprovalSessionTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/FavoriteLookupIntentTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/GroupedSearchUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/HomeRecoveryUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/HomeRefreshRecoveryTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/LinkedAccountRecoveryUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/LiveControllerTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/LiveUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/LocalConnectionRestoreTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/LocalProfileDeletionTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/MetadataOriginTransportTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/NativeAddonCommitTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/NativeMetadataOriginTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/NativeOriginPersistenceTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/NativeProgressiveSourcesTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/NativePublicMetadataDelegationTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/NativeSearchRecoveryTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/NextEpisodeControllerTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/PageRequestOwnershipTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/ParentControlsTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/ParentControlsUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/ParentTitlesTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/PhoneAddonSettingsUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/PhonePlayerActionsUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/PlaybackLifecycleTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/PreferenceSettingsUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/ProfileAdministrationTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/ProfileAdministrationUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/PublicArtworkTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/RemoteCalendarTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/RemoteSessionConcurrencyTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/ScopedLibraryMembershipTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/SearchGroupsTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/SidecarCueTimelineTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/SourceDiscoveryControllerTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/SourceIntegrationFormUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/SourceIntegrationRecoveryTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/StartupCancellationTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/StartupFailureUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/StartupRefreshHandoffTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/StartupShellUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/StartupStorageFailureTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/StartupStorageFailureUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/SubtitleStylePreferencesTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/TvAccountRecoveryUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/TvEntryAndSourcesUiTest.kt
+?? composeApp/src/desktopTest/kotlin/org/viptv/app/UnifiedSearchTest.kt
+?? composeApp/src/nativePlayerMain/kotlin/org/viptv/app/connection/NativeSearchSnapshot.kt
+?? composeApp/src/wasmJsMain/kotlin/org/viptv/app/player/HlsErrors.kt
+?? docs/ANDROID_16K_RUNTIME.md
+?? docs/ANDROID_40MIN_ENDURANCE.md
+?? docs/ANDROID_API26_RUNTIME.md
+?? docs/ANDROID_LIFECYCLE_PLAYBACK.md
+?? docs/ANDROID_SIDECAR_PLAYBACK.md
+?? docs/ANDROID_STARTUP_CALENDAR.md
+?? docs/ANDROID_TV_FIXES_2026-10-15.md
+?? docs/BROWSER_HLS_FAILURES.md
+?? docs/BROWSER_PLAYBACK_COMPLETION.md
+?? docs/CALENDAR_COMPLETION.md
+?? docs/DESKTOP_VAULT_RECOVERY.md
+?? docs/HOME_SEARCH_RECOVERY.md
+?? docs/INTEGRATION_SETTINGS_RECOVERY.md
+?? docs/LIVE_FAVORITES_AND_PROFILES.md
+?? docs/LOCAL_CONNECTION_STARTUP.md
+?? docs/METADATA_ORIGIN_COMPLETION.md
+?? docs/NATIVE_ACCOUNT_BROWSER.md
+?? docs/PHONE_PLAYER_ACTIONS.md
+?? docs/PREFERENCE_SETTINGS_COMPLETION.md
+?? docs/PROFILE_ADMINISTRATION.md
+?? docs/REMAINING_KMP_WORK.md
+?? docs/STARTUP_SHELL_TEST_STABILITY.md
+?? docs/evidence/android-16k-runtime-2026-10-15/
+?? docs/evidence/android-40min-endurance-2026-10-15/
+?? docs/evidence/android-addon-account-apk-audit-2026-10-15.json
+?? docs/evidence/android-api26-runtime-2026-10-15/
+?? docs/evidence/android-lifecycle-2026-10-15/
+?? docs/evidence/android-local-entry-commit-apk-audit-2026-10-15.json
+?? docs/evidence/android-local-startup-apk-audit-2026-10-15.json
+?? docs/evidence/android-osd-endurance-2026-10-15/
+?? docs/evidence/android-pause-only-2026-10-15/
+?? docs/evidence/android-performance-2026-10-15/
+?? docs/evidence/android-player-preferences-apk-audit-2026-10-15.json
+?? docs/evidence/android-recovery-apk-audit-2026-10-15.json
+?? docs/evidence/android-release-abi3-2026-10-15.json
+?? docs/evidence/android-release-abi3-relro-layout-2026-10-15.json
+?? docs/evidence/android-sidecar-2026-10-15/
+?? docs/evidence/android-starting-shell-2026-10-15/
+?? docs/evidence/android-startup-after-2026-10-15/
+?? docs/evidence/android-tv-fixes-2026-10-15/
+?? docs/evidence/browser-account-entry-2026-10-15/
+?? docs/evidence/browser-device-approval-2026-10-15/
+?? docs/evidence/browser-hls-failures-2026-10-15/
+?? docs/evidence/browser-playback-2026-10-15/
+?? docs/evidence/calendar-completion-2026-10-15/
+?? docs/evidence/debian-install-2026-10-15/
+?? docs/evidence/desktop-vault-2026-10-15/
+?? docs/evidence/home-ready-focus-2026-10-15/
+?? docs/evidence/home-search-recovery-2026-10-15/
+?? docs/evidence/integration-recovery-2026-10-15/
+?? docs/evidence/kmp-final-2026-10-15/
+?? docs/evidence/linux-desktop-cold-restore-2026-10-15/
+?? docs/evidence/linux-desktop-local-entry-commit-2026-10-15/
+?? docs/evidence/linux-desktop-portable-2026-10-15/
+?? docs/evidence/linux-final-287-2026-10-15/
+?? docs/evidence/live-favorites-2026-10-15/
+?? docs/evidence/local-connection-startup-2026-10-15/
+?? docs/evidence/local-entry-commit-final-2026-10-15/
+?? docs/evidence/native-account-browser-2026-10-15/
+?? docs/evidence/native-engine-source-metadata-search-2026-10-15.json
+?? docs/evidence/native-live-profile-build-2026-10-15.json
+?? docs/evidence/native-origin-apk-audit-2026-10-15.json
+?? docs/evidence/native-origin-build-2026-10-15.json
+?? docs/evidence/native-progressive-source-build-2026-10-15.json
+?? docs/evidence/parent-title-approvals-2026-10-15/
+?? docs/evidence/phone-player-actions-2026-10-15/
+?? docs/evidence/phone-preferences-native-2026-10-15/
+?? docs/evidence/player-preferences-merged-2026-10-15/
+?? docs/evidence/preference-settings-2026-10-15/
+?? docs/evidence/profile-administration-2026-10-15/
+?? docs/evidence/startup-shell-test-2026-10-15/
+?? tools/__pycache__/
+?? tools/audit_linux_runtime.py
+?? tools/package_linux.py
+?? tools/qa_16k_format_run.py
+?? tools/qa_16k_media.sh
+?? tools/qa_desktop_run.py
+?? tools/qa_endurance_run.py
+?? tools/qa_lifecycle_cert.py
+?? tools/qa_lifecycle_run.py
+?? tools/qa_lifecycle_server.py
+?? tools/qa_performance_run.py
+?? tools/qa_sidecar_server.py

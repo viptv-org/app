@@ -4,14 +4,15 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import org.viptv.app.features.calendar.CalendarDay
 
-internal actual fun calendarWindow(): CalendarWindow {
+internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
     val today = LocalDate.now()
+    val center = today.plusDays(offsetDays.toLong())
     val days = (-3L..3L).map { offset ->
-        val day = today.plusDays(offset)
+        val day = center.plusDays(offset)
         CalendarDay(day.toString(), day.format(DateTimeFormatter.ofPattern("EEE")), day.dayOfMonth.toString(),
-            if (offset == 0L) "Today" else day.format(DateTimeFormatter.ofPattern("EEEE")), day.format(DateTimeFormatter.ofPattern("MMM d, yyyy")))
+            if (day == today) "Today" else day.format(DateTimeFormatter.ofPattern("EEEE")), day.format(DateTimeFormatter.ofPattern("MMM d, yyyy")))
     }
-    return CalendarWindow(today.minusDays(4).toString(), today.plusDays(4).toString(), days)
+    return CalendarWindow(center.minusDays(4).toString(), center.plusDays(4).toString(), days)
 }
 internal actual fun calendarLabel(date: String): CalendarLabel? = runCatching {
     val instant = Instant.parse(date)

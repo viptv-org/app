@@ -1,0 +1,28 @@
+--------- beginning of system
+W/ActivityTaskManager(  628): callingPackage for (uid=2000, pid=2738) has no WPC
+I/ActivityTaskManager(  628): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2744): activity_enter_ms=52
+I/VIPTV_PERFORMANCE_QA( 2744): first_draw_ms=158
+I/ActivityTaskManager(  628): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +369ms
+I/VIPTV_PERFORMANCE_QA( 2744): interactive_shell_ms=1344
+I/VIPTV_PERFORMANCE_QA( 2744): useful_home_ms=1601
+I/ActivityTaskManager(  628): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s778ms
+I/VIPTV_PERFORMANCE_QA( 2744): calendar_first_page_ms=117
+I/VIPTV_PERFORMANCE_QA( 2744): calendar_scroll_ms=8389
+I/VIPTV_PERFORMANCE_QA( 2744): warm_route_home_ms=30
+I/VIPTV_PERFORMANCE_QA( 2744): PASS mode=cold-restored file=performance-cold-restored.json
+--------- beginning of system
+W/ActivityTaskManager(  628): callingPackage for (uid=2000, pid=2738) has no WPC
+I/ActivityTaskManager(  628): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2744): activity_enter_ms=52
+I/VIPTV_PERFORMANCE_QA( 2744): first_draw_ms=158
+I/ActivityTaskManager(  628): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +369ms
+I/VIPTV_PERFORMANCE_QA( 2744): interactive_shell_ms=1344
+I/VIPTV_PERFORMANCE_QA( 2744): useful_home_ms=1601
+I/ActivityTaskManager(  628): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s778ms
+I/VIPTV_PERFORMANCE_QA( 2744): calendar_first_page_ms=117
+I/VIPTV_PERFORMANCE_QA( 2744): calendar_scroll_ms=8389
+I/VIPTV_PERFORMANCE_QA( 2744): warm_route_home_ms=30
+I/VIPTV_PERFORMANCE_QA( 2744): PASS mode=cold-restored file=performance-cold-restored.json

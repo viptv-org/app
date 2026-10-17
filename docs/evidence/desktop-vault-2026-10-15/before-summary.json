@@ -1,0 +1,33 @@
+{
+  "real_platform_store": "DesktopSecrets.platformSecrets -> UniFFI systemSecretStore -> keyring3.6.3 sync-secret-service -> real GNOME Secret Service",
+  "fixture": "Owned dbus-run-session, temporary HOME/XDG runtime/data/config/cache, own GNOME keyring and optional owned Xvfb; packaged launcher/runtime with QA main only",
+  "app_jar_sha256": "937e96454467e3f42b3a1a3e4b35a6099a7d2f57412eb234b30b1ed36ac3dad9",
+  "local_marker_save_read_passed": true,
+  "local_marker_second_jvm_read_passed": true,
+  "legacy_remote_json_read_save_rotate_replace_clear_passed": true,
+  "unlocked_operation_jvm_seconds": [
+    0.474,
+    0.386,
+    0.464
+  ],
+  "unavailable_bus_error": "CoreException.Bridge",
+  "unavailable_bus_seconds": 0.377,
+  "headless_locked_vault_error": "CoreException.Bridge in0.35s (private prompt unavailable)",
+  "real_gui_locked_vault": {
+    "startup_pending": true,
+    "disconnect_ms": 5,
+    "disconnect_screen": "Connect",
+    "disconnect_starting": false,
+    "private_profiles_after_cancel": 0,
+    "canceled_native_restore_job_completed": false,
+    "local_choice_after_cancel_busy": true,
+    "local_factory_calls_after_1200ms": 0,
+    "defect": "Unanswered native unlock prompt prevents previous coroutine completion; next Local operation joins it and stalls."
+  },
+  "root_cause": "Resolved dbus-secret-service4.1.0 uses one-year default prompt timeout; current keyring3.6.3 creates services without overriding it. withContext(IO) cannot interrupt JNI.",
+  "candidate_fix": "Linux-only direct Secret Service API with noninteractive max prompt timeout0, same credential attributes; requires root coordination before native-source changes.",
+  "processes_bounded_and_cleaned": true,
+  "user_wallet_keyring_or_desktop_accessed": false,
+  "native_or_application_source_changes": false,
+  "physical_window_controls_qualified": false
+}

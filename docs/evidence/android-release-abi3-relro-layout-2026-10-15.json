@@ -1,0 +1,309 @@
+{
+  "recorded_at_utc": "2026-10-15T13:54:25.406892+00:00",
+  "apk": "artifacts/android-release-2026-10-15/abi3-3b047c819950/viptv-android-release-local.apk",
+  "apk_sha256": "3b047c819950adf15ac33563033da4c9147ca734fa5387b47f567a971fae56a6",
+  "scope": "read-only layout check of every packaged64-bit shared library; no builds, binary changes, device/emulator/download or runtime action",
+  "page_size": 16384,
+  "method": "For each PT_GNU_RELRO, compute [floor(p_vaddr/page),ceil((p_vaddr+p_memsz)/page)) at16KiB. Intersect the leading/trailing rounded fringe with all nonempty SHF_ALLOC|SHF_WRITE sections and PF_W PT_LOAD memory ranges outside the logical RELRO. Record the next non-RELRO writable section/LOAD/page boundary.",
+  "libraries": {
+    "lib/arm64-v8a/libandroidx.graphics.path.so": {
+      "sha256": "17ee8d0a8f3c2a7b7b2f0b4e1a93c09e4fbdd1c9bfb335fee238c2767c2c03c1",
+      "producer_comments": [
+        "Android (12027248, +pgo, +bolt, +lto, +mlgo, based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)",
+        "Linker: LLD 18.0.1"
+      ],
+      "relro": [
+        {
+          "logical_start": 23360,
+          "logical_end": 24576,
+          "logical_end_modulo16k": 8192,
+          "rounded_start": 16384,
+          "rounded_end": 32768,
+          "tail_rounding_bytes": 8192,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".bss",
+            "start": 40664,
+            "end": 40680,
+            "type": 8,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": 40664,
+          "next_nonrelro_writable_load_16k_page_start": 32768,
+          "relro_section_names": [
+            ".data.rel.ro",
+            ".fini_array",
+            ".dynamic",
+            ".got.plt",
+            ".relro_padding"
+          ]
+        }
+      ]
+    },
+    "lib/arm64-v8a/libffmpegJNI.so": {
+      "sha256": "66031c23b95da2c8118c6a1586490b68e3c89644b0e169d91b490157cb04fda8",
+      "producer_comments": [
+        "Android (13624864, +pgo, +bolt, +lto, +mlgo, based on r530567e) clang version 19.0.1 (https://android.googlesource.com/toolchain/llvm-project 97a699bf4812a18fb657c2779f5296a4ab2694d2)",
+        "Linker: LLD 19.0.1"
+      ],
+      "relro": [
+        {
+          "logical_start": 1631792,
+          "logical_end": 1761280,
+          "logical_end_modulo16k": 8192,
+          "rounded_start": 1622016,
+          "rounded_end": 1769472,
+          "tail_rounding_bytes": 8192,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".data",
+            "start": 1775552,
+            "end": 1775880,
+            "type": 1,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": 1775552,
+          "next_nonrelro_writable_load_16k_page_start": 1769472,
+          "relro_section_names": [
+            ".data.rel.ro",
+            ".fini_array",
+            ".init_array",
+            ".dynamic",
+            ".got",
+            ".got.plt",
+            ".relro_padding"
+          ]
+        }
+      ]
+    },
+    "lib/arm64-v8a/libjnidispatch.so": {
+      "sha256": "ddfc6c965bbe366615c000ec1f06552ddf0bb2b4f9d921d0bff8c75b3cb2ca4c",
+      "producer_comments": [
+        "GCC: (GNU) 4.9.x 20150123 (prerelease)"
+      ],
+      "relro": [
+        {
+          "logical_start": 179096,
+          "logical_end": 180224,
+          "logical_end_modulo16k": 0,
+          "rounded_start": 163840,
+          "rounded_end": 180224,
+          "tail_rounding_bytes": 0,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".data",
+            "start": 180224,
+            "end": 180804,
+            "type": 1,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": null,
+          "next_nonrelro_writable_load_16k_page_start": null,
+          "relro_section_names": [
+            ".data.rel.ro",
+            ".dynamic",
+            ".got"
+          ]
+        }
+      ]
+    },
+    "lib/arm64-v8a/libviptv_core.so": {
+      "sha256": "5bdf226abfc95104720be80a25a09cbb68ee1c0a98f17d04756ae479a58ea39b",
+      "producer_comments": [
+        "Android (13624864, +pgo, +bolt, +lto, +mlgo, based on r530567e) clang version 19.0.1 (https://android.googlesource.com/toolchain/llvm-project 97a699bf4812a18fb657c2779f5296a4ab2694d2)",
+        "rustc version 1.98.0 (88d9e12ae 2026-08-18)",
+        "Linker: LLD 19.0.1"
+      ],
+      "relro": [
+        {
+          "logical_start": 21841056,
+          "logical_end": 22626304,
+          "logical_end_modulo16k": 0,
+          "rounded_start": 21839872,
+          "rounded_end": 22626304,
+          "tail_rounding_bytes": 0,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".data",
+            "start": 22641640,
+            "end": 22680240,
+            "type": 1,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": 22641640,
+          "next_nonrelro_writable_load_16k_page_start": 22626304,
+          "relro_section_names": [
+            ".data.rel.ro",
+            ".fini_array",
+            ".dynamic",
+            ".got",
+            ".got.plt",
+            ".relro_padding"
+          ]
+        }
+      ]
+    },
+    "lib/x86_64/libandroidx.graphics.path.so": {
+      "sha256": "c48fe70862aae15ba6fdb173d31a0285b3ae7ae2588f5d724f8d502a2208364c",
+      "producer_comments": [
+        "Android (12027248, +pgo, +bolt, +lto, +mlgo, based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)",
+        "Linker: LLD 18.0.1"
+      ],
+      "relro": [
+        {
+          "logical_start": 23488,
+          "logical_end": 24576,
+          "logical_end_modulo16k": 8192,
+          "rounded_start": 16384,
+          "rounded_end": 32768,
+          "tail_rounding_bytes": 8192,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".bss",
+            "start": 40816,
+            "end": 40832,
+            "type": 8,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": 40816,
+          "next_nonrelro_writable_load_16k_page_start": 32768,
+          "relro_section_names": [
+            ".data.rel.ro",
+            ".fini_array",
+            ".dynamic",
+            ".got.plt",
+            ".relro_padding"
+          ]
+        }
+      ]
+    },
+    "lib/x86_64/libffmpegJNI.so": {
+      "sha256": "6189ced41aefa4434b33f3fa2f10eec756a53208ff5b7150ee0a2acda8e2821d",
+      "producer_comments": [
+        "Android (13624864, +pgo, +bolt, +lto, +mlgo, based on r530567e) clang version 19.0.1 (https://android.googlesource.com/toolchain/llvm-project 97a699bf4812a18fb657c2779f5296a4ab2694d2)",
+        "Linker: LLD 19.0.1"
+      ],
+      "relro": [
+        {
+          "logical_start": 1722336,
+          "logical_end": 1847296,
+          "logical_end_modulo16k": 12288,
+          "rounded_start": 1720320,
+          "rounded_end": 1851392,
+          "tail_rounding_bytes": 4096,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".data",
+            "start": 1861664,
+            "end": 1861992,
+            "type": 1,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": 1861664,
+          "next_nonrelro_writable_load_16k_page_start": 1851392,
+          "relro_section_names": [
+            ".data.rel.ro",
+            ".fini_array",
+            ".dynamic",
+            ".got",
+            ".got.plt",
+            ".relro_padding"
+          ]
+        }
+      ]
+    },
+    "lib/x86_64/libjnidispatch.so": {
+      "sha256": "288eafff19a70e833498201071c3d724f03f32ee8ff64a14fca50b57d975db70",
+      "producer_comments": [
+        "GCC: (GNU) 4.9.x 20150123 (prerelease)"
+      ],
+      "relro": [
+        {
+          "logical_start": 129792,
+          "logical_end": 131072,
+          "logical_end_modulo16k": 0,
+          "rounded_start": 114688,
+          "rounded_end": 131072,
+          "tail_rounding_bytes": 0,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".data",
+            "start": 131072,
+            "end": 131444,
+            "type": 1,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": null,
+          "next_nonrelro_writable_load_16k_page_start": null,
+          "relro_section_names": [
+            ".data.rel.ro.local",
+            ".dynamic",
+            ".got",
+            ".got.plt"
+          ]
+        }
+      ]
+    },
+    "lib/x86_64/libviptv_core.so": {
+      "sha256": "753c5192639dd10ab2ee35078d45b9c65b2e2e1f90510773cf9a51a9fe274195",
+      "producer_comments": [
+        "Android (13624864, +pgo, +bolt, +lto, +mlgo, based on r530567e) clang version 19.0.1 (https://android.googlesource.com/toolchain/llvm-project 97a699bf4812a18fb657c2779f5296a4ab2694d2)",
+        "rustc version 1.98.0 (88d9e12ae 2026-08-18)",
+        "Linker: LLD 19.0.1"
+      ],
+      "relro": [
+        {
+          "logical_start": 24222464,
+          "logical_end": 25038848,
+          "logical_end_modulo16k": 4096,
+          "rounded_start": 24215552,
+          "rounded_end": 25051136,
+          "tail_rounding_bytes": 12288,
+          "writable_sections_overlapped_outside_relro": [],
+          "writable_ptload_memory_overlapped_outside_relro": [],
+          "next_nonrelro_writable_section": {
+            "name": ".data",
+            "start": 25053200,
+            "end": 25091848,
+            "type": 1,
+            "flags": 3
+          },
+          "next_nonrelro_writable_load_start": 25053200,
+          "next_nonrelro_writable_load_16k_page_start": 25051136,
+          "relro_section_names": [
+            ".data.rel.ro",
+            ".fini_array",
+            ".dynamic",
+            ".got",
+            ".got.plt",
+            ".relro_padding"
+          ]
+        }
+      ]
+    }
+  },
+  "sources": {
+    "android_guide": "https://developer.android.com/guide/practices/page-sizes#check-relro",
+    "bionic_loader": "https://android.googlesource.com/platform/bionic/+/refs/heads/main/linker/linker_phdr.cpp",
+    "bionic_blob_at_review": "5967e2d48a29cbbaca8f87a2be42361ab43decd5",
+    "lld_documentation": "https://lld.llvm.org/ELF/linker_script.html#built-in-functions",
+    "lld_source": "https://github.com/llvm/llvm-project/blob/main/lld/ELF/Writer.cpp",
+    "context7": "Resolved /llvm/llvm-project then fetched LLD RELRO/page-size documentation (2commands); inspected official bionic/LLD sources for loader rounding and segment separation."
+  },
+  "conclusion": "No GNU_RELRO rounding collision in any of the 8 packaged 64-bit libraries. In 5 nonaligned logical-end cases, rounding covers only safe padding before the next writable LOAD page; 3 end aligned. No writable allocated section or PF_W LOAD memory outside logical RELRO intersects rounded protection.",
+  "runtime_unknown": "No 16 KiB runtime was tested. This establishes static RELRO/layout compatibility only; unrelated runtime page-size assumptions remain unqualified.",
+  "review_correction": "Supersedes the earlier receipt/README wording that nonaligned logical RELRO ends themselves require review/rebuild; actual section/segment layout shows no writable-data overlap.",
+  "source_analysis": {
+    "bionic": "_phdr_table_set_gnu_relro_prot uses page_start(p_vaddr) and page_end(p_vaddr+p_memsz), then mprotect. Its _extend_gnu_relro_prot_end guard avoids extending protection when the containing LOAD also has writable non-RELRO contents. For these separate-LOAD layouts, the next writable LOAD page begins at the already-rounded RELRO end.",
+    "lld": "Official linker-script documentation describes separation of RELRO from following writable PT_LOAD ranges; actual LLD18/19 producer comments and binary layouts were recorded rather than assuming a required modulo-zero logical end.",
+    "guide_interpretation": "The Android guide modulo test is a conservative warning. Nonzero modulo is not sufficient evidence of failure when the rounded page contains no writable data outside RELRO. This audit checks the actual condition directly.",
+    "scope": "Current official bionic main/source documentation was reviewed; this does not execute every Android loader release. Producer fork sources were not downloaded. Static binary intersections provide the artifact-specific result."
+  }
+}

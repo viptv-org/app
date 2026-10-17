@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="PageRequestOwnershipTest[desktop]" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:06.285Z" hostname="vynxcos" time="0.014">
+  <properties/>
+  <testcase name="detailReadCannotRestoreDetailsAfterNavigationHome[desktop]" classname="org.viptv.app.PageRequestOwnershipTest" time="0.004"/>
+  <testcase name="historyReadCannotRestoreHistoryAfterNavigationHome[desktop]" classname="org.viptv.app.PageRequestOwnershipTest" time="0.002"/>
+  <testcase name="queuedPlayDoesNotDispatchMetadataAfterNavigationWhileWaitingForRetiredWork[desktop]" classname="org.viptv.app.PageRequestOwnershipTest" time="0.004"/>
+  <testcase name="expiredSameSessionStillRetiresAfterLeavingItsPage[desktop]" classname="org.viptv.app.PageRequestOwnershipTest" time="0.001"/>
+  <testcase name="playIntentCannotOpenSourcesAfterNavigationAwayAndBack[desktop]" classname="org.viptv.app.PageRequestOwnershipTest" time="0.001"/>
+  <testcase name="abandonedPageFailureDoesNotAttachItsErrorToHome[desktop]" classname="org.viptv.app.PageRequestOwnershipTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

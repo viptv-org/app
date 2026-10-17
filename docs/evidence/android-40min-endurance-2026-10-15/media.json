@@ -1,0 +1,42 @@
+{
+  "duration_seconds": 2700.0,
+  "segments": 1350,
+  "last_segment": "segment-1349.ts",
+  "last_segment_probe": {
+    "programs": [
+      {
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ]
+      }
+    ],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video"
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio"
+      }
+    ],
+    "format": {
+      "start_time": "2699.421333",
+      "duration": "2.000000"
+    }
+  },
+  "playlist_sha256": "a0da265e27feb88d3fec914f170c4070a6107f9c9be981fdff867b1b2726dc0d",
+  "generated_synthetic": true,
+  "normal_playback_speed": true,
+  "ffmpeg_threads": 1,
+  "bytes": 65518158,
+  "directory": "/home/vynxc/.cache/viptv-qa/runtime-40min-2026-10-15/media"
+}

@@ -14,5 +14,5 @@ suspend fun RemoteConnection.libraryPage(profile: String, query: LibraryQuery): 
         .filter { it.value !is JsonNull }.joinToString("&") {
             "${it.key.encodeURLParameter()}=${it.value.jsonPrimitive.content.encodeURLParameter()}"
         }
-    return libraryCodec.decodeFromJsonElement(call("/api/v3/profiles/${profile.encodeURLPathPart()}/library?$parameters"))
+    return libraryCodec.decodeFromJsonElement(call("/api/profiles/${profile.encodeURLPathPart()}/library?$parameters"))
 }

@@ -1,0 +1,23 @@
+# Remembered local mode and startup refresh handoff — 2026-10-15
+
+Native local mode now survives process restart. Android and desktop restore the app's trusted local database path and show Profiles; they do not restore private Home content, automatically select a profile, or bypass a local PIN. Ordinary Activity/controller disposal keeps the remembered connection. Explicit Leave removes the local marker while retaining the database and preferences.
+
+The native session vault uses its existing single record to select either the legacy remote-session JSON or a versioned local marker. Existing remote records remain readable. Remote login/rotation replaces that marker atomically; local mode stores no path, profile selection, PIN or cached private content. The browser still restores only its browser session and has no local mode. If secure storage cannot remember the choice, local mode remains usable with the existing session-notice presentation.
+
+Android's retained ApplicationModel starts restoration once using MainActivity's application-owned database path. Activity recreation does not start another restoration. Desktop App provides its existing application-owned path. Local bootstrap is cancellation/generation fenced, so a canceled startup cannot publish a late profile list. Initial local entry finishes its vault write before publishing an interactive profile picker: a deterministic regression caught a fast first profile click canceling the earlier write order. The corrected case passes with a held vault write, and the final API35 native rapid-input check reaches Home and retains the connection across restart.
+
+## One-use refresh handoff
+
+A new controller could read refresh token r1 while its predecessor was persisting r2. The global rotation lock serialized the network calls, but the new controller still used its earlier r1 snapshot after acquiring the lock. A regression reproduced the consumed-token request sequence `r1, r1` and loss of the saved session.
+
+Production native startup now rereads the saved connection **inside** that lock. The unchanged regression sends `r1, r2` and retains r3. If the record became local, disappeared, changed server, or cannot be read, startup does not send the stale token or erase the replacement. Cleanup of an invalid old origin also checks that its record has not been replaced. This qualifies the in-process retiring/replacement-controller handoff; it does not claim a cross-process credential lock.
+
+## Verification
+
+Seven new tests cover legacy/native vault round trips, one-record mode changes, real native SQLite/preferences/PIN retention after cold restoration, explicit Leave, canceled local bootstrap, the consumed-token handoff, connection/logout replacement, and secure-storage read failure. Together with existing cancellation/concurrency cases, the focused gate passed 14 tests. The full merged gate passed 261 tests and built the normal Android release, production Wasm and the Linux app image in 146 seconds. The preceding debug artifact remains separately qualified.
+
+The current normal Android artifact is `local-entry-4cb59ab8ea45` (full SHA in its receipt). The final API35 phone check verifies rapid first entry, cold Profiles before Home, explicit Default selection and all eight preferences unchanged. Earlier6b phone evidence separately covers IME behavior, Leave Cancel and confirmed Leave followed by cold entry; those dialog/Leave paths are unchanged. Actual API26 and the official emulated16KiB API36 TV environment also verify the cold profile gate with the exact final4cb artifact. See [phone evidence](evidence/phone-preferences-native-2026-10-15/local-entry-4cb59ab8ea45/proof.json), [API26](ANDROID_API26_RUNTIME.md), and [16KiB](ANDROID_16K_RUNTIME.md).
+
+The new [Linux package receipt](evidence/linux-desktop-local-entry-commit-2026-10-15/summary.json) binds the current shared Kotlin jar to its extracted portable JVM/native runtime. Actual player qualification from the preceding package is retained only after matching all210 player/QA classes,96 runtime files and106 dependencies; the final marker-ordering change does not alter those components. Native desktop keyring interaction, Debian installation, Windows/macOS and physical hardware are not implied by those Linux fixture checks. The active TV setup and protected served Wasm distribution were not changed.
+
+The later continuation adds a bounded, noninteractive Linux vault adapter and visible initial connection errors on phone/desktop. Actual locked/unlocked/legacy-vault and packaged Main evidence is in [desktop vault recovery](DESKTOP_VAULT_RECOVERY.md); cancellation regressions and the current 287-test gate are recorded in [Home/search recovery](HOME_SEARCH_RECOVERY.md).

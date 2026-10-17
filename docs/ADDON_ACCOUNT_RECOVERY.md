@@ -1,0 +1,21 @@
+# Add-on installation, account recovery and page ownership — 2026-10-15
+
+This batch retains plugin capabilities and unified text search. Discovery/navigation redesign remains deferred. Changes are experimental source and immutable local candidates; no deployment or physical-TV installation occurred.
+
+The phone Add-ons page now follows the supported list/add order: a centered compact heading, installed cards, then the primary Add action before advanced configuration. Existing capability labels, profile switches, removal and source forms remain. The two phone boards are recorded as in progress with current captures; manifest preview, pairing contracts and full pixel parity are not invented or claimed.
+
+Phone and TV install dialogs retain the exact draft on failure, prevent immediate duplicate submissions, and close and clear only after an explicit successful installation signal. Retired/disposed dialog callbacks cannot close a newer attempt. The native adapter exposes a commit-only operation while retaining its existing list-return API. A later inventory/Home refresh failure therefore does not misreport an already committed installation as a failed install.
+
+Add-on, browsing-provider, source and related preference refreshes collect asynchronous results before copying current application state. Coroutine, generation, connection and profile checks prevent late responses or failures from updating a replaced session. Background configuration refresh can update caches without restoring an old route. Detail/history requests and queued Play actions have separate page ownership: leaving the page cancels its loading state, and old results cannot reopen Details or Sources after navigation away and back.
+
+TV Account now shows actual loading/failure states and a focused Retry action. It preserves cached identity on failure, disables duplicate retries, and retains dashboard fallback. Local mode makes no remote account request. Missing device counts are still described as managed on the web.
+
+The full combined gate passed **313 desktop tests** with zero failures, errors or skips, and built production Wasm into isolated output, the normal Android release and Linux app image. The focused gate covered 35 tests, including a 30-scenario stale-refresh matrix; real JNI/SQLite commit durability and legacy API compatibility were exercised. Common UI tests use one EDT owner for construction, rendering and actions.
+
+The final normal Android candidate is `addon-account-4b9cd905d844`. Its actual API35 phone test used an owned synthetic HTTP add-on, a supported native transport with no credentials. Three rapid first taps caused one failing manifest request; retry succeeded, the sheet closed, reopening showed a blank URL with Install disabled, and removal restored the original connection/assignment contents and preferences. Profile configuration revision increments from install/remove are retained honestly. The earlier 0a candidate's retained-URL defect and test-selector corrections remain separate evidence.
+
+The Linux installer additionally fixes a stock JDK21 postinst assumption: minimal Debian lacks `/usr/share/desktop-directories`, causing normal installation to fail. The package derives the verified selected-JDK script and adds that standard directory before unchanged menu commands. Revision 2 candidate `a7a6327ac660` passed normal installation in fresh official Debian 13.7, menu registration, bundled JVM/native smoke before QA dependencies, real private keyring tests and original installed Main captures. No test-image workaround or host package installation was used.
+
+Evidence: [combined and source receipt](evidence/addon-account-recovery-2026-10-15/summary.json), [final native phone proof](evidence/addon-account-recovery-2026-10-15/native-4b9cd905d844/proof.json), [APK audit](evidence/android-addon-account-apk-audit-2026-10-15.json), and [final Debian qualification](evidence/linux-final313-clear-debian-2026-10-15/README.md).
+
+Separate [41-minute original-player verification](ANDROID_OSD_40MIN_ENDURANCE.md) now includes the visible seekbar, elapsed text and slider before acknowledgment and the single lease close. It applies to its frozen debug 5abd APK and is not relabeled as this normal release. Physical hardware, broader formats, Windows/macOS, signing and complete 197-board fidelity remain open.

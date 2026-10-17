@@ -6,6 +6,14 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.*
@@ -18,6 +26,9 @@ data class Profile(val id: String, val name: String, val avatar: String?, val lo
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null)
 class RemoteFailure(val status: Int, message: String) : Exception(message)
 
+private val nativeSessionGate = Mutex()
+internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
+
 class RemoteConnection(
     rawOrigin: String,
     private val sessionStore: RemoteSessionStore = remoteSessionStore(),
@@ -27,12 +38,14 @@ class RemoteConnection(
     private val codec = Json { ignoreUnknownKeys = true }
     private val browser = browserMode
     internal val accountManagementEnabled: Boolean get() = browser
+    internal val accountDashboardUrl: String get() = origin + "/"
     private val origin = validatedRemoteOrigin(rawOrigin)
     private val client = client ?: platformClient()
     private var csrf: String? = null
     private var accessToken: String? = null
     private var refreshToken: String? = null
     private val refreshGate = Mutex()
+    private var retired = false
     private var refreshVersion = 0L
     var persistenceWarning: String? = null
         private set
@@ -43,26 +56,70 @@ class RemoteConnection(
         send = { path, body -> send(path, HttpMethod.Post, body, null, null) },
         adopt = { value ->
             if (!active()) throw CancellationException("Pairing cancelled")
-            installDeviceTokens(value, persist = false)
+            authSession { installDeviceTokens(value, persist = false) }
             val result = bootstrap()
             if (!active()) throw CancellationException("Pairing cancelled")
-            persistDeviceToken(requireNotNull(refreshToken))
+            authSession { persistDeviceToken(requireNotNull(refreshToken)) }
             result
         },
     )
 
     suspend fun login(username: String, password: String): Bootstrap {
+        ensureOpen()
         val result = requestJson(if (browser) "/api/auth/login" else "/api/auth/device/login", HttpMethod.Post,
             buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", deviceDisplayName()) })
-        if (!browser) installDeviceTokens(result.jsonObject)
+        if (!browser) authSession { installDeviceTokens(result.jsonObject) }
         csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull
         return bootstrap()
     }
 
+    internal suspend fun registerAccount(username: String, name: String, password: String): RecoveryKit {
+        check(browser) { "Create accounts in a browser" }
+        ensureOpen()
+        val response = requestJson("/api/auth/register", HttpMethod.Post, buildJsonObject {
+            put("username", username.trim()); put("name", name.trim()); put("password", password)
+        }).jsonObject
+        csrf = response["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        return recoveryKit(response, recovered = false)
+    }
+
+    internal suspend fun recoverAccount(username: String, recoveryCode: String, password: String): RecoveryKit {
+        check(browser) { "Recover accounts in a browser" }
+        ensureOpen()
+        val response = requestJson("/api/auth/recover", HttpMethod.Post, buildJsonObject {
+            put("username", username.trim()); put("recovery_code", recoveryCode.trim()); put("password", password)
+        }).jsonObject
+        csrf = response["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        return recoveryKit(response, recovered = true)
+    }
+
     suspend fun restore(saved: SavedRemoteSession): Bootstrap {
         require(!browser && validatedRemoteOrigin(saved.origin) == origin)
-        refreshToken = saved.refreshToken
-        refreshDevice()
+        return restoreSession { saved }
+    }
+
+    /** A startup snapshot may predate a retiring controller's one-use rotation. */
+    internal suspend fun restoreFromStore(): Bootstrap = restoreSession {
+        val saved = try { (sessionStore.savedConnection() as? SavedConnection.Remote)?.session }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { throw LocalFailure("Secure storage is unavailable. Try again.") }
+        if (saved == null || validatedRemoteOrigin(saved.origin) != origin)
+            throw LocalFailure("The saved connection changed. Choose your connection again.")
+        saved
+    }
+
+    private suspend fun restoreSession(currentSession: suspend () -> SavedRemoteSession): Bootstrap {
+        check(!browser)
+        authSession {
+            val saved = currentSession()
+            currentCoroutineContext().ensureActive()
+            ensureOpen()
+            if (refreshToken != null && refreshToken != saved.refreshToken) return@authSession
+            refreshToken = saved.refreshToken
+            refreshDevice()
+            refreshVersion++
+        }
+        currentCoroutineContext().ensureActive()
         return bootstrap()
     }
 
@@ -71,11 +128,14 @@ class RemoteConnection(
         val status = requestJson("/api/auth/status").jsonObject
         if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) return null
         csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
+        // Proactively rotate the access token so a restored session never
+        // starts with already-expired credentials (random mid-use logouts).
+        try { refreshBrowser() } catch (error: CancellationException) { throw error } catch (_: Exception) { /* status says authenticated; keep going on current cookies */ }
         return bootstrap()
     }
 
     suspend fun bootstrap(): Bootstrap {
-        val value = call("/api/v3/bootstrap").jsonObject
+        val value = call("/api/bootstrap").jsonObject
         requiredAudioIndexSupported = value["playback_capabilities"]?.jsonObject
             ?.get("required_audio_index")?.jsonPrimitive?.booleanOrNull == true
         val identity = value.getValue("identity").jsonObject
@@ -99,22 +159,33 @@ class RemoteConnection(
         return bootstrap()
     }
 
-    suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/v3/discover?type=all&search=${term.encodeURLParameter()}"))
-    suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = (card.parent_identity ?: card.identity).let { detail(it.kind, it.id, offset, limit) }
-    suspend fun detail(kind: String, id: String, offset: Int = 0, limit: Int = 24): DetailSnapshot {
+    suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
+    suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = (card.parent_identity ?: card.identity).let {
+        detail(it.kind, it.id, offset, limit, card.provider_id, card)
+    }
+    suspend fun detail(kind: String, id: String, offset: Int = 0, limit: Int = 24, provider: String? = null, expected: Card? = null): DetailSnapshot {
         require(offset in 0..10_000)
         require(limit in 1..128)
-        val page = if (offset == 0 && limit == 24) "" else "?offset=$offset&limit=$limit"
+        val parameters = mutableListOf<String>()
+        if (offset != 0 || limit != 24) parameters += "offset=$offset&limit=$limit"
+        if (provider == "simkl" || provider == "stremio") parameters += "provider_id=$provider"
+        else provider?.removePrefix("addon:")?.takeIf { provider.startsWith("addon:") }?.toLongOrNull()?.takeIf { it > 0 }?.let {
+            parameters += "provider_id=stremio&addon_id=$it"
+        }
+        expected?.metadata_origin?.let { origin ->
+            parameters += "metadata_origin=${Json.encodeToString(origin).encodeURLParameter()}"
+            parameters += "card=${Json.encodeToString(expected.lookupSelector()).encodeURLParameter()}"
+        }
+        val page = parameters.takeIf { it.isNotEmpty() }?.joinToString("&", prefix = "?") ?: ""
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            codec.decodeFromJsonElement(call("/api/v3/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page"))
+            codec.decodeFromJsonElement(call("/api/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page"))
         }
     }
 
-    suspend fun subtitles(card: Card): org.viptv.engine.wire.SubtitleSnapshot = codec.decodeFromJsonElement(
-        call("/api/v3/subtitles/${card.identity.kind.encodeURLPathPart()}/${card.identity.id.encodeURLPathPart()}"))
+    suspend fun subtitles(card: Card): org.viptv.engine.wire.SubtitleSnapshot = subtitlesFor(card)
 
     suspend fun subtitleContent(id: String): String = authenticatedResponse(
-        "/api/v3/subtitle-content/${id.encodeURLPathPart()}").let { response ->
+        "/api/subtitle-content/${id.encodeURLPathPart()}").let { response ->
         checkStatus(response)
         response.bodyAsText()
     }
@@ -123,24 +194,40 @@ class RemoteConnection(
         return decode(authenticatedResponse(path, method, body))
     }
 
+    /** Account-only browser operations share refresh/retirement without a media bootstrap. */
+    internal suspend fun accountCall(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonObject {
+        check(browser && path.startsWith("/api/auth/"))
+        val value = call(path, method, body).jsonObject
+        if (path in setOf("/api/auth/status", "/api/auth/me", "/api/auth/login", "/api/auth/refresh"))
+            csrf = value["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        return value
+    }
+
     private suspend fun authenticatedResponse(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): HttpResponse {
         require(path.startsWith("/api/") && !path.contains('\\'))
+        ensureOpen()
         val version = refreshVersion
         var response = send(path, method, body, accessToken, csrf)
         if (response.status == HttpStatusCode.Unauthorized && path !in setOf("/api/auth/login", "/api/auth/device/login", "/api/auth/logout")) {
             response.bodyAsText()
-            refreshGate.withLock {
+            authSession {
                 if (refreshVersion == version) {
                     if (browser) refreshBrowser() else refreshDevice()
                     refreshVersion++
                 }
             }
+            currentCoroutineContext().ensureActive()
+            ensureOpen()
             response = send(path, method, body, accessToken, csrf)
         }
         return response
     }
 
-    private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?): HttpResponse = client.request(origin + path) {
+    private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?): HttpResponse {
+        // A retirement can happen while a rotation is finishing. That rotation
+        // already owns the gate; its request must complete, while ordinary new
+        // calls are rejected by their entry points.
+        return client.request(origin + path) {
             this.method = method
             contentType(ContentType.Application.Json)
             header("x-viptv-image-delivery", if (browser) "proxy" else "direct")
@@ -149,6 +236,7 @@ class RemoteConnection(
             csrfValue?.let { header("x-csrf-token", it) }
             body?.let { setBody(it.toString()) }
         }
+    }
 
     private suspend fun requestJson(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement =
         decode(send(path, method, body, accessToken, csrf))
@@ -187,42 +275,80 @@ class RemoteConnection(
         }
     }
 
-    private suspend fun refreshDevice() {
-        val token = refreshToken ?: throw RemoteFailure(401, "Sign in to continue.")
-        val response = send("/api/auth/device/refresh", HttpMethod.Post,
-            buildJsonObject { put("refresh_token", token) }, null, null)
-        if (response.status == HttpStatusCode.Unauthorized) {
-            accessToken = null; refreshToken = null
-            try { sessionStore.clear() }
-            catch (error: CancellationException) { throw error }
-            catch (_: Exception) { /* The expired token remains unusable on the server. */ }
+    // Once sent, a rotation may already have consumed its one-use token. Navigation
+    // cancellation must wait until its replacement is installed and persisted.
+    private suspend fun refreshDevice() = withContext(NonCancellable) {
+        withTimeout(20_000) {
+            val token = refreshToken ?: throw RemoteFailure(401, "Sign in to continue.")
+            val response = send("/api/auth/device/refresh", HttpMethod.Post,
+                buildJsonObject { put("refresh_token", token) }, null, null)
+            if (response.status == HttpStatusCode.Unauthorized) {
+                accessToken = null; refreshToken = null
+                try { sessionStore.clear() }
+                catch (error: CancellationException) { throw error }
+                catch (_: Exception) { /* The server has rejected this session. */ }
+                throw RemoteFailure(401, "Sign in to continue.")
+            }
+            installDeviceTokens(decode(response).jsonObject)
         }
-        installDeviceTokens(decode(response).jsonObject)
     }
 
-    private suspend fun refreshBrowser() {
+    private suspend fun refreshBrowser() = withContext(NonCancellable) {
+        withTimeout(35_000) {
         val status = requestJson("/api/auth/status").jsonObject
         if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) throw RemoteFailure(401, "Sign in to continue.")
         csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
         val result = requestJson("/api/auth/refresh", HttpMethod.Post, buildJsonObject {})
         csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        }
     }
 
     suspend fun signOut() {
-        try {
-            refreshGate.withLock {
-                if (browser) refreshBrowser() else if (refreshToken != null) refreshDevice()
-                refreshVersion++
+        authSession {
+            withContext(NonCancellable) {
+                withTimeout(50_000) {
+                    try {
+                        if (browser) refreshBrowser() else if (refreshToken != null) refreshDevice()
+                        refreshVersion++
+                        requestJson("/api/auth/logout", HttpMethod.Post, buildJsonObject {})
+                    } catch (error: RemoteFailure) {
+                        if (error.status != 401) throw error
+                    }
+                    try { sessionStore.clear() }
+                    catch (error: CancellationException) { throw error }
+                    catch (_: Exception) { /* Server revocation has already completed. */ }
+                    accessToken = null; refreshToken = null; csrf = null
+                }
             }
-            call("/api/auth/logout", HttpMethod.Post, buildJsonObject {})
-        } catch (error: RemoteFailure) {
-            if (error.status != 401) throw error
         }
-        try { sessionStore.clear() }
-        catch (error: CancellationException) { throw error }
-        catch (_: Exception) { /* Server revocation has already completed. */ }
-        accessToken = null; refreshToken = null; csrf = null
     }
 
-    fun close() { client.close(); accessToken = null; refreshToken = null; csrf = null }
+    private suspend fun <T> authSession(block: suspend () -> T): T = refreshGate.withLock {
+        ensureOpen()
+        if (browser) block() else nativeSessionGate.withLock { ensureOpen(); block() }
+    }
+
+    private fun ensureOpen() {
+        if (retired) throw CancellationException("Connection retired")
+    }
+
+    // Mark retirement immediately, then let an already-started one-use rotation
+    // finish before closing its client. New connections serialize credential
+    // installation with that rotation, so the replacement account always wins.
+    fun close() {
+        if (retired) return
+        retired = true
+        if (refreshGate.tryLock()) {
+            try { finishClose() } finally { refreshGate.unlock() }
+        } else CoroutineScope(Dispatchers.Default).launch {
+            refreshGate.withLock { finishClose() }
+        }
+    }
+
+    suspend fun retire() {
+        close()
+        refreshGate.withLock { finishClose() }
+    }
+
+    private fun finishClose() { client.close(); accessToken = null; refreshToken = null; csrf = null }
 }

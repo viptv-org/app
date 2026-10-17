@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "artifact": "/mnt/ALPH/code/viptv-org/app/artifacts/linux-desktop-2026-10-15/final313-r2-d8697a8dd164",
+  "sha256": "d8697a8dd164fffe617e52eac5dbdf32f867a96aa58045fe72a273decd8d0710",
+  "steps": {
+    "install-gate": {
+      "exit_code": 0,
+      "seconds": 0.083
+    },
+    "installed-menu": {
+      "exit_code": 0,
+      "seconds": 0.084
+    },
+    "native-smoke": {
+      "exit_code": 0,
+      "seconds": 0.452
+    },
+    "qa-dependencies": {
+      "exit_code": 0,
+      "seconds": 27.185
+    },
+    "vault-main-probe": {
+      "exit_code": 0,
+      "seconds": 15.454
+    },
+    "installed-file-integrity": {
+      "exit_code": 0,
+      "seconds": 0.338
+    }
+  }
+}

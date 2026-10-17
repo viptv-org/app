@@ -1,0 +1,318 @@
+{
+  "counts": {
+    "POST /api/auth/device/login": 1,
+    "GET /api/v3/bootstrap": 4,
+    "POST /api/auth/profile": 1,
+    "POST /qa/expire": 1,
+    "POST /api/auth/device/refresh": 1,
+    "GET /qa/status": 9,
+    "GET /api/v3/search": 1,
+    "GET /api/v3/meta/movie/lifecycle-fixture": 1,
+    "POST /api/v2/streams": 1,
+    "GET /api/v2/streams/fixture-discovery": 1,
+    "POST /api/v3/profiles/one/source-ranking": 1,
+    "POST /api/v2/playback": 1,
+    "GET /api/v3/subtitles/movie/lifecycle-fixture": 1,
+    "GET /media/index.m3u8": 15,
+    "GET /media/segment-000.ts": 1,
+    "GET /media/segment-001.ts": 1,
+    "POST /api/v3/profiles/one/playback-events": 8,
+    "POST /api/v2/playback/fixture-lease/first-frame": 1,
+    "GET /media/segment-002.ts": 1,
+    "GET /media/segment-003.ts": 1,
+    "GET /media/segment-004.ts": 1,
+    "GET /media/segment-005.ts": 1,
+    "GET /media/segment-006.ts": 1,
+    "GET /media/segment-007.ts": 1,
+    "GET /media/segment-008.ts": 1,
+    "GET /media/segment-009.ts": 1,
+    "GET /media/segment-010.ts": 1,
+    "PUT /api/v3/profiles/one/progress": 6,
+    "GET /media/segment-011.ts": 1,
+    "GET /media/segment-012.ts": 1,
+    "GET /media/segment-013.ts": 1,
+    "GET /media/segment-014.ts": 1,
+    "GET /media/segment-015.ts": 1,
+    "GET /media/segment-016.ts": 1,
+    "GET /media/segment-017.ts": 1,
+    "GET /media/segment-018.ts": 1,
+    "DELETE /api/v2/playback/fixture-lease": 1
+  },
+  "events": [
+    {
+      "event": "start",
+      "sequence": 1,
+      "position_millis": 600000,
+      "duration_millis": 720000
+    },
+    {
+      "event": "pause",
+      "sequence": 2,
+      "position_millis": 605387,
+      "duration_millis": 720000
+    },
+    {
+      "event": "start",
+      "sequence": 3,
+      "position_millis": 605454,
+      "duration_millis": 720000
+    },
+    {
+      "event": "pause",
+      "sequence": 4,
+      "position_millis": 605699,
+      "duration_millis": 720000
+    },
+    {
+      "event": "start",
+      "sequence": 5,
+      "position_millis": 605794,
+      "duration_millis": 720000
+    },
+    {
+      "event": "pause",
+      "sequence": 6,
+      "position_millis": 607487,
+      "duration_millis": 720000
+    },
+    {
+      "event": "start",
+      "sequence": 7,
+      "position_millis": 607648,
+      "duration_millis": 720000
+    },
+    {
+      "event": "stop",
+      "sequence": 8,
+      "position_millis": 607964,
+      "duration_millis": 720000
+    }
+  ],
+  "progress": [
+    {
+      "position_millis": 605387,
+      "duration_millis": 720000
+    },
+    {
+      "position_millis": 605699,
+      "duration_millis": 720000
+    },
+    {
+      "position_millis": 605794,
+      "duration_millis": 720000
+    },
+    {
+      "position_millis": 607487,
+      "duration_millis": 720000
+    },
+    {
+      "position_millis": 607648,
+      "duration_millis": 720000
+    },
+    {
+      "position_millis": 607964,
+      "duration_millis": 720000
+    }
+  ],
+  "selected": "one",
+  "playlists": [
+    {
+      "elapsed_ms": 0,
+      "first_sequence": 0,
+      "last_exclusive": 10
+    },
+    {
+      "elapsed_ms": 19,
+      "first_sequence": 0,
+      "last_exclusive": 10
+    },
+    {
+      "elapsed_ms": 1010,
+      "first_sequence": 0,
+      "last_exclusive": 10
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/api/auth/device/login",
+      "query": "",
+      "elapsed_ms": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/profile",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/device/refresh",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/search",
+      "query": "query=Lifecycle",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/meta/movie/lifecycle-fixture",
+      "query": "provider_id=stremio&addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/streams",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/streams/fixture-discovery",
+      "query": "after=0&wait_ms=10000",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/source-ranking",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/lifecycle-fixture",
+      "query": "metadata_provider_id=stremio&metadata_addon_id=1&metadata_origin=%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D&card=%7B%22identity%22%3A%7B%22id%22%3A%22lifecycle-fixture%22%2C%22kind%22%3A%22movie%22%2C%22ids%22%3A%5B%5D%7D%2C%22provider_id%22%3A%22addon%3A1%22%2C%22title%22%3A%22Lifecycle%20fixture%22%2C%22badges%22%3A%5B%5D%2C%22metadata_origin%22%3A%7B%22provider_id%22%3A%22stremio%22%2C%22connection_id%22%3A%22addon%3A1%22%2C%22incarnation%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%7D%7D",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/fixture-lease/first-frame",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/one/playback-events",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/one/progress",
+      "query": "",
+      "elapsed_ms": 0
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/fixture-lease",
+      "query": "",
+      "elapsed_ms": 0
+    }
+  ],
+  "measurements": []
+}

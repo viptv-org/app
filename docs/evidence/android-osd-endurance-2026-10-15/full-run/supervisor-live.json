@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-15T20:59:46.813244+00:00",
+  "supervisor_pid": 3088932,
+  "children": {
+    "emulator": {
+      "pid": 3088933,
+      "status": null
+    },
+    "fixture": {
+      "pid": 3089657,
+      "status": null
+    },
+    "observer": {
+      "pid": 3089658,
+      "status": null
+    }
+  },
+  "clock_monotonic": 344521.751831964
+}

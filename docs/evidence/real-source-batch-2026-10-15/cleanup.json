@@ -1,0 +1,21 @@
+{
+  "created_jobs": 10,
+  "cancellation_http_statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "all_own_jobs_cancelled": true,
+  "user_service": "viptv-real-source-batch-20261015.service",
+  "service_state": "inactive",
+  "raw_file_modes_600": true,
+  "playback_progress_or_scrobble_mutations_by_runner": false,
+  "published_grants_preserved_by_backend_cancellation": true
+}

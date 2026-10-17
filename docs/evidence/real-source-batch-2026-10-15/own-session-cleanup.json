@@ -1,0 +1,6 @@
+{
+  "exact_fresh_session_only": true,
+  "logout_status": 200,
+  "other_sessions_revoked": false,
+  "manual_configuration_changed": false
+}

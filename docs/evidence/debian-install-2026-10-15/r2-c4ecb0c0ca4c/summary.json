@@ -1,0 +1,42 @@
+{
+  "artifact": "artifacts/linux-desktop-2026-10-15/debian-installer-r2-c4ecb0c0ca4c/viptv-experiment_0.1.0-2_amd64.deb",
+  "sha256": "c4ecb0c0ca4ceb3fcd79cd9d9fe249432025368998c9098204334baa38498128",
+  "debian_revision": 2,
+  "debian": "13.7 trixie-slim",
+  "base_image": "docker.io/library/debian@sha256:918311b7b6c4c6f68b232ba516584925f6c78ad82b6fd534b98979df6438e483",
+  "container_id": "7680723edfcf62e8ea74405ccf42ed36763c95e14951e93036ec914652faec65",
+  "rootless": true,
+  "privileged": false,
+  "artifact_mount_read_only": true,
+  "normal_apt_install_exit_code": 0,
+  "dpkg_status": "viptv-experiment 0.1.0-2 ii",
+  "dpkg_audit_empty": true,
+  "menu_directory_absent_before_install": true,
+  "desktop_menu_entry_registered": true,
+  "native_smoke_before_gui_dependencies": true,
+  "native_sha256": "0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+  "jvm": "Bundled21.0.12.1; /opt/viptv-experiment/lib/runtime/lib/server/libjvm.so mapped during both original Main captures",
+  "private_keyring_harness_passed": true,
+  "original_main_screenshots_visually_reviewed": true,
+  "rendering": "owned Xvfb; explicit Skiko SOFTWARE; no physical GPU/display/audio claim",
+  "host_packages_changed": false,
+  "host_wallet_or_display_accessed": false,
+  "original_artifact_preserved": true,
+  "interrupted_r2_attempt_recorded_as_incomplete": true,
+  "original_failure": "Original ebc3fabb2c09 revision1 apt install failed100: stock JDK21 postinst xdg-desktop-menu exit3; no writable system menu directory; dpkg half-configured.",
+  "fix": "Postinst override derives from selected verified JDK21 template; only adds idempotent standard desktop-directory prerequisite before unchanged menu commands; Debian revision2.",
+  "cleanup_owned_pid_states": {
+    "3090269": {
+      "exists": false
+    },
+    "3090267": {
+      "exists": false
+    },
+    "3072723": {
+      "exists": false
+    }
+  },
+  "cleanup_complete": true,
+  "cached_isolated_image_retained": true,
+  "scope": "Qualifies this c4ec snapshot install/menu/native/JVM/private-vault and original Main on Debian13.7 x86_64. Final shared-code build needs separate identity and checks. Historical97e VTT remains separate; no claim for playback here, physical devices, Windows/macOS or signing."
+}

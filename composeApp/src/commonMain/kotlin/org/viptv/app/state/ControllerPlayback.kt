@@ -10,7 +10,14 @@ import kotlin.time.Duration.Companion.seconds
 
 fun ApplicationController.playSource(source: SourceCandidate) = playSource(source, forceGateway = false)
 
-fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean) = openSource(source, forceGateway)
+fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean) {
+    // A queued row click can outlive the title/discovery that rendered it.
+    // Resolve the current choice by ID; display/tracking must use its metadata.
+    val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
+    val restart = restartRequested
+    restartRequested = false
+    openSource(current, forceGateway, positionMillis = if (restart) 0L else null)
+}
 
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false): Unit = run {
     progressJob?.join()
@@ -57,6 +64,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
     mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = Screen.Player, error = null)
+    loadNextEpisode()
     subtitleDiscovery = scope.launch {
         try {
             val snapshot = store?.subtitles(profile, card) ?: requireNotNull(remote).subtitles(card)
@@ -69,14 +77,34 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
 
 fun ApplicationController.retrySource(source: SourceCandidate) {
     if (!completionSeen) saveProgress(false)
-    playSource(source, forceGateway = connection != null)
+    // Desktop direct play: the gateway is only required for IPTV/live sources;
+    // VOD retries stay direct so gateway connections stay free.
+    val live = mutable.value.playback?.live == true
+    playSource(source, forceGateway = live)
 }
 
 fun ApplicationController.pausePlayback() {
+    backgroundPlayback = null
     val paused=!mutable.value.paused
     if (!paused) completionSeen = false
     mutable.value = mutable.value.copy(paused = paused)
     if(paused && !completionSeen) saveProgress(false)
+}
+
+/** Keep the route and lease while the Activity is away; save the last renderer clock. */
+fun ApplicationController.suspendPlayback() {
+    val state = mutable.value
+    if (state.playback == null || state.paused || backgroundPlayback != null) return
+    backgroundPlayback = state.playback
+    mutable.value = state.copy(paused = true)
+    if (!completionSeen) saveProgress(false, final = true)
+}
+
+fun ApplicationController.resumePlayback() {
+    val input = backgroundPlayback ?: return
+    backgroundPlayback = null
+    if (mutable.value.playback === input && !completionSeen)
+        mutable.value = mutable.value.copy(paused = false)
 }
 
 fun ApplicationController.observePlaybackFor(input: PlaybackInput?, fact: PlayerFact) {
@@ -97,8 +125,12 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         } }
     }
     if (fact is PlayerFact.Progress) {
+        val finalBackgroundSample = backgroundPlayback === mutable.value.playback && backgroundPlayback != null && fact != lastProgress
         lastProgress=fact
-        if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
+        // ON_STOP pauses the renderer synchronously after the Activity suspends
+        // the controller. Flush that final sample even if the 15s timer just ran.
+        if (finalBackgroundSample && !completionSeen) saveProgress(false, final = true)
+        else if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
     }
     if (fact is PlayerFact.Status && fact.name in listOf("Playing", "Paused") && mutable.value.playback != null) {
         mutable.value = mutable.value.copy(paused = fact.name == "Paused")
@@ -108,6 +140,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         completionSeen=true
         if (firstFrameSeen) tracking?.transition(PlaybackEvent.Stop, lastProgress, ended = true)
         mutable.value = mutable.value.copy(paused = true)
+        if (mutable.value.nextEpisode == null) loadNextEpisode(force = true)
         saveProgress(true)
     }
     if (fact is PlayerFact.Failed) mutable.value = mutable.value.copy(error = "This source could not play. Choose another source.")

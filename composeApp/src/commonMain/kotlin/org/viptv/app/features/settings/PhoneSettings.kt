@@ -18,7 +18,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
-    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null) {
+    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null) {
     var unavailable by remember { mutableStateOf<String?>(null) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -55,7 +55,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
         }
         item {
             SettingsGroup {
-                SettingsItem("Watch on TV", Lucide.Tv) { unavailable = "TV pairing" }
+                SettingsItem("Watch on TV", Lucide.Tv) { if (information != null) information("Watch on TV") else unavailable = "TV pairing" }
                 SettingsDivider()
                 SettingsItem("Add-ons", Lucide.Puzzle, "$addonCount installed", addons)
             }
@@ -68,9 +68,13 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                     SettingsItem("Devices", Lucide.Monitor, action = devices)
                     SettingsDivider()
                 }
-                SettingsItem("Help", Lucide.Info) { unavailable = "Help" }
+                if (parental != null) {
+                    SettingsItem("Parental controls", Lucide.LockKeyhole, action = parental)
+                    SettingsDivider()
+                }
+                SettingsItem("Help", Lucide.Info) { if (information != null) information("Help") else unavailable = "Help" }
                 SettingsDivider()
-                SettingsItem("About VIPTV", Lucide.Info) { unavailable = "About VIPTV" }
+                SettingsItem("About VIPTV", Lucide.Info) { if (information != null) information("About") else unavailable = "About VIPTV" }
             }
         }
         item {

@@ -1,0 +1,114 @@
+{
+  "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-release-2026-10-15/recovery-6cbcae7d7f6a/viptv-android-release-local.apk",
+  "apk_sha256": "6cbcae7d7f6a30f1b07dffc24e8b0807e2b95f66ed91afd6a82f647aa5bc3568",
+  "fixture": {
+    "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "console_port": 5590,
+    "api": 35,
+    "ram_mib": 2560,
+    "cores": 2,
+    "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+    "display": "720x1600 density280; bounded portrait phone fixture",
+    "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+    "observed_minimum_phone_ram_mib": 2560,
+    "requested_ram_mib": 1536,
+    "first_launch_stopped_for_resource_coordination": true
+  },
+  "ime_top": 1000,
+  "action_control_bounds": {
+    "Cancel": [
+      361,
+      874,
+      482,
+      958
+    ],
+    "Save": [
+      496,
+      874,
+      598,
+      958
+    ]
+  },
+  "field_bounds": [
+    122,
+    262,
+    598,
+    374
+  ],
+  "masked": true,
+  "keyboard_sources": [
+    "InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null",
+    "mSource=InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null"
+  ],
+  "save_submitted": false,
+  "real_credentials_used": false,
+  "cancel_worked_with_keyboard_open": true,
+  "keyboard_dismissal_workaround": false,
+  "reopened_draft_empty": true,
+  "native_preferences_before": [
+    {
+      "revision": 3,
+      "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+    }
+  ],
+  "native_preferences_after": [
+    {
+      "revision": 3,
+      "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+    }
+  ],
+  "native_connections_before": [
+    {
+      "count": 0
+    }
+  ],
+  "native_connections_after": [
+    {
+      "count": 0
+    }
+  ],
+  "observed_schema_labels_before": [
+    "M3U live TV",
+    "VIPTV Sources",
+    "Xtream live TV"
+  ],
+  "observed_schema_labels_after": [
+    "M3U live TV",
+    "VIPTV Sources",
+    "Xtream live TV"
+  ],
+  "observed_schema_count_before": 3,
+  "observed_schema_count_after": 3,
+  "status": "intermediate native layout/Cancel proof passed; secret IME classification defect found and being fixed separately",
+  "captures_inspected": true,
+  "source_files_sha256": {
+    "composeApp/src/commonMain/kotlin/org/viptv/app/state/ControllerSourceIntegrations.kt": "80d853f9198ff8d2de212395698bb8cc3a2ab6372f301f7269ae534ad5c9d174",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/LinkedAccounts.kt": "aab879d673395ec4c2f998864ec6f81584ed06f9fa7d4cc96159f9b64ec28773",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/SourceIntegrationForm.kt": "ea0fe9ce2cafc6e8ac9c63dfd3b35b816218d86998b72c7fc5379cf43aef39c8",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/SourceIntegrationRecoveryTest.kt": "93f7dc608a6597a3c79af5ddfb176ccfc09abbefea5a80489014baebcb29e43f",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/LinkedAccountRecoveryUiTest.kt": "29c49950e9c90414f44ccb4f4c318ebf8c711a8995d4cca26cd5a7277617fe76",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/SourceIntegrationFormUiTest.kt": "a6c0434405a884b9d69e611dab61bf8715d4336dc5075e53808585e34df58378"
+  },
+  "owned_focused_tests": 8,
+  "merged_desktop_gate": {
+    "tests": 283,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "baseline_4cb59": "../baseline-4cb59/source-form-ime-baseline.json",
+  "files_sha256": {
+    "source-form-positive.json": "372cae5bc88855866bcc3ee88d472708f94df8db969710b5598dcabb055e4323",
+    "source-form-ime-fixed.png": "087d8936f658368c44f50a71248c36060e0f8017d7c97bdcdf8ebb3ede033e2d",
+    "source-form-cancel-retains-unconfigured-state.png": "bd81533ae55c8eac342d7328e607cebbaaa7ca59ad97673018d84aa59277157b",
+    "TEST-org.viptv.app.SourceIntegrationRecoveryTest.xml": "37f4b09f1c5dee311035ceaad76b115c6cc4447e9abd03a69c0a07c2860975a2",
+    "TEST-org.viptv.app.LinkedAccountRecoveryUiTest.xml": "bc1447fd218a70d0eb0d8db7acbe938294920e77429af36a2f7ccab7ba96c1fa",
+    "TEST-org.viptv.app.SourceIntegrationFormUiTest.xml": "33f1e54ab22802a63441431bc79b8b0c1d1462811def4d38b3913fda81f83036",
+    "owned-shutdown.json": "ba9efd2979e23a211b816e92d9d39fbce810776712a880f5ee9e0def3cd280c0"
+  },
+  "owned_emulator_stopped": true,
+  "shutdown_proof": "owned-shutdown.json",
+  "qualification_limit": "PasswordVisualTransformation masked the field, but fake text appeared in IME suggestions. This candidate does not qualify secret IME classification."
+}

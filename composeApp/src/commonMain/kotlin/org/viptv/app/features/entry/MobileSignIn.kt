@@ -39,6 +39,10 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
                 Text("Sign in to VIPTV", color = Palette.text, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(14.dp))
                 Text("Pick whichever is easiest. They all reach the same account.", color = Palette.secondary, fontSize = 15.sp, lineHeight = 22.sp)
+                error?.let {
+                    Spacer(Modifier.height(12.dp))
+                    Text(it, color = Palette.danger, fontSize = 15.sp, lineHeight = 20.sp)
+                }
                 Spacer(Modifier.height(18.dp))
                 MobileSignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
                 MobileSignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }

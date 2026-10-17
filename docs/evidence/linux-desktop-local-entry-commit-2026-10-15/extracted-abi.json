@@ -1,0 +1,923 @@
+{
+  "image": "/tmp/viptv-deb-qualification-0jj04kpo/opt/viptv-experiment",
+  "elf_count": 32,
+  "external_sonames": [
+    "ld-linux-x86-64.so.2",
+    "libGL.so.1",
+    "libX11.so.6",
+    "libXext.so.6",
+    "libXi.so.6",
+    "libXrender.so.1",
+    "libXtst.so.6",
+    "libasound.so.2",
+    "libc.so.6",
+    "libdbus-1.so.3",
+    "libdl.so.2",
+    "libfontconfig.so.1",
+    "libgcc_s.so.1",
+    "libm.so.6",
+    "libpthread.so.0",
+    "librt.so.1",
+    "libstdc++.so.6",
+    "libz.so.1"
+  ],
+  "minimum_symbol_versions": {
+    "GLIBC": {
+      "version": "GLIBC_2.34",
+      "required_by": "lib/app/composeApp-desktop-a84f338ad160b15d126c9bf2e2b291d.jar!linux-x86-64/libviptv_core.so"
+    },
+    "GLIBCXX": {
+      "version": "GLIBCXX_3.4.22",
+      "required_by": "lib/app/libskiko-linux-x64.so"
+    },
+    "CXXABI": {
+      "version": "CXXABI_1.3.9",
+      "required_by": "lib/app/libskiko-linux-x64.so"
+    },
+    "GCC": {
+      "version": "GCC_4.2.0",
+      "required_by": "lib/app/composeApp-desktop-a84f338ad160b15d126c9bf2e2b291d.jar!linux-x86-64/libviptv_core.so"
+    }
+  },
+  "elf_files": [
+    {
+      "file": "lib/libapplauncher.so",
+      "sha256": "bc635a4241fc0e4a278f4af8a35b62b0f2e95ba145ffde75f6e1543a230939f6",
+      "needed": [
+        "libdl.so.2",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.3",
+          "GLIBC_2.14",
+          "GLIBC_2.2.5",
+          "GLIBC_2.4"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "file": "bin/VIPTV-Experiment",
+      "sha256": "51bc95a8ead1e651eba4d5c15113597ef2ba9c989ad25d587132fcc8b60154d6",
+      "needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.4",
+          "GLIBC_2.14",
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/app/libskiko-linux-x64.so",
+      "sha256": "1eb753007528487992f614a29d475eb9c2110a7b99dcd0af1016add0e600413a",
+      "needed": [
+        "libGL.so.1",
+        "libX11.so.6",
+        "libfontconfig.so.1",
+        "libstdc++.so.6",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.11",
+          "GLIBC_2.3",
+          "GLIBC_2.3.4",
+          "GLIBC_2.14",
+          "GLIBC_2.4",
+          "GLIBC_2.7",
+          "GLIBC_2.17",
+          "GLIBC_2.3.2",
+          "GLIBC_2.16"
+        ],
+        "libstdc++.so.6": [
+          "GLIBCXX_3.4",
+          "GLIBCXX_3.4.14",
+          "GLIBCXX_3.4.9",
+          "GLIBCXX_3.4.20",
+          "CXXABI_1.3.9",
+          "GLIBCXX_3.4.18",
+          "CXXABI_1.3",
+          "GLIBCXX_3.4.11",
+          "CXXABI_1.3.5",
+          "GLIBCXX_3.4.15",
+          "GLIBCXX_3.4.19",
+          "GLIBCXX_3.4.22"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ]
+      },
+      "external_needed": [
+        "libGL.so.1",
+        "libX11.so.6",
+        "libfontconfig.so.1",
+        "libstdc++.so.6",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libzip.so",
+      "sha256": "e644cd8a31bdef1c75b72a077acb285400552703beb7adc760fad9048dff29cf",
+      "needed": [
+        "libjvm.so",
+        "libjava.so",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.4",
+          "GLIBC_2.14"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libverify.so",
+      "sha256": "74ee5b2ec966b5b7f3ff444d9988e3adac23a303c600ba604a86d13cb88b4b43",
+      "needed": [
+        "libjvm.so",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.14",
+          "GLIBC_2.4",
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libsyslookup.so",
+      "sha256": "84108f2487b041dfee509ab748ad0dc39fbca7df4b0e7ff7c1c54b6b09ad1adf",
+      "needed": [
+        "libc.so.6",
+        "libm.so.6",
+        "libdl.so.2"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6",
+        "libm.so.6",
+        "libdl.so.2"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libsplashscreen.so",
+      "sha256": "dcd6935a10568aa4a000d3d44f7b62b093cbec0d2905859532bcd242edddab44",
+      "needed": [
+        "libjava.so",
+        "libjvm.so",
+        "libX11.so.6",
+        "libXext.so.6",
+        "libm.so.6",
+        "libpthread.so.0",
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.4"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libpthread.so.0": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libX11.so.6",
+        "libXext.so.6",
+        "libm.so.6",
+        "libpthread.so.0",
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libprefs.so",
+      "sha256": "d4732a1d3db8d466a23222209978a2f3ed64e0682c777e4fa8a0fda41d0f7359",
+      "needed": [
+        "libjvm.so",
+        "libjava.so",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libnio.so",
+      "sha256": "7248427389419f6921471d22d8cb0a3dc5e146fd80782be092c2e597e5eafbb3",
+      "needed": [
+        "libjava.so",
+        "libnet.so",
+        "libpthread.so.0",
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.3",
+          "GLIBC_2.2.5",
+          "GLIBC_2.7",
+          "GLIBC_2.9",
+          "GLIBC_2.3.2",
+          "GLIBC_2.4",
+          "GLIBC_2.14"
+        ],
+        "libpthread.so.0": [
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libpthread.so.0",
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libnet.so",
+      "sha256": "0b639279725269834585b4c07cae76ce92a18f51fa209c275da7ab161df6937b",
+      "needed": [
+        "libjvm.so",
+        "libjava.so",
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.14",
+          "GLIBC_2.4"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libmlib_image.so",
+      "sha256": "559782269a0ea9c3724df6a5e1acb61961e29f0c717f89aa2a775d7a02e8d7c6",
+      "needed": [
+        "libjava.so",
+        "libjvm.so",
+        "libm.so.6",
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.4",
+          "GLIBC_2.14",
+          "GLIBC_2.2.5"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libm.so.6",
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/liblcms.so",
+      "sha256": "71e00581955e41e0398d9fe1f0a6901a71f87967e11043f6c13948259b22d222",
+      "needed": [
+        "libawt.so",
+        "libjvm.so",
+        "libjava.so",
+        "libm.so.6",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3",
+          "GLIBC_2.4",
+          "GLIBC_2.14"
+        ]
+      },
+      "external_needed": [
+        "libm.so.6",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libjsound.so",
+      "sha256": "21f2e2a797355986c88307d063fe18431c4a4590430d5c8f04ed7f8a2a379c3f",
+      "needed": [
+        "libjava.so",
+        "libjvm.so",
+        "libasound.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.4",
+          "GLIBC_2.14"
+        ]
+      },
+      "external_needed": [
+        "libasound.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libjsig.so",
+      "sha256": "677fa55d7355d5d08862572d98e497e6f7e595abc191c4fc50eaea662fe97978",
+      "needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3.2"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libjli.so",
+      "sha256": "6703dbc0a7d5953ba248f45afca71b13807e5be9682110ed205f4361640f496a",
+      "needed": [
+        "libdl.so.2",
+        "libpthread.so.0",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.4",
+          "GLIBC_2.14",
+          "GLIBC_2.3"
+        ],
+        "libpthread.so.0": [
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libpthread.so.0",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libjimage.so",
+      "sha256": "d6d358f58dac20e3f51bc42ac65cb474db79da1243deb5e650489e17e9f5ac4a",
+      "needed": [
+        "libjvm.so",
+        "libdl.so.2",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.14",
+          "GLIBC_2.4"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libjawt.so",
+      "sha256": "26e615fb8724926c20c1e1b25dc33c6386b1240c3bea8e92e85b82d05a4df219",
+      "needed": [
+        "libawt.so",
+        "libawt_xawt.so",
+        "libjava.so",
+        "libjvm.so",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libjavajpeg.so",
+      "sha256": "fc197b10db38b66557a716be44a1b621fde301b62301914987afe0df9bf0c1bd",
+      "needed": [
+        "libjava.so",
+        "libjvm.so",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.14",
+          "GLIBC_2.4"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libjava.so",
+      "sha256": "306e8a988c8a81c65eea71928998c503caddd1c3adbcb2983a949ac264fc2cf4",
+      "needed": [
+        "libjvm.so",
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.15",
+          "GLIBC_2.14",
+          "GLIBC_2.3.4",
+          "GLIBC_2.4",
+          "GLIBC_2.3"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libfreetype.so",
+      "sha256": "18c1a93dd3f9135228e3033d8226a2d7f0aff9b00a951d331e6fe656a5ab67d3",
+      "needed": [
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.4",
+          "GLIBC_2.2.5",
+          "GLIBC_2.14"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libfontmanager.so",
+      "sha256": "acb8a0ed44dff99a9a628b64f213b960262eadf22eaa660bbdf52a8dcc7e69a6",
+      "needed": [
+        "libfreetype.so",
+        "libawt.so",
+        "libjava.so",
+        "libjvm.so",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.14",
+          "GLIBC_2.4"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libawt_xawt.so",
+      "sha256": "eac420d5a6887bf4f6a8e1f37fe310db0c0ce28e19c0c80ac4e80dca93c451ee",
+      "needed": [
+        "libm.so.6",
+        "libawt.so",
+        "libXext.so.6",
+        "libX11.so.6",
+        "libXrender.so.1",
+        "libdl.so.2",
+        "libXtst.so.6",
+        "libXi.so.6",
+        "libjava.so",
+        "libjvm.so",
+        "libpthread.so.0",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.4",
+          "GLIBC_2.14"
+        ],
+        "libpthread.so.0": [
+          "GLIBC_2.2.5"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libm.so.6",
+        "libXext.so.6",
+        "libX11.so.6",
+        "libXrender.so.1",
+        "libdl.so.2",
+        "libXtst.so.6",
+        "libXi.so.6",
+        "libpthread.so.0",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libawt_headless.so",
+      "sha256": "55d55817cfc310947adc1b21e55475247aab77c6541206d8cad60daa9ffb141a",
+      "needed": [
+        "libawt.so",
+        "libjvm.so",
+        "libjava.so",
+        "libm.so.6",
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libm.so.6",
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/libawt.so",
+      "sha256": "01f29315049ba6a93cdd258cb67e5737f341e93b4cecbdf40817a5df0b383196",
+      "needed": [
+        "libjvm.so",
+        "libjava.so",
+        "libm.so.6",
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.14",
+          "GLIBC_2.4",
+          "GLIBC_2.3"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libm.so.6",
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/jspawnhelper",
+      "sha256": "e3101d3a580c9ae6e973acbf2e861855e93ebceb0bbd8e5fa3ddf6abbf6fd63d",
+      "needed": [
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.4",
+          "GLIBC_2.2.5",
+          "GLIBC_2.14"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/jexec",
+      "sha256": "67690e6a5fd09cf1e3958df770cd11b0f63683480e101f2a1a52e444b9b573ce",
+      "needed": [
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.3",
+          "GLIBC_2.4",
+          "GLIBC_2.2.5",
+          "GLIBC_2.14"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/server/libjvm.so",
+      "sha256": "462fa559157ee8a862e7e4b8a4a74f8abbf5e1a9deb64f22ee23c7e8c43f698b",
+      "needed": [
+        "libdl.so.2",
+        "libpthread.so.0",
+        "librt.so.1",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.4",
+          "GLIBC_2.14",
+          "GLIBC_2.3",
+          "GLIBC_2.15",
+          "GLIBC_2.7",
+          "GLIBC_2.6",
+          "GLIBC_2.3.4"
+        ],
+        "libpthread.so.0": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3.2"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3.3"
+        ],
+        "librt.so.1": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libpthread.so.0",
+        "librt.so.1",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "file": "lib/runtime/lib/server/libjsig.so",
+      "sha256": "677fa55d7355d5d08862572d98e497e6f7e595abc191c4fc50eaea662fe97978",
+      "needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3.2"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libdl.so.2",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/app/kiteplayer-libass-jvm-0.3.0-d321e53df3d428ac5e34a5318aebf8.jar!kiteplayer-libass-native/linux-x64/libkiteplayer_libass_jni.so",
+      "sha256": "1842155221f78d43db9d545af123e933a06109e80e5c030a82092b578de44bee",
+      "needed": [
+        "libz.so.1",
+        "libstdc++.so.6",
+        "libm.so.6",
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3",
+          "GLIBC_2.14"
+        ]
+      },
+      "external_needed": [
+        "libz.so.1",
+        "libstdc++.so.6",
+        "libm.so.6",
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/app/kiteffmpeg-jvm-0.5.1-1dcc69628241fb052c6bf4417ba41ee.jar!kiteffmpeg-native/linux-x64/libkitecodec_jni.so",
+      "sha256": "e580d4ddacde2c7cec5c2a41e90e3158770c32d03360e75db71e3aa83987fc9a",
+      "needed": [
+        "libz.so.1",
+        "libm.so.6",
+        "libdl.so.2",
+        "libpthread.so.0",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libm.so.6": [
+          "GLIBC_2.2.5"
+        ],
+        "libdl.so.2": [
+          "GLIBC_2.2.5"
+        ],
+        "libpthread.so.0": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3.2",
+          "GLIBC_2.3.4"
+        ],
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3.4",
+          "GLIBC_2.6",
+          "GLIBC_2.7",
+          "GLIBC_2.14",
+          "GLIBC_2.17"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ]
+      },
+      "external_needed": [
+        "libz.so.1",
+        "libm.so.6",
+        "libdl.so.2",
+        "libpthread.so.0",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "file": "lib/app/jna-5.17.0-8fc1e1f239ec4511e8d9e5a433f6244.jar!com/sun/jna/linux-x86-64/libjnidispatch.so",
+      "sha256": "ca07953d595210082339753d9e818a1fdb40509a17a41914d9a2cb0d2df6b6af",
+      "needed": [
+        "libc.so.6"
+      ],
+      "version_needs": {
+        "libc.so.6": [
+          "GLIBC_2.3.4",
+          "GLIBC_2.7",
+          "GLIBC_2.2.5"
+        ]
+      },
+      "external_needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "file": "lib/app/composeApp-desktop-a84f338ad160b15d126c9bf2e2b291d.jar!linux-x86-64/libviptv_core.so",
+      "sha256": "72ac71760676938b6211d5d5e58f30ee4b1ced524d07c0e8b1614c433f088798",
+      "needed": [
+        "libdbus-1.so.3",
+        "libgcc_s.so.1",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "version_needs": {
+        "libgcc_s.so.1": [
+          "GCC_3.0",
+          "GCC_3.3",
+          "GCC_4.2.0"
+        ],
+        "libm.so.6": [
+          "GLIBC_2.29"
+        ],
+        "libc.so.6": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3",
+          "GLIBC_2.3.2",
+          "GLIBC_2.3.4",
+          "GLIBC_2.4",
+          "GLIBC_2.7",
+          "GLIBC_2.9",
+          "GLIBC_2.14",
+          "GLIBC_2.16",
+          "GLIBC_2.17",
+          "GLIBC_2.18",
+          "GLIBC_2.25",
+          "GLIBC_2.28",
+          "GLIBC_2.30",
+          "GLIBC_2.32",
+          "GLIBC_2.33",
+          "GLIBC_2.34"
+        ],
+        "ld-linux-x86-64.so.2": [
+          "GLIBC_2.3"
+        ]
+      },
+      "external_needed": [
+        "libdbus-1.so.3",
+        "libgcc_s.so.1",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    }
+  ],
+  "scope": "Static Linux x86_64 ELF requirements; bundled providers excluded from external floors. Optional dlopen drivers/plugins and actual distribution installation are not qualified."
+}

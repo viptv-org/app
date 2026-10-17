@@ -1,0 +1,125 @@
+--------- beginning of main
+--------- beginning of system
+I/VIPTV_PLAYBACK_QA( 5915): sidecar_active=false sidecar_cues=0 sidecar_position_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): opening_position_ms=0 opening_timeline_offset_ms=0 opening_live=false
+I/VIPTV_PLAYBACK_QA( 5915): ffmpeg_audio_available=true ffmpeg_version=Lavc60.3.100
+I/VIPTV_PLAYBACK_QA( 5915): status=Opening
+I/VIPTV_PLAYBACK_QA( 5915): timeline_default_ms=0 timeline_position_ms=0 timeline_offset_ms=0 timeline_placeholder=true timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 5915): status=Opening
+I/VIPTV_PLAYBACK_QA( 5915): status=Buffering
+I/VIPTV_PLAYBACK_QA( 5915): timeline_default_ms=0 timeline_position_ms=0 timeline_offset_ms=0 timeline_placeholder=true timeline_live=false timeline_dynamic=false
+I/VIPTV_PLAYBACK_QA( 5915): timeline_default_ms=0 timeline_position_ms=0 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=false
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=0 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=0 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): presentation=NativeRendererPresented exact=false
+I/VIPTV_PLAYBACK_QA( 5915): status=Playing
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=265 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=447 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=640 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=847 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=1046 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=1241 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=1444 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=1647 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=42 dropped=0 fps=20.368574199806012 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=1842 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=2047 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=2244 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=2442 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=2647 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=2850 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=3043 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=3246 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=3450 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=3652 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=91 dropped=0 fps=24.5 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=3847 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=4051 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=4246 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=4452 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=4645 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=4853 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=5047 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=5257 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=5451 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=5655 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=138 dropped=0 fps=23.5 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=5858 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=6051 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=6255 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=6458 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=6654 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=6857 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=7051 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=7256 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=7452 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=7655 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=186 dropped=0 fps=23.988005997001498 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=7857 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=8061 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=8253 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=8459 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=8655 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=8858 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=9063 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=9257 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=9460 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=9664 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=234 dropped=0 fps=24.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=9861 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=10061 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=10262 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=10457 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=10660 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=10863 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=11064 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=11257 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=11461 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=11666 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=282 dropped=0 fps=24.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=11858 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=12061 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=12265 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=12459 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=12664 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=12866 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=13062 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=13266 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=13470 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=13664 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=330 dropped=0 fps=24.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=13867 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=14070 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=14264 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=14468 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=14663 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=14866 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=15069 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=15271 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=15465 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=15670 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=378 dropped=0 fps=24.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=15874 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=16068 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=16269 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=16471 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=16675 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=16868 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=17071 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=17273 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=17467 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=426 dropped=0 fps=23.988005997001498 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=17671 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=17873 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=18075 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=18269 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=18474 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=18677 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=18869 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=19074 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=19275 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=19478 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): engine=Media3 rendered=474 dropped=0 fps=24.0 width=320 height=180 source_fps=-1.0 audio_decoder=ffmpegLavc60.3.100-eac3 video_decoder=OMX.google.h264.decoder media_item_transitions=1 window_offset_ms=0
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=19671 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=19875 duration_ms=35005
+I/VIPTV_PLAYBACK_QA( 5915): position_ms=20078 duration_ms=35005

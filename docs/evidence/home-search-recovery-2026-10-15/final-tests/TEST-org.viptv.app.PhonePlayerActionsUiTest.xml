@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="PhonePlayerActionsUiTest[desktop]" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:10.749Z" hostname="vynxcos" time="2.604">
+  <properties/>
+  <testcase name="loadedEpisodePickerStartsAtCurrentEpisodeRestoresFocusAndDispatchesExactCard[desktop]" classname="org.viptv.app.PhonePlayerActionsUiTest" time="0.508"/>
+  <testcase name="unavailableEpisodeActionsAreDisabledAndMovieHasNoEpisodeControls[desktop]" classname="org.viptv.app.PhonePlayerActionsUiTest" time="0.432"/>
+  <testcase name="episodesFromAnotherParentProviderOrIncarnationNeverBecomePlayerActions[desktop]" classname="org.viptv.app.PhonePlayerActionsUiTest" time="0.0"/>
+  <testcase name="authoritativeNextBeyondLoadedEpisodesRequiresExplicitConfirmationAndCreditsNeverDispatches[desktop]" classname="org.viptv.app.PhonePlayerActionsUiTest" time="0.698"/>
+  <testcase name="metadataOrPlaybackReplacementDismissesNextAndRemovedEpisodesCannotBeChosen[desktop]" classname="org.viptv.app.PhonePlayerActionsUiTest" time="0.782"/>
+  <testcase name="failureExposesOnlyAvailableRecoveryActionsAndDispatchesEachExplicitly[desktop]" classname="org.viptv.app.PhonePlayerActionsUiTest" time="0.184"/>
+  <system-out><![CDATA[FocusRelatedWarning: 
+   FocusRequester is not initialized. Here are some possible fixes:
+
+   1. Remember the FocusRequester: val focusRequester = remember { FocusRequester() }
+   2. Did you forget to add a Modifier.focusRequester() ?
+   3. Are you attempting to request focus during composition? Focus requests should be made in
+   response to some event. Eg Modifier.clickable { focusRequester.requestFocus() }
+
+FocusRelatedWarning: 
+   FocusRequester is not initialized. Here are some possible fixes:
+
+   1. Remember the FocusRequester: val focusRequester = remember { FocusRequester() }
+   2. Did you forget to add a Modifier.focusRequester() ?
+   3. Are you attempting to request focus during composition? Focus requests should be made in
+   response to some event. Eg Modifier.clickable { focusRequester.requestFocus() }
+
+FocusRelatedWarning: 
+   FocusRequester is not initialized. Here are some possible fixes:
+
+   1. Remember the FocusRequester: val focusRequester = remember { FocusRequester() }
+   2. Did you forget to add a Modifier.focusRequester() ?
+   3. Are you attempting to request focus during composition? Focus requests should be made in
+   response to some event. Eg Modifier.clickable { focusRequester.requestFocus() }
+
+FocusRelatedWarning: 
+   FocusRequester is not initialized. Here are some possible fixes:
+
+   1. Remember the FocusRequester: val focusRequester = remember { FocusRequester() }
+   2. Did you forget to add a Modifier.focusRequester() ?
+   3. Are you attempting to request focus during composition? Focus requests should be made in
+   response to some event. Eg Modifier.clickable { focusRequester.requestFocus() }
+
+FocusRelatedWarning: 
+   FocusRequester is not initialized. Here are some possible fixes:
+
+   1. Remember the FocusRequester: val focusRequester = remember { FocusRequester() }
+   2. Did you forget to add a Modifier.focusRequester() ?
+   3. Are you attempting to request focus during composition? Focus requests should be made in
+   response to some event. Eg Modifier.clickable { focusRequester.requestFocus() }
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

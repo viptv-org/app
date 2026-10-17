@@ -1,0 +1,103 @@
+{
+  "status": "Verified Linux native adapter, final packaged native/controller, actual packaged Main Profiles restore and visible locked-storage warning",
+  "native_linux_sha256": "0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+  "real_platform_store": "DesktopSecrets -> UniFFI systemSecretStore -> Linux noninteractive DH-encrypted Secret Service",
+  "fixture": "Real GNOME Keyring in owned private D-Bus session, temporary HOME/XDG directories and own Xvfb; copied packaged launcher/bundled JVM with exact rebuilt native override; no user wallet/display access",
+  "source_files": {
+    "Cargo.lock": "7fc34cb4c92964101cfed6846e627acd52667948074e8a354d4b13fb58bd9858",
+    "crates/viptv-core/Cargo.toml": "ceb9aa31d70681e0fd9c43c8170784c63a934632009f54db8dc01cb896803e7e",
+    "crates/viptv-core/src/local_engine/secrets.rs": "3e69cdc7135803e1247783acafbad9f3eae5d8f346cc03cf0f508d743958c4bc",
+    "crates/viptv-core/src/local_engine/secrets/linux.rs": "ee53dab002ebb20479dce60aaf770fbe1cfc420ada53af820b5b4ff89dfb4e2b"
+  },
+  "canonical_and_native_files_identical": true,
+  "rust_focused_tests_passed": 5,
+  "uniffi_checksums_unchanged": 121,
+  "generated_bindings_or_native_api_changed": false,
+  "saved_connection_roundtrips": [
+    "Local save/read",
+    "Local second-JVM read",
+    "legacy remote JSON read",
+    "remote save/rotation",
+    "replace Remote with Local",
+    "idempotent clear"
+  ],
+  "credential_identity_compatibility": [
+    "Old no-target default-collection credential get/update/delete",
+    "Exact service+username+target match takes precedence over legacy",
+    "Ambiguous exact credentials rejected by get/put/delete"
+  ],
+  "locked_vault": {
+    "get_ms": 5,
+    "put_ms": 4,
+    "delete_ms": 6,
+    "all_fail_as_bridge": true,
+    "interactive_prompter_activated": false,
+    "startup_call_completed": true,
+    "startup_notice_present": false,
+    "startup_error_present": true,
+    "cancel_ms": 3,
+    "canceled_restore_job_completed": true,
+    "profiles_immediately_after_cancel": 0,
+    "next_explicit_local_choice": "Profiles, busy=false, one owned local profile; persistence notice retained in state and rendered in Settings, not immediately Profiles/Home",
+    "prior_common_ui_gap_resolved": "Saved-vault read failure previously silently reached Connect; the verified283-test package displays its bounded error.",
+    "final_packaged_get_put_delete_ms": [
+      8,
+      4,
+      5
+    ],
+    "final_packaged_cancel_ms": 5
+  },
+  "unconfigured_default_collection": {
+    "default_alias_before_and_after": "/",
+    "get_put_delete_fail_as_bridge": true,
+    "keyring_data_files_created": false,
+    "no_credential_creation_or_reset": true
+  },
+  "unavailable_bus_fails_as_bridge": true,
+  "unavailable_bus_jvm_seconds": 0.219,
+  "linux_native_built": true,
+  "android_native_binaries_rebuilt": false,
+  "android_native_cfg_behavior_changed": false,
+  "windows_macos_source_behavior_changed": false,
+  "package_78d_preserved": true,
+  "final_package_rebuilt": true,
+  "user_wallet_keyring_or_desktop_accessed": false,
+  "owned_fixture_processes_cleaned": true,
+  "scope": "Verified Linux OS-vault and exact final packaged Main/controller in owned private D-Bus/keyring/Xvfb. Package-manager installation, physical window controls/GPU/audio, Windows/macOS execution and signing remain unqualified.",
+  "final_package": {
+    "path": "artifacts/linux-desktop-2026-10-15/final-287-ebc3fabb2c09/viptv-experiment_0.1.0-1_amd64.deb",
+    "sha256": "ebc3fabb2c094388a3a24510f6ee025d25c92ea7ec28e102b22bc51c2981ef4d",
+    "bytes": 134626580,
+    "application_jar_sha256": "eb88abd8712118f0a2460b1442d6b36a5d82f4b4bc4e1372e805fc41b8528225",
+    "native_sha256": "0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+    "extracted_jvm_native_sqlite_passed": true,
+    "extracted_32_elf_inventory_matches_input": true,
+    "desktop_menu_exec_icon_and_xdg_dependency_verified": true,
+    "real_vault_fixture_uses_packaged_native_without_override": true,
+    "actual_main_restored_profiles_and_visible_locked_warning_verified": true,
+    "fresh_media_playback_rerun": false
+  },
+  "protected_served_wasm_files": 109,
+  "protected_served_wasm_hashes_match_baseline": true,
+  "latest_batch_candidate_status": "Final frozen287-test snapshot verified; fresh packaged vault/Main proof is separate from historical VTT media proof.",
+  "verified_283_package": {
+    "path": "artifacts/linux-desktop-2026-10-15/portable-vault-recovery-2de7c1517d82/viptv-experiment_0.1.0-1_amd64.deb",
+    "sha256": "2de7c1517d82e7c1f4127d7164942a25de1b2a168cacedc456f4d7136ae96cc8",
+    "bytes": 134607196,
+    "application_jar_sha256": "8d93cb99488e4faf5ac96dab22f42fe9ac57d266e0a73ce3f727838dd3faf07e",
+    "native_sha256": "0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+    "extracted_jvm_native_sqlite_passed": true,
+    "extracted_32_elf_inventory_matches_input": true,
+    "desktop_menu_exec_icon_and_xdg_dependency_verified": true,
+    "real_vault_fixture_uses_native_from_package": true,
+    "library_override_used": false,
+    "actual_main_unlocked_local_profiles_capture": "final-actual-main-unlocked-local-restore.png",
+    "actual_main_locked_visible_storage_warning_capture": "final-actual-main-locked-storage-warning.png",
+    "screenshots_visually_inspected": true,
+    "actual_main_captured_after_seconds": [
+      4.071,
+      4.121
+    ]
+  },
+  "final_287_evidence": "../linux-final-287-2026-10-15/summary.json"
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="UnifiedSearchTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:32.172Z" hostname="vynxcos" time="0.608">
+  <properties/>
+  <testcase name="olderServerWithoutGroupedSearchUsesItsExistingSearchRoute[desktop]" classname="org.viptv.app.UnifiedSearchTest" time="0.303"/>
+  <testcase name="detailPaginationKeepsTheSelectedSearchAddonInsteadOfTheDefaultBrowser[desktop]" classname="org.viptv.app.UnifiedSearchTest" time="0.001"/>
+  <testcase name="unifiedSearchKeepsDuplicateTitlesInTheirProviderRowsAndRetainsFailures[desktop]" classname="org.viptv.app.UnifiedSearchTest" time="0.302"/>
+  <testcase name="sourceDiscoveryCarriesTheSelectedMetadataOriginAlongWithTheMediaIdentity[desktop]" classname="org.viptv.app.UnifiedSearchTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

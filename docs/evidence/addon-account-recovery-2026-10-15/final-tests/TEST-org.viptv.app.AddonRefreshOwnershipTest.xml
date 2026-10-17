@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="AddonRefreshOwnershipTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:56:57.568Z" hostname="vynxcos" time="0.06">
+  <properties/>
+  <testcase name="everyFollowupSuppressesLateResultsAndErrorsAfterCoroutineOrOwnerChanges[desktop]" classname="org.viptv.app.AddonRefreshOwnershipTest" time="0.052"/>
+  <testcase name="ordinaryHomeNavigationDuringInventoryKeepsDestinationAndAcceptsOwnedResults[desktop]" classname="org.viptv.app.AddonRefreshOwnershipTest" time="0.005"/>
+  <testcase name="busyUnrelatedOperationRejectsSubmissionAndReleasesItsCallbackWithoutChangingTheJob[desktop]" classname="org.viptv.app.AddonRefreshOwnershipTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

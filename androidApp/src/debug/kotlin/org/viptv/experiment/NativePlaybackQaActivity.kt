@@ -20,6 +20,7 @@ class NativePlaybackQaActivity : ComponentActivity() {
         val uri = requireNotNull(intent.getStringExtra("qa_media_uri"))
         require(android.net.Uri.parse(uri).scheme == "https")
         val input = PlaybackInput("public-playback-qa", uri,
+            positionMillis = intent.getLongExtra("qa_position_ms", 0), live = intent.getBooleanExtra("qa_live", false),
             diagnostics = { Log.i("VIPTV_PLAYBACK_QA", it) })
         setContent {
             var paused by remember { mutableStateOf(false) }

@@ -1,0 +1,438 @@
+{
+  "phase": "complete",
+  "detail": true,
+  "source": true,
+  "first_frame": true,
+  "pause": true,
+  "captions": true,
+  "caption_size": true,
+  "seek": true,
+  "cleanup": true,
+  "page_errors": [],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/meta/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/streams",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/streams/<id>",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/source-ranking",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/<id>/first-frame",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/<id>/progress",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitle-content/<id>",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/<id>/progress",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitle-content/<id>",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback/<id>/first-frame",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/playback-events",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/profiles/<id>/progress",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    }
+  ],
+  "source_origin": true,
+  "timeline_offset": 28.778,
+  "initial_offset": 0,
+  "original_duration": 52.208333,
+  "subtitle_origins": [
+    true,
+    true
+  ],
+  "media_requests": [
+    {
+      "name": "index.m3u8",
+      "status": 503
+    },
+    {
+      "name": "index.m3u8",
+      "status": 200
+    },
+    {
+      "name": "segment-000000000.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000001.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000002.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000003.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000004.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000005.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000006.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000007.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000008.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000009.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000010.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000011.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000012.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000013.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000014.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000015.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000016.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000017.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000018.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000019.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000020.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000021.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000022.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000023.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000024.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000025.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000026.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000027.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000028.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000029.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000030.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000031.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000032.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000033.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000034.ts",
+      "status": 200
+    },
+    {
+      "name": "index.m3u8",
+      "status": 503
+    },
+    {
+      "name": "index.m3u8",
+      "status": 200
+    },
+    {
+      "name": "segment-000000000.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000001.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000002.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000003.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000004.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000005.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000006.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000007.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000008.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000009.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000010.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000011.ts",
+      "status": 200
+    },
+    {
+      "name": "segment-000000012.ts",
+      "status": 200
+    }
+  ],
+  "media": {
+    "width": 854,
+    "height": 480,
+    "duration": 52.208335999999996,
+    "presented": 97
+  },
+  "progress_origins": [
+    true,
+    true,
+    true
+  ],
+  "seek_paused_sample": {
+    "position": 0,
+    "paused": true,
+    "buffered": [
+      [
+        0.021333,
+        23.210666
+      ]
+    ],
+    "seekable": [
+      [
+        0,
+        23.437999
+      ]
+    ]
+  },
+  "rebased_captions": [
+    {
+      "text": "Browser fixture after seek",
+      "start": 0,
+      "end": 11.222000000000001
+    }
+  ],
+  "before_resume": {
+    "position": 0,
+    "paused": true,
+    "wall": 12700
+  },
+  "after_seek": {
+    "position": 1.310429,
+    "duration": 23.437999,
+    "presented": 36,
+    "wall": 14114.899999976158,
+    "original_position": 30.088428999999998
+  },
+  "saved_progress": 0.5796812749003984,
+  "saved_original_position": 30.264193033864547,
+  "fixture": "Owned edge returns HTTP503 once for each viewer manifest, then proxies actual signed gateway manifest; API and playback are real.",
+  "bundle_js_sha256": "9c8d6ba1877a8b550d6a4423d687b68d6d2983284ca4b58d0b000417ad93b46f",
+  "saved_position_difference_seconds": 0.17576403386454942
+}

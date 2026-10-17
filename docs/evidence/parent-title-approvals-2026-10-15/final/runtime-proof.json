@@ -1,0 +1,98 @@
+{
+  "phase": "complete",
+  "pin": true,
+  "target_search": true,
+  "private_add": true,
+  "list": true,
+  "revoke": true,
+  "selected_unchanged": true,
+  "page_errors": 0,
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/account/devices",
+      "status": 403,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/parent/unlock",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles/:managed-target/approvals",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/parent/search",
+      "status": 200,
+      "target": "managed-child"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/:managed-target/approvals",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles/:managed-target/approvals",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/:managed-target/approvals",
+      "status": 200,
+      "target": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles/:managed-target/approvals",
+      "status": 200,
+      "target": null
+    }
+  ],
+  "browser": "Real Chromium via Playwright; actual KMP rendered pointer/keyboard controls",
+  "transport": "Trusted local HTTPS",
+  "scope": {
+    "selected_profile": "restricted child with no integration assignments",
+    "target_profile": "different owned child with private provider assignment only",
+    "pin": "actual UI household PIN unlock",
+    "provider": "synthetic loopback metadata/catalog only",
+    "origin": "host-issued stable connector incarnation and saved full identity assertions"
+  },
+  "limits": [
+    "Disposable synthetic accounts and data only",
+    "No physical TV, production deployment, real provider, or external message",
+    "Normal release and qualification-only test host are separate artifacts"
+  ]
+}

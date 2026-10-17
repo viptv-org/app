@@ -1,0 +1,75 @@
+{
+  "recorded_at_utc": "2026-10-15T08:08:50.583121+00:00",
+  "status": "local experimental build artifacts; not deployed or installed",
+  "base_core_revision": "47b85b5386617f455ade8b294a7a844b54f537c0",
+  "source_overlay": "native/core/docs/source-metadata-overlay.json",
+  "source_overlay_unchanged_through_build": true,
+  "source_overlay_files": {
+    "crates/viptv-engine/Cargo.toml": "e0132b9a189823ab827e2984561162d62a3f804884a6bd0787395c063b70334c",
+    "crates/viptv-engine/src/stremio.rs": "ded9a5d3cafaf420366104bb7c56a4ceef72a3138f07695493fb7e199e6e5fc0",
+    "crates/viptv-engine/src/stremio/streams.rs": "8fa67a21f4dd7adbe2abd70310ba6ddf81cceeeeb4d1db127d8b9f43b8ff12d3",
+    "crates/viptv-engine/src/stremio/source_metadata.rs": "18ba56b857b90945a1840ed71a2697bf88ad84cbe08e274ab086593d05f193ce",
+    "crates/viptv-engine/tests/streams.rs": "def1b553a31f0703312285ef0a1721c331b71e4b797778f9023073f726bd7480",
+    "crates/viptv-engine/tests/source_metadata.rs": "7ac0e0c7ff74bda8a4fa738b2dd571d1ecef9575cb2ec301a3edb9b002932d8c",
+    "tests/source-metadata-vectors.json": "30dba1ff5b87f6cf9ebef697f8a1324f80bf233cb34d13453a85e46d265f9618",
+    "tests/source-metadata-captured.json": "061ee049fc65d056f687f326f6b21576cf79faa0a22febb340ad1e3355c31982",
+    "Cargo.lock": "ff9a707de14da56d01a4d35d5058dd06b5c31360dbb0ed9c6ddf08e723eb104e",
+    "crates/viptv-engine/src/registry.rs": "b564ffe1280c3caf75771e9b688aa177183cc392dbe2e32340a0b55d0f3721e9",
+    "crates/viptv-engine/tests/search_registry.rs": "8a68374ba81e289af9f10da8b3851f0880bb0945f0581af8ec95b4fdb4c02842",
+    "crates/viptv-core/src/local_engine/search.rs": "f656ce435d1ca1198e38461ae2dd297caaa6622a5c239f9698fdab7baf5c20c5",
+    "crates/viptv-core/src/local_engine/addons/tests.rs": "dcc8a461ca386b65a5b3c2ebfac2cfc06530381294f76a8eca3c4e484cc44bd9"
+  },
+  "generated_protocol_changed": false,
+  "commands": [
+    "CARGO_BUILD_JOBS=1 python3 tools/build_engine.py desktop",
+    "CARGO_BUILD_JOBS=1 python3 tools/build_engine.py android"
+  ],
+  "cargo_features": [
+    "vsources-runtime",
+    "live-runtime"
+  ],
+  "cargo_locked": true,
+  "cargo_build_jobs": 1,
+  "release_build_elapsed_seconds": {
+    "linux-x86-64": 75,
+    "armeabi-v7a": 78,
+    "arm64-v8a": 90,
+    "x86_64": 80
+  },
+  "artifacts": {
+    "linux-x86-64": {
+      "path": "composeApp/build/nativeResources/linux-x86-64/libviptv_core.so",
+      "sha256": "64e0cc9be793779ec35f275d2d3e55536348593b055783e8a1955a5aef95277e",
+      "bytes": 34351760
+    },
+    "armeabi-v7a": {
+      "path": "androidApp/build/generated/rustJni/armeabi-v7a/libviptv_core.so",
+      "sha256": "723ae85ebc9e110d205baa736b02ffe463fda0c3e2ba35aee6c41352e6a9477d",
+      "bytes": 24162928
+    },
+    "arm64-v8a": {
+      "path": "androidApp/build/generated/rustJni/arm64-v8a/libviptv_core.so",
+      "sha256": "b53457fa832b3ca3789ba8a59606dca8fa687be95d7685a736a54f2b115603ac",
+      "bytes": 32645504
+    },
+    "x86_64": {
+      "path": "androidApp/build/generated/rustJni/x86_64/libviptv_core.so",
+      "sha256": "ad20e5a8dddb5a6f48facb6c0d89d64ff1374e3d6a0370a3a891ba0bbbe379f8",
+      "bytes": 32732040
+    }
+  },
+  "validation": {
+    "core_source_cases": 942,
+    "captured_sanitized_source_cases": 140,
+    "synthetic_source_cases": 802,
+    "core_source_batch_ms": 333,
+    "backend_source_batch_ms": 285,
+    "search_registry_tests_passed": 3,
+    "native_search_addon_provenance_test_passed": 1,
+    "backend_source_tests_passed": 2
+  },
+  "wasm_rebuilt": false,
+  "device_actions": false,
+  "live_services_changed": false,
+  "language_regressions": "Explicit validated languages, regions and scripts preserved; known ISO3 aliases and exact human names normalized; arbitrary prose not tokenized."
+}

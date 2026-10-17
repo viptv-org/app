@@ -3,10 +3,13 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.serialization.json.*
@@ -14,15 +17,18 @@ import org.viptv.app.connection.SourceIntegrationSchema
 
 @Composable
 internal fun SourceIntegrationForm(schema: SourceIntegrationSchema, busy: Boolean, error: String?, dismiss: () -> Unit,
-    save: (JsonObject) -> Unit) {
+    keyboardInsets: WindowInsets? = null, save: (JsonObject) -> Unit) {
     val values = remember(schema.plugin_id) { mutableStateMapOf<String, String>() }
     var selected by remember(schema.plugin_id) { mutableStateOf(emptySet<String>()) }
     val valid = schema.credential_fields.all { !it.required || !values[it.id].isNullOrBlank() }
-    AlertDialog(onDismissRequest = dismiss, title = { Text(schema.name) }, text = {
+    AlertDialog(onDismissRequest = dismiss,
+        modifier = Modifier.composed { windowInsetsPadding(keyboardInsets ?: WindowInsets.ime) },
+        title = { Text(schema.name) }, text = {
         Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             schema.credential_fields.forEach { field ->
                 OutlinedTextField(values[field.id].orEmpty(), { values[field.id] = it }, label = { Text(field.label) },
                     singleLine = true, enabled = !busy,
+                    keyboardOptions = if (field.secret) KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false) else KeyboardOptions.Default,
                     visualTransformation = if (field.secret) PasswordVisualTransformation() else VisualTransformation.None)
             }
             if (schema.provider_choices.isNotEmpty()) {

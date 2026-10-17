@@ -17,7 +17,7 @@ class RemotePreferencesTest {
             override suspend fun clear() = Unit
         }
         val client = HttpClient(MockEngine { request ->
-            assertEquals("/api/v3/profiles/12/preferences", request.url.encodedPath)
+            assertEquals("/api/profiles/12/preferences", request.url.encodedPath)
             assertEquals(HttpMethod.Put, request.method)
             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             assertEquals(7, body.getValue("revision").jsonPrimitive.int)

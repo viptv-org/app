@@ -26,14 +26,14 @@ class RemotePlaybackTest {
         val calls = mutableListOf<String>()
         val client = HttpClient(MockEngine { request ->
             if (!request.url.encodedPath.startsWith("/api/auth/")) assertEquals("fixture-csrf", request.headers["x-csrf-token"])
-            if (request.url.encodedPath.startsWith("/api/v2/")) calls += "${request.method.value} ${request.url.encodedPath}"
+            if (request.url.encodedPath.startsWith("/api/")) calls += "${request.method.value} ${request.url.encodedPath}"
             val path = request.url.encodedPath
             if (path.endsWith("/heartbeat")) assertEquals(0L, request.body.contentLength ?: 0L)
             if (path.endsWith("/first-frame")) assertEquals("{}", (request.body as TextContent).text)
             val response = when (path) {
                 "/api/auth/login" -> """{"csrf_token":"fixture-csrf"}"""
-                "/api/v3/bootstrap" -> """{"identity":{"profiles":[],"profile_id":null}}"""
-                "/api/v2/playback" -> {
+                "/api/bootstrap" -> """{"identity":{"profiles":[],"profile_id":null}}"""
+                "/api/playback" -> {
                     val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
                     assertTrue(body.getValue("force_gateway").jsonPrimitive.boolean)
                     assertTrue(body.getValue("resume").jsonPrimitive.boolean)
@@ -41,7 +41,7 @@ class RemotePlaybackTest {
                     assertFalse(body.getValue("client").jsonObject.getValue("can_play_direct").jsonPrimitive.boolean)
                     """{"id":"lease","status":"starting"}"""
                 }
-                "/api/v2/playback/lease" -> if (request.method == HttpMethod.Delete) "{}" else
+                "/api/playback/lease" -> if (request.method == HttpMethod.Delete) "{}" else
                     """{"id":"lease","status":"ready","renew_after_seconds":20,"delivery":{"kind":"gateway","url":"https://media.example/scoped/index.m3u8","position":0,"timeline_offset_seconds":3,"duration":60,"required_audio_index":9}}"""
                 else -> "{}"
             }
@@ -57,8 +57,8 @@ class RemotePlaybackTest {
         assertEquals("profile", lease.input.profileId)
         assertNull(lease.input.requiredAudioIndex)
         lease.firstFrame(); lease.renew(); lease.close()
-        assertEquals(listOf("POST /api/v2/playback", "GET /api/v2/playback/lease", "POST /api/v2/playback/lease/first-frame",
-            "POST /api/v2/playback/lease/heartbeat", "DELETE /api/v2/playback/lease"), calls)
+        assertEquals(listOf("POST /api/auth/login", "GET /api/bootstrap", "POST /api/playback", "GET /api/playback/lease", "POST /api/playback/lease/first-frame",
+            "POST /api/playback/lease/heartbeat", "DELETE /api/playback/lease"), calls)
         connection.close()
     }
 
@@ -67,7 +67,7 @@ class RemotePlaybackTest {
         val client = HttpClient(MockEngine { request ->
             calls += request.url.encodedPath
             if (request.url.encodedPath.endsWith("/heartbeat")) assertEquals(0L, request.body.contentLength ?: 0L)
-            respond(if (request.url.encodedPath == "/api/v2/playback")
+            respond(if (request.url.encodedPath == "/api/playback")
                 """{"id":"direct","status":"ready","delivery":{"kind":"direct","url":"https://media.example/movie.mp4","position":0,"required_audio_index":1}}"""
                 else "{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
@@ -85,7 +85,7 @@ class RemotePlaybackTest {
         for (supported in listOf(false, true)) {
             var sent: JsonObject? = null
             val client = HttpClient(MockEngine { request ->
-                val body = if (request.url.encodedPath == "/api/v3/bootstrap")
+                val body = if (request.url.encodedPath == "/api/bootstrap")
                     """{"identity":{"profiles":[],"profile_id":null},"playback_capabilities":{"required_audio_index":$supported}}"""
                 else {
                     sent = Json.parseToJsonElement((request.body as TextContent).text).jsonObject.getValue("client").jsonObject
@@ -116,7 +116,7 @@ class RemotePlaybackTest {
         val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
         val task = launch { connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", facts) }
         started.await(); yield(); task.cancelAndJoin()
-        assertEquals(listOf("/api/v2/playback/pending"), stopped)
+        assertEquals(listOf("/api/playback/pending"), stopped)
         connection.close()
     }
 
@@ -127,10 +127,10 @@ class RemotePlaybackTest {
             val path = request.url.encodedPath
             val body = when (path) {
                 "/api/auth/device/refresh" -> { refreshes++; """{"access_token":"fresh$refreshes","refresh_token":"refresh-next"}""" }
-                "/api/v3/bootstrap" -> """{"identity":{"profiles":[],"profile_id":null}}"""
+                "/api/bootstrap" -> """{"identity":{"profiles":[],"profile_id":null}}"""
                 else -> {
                     subtitleRequests++
-                    assertEquals("/api/v3/subtitle-content/opaque", path)
+                    assertEquals("/api/subtitle-content/opaque", path)
                     assertEquals("Bearer fresh$subtitleRequests", request.headers[HttpHeaders.Authorization])
                     if (subtitleRequests == 1) return@MockEngine respond("{}", HttpStatusCode.Unauthorized)
                     "WEBVTT\n\n00:00.000 --> 00:01.000\nFixture cue\n"
@@ -161,7 +161,7 @@ class RemotePlaybackTest {
         val task = launch { connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", facts) }
         started.await(); task.cancelAndJoin()
         assertEquals(1, cancelled.size)
-        assertTrue(cancelled.single().startsWith("/api/v2/playback-requests/"))
+        assertTrue(cancelled.single().startsWith("/api/playback-requests/"))
         connection.close()
     }
 }

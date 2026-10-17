@@ -1,0 +1,28 @@
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2795) has no WPC
+I/ActivityTaskManager(  627): Add Task{a0ab670 #28 type=standard A=10088:org.viptv.experiment} to hidden list because adding Task{e0d4758 #29 type=standard A=10088:org.viptv.experiment}
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2696): activity_enter_ms=13862
+I/VIPTV_PERFORMANCE_QA( 2696): first_draw_ms=13896
+I/VIPTV_PERFORMANCE_QA( 2696): interactive_shell_ms=13896
+I/VIPTV_PERFORMANCE_QA( 2696): interactive_shell_from_activity_ms=34
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +222ms
+I/VIPTV_PERFORMANCE_QA( 2696): useful_home_ms=15051
+I/VIPTV_PERFORMANCE_QA( 2696): useful_home_from_activity_ms=1189
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s460ms
+I/VIPTV_PERFORMANCE_QA( 2696): PASS mode=warm-activity file=performance-warm-activity.json
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2795) has no WPC
+I/ActivityTaskManager(  627): Add Task{a0ab670 #28 type=standard A=10088:org.viptv.experiment} to hidden list because adding Task{e0d4758 #29 type=standard A=10088:org.viptv.experiment}
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2696): activity_enter_ms=13862
+I/VIPTV_PERFORMANCE_QA( 2696): first_draw_ms=13896
+I/VIPTV_PERFORMANCE_QA( 2696): interactive_shell_ms=13896
+I/VIPTV_PERFORMANCE_QA( 2696): interactive_shell_from_activity_ms=34
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +222ms
+I/VIPTV_PERFORMANCE_QA( 2696): useful_home_ms=15051
+I/VIPTV_PERFORMANCE_QA( 2696): useful_home_from_activity_ms=1189
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s460ms
+I/VIPTV_PERFORMANCE_QA( 2696): PASS mode=warm-activity file=performance-warm-activity.json

@@ -1,0 +1,24 @@
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2845) has no WPC
+I/ActivityTaskManager(  627): Add Task{e0d4758 #29 type=standard A=10088:org.viptv.experiment} to hidden list because adding Task{2dde02 #30 type=standard A=10088:org.viptv.experiment}
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2849): activity_enter_ms=45
+I/VIPTV_PERFORMANCE_QA( 2849): first_draw_ms=138
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +371ms
+I/VIPTV_PERFORMANCE_QA( 2849): interactive_shell_ms=139
+I/VIPTV_PERFORMANCE_QA( 2849): interactive_shell_from_activity_ms=94
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s705ms
+I/VIPTV_PERFORMANCE_QA( 2849): PASS mode=cancel-restored file=performance-cancel-restored.json
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2845) has no WPC
+I/ActivityTaskManager(  627): Add Task{e0d4758 #29 type=standard A=10088:org.viptv.experiment} to hidden list because adding Task{2dde02 #30 type=standard A=10088:org.viptv.experiment}
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2849): activity_enter_ms=45
+I/VIPTV_PERFORMANCE_QA( 2849): first_draw_ms=138
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +371ms
+I/VIPTV_PERFORMANCE_QA( 2849): interactive_shell_ms=139
+I/VIPTV_PERFORMANCE_QA( 2849): interactive_shell_from_activity_ms=94
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s705ms
+I/VIPTV_PERFORMANCE_QA( 2849): PASS mode=cancel-restored file=performance-cancel-restored.json

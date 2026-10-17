@@ -1,0 +1,29 @@
+{
+  "status": "source-ready; final native APK rerun pending",
+  "focused_tests": [
+    {
+      "name": "PhoneAddonSettingsUiTest[desktop]",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "AddonInstallCompletionTest[desktop]",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "NativeAddonCommitTest[desktop]",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0"
+    }
+  ],
+  "total": 12,
+  "actual_native_red_gap": "docs/evidence/addon-account-recovery-2026-10-15/native-0a3156ab59ed/proof.json",
+  "source_sha256": {
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AddonSettings.kt": "9e303cda370169d8b8ecf011317e8f346c360e6070a147c8f987caf13c13b7c6",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/PhoneAddonSettingsUiTest.kt": "d6a738e6f3119d490c3b55a8a5e52958af87a4477c0e627b3f9167a1545f10b4"
+  }
+}

@@ -16,7 +16,7 @@ suspend fun RemoteConnection.selectBrowsingProvider(profile: String, current: Br
         assignments.removeAll { it.connection_id == connection.id }
         assignments += ProfileAssignment(connection.id, (old?.enabled.orEmpty() + browsing).distinct())
     }
-    call("/api/v3/profiles/${profile.encodeURLPathPart()}/integrations", HttpMethod.Put, buildJsonObject {
+    call("/api/profiles/${profile.encodeURLPathPart()}/integrations", HttpMethod.Put, buildJsonObject {
         put("revision", current.profile.scope.revision)
         put("browsing_plugin", plugin)
         put("assignments", Json.encodeToJsonElement(assignments))

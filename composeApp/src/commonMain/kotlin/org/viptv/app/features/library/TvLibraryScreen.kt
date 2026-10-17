@@ -1,5 +1,6 @@
 package org.viptv.app.features.library
 
+import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.lazy.grid.*
@@ -30,7 +31,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
         "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }
         "Last watched" -> filtered.sortedByDescending { lastWatched[it.identity.id] ?: Long.MIN_VALUE }
         else -> filtered
-    }.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
+    }.distinctBy(::cardLookupKey)
     val grid = rememberLazyGridState()
     val empty = libraryEmptyState(snapshot, query, available)
     AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -54,7 +55,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
                     horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
                     contentPadding = PaddingValues(bottom = 96.dp * scale)) {
-                    itemsIndexed(visible, key = { _, card -> card.provider_id + ":" + card.identity.kind + ":" + card.identity.id }) { index, card ->
+                    itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
                         TvCatalogCard(card, scale, true, Modifier.then(if (index == 0) Modifier.focusRequester(first) else Modifier)
                             .focusProperties { if (index < 7) up = selectedFilter }, {}, open, focusedCaptions = true)
                     }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="RemoteSessionConcurrencyTest[desktop]" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:18.648Z" hostname="vynxcos" time="0.047">
+  <properties/>
+  <testcase name="cancelledSignOutStillRetiresTheRevokedControllerSession[desktop]" classname="org.viptv.app.RemoteSessionConcurrencyTest" time="0.003"/>
+  <testcase name="parallelUnauthorizedRequestsConsumeTheRefreshTokenOnce[desktop]" classname="org.viptv.app.RemoteSessionConcurrencyTest" time="0.036"/>
+  <testcase name="enteringLocalModeWaitsForRotationBeforeClearingTheSavedRemoteSession[desktop]" classname="org.viptv.app.RemoteSessionConcurrencyTest" time="0.003"/>
+  <testcase name="retiredRefreshCannotOverwriteAReplacementAccount[desktop]" classname="org.viptv.app.RemoteSessionConcurrencyTest" time="0.003"/>
+  <testcase name="cancellationDuringRotationPersistsReplacementBeforeNextRequest[desktop]" classname="org.viptv.app.RemoteSessionConcurrencyTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

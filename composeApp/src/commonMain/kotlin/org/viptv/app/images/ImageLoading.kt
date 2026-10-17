@@ -16,6 +16,7 @@ internal expect fun imageCacheDirectory(context: PlatformContext): Path?
 internal fun ConfigureImageLoading(diagnostics: ((String) -> Unit)? = null) {
     setSingletonImageLoaderFactory { context ->
         ImageLoader.Builder(context)
+            .components { add(PublicArtworkMapper()) }
             .eventListenerFactory(object : EventListener.Factory {
                 override fun create(request: ImageRequest): EventListener = diagnostics?.let { ImageDiagnostics(it) } ?: EventListener.NONE
             })

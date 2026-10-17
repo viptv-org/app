@@ -1,0 +1,156 @@
+{
+  "phase": "complete",
+  "detail": true,
+  "source": true,
+  "first_frame": false,
+  "pause": false,
+  "captions": false,
+  "caption_size": false,
+  "seek": false,
+  "cleanup": true,
+  "page_errors": [],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/meta/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/streams",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/streams/<id>",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles/<id>/source-ranking",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/playback",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/subtitles/movie/tt0123456789",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/playback/<id>",
+      "status": 200
+    }
+  ],
+  "source_origin": true,
+  "subtitle_origins": [
+    true
+  ],
+  "media_requests": [
+    {
+      "name": "index.m3u8",
+      "status": 200
+    }
+  ],
+  "timeline_offset": 0,
+  "initial_offset": 0,
+  "original_duration": 52.208333,
+  "failure_visible": false,
+  "media_state": {
+    "ready": 0,
+    "network": 2,
+    "error_code": null,
+    "presented": 0
+  },
+  "media_events": [
+    {
+      "event": "waiting",
+      "ready": 0,
+      "time": 0
+    }
+  ],
+  "expected_failure_visible": false,
+  "baseline_bundle_js_sha256": "921835102477c95799b0ef7ed2a3bc080882b7aaea688bc077f09b56d010043b",
+  "fixture": "Real HTTPS API/gateway with owned edge deliberately serving an invalid HLS manifest; no browser route/API interception.",
+  "observation_seconds": 8,
+  "expected_regression": "No visible failure with no frames and no HTMLVideoElement error despite terminal HLS parse error."
+}

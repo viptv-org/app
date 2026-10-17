@@ -1,0 +1,13 @@
+drwxr-xr-x 2 root root 60 Oct 15 20:03 /usr/share/applications
+            exit_failure_operation_impossible "No writable system menu directory found."
+        fi
+    fi
+
+        exit_failure_operation_impossible "No writable system menu directory found."
+    fi
+fi
+
+        exit_failure_operation_impossible "No writable system menu directory found."
+    fi
+fi
+

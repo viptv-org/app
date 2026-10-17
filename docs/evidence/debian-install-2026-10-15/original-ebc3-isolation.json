@@ -1,0 +1,22 @@
+{
+  "privileged": false,
+  "security_options": [
+    "no-new-privileges"
+  ],
+  "mounts": [
+    {
+      "Type": "bind",
+      "Source": "/mnt/ALPH/code/viptv-org/app/artifacts/linux-desktop-2026-10-15/final-287-ebc3fabb2c09/viptv-experiment_0.1.0-1_amd64.deb",
+      "Destination": "/mnt/viptv.deb",
+      "Driver": "",
+      "Mode": "",
+      "Options": [
+        "rbind"
+      ],
+      "RW": false,
+      "Propagation": "rprivate"
+    }
+  ],
+  "network_mode": "pasta",
+  "cgroup_mode": "private"
+}

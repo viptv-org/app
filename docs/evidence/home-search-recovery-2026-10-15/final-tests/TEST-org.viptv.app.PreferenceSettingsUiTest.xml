@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="PreferenceSettingsUiTest[desktop]" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:13.910Z" hostname="vynxcos" time="3.083">
+  <properties/>
+  <testcase name="tvSubtitleFailureUsesItsOwnSectionAndRetryKeepsTheSafeError[desktop]" classname="org.viptv.app.PreferenceSettingsUiTest" time="0.11"/>
+  <testcase name="languageDialogKeepsActionsAboveKeyboardAndScrollsChoicesInCompactViewport[desktop]" classname="org.viptv.app.PreferenceSettingsUiTest" time="0.29"/>
+  <testcase name="phoneSettingsRoutesPlaybackAndSubtitlesToDistinctSections[desktop]" classname="org.viptv.app.PreferenceSettingsUiTest" time="0.333"/>
+  <testcase name="phonePlaybackDraftUsesActualSourceQualityAndPreservesOtherFieldsUntilSave[desktop]" classname="org.viptv.app.PreferenceSettingsUiTest" time="0.614"/>
+  <testcase name="tvPreferenceFailureFocusesRetryDisablesDuplicatesAndRestoresLoadedControls[desktop]" classname="org.viptv.app.PreferenceSettingsUiTest" time="0.274"/>
+  <testcase name="phoneRetryAndInvalidCustomValuesCannotInventOrSubmitPreferences[desktop]" classname="org.viptv.app.PreferenceSettingsUiTest" time="0.586"/>
+  <testcase name="phoneSubtitlePreviewAndSaveRetainAllEightFieldsWithCustomLanguagesAndAlpha[desktop]" classname="org.viptv.app.PreferenceSettingsUiTest" time="0.876"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

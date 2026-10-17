@@ -12,7 +12,7 @@ class RemoteSourcePresentationTest {
     @Test fun serverSourceFactsReachTheSamePresentationAsNativeSources() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             val body = if (request.method == HttpMethod.Post) """{"id":"job"}""" else
-                """{"events":[{"source":"addon:1","streams":[{"id":"grant","name":"Release","quality_height":1080,"presentation":{"provider_name":"Provider","delivery_format":"hls","video_codec":"HEVC","audio_codecs":["EAC3"],"size_bytes":1234}}]}],"done":true}"""
+                """{"events":[{"source":"addon:1","streams":[{"id":"grant","name":"Release","detail":"Movie.1080p.HEVC.mkv\nProvider notes","quality_height":1080,"presentation":{"provider_name":"Provider","delivery_format":"hls","video_codec":"HEVC","audio_codecs":["EAC3"],"size_bytes":1234}}]}],"done":true}"""
             respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val store = object : RemoteSessionStore {
@@ -23,6 +23,7 @@ class RemoteSourcePresentationTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         try {
             val source = remote.sources(Card(MediaIdentity("title", "movie", emptyList()), provider_id = "simkl", title = "Title", badges = emptyList())).single()
+            assertEquals("Movie.1080p.HEVC.mkv\nProvider notes", source.detail)
             assertEquals("Provider", source.presentation?.provider_name)
             assertEquals("hls", source.presentation?.delivery_format)
             assertEquals("HEVC", source.presentation?.video_codec)

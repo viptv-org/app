@@ -1,0 +1,32 @@
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2507) has no WPC
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2511): activity_enter_ms=69
+I/VIPTV_PERFORMANCE_QA( 2511): first_draw_ms=216
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +498ms
+I/VIPTV_PERFORMANCE_QA( 2511): interactive_shell_ms=218
+I/VIPTV_PERFORMANCE_QA( 2511): interactive_shell_from_activity_ms=149
+I/VIPTV_PERFORMANCE_QA( 2511): useful_home_ms=1496
+I/VIPTV_PERFORMANCE_QA( 2511): useful_home_from_activity_ms=1427
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s862ms
+I/VIPTV_PERFORMANCE_QA( 2511): calendar_first_page_ms=163
+I/VIPTV_PERFORMANCE_QA( 2511): calendar_scroll_ms=8374
+I/VIPTV_PERFORMANCE_QA( 2511): warm_route_home_ms=47
+I/VIPTV_PERFORMANCE_QA( 2511): PASS mode=cold-restored file=performance-cold-restored.json
+--------- beginning of system
+W/ActivityTaskManager(  627): callingPackage for (uid=2000, pid=2507) has no WPC
+I/ActivityTaskManager(  627): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 xflg=0x4 cmp=org.viptv.experiment/.PerformanceQaActivity (has extras)} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+--------- beginning of main
+I/VIPTV_PERFORMANCE_QA( 2511): activity_enter_ms=69
+I/VIPTV_PERFORMANCE_QA( 2511): first_draw_ms=216
+I/ActivityTaskManager(  627): Displayed org.viptv.experiment/.PerformanceQaActivity for user 0: +498ms
+I/VIPTV_PERFORMANCE_QA( 2511): interactive_shell_ms=218
+I/VIPTV_PERFORMANCE_QA( 2511): interactive_shell_from_activity_ms=149
+I/VIPTV_PERFORMANCE_QA( 2511): useful_home_ms=1496
+I/VIPTV_PERFORMANCE_QA( 2511): useful_home_from_activity_ms=1427
+I/ActivityTaskManager(  627): Fully drawn org.viptv.experiment/.PerformanceQaActivity: +1s862ms
+I/VIPTV_PERFORMANCE_QA( 2511): calendar_first_page_ms=163
+I/VIPTV_PERFORMANCE_QA( 2511): calendar_scroll_ms=8374
+I/VIPTV_PERFORMANCE_QA( 2511): warm_route_home_ms=47
+I/VIPTV_PERFORMANCE_QA( 2511): PASS mode=cold-restored file=performance-cold-restored.json

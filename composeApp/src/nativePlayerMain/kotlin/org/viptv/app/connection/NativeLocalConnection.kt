@@ -33,11 +33,13 @@ actual fun localConnection(databasePath: String): LocalConnection = NativeLocalC
 @Serializable
 private data class LocalProfileCard(val id: String, val name: String, val locked: Boolean, val avatar_id: String?)
 
-internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.SecretStore = platformSecrets(),
+internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.SecretStore = platformSecrets(),
     internal val client: io.ktor.client.HttpClient = platformClient()) : LocalConnection {
     internal val engine = LocalEngine(path, secrets)
     internal val json = Json { ignoreUnknownKeys = true }
     private val pendingHomes=ConcurrentHashMap<String,String>()
+    internal val playbackOrigins = ConcurrentHashMap<String, NativePlaybackOrigin>()
+
 
     override suspend fun bootstrap(profile: String?): Bootstrap {
         val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<LocalProfileCard>>(engine.profileCards()) }.map { Profile(it.id, it.name, null, it.locked, it.avatar_id) }
@@ -64,7 +66,7 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
         catch (_: Exception) { throw LocalFailure("Could not change the avatar. Check the current PIN.") }
     }
     override suspend fun deleteProfile(id: String, pin: String) = withContext(Dispatchers.IO) {
-        try { engine.deleteProfile(id, pin) }
+        try { engine.deleteProfile(id, pin); pendingHomes.remove(id); playbackOrigins.entries.removeIf { it.value.profile == id }; Unit }
         catch (_: Exception) { throw LocalFailure("Could not delete the profile. Check its PIN; at least one profile must remain.") }
     }
     override suspend fun setProfilePin(id: String, oldPin: String, newPin: String) = withContext(Dispatchers.IO) {
@@ -82,11 +84,18 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
     override suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = fetchLiveChannels(profile, query)
     override suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = fetchLiveGuide(profile, channel)
     override suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = fetchLiveSources(profile, channel)
+    override suspend fun liveFavorites(profile: String): Set<String> = withContext(Dispatchers.IO) { decodeLiveFavorites(engine.liveFavorites(profile)) }
+    override suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = withContext(Dispatchers.IO) { decodeLiveFavorites(engine.setLiveFavorite(profile, channel, saved)) }
+
 
     override suspend fun libraryPage(profile: String, query: org.viptv.engine.wire.LibraryQuery): org.viptv.engine.wire.LibrarySnapshot = withContext(Dispatchers.IO) {
         json.decodeFromString(engine.libraryPage(profile, json.encodeToString(query)))
     }
     override suspend fun library(profile: String): List<Card> = fetchLocalLibrary(profile)
+    override suspend fun libraryMembership(profile: String): org.viptv.engine.wire.LibraryMembershipSnapshot = withContext(Dispatchers.IO) {
+        json.decodeFromString(engine.libraryMembership(profile))
+    }
+
 
     override suspend fun saveFavorite(profile: String, card: Card): Unit = fetchLocalSaveFavorite(profile, card)
 
@@ -103,18 +112,27 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
     override suspend fun removeAddon(id: String) = withContext(Dispatchers.IO) { engine.removeAddon(id) }
 
     override suspend fun installAddon(profile: String, manifestUrl: String): List<IntegrationConnection> {
-        val url = try { withContext(Dispatchers.IO) { engine.checkAddonUrl(manifestUrl.trim()) } }
-        catch (_: Exception) { throw LocalFailure("Enter a valid add-on manifest URL.") }
-        val manifest = addonJson(client, url)
-        try { withContext(Dispatchers.IO) { engine.installAddon(profile, url, manifest) } }
-        catch (_: Exception) { throw LocalFailure("The add-on could not be installed. Check the manifest and secure storage.") }
+        commitAddonInstallation(profile, manifestUrl)
         return addons()
     }
 
-    override suspend fun search(profile: String, term: String): CatalogPage {
-        val snapshot = runPlan(withContext(Dispatchers.IO) { engine.planSearch(profile, term) })
-        return CatalogPage(snapshot.rows.flatMap { it.cards }, null, true)
+    override suspend fun commitAddonInstallation(profile: String, manifestUrl: String) {
+        val url = try { withContext(Dispatchers.IO) { engine.checkAddonUrl(manifestUrl.trim()) } }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { throw LocalFailure("Enter a valid add-on manifest URL.") }
+        val manifest = addonJson(client, url)
+        try { withContext(Dispatchers.IO) { engine.installAddon(profile, url, manifest) } }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { throw LocalFailure("The add-on could not be installed. Check the manifest and secure storage.") }
     }
+
+    override suspend fun search(profile: String, term: String): CatalogPage {
+        val snapshot = searchResults(profile, term)
+        return CatalogPage(snapshot.rows.flatMap { it.cards }, null, snapshot.complete)
+    }
+
+    override suspend fun searchResults(profile: String, term: String): SearchSnapshot =
+        nativeSearchSnapshot(runPlan(withContext(Dispatchers.IO) { engine.planSearch(profile, term) }))
 
     override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, 24)
     override suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, limit)
@@ -165,5 +183,5 @@ internal class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.Se
             json.decodeFromString(engine.projectHome(plan.getValue("id").jsonPrimitive.content, results.toString()))
         }
     }
-    override fun close() { pendingHomes.clear(); client.close(); engine.close() }
+    override fun close() { playbackOrigins.clear(); pendingHomes.clear(); client.close(); engine.close() }
 }

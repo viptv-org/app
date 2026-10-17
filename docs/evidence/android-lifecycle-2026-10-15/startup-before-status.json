@@ -1,0 +1,81 @@
+{
+  "counts": {
+    "GET /qa/status": 7,
+    "POST /api/auth/device/login": 1,
+    "GET /api/v3/bootstrap": 4,
+    "POST /api/auth/profile": 1,
+    "POST /qa/expire": 1,
+    "POST /api/auth/device/refresh": 1,
+    "GET /api/v3/search": 1,
+    "GET /api/v3/meta/movie/lifecycle-fixture": 1,
+    "POST /api/v2/streams": 1,
+    "GET /api/v2/streams/fixture-discovery": 1,
+    "POST /api/v3/profiles/one/source-ranking": 1,
+    "POST /api/v2/playback": 1,
+    "GET /api/v3/subtitles/movie/lifecycle-fixture": 1,
+    "GET /media/index.m3u8": 13,
+    "GET /media/segment-007.ts": 1,
+    "GET /media/segment-008.ts": 1,
+    "POST /api/v3/profiles/one/playback-events": 4,
+    "POST /api/v2/playback/fixture-lease/first-frame": 1,
+    "GET /media/segment-009.ts": 1,
+    "GET /media/segment-010.ts": 1,
+    "GET /media/segment-011.ts": 1,
+    "PUT /api/v3/profiles/one/progress": 1,
+    "GET /media/segment-012.ts": 1,
+    "GET /media/segment-013.ts": 1,
+    "GET /media/segment-014.ts": 1,
+    "GET /media/segment-015.ts": 1,
+    "GET /media/segment-016.ts": 1
+  },
+  "events": [
+    {
+      "event": "start",
+      "sequence": 1,
+      "position_millis": 614000,
+      "duration_millis": 720000
+    },
+    {
+      "event": "pause",
+      "sequence": 2,
+      "position_millis": 618971,
+      "duration_millis": 720000
+    },
+    {
+      "event": "start",
+      "sequence": 3,
+      "position_millis": 619015,
+      "duration_millis": 720000
+    },
+    {
+      "event": "pause",
+      "sequence": 4,
+      "position_millis": 620104,
+      "duration_millis": 720000
+    }
+  ],
+  "progress": [
+    {
+      "position_millis": 618773,
+      "duration_millis": 720000
+    }
+  ],
+  "selected": "one",
+  "playlists": [
+    {
+      "elapsed_ms": 0,
+      "first_sequence": 0,
+      "last_exclusive": 10
+    },
+    {
+      "elapsed_ms": 21,
+      "first_sequence": 0,
+      "last_exclusive": 10
+    },
+    {
+      "elapsed_ms": 1548,
+      "first_sequence": 0,
+      "last_exclusive": 10
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "apk_sha256": "e984c35b80d6df4e8a20a5833225c77712fb68e7b4b142434704d0144357807b",
+  "variant": "debug; frozen final engine artifacts; explicit onResume fix; debug floating Activity probe",
+  "normal_release_with_same_production_fix": "artifacts/android-release-2026-10-15/abi3-755cb5bc1722/",
+  "device": "viptv-lifecycle-isolated/emulator-5586 only;1024MiB;AndroidTV36;x86_64;960x540;softwareGPU",
+  "result": "both pause-only cases and full lifecycle/start-clock regressions passed; owned emulator and fixture stopped"
+}

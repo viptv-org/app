@@ -6,6 +6,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
@@ -14,10 +19,15 @@ import kotlinx.coroutines.flow.Flow
 internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier,
     observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) {
     key(input) {
-        val context = LocalContext.current.applicationContext
+        val context = LocalContext.current
+        val activity = remember(context) { context.activity() }
+        val lifecycle = LocalLifecycleOwner.current.lifecycle
+        val owner = requireNotNull(LocalViewModelStoreOwner.current)
+        val model = remember(owner) { ViewModelProvider(owner)[AndroidPlaybackModel::class.java] }
         val latestObserve by rememberUpdatedState(observe)
-        val scope = rememberCoroutineScope()
-        val session = remember { AndroidPlaybackSession(context, input, scope) { latestObserve(it) } }
+        var starts by remember(lifecycle) { mutableIntStateOf(0) }
+        val session = remember(model, input) { model.acquire(context, input) { latestObserve(it) } }
+        SideEffect { session.observe = { latestObserve(it) } }
         AndroidView(factory = { viewContext -> PlayerView(viewContext).apply {
             useController = false
             isFocusable = false
@@ -27,13 +37,34 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
         } }, modifier = modifier, update = { view ->
             view.player = session.player
             session.view = view
-        }, onRelease = { it.player = null })
-        DisposableEffect(session) { onDispose { session.close() } }
-        LaunchedEffect(session) { session.open(paused) }
-        LaunchedEffect(session, paused) { session.player.playWhenReady = !paused }
+        }, onRelease = { if (session.view === it) session.view = null; it.player = null })
+        DisposableEffect(session, lifecycle) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_STOP) { session.progress(); session.player.pause() }
+                // onStart can run before paused has been recomposed after the
+                // Activity resumes its controller. Apply intent on the next
+                // composition, never feed a stale pause back into that controller.
+                // The epoch also handles stop/start updates coalescing to the
+                // same paused value while the window recomposer was suspended.
+                if (event == Lifecycle.Event.ON_START) starts++
+            }
+            lifecycle.addObserver(observer)
+            onDispose {
+                lifecycle.removeObserver(observer)
+                if (activity?.isChangingConfigurations != true) model.release(session)
+            }
+        }
+        LaunchedEffect(session) { session.open(paused || !lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) }
+        LaunchedEffect(session, paused, starts) { session.player.playWhenReady = !paused && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) }
         LaunchedEffect(session, commands) { commands.collect(session::command) }
         LaunchedEffect(session) { input.providerSubtitles.collect { session.sourcesChanged(it) } }
         LaunchedEffect(session) { while (true) { delay(200); session.progress() } }
         LaunchedEffect(session) { while (true) { delay(2000); session.diagnostics() } }
     }
+}
+
+private tailrec fun android.content.Context.activity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.activity()
+    else -> null
 }

@@ -1,0 +1,81 @@
+{
+  "registration": true,
+  "recovery": true,
+  "parent_pin": true,
+  "policy": true,
+  "errors": [],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/profiles"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/profile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/account/devices"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/parent/pin"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/profiles/7/kids"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v3/parent/unlock"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/profiles"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/recover"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/bootstrap"
+    }
+  ]
+}

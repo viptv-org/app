@@ -1,0 +1,139 @@
+{
+  "core_endurance_passed": true,
+  "host_final_osd_capture_passed": false,
+  "raw_host_result_passed": false,
+  "scope": "Android 36 official Google TV experimental 16 KiB x86_64; actual MainActivity/controller/Media3 playback, synthetic HTTPS H.264/AAC rolling HLS; no physical hardware or real provider claim",
+  "apk": {
+    "apk": "app/artifacts/android-endurance-2026-10-15/347e9bfc1871/viptv-endurance-debug.apk",
+    "sha256": "347e9bfc1871c4da1ecfe43d56f1f9a66c3999ada6e52cb1823f7069baefd207",
+    "bytes": 118897170,
+    "build_seconds": 52,
+    "task": ":androidApp:assembleDebug --max-workers=1 -x :androidApp:buildAndroidEngine",
+    "scope": "Debug-only TV endurance QA cap/telemetry; production source frozen during cut"
+  },
+  "media": {
+    "duration_seconds": 2700.0,
+    "segments": 1350,
+    "last_segment": "segment-1349.ts",
+    "last_segment_probe": {
+      "programs": [
+        {
+          "streams": [
+            {
+              "codec_name": "h264",
+              "codec_type": "video"
+            },
+            {
+              "codec_name": "aac",
+              "codec_type": "audio"
+            }
+          ]
+        }
+      ],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio"
+        }
+      ],
+      "format": {
+        "start_time": "2699.421333",
+        "duration": "2.000000"
+      }
+    },
+    "playlist_sha256": "a0da265e27feb88d3fec914f170c4070a6107f9c9be981fdff867b1b2726dc0d",
+    "generated_synthetic": true,
+    "normal_playback_speed": true,
+    "ffmpeg_threads": 1,
+    "bytes": 65518158,
+    "directory": "/home/vynxc/.cache/viptv-qa/runtime-40min-2026-10-15/media"
+  },
+  "guest": {
+    "sdk": 36,
+    "page_size": 16384,
+    "uimode": "Current UI Mode Service state:\n  mDockState=0 mLastBroadcastState=0\n mStartDreamImmediatelyOnDock=true  mNightMode=2 (yes)  mOverrideOn/Off=false/false  mAttentionModeThemeOverlay=1000 mNightModeLocked=true\n  mCarModeEnabled=false (carModeApps=\n mWaitForDeviceInactive=false mComputedNightMode=true customStart=22:00 customEnd06:00 mCarModeEnableFlags=0 mEnableCarDockLaunch=false\n  mCurUiMode=0x24 mUiModeLocked=true mSetUiMode=0x24\n  mHoldingConfiguration=false mSystemReady=true\n  mTwilightService.getLastTwilightState()=null\n",
+    "linker_compat": "false",
+    "package_compat_disabled": "true",
+    "fingerprint": "google/sdk_google_atv64_amati_x86_64_16k/emu64xa16k:16/BT2A.260319.001/15058170:user/dev-keys"
+  },
+  "host_sustain_wall_ms": 2464748,
+  "native_sustain_wall_ms": 2464637,
+  "normal_speed": 1.0,
+  "clock_samples": 471,
+  "native_clock_sample_counter": 471,
+  "merged_samples_strictly_monotonic": true,
+  "seeks": 79,
+  "all_seek_renderer_positions_exact": true,
+  "all_seek_tracking_start_positions_exact": true,
+  "player_replacements": 0,
+  "window_origin_advance_ms": 2438000,
+  "max_sampled_controller_renderer_difference_ms": 207,
+  "final_actual_renderer_title_ms": 3049283,
+  "final_emitted_progress_ms": 3049283,
+  "final_difference_ms": 0,
+  "rendered_frame_counter_max": 36391,
+  "dropped_frame_counter_max": 3,
+  "home_cycles": 9,
+  "periodic_home_cycles": 7,
+  "lease_opens": 1,
+  "lease_closes": 1,
+  "progress_writes": 259,
+  "authority_counts": {
+    "POST /api/auth/device/login": 1,
+    "POST /api/auth/device/refresh": 1,
+    "GET /api/v3/bootstrap": 4,
+    "POST /api/auth/profile": 1
+  },
+  "same_app_pid": 2403,
+  "observer_recovery": {
+    "original_driver_pid": 3041940,
+    "new_driver_pid": 3062454,
+    "app_pid": 2403,
+    "original_started_utc": "2026-10-15T19:07:23.457203+00:00",
+    "resumed_utc": "2026-10-15T19:40:41.966875+00:00",
+    "merged_samples": 375,
+    "recovered_samples": 39,
+    "same_app_player_lease_continued": true,
+    "manual_pending_home_handoff": "Handled same existing task before reattach; no app/player restart"
+  },
+  "host_clock_method": "Original UTC start retained; monotonic observer reanchored to unchanged host wall epoch, Android native elapsed clock continues independently",
+  "system_failure": "Unrelated com.google.android.apps.mediashell PID 3055 libcast_service.so rejected 16 KiB alignment. The unscoped first observer stopped; actual app/player stayed alive and native test continued. All 39 buffered gap samples were recovered and all 471/471 native samples preserved.",
+  "final_capture_gap": "Native probe paused and logged expected 50:49, but programmatic pause did not reveal auto-hidden TV controls. Captured source frame 40:49.333 without OSD; final accessibility assertion false. Probe then closed original player and passed clock/tracking. No reopened UI is relabeled as original endurance OSD.",
+  "application_native_pass_line": "I/VIPTV_LIFECYCLE_QA( 2403): PASS profile_focus=true details_retained=true player_retained=true user_pause_retained=true background_paused=true foreground_resumed=true pause_only_playing=true pause_only_user_paused=true auth_refreshes=1 bootstraps=4 lease_opens=1 title_clock=true",
+  "limits": [
+    "Synthetic low-resolution video and silent virtual audio",
+    "Actual 41-minute normal-speed endurance applies to frozen debug 347e snapshot and unchanged player code",
+    "No physical ARM/TV, real provider, audible output/passthrough, HDR/DRM or hardware-performance claim",
+    "Final original-player OSD/accessibility remains unqualified; raw host capture failure retained"
+  ],
+  "cleanup": {
+    "guest_pid": 3041048,
+    "fixture_pid": 3041530,
+    "guest_process_gone": true,
+    "fixture_process_gone": true,
+    "original_driver_process_gone": true,
+    "resumed_driver_process_gone": true,
+    "reverse_removed": true,
+    "other_devices_untouched": true,
+    "global_adb_actions": false
+  },
+  "max_independently_recomputed_component_difference_ms": 207,
+  "host_observer_sessions": {
+    "original": {
+      "session_id": 48747,
+      "terminal_exit": 143
+    },
+    "resumed": {
+      "session_id": 21053,
+      "terminal_exit": 1
+    },
+    "note": "Terminal host result is false because final OSD accessibility failed; native/core result is separately passed. Original unscoped observer failure is preserved.",
+    "raw_host_result_passed": false,
+    "raw_results_preserved": true
+  }
+}

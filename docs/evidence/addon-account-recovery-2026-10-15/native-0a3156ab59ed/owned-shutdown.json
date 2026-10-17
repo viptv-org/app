@@ -1,0 +1,15 @@
+{
+  "guarded_serial": "emulator-5590",
+  "guarded_avd": "viptv-phone-prefs-jvx0yqu1",
+  "guarded_stop_script": "/tmp/viptv-phone-preferences-jvx0yqu1/stop_owned.py",
+  "stop_completed_before_initial_receipt_write_failed_missing_parent_directory": true,
+  "owned_processes_gone": true,
+  "owner_record": {
+    "owner": 3113098,
+    "owner_script": "/tmp/viptv-phone-preferences-jvx0yqu1/start.py",
+    "emulator_pid": 3113099,
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "stopped": true
+  }
+}

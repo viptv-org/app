@@ -1,0 +1,82 @@
+{
+  "status": "Final frozen287-test application package and real platform vault/Main verified",
+  "package": {
+    "path": "artifacts/linux-desktop-2026-10-15/final-287-ebc3fabb2c09/viptv-experiment_0.1.0-1_amd64.deb",
+    "sha256": "ebc3fabb2c094388a3a24510f6ee025d25c92ea7ec28e102b22bc51c2981ef4d",
+    "bytes": 134626580,
+    "application_jar_sha256": "eb88abd8712118f0a2460b1442d6b36a5d82f4b4bc4e1372e805fc41b8528225",
+    "native_sha256": "0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+    "extracted_jvm_native_sqlite_passed": true,
+    "extracted_32_elf_inventory_matches_input": true,
+    "desktop_menu_exec_icon_and_xdg_dependency_verified": true,
+    "real_vault_fixture_uses_packaged_native_without_override": true,
+    "actual_main_restored_profiles_and_visible_locked_warning_verified": true,
+    "fresh_media_playback_rerun": false
+  },
+  "source_gate": {
+    "desktop_tests": 287,
+    "wasm_android_current_linux_image_passed": true,
+    "seconds": 167,
+    "log": "full-287-gate.log"
+  },
+  "native_vault_focused_rust_tests": 5,
+  "uniffi_checksum_values_unchanged": 121,
+  "actual_packaged_store_checks": [
+    "Local marker save/read and second-JVM persistence",
+    "legacy remote JSON read/save/rotation/Local replacement/idempotent clear",
+    "No-target old credentials; exact-over-legacy matching; ambiguous get/write/delete rejection"
+  ],
+  "locked_vault": {
+    "get_put_delete_ms": [
+      5,
+      3,
+      3
+    ],
+    "prompter_activated": false,
+    "startup_error_retained": true,
+    "cancel_ms": 3,
+    "canceled_restore_job_completed": true,
+    "profiles_immediately_after_cancel": 0,
+    "next_explicit_local_screen": "Profiles",
+    "next_local_persistence_notice_in_state": true,
+    "persistence_notice_rendered_in": "Settings; not immediately Profiles/Home"
+  },
+  "actual_main_screenshots": {
+    "unlocked_local_restore": "actual-main-unlocked-local-restore.png",
+    "locked_storage_warning": "actual-main-locked-storage-warning.png",
+    "visually_inspected": true
+  },
+  "unchanged_0212_native_no_default_collection_proof": "../desktop-vault-2026-10-15/no-default.json",
+  "media_evidence": {
+    "fresh_current_package_media_playback": false,
+    "historical_actual_vtt_candidate_sha256": "97e065fe977e6a9238d02aff129578f8e5a3b7885eb2d608406f02b53747a2e2",
+    "unchanged_player_qa_classes": 210,
+    "unchanged_dependency_files": 106,
+    "unchanged_runtime_files": 96,
+    "changed_core_native_explicitly_excluded": true,
+    "receipt": "media-component-continuity.json"
+  },
+  "home_focus": {
+    "focused_render_key_tests": 9,
+    "full_suite_background_snapshot_errors": false,
+    "capture": "tv-home-no-hero-navigation.png",
+    "source_hashes": {
+      "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeScreen.kt": "41290248a183f28c5f1b3ce3f231c14bd30dc286a03b6b5100e5c274c65db203",
+      "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeShelf.kt": "d820f248ab2a21397591239075bf0d568fb3e3ec815671bf7ba7f60de8f38cbd",
+      "composeApp/src/desktopTest/kotlin/org/viptv/app/HomeRecoveryUiTest.kt": "fc478ede1cd047d6225dc398d683a54cb7aa0a42bb9b87f95207fda0847aec2a"
+    }
+  },
+  "protected_served_wasm_files": 109,
+  "protected_served_wasm_hashes_match_baseline": true,
+  "previous_packages_preserved": true,
+  "user_wallet_desktop_audio_or_manual_services_changed": false,
+  "owned_probe_processes_cleaned": true,
+  "package_manager_installation_performed": false,
+  "android_native_rebuilt_for_linux_overlay": false,
+  "unqualified": [
+    "Real Debian package-manager installation",
+    "Physical display/window controls/GPU/audio quality",
+    "Windows/macOS native execution",
+    "Distribution signing"
+  ]
+}

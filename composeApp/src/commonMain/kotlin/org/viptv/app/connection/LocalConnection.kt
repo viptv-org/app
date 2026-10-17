@@ -20,11 +20,16 @@ interface LocalConnection : AutoCloseable {
     suspend fun refreshHome(profile: String): HomeSnapshot
     suspend fun addons(): List<IntegrationConnection>
     suspend fun installAddon(profile: String, manifestUrl: String): List<IntegrationConnection>
+    /** Completes when installation commits, independently of any subsequent inventory read. */
+    suspend fun commitAddonInstallation(profile: String, manifestUrl: String) { installAddon(profile, manifestUrl) }
     suspend fun search(profile: String, term: String): CatalogPage
+    suspend fun searchResults(profile: String, term: String): SearchSnapshot? = null
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
     suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = detail(profile, card, offset)
     suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate>
     suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = LiveCatalogPage(reason = "Live TV is unavailable on this device.")
+    suspend fun liveFavorites(profile: String): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
+    suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
     suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = LiveGuideSnapshot(channel, reason = "The program guide is unavailable.")
     suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = throw LocalFailure("This live channel is unavailable.")
     suspend fun rankSources(profile: String, sources: List<SourceCandidate>): List<SourceCandidate> = sources
@@ -40,6 +45,7 @@ interface LocalConnection : AutoCloseable {
     suspend fun browse(profile: String, query: BrowseQuery): CatalogPage = throw LocalFailure("Browse is unavailable for this profile.")
     suspend fun libraryPage(profile: String, query: org.viptv.engine.wire.LibraryQuery): org.viptv.engine.wire.LibrarySnapshot = throw LocalFailure("My List is unavailable on this device.")
     suspend fun library(profile: String): List<Card> = throw LocalFailure("My List is unavailable on this device.")
+    suspend fun libraryMembership(profile: String): org.viptv.engine.wire.LibraryMembershipSnapshot? = null
     suspend fun saveFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
     suspend fun removeFavorite(profile: String, card: Card): Unit = throw LocalFailure("My List is unavailable on this device.")
     suspend fun browsingConfiguration(profile: String): BrowsingConfiguration? = null

@@ -6,6 +6,10 @@ internal fun SourceCandidate.sourceFilterId(): String = provider_id + ":" + pres
 internal fun SourceCandidate.providerLabel(): String = presentation?.provider_name?.takeIf { it.isNotBlank() } ?: provider_id
 internal fun SourceCandidate.qualityLabel(): String? = quality_height?.let { if (it == 2160L) "4K" else "${it}p" } ?: presentation?.quality
 internal fun SourceCandidate.formatLabel(): String? = presentation?.let { it.container ?: it.delivery_format?.takeIf { format -> format.equals("hls", true) }?.uppercase() }
+/** A provider's release title/description remains readable even after technical parsing succeeds. */
+internal fun SourceCandidate.releaseDetail(): String? = detail?.takeIf {
+    it.isNotBlank() && it.trim() != label.trim() && it.trim() != technicalDetail()?.trim()
+}
 internal fun SourceCandidate.technicalDetail(): String? {
     val fallback = detail?.takeUnless { it.trim() == qualityLabel() }
     val value = presentation ?: return fallback

@@ -1,0 +1,10 @@
+{
+  "sdk": 36,
+  "page_size": 16384,
+  "ui_mode": "television, night enabled, 0x24",
+  "ui_mode_type_mask": 4,
+  "raw_uimode": "Current UI Mode Service state:\n  mDockState=0 mLastBroadcastState=0\n mStartDreamImmediatelyOnDock=true  mNightMode=2 (yes)  mOverrideOn/Off=false/false  mAttentionModeThemeOverlay=1000 mNightModeLocked=true\n  mCarModeEnabled=false (carModeApps=\n mWaitForDeviceInactive=false mComputedNightMode=true customStart=22:00 customEnd06:00 mCarModeEnableFlags=0 mEnableCarDockLaunch=false\n  mCurUiMode=0x24 mUiModeLocked=true mSetUiMode=0x24\n  mHoldingConfiguration=false mSystemReady=true\n  mTwilightService.getLastTwilightState()=null\n",
+  "scope": "Explicit environment verification on preserved unchanged owned AVD after startup smoke; no app, install, fixture or media rerun",
+  "verification_guest_stopped": true,
+  "helper_correction": "Initial helper expected night-disabled 0x14; actual TV mode is night-enabled 0x24. Correct verification uses UI_MODE_TYPE_MASK 0x0f and requires type 4. No app failure occurred."
+}

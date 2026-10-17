@@ -5,5 +5,19 @@
   <activity android:name="org.viptv.experiment.NativeSourceQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
   <activity android:name="org.viptv.experiment.Media3PlaybackQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
   <activity android:name="org.viptv.experiment.NativePlaybackQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+  <activity android:name="org.viptv.experiment.SidecarPlaybackQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+  <activity android:name="org.viptv.experiment.PauseOnlyQaActivity" android:exported="false" android:theme="@android:style/Theme.Material.Dialog" />
+  <activity android:name="org.viptv.experiment.Api26LifecycleQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+  <activity android:name="org.viptv.experiment.LifecycleQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+  <activity android:name="org.viptv.experiment.PerformanceQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+  <activity android:name="org.viptv.experiment.BrowserLaunchQaActivity" android:exported="true" />
+  <activity android:name="org.viptv.experiment.BrowserLaunchReceiverQaActivity" android:exported="true">
+   <intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="https" android:host="viptv-browser-fixture.invalid" android:pathPrefix="/proof" />
+   </intent-filter>
+  </activity>
  </application>
 </manifest>

@@ -54,8 +54,10 @@ internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: Stri
         if (completed == null && found.isEmpty()) throw LocalFailure("Source providers took too long. Try again.")
         return found.values.toList()
     } finally {
-        jobId?.let { id -> withContext(NonCancellable + Dispatchers.IO) {
-            withTimeoutOrNull(3_000) { try { engine.cancelIntegrationSources(profile, id) } catch (_: Exception) { } }
+        jobId?.let { id -> withContext(NonCancellable) {
+            withContext(Dispatchers.IO) {
+                withTimeoutOrNull(3_000) { try { engine.cancelIntegrationSources(profile, id) } catch (_: Exception) { } }
+            }
         } }
     }
 }

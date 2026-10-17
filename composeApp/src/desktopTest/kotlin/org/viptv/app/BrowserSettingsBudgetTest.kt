@@ -19,7 +19,7 @@ class BrowserSettingsBudgetTest {
         }
         val remote = RemoteConnection("https://watch.example",store,HttpClient(MockEngine { request ->
             requests += request.url.encodedPath
-            assertEquals("/api/v3/account/devices",request.url.encodedPath)
+            assertEquals("/api/account/devices",request.url.encodedPath)
             respond(accountFixture,headers = headersOf(HttpHeaders.ContentType,"application/json"))
         }),browserMode = true)
         try {
@@ -29,7 +29,7 @@ class BrowserSettingsBudgetTest {
             controller.navigate(Screen.Settings); controller.job?.join()
             assertTrue(requests.isEmpty())
             controller.refreshAccountDevices(); controller.job?.join()
-            assertEquals(listOf("/api/v3/account/devices"),requests)
+            assertEquals(listOf("/api/account/devices"),requests)
         } finally { scope.cancel(); remote.close() }
     }
 }

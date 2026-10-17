@@ -1,0 +1,99 @@
+{
+  "url": "http://127.0.0.1:45017/manifest.json",
+  "rapid_taps": 3,
+  "manifest_attempts": 1,
+  "labels": [
+    {
+      "text": "",
+      "desc": "Close sheet",
+      "click": "true",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[0,0][720,754]"
+    },
+    {
+      "text": "",
+      "desc": "Drag handle",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[332,793][388,800]"
+    },
+    {
+      "text": "Add an add-on",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,860][608,902]"
+    },
+    {
+      "text": "",
+      "desc": "Close add-on form",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[629,860][671,902]"
+    },
+    {
+      "text": "Add-on URL",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,955][175,997]"
+    },
+    {
+      "text": "http://127.0.0.1:45017/manifest.json",
+      "desc": "",
+      "click": "true",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1018][692,1130]"
+    },
+    {
+      "text": "Add-on URL",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[56,1018][186,1046]"
+    },
+    {
+      "text": "Install",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[325,1178][396,1213]"
+    },
+    {
+      "text": "Only install add-ons you trust. You can remove one at any time.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1260][692,1344]"
+    },
+    {
+      "text": "This add-on could not be loaded. Check its address and try again.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1376][692,1460]"
+    }
+  ],
+  "server": {
+    "manifest_attempts": 1,
+    "events": [
+      {
+        "method": "GET",
+        "path": "/manifest.json",
+        "status": 503,
+        "manifest_attempts": 1,
+        "time": 1792098177.6146379
+      }
+    ]
+  }
+}

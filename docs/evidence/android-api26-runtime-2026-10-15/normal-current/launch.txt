@@ -1,0 +1,7 @@
+Starting: Intent { cmp=org.viptv.experiment/.MainActivity }
+Status: ok
+Activity: org.viptv.experiment/.MainActivity
+ThisTime: 445
+TotalTime: 445
+WaitTime: 457
+Complete

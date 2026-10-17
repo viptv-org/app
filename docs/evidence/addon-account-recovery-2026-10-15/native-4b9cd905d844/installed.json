@@ -1,0 +1,173 @@
+{
+  "connections": [
+    {
+      "id": "addon:a07f8415-85dc-42b0-9418-bf4e0e02d5e2",
+      "account": "local",
+      "value": "{\"id\":\"addon:a07f8415-85dc-42b0-9418-bf4e0e02d5e2\",\"plugin_id\":\"stremio\",\"account_id\":\"local\",\"private_profile_id\":null,\"name\":\"Synthetic phone add-on\",\"enabled\":true,\"revision\":0,\"capabilities\":[\"Sources\",\"Discovery\"]}"
+    }
+  ],
+  "labels": [
+    {
+      "text": "",
+      "desc": "Back to settings",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[49,185][91,227]"
+    },
+    {
+      "text": "Add-ons",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[297,185][424,227]"
+    },
+    {
+      "text": "Add-ons find the movies, series and channels you watch. Installed add-ons are shared by profiles on this device; switches apply to the current profile.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,280][692,391]"
+    },
+    {
+      "text": "Synthetic phone add-on",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[154,444][479,486]"
+    },
+    {
+      "text": "Sources \u00b7 Discovery",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[154,491][375,533]"
+    },
+    {
+      "text": "",
+      "desc": "Enable Synthetic phone add-on for this profile",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[573,461][664,517]"
+    },
+    {
+      "text": "Remove",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[550,558][643,593]"
+    },
+    {
+      "text": "Add an add-on",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[281,696][489,732]"
+    },
+    {
+      "text": "Advanced configuration",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,824][320,866]"
+    },
+    {
+      "text": "Metadata provider",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,898][356,947]"
+    },
+    {
+      "text": "This profile uses one provider for Home and browsing. Search uses all enabled search integrations. Stream and subtitle add-ons can work together.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,968][692,1136]"
+    },
+    {
+      "text": "Stremio",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1157][134,1199]"
+    },
+    {
+      "text": "Source integrations",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1241][376,1290]"
+    },
+    {
+      "text": "Refresh",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[581,1266][671,1301]"
+    },
+    {
+      "text": "Configuration applies to this profile. Saved credentials are never displayed.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1346][692,1430]"
+    },
+    {
+      "text": "VIPTV Sources",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1451][229,1493]"
+    },
+    {
+      "text": "Needs configuration",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[28,1507][311,1516]"
+    }
+  ],
+  "server": {
+    "manifest_attempts": 2,
+    "events": [
+      {
+        "method": "GET",
+        "path": "/manifest.json",
+        "status": 503,
+        "manifest_attempts": 1,
+        "time": 1792098177.6146379
+      },
+      {
+        "method": "GET",
+        "path": "/manifest.json",
+        "status": 200,
+        "manifest_attempts": 2,
+        "time": 1792098183.866478
+      },
+      {
+        "method": "GET",
+        "path": "/catalog/movie/synthetic-phone.json",
+        "status": 200,
+        "manifest_attempts": 2,
+        "time": 1792098185.8929462
+      }
+    ]
+  }
+}

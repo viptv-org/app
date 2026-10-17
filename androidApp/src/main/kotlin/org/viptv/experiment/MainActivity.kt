@@ -12,11 +12,15 @@ import org.viptv.app.state.Screen
 import org.viptv.app.App
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.connection.AndroidSecrets
+import org.viptv.app.connection.AndroidAccountAuthorization
+import androidx.lifecycle.ViewModelProvider
 
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
+    private var applicationModel: ApplicationModel? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidSecrets.attach(applicationContext)
+        AndroidAccountAuthorization.attach(applicationContext)
         val tv = getSystemService(UiModeManager::class.java).currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
         if (intent.getBooleanExtra("ui_preview", false)) {
             val screen = runCatching { Screen.valueOf(intent.getStringExtra("ui_screen") ?: "Home") }.getOrDefault(Screen.Home)
@@ -30,9 +34,11 @@ class MainActivity : ComponentActivity() {
             }
             return
         }
+        val model = ViewModelProvider(this)[ApplicationModel::class.java]
+        applicationModel = model
+        model.start(filesDir.resolve("local.sqlite").absolutePath)
         setContent {
-            val scope = rememberCoroutineScope()
-            val controller = remember { ApplicationController(scope) }
+            val controller = model.controller
             val state by controller.state.collectAsState()
             var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
             BackHandler(enabled = entryBack != null || state.screen !in listOf(Screen.Connect, Screen.Profiles)) {
@@ -46,7 +52,28 @@ class MainActivity : ComponentActivity() {
                 }
             }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
-            App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller, entryBackChanged = { entryBack = it })
+            App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
+                manageControllerLifecycle = false, entryBackChanged = { entryBack = it })
         }
+    }
+    override fun onPause() {
+        // Lifecycle ON_STOP observers may pause the renderer before onStop is
+        // called. Capture whether playback should resume before that feedback.
+        applicationModel?.controller?.suspendPlayback()
+        super.onPause()
+    }
+    override fun onStop() {
+        applicationModel?.controller?.suspendPlayback()
+        super.onStop()
+    }
+    override fun onResume() {
+        super.onResume()
+        // A translucent Activity can pause us without stopping us. onStart is
+        // not called on that return; only a lifecycle-owned pause may resume.
+        applicationModel?.controller?.resumePlayback()
+    }
+    override fun onStart() {
+        super.onStart()
+        applicationModel?.controller?.resumePlayback()
     }
 }

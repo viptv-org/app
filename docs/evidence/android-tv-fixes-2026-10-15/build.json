@@ -1,0 +1,50 @@
+{
+  "recorded_at_utc": "2026-10-15T08:12:33.720759+00:00",
+  "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-tv-2026-10-15/viptv-android-tv-qa.apk",
+  "sha256": "54acba448b38d60ecfdd73163efbe576ba60f7e519cfd01772a1fcf90ec8e050",
+  "bytes": 74899247,
+  "status": "local candidate; not installed",
+  "native_libraries": [
+    {
+      "abi": "armeabi-v7a",
+      "unstripped_sha256": "723ae85ebc9e110d205baa736b02ffe463fda0c3e2ba35aee6c41352e6a9477d",
+      "apk_sha256": "3c37b3498ec4dd3d4fe113f6d3fc05eb881e6d291940f0d781aa9c1a2a8d819f",
+      "executable_and_data_sections_match": true
+    },
+    {
+      "abi": "arm64-v8a",
+      "unstripped_sha256": "b53457fa832b3ca3789ba8a59606dca8fa687be95d7685a736a54f2b115603ac",
+      "apk_sha256": "a000cec7aeeec14827a2fde4940823e3e52bca8c61cac4bfebdbcf0206534021",
+      "executable_and_data_sections_match": true
+    },
+    {
+      "abi": "x86_64",
+      "unstripped_sha256": "ad20e5a8dddb5a6f48facb6c0d89d64ff1374e3d6a0370a3a891ba0bbbe379f8",
+      "apk_sha256": "cc706134af60c87de8c7e21e57dca47e7e9d2667b780ae1d8d81c2ca368bed28",
+      "executable_and_data_sections_match": true
+    }
+  ],
+  "full_desktop_tests": 122,
+  "full_desktop_failures": 0,
+  "android_qa_assembly": "passed",
+  "wasm_compilation": "passed",
+  "api_health": {
+    "http": 200,
+    "tls_verify": 0
+  },
+  "gateway_health": {
+    "http": 200,
+    "tls_verify": 0
+  },
+  "final_targeted_desktop_tests": 12,
+  "final_targeted_desktop_failures": 0,
+  "apk_signature_verification": "passed",
+  "backend_relevant_tests": 104,
+  "backend_failures": 0,
+  "source_corpus_cases": 942,
+  "source_corpus_captured_cases": 140,
+  "source_core_batch_ms": 333,
+  "source_backend_batch_ms": 284,
+  "installed": false,
+  "backend_deployed": false
+}

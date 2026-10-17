@@ -16,7 +16,8 @@ data class LiveCatalogChannel(val id: String, val connection_id: String, val car
 data class LiveCatalogGroup(val id: String, val label: String)
 @Serializable
 data class LiveCatalogPage(val channels: List<LiveCatalogChannel> = emptyList(), val groups: List<LiveCatalogGroup> = emptyList(),
-    val next_cursor: String? = null, val complete: Boolean = true, val availability: String = "Unsupported", val reason: String? = null)
+    val next_cursor: String? = null, val complete: Boolean = true, val availability: String = "Unsupported", val reason: String? = null,
+    val connections: List<org.viptv.engine.wire.IntegrationConnection> = emptyList())
 @Serializable
 data class LiveGuideProgram(val id: String, val title: String, val start_millis: Long, val end_millis: Long, val description: String? = null)
 @Serializable
@@ -32,14 +33,14 @@ suspend fun RemoteConnection.liveChannels(profile: String, query: LiveQuery): Li
         query.group_id?.let { add("group_id=${it.encodeURLParameter()}") }
         query.search?.let { add("search=${it.encodeURLParameter()}") }
     }
-    return liveCodec.decodeFromJsonElement(call("/api/v3/profiles/${profile.encodeURLPathPart()}/live/channels?${parameters.joinToString("&")}"))
+    return liveCodec.decodeFromJsonElement(call("/api/profiles/${profile.encodeURLPathPart()}/live/channels?${parameters.joinToString("&")}"))
 }
 
 suspend fun RemoteConnection.liveGuide(profile: String, channel: String): LiveGuideSnapshot =
-    liveCodec.decodeFromJsonElement(call("/api/v3/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/guide"))
+    liveCodec.decodeFromJsonElement(call("/api/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/guide"))
 
 suspend fun RemoteConnection.liveSources(profile: String, channel: String): List<SourceCandidate> {
-    val page = call("/api/v3/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/sources").jsonObject
+    val page = call("/api/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/sources").jsonObject
     return page.getValue("streams").jsonArray.map { element ->
         val row = element.jsonObject
         SourceCandidate(row.getValue("id").jsonPrimitive.content, row["provider_id"]?.jsonPrimitive?.contentOrNull ?: "server",

@@ -1,0 +1,11 @@
+{
+  "qualification_passed": false,
+  "counts_as_endurance": false,
+  "reason": "Worker and detached children were terminated during goal continuation before >=40-minute interval or final capture.",
+  "processes_confirmed_absent_utc": "2026-10-15T20:15:59Z",
+  "observer_pid": 3083019,
+  "fixture_pid": 3083018,
+  "emulator_pid": 3081239,
+  "last_recorded_host_sustain_wall_ms": 179480,
+  "logs_preserved": true
+}

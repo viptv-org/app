@@ -1,0 +1,50 @@
+[
+  {
+    "text": "Edit",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[621,173][675,209]"
+  },
+  {
+    "text": "Who\u2019s watching?",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[0,315][720,379]"
+  },
+  {
+    "text": "D",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[187,507][257,629]"
+  },
+  {
+    "text": "Default",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[174,691][270,726]"
+  },
+  {
+    "text": "",
+    "desc": "Add profile",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[463,533][533,603]"
+  },
+  {
+    "text": "Add profile",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[425,691][571,726]"
+  }
+]

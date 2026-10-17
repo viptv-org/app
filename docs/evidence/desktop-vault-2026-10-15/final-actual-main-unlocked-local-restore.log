@@ -1,0 +1,6 @@
+Picked up JAVA_TOOL_OPTIONS: -Xmx512m -Duser.home=/tmp/viptv-desktop-vault-2026-10-15/owned-final-package/home -Djava.io.tmpdir=/tmp/viptv-desktop-vault-2026-10-15/owned-final-package/tmp
+[SKIKO] warn: Fallback to next API
+org.jetbrains.skiko.RenderException: Cannot create Linux GL context
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.

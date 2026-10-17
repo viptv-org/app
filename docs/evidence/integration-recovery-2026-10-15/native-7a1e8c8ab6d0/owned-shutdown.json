@@ -1,0 +1,48 @@
+{
+  "guarded_serial": "emulator-5590",
+  "guarded_avd": "viptv-phone-prefs-jvx0yqu1",
+  "owner_before": {
+    "pid": 3068429,
+    "argv": [
+      "python3",
+      "/tmp/viptv-phone-preferences-jvx0yqu1/start.py"
+    ],
+    "cwd": "/mnt/ALPH/code/viptv-org",
+    "ppid": 3000896,
+    "start_ticks": 34045817
+  },
+  "emulator_before": {
+    "pid": 3068430,
+    "argv": [
+      "/home/vynxc/Android/Sdk/emulator/qemu/linux-x86_64/qemu-system-x86_64-headless",
+      "-avd",
+      "viptv-phone-prefs-jvx0yqu1",
+      "-port",
+      "5590",
+      "-no-window",
+      "-no-metrics",
+      "-no-audio",
+      "-no-boot-anim",
+      "-no-snapshot",
+      "-memory",
+      "2560",
+      "-cores",
+      "2",
+      "-gpu",
+      "swiftshader_indirect"
+    ],
+    "cwd": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "ppid": 3068429,
+    "start_ticks": 34045820
+  },
+  "stop": "SIGTERM validated owner; owner performs exact-name/serial guarded emulator kill",
+  "owned_processes_gone": true,
+  "owner_record": {
+    "owner": 3068429,
+    "owner_script": "/tmp/viptv-phone-preferences-jvx0yqu1/start.py",
+    "emulator_pid": 3068430,
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "stopped": true
+  }
+}

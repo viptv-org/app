@@ -1,0 +1,13 @@
+# Live favorites, feed selection and local profile cleanup
+
+Current experimental source wires the existing desktop/phone channel stars to dedicated host-owned Live preferences. They remain separate from movie/series My List. Favorite mutations are profile/connection/configuration fenced, duplicate intents are suppressed, and sibling snapshot responses cannot undo each other. Empty and sparse filtered pages automatically continue within the selected feed with cursor-progress and10,000-offset bounds. No manual Load More is introduced.
+
+Both native and server Live pages already advertise authorized public `connections[]`, and honor `connection_id` on channel queries. KMP now retains those records, pins the selected feed and exposes a small source dropdown only when multiple feeds are available. Switching feeds resets group/offset and fences old guide responses. Favourites applies to the selected feed's directory; an empty state explicitly names that feed even when the profile has saved channels elsewhere. No new server or generated Rust wire schema is required.
+
+TV design extension: the existing preview receives a focusable favourite action, and the existing category row receives a Favourites action and conditional source dropdown using existing TV controls. The preview, filters and guide keep their current layout coordinates. These newly connected states are an explicit extension of the supplied TV Live board, not a claim of197-board parity.
+
+Temporary guide failures can retry; successful/unsupported guide results have a short cache. Leaving Live, changing feed/profile/configuration or replacing a guide request prevents late publication. A missing provider EPG remains truthfully unavailable and does not disable host channel favorites.
+
+Local profile deletion atomically removes exact profile-private database resources, preserves shared account installs and other profiles, cancels scoped jobs and invalidates grants/metadata. Vault pruning is best effort after commit. A minimal last-revision tombstone prevents a recreated profile ID authorizing old work. A wrong PIN leaves existing resources valid. Deleting the selected profile also clears private controller data before returning to Profiles.
+
+Source/native adoption, test results and packaging status are recorded in [native-live-profile-build-2026-10-15.json](evidence/native-live-profile-build-2026-10-15.json). The final origin overlay now includes rebuilt desktop and all three Android JNI packaging inputs; current qualification is tracked in [native-origin-build-2026-10-15.json](evidence/native-origin-build-2026-10-15.json). No physical device or live service was changed.

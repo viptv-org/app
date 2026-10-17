@@ -1,0 +1,8 @@
+{
+  "owned_avd": "viptv-api26-isolated",
+  "owned_serial": "emulator-5592",
+  "stopped": true,
+  "emulator_process_gone": true,
+  "fixture_started": false,
+  "other_devices_untouched": true
+}

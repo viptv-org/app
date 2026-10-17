@@ -1,0 +1,146 @@
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  adduser alsa-topology-conf alsa-ucm-conf ca-certificates cpp cpp-14
+  cpp-14-x86-64-linux-gnu cpp-x86-64-linux-gnu dbus dbus-bin dbus-daemon
+  dbus-session-bus-common dbus-system-bus-common fontconfig-config
+  fonts-dejavu-core fonts-dejavu-mono libapparmor1 libasound2-data
+  libasound2t64 libatomic1 libauthen-sasl-perl libbrotli1 libclone-perl
+  libdata-dump-perl libdbus-1-3 libdrm-amdgpu1 libdrm-common libdrm-intel1
+  libdrm2 libedit2 libegl-mesa0 libegl1 libelf1t64 libencode-locale-perl
+  libexpat1 libffi8 libfile-basedir-perl libfile-desktopentry-perl
+  libfile-listing-perl libfile-mimeinfo-perl libfont-afm-perl libfontconfig1
+  libfreetype6 libgbm1 libgdbm-compat4t64 libgdbm6t64 libgl1 libgl1-mesa-dri
+  libgles2 libglib2.0-0t64 libglib2.0-data libglvnd0 libglx-mesa0 libglx0
+  libhtml-form-perl libhtml-format-perl libhtml-parser-perl
+  libhtml-tagset-perl libhtml-tree-perl libhttp-cookies-perl
+  libhttp-daemon-perl libhttp-date-perl libhttp-message-perl
+  libhttp-negotiate-perl libice6 libio-compress-brotli-perl libio-html-perl
+  libio-socket-ssl-perl libio-stringy-perl libipc-system-simple-perl libisl23
+  libllvm19 liblwp-mediatypes-perl liblwp-protocol-https-perl
+  libmailtools-perl libmpc3 libmpfr6 libnet-dbus-perl libnet-http-perl
+  libnet-smtp-ssl-perl libnet-ssleay-perl libpciaccess0 libperl5.40
+  libpng16-16t64 libsensors-config libsensors5 libsm6 libtext-iconv-perl
+  libtie-ixhash-perl libtimedate-perl libtry-tiny-perl liburi-perl libvulkan1
+  libwayland-client0 libwayland-server0 libwww-perl libwww-robotrules-perl
+  libx11-6 libx11-data libx11-protocol-perl libx11-xcb1 libxau6 libxaw7
+  libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-randr0 libxcb-shape0
+  libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb1 libxcomposite1 libxcursor1
+  libxdmcp6 libxext6 libxfixes3 libxft2 libxi6 libxinerama1 libxkbfile1
+  libxml-parser-perl libxml-twig-perl libxml-xpathengine-perl libxml2 libxmu6
+  libxmuu1 libxpm4 libxrandr2 libxrender1 libxshmfence1 libxt6t64 libxtst6
+  libxv1 libxxf86dga1 libxxf86vm1 libz3-4 luit mesa-libgallium
+  mesa-vulkan-drivers netbase openssl perl perl-modules-5.40
+  perl-openssl-defaults shared-mime-info x11-common x11-utils
+  x11-xserver-utils xdg-user-dirs xdg-utils zutty
+Suggested packages:
+  liblocale-gettext-perl cron quota cpp-doc gcc-14-locales cpp-14-doc
+  default-dbus-session-bus | dbus-session-bus alsa-utils libasound2-plugins
+  libdigest-hmac-perl libgssapi-perl gdbm-l10n low-memory-monitor
+  libcrypt-ssleay-perl pciutils sensible-utils lm-sensors libsub-name-perl
+  libbusiness-isbn-perl libmime-base32-perl libregexp-ipv6-perl
+  libauthen-ntlm-perl libunicode-map8-perl libunicode-string-perl
+  xml-twig-tools perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl make libtap-harness-archive-perl debhelper
+  mesa-utils nickle cairo-5c xorg-docs-core
+The following NEW packages will be installed:
+  adduser alsa-topology-conf alsa-ucm-conf ca-certificates cpp cpp-14
+  cpp-14-x86-64-linux-gnu cpp-x86-64-linux-gnu dbus dbus-bin dbus-daemon
+  dbus-session-bus-common dbus-system-bus-common fontconfig-config
+  fonts-dejavu-core fonts-dejavu-mono libapparmor1 libasound2-data
+  libasound2t64 libatomic1 libauthen-sasl-perl libbrotli1 libclone-perl
+  libdata-dump-perl libdbus-1-3 libdrm-amdgpu1 libdrm-common libdrm-intel1
+  libdrm2 libedit2 libegl-mesa0 libegl1 libelf1t64 libencode-locale-perl
+  libexpat1 libffi8 libfile-basedir-perl libfile-desktopentry-perl
+  libfile-listing-perl libfile-mimeinfo-perl libfont-afm-perl libfontconfig1
+  libfreetype6 libgbm1 libgdbm-compat4t64 libgdbm6t64 libgl1 libgl1-mesa-dri
+  libgles2 libglib2.0-0t64 libglib2.0-data libglvnd0 libglx-mesa0 libglx0
+  libhtml-form-perl libhtml-format-perl libhtml-parser-perl
+  libhtml-tagset-perl libhtml-tree-perl libhttp-cookies-perl
+  libhttp-daemon-perl libhttp-date-perl libhttp-message-perl
+  libhttp-negotiate-perl libice6 libio-compress-brotli-perl libio-html-perl
+  libio-socket-ssl-perl libio-stringy-perl libipc-system-simple-perl libisl23
+  libllvm19 liblwp-mediatypes-perl liblwp-protocol-https-perl
+  libmailtools-perl libmpc3 libmpfr6 libnet-dbus-perl libnet-http-perl
+  libnet-smtp-ssl-perl libnet-ssleay-perl libpciaccess0 libperl5.40
+  libpng16-16t64 libsensors-config libsensors5 libsm6 libtext-iconv-perl
+  libtie-ixhash-perl libtimedate-perl libtry-tiny-perl liburi-perl libvulkan1
+  libwayland-client0 libwayland-server0 libwww-perl libwww-robotrules-perl
+  libx11-6 libx11-data libx11-protocol-perl libx11-xcb1 libxau6 libxaw7
+  libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-randr0 libxcb-shape0
+  libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb1 libxcomposite1 libxcursor1
+  libxdmcp6 libxext6 libxfixes3 libxft2 libxi6 libxinerama1 libxkbfile1
+  libxml-parser-perl libxml-twig-perl libxml-xpathengine-perl libxml2 libxmu6
+  libxmuu1 libxpm4 libxrandr2 libxrender1 libxshmfence1 libxt6t64 libxtst6
+  libxv1 libxxf86dga1 libxxf86vm1 libz3-4 luit mesa-libgallium
+  mesa-vulkan-drivers netbase openssl perl perl-modules-5.40
+  perl-openssl-defaults shared-mime-info viptv-experiment x11-common x11-utils
+  x11-xserver-utils xdg-user-dirs xdg-utils zutty
+0 upgraded, 153 newly installed, 0 to remove and 1 not upgraded.
+Need to get 97.6 MB/232 MB of archives.
+After this operation, 661 MB of additional disk space will be used.
+Get:1 /mnt/viptv.deb viptv-experiment amd64 0.1.0-2 [135 MB]
+Get:2 http://deb.debian.org/debian trixie/main amd64 libdbus-1-3 amd64 1.16.2-2 [178 kB]
+Get:3 http://deb.debian.org/debian trixie/main amd64 dbus-bin amd64 1.16.2-2 [80.0 kB]
+Get:4 http://deb.debian.org/debian trixie/main amd64 dbus-session-bus-common all 1.16.2-2 [52.3 kB]
+Get:5 http://deb.debian.org/debian trixie/main amd64 libapparmor1 amd64 4.1.0-1 [43.7 kB]
+Get:6 http://deb.debian.org/debian trixie/main amd64 libexpat1 amd64 2.8.3-1~deb13u1 [123 kB]
+Get:7 http://deb.debian.org/debian trixie/main amd64 dbus-daemon amd64 1.16.2-2 [159 kB]
+Get:8 http://deb.debian.org/debian trixie/main amd64 adduser all 3.152 [191 kB]
+Get:9 http://deb.debian.org/debian trixie/main amd64 dbus-system-bus-common all 1.16.2-2 [53.5 kB]
+Get:10 http://deb.debian.org/debian trixie/main amd64 dbus amd64 1.16.2-2 [71.6 kB]
+Get:11 http://deb.debian.org/debian trixie/main amd64 netbase all 6.5 [12.4 kB]
+Get:12 http://deb.debian.org/debian-security trixie-security/main amd64 openssl amd64 3.5.7-1~deb13u3 [1508 kB]
+Get:13 http://deb.debian.org/debian trixie/main amd64 ca-certificates all 20250419 [162 kB]
+Get:14 http://deb.debian.org/debian trixie/main amd64 perl-modules-5.40 all 5.40.1-6+deb13u1 [3014 kB]
+Get:15 http://deb.debian.org/debian trixie/main amd64 libgdbm6t64 amd64 1.24-2 [75.2 kB]
+Get:16 http://deb.debian.org/debian trixie/main amd64 libgdbm-compat4t64 amd64 1.24-2 [50.3 kB]
+Get:17 http://deb.debian.org/debian trixie/main amd64 libperl5.40 amd64 5.40.1-6+deb13u1 [4326 kB]
+Get:18 http://deb.debian.org/debian trixie/main amd64 perl amd64 5.40.1-6+deb13u1 [268 kB]
+Get:19 http://deb.debian.org/debian trixie/main amd64 alsa-topology-conf all 1.2.5.1-3 [15.3 kB]
+Get:20 http://deb.debian.org/debian trixie/main amd64 libasound2-data all 1.2.14-1+deb13u1 [21.2 kB]
+Get:21 http://deb.debian.org/debian trixie/main amd64 libasound2t64 amd64 1.2.14-1+deb13u1 [381 kB]
+Get:22 http://deb.debian.org/debian trixie/main amd64 alsa-ucm-conf all 1.2.14-1 [92.5 kB]
+Get:23 http://deb.debian.org/debian trixie/main amd64 libisl23 amd64 0.27-1 [659 kB]
+Get:24 http://deb.debian.org/debian trixie/main amd64 libmpfr6 amd64 4.2.2-1 [729 kB]
+Get:25 http://deb.debian.org/debian trixie/main amd64 libmpc3 amd64 1.3.1-1+b3 [52.2 kB]
+Get:26 http://deb.debian.org/debian trixie/main amd64 cpp-14-x86-64-linux-gnu amd64 14.2.0-19 [11.0 MB]
+Get:27 http://deb.debian.org/debian trixie/main amd64 cpp-14 amd64 14.2.0-19 [1280 B]
+Get:28 http://deb.debian.org/debian trixie/main amd64 cpp-x86-64-linux-gnu amd64 4:14.2.0-1 [4840 B]
+Get:29 http://deb.debian.org/debian trixie/main amd64 cpp amd64 4:14.2.0-1 [1568 B]
+Get:30 http://deb.debian.org/debian trixie/main amd64 fonts-dejavu-mono all 2.37-8 [489 kB]
+Get:31 http://deb.debian.org/debian trixie/main amd64 fonts-dejavu-core all 2.37-8 [840 kB]
+Get:32 http://deb.debian.org/debian trixie/main amd64 fontconfig-config amd64 2.15.0-2.3 [318 kB]
+Get:33 http://deb.debian.org/debian trixie/main amd64 libatomic1 amd64 14.2.0-19 [9308 B]
+Get:34 http://deb.debian.org/debian trixie/main amd64 libauthen-sasl-perl all 2.1700-1 [44.8 kB]
+Get:35 http://deb.debian.org/debian trixie/main amd64 libbrotli1 amd64 1.1.0-2+b7 [307 kB]
+Get:36 http://deb.debian.org/debian trixie/main amd64 libclone-perl amd64 0.47-1+b1 [13.9 kB]
+Get:37 http://deb.debian.org/debian trixie/main amd64 libdata-dump-perl all 1.25-1 [28.4 kB]
+Get:38 http://deb.debian.org/debian trixie/main amd64 libdrm-common all 2.4.124-2 [8288 B]
+Get:39 http://deb.debian.org/debian trixie/main amd64 libdrm2 amd64 2.4.124-2 [39.0 kB]
+Get:40 http://deb.debian.org/debian trixie/main amd64 libdrm-amdgpu1 amd64 2.4.124-2 [22.6 kB]
+Get:41 http://deb.debian.org/debian trixie/main amd64 libpciaccess0 amd64 0.17-3+b3 [51.9 kB]
+Get:42 http://deb.debian.org/debian trixie/main amd64 libdrm-intel1 amd64 2.4.124-2 [64.1 kB]
+Get:43 http://deb.debian.org/debian trixie/main amd64 libedit2 amd64 3.1-20250104-1 [93.8 kB]
+Get:44 http://deb.debian.org/debian trixie/main amd64 libffi8 amd64 3.4.8-2 [24.1 kB]
+Get:45 http://deb.debian.org/debian trixie/main amd64 libwayland-server0 amd64 1.23.1-3 [34.4 kB]
+Get:46 http://deb.debian.org/debian trixie/main amd64 libelf1t64 amd64 0.192-4 [189 kB]
+Get:47 http://deb.debian.org/debian trixie/main amd64 libxml2 amd64 2.12.7+dfsg+really2.9.14-2.1+deb13u3 [700 kB]
+Get:48 http://deb.debian.org/debian trixie/main amd64 libz3-4 amd64 4.13.3-1 [8560 kB]
+Get:49 http://deb.debian.org/debian trixie/main amd64 libllvm19 amd64 1:19.1.7-3+b1 [26.0 MB]
+Get:50 http://deb.debian.org/debian trixie/main amd64 libsensors-config all 1:3.6.2-2 [16.2 kB]
+Get:51 http://deb.debian.org/debian trixie/main amd64 libsensors5 amd64 1:3.6.2-2 [37.5 kB]
+Get:52 http://deb.debian.org/debian trixie/main amd64 libxau6 amd64 1:1.0.11-1 [20.4 kB]
+Get:53 http://deb.debian.org/debian trixie/main amd64 libxdmcp6 amd64 1:1.1.5-1 [27.8 kB]
+Get:54 http://deb.debian.org/debian trixie/main amd64 libxcb1 amd64 1.17.0-2+b1 [144 kB]
+Get:55 http://deb.debian.org/debian trixie/main amd64 libx11-data all 2:1.8.12-1 [343 kB]
+Get:56 http://deb.debian.org/debian trixie/main amd64 libx11-6 amd64 2:1.8.12-1 [815 kB]
+Get:57 http://deb.debian.org/debian trixie/main amd64 libx11-xcb1 amd64 2:1.8.12-1 [247 kB]
+Get:58 http://deb.debian.org/debian trixie/main amd64 libxcb-dri3-0 amd64 1.17.0-2+b1 [107 kB]
+Get:59 http://deb.debian.org/debian trixie/main amd64 libxcb-present0 amd64 1.17.0-2+b1 [106 kB]
+Get:60 http://deb.debian.org/debian trixie/main amd64 libxcb-randr0 amd64 1.17.0-2+b1 [117 kB]
+Get:61 http://deb.debian.org/debian trixie/main amd64 libxcb-sync1 amd64 1.17.0-2+b1 [109 kB]
+Get:62 http://deb.debian.org/debian trixie/main amd64 libxcb-xfixes0 amd64 1.17.0-2+b1 [109 kB]
+Get:63 http://deb.debian.org/debian trixie/main amd64 libxshmfence1 amd64 1.3.3-1 [10.9 kB]
+Get:64 http://deb.debian.org/debian trixie/main amd64 mesa-libgallium amd64 25.0.7-2+deb13u1 [9630 kB]

@@ -1,0 +1,48 @@
+{
+  "candidate": "artifacts/linux-desktop-2026-10-15/portable-cold-restore-97e065fe977e/viptv-experiment_0.1.0-1_amd64.deb",
+  "sha256": "97e065fe977e6a9238d02aff129578f8e5a3b7885eb2d608406f02b53747a2e2",
+  "bytes": 134612728,
+  "supersedes_without_modifying": "portable-menu-360ec20dd299",
+  "source_gate": "cold-local startup full260 desktop + Wasm + Android debug/release + createDistributable terminal success",
+  "source_changes": "Local-mode cold restore, restore PIN gate, explicit Leave marker clear, rotated-token lock revalidation, phone IME fix",
+  "packaged_app_jar_sha256": "9b76c43cfde6fae526d37b7fe0fae3f876ff41038d8b27f584fd557a78843db2",
+  "app_jar_matches_current_desktop_build": true,
+  "unchanged_native_engine_sha256": "72ac71760676938b6211d5d5e58f30ee4b1ced524d07c0e8b1614c433f088798",
+  "bundled_jdk": "Temurin 21.0.12.1+1",
+  "extracted_launcher_jvm_native_sqlite_passed": true,
+  "extracted_32_elf_inventory_matches_input": true,
+  "desktop_menu_exec_icon_paths_verified": true,
+  "xdg_utils_dependency_present": true,
+  "external_symbol_floors": {
+    "GLIBC": "GLIBC_2.34",
+    "GLIBCXX": "GLIBCXX_3.4.22",
+    "CXXABI": "CXXABI_1.3.9",
+    "GCC": "GCC_4.2.0"
+  },
+  "portable_package_vtt_media_runtime": {
+    "passed": true,
+    "elapsed_seconds": 8.6,
+    "loaded_own_packaged_jvm": true,
+    "drawn_frames": 63,
+    "seek_ms": 8101,
+    "audio_tracks": 2,
+    "pause_resume_and_track_controls": true,
+    "caption_off_gold_pixels": 0,
+    "caption_on_gold_pixels": 5476,
+    "caption_size_change_gold_pixels": 3705,
+    "blue_background_visually_checked": true,
+    "silent_sink_audio_underruns": 9,
+    "physical_audio_quality_qualified": false
+  },
+  "protected_served_wasm_files": 109,
+  "protected_served_wasm_hashes_match_baseline": true,
+  "physical_tv_user_desktop_or_default_audio_changed": false,
+  "package_installed": false,
+  "system_packages_modified": false,
+  "unqualified": [
+    "Actual Debian distribution installation",
+    "Windows and macOS native execution",
+    "Physical display, GPU and audio quality",
+    "Distribution signing"
+  ]
+}

@@ -20,7 +20,7 @@ private val avatarChoices = listOf(
 )
 
 @Composable
-internal fun AvatarPicker(profile: Profile?, busy: Boolean, dismiss: () -> Unit, choose: (String, String) -> Unit) {
+internal fun AvatarPicker(profile: Profile?, busy: Boolean, dismiss: () -> Unit, choose: (String, String) -> Unit, pinAvailable: Boolean = true) {
     var pin by remember(profile?.id) { mutableStateOf("") }
     AlertDialog(onDismissRequest = dismiss, title = { Text("Change avatar") }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -28,7 +28,7 @@ internal fun AvatarPicker(profile: Profile?, busy: Boolean, dismiss: () -> Unit,
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     pair.forEach { (id, label) ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            TextButton(onClick = { choose(id, pin) }, enabled = !busy && (profile?.locked != true || pin.length in 4..8)) {
+                            TextButton(onClick = { choose(id, pin) }, enabled = !busy && (!profile.requiresLocalPin(pinAvailable) || pin.length in 4..8)) {
                                 ProfileAvatar(profile?.copy(avatarId = id), 72.dp, 16.dp)
                             }
                             Text(label)
@@ -36,7 +36,7 @@ internal fun AvatarPicker(profile: Profile?, busy: Boolean, dismiss: () -> Unit,
                     }
                 }
             }
-            if (profile?.locked == true) OutlinedTextField(pin,
+            if (profile.requiresLocalPin(pinAvailable)) OutlinedTextField(pin,
                 { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
                 label = { Text("Current PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
         }

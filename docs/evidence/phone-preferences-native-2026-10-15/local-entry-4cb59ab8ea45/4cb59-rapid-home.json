@@ -1,0 +1,162 @@
+[
+  {
+    "text": "V",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[43,156][62,193]"
+  },
+  {
+    "text": "VIPTV",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[93,154][190,196]"
+  },
+  {
+    "text": "",
+    "desc": "Cast",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[498,156][537,195]"
+  },
+  {
+    "text": "",
+    "desc": "Remote control",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[568,156][607,195]"
+  },
+  {
+    "text": "D",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[647,155][668,197]"
+  },
+  {
+    "text": "All",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[56,239][85,271]"
+  },
+  {
+    "text": "Movies",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[151,239][236,271]"
+  },
+  {
+    "text": "Series",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[300,239][376,271]"
+  },
+  {
+    "text": "Anime",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[440,239][514,271]"
+  },
+  {
+    "text": "Genres",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[610,239][692,271]"
+  },
+  {
+    "text": "No catalogs are configured for this profile.",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[28,402][620,444]"
+  },
+  {
+    "text": "",
+    "desc": "Home",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[81,1414][120,1453]"
+  },
+  {
+    "text": "Home",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[75,1453][125,1478]"
+  },
+  {
+    "text": "",
+    "desc": "Live",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[210,1414][249,1453]"
+  },
+  {
+    "text": "Live",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[211,1453][248,1478]"
+  },
+  {
+    "text": "",
+    "desc": "Calendar",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[339,1414][378,1453]"
+  },
+  {
+    "text": "Calendar",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[320,1453][397,1478]"
+  },
+  {
+    "text": "",
+    "desc": "My List",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[468,1414][507,1453]"
+  },
+  {
+    "text": "My List",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[455,1453][520,1478]"
+  },
+  {
+    "text": "",
+    "desc": "Search",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[614,1424][658,1468]"
+  }
+]

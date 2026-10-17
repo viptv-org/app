@@ -1,0 +1,8 @@
+{
+  "kernel_page_sizes_kib": [
+    4
+  ],
+  "mmu_page_sizes_kib": [
+    4
+  ]
+}

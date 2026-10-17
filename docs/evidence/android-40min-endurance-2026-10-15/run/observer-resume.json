@@ -1,0 +1,11 @@
+{
+  "original_driver_pid": 3041940,
+  "new_driver_pid": 3062454,
+  "app_pid": 2403,
+  "original_started_utc": "2026-10-15T19:07:23.457203+00:00",
+  "resumed_utc": "2026-10-15T19:40:41.966875+00:00",
+  "merged_samples": 375,
+  "recovered_samples": 39,
+  "same_app_player_lease_continued": true,
+  "manual_pending_home_handoff": "Handled same existing task before reattach; no app/player restart"
+}

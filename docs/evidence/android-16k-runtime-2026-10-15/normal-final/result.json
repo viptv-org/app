@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "apk_sha256": "b4394d8aab1c7a6e543431841ab9c75750809f94d66c206bd78195a63405438f",
+  "variant": "normal release",
+  "avd": "viptv-16k-isolated",
+  "page_size": 16384,
+  "linker_compat": "false",
+  "package_compat_disabled": "true",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "launch": "Starting: Intent { cmp=org.viptv.experiment/.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: org.viptv.experiment/.MainActivity\nTotalTime: 292\nWaitTime: 296\nComplete\n",
+  "profile_focus": "Default",
+  "home_labels": [
+    "V",
+    "VIPTV",
+    "Home",
+    "Movies",
+    "Series",
+    "Anime",
+    "Live",
+    "Calendar",
+    "My List",
+    "D"
+  ],
+  "real_native_local_home": true
+}

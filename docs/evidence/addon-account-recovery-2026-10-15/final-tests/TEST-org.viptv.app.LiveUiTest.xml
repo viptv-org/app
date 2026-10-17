@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="LiveUiTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:04.765Z" hostname="vynxcos" time="0.451">
+  <properties/>
+  <testcase name="sourceSelectorIsConditionalAndNamesTheSelectedAuthorizedFeed[desktop]" classname="org.viptv.app.LiveUiTest" time="0.175"/>
+  <testcase name="emptyFavoritesStateExplicitlyNamesTheSelectedFeedOnDesktopAndTv[desktop]" classname="org.viptv.app.LiveUiTest" time="0.17"/>
+  <testcase name="tvFavoriteAndCategoryAreRealActionsWithinTheExistingLayout[desktop]" classname="org.viptv.app.LiveUiTest" time="0.106"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

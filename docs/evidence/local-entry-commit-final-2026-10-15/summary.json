@@ -1,0 +1,18 @@
+{
+  "recorded_at_utc": "2026-10-15T18:47:40.639191+00:00",
+  "desktop": {
+    "tests": 261,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "production_wasm": "passed, isolated output",
+  "normal_android_release": "passed",
+  "linux_app_image": "passed",
+  "wall_seconds": 146,
+  "workers": 1,
+  "normal_apk": "artifacts/android-release-2026-10-15/local-entry-4cb59ab8ea45/viptv-android-release-local.apk",
+  "normal_apk_sha256": "4cb59ab8ea453d8e20dfc5b731fe8b430bc1818c7a95e55a9c8d59bbed4f3193",
+  "debug_runtime_artifact": "Preceding c20377debug remains independently qualified for unchanged playback/auth/lifecycle code; no debug rebuild in this final ordering-only gate.",
+  "protected_manual_wasm_unchanged_files": 109
+}

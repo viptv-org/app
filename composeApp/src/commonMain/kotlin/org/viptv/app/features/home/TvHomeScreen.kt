@@ -13,11 +13,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.connection.Profile
@@ -26,7 +32,7 @@ import org.viptv.engine.wire.*
 
 @Composable
 internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card) -> Unit, retry: () -> Unit,
-    navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}) {
+    navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null) {
     var browsing by remember(home?.scope?.profile_id) { mutableStateOf(false) }
     var focused by remember(home?.scope?.profile_id) { mutableStateOf<Card?>(null) }
     var activeRow by remember(home?.scope?.profile_id) { mutableIntStateOf(-1) }
@@ -34,9 +40,34 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     var lastRowHeight by remember(home?.scope?.profile_id, home?.rows?.lastOrNull()?.id) { mutableIntStateOf(0) }
     var heroFocusEpoch by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
     val firstCard = remember { FocusRequester() }; val playFocus = remember { FocusRequester() }
+    val navigationFocus = remember { FocusRequester() }
+    var navigationFocusEpoch by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
+    var initialShelfFocusClaimed by remember(home?.scope?.profile_id) { mutableStateOf(false) }
+    var navigationAttached by remember { mutableStateOf(false) }
+    val input = LocalInputModeManager.current
     val rows = rememberLazyListState(); val scope = rememberCoroutineScope()
     val visibleRows = remember(home?.rows) {
         home?.rows.orEmpty().filter { it.cards.isNotEmpty() || it.state == RowState.PENDING || it.state == RowState.FAILED }
+    }
+    val featured = slides.ifEmpty { home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) } }
+    val firstReadyRow = visibleRows.indexOfFirst { it.state == RowState.READY && it.cards.isNotEmpty() }
+    var firstReadyAttached by remember(home?.scope?.profile_id, visibleRows.getOrNull(firstReadyRow)?.id) { mutableStateOf(false) }
+    suspend fun focusWhenPlaced(requester: FocusRequester, ready: () -> Boolean): Boolean = withTimeoutOrNull(1500) {
+        snapshotFlow { ready() }.first { it }
+        input.requestInputMode(InputMode.Keyboard)
+        while (!runCatching { requester.requestFocus() }.getOrDefault(false)) withFrameNanos { }
+        true
+    } ?: false
+    LaunchedEffect(home?.scope?.profile_id, visibleRows.getOrNull(firstReadyRow)?.id, featured.isEmpty(), error) {
+        if (!initialShelfFocusClaimed && featured.isEmpty() && error == null && firstReadyRow >= 0) {
+            rows.scrollToItem(firstReadyRow)
+            initialShelfFocusClaimed = focusWhenPlaced(firstCard) { firstReadyAttached }
+        }
+    }
+    LaunchedEffect(navigationFocusEpoch) {
+        if (navigationFocusEpoch != 0) {
+            focusWhenPlaced(navigationFocus) { navigationAttached }
+        }
     }
     val density = LocalDensity.current
     var rowScale by remember { mutableFloatStateOf(1f) }
@@ -45,7 +76,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     }
     fun returnHero() {
         browsing = false; focused = null; activeRow = -1; heroFocusEpoch++
-        if (home?.hero != null) playFocus.requestFocus()
+        if (featured.isNotEmpty()) playFocus.requestFocus() else navigationFocusEpoch++
         rowMotion?.cancel()
         rowMotion = scope.launch { rows.animateScrollBy(-rowOffset(rows.firstVisibleItemIndex, rowScale) - rows.firstVisibleItemScrollOffset, tween(450)) }
     }
@@ -58,7 +89,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val top = animateDpAsState(targetTop, tween(450, easing = easing), label = "Billboard to rows", finishedListener = {})
         val measuredLastHeight = with(LocalDensity.current) { lastRowHeight.toDp() }
         val bottomSpace = maxOf(96.dp * scale, maxHeight - targetTop - measuredLastHeight)
-        val featured = slides.ifEmpty { home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) } }
         var heroTimerEnabled by remember(home?.scope) { mutableStateOf(true) }
         LaunchedEffect(browsing) {
             if (browsing) heroTimerEnabled = false
@@ -70,7 +100,15 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val original = settled ?: carousel.card
         val card = original?.let { summaryCards[it.identity.id] ?: it }
         val arrival = rememberTvContentArrival(home != null)
-        if (home == null) TvHomeLoading(scale) else {
+        val empty = home?.complete == true && visibleRows.isEmpty() && featured.isEmpty()
+        val catalogsFailed = home?.complete == true && featured.isEmpty() &&
+            home.rows.any { it.state == RowState.FAILED } &&
+            home.rows.all { it.cards.isEmpty() && it.state != RowState.PENDING }
+        if (home == null || empty || catalogsFailed) {
+            if (home == null && busy && error == null) TvHomeLoading(scale)
+            else HomeStatus(home, error ?: "Your catalogs could not load. Try refreshing Home.".takeIf { catalogsFailed }, busy, retry, navigate,
+                Modifier.padding(start = 96.dp * scale, end = 96.dp * scale, top = 300.dp * scale), television = true, scale = scale)
+        } else {
             Box(Modifier.fillMaxSize().then(arrival)) {
                 TvHomeBackdrop(card, browsing, portrait = selection?.portrait ?: false, hero = carousel.card, heroReady = carousel.artworkReady)
                 if (card != null) {
@@ -81,7 +119,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                     }
                     TvHomeVisibility(!browsing, scale, -80, 450, retain = true, focusEnabled = { !browsing }, sequentialFade = true) {
                         carousel.card?.let { hero ->
-                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing, save = { if (!browsing) save(it) }, isSaved = saved)
+                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing && error == null, save = { if (!browsing) save(it) }, isSaved = saved)
                         }
                     }
                 }
@@ -91,7 +129,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                     }, state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = bottomSpace)) {
                         itemsIndexed(visibleRows, key = { _, row -> row.id }) { index, row ->
                             val visibility = animateFloatAsState(if (browsing && index < activeRow) 0f else 1f, tween(200), label = "Row visibility")
-                            TvHomeShelf(row, scale, if (index == 0) firstCard else null, showFocus = true,
+                            TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
                                 up = ::returnHero,
                                 focus = { focused = it; browsing = true
                                     if (activeRow != index) {
@@ -103,12 +141,24 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                     }
                                 }, open, retry,
                                 modifier = Modifier.graphicsLayer { alpha = visibility.value }
-                                    .then(if (index == visibleRows.lastIndex) Modifier.onSizeChanged { lastRowHeight = it.height } else Modifier))
+                                    .then(if (index == visibleRows.lastIndex) Modifier.onSizeChanged { lastRowHeight = it.height } else Modifier),
+                                firstPlaced = { firstReadyAttached = true })
                         }
                     }
                 }
             }
         }
-        TvHomeVisibility(!browsing, scale, 0, 200) { TopNavigation(Screen.Home, true, navigate, profile) }
+        if (error != null && home != null && !empty && !catalogsFailed) {
+            HomeStatus(home, error, busy, retry, navigate,
+                Modifier.padding(start = 96.dp * scale, end = 96.dp * scale, top = 168.dp * scale), television = true, scale = scale, inline = true)
+        }
+        if (busy && home != null) androidx.compose.material3.LinearProgressIndicator(
+            Modifier.fillMaxWidth().padding(horizontal = 96.dp * scale).padding(top = 146.dp * scale), color = org.viptv.app.theme.Palette.accent)
+        TvHomeVisibility(!browsing, scale, 0, 200) {
+            DisposableEffect(Unit) { onDispose { navigationAttached = false } }
+            Box(Modifier.focusRequester(navigationFocus).onGloballyPositioned { navigationAttached = true }) {
+                TopNavigation(Screen.Home, true, navigate, profile)
+            }
+        }
     }
 }

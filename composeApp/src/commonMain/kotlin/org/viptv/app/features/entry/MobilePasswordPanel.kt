@@ -37,7 +37,7 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     Spacer(Modifier.height(18.dp))
     Text("Password", color = Palette.secondary, fontSize = 13.sp)
     Spacer(Modifier.height(6.dp))
-    SignInInput(password, { password = it }, "Password", height = 48.dp,
+    SignInInput(password, { password = it }, "Password", height = 48.dp, secret = true,
         transformation = if (visible) VisualTransformation.None else PasswordVisualTransformation()) {
         Icon(if (visible) Lucide.EyeOff else Lucide.Eye, if (visible) "Hide password" else "Show password",
             Modifier.size(20.dp).clickable { visible = !visible }, tint = Palette.secondary)

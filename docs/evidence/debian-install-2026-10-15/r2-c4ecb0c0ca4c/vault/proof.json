@@ -1,0 +1,133 @@
+{
+  "default_collection": "(objectpath '/org/freedesktop/secrets/collection/login',)",
+  "write-local": {
+    "exit_code": 0,
+    "stdout": [
+      "[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "local_write_read_passed",
+      "elapsed_ms:386"
+    ],
+    "stderr": [],
+    "seconds": 0.485
+  },
+  "read-local": {
+    "exit_code": 0,
+    "stdout": [
+      "[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "local_fresh_process_read_passed",
+      "elapsed_ms:377"
+    ],
+    "stderr": [],
+    "seconds": 0.475
+  },
+  "legacy-remote": {
+    "exit_code": 0,
+    "stdout": [
+      "[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "legacy_remote_save_read_replace_clear_passed",
+      "elapsed_ms:423"
+    ],
+    "stderr": [],
+    "seconds": 0.517
+  },
+  "credential-matching": {
+    "exit_code": 0,
+    "stdout": [
+      "[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "legacy_identity_exact_priority_ambiguous_rejection_passed",
+      "elapsed_ms:417"
+    ],
+    "stderr": [],
+    "seconds": 0.511
+  },
+  "actual-main-unlocked-local-restore": {
+    "actual_packaged_main": true,
+    "launcher": "/opt/viptv-experiment/bin/VIPTV-Experiment",
+    "screenshot": "/qualification/vault/installed-c4ec/actual-main-unlocked-local-restore.png",
+    "seconds_until_capture": 4.067,
+    "owned_display_only": true,
+    "loaded_jvm": [
+      "/opt/viptv-experiment/lib/runtime/lib/server/libjvm.so",
+      "/opt/viptv-experiment/lib/runtime/lib/server/libjvm.so",
+      "/opt/viptv-experiment/lib/runtime/lib/server/libjvm.so"
+    ]
+  },
+  "lock_result": "([objectpath '/org/freedesktop/secrets/collection/login'], objectpath '/')",
+  "locked-access": {
+    "exit_code": 0,
+    "stdout": [
+      "[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "get_ms:8",
+      "put_ms:5",
+      "delete_ms:3",
+      "vault_access_failures:3",
+      "elapsed_ms:354"
+    ],
+    "stderr": [],
+    "seconds": 0.444
+  },
+  "cancel-startup": {
+    "exit_code": 0,
+    "stdout": [
+      "[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "startup_vault_wait_active:false",
+      "startup_vault_notice:false",
+      "startup_vault_error_present:true",
+      "disconnect_ms:3",
+      "disconnect_screen:Connect",
+      "disconnect_starting:false",
+      "profiles_immediately_after_cancel:0",
+      "canceled_restore_job_completed:true",
+      "new_local_choice_busy:false",
+      "new_local_choice_factory_calls:1",
+      "private_profiles_after_cancel:1",
+      "new_local_choice_screen:Profiles",
+      "new_local_choice_notice:true",
+      "elapsed_ms:2975"
+    ],
+    "stderr": [
+      "SLF4J(W): No SLF4J providers were found.",
+      "SLF4J(W): Defaulting to no-operation (NOP) logger implementation",
+      "SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details."
+    ],
+    "seconds": 3.071
+  },
+  "actual-main-locked-storage-warning": {
+    "actual_packaged_main": true,
+    "launcher": "/opt/viptv-experiment/bin/VIPTV-Experiment",
+    "screenshot": "/qualification/vault/installed-c4ec/actual-main-locked-storage-warning.png",
+    "seconds_until_capture": 4.167,
+    "owned_display_only": true,
+    "loaded_jvm": [
+      "/opt/viptv-experiment/lib/runtime/lib/server/libjvm.so",
+      "/opt/viptv-experiment/lib/runtime/lib/server/libjvm.so",
+      "/opt/viptv-experiment/lib/runtime/lib/server/libjvm.so"
+    ]
+  },
+  "prompter_owned_after_locked_operations": "(false,)",
+  "read": {
+    "exit_code": 0,
+    "stdout": [
+      "[0.000s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "[0.000s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../viptv-debian-r2-probes-20261015.service', detected limits won't be accurate",
+      "packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+      "native_vault_call_started",
+      "vault_call_failed:uniffi.viptv_core.CoreException$Bridge",
+      "elapsed_ms:356"
+    ],
+    "stderr": [],
+    "seconds": 0.453
+  }
+}

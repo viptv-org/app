@@ -1,0 +1,176 @@
+{
+  "recorded_at_utc": "2026-10-15T17:36:58.573907+00:00",
+  "apk": "artifacts/android-release-2026-10-15/player-preferences-b4394d8aab1c/viptv-android-release-local.apk",
+  "sha256": "b4394d8aab1c7a6e543431841ab9c75750809f94d66c206bd78195a63405438f",
+  "bytes": 75429531,
+  "status": "Immutable normal release-variant candidate; signed with existing Android Debug certificate; no distribution claim",
+  "build_evidence": {
+    "root_merged_desktop_tests": 253,
+    "failures": 0,
+    "root_production_wasm_and_android_debug_release": true,
+    "root_wall_seconds": 199,
+    "native_rebuild": false
+  },
+  "manifest": {
+    "package": "org.viptv.experiment",
+    "version_name": "0.1.0-experiment",
+    "min_sdk": "26",
+    "target_sdk": "36",
+    "activities": [
+      "org.viptv.experiment.MainActivity"
+    ],
+    "debuggable": false,
+    "qa_network_security_override": false,
+    "profileable_shell": false
+  },
+  "signing": {
+    "verified": true,
+    "scheme_v2": true,
+    "certificate": "Existing Android Debug certificate; no private key read/output"
+  },
+  "zipalign_16k_check": true,
+  "native_libraries": {
+    "lib/arm64-v8a/libandroidx.graphics.path.so": {
+      "sha256": "17ee8d0a8f3c2a7b7b2f0b4e1a93c09e4fbdd1c9bfb335fee238c2767c2c03c1",
+      "bytes": 9952,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 3489792,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/arm64-v8a/libffmpegJNI.so": {
+      "sha256": "66031c23b95da2c8118c6a1586490b68e3c89644b0e169d91b490157cb04fda8",
+      "bytes": 1728776,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 3506176,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/arm64-v8a/libjnidispatch.so": {
+      "sha256": "ddfc6c965bbe366615c000ec1f06552ddf0bb2b4f9d921d0bff8c75b3cb2ca4c",
+      "bytes": 165992,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 5242880,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/arm64-v8a/libviptv_core.so": {
+      "sha256": "5bdf226abfc95104720be80a25a09cbb68ee1c0a98f17d04756ae479a58ea39b",
+      "bytes": 22633184,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 5423104,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/armeabi-v7a/libandroidx.graphics.path.so": {
+      "sha256": "fb5c883968299dda07f2c8552f506aa69a7fff988f8f56285744e08797c4f7cc",
+      "bytes": 7224,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 28065792,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/armeabi-v7a/libffmpegJNI.so": {
+      "sha256": "c6dc323254609053f5f851a5b8a927bb31670ebeacbc87a185babb76779ada77",
+      "bytes": 1590008,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 28082176,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/armeabi-v7a/libjnidispatch.so": {
+      "sha256": "4a2fc525286a13179b1e62e10bd8ab96422eb205a2db8dbeb2e177564700bf4a",
+      "bytes": 116344,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 29687808,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/armeabi-v7a/libviptv_core.so": {
+      "sha256": "3ded5c0e07d7a9c7d33a1ed5670cd7eb1bb71f5e3a02669fabebf745624a162a",
+      "bytes": 15804020,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 29818880,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/x86_64/libandroidx.graphics.path.so": {
+      "sha256": "c48fe70862aae15ba6fdb173d31a0285b3ae7ae2588f5d724f8d502a2208364c",
+      "bytes": 10104,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 45629440,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/x86_64/libffmpegJNI.so": {
+      "sha256": "6189ced41aefa4434b33f3fa2f10eec756a53208ff5b7150ee0a2acda8e2821d",
+      "bytes": 1814808,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 45645824,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/x86_64/libjnidispatch.so": {
+      "sha256": "288eafff19a70e833498201071c3d724f03f32ee8ff64a14fca50b57d975db70",
+      "bytes": 116904,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 47464448,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    },
+    "lib/x86_64/libviptv_core.so": {
+      "sha256": "753c5192639dd10ab2ee35078d45b9c65b2e2e1f90510773cf9a51a9fe274195",
+      "bytes": 25044792,
+      "prior_packed_bytes_identical": true,
+      "zip_data_offset": 47595520,
+      "zip_offset_modulo_16k": 0,
+      "uncompressed": true
+    }
+  },
+  "proguard_rules_sha256": "bc42238b8a4b0446adafe4b41e25b49c1a75b5725c942b1ac47fb3a5a56bc869",
+  "jni_media3_audio_check": "PASS tools/check_media3_audio.py (source pin, decoder SHA, three ABIs,16KiB ELF alignment, growOutputBuffer callback, FFmpeg notices)",
+  "qualified_native_reuse": {
+    "prior_apk_sha256": "3b047c819950adf15ac33563033da4c9147ca734fa5387b47f567a971fae56a6",
+    "prior_receipt": "artifacts/android-release-2026-10-15/abi3-3b047c819950/receipt.json",
+    "prior_receipt_sha256": "30280b4362dda22c04da877503006e77c393ac2ef3643a1636b2907c04dc44dc",
+    "method": "All12 packaged native libraries are byte-for-byte identical to qualified3b047 candidate; only after equality reuse its ELF/ALLOC-section and121-checksum evidence. This audit does not rerun architecture binaries or infer runtime16KiB acceptance from alignment."
+  },
+  "existing_native_api_checksums": {
+    "base_unchanged": 110,
+    "additive": 11,
+    "current_total": 121,
+    "compiled_desktop_matched": 121
+  },
+  "elf_compatibility_scope": {
+    "all_64bit_pt_load_alignment_16k": true,
+    "armv7_rust_pt_load_alignment_bytes": 4096,
+    "runtime_16k_qualified": false,
+    "limitation": "No 16 KiB runtime qualification performed. Static checks find no rounded-RELRO overlap with writable allocated data or PF_W LOAD memory across all eight 64-bit libraries; nonaligned logical-end modulo alone is not a demonstrated defect.",
+    "reference": "https://developer.android.com/guide/practices/page-sizes#check-relro",
+    "relro_layout_collision_found": false,
+    "relro_libraries_checked": 8,
+    "relro_layout_evidence": "relro-layout.json"
+  },
+  "physical_device_actions": false,
+  "installed_during_audit": false,
+  "deployed": false,
+  "earlier_artifacts_overwritten": false,
+  "qa_activity_names_absent_from_dex": [
+    "NativeQaActivity",
+    "NativeSourceQaActivity",
+    "Media3PlaybackQaActivity",
+    "NativePlaybackQaActivity",
+    "SidecarPlaybackQaActivity",
+    "LifecycleQaActivity",
+    "PerformanceQaActivity",
+    "BrowserLaunchQaActivity",
+    "BrowserLaunchReceiverQaActivity",
+    "TranslucentPauseQaActivity"
+  ],
+  "packaged_application_font_notices": {
+    "assets/composeResources/org.viptv.app.resources/files/licenses/application.txt": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6",
+    "assets/composeResources/org.viptv.app.resources/files/licenses/onest.txt": "a2a09da98a3d0d1ec79fc2d6deeac748b20a8153e26699552e7b59b5a40b63a3",
+    "assets/composeResources/org.viptv.app.resources/files/licenses/bricolage-grotesque.txt": "923f4ddf0fd39f9b7794ab0df7332f3d95dc43e8ad7ec2289d6d9e8491177f51"
+  },
+  "current_frozen_native_source_files_verified": 66
+}

@@ -1,0 +1,105 @@
+, comm: dex2oat64, not enough memory for the allocation
+[   50.348322] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   50.387599] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   50.387998] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   50.413882] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   50.414163] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.316162] __vm_enough_memory: 444 callbacks suppressed
+[   55.316165] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.316603] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.336475] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.336786] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.356639] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.356914] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.376747] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.377033] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.397920] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   55.398281] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.322764] __vm_enough_memory: 448 callbacks suppressed
+[   60.322767] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.323226] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.343327] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.343634] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.366099] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.366374] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.386582] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.386857] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.407035] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   60.407310] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.334951] __vm_enough_memory: 464 callbacks suppressed
+[   65.334954] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.335395] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.355216] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.355473] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.375344] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.375608] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.395434] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.395694] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.415514] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   65.415772] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.339851] __vm_enough_memory: 456 callbacks suppressed
+[   70.339854] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.340301] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.362142] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.362418] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.382403] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.382675] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.403230] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.403504] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.425007] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   70.425280] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.355583] __vm_enough_memory: 460 callbacks suppressed
+[   75.355586] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.356042] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.375909] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.376161] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.396078] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.396334] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.416291] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.416551] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.436493] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   75.436759] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.366352] __vm_enough_memory: 460 callbacks suppressed
+[   80.366355] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.366803] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.388364] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.388651] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.408526] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.408831] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.428864] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.429137] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.450833] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   80.451139] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.369556] __vm_enough_memory: 454 callbacks suppressed
+[   85.369559] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.370024] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.390114] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.390379] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.410324] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.410601] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.430549] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.430846] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.450731] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   85.450995] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.376962] __vm_enough_memory: 450 callbacks suppressed
+[   90.376965] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.377402] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.397284] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.397557] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.420232] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.420646] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.440628] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.440890] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.462093] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   90.462424] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.381589] __vm_enough_memory: 466 callbacks suppressed
+[   95.381592] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.382034] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.401875] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.402179] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.422188] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.422484] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.442484] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.442748] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.462671] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation
+[   95.462951] __vm_enough_memory: pid: 431, comm: dex2oat64, not enough memory for the allocation

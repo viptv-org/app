@@ -1,0 +1,37 @@
+{
+  "actual_launch_argv": [
+    "systemd-run",
+    "--user",
+    "--unit=viptv-osd-endurance-20261015T2017Z",
+    "--service-type=exec",
+    "--remain-after-exit",
+    "--property=KillMode=control-group",
+    "--property=Restart=no",
+    "--property=RuntimeMaxSec=3000",
+    "--property=TimeoutStopSec=30",
+    "--working-directory=/mnt/ALPH/code/viptv-org/app",
+    "/usr/bin/python3",
+    "/tmp/viptv-osd-endurance-qa/supervised-run.py"
+  ],
+  "unit": "viptv-osd-endurance-20261015T2017Z.service",
+  "user_manager_only": true,
+  "invocation_id": "f93c94cc68fd49579c0225b32601d126",
+  "verified_properties_file": "service-start.txt",
+  "completed_properties_file": "service-completed.txt",
+  "stopped_properties_file": "service-stopped.txt",
+  "ownership": {
+    "supervisor_pid": 3088932,
+    "emulator_pid": 3088933,
+    "emulator_avd": "viptv-16k-isolated",
+    "emulator_serial": "emulator-5586",
+    "fixture_pid": 3089657,
+    "fixture_port": 18586,
+    "observer_pid": 3089658,
+    "app_guest_pid": 2374
+  },
+  "cleanup_receipt": "cleanup-verified.json",
+  "other_units_modified": false,
+  "automatic_restarts": false,
+  "interrupted_attempt_counts_as_endurance": false,
+  "apk_scope": "immutable5abd only; no later normal build relabel"
+}

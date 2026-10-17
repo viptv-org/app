@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CalendarControlsUiTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:56:57.692Z" hostname="vynxcos" time="1.422">
+  <properties/>
+  <testcase name="tvFocusReturnsToSelectedReleaseWhileLaterPagesArrive[desktop]" classname="org.viptv.app.CalendarControlsUiTest" time="0.685"/>
+  <testcase name="phoneAndDesktopPreserveEmptyDatesAndOfferExplicitEpisodeAction[desktop]" classname="org.viptv.app.CalendarControlsUiTest" time="0.323"/>
+  <testcase name="tvControlsAndWatchActionRemainWithinTheExistingRailsAndKeepEmptyDateSelectable[desktop]" classname="org.viptv.app.CalendarControlsUiTest" time="0.414"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

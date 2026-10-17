@@ -1,0 +1,358 @@
+{
+  "recorded_at": "2026-10-15",
+  "minimum_sdk_runtime": 26,
+  "image": "system-images;android-26;google_apis;x86_64",
+  "image_revision": 16,
+  "ui_mode": "normal 0x11",
+  "avd": "viptv-api26-isolated",
+  "serial": "emulator-5592",
+  "main_activity_api26_lifecycle": "Passed on current immutable c20377 APK with explicit exact SDK26 and normal-mode assertions; independent TV probe unchanged",
+  "idle_cleanup": {
+    "idle_shutdown": true,
+    "avd": "viptv-api26-isolated",
+    "serial": "emulator-5592",
+    "fixture_port": 18592,
+    "emulator_process_gone": true,
+    "fixture_running": false,
+    "reason": "Release owned idle RAM while root prepares coordinated new artifacts; cold boot again for remaining API26 MainActivity qualification"
+  },
+  "limits": [
+    "Official Android TV API26 firmware is not qualified",
+    "Physical ARM/TV runtime is unqualified",
+    "Synthetic low-resolution video and silent audio",
+    "No audible audio, passthrough, HDR/DRM, 40-minute endurance, performance budget or deployment claim"
+  ],
+  "current_normal": {
+    "passed": true,
+    "sdk": 26,
+    "apk_sha256": "6b7079b06808580c94cae8b9d0cdd8093bc79a7b27e96129d6c1cb817c0baba7",
+    "variant": "normal release",
+    "native_profile_preferences_revision": 1,
+    "persisted_preferences": {
+      "preferred_audio_language": null,
+      "preferred_subtitle_language": null,
+      "subtitles_enabled": true,
+      "source_selection": "best",
+      "max_quality_height": 1080,
+      "subtitle_font_scale": 1.25,
+      "subtitle_text_color": "#FFFFFF",
+      "subtitle_background_color": "#00000000"
+    },
+    "cold_restore_skipped_signin": true,
+    "cold_restore_profile_gate_before_home": true,
+    "cold_restore_labels": [
+      "Who\u2019s watching?",
+      "D",
+      "Default",
+      "Add profile",
+      "Manage profiles"
+    ],
+    "native_local_home": true,
+    "first_framework_launch_ms": 445,
+    "reopen_framework_launch_ms": 420,
+    "visual_review": "Restored profile chooser before Home; Best match, 1080p and Large visibly retained after profile selection"
+  },
+  "current_debug": {
+    "passed": true,
+    "apk_sha256": "c20377c99a38183b39e8612fedd48b5994c1443dc5b6c36e76322e0fdcaf7089",
+    "sdk": 26,
+    "mode": "normal",
+    "native_pin_reopen": true,
+    "sustain": {
+      "wall_ms": 61450,
+      "samples": 12,
+      "seeks": 2,
+      "replacements": 0,
+      "origin_delta_ms": 34000,
+      "page_size": 4096
+    },
+    "seeks": [
+      {
+        "target_ms": 612000,
+        "actual_ms": 612000
+      },
+      {
+        "target_ms": 624000,
+        "actual_ms": 624000
+      }
+    ],
+    "each_seek_emitted_exact_tracking_start": true,
+    "renderer_final_ms": 654171,
+    "saved_progress_ms": 653968,
+    "final_clock_difference_ms": 203,
+    "max_sampled_clock_difference_ms": 203,
+    "lifecycle_result": {
+      "passed": true,
+      "captured": true,
+      "elapsed_accessibility_verified": true,
+      "serial": "emulator-5592",
+      "avd": "viptv-api26-isolated",
+      "sustain_requested_ms": 60000,
+      "fixture": "synthetic HTTPS facade",
+      "counts": {
+        "POST /api/auth/device/login": 1,
+        "GET /api/v3/bootstrap": 4,
+        "POST /api/auth/profile": 1,
+        "POST /qa/expire": 1,
+        "POST /api/auth/device/refresh": 1,
+        "GET /qa/status": 10,
+        "GET /api/v3/search": 1,
+        "GET /api/v3/meta/movie/lifecycle-fixture": 1,
+        "POST /api/v2/streams": 1,
+        "GET /api/v2/streams/fixture-discovery": 1,
+        "POST /api/v3/profiles/one/source-ranking": 1,
+        "POST /api/v2/playback": 1,
+        "GET /api/v3/subtitles/movie/lifecycle-fixture": 1,
+        "GET /media/index.m3u8": 42,
+        "GET /media/segment-000.ts": 1,
+        "GET /media/segment-001.ts": 1,
+        "POST /api/v3/profiles/one/playback-events": 12,
+        "GET /media/segment-002.ts": 1,
+        "GET /media/segment-003.ts": 1,
+        "GET /media/segment-004.ts": 1,
+        "GET /media/segment-005.ts": 1,
+        "GET /media/segment-006.ts": 1,
+        "GET /media/segment-007.ts": 1,
+        "GET /media/segment-008.ts": 1,
+        "GET /media/segment-009.ts": 1,
+        "GET /media/segment-010.ts": 1,
+        "GET /media/segment-011.ts": 1,
+        "GET /media/segment-012.ts": 2,
+        "PUT /api/v3/profiles/one/progress": 13,
+        "GET /media/segment-013.ts": 2,
+        "GET /media/segment-014.ts": 2,
+        "GET /media/segment-015.ts": 2,
+        "GET /media/segment-016.ts": 2,
+        "GET /media/segment-017.ts": 2,
+        "GET /media/segment-018.ts": 2,
+        "GET /media/segment-019.ts": 2,
+        "GET /media/segment-020.ts": 2,
+        "GET /media/segment-021.ts": 2,
+        "GET /media/segment-022.ts": 2,
+        "GET /media/segment-023.ts": 2,
+        "POST /api/v2/playback/fixture-lease/heartbeat": 2,
+        "GET /media/segment-024.ts": 2,
+        "GET /media/segment-025.ts": 2,
+        "GET /media/segment-026.ts": 2,
+        "GET /media/segment-027.ts": 2,
+        "GET /media/segment-028.ts": 2,
+        "GET /media/segment-029.ts": 2,
+        "GET /media/segment-030.ts": 2,
+        "GET /media/segment-031.ts": 2,
+        "GET /media/segment-032.ts": 2,
+        "GET /media/segment-033.ts": 2,
+        "GET /media/segment-034.ts": 1,
+        "GET /media/segment-035.ts": 1,
+        "GET /media/segment-036.ts": 1,
+        "GET /media/segment-037.ts": 1,
+        "GET /media/segment-038.ts": 1,
+        "GET /media/segment-039.ts": 1,
+        "GET /media/segment-040.ts": 1,
+        "GET /media/segment-041.ts": 1,
+        "GET /media/segment-042.ts": 1,
+        "GET /media/segment-043.ts": 1,
+        "GET /media/segment-044.ts": 1,
+        "GET /media/segment-045.ts": 1,
+        "GET /media/segment-046.ts": 1,
+        "GET /media/segment-047.ts": 1,
+        "GET /media/segment-048.ts": 1,
+        "DELETE /api/v2/playback/fixture-lease": 1
+      },
+      "nonzero_start_ms": 8000,
+      "live_edge_start_ms": 14000
+    },
+    "eac3": {
+      "avd": "viptv-api26-isolated",
+      "page_size": null,
+      "fixture": "synthetic H264/EAC3 Matroska,320x180,stereo48kHz",
+      "first_frame": true,
+      "ffmpeg_available": true,
+      "ffmpeg_decoder": [
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3",
+        "ffmpegLavc60.3.100-eac3"
+      ],
+      "max_position_ms": 20067,
+      "wall_ms": 20794,
+      "failed": false,
+      "passed": true
+    },
+    "visual_review": "Paused real phone player shows 10:05; accessibility matches; H264 synthetic frame visible"
+  },
+  "current_guest": {
+    "ro.build.version.sdk": "26",
+    "ro.build.version.release": "8.0.0",
+    "ro.build.fingerprint": "Android/sdk_gphone_x86_64/generic_x86_64:8.0.0/OSR1.180418.026/6741039:userdebug/dev-keys",
+    "ro.product.cpu.abilist": "x86_64,x86",
+    "ro.build.characteristics": "emulator",
+    "ro.kernel.qemu.avd_name": "viptv-api26-isolated",
+    "uimode": "Current UI Mode Service state:\n  mDockState=0 mLastBroadcastState=0\n  mNightMode=1 mNightModeLocked=false mCarModeEnabled=false mComputedNightMode=false mCarModeEnableFlags=0 mEnableCarDockLaunch=true\n  mCurUiMode=0x11 mUiModeLocked=false mSetUiMode=0x11\n  mHoldingConfiguration=false mSystemReady=true\n  mTwilightService.getLastTwilightState()=null\n"
+  },
+  "current_runtime_errors": "No org.viptv.experiment AndroidRuntime crash in current run crash buffer",
+  "cleanup": {
+    "owned_avd": "viptv-api26-isolated",
+    "owned_serial": "emulator-5592",
+    "fixture_port": 18592,
+    "emulator_process_gone": true,
+    "fixture_running": false,
+    "reverse_removed": true,
+    "no_global_adb_server_actions": true,
+    "other_devices_untouched": true
+  },
+  "earlier_normal": {
+    "passed": true,
+    "apk_sha256": "b4394d8aab1c7a6e543431841ab9c75750809f94d66c206bd78195a63405438f",
+    "sdk": 26,
+    "ui_mode": "normal 0x11",
+    "variant": "normal release",
+    "framework_first_launch_ms": 447,
+    "framework_process_reopen_ms": 418,
+    "native_local_home": true,
+    "native_profile_preferences_persisted_revision": 1,
+    "saved_preferences": {
+      "preferred_audio_language": null,
+      "preferred_subtitle_language": null,
+      "subtitles_enabled": true,
+      "source_selection": "best",
+      "max_quality_height": 1080,
+      "subtitle_font_scale": 1.25,
+      "subtitle_text_color": "#FFFFFF",
+      "subtitle_background_color": "#00000000"
+    },
+    "reentered_local_profile_after_process_restart": true,
+    "visual_review": "Best match/1080p/Large selected after process restart"
+  },
+  "earlier_debug_hls": {
+    "passed": true,
+    "sdk": 26,
+    "avd": "viptv-api26-isolated",
+    "immutable_debug_sha256": "7699e92dc23a037933402abebfcf30bcba40b378ea4d37c212efddd3424cf414",
+    "scope": "real NativePlaybackQaActivity and TvPlayerScreen on normal-mode API26 OS; not MainActivity/controller TV lifecycle",
+    "stages": [
+      {
+        "stage": "playing",
+        "position_ms": 10502,
+        "sample_count": 14
+      },
+      {
+        "stage": "user_paused",
+        "position_ms": 10677,
+        "sample_count": 15
+      },
+      {
+        "stage": "paused_stable",
+        "position_ms": 10677,
+        "sample_count": 17
+      },
+      {
+        "stage": "paused_seek",
+        "position_ms": 9677,
+        "sample_count": 21
+      },
+      {
+        "stage": "paused_home_return",
+        "position_ms": 9677,
+        "sample_count": 48
+      },
+      {
+        "stage": "playing_resumed",
+        "position_ms": 11246,
+        "sample_count": 57
+      },
+      {
+        "stage": "playing_background_stopped",
+        "position_ms": 11394,
+        "sample_count": 60
+      },
+      {
+        "stage": "playing_home_return",
+        "position_ms": 13069,
+        "sample_count": 87
+      }
+    ],
+    "paused_seek_delta_ms": -1000,
+    "first_return_position_ms": 11394,
+    "opening_count": 1,
+    "wall_ms": 23540,
+    "ffmpeg_aac": true,
+    "h264_rendered": true,
+    "first_frame": true,
+    "user_paused_home_return": true,
+    "playing_home_return": true
+  },
+  "earlier_debug_eac3": {
+    "avd": "viptv-api26-isolated",
+    "page_size": null,
+    "fixture": "synthetic H264/EAC3 Matroska,320x180,stereo48kHz",
+    "first_frame": true,
+    "ffmpeg_available": true,
+    "ffmpeg_decoder": [
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3",
+      "ffmpegLavc60.3.100-eac3"
+    ],
+    "max_position_ms": 20078,
+    "wall_ms": 20841,
+    "failed": false,
+    "passed": true
+  },
+  "latest_normal_startup": {
+    "passed": true,
+    "apk_sha256": "4cb59ab8ea453d8e20dfc5b731fe8b430bc1818c7a95e55a9c8d59bbed4f3193",
+    "variant": "normal release",
+    "avd": "viptv-api26-isolated",
+    "serial": "emulator-5592",
+    "sdk": 26,
+    "ui_mode": "normal 0x11",
+    "first_entry_mode_reset": "Owned fresh app data via pm clear; Success, then welcome observed before Use without account",
+    "install": "Performing Streamed Install\nSuccess\n",
+    "pm_clear": "Success\n",
+    "real_native_local_home": true,
+    "cold_restore_profiles_before_home": true,
+    "cold_restore_without_welcome": true,
+    "unprotected_default_selected_explicitly": true,
+    "home_labels": [
+      "V",
+      "Home",
+      "Live",
+      "My List",
+      "Search",
+      "No catalogs are configured for this profile."
+    ],
+    "cold_profile_labels": [
+      "Who\u2019s watching?",
+      "D",
+      "Default",
+      "Add profile",
+      "Manage profiles"
+    ],
+    "framework_first_launch_ms": 540,
+    "framework_cold_reopen_ms": 423,
+    "scope": "latest normal first local entry and cold Profiles gate only; unchanged debug/native player scenarios not repeated",
+    "visual_review": "Actual API26 native local Home and cold Profiles gate inspected"
+  },
+  "latest_normal_startup_cleanup": {
+    "owned_avd": "viptv-api26-isolated",
+    "owned_serial": "emulator-5592",
+    "stopped": true,
+    "emulator_process_gone": true,
+    "fixture_started": false,
+    "other_devices_untouched": true
+  },
+  "latest_normal_apk_sha256": "4cb59ab8ea453d8e20dfc5b731fe8b430bc1818c7a95e55a9c8d59bbed4f3193",
+  "current_normal_scope_note": "current_normal preserves the earlier 6b preferences and cold-profile qualification; latest_normal_startup is the final 4cb candidate first-entry/cold-profile follow-up. c20377 debug runtime receipts remain separate."
+}

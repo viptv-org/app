@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="SourceIntegrationFormUiTest[desktop]" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:21:16.724Z" hostname="vynxcos" time="0.209">
+  <properties/>
+  <testcase name="credentialFormKeepsCancelAndSaveVisibleAboveKeyboardWithScrollableProviderChoices[desktop]" classname="org.viptv.app.SourceIntegrationFormUiTest" time="0.209"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

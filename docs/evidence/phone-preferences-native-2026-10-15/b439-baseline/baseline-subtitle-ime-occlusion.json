@@ -1,0 +1,121 @@
+{
+  "apk_sha256": "b4394d8aab1c7a6e543431841ab9c75750809f94d66c206bd78195a63405438f",
+  "ime_top": 1000,
+  "action_bounds": {
+    "Cancel": [
+      328,
+      1092,
+      407,
+      1127
+    ],
+    "Use value": [
+      463,
+      1092,
+      577,
+      1127
+    ]
+  },
+  "actions_obscured": true,
+  "keyboard_source": [
+    "InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null",
+    "mSource=InsetsSource id=3 type=ime frame=[0,1000][720,1600] visibleFrame=[0,1000][720,1600] visible=true flags= sideHint=BOTTOM boundingRects=null"
+  ],
+  "labels": [
+    {
+      "text": "Subtitle language",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[122,178][461,234]"
+    },
+    {
+      "text": "Default",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,287][263,322]"
+    },
+    {
+      "text": "English",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,385][263,420]"
+    },
+    {
+      "text": "Spanish",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,483][272,518]"
+    },
+    {
+      "text": "Portuguese",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,581][314,616]"
+    },
+    {
+      "text": "French",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,679][260,714]"
+    },
+    {
+      "text": "German",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[179,777][269,812]"
+    },
+    {
+      "text": "pt-BR",
+      "desc": "",
+      "click": "true",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[122,850][598,1025]"
+    },
+    {
+      "text": "Language tag",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[150,850][296,878]"
+    },
+    {
+      "text": "For example en or pt-BR. Empty uses the default.",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[150,969][570,1025]"
+    },
+    {
+      "text": "Cancel",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[328,1092][407,1127]"
+    },
+    {
+      "text": "Use value",
+      "desc": "",
+      "click": "false",
+      "enabled": "true",
+      "checked": "false",
+      "bounds": "[463,1092][577,1127]"
+    }
+  ]
+}

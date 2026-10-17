@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=VIPTV-Experiment
+Comment=VIPTV-Experiment
+Exec=/opt/viptv-experiment/bin/VIPTV-Experiment
+Icon=/opt/viptv-experiment/lib/VIPTV-Experiment.png
+Terminal=false
+Type=Application
+Categories=Unknown
+MimeType=

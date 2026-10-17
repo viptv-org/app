@@ -737,7 +737,9 @@
     "height": 390,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PlayerScreen.kt",
-    "capture": "docs/evidence/android-player-controls.png"
+    "capture": "docs/evidence/phone-player-actions-2026-10-15/phone-player-controls.png",
+    "previous_capture": "docs/evidence/android-player-controls.png",
+    "verification": "Six actual common Compose UI/focus/dispatch regressions pass; inspected844x390 captures. Physical phone/decoder and complete board parity remain unproven."
   },
   {
     "id": "M3PlayerSeek",
@@ -785,9 +787,10 @@
     "title": "Player \u2014 next episode",
     "width": 844,
     "height": 390,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhoneNextEpisode.kt",
+    "capture": "docs/evidence/phone-player-actions-2026-10-15/phone-player-next.png",
+    "verification": "Six actual common Compose UI/focus/dispatch regressions pass; inspected844x390 captures. Physical phone/decoder and complete board parity remain unproven."
   },
   {
     "id": "M3PlayerBuffer",
@@ -805,9 +808,10 @@
     "title": "Player \u2014 source failed",
     "width": 844,
     "height": 390,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhonePlayerFailure.kt",
+    "capture": "docs/evidence/phone-player-actions-2026-10-15/phone-player-source-failure.png",
+    "verification": "Six actual common Compose UI/focus/dispatch regressions pass; inspected844x390 captures. Physical phone/decoder and complete board parity remain unproven."
   },
   {
     "id": "M3PlayerLive",
@@ -865,9 +869,10 @@
     "title": "Settings \u2014 Playback",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneProfilePreferences.kt",
+    "capture": "docs/evidence/preference-settings-2026-10-15/phone-playback-preferences.png",
+    "verification": "Six common Compose preferences focus/draft/routing cases pass; supplied Sources fields implemented. Unavailable board-only preferences omitted; physical phone/full parity unproven."
   },
   {
     "id": "M3SetSubs",
@@ -875,9 +880,10 @@
     "title": "Settings \u2014 Subtitles & audio",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneSubtitlePreferences.kt",
+    "capture": "docs/evidence/preference-settings-2026-10-15/phone-subtitle-preferences.png",
+    "verification": "Actual common Compose preview/style/draft dispatch verified; eight current wire fields preserved. Shadow has no stored field; physical phone/full parity unproven."
   },
   {
     "id": "M3SetAddons",
@@ -885,9 +891,10 @@
     "title": "Settings \u2014 Add-ons",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AddonSettings.kt",
+    "capture": "docs/evidence/addon-account-recovery-2026-10-15/common-captures/phone-addons-populated.png",
+    "verification": "Supported list/add/remove/switch flow, primary action before advanced controls, explicit install completion and native failure/retry/success/blank reopen verified. Full pixel parity and unprovided manifest-preview/pairing contracts remain unqualified."
   },
   {
     "id": "M3AddAddon",
@@ -895,9 +902,10 @@
     "title": "Add an add-on",
     "width": 390,
     "height": 844,
-    "status": "pending",
-    "implementation": null,
-    "capture": null
+    "status": "in_progress",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AddonSettings.kt",
+    "capture": "docs/evidence/addon-account-recovery-2026-10-15/common-captures/phone-add-addon-sheet.png",
+    "verification": "Supported list/add/remove/switch flow, primary action before advanced controls, explicit install completion and native failure/retry/success/blank reopen verified. Full pixel parity and unprovided manifest-preview/pairing contracts remain unqualified."
   },
   {
     "id": "M3SignOut",

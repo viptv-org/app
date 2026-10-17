@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "playback-cancel",
+    "playback-draft",
+    "playback-unsaved-discard",
+    "playback-saved-reopened"
+  ]
+}

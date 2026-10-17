@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>VIPTV</string>
+    <key>CFBundleIdentifier</key>
+    <string>org.viptv.iosapp</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <!-- Simulator/QA only: allow the self-signed viptv.local.test origin. -->
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>viptv.local.test</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSExceptionMinimumTLSVersion</key>
+                <string>TLSv1.2</string>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>

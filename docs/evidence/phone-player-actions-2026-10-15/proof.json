@@ -1,0 +1,36 @@
+{
+  "scope": "Actual common Compose rendering and semantic action/focus dispatch; no decoder or physical Android qualification",
+  "boards": [
+    "M3Player",
+    "M3PlayerNext",
+    "M3PlayerError"
+  ],
+  "tests": 6,
+  "failures": 0,
+  "errors": 0,
+  "test_runtime_seconds": 3.961,
+  "build_log": "/tmp/viptv-phone-player-focused.log",
+  "build_wall_seconds": 21,
+  "inspected_captures": {
+    "phone-player-episodes-current.png": "82f51d293307e90cbbbcc153f794629f11cb162384c562eb16a356bf9482f160",
+    "phone-player-source-failure.png": "ec9713466961705756df2de12d4bb1ac8b41e7dc888c5cf9d42db938097fc219",
+    "phone-player-next.png": "1c2d4f7262253f60f12e5eb5913755cb302d201c417b94ed996bd782174f5c72",
+    "phone-player-controls.png": "9e8fdb12b8ac1e766e911b1c8a919bbf54f24cee33421f0471c8309aa7c7cd42",
+    "phone-player-unavailable-portrait.png": "66e700c931b58ff1a83e6ccd3715b2dbfc994d80cb118ac79a01dced4659bf13"
+  },
+  "source_sha256": {
+    "PlayerScreen.kt": "96d6f6b5a24924eb0c008f57b6dd7ec85ca76ec31a39fb26a81df48daabd9b22",
+    "PlayerRoute.kt": "44a5d63aae2a2d5057f215ad17c2edefdf4dffed75b4beb13f2078c4090881d5",
+    "PhonePlaybackControls.kt": "61a326abf7938b57a4b74a0617ead87302e99317da58e6e34c676dbc0c3e0350",
+    "PhoneEpisodePicker.kt": "fc78f4a90681bc933afeb8a2b7b589de3b22954a1a9b1e09081705c8c47cd117",
+    "PhoneNextEpisode.kt": "a417091ae67913a1905cd4af414306bd12c335c1cb90e2b4bc6b2c2bff3c388f",
+    "PhonePlayerFailure.kt": "403365231d416139aa2ef435f3813cb496dc146fd08eb2f51cd0adc6860b8e95"
+  },
+  "full_platform_gate": "Parent agent runs merged desktop/Wasm/Linux gate separately",
+  "limitations": [
+    "Synthetic host-issued Card fixtures; exact identities and scoped origin assertions retained",
+    "No autoplay, fabricated episode, intro marker, thumbnail service, cast API, or metadata authority added",
+    "Loaded episode sheet is provisional: supplied phone player has Episodes entry but no exact phone episode-picker board",
+    "No claim of full197-board fidelity or physical-TV qualification"
+  ]
+}

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
@@ -29,14 +30,16 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         .onFocusChanged { focused = it.isFocused }.clickable(enabled = enabled) { choose(source) }
         .padding(horizontal = if (television) 28.dp else 20.dp, vertical = if (television) 24.dp else 18.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Column(Modifier.width(49.dp)) {
-            Text(source.qualityLabel() ?: "—", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = foreground)
-            source.formatLabel()?.let { Text(it, fontSize = 10.sp, maxLines = 2, color = foreground.copy(alpha = .7f)) }
+        Column(Modifier.widthIn(min = 56.dp)) {
+            Text(source.qualityLabel() ?: "—", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = foreground,
+                maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+            source.formatLabel()?.let { Text(it, fontSize = 10.sp, maxLines = 1, softWrap = false, color = foreground.copy(alpha = .7f)) }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(source.label, fontSize = if (television) 24.sp else 14.sp, fontWeight = FontWeight.SemiBold, color = foreground)
+            source.releaseDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp, color = foreground) }
             source.technicalDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp,
-                color = foreground.copy(alpha = 0.7f), maxLines = 3) }
+                color = foreground.copy(alpha = 0.7f)) }
         }
         Icon(if (selected) Lucide.Check else Lucide.ChevronRight, if (selected) "Selected source" else null, Modifier.size(if (television) 24.dp else 18.dp), tint = foreground)
     }

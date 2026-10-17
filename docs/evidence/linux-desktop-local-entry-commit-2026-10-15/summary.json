@@ -1,0 +1,41 @@
+{
+  "candidate": "artifacts/linux-desktop-2026-10-15/portable-local-entry-78d32a8c3404/viptv-experiment_0.1.0-1_amd64.deb",
+  "sha256": "78d32a8c3404332b3feea80f38f6b3f55552e03ad4b7596d4e2d481d47befdb2",
+  "bytes": 134614792,
+  "supersedes_without_modifying": "portable-cold-restore-97e065fe977e",
+  "source_gate": "local-entry commit full261 desktop + Wasm + Android normal + createDistributable terminal success",
+  "source_change": "Persist local marker before publishing profiles so a fast profile selection cannot cancel persistence",
+  "packaged_app_jar_sha256": "937e96454467e3f42b3a1a3e4b35a6099a7d2f57412eb234b30b1ed36ac3dad9",
+  "app_jar_matches_current_desktop_build": true,
+  "unchanged_native_engine_sha256": "72ac71760676938b6211d5d5e58f30ee4b1ced524d07c0e8b1614c433f088798",
+  "bundled_jdk": "Temurin 21.0.12.1+1",
+  "extracted_launcher_jvm_native_sqlite_passed": true,
+  "extracted_32_elf_inventory_matches_input": true,
+  "desktop_menu_exec_icon_paths_verified": true,
+  "xdg_utils_dependency_present": true,
+  "external_symbol_floors": {
+    "GLIBC": "GLIBC_2.34",
+    "GLIBCXX": "GLIBCXX_3.4.22",
+    "CXXABI": "CXXABI_1.3.9",
+    "GCC": "GCC_4.2.0"
+  },
+  "prior_actual_media_component_continuity": {
+    "prior_candidate_sha256": "97e065fe977e6a9238d02aff129578f8e5a3b7885eb2d608406f02b53747a2e2",
+    "evidence": "docs/evidence/linux-desktop-cold-restore-2026-10-15/portable-vtt-receipt.json",
+    "identical_player_class_count": 210,
+    "identical_runtime_file_count": 96,
+    "identical_dependency_file_count": 106,
+    "current_candidate_full_media_playback_rerun": false
+  },
+  "protected_served_wasm_files": 109,
+  "protected_served_wasm_hashes_match_baseline": true,
+  "physical_tv_user_desktop_or_default_audio_changed": false,
+  "package_installed": false,
+  "system_packages_modified": false,
+  "unqualified": [
+    "Actual Debian distribution installation",
+    "Windows and macOS native execution",
+    "Physical display, GPU and audio quality",
+    "Distribution signing"
+  ]
+}

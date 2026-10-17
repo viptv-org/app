@@ -1,0 +1,17 @@
+{
+  "jdk_archive": "OpenJDK21U-jdk_x64_linux_hotspot_21.0.12.1_1.tar.gz",
+  "jdk_archive_sha256": "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94",
+  "isolated_dpkg": {
+    "name": "dpkg-1.23.7-1-x86_64.pkg.tar.zst",
+    "sha256": "22c53a697365fa0b67892de39199e365436e374e687472b276cf80dfbfb8806a",
+    "signature_verified": true,
+    "source": "existing verified build cache",
+    "package_database": "local extra.db signed package metadata",
+    "license": "GPL-2.0-or-later",
+    "system_packages_modified": false
+  },
+  "wrapper_sha256": "4e5f005ff4f6300ae22bb18c5785b8a7326d3557d0f64fc85f48fcf4befb29d6",
+  "abi_audit_script_sha256": "a1ca98145ec68e52cfc0a6fbbbfc115033b258a1b27f7700598249954cde537e",
+  "native_smoke_script_sha256": "585073f70af829d925fa59b4d004ae30ce3c93ab34ab0d4ad761896c74b56b3f",
+  "system_packages_modified": false
+}

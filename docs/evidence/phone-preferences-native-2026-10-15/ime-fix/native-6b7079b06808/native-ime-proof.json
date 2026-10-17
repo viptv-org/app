@@ -1,0 +1,19 @@
+{
+  "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-release-2026-10-15/local-startup-6b7079b06808/viptv-android-release-local.apk",
+  "apk_sha256": "6b7079b06808580c94cae8b9d0cdd8093bc79a7b27e96129d6c1cb817c0baba7",
+  "checks": [
+    "audio-language-ime-visible",
+    "subtitle-language-ime-visible",
+    "custom-colour-ime-visible",
+    "save-reopen-preserves-all-eight-fields"
+  ],
+  "before": {
+    "revision": 2,
+    "value": "{\"preferred_audio_language\":\"zh-Hant\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+  },
+  "after": {
+    "revision": 3,
+    "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+  },
+  "no_keyboard_dismissal_used": true
+}

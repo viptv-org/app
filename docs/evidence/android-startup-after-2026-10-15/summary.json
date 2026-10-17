@@ -1,0 +1,193 @@
+[
+  {
+    "mode": "cold-empty",
+    "pid": "2361",
+    "previous_pid": null,
+    "framework_launch_state": "COLD",
+    "am_total_ms": 691,
+    "am_wait_ms": 731,
+    "system_fully_drawn_ms": 3801,
+    "marks_ms": {
+      "activity_enter_ms": 138,
+      "first_draw_ms": 375,
+      "interactive_shell_ms": 378,
+      "interactive_shell_from_activity_ms": 240,
+      "profile_to_home_ms": 906
+    },
+    "request_counts": {
+      "GET /qa/status": 1,
+      "POST /api/auth/device/login": 1,
+      "GET /api/v3/bootstrap": 2,
+      "POST /api/auth/profile": 1,
+      "GET /assets/fixture.jpg": 10,
+      "POST /qa/performance": 1
+    }
+  },
+  {
+    "mode": "cold-restored",
+    "pid": "2511",
+    "previous_pid": null,
+    "framework_launch_state": "COLD",
+    "am_total_ms": 498,
+    "am_wait_ms": 507,
+    "system_fully_drawn_ms": 1862,
+    "marks_ms": {
+      "activity_enter_ms": 69,
+      "first_draw_ms": 216,
+      "interactive_shell_ms": 218,
+      "interactive_shell_from_activity_ms": 149,
+      "useful_home_ms": 1496,
+      "useful_home_from_activity_ms": 1427,
+      "calendar_first_page_ms": 163,
+      "calendar_scroll_ms": 8374,
+      "calendar_final_index": 80,
+      "warm_route_home_ms": 47
+    },
+    "request_counts": {
+      "GET /qa/status": 1,
+      "GET /api/v3/bootstrap": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1,
+      "GET /api/v3/calendar": 4
+    },
+    "calendar_frames": {
+      "samples": 490,
+      "p50_ms": 20.222981,
+      "p95_ms": 24.496516,
+      "p99_ms": 26.633947,
+      "over16_67_ms": 486,
+      "platform_deadline_misses": 2,
+      "dropped_callback_reports": 0,
+      "deadline_ns_distribution": {
+        "16666666": 2,
+        "33333332": 488
+      }
+    }
+  },
+  {
+    "mode": "cold-restored",
+    "pid": "2599",
+    "previous_pid": null,
+    "framework_launch_state": "COLD",
+    "am_total_ms": 505,
+    "am_wait_ms": 508,
+    "system_fully_drawn_ms": 1860,
+    "marks_ms": {
+      "activity_enter_ms": 68,
+      "first_draw_ms": 217,
+      "interactive_shell_ms": 218,
+      "interactive_shell_from_activity_ms": 150,
+      "useful_home_ms": 1496,
+      "useful_home_from_activity_ms": 1428,
+      "calendar_first_page_ms": 155,
+      "calendar_scroll_ms": 8388,
+      "calendar_final_index": 80,
+      "warm_route_home_ms": 41
+    },
+    "request_counts": {
+      "GET /qa/status": 1,
+      "GET /api/v3/bootstrap": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1,
+      "GET /api/v3/calendar": 4
+    },
+    "calendar_frames": {
+      "samples": 490,
+      "p50_ms": 16.736584,
+      "p95_ms": 16.962089,
+      "p99_ms": 17.357851,
+      "over16_67_ms": 355,
+      "platform_deadline_misses": 3,
+      "dropped_callback_reports": 0,
+      "deadline_ns_distribution": {
+        "16666666": 3,
+        "33333332": 487
+      }
+    }
+  },
+  {
+    "mode": "cold-restored",
+    "pid": "2696",
+    "previous_pid": null,
+    "framework_launch_state": "COLD",
+    "am_total_ms": 352,
+    "am_wait_ms": 358,
+    "system_fully_drawn_ms": 1574,
+    "marks_ms": {
+      "activity_enter_ms": 45,
+      "first_draw_ms": 149,
+      "interactive_shell_ms": 150,
+      "interactive_shell_from_activity_ms": 105,
+      "useful_home_ms": 1201,
+      "useful_home_from_activity_ms": 1156,
+      "calendar_first_page_ms": 105,
+      "calendar_scroll_ms": 8394,
+      "calendar_final_index": 80,
+      "warm_route_home_ms": 29
+    },
+    "request_counts": {
+      "GET /qa/status": 1,
+      "GET /api/v3/bootstrap": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1,
+      "GET /api/v3/calendar": 4
+    },
+    "calendar_frames": {
+      "samples": 490,
+      "p50_ms": 16.734229,
+      "p95_ms": 17.075998,
+      "p99_ms": 17.636977,
+      "over16_67_ms": 325,
+      "platform_deadline_misses": 2,
+      "dropped_callback_reports": 0,
+      "deadline_ns_distribution": {
+        "16666666": 3,
+        "33333332": 487
+      }
+    }
+  },
+  {
+    "mode": "warm-activity",
+    "pid": "2696",
+    "previous_pid": "2696",
+    "framework_launch_state": "WARM",
+    "am_total_ms": 222,
+    "am_wait_ms": 235,
+    "system_fully_drawn_ms": 1460,
+    "marks_ms": {
+      "activity_enter_ms": 13862,
+      "first_draw_ms": 13896,
+      "interactive_shell_ms": 13896,
+      "interactive_shell_from_activity_ms": 34,
+      "useful_home_ms": 15051,
+      "useful_home_from_activity_ms": 1189
+    },
+    "request_counts": {
+      "GET /qa/status": 1,
+      "GET /api/v3/bootstrap": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1
+    }
+  },
+  {
+    "mode": "cancel-restored",
+    "pid": "2849",
+    "previous_pid": null,
+    "framework_launch_state": "COLD",
+    "am_total_ms": 371,
+    "am_wait_ms": 378,
+    "system_fully_drawn_ms": 1705,
+    "marks_ms": {
+      "activity_enter_ms": 45,
+      "first_draw_ms": 138,
+      "interactive_shell_ms": 139,
+      "interactive_shell_from_activity_ms": 94,
+      "restore_canceled": true
+    },
+    "request_counts": {
+      "GET /qa/status": 1,
+      "POST /qa/performance": 1,
+      "POST /api/auth/device/refresh": 1
+    }
+  }
+]

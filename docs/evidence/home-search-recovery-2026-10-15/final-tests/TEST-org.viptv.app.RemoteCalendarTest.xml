@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="RemoteCalendarTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:18.094Z" hostname="vynxcos" time="0.012">
+  <properties/>
+  <testcase name="refusesRepeatedOrMissingCursorsInsteadOfLooping[desktop]" classname="org.viptv.app.RemoteCalendarTest" time="0.005"/>
+  <testcase name="leavingCalendarCancelsItsPendingResponse[desktop]" classname="org.viptv.app.RemoteCalendarTest" time="0.003"/>
+  <testcase name="publishesFirstPageBeforeFetchingTheRemainingPagesAndUsesServerCursor[desktop]" classname="org.viptv.app.RemoteCalendarTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

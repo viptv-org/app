@@ -1,0 +1,6 @@
+Trying to pull docker.io/library/debian:trixie-slim...
+Getting image source signatures
+Copying blob sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e
+Copying config sha256:567e3c17b188e21cd42aa5e1c55e16d8270f880ed8ea321dbd40f993467efc4c
+Writing manifest to image destination
+567e3c17b188e21cd42aa5e1c55e16d8270f880ed8ea321dbd40f993467efc4c

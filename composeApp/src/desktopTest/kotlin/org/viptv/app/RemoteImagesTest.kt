@@ -13,7 +13,7 @@ class RemoteImagesTest {
         for (browser in listOf(false, true)) {
             val client = HttpClient(MockEngine { request ->
                 assertEquals(if (browser) "proxy" else "direct", request.headers["x-viptv-image-delivery"])
-                respond("""{"cards":[{"logo":"/api/v3/images/simkl/posters/hash_m.webp","poster":"https://cdn.example/poster.webp"}],"subtitle":"/api/v3/subtitle-content/id"}""",
+                respond("""{"cards":[{"logo":"/api/images/simkl/posters/hash_m.webp","poster":"https://cdn.example/poster.webp"}],"subtitle":"/api/subtitle-content/id"}""",
                     headers = headersOf(HttpHeaders.ContentType, "application/json"))
             }) { configureTransport() }
             val store = object : RemoteSessionStore {
@@ -22,11 +22,11 @@ class RemoteImagesTest {
                 override suspend fun clear() = Unit
             }
             val connection = RemoteConnection("https://192.168.88.14:18451", store, client, browserMode = browser)
-            val result = connection.call("/api/v3/example").jsonObject
+            val result = connection.call("/api/example").jsonObject
             val card = result.getValue("cards").jsonArray.single().jsonObject
-            assertEquals("https://192.168.88.14:18451/api/v3/images/simkl/posters/hash_m.webp", card.getValue("logo").jsonPrimitive.content)
+            assertEquals("https://192.168.88.14:18451/api/images/simkl/posters/hash_m.webp", card.getValue("logo").jsonPrimitive.content)
             assertEquals("https://cdn.example/poster.webp", card.getValue("poster").jsonPrimitive.content)
-            assertEquals("/api/v3/subtitle-content/id", result.getValue("subtitle").jsonPrimitive.content)
+            assertEquals("/api/subtitle-content/id", result.getValue("subtitle").jsonPrimitive.content)
             connection.close()
         }
     }

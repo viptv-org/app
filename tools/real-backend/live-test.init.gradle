@@ -1,0 +1,15 @@
+// Opt-in real service tests. This source directory is excluded from normal tests.
+allprojects { p ->
+    afterEvaluate {
+        if (p.path == ':composeApp') {
+            p.kotlin.sourceSets.getByName('desktopTest').kotlin.srcDir(p.rootProject.file('tools/real-backend'))
+            p.tasks.withType(Test).configureEach {
+                def trustStore = System.getenv('VIPTV_REAL_TRUST_STORE')
+                if (trustStore) {
+                    systemProperty 'javax.net.ssl.trustStore', trustStore
+                    systemProperty 'javax.net.ssl.trustStorePassword', System.getenv('VIPTV_REAL_TRUST_STORE_PASSWORD') ?: 'changeit'
+                }
+            }
+        }
+    }
+}

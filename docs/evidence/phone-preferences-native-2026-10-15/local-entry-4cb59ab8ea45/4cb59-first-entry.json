@@ -1,0 +1,114 @@
+[
+  {
+    "text": "",
+    "desc": "All sign-in options",
+    "click": "true",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[7,143][91,227]"
+  },
+  {
+    "text": "Sign in to VIPTV",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[28,255][427,319]"
+  },
+  {
+    "text": "Pick whichever is easiest. They all reach the same account.",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[28,344][692,422]"
+  },
+  {
+    "text": "Continue in browser",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,472][383,507]"
+  },
+  {
+    "text": "Approve this sign-in through your server",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,507][563,539]"
+  },
+  {
+    "text": "Email me a code",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,589][328,624]"
+  },
+  {
+    "text": "No password needed",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,624][347,656]"
+  },
+  {
+    "text": "Use a password",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,722][322,757]"
+  },
+  {
+    "text": "Use another device",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,822][370,857]"
+  },
+  {
+    "text": "Scan a code and approve this sign-in",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,857][522,889]"
+  },
+  {
+    "text": "IPTV provider",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,939][295,974]"
+  },
+  {
+    "text": "Xtream Codes login or an M3U playlist link",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,974][576,1006]"
+  },
+  {
+    "text": "Use without an account",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,1056][430,1091]"
+  },
+  {
+    "text": "Everything stays on this device",
+    "desc": "",
+    "click": "false",
+    "enabled": "true",
+    "checked": "false",
+    "bounds": "[112,1091][461,1123]"
+  }
+]

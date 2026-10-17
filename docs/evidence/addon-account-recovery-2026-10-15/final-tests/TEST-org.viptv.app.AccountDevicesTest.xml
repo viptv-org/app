@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="AccountDevicesTest[desktop]" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:56:56.674Z" hostname="vynxcos" time="0.08">
+  <properties/>
+  <testcase name="aNewParentPolicyRefusalHidesPreviouslyLoadedDeviceData[desktop]" classname="org.viptv.app.AccountDevicesTest" time="0.056"/>
+  <testcase name="oldHostDoesNotPretendItHasAnEmptyDeviceList[desktop]" classname="org.viptv.app.AccountDevicesTest" time="0.002"/>
+  <testcase name="nativeViewingConnectionsCannotDispatchAccountManagementRequests[desktop]" classname="org.viptv.app.AccountDevicesTest" time="0.002"/>
+  <testcase name="signingOutOneDeviceReconcilesThatRowWithoutRefetchingTheAccount[desktop]" classname="org.viptv.app.AccountDevicesTest" time="0.008"/>
+  <testcase name="browserDeviceManagementUsesOneAggregateAndCookieCsrfWithoutBearerCredentials[desktop]" classname="org.viptv.app.AccountDevicesTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+]]></system-err>
+</testsuite>

@@ -1,0 +1,11 @@
+--------- beginning of main
+I/VIPTV_LIFECYCLE_QA( 3180): activity_created id=68696409 restored=false
+I/VIPTV_LIFECYCLE_QA( 3180): initial_profile_focus=first
+I/VIPTV_LIFECYCLE_QA( 3180): activity_created id=230688324 restored=true
+I/VIPTV_LIFECYCLE_QA( 3180): capture_elapsed expected=10:19 position_ms=619183 window_offset_ms=4000
+I/VIPTV_LIFECYCLE_QA( 3180): activity_created id=40654222 restored=true
+I/VIPTV_LIFECYCLE_QA( 3180): await_home paused=true
+I/VIPTV_LIFECYCLE_QA( 3180): background_paused position_ms=619183 was_paused=true
+I/VIPTV_LIFECYCLE_QA( 3180): await_home paused=false
+I/VIPTV_LIFECYCLE_QA( 3180): background_paused position_ms=620059 was_paused=false
+E/VIPTV_LIFECYCLE_QA( 3180): FAIL IllegalStateException: Check failed.

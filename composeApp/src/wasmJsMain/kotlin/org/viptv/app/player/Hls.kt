@@ -3,6 +3,8 @@ package org.viptv.app.player
 
 import org.w3c.dom.HTMLMediaElement
 
+external interface HlsEvents : JsAny { val ERROR: String }
+
 @JsModule("hls.js")
 external class Hls : JsAny {
     constructor()
@@ -11,5 +13,5 @@ external class Hls : JsAny {
     fun loadSource(url: String)
     fun attachMedia(media: HTMLMediaElement)
     fun destroy()
-    companion object { fun isSupported(): Boolean }
+    companion object { fun isSupported(): Boolean; val Events: HlsEvents }
 }

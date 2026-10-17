@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.AsyncImage
 import org.viptv.app.components.Brand
 import org.viptv.app.components.TvAction
@@ -27,7 +29,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?) {
+internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, error: String? = null) {
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { first.requestFocus() }
     TvWelcomeBackdrop(scale)
@@ -44,6 +46,12 @@ internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?) {
             }
             if (local != null) TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, activate = local) {
                 Text("Use without an account", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        error?.let { message ->
+            Box(Modifier.fillMaxWidth().offset(y = 720.dp * scale).padding(horizontal = 96.dp * scale), contentAlignment = Alignment.Center) {
+                Text(message, color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp,
+                    textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
         }
         if (local != null) Box(Modifier.fillMaxWidth().offset(y = 960.dp * scale), contentAlignment = Alignment.Center) {

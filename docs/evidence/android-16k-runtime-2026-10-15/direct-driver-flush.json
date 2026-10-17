@@ -1,0 +1,6 @@
+{
+  "reason": "select/TextIO read-ahead held final real app PASS; closed only owned logcat child to drain EOF",
+  "app_or_fixture_changed": false,
+  "logcat_pid": 2993157,
+  "parent_pid": 2993137
+}

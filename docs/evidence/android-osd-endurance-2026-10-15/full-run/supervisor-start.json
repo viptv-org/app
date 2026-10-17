@@ -1,0 +1,7 @@
+{
+  "pid": 3088932,
+  "started_utc": "2026-10-15T20:17:56.326230+00:00",
+  "unit": "viptv-osd-endurance-20261015T2017Z.service",
+  "interrupted_run": "../long-run",
+  "interrupted_run_counts_as_endurance": false
+}

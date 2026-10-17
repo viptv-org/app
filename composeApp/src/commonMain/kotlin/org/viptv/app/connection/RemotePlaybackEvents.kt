@@ -34,7 +34,7 @@ internal class RemotePlaybackEvents(
         val profile = requireNotNull(input.profileId) { "Playback is not bound to a profile." }
         check(sequence < Long.MAX_VALUE)
         sequence++
-        val result = remote.call("/api/v3/profiles/${profile.encodeURLPathPart()}/playback-events", HttpMethod.Post,
+        val result = remote.call("/api/profiles/${profile.encodeURLPathPart()}/playback-events", HttpMethod.Post,
             buildJsonObject {
                 put("attempt_id", input.id); put("sequence", sequence)
                 put("identity", Json.encodeToJsonElement(card.identity))

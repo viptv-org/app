@@ -18,5 +18,6 @@ internal data class TvSettingsPreferences(
     val subtitleSize: String = "Large",
     val subtitleBackground: String = "Shadow",
     val subtitleColor: Long = 0xFFFFFFFF,
+    val subtitleBackgroundColor: String = "#00000000",
 )
 internal data class TvAddonInfo(val subtitle: String, val color: Long, val letter: String? = null)

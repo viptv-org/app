@@ -1,0 +1,82 @@
+{
+  "runtime_backend_sha256": "01c3b81f84aa624d0867c568f059fb336111172fefaa2cb75c7928bd54b76ef2",
+  "runtime_gateway_sha256": "7e2d89413af9c6faf9fedff92223079fba87d4c187cc3fc3b16390ade688251d",
+  "runtime_updated": false,
+  "simkl_linked": true,
+  "first_tv_search": {
+    "status": 502,
+    "seconds": 3.01,
+    "error": "Simkl is unavailable"
+  },
+  "real_search": [
+    {
+      "category": "movie",
+      "query": "Inception",
+      "status": 200,
+      "cards": 12,
+      "seconds": 1.157
+    },
+    {
+      "category": "anime",
+      "query": "Naruto",
+      "status": 200,
+      "cards": 22,
+      "seconds": 1.045
+    },
+    {
+      "category": "tv",
+      "query": "Ted Lasso",
+      "status": 200,
+      "cards": 1,
+      "seconds": 0.213
+    }
+  ],
+  "calendar": {
+    "status": 200,
+    "seconds": 0.636,
+    "entries": 100
+  },
+  "genre_filter": [
+    {
+      "kind": "movie",
+      "status": 200,
+      "seconds": 1.009,
+      "cards": 24,
+      "error": null
+    },
+    {
+      "kind": "series",
+      "status": 200,
+      "seconds": 0.788,
+      "cards": 24,
+      "error": null
+    },
+    {
+      "kind": "anime",
+      "status": 200,
+      "seconds": 1.263,
+      "cards": 24,
+      "error": null
+    }
+  ],
+  "home": {
+    "status": 200,
+    "seconds": 5.301
+  },
+  "grouped_search_on_older_runtime": {
+    "status": 404,
+    "qualified": false
+  },
+  "kmp_client_real_session": {
+    "passed": true,
+    "restores": 5,
+    "distinct_refresh_tokens": 8,
+    "concurrent_authenticated_bootstraps": 40,
+    "search_and_detail": true,
+    "own_session_signed_out": true,
+    "android_secure_store_qualified": false,
+    "concurrent_restores": 2
+  },
+  "production_parser_source_sha256": "15e937cc579b8829997448f6fdee544d2f62244aea3f3854a47efcc9fd79ed12",
+  "live_watch_history_written": false
+}

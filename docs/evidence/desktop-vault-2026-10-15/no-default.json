@@ -1,0 +1,17 @@
+{
+  "default_alias_before": "(objectpath '/',)",
+  "exit_code": 0,
+  "stdout": [
+    "rebuilt_native_mapped:true",
+    "rebuilt_native_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06",
+    "get_ms:6",
+    "put_ms:3",
+    "delete_ms:3",
+    "vault_access_failures:3",
+    "elapsed_ms:144"
+  ],
+  "stderr": [],
+  "seconds": 0.221,
+  "default_alias_after": "(objectpath '/',)",
+  "keyring_data_files_created": []
+}

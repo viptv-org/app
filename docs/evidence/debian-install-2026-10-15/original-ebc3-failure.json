@@ -1,0 +1,16 @@
+{
+  "artifact_sha256": "ebc3fabb2c094388a3a24510f6ee025d25c92ea7ec28e102b22bc51c2981ef4d",
+  "debian": "13.7 trixie",
+  "base_digest": "sha256:918311b7b6c4c6f68b232ba516584925f6c78ad82b6fd534b98979df6438e483",
+  "rootless": true,
+  "privileged": false,
+  "host_packages_changed": false,
+  "artifact_read_only": true,
+  "apt_exit_code": 100,
+  "dpkg_status": "install ok half-configured 0.1.0-1",
+  "postinst_exit_code": 3,
+  "failure": "xdg-desktop-menu: No writable system menu directory found.",
+  "root_cause": "/usr/share/desktop-directories absent in official minimal Debian; stock JDK21 postinst does not create it.",
+  "unpacked_native_smoke_exit_code": 0,
+  "qualification": "Original install failed; native execution after unpack is diagnostic only, not a successful installed-package qualification."
+}

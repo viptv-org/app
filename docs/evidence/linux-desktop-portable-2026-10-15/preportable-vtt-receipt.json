@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "launcher": "/mnt/ALPH/code/viptv-org/app/composeApp/build/compose/binaries/main/app/VIPTV-Experiment/bin/VIPTV-Experiment",
+  "fixture": "generated20s960x540H264/30fps +twoAAC tracks; no media network",
+  "subtitle_format": "vtt",
+  "media_sha256": "a759e55b02f3595273edf4cd43fd9ad56c4e3c8d66e81af54a027410ea6bb82c",
+  "subtitle_sha256": "8a80b9897dee07961bf36df925425ed3bf7b89dc184a726e7e1a1d290a6c6b4d",
+  "result": {
+    "phase": "complete",
+    "passed": true,
+    "presentation": "DesktopDrawCompleted",
+    "position_ms": 8101,
+    "subtitle_scale": 1.25,
+    "audio_tracks": 2,
+    "subtitle_selected": true,
+    "control_failure": false,
+    "diagnostics": [
+      "path=ComposeCanvas decoded=120 submitted=50 drawn=49 decode_fps=28.90173410404624 av_drift_ms=11 rebuffers=0 audio_underruns=0 hw=software seekable=true",
+      "path=ComposeCanvas decoded=384 submitted=66 drawn=65 decode_fps=251.21713729308667 av_drift_ms=23 rebuffers=0 audio_underruns=0 hw=software seekable=true",
+      "path=ComposeCanvas decoded=384 submitted=66 drawn=65 decode_fps=0.0 av_drift_ms=23 rebuffers=0 audio_underruns=0 hw=software seekable=true"
+    ]
+  },
+  "screenshots": {
+    "playing": "/tmp/viptv-desktop-caption-vtt-2026-10-15/playing.png",
+    "paused": "/tmp/viptv-desktop-caption-vtt-2026-10-15/paused.png",
+    "caption-off": "/tmp/viptv-desktop-caption-vtt-2026-10-15/caption-off.png",
+    "caption-on": "/tmp/viptv-desktop-caption-vtt-2026-10-15/caption-on.png",
+    "caption-sized": "/tmp/viptv-desktop-caption-vtt-2026-10-15/caption-sized.png"
+  },
+  "pixel_checks": {
+    "caption-off": {
+      "gold_pixels": 0,
+      "bounds": null
+    },
+    "caption-on": {
+      "gold_pixels": 5476,
+      "bounds": [
+        401,
+        677,
+        979,
+        715
+      ]
+    },
+    "caption-sized": {
+      "gold_pixels": 3705,
+      "bounds": [
+        449,
+        686,
+        930,
+        717
+      ]
+    }
+  },
+  "elapsed_seconds": 9.58,
+  "runtime_scope": "Linux bundled JVM under owned Xvfb/virtual silent audio; not physical display/audio/GPU/Windows/macOS acceptance",
+  "actual_desktop_ui_touched": false
+}

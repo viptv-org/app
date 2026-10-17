@@ -1,0 +1,24 @@
+{
+  "backend_sha256": "ce3219b6a2ac15a353bf7653e4f445410a4d6bd8c42da7dd0e6d23030e5da921",
+  "tls_validation": "system trust; no bypass",
+  "normal_backend": true,
+  "synthetic_accounts": true,
+  "browser_sizes": [
+    [
+      1440,
+      1000
+    ],
+    [
+      390,
+      844
+    ]
+  ],
+  "bundle_files": {
+    "4c75a65ea0d052b0033c.wasm": "bc3ba819545bbc1aae319a3c41c3f333bc55c10ec30586cef5273d558ac12a93",
+    "composeApp.js.map": "6c0d48be1b551a4eea0a3f419d237642ffe2bf7b4564b2db42df752702914f2e",
+    "composeApp.js.LICENSE.txt": "85a703daf937b69e6a45c75947dcea43f4026a835b84a7ea4300843217311baf",
+    "038b81db9c40989b0001.wasm": "8888eca6fff9a73ecdffba02379b52ba019b6f97c4006650b5124764cbf48fb6",
+    "composeApp.js": "f0749a2d0a4576b498b8cb840267d7ed4fa2b3ce16f99cbd2ef0d7bb31c1b406",
+    "index.html": "f43bb471f0393b962a4a3e397c3e4f0ff050406d9573abc892413e788e709e9b"
+  }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="RemotePlaybackTest[desktop]" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:18.123Z" hostname="vynxcos" time="0.519">
+  <properties/>
+  <testcase name="cancellingStartingLeaseStopsIt[desktop]" classname="org.viptv.app.RemotePlaybackTest" time="0.255"/>
+  <testcase name="gatewayLeaseKeepsControlAuthenticatedAndStops[desktop]" classname="org.viptv.app.RemotePlaybackTest" time="0.254"/>
+  <testcase name="audioSelectionCapabilityRequiresHostBootstrapAdvertisement[desktop]" classname="org.viptv.app.RemotePlaybackTest" time="0.002"/>
+  <testcase name="directPlaybackRenewsWithoutGatewayFrameAcknowledgment[desktop]" classname="org.viptv.app.RemotePlaybackTest" time="0.002"/>
+  <testcase name="subtitleContentRefreshesDeviceSessionAndRemainsRawVtt[desktop]" classname="org.viptv.app.RemotePlaybackTest" time="0.003"/>
+  <testcase name="cancellingBeforeStartReplyCancelsByRequestAuthority[desktop]" classname="org.viptv.app.RemotePlaybackTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

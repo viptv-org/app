@@ -1,0 +1,10 @@
+{
+  "apt-update": {
+    "exit_code": 0,
+    "seconds": 5.57
+  },
+  "apt-install-deb": {
+    "exit_code": 100,
+    "seconds": 36.27
+  }
+}

@@ -1,0 +1,7 @@
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=org.viptv.experiment/.PerformanceQaActivity (has extras) }
+Status: ok
+LaunchState: COLD
+Activity: org.viptv.experiment/.PerformanceQaActivity
+TotalTime: 691
+WaitTime: 731
+Complete

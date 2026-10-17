@@ -25,8 +25,9 @@ import org.viptv.app.theme.Palette
 internal fun MobileProfileEdit(
     profile: Profile?, count: Int, busy: Boolean, error: String?,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
-    setAvatar: (String, String) -> Unit, delete: (String) -> Unit, pinAvailable: Boolean = true,
+    setAvatar: (String, String) -> Unit, delete: (String) -> Unit, pinAvailable: Boolean = true, editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null,
 ) {
+    var guidance by remember(profile?.id) { mutableStateOf<Boolean?>(null) }
     var pickingAvatar by remember(profile?.id) { mutableStateOf(false) }
     var editingName by remember(profile?.id) { mutableStateOf(false) }
     var editingPin by remember(profile?.id) { mutableStateOf(false) }
@@ -49,6 +50,8 @@ internal fun MobileProfileEdit(
         Spacer(Modifier.height(28.dp))
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF1B1B1D))) {
             EditSettingRow("Name", profile?.name.orEmpty(), onClick = { editingName = true })
+            EditSettingRow("Audio & subtitles", "", onClick = { if (!busy) guidance = true })
+            EditSettingRow("Maturity rating", "", onClick = { if (!busy) guidance = false })
             if (pinAvailable) HorizontalDivider(color = Color.White.copy(alpha = .08f))
             if (pinAvailable) EditSettingRow("Profile lock", if (profile?.locked == true) "On" else "Off",
                 subtitle = "Ask for a PIN on this device", onClick = { editingPin = true })
@@ -61,16 +64,17 @@ internal fun MobileProfileEdit(
             }
         }
     }
-    if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }) { avatarId, pin ->
+    if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }, { avatarId, pin ->
         setAvatar(avatarId, pin); pickingAvatar = false
-    }
-    if (editingName) NameDialog(profile, busy, { editingName = false }) { name, pin ->
+    }, pinAvailable = pinAvailable)
+    if (editingName) NameDialog(profile, busy, pinAvailable, { editingName = false }) { name, pin ->
         rename(name, pin); editingName = false
     }
     if (editingPin) PinDialog(profile, busy, { editingPin = false }) { old, next ->
         setPin(old, next); editingPin = false
     }
-    if (confirmingDelete) DeleteProfileDialog(profile, busy, { confirmingDelete = false }) { pin ->
+    guidance?.let { ProfilePreferenceGuidance(it, pinAvailable, editingCurrent, profile?.name, { guidance = null }, openSettings) }
+    if (confirmingDelete) DeleteProfileDialog(profile, busy, pinAvailable, { confirmingDelete = false }) { pin ->
         delete(pin); confirmingDelete = false
     }
 }
@@ -90,15 +94,15 @@ private fun EditSettingRow(title: String, value: String, subtitle: String? = nul
 }
 
 @Composable
-private fun NameDialog(profile: Profile?, busy: Boolean, dismiss: () -> Unit, save: (String, String) -> Unit) {
+private fun NameDialog(profile: Profile?, busy: Boolean, pinAvailable: Boolean, dismiss: () -> Unit, save: (String, String) -> Unit) {
     var name by remember(profile?.id) { mutableStateOf(profile?.name.orEmpty()) }
     var pin by remember(profile?.id) { mutableStateOf("") }
     AlertDialog(onDismissRequest = dismiss, title = { Text("Name") }, text = {
         Column {
             OutlinedTextField(name, { if (it.length <= 64) name = it }, singleLine = true)
-            if (profile?.locked == true) PinField(pin) { pin = it }
+            if (profile.requiresLocalPin(pinAvailable)) PinField(pin) { pin = it }
         }
-    }, confirmButton = { TextButton(onClick = { save(name, pin) }, enabled = !busy && name.isNotBlank() && (profile?.locked != true || pin.length in 4..8)) { Text("Save") } },
+    }, confirmButton = { TextButton(onClick = { save(name, pin) }, enabled = !busy && name.isNotBlank() && (!profile.requiresLocalPin(pinAvailable) || pin.length in 4..8)) { Text("Save") } },
         dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } })
 }
 
@@ -117,14 +121,14 @@ private fun PinDialog(profile: Profile?, busy: Boolean, dismiss: () -> Unit, sav
 }
 
 @Composable
-private fun DeleteProfileDialog(profile: Profile?, busy: Boolean, dismiss: () -> Unit, delete: (String) -> Unit) {
+private fun DeleteProfileDialog(profile: Profile?, busy: Boolean, pinAvailable: Boolean, dismiss: () -> Unit, delete: (String) -> Unit) {
     var pin by remember(profile?.id) { mutableStateOf("") }
     AlertDialog(onDismissRequest = dismiss, title = { Text("Delete ${profile?.name}?") },
         text = { Column {
-            Text("This removes this profile’s history and add-on choices from this device.")
-            if (profile?.locked == true) PinField(pin) { pin = it }
+            Text("This removes this profile’s history and add-on choices.")
+            if (profile.requiresLocalPin(pinAvailable)) PinField(pin) { pin = it }
         } },
-        confirmButton = { TextButton(onClick = { delete(pin) }, enabled = !busy && (profile?.locked != true || pin.length in 4..8)) { Text("Delete") } },
+        confirmButton = { TextButton(onClick = { delete(pin) }, enabled = !busy && (!profile.requiresLocalPin(pinAvailable) || pin.length in 4..8)) { Text("Delete") } },
         dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } })
 }
 

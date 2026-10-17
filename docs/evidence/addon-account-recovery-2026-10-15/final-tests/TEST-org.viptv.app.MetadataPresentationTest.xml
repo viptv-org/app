@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="MetadataPresentationTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:05.733Z" hostname="vynxcos" time="0.001">
+  <properties/>
+  <testcase name="resumeTextDoesNotReplaceStructuredTitleMetadata[desktop]" classname="org.viptv.app.MetadataPresentationTest" time="0.001"/>
+  <testcase name="oldAddonMetadataRemainsVisibleWhenTypedFieldsAreAbsent[desktop]" classname="org.viptv.app.MetadataPresentationTest" time="0.0"/>
+  <testcase name="animeCategoryDoesNotChangeEpisodePlaybackIdentityOrRankOrder[desktop]" classname="org.viptv.app.MetadataPresentationTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

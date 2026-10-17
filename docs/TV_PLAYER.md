@@ -1,9 +1,13 @@
 # Android TV player checkpoint
 
+Android provider subtitles now preserve the primary HLS source, title clock and audio selection. The former rolling-window reset edge is resolved in source and isolated Android qualification; see [Android sidecar playback](ANDROID_SIDECAR_PLAYBACK.md) for evidence and physical-device qualification limits.
+
+The real Android app/controller recreation, Home/return, original clock and initial zero/nonzero/live HLS behavior now have [isolated runtime evidence](ANDROID_LIFECYCLE_PLAYBACK.md). The reproduced foreground pause race and on-demand startup jump are fixed; process death and physical-device endurance remain separate qualification.
+
 The TV player has dedicated controls, buffering, seek preview, audio/subtitle,
 intro-skip, next-episode and source-error surfaces based on the supplied `Tv3Player`
-boards. Native playback continues to use KitePlayer; web playback uses its existing
-browser adapter. Renderer and interaction logic live in separate small files.
+boards. Android uses Media3, desktop uses KitePlayer, and web uses its browser
+adapter. Renderer and interaction logic live in separate small files.
 
 Remote Left/Right previews a seek. OK commits it; Back cancels it. Up moves from
 the timeline to the control row. Back dismisses a sheet or hides controls before

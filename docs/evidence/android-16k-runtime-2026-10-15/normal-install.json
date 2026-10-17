@@ -1,0 +1,10 @@
+{
+  "avd": "viptv-16k-isolated",
+  "page_size": 16384,
+  "fingerprint": "google/sdk_google_atv64_amati_x86_64_16k/emu64xa16k:16/BT2A.260319.001/15058170:user/dev-keys",
+  "linker_compat": "false",
+  "package_compat_disabled": "true",
+  "apk_sha256": "3b047c819950adf15ac33563033da4c9147ca734fa5387b47f567a971fae56a6",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "launch": "Starting: Intent { cmp=org.viptv.experiment/.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: org.viptv.experiment/.MainActivity\nTotalTime: 1349\nWaitTime: 1393\nComplete\n"
+}

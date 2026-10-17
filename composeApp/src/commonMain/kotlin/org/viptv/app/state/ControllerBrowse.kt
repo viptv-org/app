@@ -40,7 +40,16 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
         mutable.value = mutable.value.copy(browseQuery = query, browseControls = scoped, browseCards = emptyList(), browseNext = null, error = scoped.discovery.message ?: "Configure a browsing integration for this profile.")
         return
     }
-    val selected = query.withDefaultCatalog(scoped)
+    // Simkl advertises only monthly files for a selected genre. A prior Today/
+    // This week choice cannot remain on the request after the genre changes.
+    val scopedQuery = if (scoped.provider_id == "simkl") {
+        val timeframe = scoped.controls.find { it.id == "timeframe" }
+        val priorTimeframe = query.extras["timeframe"]
+        if (priorTimeframe != null && timeframe != null && timeframe.choices.none { it.value == priorTimeframe })
+            query.copy(extras = query.extras - "timeframe" + listOfNotNull(timeframe.choices.firstOrNull()?.let { "timeframe" to it.value }).toMap())
+        else query
+    } else query
+    val selected = scopedQuery.withDefaultCatalog(scoped)
     mutable.value = mutable.value.copy(browseQuery = selected, browseControls = scoped,
         browseCards = if (append) mutable.value.browseCards else emptyList(), browseNext = if (append) mutable.value.browseNext else null)
     val required = scoped.missingRequired(selected)
@@ -50,6 +59,6 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
     }
     val page = local?.browse(profile, selected) ?: requireNotNull(connection).browse(selected, scoped)
     mutable.value = mutable.value.copy(browseQuery = selected, browseControls = scoped,
-        browseCards = ((if (append) mutable.value.browseCards else emptyList()) + page.cards).distinctBy { it.provider_id to it.identity },
+        browseCards = ((if (append) mutable.value.browseCards else emptyList()) + page.cards).distinctBy(::cardLookupKey),
         browseNext = page.next_cursor)
 }

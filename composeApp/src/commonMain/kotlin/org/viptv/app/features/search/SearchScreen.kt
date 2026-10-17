@@ -21,23 +21,20 @@ import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.app.connection.SearchResultRow
 
 @Composable
 fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean,
-    query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false, editQuery: ((String) -> String) -> Unit) {
+    query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false, editQuery: ((String) -> String) -> Unit,
+    searchRows: List<SearchResultRow> = emptyList()) {
     if (television) {
-        TvSearchScreen(term, results, addons, busy, error, query, open, editQuery)
+        TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows)
         return
     }
     var filter by remember { mutableStateOf("All") }
-    val unique = results.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
-    val visible = when (filter) {
-        "Movies" -> unique.filter { it.searchCategory() == "movie" }
-        "Series" -> unique.filter { it.searchCategory() == "series" }
-        "Anime" -> unique.filter { it.searchCategory() == "anime" }
-        "Channels" -> unique.filter { it.identity.kind in listOf("channel", "tv") }
-        else -> unique
-    }
+    val visible = results.distinctBy(::searchCardKey).filter { it.matchesSearchFilter(filter) }
+    val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows, filter) else searchGroups(visible, addons)
+    val hasResults = if (searchRows.isNotEmpty()) groups.any { it.cards.isNotEmpty() } else visible.isNotEmpty()
     BoxWithConstraints(Modifier.fillMaxSize()) {
     val phone = maxWidth < 640.dp
     Column(Modifier.fillMaxSize().imePadding().padding(horizontal = if (phone) 16.dp else 40.dp, vertical = if (phone) 8.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp)) {
@@ -54,18 +51,17 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         error?.let { Text(it, color = Palette.danger) }
-        if (!busy && term.isNotBlank() && visible.isEmpty() && error == null) Text("No matches. Try another search.", color = Palette.secondary)
-        if (phone && term.isNotBlank() && visible.isNotEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        val groups = searchGroups(visible, addons)
-        if (groups.size > 1) {
-            val labels=addons.associate { it.id to it.name }
+        if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)
+        if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        if (searchRows.isNotEmpty() || groups.size > 1) {
             LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(group.label, style = MaterialTheme.typography.titleMedium)
+                            (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, color = Palette.secondary) }
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                rowItems(group.cards, key = { it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = 160, portrait = true, open = open) }
+                                rowItems(group.cards, key = ::searchCardKey) { MediaCard(it, width = 160, portrait = true, showLabels = true, open = open) }
                             }
                         }
                     }
@@ -73,7 +69,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             }
         } else {
             LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 24.dp)) {
-                items(visible, key = { it.provider_id + ":" + it.identity.kind + ":" + it.identity.id }) { MediaCard(it, width = if (phone) 112 else 172, portrait = true, showLabels = true, open = open) }
+                items(visible, key = ::searchCardKey) { MediaCard(it, width = if (phone) 112 else 172, portrait = true, showLabels = true, open = open) }
             }
         }
     }

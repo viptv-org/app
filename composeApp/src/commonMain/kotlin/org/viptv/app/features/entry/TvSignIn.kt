@@ -25,7 +25,7 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         when (step) {
-            TvSignInStep.Welcome -> TvWelcome(scale, { step = TvSignInStep.Choice }, local)
+            TvSignInStep.Welcome -> TvWelcome(scale, { step = TvSignInStep.Choice }, local, error)
             TvSignInStep.Choice -> TvSignInChoice(scale, local) { step = it }
             TvSignInStep.Password -> TvPasswordPanel(server, busy, error, scale, connect, { step = TvSignInStep.Email }, serverChanged = { server = it })
             TvSignInStep.Email -> TvEmailSignIn(scale, { step = TvSignInStep.Phone }, initialEmail, initialEmail.isNotEmpty())

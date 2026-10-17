@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ProfileAdministrationUiTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T13:49:56.826Z" hostname="vynxcos" time="1.43">
+  <properties/>
+  <testcase name="otherProfileLanguageGuidanceUsesSelectionAndNeverPromisesMenuLocalization[desktop]" classname="org.viptv.app.ProfileAdministrationUiTest" time="0.299"/>
+  <testcase name="remoteParentNameAndAvatarEditsNeverAskForALocalPin[desktop]" classname="org.viptv.app.ProfileAdministrationUiTest" time="0.604"/>
+  <testcase name="actualLocalPinRemainsRequiredAndRemotePolicyCannotBecomeLocalLock[desktop]" classname="org.viptv.app.ProfileAdministrationUiTest" time="0.216"/>
+  <testcase name="existingTvSettingsHonorsAudioSectionEntry[desktop]" classname="org.viptv.app.ProfileAdministrationUiTest" time="0.31"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

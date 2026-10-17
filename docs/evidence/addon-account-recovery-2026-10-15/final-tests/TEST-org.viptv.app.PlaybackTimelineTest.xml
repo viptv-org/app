@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="PlaybackTimelineTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:17.308Z" hostname="vynxcos" time="0.0">
+  <properties/>
+  <testcase name="rollingWindowAndGatewaySeekHaveIndependentOrigins[desktop]" classname="org.viptv.app.PlaybackTimelineTest" time="0.0"/>
+  <testcase name="rollingHlsWindowPreservesFortyMinutePositionAndTrackingClock[desktop]" classname="org.viptv.app.PlaybackTimelineTest" time="0.0"/>
+  <testcase name="gatewayCutPreservesOriginalHistoryClockAndFullDuration[desktop]" classname="org.viptv.app.PlaybackTimelineTest" time="0.0"/>
+  <testcase name="standaloneAndDirectPlaybackKeepTheirOwnClock[desktop]" classname="org.viptv.app.PlaybackTimelineTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -26,11 +26,11 @@ class AccountDevicesTest {
             assertNull(request.headers[HttpHeaders.Authorization])
             val body = when (request.url.encodedPath) {
                 "/api/auth/login" -> """{"csrf_token":"fixture-csrf"}"""
-                "/api/v3/bootstrap" -> """{"identity":{"profiles":[],"profile_id":null},"home":null}"""
-                "/api/v3/account/devices" -> if (request.method == HttpMethod.Get) accountFixture else {
+                "/api/bootstrap" -> """{"identity":{"profiles":[],"profile_id":null},"home":null}"""
+                "/api/account/devices" -> if (request.method == HttpMethod.Get) accountFixture else {
                     assertEquals("fixture-csrf",request.headers["x-csrf-token"]); """{"signed_out":true}"""
                 }
-                "/api/v3/account/devices/other-family" -> {
+                "/api/account/devices/other-family" -> {
                     assertEquals(HttpMethod.Delete,request.method)
                     assertEquals("fixture-csrf",request.headers["x-csrf-token"]); """{"signed_out":true}"""
                 }
@@ -45,9 +45,9 @@ class AccountDevicesTest {
             assertEquals("viewer",data.account.username)
             assertTrue(data.devices.single { it.current }.current)
             assertFalse(data.devices.single { it.current }.can_sign_out)
-            assertEquals(1,calls.count { it.first == "/api/v3/account/devices" })
+            assertEquals(1,calls.count { it.first == "/api/account/devices" })
             remote.signOutDevice("other-family"); remote.signOutAllDevices()
-            assertEquals(listOf(HttpMethod.Get,HttpMethod.Delete),calls.filter { it.first == "/api/v3/account/devices" }.map { it.second })
+            assertEquals(listOf(HttpMethod.Get,HttpMethod.Delete),calls.filter { it.first == "/api/account/devices" }.map { it.second })
         } finally { remote.close() }
     }
 
@@ -90,7 +90,7 @@ class AccountDevicesTest {
         var requests = 0
         val remote = RemoteConnection("https://watch.example",store,HttpClient(MockEngine { request ->
             requests++
-            assertEquals("/api/v3/account/devices/other-family",request.url.encodedPath)
+            assertEquals("/api/account/devices/other-family",request.url.encodedPath)
             assertEquals(HttpMethod.Delete,request.method)
             respond("""{"signed_out":true}""",headers = headersOf(HttpHeaders.ContentType,"application/json"))
         }),browserMode = true)

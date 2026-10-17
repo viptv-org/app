@@ -1,0 +1,97 @@
+{
+  "elapsed_seconds": 30.028,
+  "titles": 12,
+  "done": 10,
+  "streams": 703,
+  "events": 40,
+  "provider_counts": {
+    "iptv": 0,
+    "Torrentio": 294,
+    "Torrentio TB": 307,
+    "PenguPlay": 102
+  },
+  "errors": [
+    {
+      "title": "Dark Matter",
+      "provider": "PenguPlay",
+      "error_code": "source_format_unsupported",
+      "error": "This source format is not supported. Choose another source."
+    },
+    {
+      "title": "Marshals",
+      "provider": "PenguPlay",
+      "error_code": "source_format_unsupported",
+      "error": "This source format is not supported. Choose another source."
+    },
+    {
+      "title": "Ted Lasso",
+      "provider": "PenguPlay",
+      "error_code": "source_format_unsupported",
+      "error": "This source format is not supported. Choose another source."
+    },
+    {
+      "title": "One Piece",
+      "provider": "PenguPlay",
+      "error_code": "addon_timeout",
+      "error": "The addon took too long to respond. Try again or choose another addon."
+    },
+    {
+      "title": "Inception",
+      "provider": "PenguPlay",
+      "error_code": "addon_dns_unavailable",
+      "error": "The addon address could not be resolved. Check its address or try again later."
+    },
+    {
+      "title": "Inception",
+      "start_error": "Verified source mapping is unavailable for this title or episode"
+    },
+    {
+      "title": "Inception: The Cobol Job",
+      "provider": "PenguPlay",
+      "error_code": "addon_dns_unavailable",
+      "error": "The addon address could not be resolved. Check its address or try again later."
+    },
+    {
+      "title": "Inception: Music from the Motion Picture",
+      "start_error": "Verified source mapping is unavailable for this title or episode"
+    },
+    {
+      "title": "The Crack: Inception",
+      "provider": "PenguPlay",
+      "error_code": "addon_timeout",
+      "error": "The addon took too long to respond. Try again or choose another addon."
+    },
+    {
+      "title": "Insha Allah: An inception at closure",
+      "provider": "PenguPlay",
+      "error_code": "addon_unavailable",
+      "error": "The addon could not return sources. Try again or choose another addon."
+    },
+    {
+      "title": "WWA The Inception",
+      "provider": "PenguPlay",
+      "error_code": "addon_dns_unavailable",
+      "error": "The addon address could not be resolved. Check its address or try again later."
+    },
+    {
+      "title": "Bikini Inception",
+      "provider": "PenguPlay",
+      "error_code": "addon_dns_unavailable",
+      "error": "The addon address could not be resolved. Check its address or try again later."
+    }
+  ],
+  "owned_job_cleanup_statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    null,
+    200,
+    null,
+    200,
+    200,
+    200,
+    200
+  ]
+}

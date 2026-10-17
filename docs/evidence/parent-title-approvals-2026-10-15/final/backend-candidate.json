@@ -1,0 +1,22 @@
+{
+  "normal_release": "api-normal-9f625d682fef",
+  "sha256": "9f625d682fef9df9c0be603831d59dc66a6bd162ef899e777c7e3840487a36ed",
+  "normal_tests": {
+    "passed": 503,
+    "ignored": 8,
+    "failed": 0,
+    "log": "/tmp/viptv-origin-qualified-normal.log"
+  },
+  "sdk_tests": {
+    "passed": 505,
+    "ignored": 9,
+    "failed": 0,
+    "log": "/tmp/viptv-origin-qualified-sdk.log"
+  },
+  "test_binary": "backend-tests-9768126a3f9f",
+  "test_binary_sha256": "9768126a3f9f40c6be39820ce443a20bfb7044aacb319ad75bc888d9b3fd2acc",
+  "built_at": 1792071710,
+  "deployed": false,
+  "source_state": "Uncommitted experimental workspace overlay; exact immutable artifacts qualified, not deployed",
+  "screenshot_sha256": "127a96948e569bb92d3304cfa9f04cc1733b6e894325108d8898db646bb97a3b"
+}

@@ -1,0 +1,28 @@
+{"write-local": {"exit_code": 0, "stdout": ["local_write_read_passed", "elapsed_ms:372"], "stderr": [], "seconds": 0.474}}
+{"read-local": {"exit_code": 0, "stdout": ["local_fresh_process_read_passed", "elapsed_ms:292"], "stderr": [], "seconds": 0.386}}
+{"legacy-remote": {"exit_code": 0, "stdout": ["legacy_remote_save_read_replace_clear_passed", "elapsed_ms:385"], "stderr": [], "seconds": 0.464}}
+{"write-local": {"exit_code": 0, "stdout": ["local_write_read_passed", "elapsed_ms:307"], "stderr": [], "seconds": 0.388}}
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activating service name='org.gnome.keyring.SystemPrompter' requested by ':1.2' (uid=1000 pid=3039778 comm="gnome-keyring-daemon --foreground --unlock --compo")
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activating service name='org.a11y.Bus' requested by ':1.30' (uid=1000 pid=3040059 comm="/usr/lib/gcr-prompter")
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.32' (uid=1000 pid=3040068 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.32' (uid=1000 pid=3040068 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Successfully activated service 'org.gnome.keyring.SystemPrompter'
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activating service name='org.gtk.vfs.Daemon' requested by ':1.33' (uid=1000 pid=3040059 comm="/usr/lib/gcr-prompter")
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Successfully activated service 'org.gtk.vfs.Daemon'
+
+** (gcr-prompter:3040059): WARNING **: 15:04:19.060: AT-SPI: Could not obtain desktop path or name
+
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.32' (uid=1000 pid=3040068 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+
+** (gcr-prompter:3040059): WARNING **: 15:04:19.061: atk-bridge: GetRegisteredEvents returned message with unknown signature
+
+** (gcr-prompter:3040059): WARNING **: 15:04:19.061: atk-bridge: get_device_events_reply: unknown signature
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Activating service name='org.gtk.vfs.Metadata' requested by ':1.33' (uid=1000 pid=3040059 comm="/usr/lib/gcr-prompter")
+dbus-daemon[3039760]: [session uid=1000 pid=3039760 pidfd=5] Successfully activated service 'org.gtk.vfs.Metadata'
+{"cancel-startup": {"exit_code": 0, "stdout": ["startup_vault_wait_active:true", "disconnect_ms:5", "disconnect_screen:Connect", "disconnect_starting:false", "canceled_restore_job_completed:false", "new_local_choice_busy:true", "new_local_choice_factory_calls:0", "private_profiles_after_cancel:0", "elapsed_ms:2907"], "stderr": [], "seconds": 3.3}}
+{"read": {"exit_code": 0, "stdout": ["native_vault_call_started", "vault_call_failed:uniffi.viptv_core.CoreException$Bridge", "elapsed_ms:265"], "stderr": [], "seconds": 0.377}}
+A connection to the bus can't be made

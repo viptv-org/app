@@ -1,0 +1,37 @@
+{
+  "recorded_at_utc": "2026-10-15T13:53:54.368583+00:00",
+  "desktop": {
+    "suites": 83,
+    "tests": 236,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "production_wasm": "passed; isolated output only",
+  "android_release_assembly": "passed",
+  "build_seconds": 158,
+  "workers": 1,
+  "engine_builds_skipped": "All four native binaries already rebuilt and independently audited; no native source changed during final app gate.",
+  "protected_manual_wasm": {
+    "files": 109,
+    "all_hashes_equal_to_before": true
+  },
+  "physical_device_actions": false,
+  "deployment": false,
+  "backend": {
+    "normal_passed": 503,
+    "normal_existing_ignored": 8,
+    "sdk_passed": 505,
+    "sdk_existing_ignored": 9,
+    "failures": 0
+  },
+  "command": "./gradlew :composeApp:desktopTest :composeApp:wasmJsBrowserDistribution :androidApp:assembleRelease --init-script /tmp/viptv-isolated-web.gradle --max-workers=1 -x :composeApp:buildDesktopEngine -x :androidApp:buildAndroidEngine",
+  "environment": {
+    "JAVA_HOME": "/tmp/viptv-temurin21/jdk-21.0.12.1+1",
+    "VIPTV_WEB_OUTPUT": "/tmp/viptv-kmp-browser-completion-OaZSX6/dist",
+    "VIPTV_PROFILE_CAPTURE_DIR": "/tmp/viptv-profile-administration-qa"
+  },
+  "apk_sha256": "3b047c819950adf15ac33563033da4c9147ca734fa5387b47f567a971fae56a6",
+  "immutable_apk": "artifacts/android-release-2026-10-15/abi3-3b047c819950/viptv-android-release-local.apk",
+  "apk_audit": "docs/evidence/android-release-abi3-2026-10-15.json"
+}

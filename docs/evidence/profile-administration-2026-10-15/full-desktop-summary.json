@@ -1,0 +1,6 @@
+{
+  "tests": 236,
+  "failures": 0,
+  "skipped": 0,
+  "note": "Final shared gate desktop test phase; production Wasm and release assembly recorded separately by root."
+}

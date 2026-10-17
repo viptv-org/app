@@ -14,7 +14,8 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, volume: Float,
-    setVolume: (Float) -> Unit, speed: Double, setSpeed: (Double) -> Unit, close: () -> Unit, tracks: () -> Unit, seekEnabled: Boolean = true) {
+    setVolume: (Float) -> Unit, speed: Double, setSpeed: (Double) -> Unit, close: () -> Unit, tracks: () -> Unit, seekEnabled: Boolean = true,
+    streams: (() -> Unit)? = null, streamLabel: String? = null) {
     var speeds by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         IconButton(onClick = toggle) {
@@ -28,6 +29,11 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
         }
         PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
         Spacer(Modifier.weight(1f))
+        streams?.let { streamsAction ->
+            TextButton(onClick = streamsAction) {
+                Icon(Lucide.Layers, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(streamLabel ?: "Streams")
+            }
+        }
         IconButton(onClick = tracks) { Icon(Lucide.Captions, "Audio and subtitles", Modifier.size(22.dp)) }
         Box {
             TextButton(onClick = { speeds = true }) { Text(playbackSpeed(speed)) }

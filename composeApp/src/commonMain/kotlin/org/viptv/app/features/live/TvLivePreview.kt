@@ -21,10 +21,11 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvMediaBadge
 
 @Composable
-internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, watch: () -> Unit) {
+internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, favorite: (() -> Unit)? = null, watch: () -> Unit) {
     Column(Modifier.offset(96.dp * scale, (-2).dp * scale).width(820.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
             Text("LIVE", Modifier.background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
@@ -45,6 +46,11 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             it.description?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
                 color = Palette.body, maxLines = 2) }
         }
+    }
+    if (favorite != null) TvAction(Modifier.offset(96.dp * scale, 306.dp * scale).height(52.dp * scale), scale,
+        activate = favorite, enabled = !channel.favoritePending, contentPadding = PaddingValues(horizontal = 22.dp * scale)) {
+        Icon(Lucide.Star, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale))
+        Text(if (channel.favorite) "Remove favourite" else "Favourite channel", color = it, fontSize = (22 * scale).sp)
     }
     var focused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(12.dp * scale)

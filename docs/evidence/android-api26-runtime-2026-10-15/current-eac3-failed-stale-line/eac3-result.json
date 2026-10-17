@@ -1,0 +1,12 @@
+{
+  "avd": "viptv-api26-isolated",
+  "page_size": null,
+  "fixture": "synthetic H264/EAC3 Matroska,320x180,stereo48kHz",
+  "first_frame": false,
+  "ffmpeg_available": false,
+  "ffmpeg_decoder": [],
+  "max_position_ms": 24366,
+  "wall_ms": 300,
+  "failed": false,
+  "passed": false
+}

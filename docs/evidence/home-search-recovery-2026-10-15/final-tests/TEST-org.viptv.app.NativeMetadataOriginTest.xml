@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="NativeMetadataOriginTest[desktop]" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:08.907Z" hostname="vynxcos" time="0.014">
+  <properties/>
+  <testcase name="identicalProviderIdsKeepSeparateCachePagesAndDisabledOriginDoesNotFallThrough[desktop]" classname="org.viptv.app.NativeMetadataOriginTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

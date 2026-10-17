@@ -1,0 +1,27 @@
+{
+  "focused_tests_passed": 9,
+  "new_regressions": [
+    "Initial READY shelf focus without hero; actual Up key reaches visible navigation; recomposition does not steal focus back",
+    "Back callback reaches visible navigation",
+    "Leading PENDING/FAILED rows do not prevent lazy READY target attachment/focus"
+  ],
+  "source_sha256": {
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeScreen.kt": "41290248a183f28c5f1b3ce3f231c14bd30dc286a03b6b5100e5c274c65db203",
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeShelf.kt": "d820f248ab2a21397591239075bf0d568fb3e3ec815671bf7ba7f60de8f38cbd",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/HomeRecoveryUiTest.kt": "fc478ede1cd047d6225dc398d683a54cb7aa0a42bb9b87f95207fda0847aec2a"
+  },
+  "focus_strategy": "Profile-scoped one-time claim; wait for placed lazy/nav target; request Keyboard input mode; guarded frame retry bounded to1.5seconds; no browsing-triggered initial focus effect",
+  "gate": "desktopTest HomeRecoveryUiTest only; max-workers1; buildDesktopEngine excluded",
+  "seconds": 52,
+  "physical_tv_or_os_window_input_qualified": false,
+  "served_wasm_distribution_built_or_changed": false,
+  "native_api_or_business_logic_changed": false,
+  "latest_focused_gate_seconds": 14,
+  "scene_owner_thread": "AWT EDT for scene construction, render, key input, assertions and launched UI work",
+  "test_waits": "Bounded semantic focus waits with monotonic frame times; suspend delay yields the EDT",
+  "multithreaded_snapshot_observer_errors": false,
+  "prior_full_suite_failure_preserved": "full-gate-before-thread-fix/home-test.xml",
+  "final_full_suite_tests_passed": 287,
+  "final_full_suite_background_snapshot_errors": false,
+  "final_navigation_capture": "../linux-final-287-2026-10-15/tv-home-no-hero-navigation.png"
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="HomeRefreshRecoveryTest[desktop]" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:57:03.941Z" hostname="vynxcos" time="0.011">
+  <properties/>
+  <testcase name="canceledRefreshCannotPublishLateHomeIntoAnotherSession[desktop]" classname="org.viptv.app.HomeRefreshRecoveryTest" time="0.004"/>
+  <testcase name="failedRefreshKeepsCachedHomeAndBusyUntilProviderFinishesThenRetryReplacesIt[desktop]" classname="org.viptv.app.HomeRefreshRecoveryTest" time="0.004"/>
+  <testcase name="navigationDuringRefreshKeepsDestinationAndSearchDraft[desktop]" classname="org.viptv.app.HomeRefreshRecoveryTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

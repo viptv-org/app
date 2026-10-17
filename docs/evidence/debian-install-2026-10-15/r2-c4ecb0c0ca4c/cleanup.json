@@ -1,0 +1,67 @@
+{
+  "records": [
+    {
+      "action": "stop-own-user-unit",
+      "unit": "viptv-debian-r2-probes-20261015.service",
+      "exit_code": 5,
+      "stderr": "Failed to stop viptv-debian-r2-probes-20261015.service: Unit viptv-debian-r2-probes-20261015.service not loaded.\n"
+    },
+    {
+      "action": "stop-own-user-unit",
+      "unit": "viptv-debian-r2-qualification-20261015.service",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "action": "remove-own-container",
+      "id": "32046a2cb23528fefb175c02cac79d751e7640f7f1cf95c8af4e2ad47a27e005",
+      "exit_code": 0,
+      "stdout": "32046a2cb23528fefb175c02cac79d751e7640f7f1cf95c8af4e2ad47a27e005\n",
+      "stderr": ""
+    },
+    {
+      "action": "remove-own-container",
+      "id": "59e8f5e3801688eafdc2e8d0296d30a75d68bb9eeb43a7d216eac3b76badbbd3",
+      "exit_code": 0,
+      "stdout": "59e8f5e3801688eafdc2e8d0296d30a75d68bb9eeb43a7d216eac3b76badbbd3\n",
+      "stderr": ""
+    },
+    {
+      "action": "remove-own-container",
+      "id": "viptv-debian-r2-fresh-20261015",
+      "exit_code": 0,
+      "stdout": "viptv-debian-r2-fresh-20261015\n",
+      "stderr": ""
+    },
+    {
+      "action": "own-store-container-inventory",
+      "exit_code": 0,
+      "containers": []
+    },
+    {
+      "action": "own-unit-active-state",
+      "unit": "viptv-debian-r2-probes-20261015.service",
+      "state": "inactive",
+      "exit_code": 4
+    },
+    {
+      "action": "own-unit-active-state",
+      "unit": "viptv-debian-r2-qualification-20261015.service",
+      "state": "inactive",
+      "exit_code": 4
+    },
+    {
+      "action": "terminate-exact-owned-rootless-pause",
+      "pid": 3072723,
+      "pidfile": "/tmp/viptv-debian-install-2026-10-15/runtime/libpod/tmp/pause.pid",
+      "verified_cmdline": "catatonit -P",
+      "verified_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/user.slice/podman-pause-839f900e.scope",
+      "exists_after": false
+    }
+  ],
+  "host_package_installation": false,
+  "host_manual_services_touched": false,
+  "user_default_containers_touched": false,
+  "host_display_or_wallet_accessed": false,
+  "isolated_cached_image_retained": true
+}

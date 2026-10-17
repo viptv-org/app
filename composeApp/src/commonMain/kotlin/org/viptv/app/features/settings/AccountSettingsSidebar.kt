@@ -21,7 +21,7 @@ internal fun AccountSettingsSidebar(selected: String, profiles: () -> Unit, sele
         item { Text("Account", Modifier.padding(start = 12.dp, bottom = 14.dp), fontSize = 26.sp, lineHeight = 30.sp,
             letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold) }
         val entries = listOf("Account" to Lucide.UserRound, "Profiles" to Lucide.UsersRound, "Devices" to Lucide.Monitor,
-            "Add-ons" to Lucide.Puzzle, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions)
+            "Parental controls" to Lucide.LockKeyhole, "Add-ons" to Lucide.Puzzle, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions)
         entries.forEach { (label, icon) -> item(key = label) {
             Surface(color = if (selected == label) Palette.text.copy(alpha = .1f) else Palette.background,
                 shape = RoundedCornerShape(8.dp)) {

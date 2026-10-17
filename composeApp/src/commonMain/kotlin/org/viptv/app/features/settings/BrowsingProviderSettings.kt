@@ -16,7 +16,7 @@ internal fun BrowsingProviderSettings(configuration: BrowsingConfiguration?, plu
         + configuration.profile.browsing_plugin).distinct()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Metadata provider", style = MaterialTheme.typography.titleLarge)
-        Text("This profile uses one provider for Home, search and title details. Stream and subtitle add-ons can work together.", color = Palette.secondary)
+        Text("This profile uses one provider for Home and browsing. Search uses all enabled search integrations. Stream and subtitle add-ons can work together.", color = Palette.secondary)
         choices.forEach { plugin ->
             val name = plugins.find { it.id == plugin }?.name ?: plugin.replaceFirstChar(Char::uppercaseChar)
             val selected = configuration.profile.browsing_plugin == plugin

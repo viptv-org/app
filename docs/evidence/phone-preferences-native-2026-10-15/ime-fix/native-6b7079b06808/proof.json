@@ -1,0 +1,106 @@
+{
+  "status": "passed on actual API35 native normal release",
+  "apk": "/mnt/ALPH/code/viptv-org/app/artifacts/android-release-2026-10-15/local-startup-6b7079b06808/viptv-android-release-local.apk",
+  "apk_sha256": "6b7079b06808580c94cae8b9d0cdd8093bc79a7b27e96129d6c1cb817c0baba7",
+  "fixture": {
+    "root": "/tmp/viptv-phone-preferences-jvx0yqu1",
+    "avd_name": "viptv-phone-prefs-jvx0yqu1",
+    "serial": "emulator-5590",
+    "console_port": 5590,
+    "api": 35,
+    "ram_mib": 2560,
+    "cores": 2,
+    "avd_home": "/mnt/ALPH/.viptv-qa/phone-preferences-jvx0yqu1/avds",
+    "display": "720x1600 density280; bounded portrait phone fixture",
+    "avd_storage_reason": "Disk-backed private AVD avoids consuming shared /tmp tmpfs memory",
+    "observed_minimum_phone_ram_mib": 2560,
+    "requested_ram_mib": 1536,
+    "first_launch_stopped_for_resource_coordination": true
+  },
+  "scope": "Only private local Default profile. No real accounts/providers/manual services/default Wasm output/user emulator5554/physical TV changes.",
+  "checks": [
+    "audio-language-ime-visible",
+    "subtitle-language-ime-visible",
+    "custom-colour-ime-visible",
+    "save-reopen-preserves-all-eight-fields",
+    "cold launch restores Local to Profiles without selecting a profile automatically",
+    "explicit Default selection retains all preferences",
+    "Leave Cancel retains Local",
+    "confirmed Leave clears remembered Local across force-stop/relaunch",
+    "preferences and one native profile remain after Leave"
+  ],
+  "ime_observation": {
+    "before_b439": "IMEtop1000, action text1092..1127 fully obscured",
+    "after_6b7079": "IMEtop1000, complete clickable language actions874..958 and custom field657..832; actions/field stay visible with keyboard open",
+    "keyboard_dismissal_workaround_used": false
+  },
+  "native_preferences_after_save": {
+    "preferred_audio_language": "fr-CA",
+    "preferred_subtitle_language": "pt-BR",
+    "subtitles_enabled": false,
+    "source_selection": "best",
+    "max_quality_height": 1080,
+    "subtitle_font_scale": 1.25,
+    "subtitle_text_color": "#1A2B3C",
+    "subtitle_background_color": "#80445566"
+  },
+  "revision_after_save": 3,
+  "cold_local": {
+    "cold_launch_restores_local_mode_to_profiles": true,
+    "requires_explicit_profile_selection": true,
+    "real_account_used": false,
+    "preferences_unchanged_after_restart": [
+      {
+        "revision": 3,
+        "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+      }
+    ],
+    "ui_verified": [
+      "Best match",
+      "1080p",
+      "fr-CA",
+      "pt-BR"
+    ]
+  },
+  "leave_local": {
+    "leave_cancel_retains_local_session": true,
+    "confirmed_leave_returns_entry": true,
+    "cold_launch_stays_entry_after_leave": true,
+    "profiles_and_preferences_preserved": true,
+    "native_preferences": [
+      {
+        "revision": 3,
+        "value": "{\"preferred_audio_language\":\"fr-CA\",\"preferred_subtitle_language\":\"pt-BR\",\"subtitles_enabled\":false,\"source_selection\":\"best\",\"max_quality_height\":1080,\"subtitle_font_scale\":1.25,\"subtitle_text_color\":\"#1A2B3C\",\"subtitle_background_color\":\"#80445566\"}"
+      }
+    ],
+    "profiles_remaining": 1
+  },
+  "visual_inspection": "All11 final native captures inspected. Single headings and normal system insets verified. This does not qualify physical-phone hardware, landscape, decoder playback, or full visual-board parity.",
+  "source_sha256": {
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhonePreferenceDialog.kt": "c3ec2272c56af9abaf7b77717bc3cb30dae16514c554b29e5add044b841912f8",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/PreferenceSettingsUiTest.kt": "caee96c0d31dea58439e5167541c2d9f0d79ba25c2600009fe168d76080f969d"
+  },
+  "files_sha256": {
+    "native-ime-proof.json": "db1f8413b954a891fed1e1d43076dc8c5ad0fd8f0ecd2e425300df3ee9dcb6a2",
+    "cold-local-entry.json": "1d49b7fa6a8cb241aac932460ce299b0b61ede20f402fa1afe86e1b7c912a629",
+    "cold-local-proof.json": "45e63ebe4eef54532367431fcc6566ed51e105f8b34fa36d176dd39e2b7f365f",
+    "leave-local-proof.json": "dfffd0327aca3d91a515f2f264e8fe65ed5e469b33444f99247c34df4fc9e43d",
+    "audio-language-ime-visible.json": "db56efab1c2d5c6f0fe9ae4c72fee914cf9056500b734f2291c01b4b06d4b9d2",
+    "subtitle-language-ime-visible.json": "48ce7f3a92544950b623e2e39cd93eb8b5c15f80c46a91845130eb18b7c8b7e8",
+    "custom-colour-ime-visible.json": "4d18899a31f76e67d97013b85ceb8e6b9591dda21da086a362e5a4efbb67b730",
+    "audio-language-ime-visible.png": "c7bdf3defff0e087a04bb3e7a2c15b45c5f5129c42c204886ebba158e42c277b",
+    "subtitle-language-ime-visible.png": "d34a607e46f1f6bbe5d5f6b529e5a0e0a4eb720a16a5e33da2b505cc42130ec4",
+    "custom-colour-ime-visible.png": "2364fc241c47de2e3846ef7d774b2d2de92a0e5f3f43f344ae859274f2fd9117",
+    "ime-fixed-subtitles-reopened-top.png": "2ea8994cf046a28eb51a60d03cb4a8324c7ee365ded6d2d10cd3d484793e4ed5",
+    "ime-fixed-subtitles-reopened-bottom.png": "146f87b6d9c1dd49e2ecb1eeb02b31f717215a90c3640521a65110284049c3fc",
+    "cold-local-restored-profiles.png": "9a3baba41fb56ffd9cebed47c581ef7c479a2897e9aa5c3fc6578ee22856feba",
+    "cold-local-playback-persisted.png": "574729b36ec8a62387a19a9c00ca2a66f4cfd3e5cc4c912bb25b7a7cf691bb41",
+    "cold-local-subtitles-persisted-top.png": "2ea8994cf046a28eb51a60d03cb4a8324c7ee365ded6d2d10cd3d484793e4ed5",
+    "cold-local-subtitles-persisted-bottom.png": "146f87b6d9c1dd49e2ecb1eeb02b31f717215a90c3640521a65110284049c3fc",
+    "leave-local-returns-entry.png": "567e16f97be7cdabd35900b1430f506612c0f8010d20952fd50585cde0ad40ad",
+    "leave-local-cold-entry.png": "567e16f97be7cdabd35900b1430f506612c0f8010d20952fd50585cde0ad40ad",
+    "owned-shutdown.json": "646ed2e5a954b7d10d929efe92a0f1576a009eb37c590c8f0c6487d3e990dfc8"
+  },
+  "owned_emulator_stopped": true,
+  "shutdown_proof": "owned-shutdown.json"
+}

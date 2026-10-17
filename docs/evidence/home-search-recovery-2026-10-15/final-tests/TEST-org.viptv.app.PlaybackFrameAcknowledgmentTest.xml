@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="PlaybackFrameAcknowledgmentTest[desktop]" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:48:13.647Z" hostname="vynxcos" time="0.253">
+  <properties/>
+  <testcase name="revocationBetweenAttemptsPreventsRetry[desktop]" classname="org.viptv.app.PlaybackFrameAcknowledgmentTest" time="0.001"/>
+  <testcase name="queuedStaleProofMakesNoRequest[desktop]" classname="org.viptv.app.PlaybackFrameAcknowledgmentTest" time="0.0"/>
+  <testcase name="forbiddenIsNeverRetried[desktop]" classname="org.viptv.app.PlaybackFrameAcknowledgmentTest" time="0.001"/>
+  <testcase name="transientFailureRetriesAndSuccessStops[desktop]" classname="org.viptv.app.PlaybackFrameAcknowledgmentTest" time="0.251"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

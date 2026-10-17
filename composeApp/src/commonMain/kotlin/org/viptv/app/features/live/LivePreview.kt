@@ -58,8 +58,8 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Watch")
                 }
-                Button(favourite, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-                    Icon(Lucide.Star, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Favourite")
+                Button(favourite, enabled = !channel.favoritePending, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
+                    Icon(Lucide.Star, null, Modifier.size(16.dp), tint = if (channel.favorite) Palette.accent else Palette.text); Spacer(Modifier.width(8.dp)); Text(if (channel.favorite) "Favourited" else "Favourite")
                 }
                 if (guide != null) Button(guide, shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {

@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "sdk": 26,
+  "apk_sha256": "6b7079b06808580c94cae8b9d0cdd8093bc79a7b27e96129d6c1cb817c0baba7",
+  "variant": "normal release",
+  "native_profile_preferences_revision": 1,
+  "persisted_preferences": {
+    "preferred_audio_language": null,
+    "preferred_subtitle_language": null,
+    "subtitles_enabled": true,
+    "source_selection": "best",
+    "max_quality_height": 1080,
+    "subtitle_font_scale": 1.25,
+    "subtitle_text_color": "#FFFFFF",
+    "subtitle_background_color": "#00000000"
+  },
+  "cold_restore_skipped_signin": true,
+  "cold_restore_profile_gate_before_home": true,
+  "cold_restore_labels": [
+    "Who\u2019s watching?",
+    "D",
+    "Default",
+    "Add profile",
+    "Manage profiles"
+  ],
+  "native_local_home": true,
+  "first_framework_launch_ms": 445,
+  "reopen_framework_launch_ms": 420
+}

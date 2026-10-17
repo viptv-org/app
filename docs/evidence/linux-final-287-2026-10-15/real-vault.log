@@ -1,0 +1,48 @@
+{"write-local": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "local_write_read_passed", "elapsed_ms:399"], "stderr": [], "seconds": 0.481}}
+{"read-local": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "local_fresh_process_read_passed", "elapsed_ms:382"], "stderr": [], "seconds": 0.46}}
+{"legacy-remote": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "legacy_remote_save_read_replace_clear_passed", "elapsed_ms:467"], "stderr": [], "seconds": 0.542}}
+{"credential-matching": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "legacy_identity_exact_priority_ambiguous_rejection_passed", "elapsed_ms:449"], "stderr": [], "seconds": 0.535}}
+{"write-local": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "local_write_read_passed", "elapsed_ms:418"], "stderr": [], "seconds": 0.511}}
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.41' (uid=1000 pid=3069480 comm="/tmp/viptv-desktop-final-287-extracted/opt/viptv-e")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.42' (uid=1000 pid=3069585 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.portal.Documents' requested by ':1.42' (uid=1000 pid=3069585 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.freedesktop.portal.Documents'
+
+(/usr/lib/xdg-desktop-portal:3069585): xdg-desktop-portal-WARNING **: 15:52:34.916: Choosing gtk.portal for org.freedesktop.impl.portal.Lockdown as a last-resort fallback
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.42' (uid=1000 pid=3069585 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.a11y.Bus' requested by ':1.45' (uid=1000 pid=3069609 comm="/usr/lib/xdg-desktop-portal-gtk")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.47' (uid=1000 pid=3069619 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.gtk.vfs.Daemon' requested by ':1.48' (uid=1000 pid=3069609 comm="/usr/lib/xdg-desktop-portal-gtk")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.gtk.vfs.Daemon'
+
+** (xdg-desktop-portal-gtk:3069609): WARNING **: 15:52:34.979: AT-SPI: Could not obtain desktop path or name
+
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.gtk'
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.47' (uid=1000 pid=3069619 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+
+** (xdg-desktop-portal-gtk:3069609): WARNING **: 15:52:34.981: atk-bridge: GetRegisteredEvents returned message with unknown signature
+
+** (xdg-desktop-portal-gtk:3069609): WARNING **: 15:52:34.981: atk-bridge: get_device_events_reply: unknown signature
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.kde' requested by ':1.42' (uid=1000 pid=3069585 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.kde'
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.47' (uid=1000 pid=3069619 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.47' (uid=1000 pid=3069619 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3069585): xdg-desktop-portal-WARNING **: 15:52:35.213: Failed to connect to PipeWire: Couldn't connect to PipeWire
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.kwallet' requested by ':1.42' (uid=1000 pid=3069585 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.freedesktop.portal.Desktop'
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.kwallet'
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.47' (uid=1000 pid=3069619 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activating service name='org.freedesktop.systemd1' requested by ':1.47' (uid=1000 pid=3069619 comm="/usr/bin/dbus-broker-launch --config-file=/usr/sha")
+dbus-daemon[3069154]: [session uid=1000 pid=3069154 pidfd=5] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+{"locked-access": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "get_ms:5", "put_ms:3", "delete_ms:3", "vault_access_failures:3", "elapsed_ms:358"], "stderr": [], "seconds": 0.436}}
+{"cancel-startup": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "startup_vault_wait_active:false", "startup_vault_notice:false", "startup_vault_error_present:true", "disconnect_ms:3", "disconnect_screen:Connect", "disconnect_starting:false", "profiles_immediately_after_cancel:0", "canceled_restore_job_completed:true", "new_local_choice_busy:false", "new_local_choice_factory_calls:1", "private_profiles_after_cancel:1", "new_local_choice_screen:Profiles", "new_local_choice_notice:true", "elapsed_ms:2985"], "stderr": ["SLF4J(W): No SLF4J providers were found.", "SLF4J(W): Defaulting to no-operation (NOP) logger implementation", "SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details."], "seconds": 3.06}}
+{"read": {"exit_code": 0, "stdout": ["packaged_native_resource_sha256:0212a058da9465e46c6eb885963f13e22bb8e3dc7ddd17198e9d1e790d52cd06", "native_vault_call_started", "vault_call_failed:uniffi.viptv_core.CoreException$Bridge", "elapsed_ms:358"], "stderr": [], "seconds": 0.435}}
+A connection to the bus can't be made

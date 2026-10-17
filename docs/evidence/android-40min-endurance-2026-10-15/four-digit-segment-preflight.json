@@ -1,0 +1,17 @@
+{
+  "scope": "Host preflight HTTP probes, not renderer consumption; verifies late filenames before33-minute boundary",
+  "checks": [
+    {
+      "name": "segment-1000.ts",
+      "status": 200,
+      "bytes": 46624,
+      "sha256": "c38fe228cb9cdbf2d4357b367784cf0030dcc6fcfb6c6396099b2cd782960aa5"
+    },
+    {
+      "name": "segment-1349.ts",
+      "status": 200,
+      "bytes": 45496,
+      "sha256": "4fdffd022c621b4ca38e5a6a2bbf5f6555eef96eb0d4d1527ddcf1f685bd11a2"
+    }
+  ]
+}

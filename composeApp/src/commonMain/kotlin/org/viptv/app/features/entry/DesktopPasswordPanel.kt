@@ -41,7 +41,7 @@ internal fun DesktopPasswordPanel(
         Spacer(Modifier.height(12.dp))
         Text("Password", color = Palette.text, fontSize = 12.sp)
         Spacer(Modifier.height(5.dp))
-        SignInInput(password, { password = it }, "Password",
+        SignInInput(password, { password = it }, "Password", secret = true,
             transformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation()) {
             Icon(if (showPassword) Lucide.EyeOff else Lucide.Eye,
                 if (showPassword) "Hide password" else "Show password",

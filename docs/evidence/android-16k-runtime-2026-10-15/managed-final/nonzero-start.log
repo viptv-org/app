@@ -1,0 +1,12 @@
+--------- beginning of main
+I/VIPTV_PLAYBACK_QA( 5620): sidecar_active=false sidecar_cues=0 sidecar_position_ms=0
+I/VIPTV_PLAYBACK_QA( 5620): opening_position_ms=8000 opening_timeline_offset_ms=0 opening_live=false
+I/VIPTV_PLAYBACK_QA( 5620): ffmpeg_audio_available=true ffmpeg_version=Lavc60.3.100
+I/VIPTV_PLAYBACK_QA( 5620): status=Opening
+I/VIPTV_PLAYBACK_QA( 5620): timeline_default_ms=0 timeline_position_ms=8000 timeline_offset_ms=0 timeline_placeholder=true timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 5620): status=Opening
+I/VIPTV_PLAYBACK_QA( 5620): status=Buffering
+I/VIPTV_PLAYBACK_QA( 5620): timeline_default_ms=0 timeline_position_ms=8000 timeline_offset_ms=0 timeline_placeholder=false timeline_live=false timeline_dynamic=true
+I/VIPTV_PLAYBACK_QA( 5620): position_ms=8000 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 5620): position_ms=8000 duration_ms=20000
+I/VIPTV_PLAYBACK_QA( 5620): presentation=NativeRendererPresented exact=false

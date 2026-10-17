@@ -32,7 +32,7 @@ internal fun IptvInputs(draft: IptvCredentials, mobile: Boolean, change: (IptvCr
         Spacer(Modifier.height(if (mobile) 14.dp else 12.dp))
         IptvInputLabel("Password", mobile)
         Spacer(Modifier.height(6.dp))
-        SignInInput(draft.password, { change(draft.copy(password = it)) }, "Password", height = height, fontSize = fontSize,
+        SignInInput(draft.password, { change(draft.copy(password = it)) }, "Password", height = height, fontSize = fontSize, secret = true,
             transformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation()) {
             Icon(if (showPassword) Lucide.EyeOff else Lucide.Eye, if (showPassword) "Hide password" else "Show password",
                 Modifier.size(18.dp).clickable { showPassword = !showPassword }, tint = Palette.secondary)

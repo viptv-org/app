@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="DeviceApprovalSessionTest[desktop]" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:56:59.195Z" hostname="vynxcos" time="0.061">
+  <properties/>
+  <testcase name="failedRevocationKeepsAccountAndAllowsParentAuthorizedRetry[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.009"/>
+  <testcase name="unrelatedForbiddenDoesNotAskForParentPin[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.004"/>
+  <testcase name="restrictedLookupUnlocksAndRetriesWithoutApprovingTheDevice[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.008"/>
+  <testcase name="resetWaitsForRotationBeforeTheReplacementAccountSignsIn[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.013"/>
+  <testcase name="signOutRefreshesAnExpiredCookieBeforeServerRevocation[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.007"/>
+  <testcase name="restoresAnExpiredAccessCookieUsingTheRefreshCookieWithoutMediaRequests[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.007"/>
+  <testcase name="resetDuringAFailedRefreshDoesNotInvokeTheOldErrorCallback[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.006"/>
+  <testcase name="approvalAfterExpiryRefreshesOnceAndUsesTheNewCsrf[desktop]" classname="org.viptv.app.DeviceApprovalSessionTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

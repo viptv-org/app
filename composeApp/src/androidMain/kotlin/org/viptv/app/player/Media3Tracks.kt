@@ -12,9 +12,11 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
     private val references = mutableMapOf<Int, Key>()
     private val requiredAudio = RequiredAudioSelection(input.requiredAudioIndex)
     private var requiredAudioFailed = false
+    private var providerSelection: String? = null
+    fun providerSelected(id: String?) { providerSelection = id; changed() }
     fun changed() {
         references.clear()
-        var selectedProvider: String? = null
+        var selectedProvider: String? = providerSelection
         fun options(type: Int): List<PlaybackTrack> = player.currentTracks.groups.filter { it.type == type }.flatMap { group ->
             (0 until group.length).filter { group.isTrackSupported(it) }.mapNotNull { index ->
                 val format = group.getTrackFormat(index)
@@ -29,7 +31,7 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
                     val language = format.language?.takeUnless { it == "und" }
                     val label = listOfNotNull(format.label?.takeIf { it.isNotBlank() }, language,
                         format.channelCount.takeIf { type == C.TRACK_TYPE_AUDIO && it > 0 }?.let { "${it} channels" }).distinct().joinToString(" · ")
-                    PlaybackTrack(id, label.ifBlank { if (type == C.TRACK_TYPE_AUDIO) "Audio track ${index+1}" else "Subtitle ${index+1}" }, group.isTrackSelected(index))
+                    PlaybackTrack(id, label.ifBlank { if (type == C.TRACK_TYPE_AUDIO) "Audio track ${index+1}" else "Subtitle ${index+1}" }, group.isTrackSelected(index) && (type != C.TRACK_TYPE_TEXT || providerSelection == null))
                 }
             }
         }

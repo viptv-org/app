@@ -1,0 +1,35 @@
+{
+  "status": "common regression and actual native rebuilt-release IME recheck passed",
+  "fix": "Read IME insets within the dialog layout and apply them before Material3 measures its scrollable body. Actions stay outside the scrollable body. No global window flags or profile contract changes.",
+  "desktop_regression": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 3.95,
+    "build_seconds": 17,
+    "viewport": "390x844,1x density",
+    "injected_ime_bottom": 320,
+    "visible_bottom": 524,
+    "assertions": [
+      "Cancel and Use value stay above visible bottom",
+      "body scroll reaches language field with at least48px visible",
+      "language field stays above action row",
+      "custom pt-BR applies preserving unrelated fields"
+    ],
+    "negative_proof": "Removing inset application fails Cancel bounds bottom696 >524"
+  },
+  "sources_sha256": {
+    "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhonePreferenceDialog.kt": "c3ec2272c56af9abaf7b77717bc3cb30dae16514c554b29e5add044b841912f8",
+    "composeApp/src/desktopTest/kotlin/org/viptv/app/PreferenceSettingsUiTest.kt": "caee96c0d31dea58439e5167541c2d9f0d79ba25c2600009fe168d76080f969d"
+  },
+  "files_sha256": {
+    "focused-ime.log": "aa7f2606a29bb93163f9a00155f8ee537947a5c72fbac6954d0ff4122d64c316",
+    "focused-ime-red.log": "46c3ddefaecae498899b201d7cbff0c2c0d5bda04859a762a98b6914cde5df18",
+    "focused-ime-red.xml": "1284d15f9dbf1fd2fdf27002c816828744afdc4ed8427c1fb9f52e7e812dad8b",
+    "focused-ime-green.xml": "f6e2affcf4fcb7bec3ff27f21217395d3f5fab9c8a09f738d3b0ac508b05f72b",
+    "phone-language-dialog-keyboard.png": "6fb9fb612e91461d0f1353bba01be969da45e2a4fb0f44235f145c5f9846edfd"
+  },
+  "native_proof": "native-6b7079b06808/proof.json",
+  "native_apk_sha256": "6b7079b06808580c94cae8b9d0cdd8093bc79a7b27e96129d6c1cb817c0baba7",
+  "native_proof_sha256": "915c97ad7105361c506106d75671eb9b8b42429a9e004f39decb0c3fd7903ebb"
+}

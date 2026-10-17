@@ -1,0 +1,11 @@
+Package: viptv-experiment
+Version: 0.1.0-1
+Section: misc
+Maintainer: Unknown <Unknown>
+Priority: optional
+Architecture: amd64
+Provides: viptv-experiment
+Description: VIPTV-Experiment
+Depends: xdg-utils , libasound2t64 | libasound2, libc6 (>= 2.34), libdbus-1-3, libfontconfig1, libgcc-s1 (>= 4.2), libgl1, libstdc++6 (>= 6.1), libx11-6, libxext6, libxi6, libxrender1, libxtst6, zlib1g
+Installed-Size: 219079
+

@@ -20,7 +20,7 @@ internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey:
     var index by remember(scopeKey) { mutableIntStateOf(0) }
     val active = if (cards.isEmpty()) 0 else index % cards.size
     val card = cards.getOrNull(active)
-    val key = card?.identity?.let { "${it.kind}:${it.id}" }
+    val key = card?.let { org.viptv.app.connection.cardLookupKey(it) }
     val artwork = card?.landscape ?: card?.poster
     var ready by remember(scopeKey, artwork) { mutableStateOf(artwork == null) }
     val progress = remember(scopeKey) { Animatable(0f) }

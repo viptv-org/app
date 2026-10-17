@@ -3,6 +3,7 @@ package org.viptv.app.state
 import org.viptv.app.connection.*
 
 fun ApplicationController.selectProfile(id: String) {
+    if (mutable.value.busy) return
     if (mutable.value.profiles.any { it.id == id && it.locked }) {
         mutable.value = mutable.value.copy(screen = Screen.ProfilePin, profileToOpen = id, error = null)
         return
@@ -10,7 +11,7 @@ fun ApplicationController.selectProfile(id: String) {
     run { openProfile(id) }
 }
 
-fun ApplicationController.submitProfilePin(pin: String) = run {
+fun ApplicationController.submitProfilePin(pin: String) = profileMutation {
     val id = mutable.value.profileToOpen ?: throw LocalFailure("Choose a profile first.")
     if (local != null) {
         if (!requireNotNull(local).verifyProfilePin(id, pin)) throw LocalFailure("Incorrect PIN or too many attempts. Try again later.")
@@ -33,37 +34,62 @@ fun ApplicationController.stopManagingProfiles() { mutable.value=mutable.value.c
 
 fun ApplicationController.editProfile(id: String) { mutable.value=mutable.value.copy(screen=Screen.ProfileEdit,profileToEdit=id,error=null) }
 
-fun ApplicationController.createProfile(name: String) = run {
+fun ApplicationController.createProfile(name: String) = profileMutation {
     if (local != null) requireNotNull(local).createProfile(name) else requireNotNull(connection).createProfile(name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,error=null)
 }
 
-fun ApplicationController.renameProfile(name: String, pin: String) = run {
+fun ApplicationController.renameProfile(name: String, pin: String) = profileMutation {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).renameProfile(id,name,pin) else requireNotNull(connection).renameProfile(id,name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true)
 }
 
-fun ApplicationController.setProfileAvatar(avatarId: String, pin: String) = run {
+fun ApplicationController.setProfileAvatar(avatarId: String, pin: String) = profileMutation {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).setProfileAvatar(id,avatarId,pin) else requireNotNull(connection).setProfileAvatar(id,avatarId)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement)
 }
 
-fun ApplicationController.deleteProfile(pin: String) = run {
+fun ApplicationController.deleteProfile(pin: String) = profileMutation {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).deleteProfile(id,pin) else requireNotNull(connection).deleteProfile(id)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
-    mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true,
-        selectedProfile=mutable.value.selectedProfile.takeUnless { it==id })
+    if (mutable.value.selectedProfile == id) {
+        progressJob?.cancel(); subtitleDiscovery?.cancel(); liveGuideJob?.cancel()
+        liveFavoriteJobs.values.forEach { it.cancel() }; liveFavoriteJobs.clear()
+        releaseRemotePlayback()?.join()
+        accept(next, screen = Screen.Profiles)
+        mutable.value = mutable.value.copy(managingProfiles = true)
+    } else mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,
+        screen=Screen.Profiles,managingProfiles=true,profileToEdit=null,profileToOpen=null)
 }
 
-fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = run {
+fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = profileMutation {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
-    requireNotNull(local).setProfilePin(id,oldPin,newPin)
+    val device = local ?: throw LocalFailure("This server uses an account parent PIN. Open Parental controls to manage it.")
+    device.setProfilePin(id,oldPin,newPin)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true)
+}
+
+/** Do not cancel an already submitted mutation just because a stale UI action repeats. */
+private fun ApplicationController.profileMutation(operation: suspend () -> Unit) {
+    if (mutable.value.busy) return
+    run(operation)
+}
+
+/** Existing settings operate on the selected profile, never an implicit edit target. */
+fun ApplicationController.profileSettings(section: String) {
+    if (mutable.value.busy || section !in listOf("Subtitles & audio", "Parental controls")) return
+    if (section == "Subtitles & audio" && mutable.value.profileToEdit != mutable.value.selectedProfile) {
+        mutable.value = mutable.value.copy(screen = Screen.Profiles, managingProfiles = false, error = null, settingsEntrySection = null)
+        return
+    }
+    mutable.value = mutable.value.copy(settingsEntrySection = section)
+    navigate(Screen.Settings)
+    if (section == "Subtitles & audio" && mutable.value.preferences == null) refreshPreferences()
 }

@@ -35,25 +35,28 @@ internal fun TvSubtitleSettings(prefs: TvSettingsPreferences?, scale: Float, ini
                 Box(Modifier.fillMaxWidth().height(405.dp * scale).clip(RoundedCornerShape(14.dp * scale))) {
                     AsyncImage(Res.getUri("files/entry/subtitle-preview.jpg"), "Subtitle style preview", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     if (prefs != null) {
-                        val font = when (prefs.subtitleSize) { "Small" -> 26; "Medium" -> 32; "Large" -> 40; else -> 48 }
+                        val font = when (prefs.subtitleSize) { "Small" -> 26; "Medium" -> 32; "Large" -> 40; "Extra large" -> 48;
+                            else -> ((prefs.subtitleSize.removeSuffix("×").toDoubleOrNull() ?: 1.0) * 32).toInt().coerceIn(16, 64) }
+                        val background = prefs.subtitleBackgroundColor.takeUnless { it == "#00000000" } ?: "#B3000000"
+                        val backgroundColor = background.removePrefix("#").toLongOrNull(16)?.let { if (background.length == 7) it or 0xFF000000 else it } ?: 0xB3000000
                         Text("I didn’t hear you come in.", Modifier.align(Alignment.BottomCenter).padding(bottom = 34.dp * scale)
-                            .background(if (prefs.subtitleBackground == "Box") Color.Black.copy(alpha = 0.7f) else Color.Transparent).padding(horizontal = 12.dp * scale),
+                            .background(if (prefs.subtitleBackground == "Box") Color(backgroundColor) else Color.Transparent).padding(horizontal = 12.dp * scale),
                             color = Color(prefs.subtitleColor), fontSize = (font * scale).sp, lineHeight = ((font + 8) * scale).sp, fontWeight = FontWeight.SemiBold,
                             style = TextStyle(shadow = if (prefs.subtitleBackground == "Shadow") Shadow(Color.Black, Offset(2f, 2f), 4f) else null))
                     }
                 }
                 Spacer(Modifier.height(45.dp * scale))
                 TvSubtitleChoiceRow("Size", listOf("Small", "Medium", "Large", "Extra large"), prefs?.subtitleSize, scale, initial, sidebar) {
-                    if (!actualPreferencesOnly && prefs != null) change(prefs.copy(subtitleSize = it)) else unavailable() }
+                    if (prefs != null) change(prefs.copy(subtitleSize = it)) else unavailable() }
                 Spacer(Modifier.height(24.dp * scale))
-                TvSubtitleChoiceRow("Background", listOf("None", "Shadow", "Box"), prefs?.subtitleBackground, scale, null, sidebar) {
-                    if (!actualPreferencesOnly && prefs != null) change(prefs.copy(subtitleBackground = it)) else unavailable() }
+                TvSubtitleChoiceRow("Background", if (actualPreferencesOnly) listOf("None", "Box") else listOf("None", "Shadow", "Box"), prefs?.subtitleBackground, scale, null, sidebar) {
+                    if (prefs != null) change(prefs.copy(subtitleBackground = it)) else unavailable() }
                 Spacer(Modifier.height(24.dp * scale))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
                     Text("Text colour", Modifier.width(210.dp * scale), fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
                     listOf("White" to 0xFFFFFFFF, "Yellow" to 0xFFFFE16B, "Blue" to 0xFF7AE0EC, "Green" to 0xFFB5EF98).forEachIndexed { index, (label, value) ->
                         TvSubtitleColor(value, label, prefs?.subtitleColor == value, scale, if (index == 0) sidebar else null) {
-                            if (!actualPreferencesOnly && prefs != null) change(prefs.copy(subtitleColor = value)) else unavailable() }
+                            if (prefs != null) change(prefs.copy(subtitleColor = value)) else unavailable() }
                     }
                 }
             }
@@ -62,7 +65,7 @@ internal fun TvSubtitleSettings(prefs: TvSettingsPreferences?, scale: Float, ini
                     if (prefs != null) choose("Subtitle language", listOf("Default", "English", "Spanish", "Portuguese", "French", "German")) { change(prefs.copy(subtitleLanguage = it)) } else unavailable() }
                 TvSettingsRow("Audio language", scale = scale, value = prefs?.audioLanguage ?: "Unavailable", left = sidebar) {
                     if (prefs != null) choose("Audio language", listOf("Original", "English", "Spanish", "French", "German")) { change(prefs.copy(audioLanguage = it)) } else unavailable() }
-                Text(if (actualPreferencesOnly) "Subtitle style changes are unavailable on this connection." else if (prefs != null) "The preview updates as you change a setting." else "Subtitle preferences are not available on this connection yet.",
+                Text(if (prefs != null) "The preview updates as you change a setting. Saved preferences apply to the next playback." else "Subtitle preferences are not available on this connection yet.",
                     Modifier.padding(top = 12.dp * scale), fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Color(0xFF8F8D89))
             }
         }

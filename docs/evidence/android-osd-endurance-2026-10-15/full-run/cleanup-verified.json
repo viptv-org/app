@@ -1,0 +1,33 @@
+{
+  "utc": "2026-10-15T20:59:57.946944+00:00",
+  "children": {
+    "emulator": {
+      "pid": 3088933,
+      "returncode": 0,
+      "proc_present": false
+    },
+    "fixture": {
+      "pid": 3089657,
+      "returncode": -15,
+      "proc_present": false
+    },
+    "observer": {
+      "pid": 3089658,
+      "returncode": 0,
+      "proc_present": false
+    }
+  },
+  "unit_stopped": true,
+  "unit_query_after_stop": "LoadState=not-found\nActiveState=inactive\nSubState=dead\nMainPID=0\nResult=success",
+  "ports": {
+    "5586": {
+      "open": false
+    },
+    "5587": {
+      "open": false
+    },
+    "18586": {
+      "open": false
+    }
+  }
+}

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
@@ -29,12 +31,22 @@ internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) ->
 }
 
 @Composable
-internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, lock: () -> Unit, tracks: () -> Unit) {
+internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, lock: () -> Unit, tracks: () -> Unit,
+    episodes: (() -> Unit)? = null, episodesEnabled: Boolean = false, next: (() -> Unit)? = null,
+    nextEnabled: Boolean = false, episodesFocus: FocusRequester? = null, nextFocus: FocusRequester? = null) {
     var speeds by remember { mutableStateOf(false) }
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    val episodeAction: @Composable () -> Unit = {
+        if (episodes != null) TextButton(episodes, enabled = episodesEnabled,
+            modifier = episodesFocus?.let { Modifier.focusRequester(it) } ?: Modifier) {
+            Icon(Lucide.List, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Episodes")
+        }
+    }
+    val tracksAction: @Composable () -> Unit = {
         TextButton(onClick = tracks) {
             Icon(Lucide.Captions, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Audio & subtitles")
         }
+    }
+    val speedAction: @Composable () -> Unit = {
         Box {
             TextButton(onClick = { speeds = true }) {
                 Icon(Lucide.Gauge, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(playbackSpeed(speed))
@@ -45,8 +57,24 @@ internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, loc
                 }
             }
         }
+    }
+    val lockAction: @Composable () -> Unit = {
         TextButton(onClick = lock) {
             Icon(Lucide.Lock, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Lock")
+        }
+    }
+    val nextAction: @Composable () -> Unit = {
+        if (next != null) TextButton(next, enabled = nextEnabled,
+            modifier = nextFocus?.let { Modifier.focusRequester(it) } ?: Modifier) {
+            Icon(Lucide.SkipForward, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Next episode")
+        }
+    }
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        if (maxWidth < 600.dp) Column {
+            Row { episodeAction(); tracksAction() }
+            Row(Modifier.fillMaxWidth()) { speedAction(); lockAction(); Spacer(Modifier.weight(1f)); nextAction() }
+        } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            episodeAction(); tracksAction(); speedAction(); lockAction(); Spacer(Modifier.weight(1f)); nextAction()
         }
     }
 }

@@ -1,0 +1,21 @@
+{
+  "checks": [
+    "subtitles-custom-language-keyboard-dismissed",
+    "subtitles-custom-unsaved",
+    "subtitles-custom-reopened-top",
+    "subtitles-custom-reopened-bottom"
+  ],
+  "expected": {
+    "source_selection": "best",
+    "max_quality_height": 1080,
+    "preferred_audio_language": "zh-Hant",
+    "preferred_subtitle_language": "pt-BR",
+    "subtitles_enabled": false,
+    "subtitle_font_scale": 1.25,
+    "subtitle_text_color": "#1A2B3C",
+    "subtitle_background_color": "#80445566"
+  },
+  "before_revision": 1,
+  "after_revision": 2,
+  "language_dialog_requires_ime_dismissal": true
+}

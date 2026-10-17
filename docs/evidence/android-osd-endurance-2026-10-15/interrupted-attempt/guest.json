@@ -1,0 +1,8 @@
+{
+  "sdk": 36,
+  "page_size": 16384,
+  "uimode": "Current UI Mode Service state:\n  mDockState=0 mLastBroadcastState=0\n mStartDreamImmediatelyOnDock=true  mNightMode=2 (yes)  mOverrideOn/Off=false/false  mAttentionModeThemeOverlay=1000 mNightModeLocked=true\n  mCarModeEnabled=false (carModeApps=\n mWaitForDeviceInactive=false mComputedNightMode=true customStart=22:00 customEnd06:00 mCarModeEnableFlags=0 mEnableCarDockLaunch=false\n  mCurUiMode=0x24 mUiModeLocked=true mSetUiMode=0x24\n  mHoldingConfiguration=false mSystemReady=true\n  mTwilightService.getLastTwilightState()=null\n",
+  "linker_compat": "false",
+  "package_compat_disabled": "true",
+  "fingerprint": "google/sdk_google_atv64_amati_x86_64_16k/emu64xa16k:16/BT2A.260319.001/15058170:user/dev-keys"
+}

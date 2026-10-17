@@ -35,7 +35,7 @@ class RemoteSessionTest {
                     refreshes++
                     """{"access_token":"a${refreshes + 1}","refresh_token":"r${refreshes + 1}"}""" to HttpStatusCode.OK
                 }
-                "/api/v3/bootstrap" -> {
+                "/api/bootstrap" -> {
                     if (authorization == "Bearer a1" && expired) "{}" to HttpStatusCode.Unauthorized
                     else {
                         assertEquals("Bearer a${refreshes + 1}", authorization)
@@ -73,7 +73,7 @@ class RemoteSessionTest {
     }
 
     @Test
-    fun browserSessionUsesStatusCsrfBeforeRefreshingExpiredCookie() = runBlocking {
+    fun browserSessionProactivelyRotatesBeforeBootstrapSoRestoresNeverStartExpired() = runBlocking {
         var statusCalls = 0
         var bootstrapCalls = 0
         var refreshed = false
@@ -83,8 +83,10 @@ class RemoteSessionTest {
                     statusCalls++
                     """{"authenticated":true,"csrf_token":"c$statusCalls"}""" to HttpStatusCode.OK
                 }
-                "/api/v3/bootstrap" -> {
+                "/api/bootstrap" -> {
                     bootstrapCalls++
+                    // The proactive refresh must run before the first
+                    // bootstrap: a restored session never starts expired.
                     if (!refreshed) "{}" to HttpStatusCode.Unauthorized
                     else """{"identity":{"profiles":[],"profile_id":null},"home":null}""" to HttpStatusCode.OK
                 }
@@ -102,7 +104,7 @@ class RemoteSessionTest {
             close()
         }
         assertEquals(2, statusCalls)
-        assertEquals(2, bootstrapCalls)
+        assertEquals(1, bootstrapCalls)
     }
 
     @Test
@@ -115,7 +117,7 @@ class RemoteSessionTest {
         val client = HttpClient(MockEngine { request ->
             val body = when (request.url.encodedPath) {
                 "/api/auth/device/login" -> """{"access_token":"access","refresh_token":"refresh"}"""
-                "/api/v3/bootstrap" -> {
+                "/api/bootstrap" -> {
                     assertEquals("Bearer access", request.headers[HttpHeaders.Authorization])
                     """{"identity":{"profiles":[],"profile_id":null},"home":null}"""
                 }

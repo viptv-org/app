@@ -21,8 +21,8 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvCalendarPreview(entry: CalendarEntry, action: TvCalendarAction?, scale: Float,
-    requester: FocusRequester, left: FocusRequester?, up: FocusRequester, open: (Card) -> Unit, watch: (Card) -> Unit) {
-    Column(Modifier.offset(1240.dp * scale, 118.dp * scale).width(584.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
+    requester: FocusRequester, left: FocusRequester?, up: FocusRequester, open: (Card) -> Unit, watch: (Card) -> Unit, contentY: androidx.compose.ui.unit.Dp = 118.dp * scale) {
+    Column(Modifier.offset(1240.dp * scale, contentY).width(584.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
         AsyncImage(entry.card.landscape ?: entry.card.poster, entry.card.title, Modifier.fillMaxWidth().aspectRatio(16f / 9)
             .clip(RoundedCornerShape(16.dp * scale)), contentScale = ContentScale.Crop)
         Text(entry.card.title, fontSize = (34 * scale).sp, lineHeight = (41 * scale).sp, fontWeight = FontWeight.Bold,
