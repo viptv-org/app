@@ -4,8 +4,8 @@ import org.viptv.app.connection.*
 
 /**
  * One import draft for the current remote connection and selected profile.
- * Browser account sessions choose add-ons; native device sessions import into
- * their own profile with a read-only add-on stage. Local mode has no import.
+ * Browser account sessions and native device sessions run the same flow,
+ * including add-on choices; the server decides authority. Local mode has no import.
  */
 fun ApplicationController.openStremioImport(restricted: Boolean): StremioImportSession? {
     val remote = connection ?: return null
@@ -13,7 +13,7 @@ fun ApplicationController.openStremioImport(restricted: Boolean): StremioImportS
     val profile = mutable.value.selectedProfile ?: return null
     val name = mutable.value.profiles.find { it.id == profile }?.name ?: return null
     discardStremioImport()
-    return StremioImportSession(scope, RemoteStremioImport(remote), profile, name, restricted, remote.accountManagementEnabled,
+    return StremioImportSession(scope, RemoteStremioImport(remote), profile, name, restricted,
         owned = { connection === remote && local == null && mutable.value.selectedProfile == profile }).also { stremioImport = it }
 }
 

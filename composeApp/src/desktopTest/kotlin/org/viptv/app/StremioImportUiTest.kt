@@ -10,6 +10,7 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.*
+import kotlinx.serialization.json.Json
 import org.viptv.app.connection.*
 import org.viptv.app.features.settings.*
 import org.viptv.app.state.*
@@ -21,8 +22,8 @@ import kotlin.test.*
 class StremioImportUiTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     @AfterTest fun close() = scope.cancel()
-    private fun session(transport: StremioImportTransport, editable: Boolean = true, restricted: Boolean = false, name: String = "Synthetic profile") =
-        StremioImportSession(scope, transport, "2", name, restricted, editable)
+    private fun session(transport: StremioImportTransport, restricted: Boolean = false, name: String = "Synthetic profile") =
+        StremioImportSession(scope, transport, "2", name, restricted)
     private fun scene(width: Int, height: Int, session: StremioImportSession?, name: String = "Synthetic profile", compact: Boolean = false) =
         ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) { StremioImportScreen(session, name, compact) } }
@@ -74,7 +75,8 @@ class StremioImportUiTest {
     @Test fun passwordIsClearedOnFailureAndCancelShowingOnlyFixedCopy(): Unit = runBlocking {
         val transport = FakeStremioTransport()
         transport.preview = { throw StremioImportFailure(401, "stremio_credentials_invalid") }
-        val scene = scene(1000, 1200, session(transport))
+        val session = session(transport)
+        val scene = scene(1000, 1200, session)
         try {
             val probe = Probe(scene); probe.frames(12)
             probe.setText("Stremio email", "synthetic@example.invalid"); probe.setText("Stremio password", "synthetic-password")
@@ -96,24 +98,129 @@ class StremioImportUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun nativeDeviceSessionShowsAddonsWithoutChoicesAndPointsToTheWeb() {
+    @Test fun phoneAddonStageOffersEveryChoiceAndBringsTheFirstFailedAddonIntoView() {
+        val addons = assertNotNull(parseAddons(Json.parseToJsonElement(StremioSyntheticFixtures.addonsJson("2")), "2", System.currentTimeMillis()))
+            .copy(previewId = stremioHandle)
+        val failing = listOf(StremioSyntheticFixtures.addonIds[17], StremioSyntheticFixtures.addonIds[19])
         val transport = FakeStremioTransport()
-        transport.review = { _, _ -> stremioReview(addonsToAdd = 0) }
-        val scene = scene(390, 1600, session(transport, editable = false), compact = true)
+        transport.preview = { addons }
+        transport.review = { chosen, _ ->
+            chosen.filter { it in failing }.takeIf { it.isNotEmpty() }?.let { throw StremioImportFailure(424, "stremio_addon_unavailable", it,
+                mapOf(failing[0] to "addon_unreachable", failing[1] to "a_future_category")) }
+            stremioReview(addonsToAdd = chosen.size)
+        }
+        val session = session(transport)
+        val scene = scene(390, 844, session, compact = true)
         try {
             val probe = Probe(scene); probe.frames(12)
             probe.setText("Stremio email", "synthetic@example.invalid"); probe.setText("Stremio password", "synthetic-password")
             probe.click("Next: Choose add-ons")
             assertTrue(probe.has("Step 2 of 4: Choose add-ons"))
-            assertTrue(probe.has("Add-ons are account-wide. You can add them from VIPTV on the web."))
-            assertTrue(probe.has("Synthetic metadata")); assertTrue(probe.has("New — not added from this device"))
-            assertNull(probe.described("Use add-on Synthetic metadata"), "No add-on checkboxes on a device session")
-            listOf("Select all", "Clear all", "Continue without add-ons").forEach { assertFalse(probe.has(it), it) }
-            probe.capture("native-addons")
+            assertTrue(probe.has("Do you want to bring these add-ons into VIPTV? Uncheck any you do not want."))
+            assertTrue(probe.has("21 of 21 available add-ons selected · 21 new to your account"))
+            assertEquals(ToggleableState.On, probe.describedState("Use add-on Cinemeta"))
+            assertNotNull(probe.described("Use add-on Synthetic Torrent (1 of 2)"), "Repeated names are numbered in Stremio order")
+            listOf("Select all", "Clear all", "Continue without add-ons", "Next: Review items").forEach { assertNotNull(probe.clickableOrNull(it), it) }
+            probe.assertInside(390, "phone add-ons")
+            probe.capture("phone-addons-choice")
             probe.click("Next: Review items")
-            assertEquals("review:$stremioHandle:[]:0", transport.calls.last())
+            assertTrue(probe.has("An add-on could not be verified. Change your add-on choices and try again."))
+            assertTrue(probe.has("Couldn't check: Synthetic Debrid, Ñandú Meta."))
+            probe.frames(60)
+            val first = assertNotNull(probe.described("Use add-on Synthetic Debrid"), "The first failed add-on is scrolled into view")
+            assertEquals(true, first.config.getOrNull(SemanticsProperties.Focused), "and focused")
+            assertTrue(probe.has("This add-on didn't respond. Try again or uncheck it."))
+            assertTrue(probe.has("Couldn't be checked"))
+            probe.capture("phone-addons-failed")
+            probe.scrollList(0)
+            assertTrue(probe.has("2 add-ons couldn't be checked. Uncheck them, or continue without add-ons."))
+            probe.scrollList(26)
+            assertTrue(probe.has("This add-on couldn't be checked. Uncheck it or try again."), "Unknown categories get generic copy")
+            probe.clickDescription("Use add-on Synthetic Debrid")
+            assertEquals(setOf(failing[1]), session.state.value.failedAddons, "Unticking clears that add-on's mark")
+            probe.click("Uncheck failed add-ons")
+            assertTrue(session.state.value.failedAddons.isEmpty())
+            assertEquals(ToggleableState.Off, probe.describedState("Use add-on Ñandú Meta"))
+            assertNull(probe.clickableOrNull("Uncheck failed add-ons"))
+            probe.click("Next: Review items")
             assertTrue(probe.has("Review items"))
-            assertFalse(probe.nodes().any { probe.text(it).startsWith("New add-ons to register") })
+            assertEquals(19, transport.calls.last().substringAfter("[").substringBefore("]").split(", ").size)
+        } finally { scene.close() }
+    }
+
+    @Test fun cancellingALongVerificationOnAPhoneKeepsTheChoices(): Unit = runBlocking {
+        val transport = FakeStremioTransport()
+        val gate = CompletableDeferred<StremioReview>()
+        transport.review = { _, _ -> gate.await() }
+        val session = session(transport)
+        val scene = scene(390, 844, session, compact = true)
+        try {
+            val probe = Probe(scene); probe.frames(12)
+            session.connect("synthetic@example.invalid", "synthetic-password"); probe.frames(6)
+            probe.click("Next: Review items")
+            assertTrue(probe.has("Verifying metadata and preparing named items…"))
+            assertTrue(probe.has("This can take up to a minute for large libraries or many add-ons. Nothing is saved yet."))
+            assertTrue(probe.disabled("Next: Review items"))
+            probe.click("Cancel")
+            assertTrue(probe.has(stremioReviewStoppedCopy))
+            assertFalse(probe.has("Verifying metadata and preparing named items…"))
+            assertEquals(ToggleableState.On, probe.describedState("Use add-on Synthetic metadata"))
+            gate.complete(stremioReview()); probe.frames(6)
+            assertTrue(probe.has("Step 2 of 4: Choose add-ons"))
+        } finally { scene.close() }
+    }
+
+    @Test fun twoThousandRowReviewStaysResponsiveAtPhoneWidth() {
+        val review = assertNotNull(parseReview(Json.parseToJsonElement(StremioSyntheticFixtures.reviewJson(2_000, profile = "2")), "2", System.currentTimeMillis()))
+            .copy(previewId = stremioHandle)
+        val transport = FakeStremioTransport()
+        transport.review = { _, _ -> review }
+        val session = session(transport)
+        val scene = scene(390, 844, session, compact = true)
+        try {
+            val probe = Probe(scene); probe.frames(12)
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); probe.frames(10)
+            probe.scrollList(6) // The item controls, below the summary on a phone
+            assertTrue(probe.has("1920 review items included · 0 excluded · 2000 shown in this preview"))
+            val timings = linkedMapOf<String, Long>()
+            fun timed(label: String, block: () -> Unit) { val start = System.nanoTime(); block(); timings[label] = (System.nanoTime() - start) / 1_000_000 }
+            val saga = review.items.filter { "saga" in it.name.lowercase() }
+            timed("search") { probe.setText("Find a title", "saga") }
+            assertTrue(probe.has("Showing 1–${minOf(50, saga.size)} of ${saga.size} matching"))
+            timed("exclude matching") { probe.click("Exclude matching") }
+            assertEquals(saga.count { it.selectable }, session.state.value.excluded.size)
+            timed("clear search") { probe.setText("Find a title", "") }
+            timed("exclude all") { probe.click("Exclude all") }
+            assertTrue(probe.has("0 review items included · 1920 excluded · 2000 shown in this preview"))
+            assertTrue(probe.has("Include at least one item, or go back and choose a new add-on, to continue."))
+            assertTrue(probe.disabled("Next: Confirm import"))
+            timed("include all") { probe.click("Include all") }
+            timed("filter") { probe.click("Needs review / unmatched") }
+            assertTrue(probe.has("Showing 1–50 of 80 matching"))
+            probe.scrollToEnd()
+            assertTrue(probe.has("Page 1 of 2 · 80 matching"))
+            timed("next page") { probe.click("Next items") }
+            assertNotNull(probe.nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.ContentDescription)?.any { d -> d.startsWith("Include ") } == true },
+                "The next page's first rows are scrolled into view")
+            probe.assertInside(390, "large review")
+            probe.capture("phone-large-review")
+            println("2000-row phone review timings (ms, includes 10 frames each): $timings")
+            timings.forEach { (label, ms) -> assertTrue(ms < 4_000, "$label took $ms ms") }
+        } finally { scene.close() }
+    }
+
+    @Test fun tabletWidthUsesTwoSummaryColumnsWithinAReadableWidth() {
+        val transport = FakeStremioTransport()
+        val session = session(transport)
+        val scene = scene(1280, 1200, session)
+        try {
+            val probe = Probe(scene); probe.frames(12)
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); probe.frames(10)
+            val left = probe.textNode("Source library records").positionInRoot.x
+            val right = probe.textNode("Existing entries preserved").positionInRoot.x
+            assertTrue(right - left > 300, "Summary uses two columns ($left, $right)")
+            probe.assertTextInside(760, "tablet content width")
+            probe.capture("tablet-items")
         } finally { scene.close() }
     }
 
@@ -161,8 +268,10 @@ class StremioImportUiTest {
             val probe = Probe(scene); probe.frames(12)
             session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); probe.frames(10)
             assertNotNull(probe.described("Include Movie 000")); assertNull(probe.described("Include Movie 050"))
-            probe.click("Next items")
+            assertTrue(probe.has("Showing 1–50 of 120 matching"))
+            probe.scrollToEnd(); probe.click("Next items")
             assertNotNull(probe.described("Include Movie 050"))
+            probe.scrollList(0)
             probe.setText("Find a title", "Movie 11")
             assertNotNull(probe.described("Include Movie 119")); assertNull(probe.described("Include Movie 050"))
             probe.click("Exclude matching")
@@ -216,7 +325,7 @@ class StremioImportUiTest {
     @Test fun phoneSettingsOpensImportAndReturnsToTheList() {
         val scene = ImageComposeScene(390, 844, Density(1f)) {
             ViptvTheme { SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
-                stremioImport = { compact, back -> StremioImportScreen(null, "Synthetic profile", compact, back) }) }
+                stremioImport = { compact, back, _ -> StremioImportScreen(null, "Synthetic profile", compact, back) }) }
         }
         try {
             val probe = Probe(scene); probe.frames(12)
@@ -244,11 +353,22 @@ class StremioImportUiTest {
         private fun clickable(label: String, button: Boolean) = nodes().filter { node ->
             node.config.contains(SemanticsActions.OnClick) && node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == label } == true &&
                 (!button || node.config.getOrNull(SemanticsProperties.Role) == Role.Button)
-        }.let { matches -> matches.lastOrNull() ?: error("Missing action $label") }
-        fun toggleState(label: String) = clickable(label, false).config[SemanticsProperties.ToggleableState]
-        fun disabled(label: String, button: Boolean = false) = clickable(label, button).config.contains(SemanticsProperties.Disabled)
+        }.lastOrNull()
+        fun clickableOrNull(label: String) = clickable(label, false)
+        private fun clickableOrFail(label: String, button: Boolean) = clickable(label, button) ?: error("Missing action $label")
+        fun textNode(value: String) = nodes().first { it.config.getOrNull(SemanticsProperties.Text)?.any { t -> t.text == value } == true }
+        /** Scrolls the import's lazy list, as a user would, so off-screen entries compose. */
+        fun scrollToEnd() {
+            repeat(3) { nodes().first { it.config.contains(SemanticsActions.ScrollBy) }.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 100_000f); frames(6) }
+        }
+        fun scrollList(index: Int) {
+            val list = nodes().first { it.config.contains(SemanticsActions.ScrollToIndex) }
+            list.config[SemanticsActions.ScrollToIndex].action!!.invoke(index); frames(10)
+        }
+        fun toggleState(label: String) = clickableOrFail(label, false).config[SemanticsProperties.ToggleableState]
+        fun disabled(label: String, button: Boolean = false) = clickableOrFail(label, button).config.contains(SemanticsProperties.Disabled)
         fun click(label: String, button: Boolean = false) {
-            val node = clickable(label, button)
+            val node = clickableOrFail(label, button)
             assertFalse(node.config.contains(SemanticsProperties.Disabled), "$label is disabled")
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); frames(10)
         }
@@ -259,6 +379,10 @@ class StremioImportUiTest {
             val left = node.positionInRoot.x; val right = left + node.size.width
             if (node.size.width > 0) assertTrue(left >= -.5f && right <= width + .5f,
                 "$stage: '${text(node).take(40)}' overflows the phone width ($left..$right)")
+        }
+        fun assertTextInside(width: Int, stage: String) = nodes().filter { it.config.contains(SemanticsProperties.Text) }.forEach { node ->
+            val right = node.positionInRoot.x + node.size.width
+            assertTrue(right <= width + .5f, "$stage: text overflows $width ($right)")
         }
         fun capture(variant: String) {
             val directory = System.getenv("VIPTV_ACCOUNT_CAPTURE_DIR") ?: return

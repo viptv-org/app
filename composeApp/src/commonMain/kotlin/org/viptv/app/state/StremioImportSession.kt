@@ -8,16 +8,17 @@ import org.viptv.app.connection.*
 enum class StremioImportStage(val step: Int, val title: String) {
     Connect(1, "Connect Stremio"), Addons(2, "Choose add-ons"), Items(3, "Review items"), Confirm(4, "Confirm import"), Complete(0, "Import complete")
 }
-enum class StremioImportBusy(val label: String) {
-    Preview("Reading Stremio for a read-only preview…"), Review("Verifying metadata and preparing named items…"), Apply("Saving the confirmed import…")
+/** [label] is the dashboard status; [expectation] tells the user why it can take a while. */
+enum class StremioImportBusy(val label: String, val expectation: String) {
+    Preview("Reading Stremio for a read-only preview…", "Large Stremio libraries can take up to a minute. Nothing is saved."),
+    Review("Verifying metadata and preparing named items…", "This can take up to a minute for large libraries or many add-ons. Nothing is saved yet."),
+    Apply("Saving the confirmed import…", "This can take up to a minute. Stay on this screen to see the result.")
 }
 
 /** Never holds the Stremio password: the field owns it until [StremioImportSession.connect] drops it. */
 data class StremioImportState(
     val profileName: String,
     val restricted: Boolean,
-    /** Browser account sessions choose add-ons; native device sessions only see them. */
-    val addonsEditable: Boolean,
     val stage: StremioImportStage = StremioImportStage.Connect,
     val email: String = "",
     val library: Boolean = true,
@@ -25,6 +26,10 @@ data class StremioImportState(
     val addons: StremioAddonPreview? = null,
     val selectedAddons: Set<String> = emptySet(),
     val failedAddons: Set<String> = emptySet(),
+    /** Server category per failed add-on, when it sent one. */
+    val failedReasons: Map<String, String> = emptyMap(),
+    /** Increments each time a verification names failed add-ons, so the screen can bring the first into view. */
+    val failedReports: Int = 0,
     val review: StremioReview? = null,
     val excluded: Set<String> = emptySet(),
     val reviewedAddons: String? = null,
@@ -34,6 +39,8 @@ data class StremioImportState(
     val expired: Boolean = false,
     val busy: StremioImportBusy? = null,
     val error: String? = null,
+    /** Neutral, non-error status such as a stopped verification. */
+    val notice: String? = null,
     /** Increments when the draft is discarded so the form clears its fields and restores email focus. */
     val resets: Int = 0,
 ) {
@@ -54,9 +61,17 @@ internal fun stremioSelectedCounts(summary: Map<String, Int>, items: List<Stremi
 private val staleCodes = setOf("stremio_preview_stale", "stremio_preview_expired", "stremio_preview_not_found", "stremio_selection_mismatch")
 internal const val stremioStaleCopy = "This preview is no longer current. Preview again."
 internal const val stremioUncertainApplyCopy = "Could not confirm the import. Retry this preview; completed items will not be duplicated."
+internal const val stremioTimeoutCopy = "Stremio or the server took too long to respond. Try again."
+internal const val stremioReviewTimeoutCopy = "Stremio or the server took too long to respond. Try again, or choose fewer add-ons."
+internal const val stremioUnreachableCopy = "Could not reach the VIPTV server. Check your connection and try again."
+internal const val stremioReviewStoppedCopy = "Verification stopped. Your add-on choices are kept; change them or try again."
 
-/** Fixed copy only; upstream diagnostics are never shown. */
-internal fun stremioImportError(failure: Throwable, applying: Boolean): String {
+/**
+ * Fixed copy only; upstream diagnostics are never shown. A known `error_code` wins whatever the
+ * HTTP status. Without one, preview/review failures say what happened (too slow, unreachable);
+ * during apply the outcome is unknown, so the retry copy never implies nothing was saved.
+ */
+internal fun stremioImportError(failure: Throwable, applying: Boolean, reviewing: Boolean = false): String {
     if (failure is StremioImportFailure) when (failure.code) {
         "stremio_credentials_invalid" -> return "Stremio sign-in failed. Check your details."
         in staleCodes -> return stremioStaleCopy
@@ -67,11 +82,21 @@ internal fun stremioImportError(failure: Throwable, applying: Boolean): String {
         "stremio_storage_unavailable" -> return "Import storage is temporarily unavailable. Try again."
         "stremio_invalid_request" -> return "This import request could not be accepted. Start a new preview and try again."
         "secret_store_not_configured" -> return "The server needs encrypted add-on storage before importing configuration."
-        "account_session_required" -> return "Add-ons can only be added from VIPTV on the web."
+        "account_session_required" -> return "This session can't add add-ons to your account. Continue without add-ons, or try again from VIPTV on the web."
+        null -> when (failure.status) {
+            401 -> return "Sign in again to continue."
+            429 -> return "Too many requests. Wait a moment and try again."
+        }
     }
     if (failure is StremioInvalidResponse && failure.message in setOf("Invalid review", "Invalid add-ons", "Replaced review"))
         return "The server returned an unexpected import review. Start a new preview or update VIPTV."
-    return if (applying) stremioUncertainApplyCopy else "Could not prepare the import. Check your details or add-on choices and try again."
+    if (applying) return stremioUncertainApplyCopy
+    if (failure is StremioTransportFailure) return when {
+        !failure.timedOut -> stremioUnreachableCopy
+        reviewing -> stremioReviewTimeoutCopy
+        else -> stremioTimeoutCopy
+    }
+    return "Could not prepare the import. Check your details or add-on choices and try again."
 }
 
 /**
@@ -85,11 +110,10 @@ class StremioImportSession internal constructor(
     val profileId: String,
     profileName: String,
     restricted: Boolean,
-    addonsEditable: Boolean,
     private val now: () -> Long = ::epochMillis,
     internal val owned: () -> Boolean = { true },
 ) {
-    private val mutable = MutableStateFlow(StremioImportState(profileName, restricted, addonsEditable))
+    private val mutable = MutableStateFlow(StremioImportState(profileName, restricted))
     val state = mutable.asStateFlow()
     private val current get() = mutable.value
     private var epoch = 0L
@@ -118,7 +142,7 @@ class StremioImportSession internal constructor(
         if (!idle() || !usable() || draft.connected || draft.completion != null || email.isBlank() || password.isEmpty()) return
         val request = ++epoch
         val address = email.trim()
-        mutable.value = draft.copy(error = null, busy = StremioImportBusy.Preview)
+        mutable.value = draft.copy(error = null, notice = null, busy = StremioImportBusy.Preview)
         start(request) { loadPreview(request, address, password, draft.library, draft.progress) }
     }
 
@@ -130,7 +154,7 @@ class StremioImportSession internal constructor(
                 is StremioAddonPreview -> {
                     handle = value.previewId
                     mutable.value = current.copy(email = email, addons = value, expired = false, stage = StremioImportStage.Addons,
-                        selectedAddons = if (current.addonsEditable) value.addons.filter { it.status != "unavailable" }.map { it.id }.toSet() else emptySet())
+                        selectedAddons = value.addons.filter { it.status != "unavailable" }.map { it.id }.toSet())
                     scheduleExpiry()
                 }
                 is StremioReview -> { mutable.value = current.copy(email = email); acceptReview(value, null) }
@@ -148,25 +172,35 @@ class StremioImportSession internal constructor(
         scheduleExpiry()
     }
 
-    private fun canChooseAddons() = current.addonsEditable && idle() && !current.expired && current.stage == StremioImportStage.Addons
+    private fun canChooseAddons() = idle() && !current.expired && current.stage == StremioImportStage.Addons
+    /** Unticking a failed add-on clears its mark: it no longer blocks the next verification. */
     fun toggleAddon(id: String, selected: Boolean) {
         val addon = current.addons?.addons?.find { it.id == id } ?: return
         if (!canChooseAddons() || (selected && addon.status == "unavailable")) return
-        mutable.value = current.copy(confirmed = false, selectedAddons = if (selected) current.selectedAddons + id else current.selectedAddons - id)
+        mutable.value = current.copy(confirmed = false, notice = null,
+            selectedAddons = if (selected) current.selectedAddons + id else current.selectedAddons - id,
+            failedAddons = if (selected) current.failedAddons else current.failedAddons - id,
+            failedReasons = if (selected) current.failedReasons else current.failedReasons - id)
     }
     fun selectAllAddons() {
         val addons = current.addons ?: return
-        if (canChooseAddons()) mutable.value = current.copy(confirmed = false,
+        if (canChooseAddons()) mutable.value = current.copy(confirmed = false, notice = null,
             selectedAddons = addons.addons.filter { it.status != "unavailable" }.map { it.id }.toSet())
     }
-    fun clearAddons() { if (canChooseAddons()) mutable.value = current.copy(confirmed = false, selectedAddons = emptySet()) }
+    fun clearAddons() { if (canChooseAddons()) mutable.value = current.copy(confirmed = false, notice = null, selectedAddons = emptySet(),
+        failedAddons = emptySet(), failedReasons = emptyMap()) }
+    /** Keeps every other choice; the user presses Next again to re-verify without the failed add-ons. */
+    fun uncheckFailedAddons() {
+        if (canChooseAddons() && current.failedAddons.isNotEmpty()) mutable.value = current.copy(confirmed = false, notice = null,
+            selectedAddons = current.selectedAddons - current.failedAddons, failedAddons = emptySet(), failedReasons = emptyMap())
+    }
+    /** Skipping only limits this import; existing account add-ons are never removed. */
     fun continueWithoutAddons() {
         if (!canChooseAddons()) return
-        mutable.value = current.copy(selectedAddons = emptySet(), confirmed = false)
+        mutable.value = current.copy(selectedAddons = emptySet(), failedAddons = emptySet(), failedReasons = emptyMap(), confirmed = false)
         verify(emptySet())
     }
-    /** Native device sessions may not register add-ons, so they always review with none selected. */
-    fun reviewItems() = verify(if (current.addonsEditable) current.selectedAddons else emptySet())
+    fun reviewItems() = verify(current.selectedAddons)
 
     private fun verify(chosen: Set<String>) {
         val draft = current
@@ -174,10 +208,11 @@ class StremioImportSession internal constructor(
         if (draft.expired || !idle() || !usable() || expiredAt(addons)) return
         val key = chosen.sorted().joinToString(",")
         if (draft.review != null && draft.reviewedAddons == key) {
-            mutable.value = draft.copy(error = null, stage = StremioImportStage.Items); return
+            mutable.value = draft.copy(error = null, notice = null, stage = StremioImportStage.Items); return
         }
         val request = ++epoch
-        mutable.value = draft.copy(reviewedAddons = null, error = null, failedAddons = emptySet(), busy = StremioImportBusy.Review)
+        mutable.value = draft.copy(reviewedAddons = null, error = null, notice = null, failedAddons = emptySet(), failedReasons = emptyMap(),
+            busy = StremioImportBusy.Review)
         start(request) { loadReview(request, addons, chosen.sorted(), key, draft.review?.revision ?: 0) }
     }
 
@@ -194,9 +229,11 @@ class StremioImportSession internal constructor(
             if (!live(request)) return
             mutable.value = current.copy(reviewedAddons = null, confirmed = false)
             if (error is StremioImportFailure && error.code == "stremio_addon_unavailable")
-                mutable.value = current.copy(failedAddons = addons.addons.map { it.id }.filter { it in error.failedAddons }.toSet())
+                mutable.value = addons.addons.map { it.id }.filter { it in error.failedAddons }.toSet().let { failed ->
+                    current.copy(failedAddons = failed, failedReasons = error.failedReasons.filterKeys { it in failed },
+                        failedReports = current.failedReports + 1) }
             if (error is StremioImportFailure && error.code in staleCodes) { reset(); mutable.value = current.copy(expired = true) }
-            mutable.value = current.copy(error = stremioImportError(error, false))
+            mutable.value = current.copy(error = stremioImportError(error, false, reviewing = true))
         }
     }
 
@@ -204,7 +241,8 @@ class StremioImportSession internal constructor(
     fun setItemsIncluded(ids: Collection<String>, included: Boolean) {
         val review = current.review ?: return
         if (!canChooseItems()) return
-        val selectable = review.items.filter { it.selectable && it.id in ids }.map { it.id }
+        val wanted = ids as? Set<String> ?: ids.toHashSet()
+        val selectable = review.items.filter { it.selectable && it.id in wanted }.map { it.id }
         mutable.value = current.copy(confirmed = false, excluded = if (included) current.excluded - selectable.toSet() else current.excluded + selectable)
     }
 
@@ -261,10 +299,21 @@ class StremioImportSession internal constructor(
         if (draft.stage == StremioImportStage.Connect && draft.connected && !draft.expired && idle())
             mutable.value = draft.copy(stage = if (draft.addons != null) StremioImportStage.Addons else StremioImportStage.Items)
     }
-    /** Cancels a pending preview, or discards an unlocked draft. Never interrupts apply. */
+    /**
+     * Cancels a pending preview (nothing to keep), stops a long metadata verification while keeping
+     * the add-on choices, or discards an unlocked draft. Never interrupts apply, which may commit.
+     */
     fun cancel() {
         val draft = current
-        if (draft.busy == StremioImportBusy.Preview || (idle() && !draft.selectionLocked)) reset()
+        when {
+            draft.busy == StremioImportBusy.Review -> {
+                epoch++
+                pending?.cancel(); pending = null
+                mutable.value = draft.copy(busy = null, reviewedAddons = null, confirmed = false, error = null,
+                    notice = stremioReviewStoppedCopy, stage = StremioImportStage.Addons)
+            }
+            draft.busy == StremioImportBusy.Preview || (idle() && !draft.selectionLocked) -> reset()
+        }
     }
     fun changeConnection() { if (idle()) reset() }
     fun startAnother() { if (current.stage == StremioImportStage.Complete) reset() }
@@ -275,7 +324,7 @@ class StremioImportSession internal constructor(
         timer?.cancel(); timer = null
         discardPreview()
         val draft = current
-        mutable.value = StremioImportState(draft.profileName, draft.restricted, draft.addonsEditable,
+        mutable.value = StremioImportState(draft.profileName, draft.restricted,
             library = draft.library, progress = draft.progress, resets = draft.resets + 1)
     }
 
@@ -288,7 +337,7 @@ class StremioImportSession internal constructor(
         timer?.cancel(); timer = null
         discardPreview()
         val draft = current
-        mutable.value = StremioImportState(draft.profileName, draft.restricted, draft.addonsEditable, resets = draft.resets + 1)
+        mutable.value = StremioImportState(draft.profileName, draft.restricted, resets = draft.resets + 1)
     }
 
     private fun discardPreview() {

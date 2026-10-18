@@ -20,7 +20,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
-    stremioImport: (@Composable (Boolean, () -> Unit) -> Unit)? = null) {
+    /** (compact, back, manageAddons): the import may open the Add-ons section from its first stage, as on the web. */
+    stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion)
         return
@@ -50,7 +51,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section == "Account" && account != null -> SettingsDetailContent(compact, { section = null }, account)
                     section == "Devices" && devices != null -> devices(compact) { section = if (compact) null else "Account" }
                     section == stremioImportSection && stremioImport != null -> Box(if (!compact && !webAccount) Modifier.padding(32.dp) else Modifier) {
-                        stremioImport(compact) { section = if (compact) null else "Account" }
+                        stremioImport(compact, { section = if (compact) null else "Account" }) { section = "Add-ons" }
                     }
                     section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, { section = null }) {
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()

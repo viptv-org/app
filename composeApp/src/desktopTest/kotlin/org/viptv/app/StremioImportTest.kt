@@ -4,11 +4,15 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.HttpTimeoutCapability
+import io.ktor.client.request.HttpResponseData
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
+import org.viptv.app.features.settings.stremioDuplicateOrdinals
 import kotlin.test.*
 
 internal const val stremioHandle = "synthetic_preview_123456789"
@@ -54,8 +58,8 @@ internal class FakeStremioTransport : StremioImportTransport {
 class StremioImportTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     @AfterTest fun close() = scope.cancel()
-    private fun session(transport: StremioImportTransport, editable: Boolean = true, restricted: Boolean = false, owned: () -> Boolean = { true }) =
-        StremioImportSession(scope, transport, "2", "Synthetic profile", restricted, editable, owned = owned)
+    private fun session(transport: StremioImportTransport, restricted: Boolean = false, owned: () -> Boolean = { true }) =
+        StremioImportSession(scope, transport, "2", "Synthetic profile", restricted, owned = owned)
     private fun StremioImportSession.toItems() { connect(" synthetic@example.invalid ", "synthetic-password"); reviewItems() }
 
     @Test fun guidedFlowUsesSortedSelectionsRevisionAndAppliesOnlyAfterConfirmation() {
@@ -203,21 +207,49 @@ class StremioImportTest {
         session.toConfirm(); assertFalse(session.state.value.confirmed)
     }
 
-    @Test fun nativeDeviceSessionsSeeAddonsReadOnlyAndReviewWithNone() {
+    @Test fun cancellingALongVerificationKeepsTheAddonChoicesAndCanRetry(): Unit = runBlocking {
         val transport = FakeStremioTransport()
-        transport.review = { addons, _ -> assertTrue(addons.isEmpty()); stremioReview(addonsToAdd = 0) }
-        val session = session(transport, editable = false)
+        val late = CompletableDeferred<StremioReview>()
+        transport.review = { _, _ -> withContext(NonCancellable) { late.await() } }
+        val session = session(transport)
         session.connect("synthetic@example.invalid", "synthetic-password")
-        assertEquals(StremioImportStage.Addons, session.state.value.stage)
-        assertTrue(session.state.value.selectedAddons.isEmpty())
-        session.selectAllAddons(); session.toggleAddon(stremioAddonId, true); session.continueWithoutAddons()
-        assertTrue(session.state.value.selectedAddons.isEmpty())
-        assertEquals(0, transport.reviews)
+        session.toggleAddon(stremioSecondAddonId, false)
         session.reviewItems()
-        assertEquals("review:$stremioHandle:[]:0", transport.calls.last())
+        assertEquals(StremioImportBusy.Review, session.state.value.busy)
+        session.cancel()
+        val stopped = session.state.value
+        assertNull(stopped.busy)
+        assertEquals(StremioImportStage.Addons, stopped.stage)
+        assertTrue(stopped.connected, "Stopping a verification keeps the draft and the server preview")
+        assertEquals(setOf(stremioAddonId), stopped.selectedAddons)
+        assertEquals(stremioReviewStoppedCopy, stopped.notice)
+        assertTrue(transport.calls.none { it.startsWith("discard") })
+        late.complete(stremioReview()); yield()
+        assertEquals(StremioImportStage.Addons, session.state.value.stage, "The stopped response is ignored")
+        transport.review = { _, _ -> stremioReview(1) }
+        session.reviewItems()
+        assertEquals("review:$stremioHandle:[$stremioAddonId]:0", transport.calls.last())
         assertEquals(StremioImportStage.Items, session.state.value.stage)
-        session.back(); session.reviewItems()
-        assertEquals(1, transport.reviews)
+        assertNull(session.state.value.notice)
+    }
+
+    @Test fun everyClientChoosesAddonsIncludingNativeDeviceSessions() {
+        val controller = ApplicationController(scope, Store())
+        val device = RemoteConnection("https://watch.example", Store(), HttpClient(MockEngine { respond("{}") }) { configureTransport() }, browserMode = false)
+        try {
+            controller.connection = device
+            controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "2", profiles = listOf(Profile("2", "Synthetic profile", null)))
+            assertNotNull(controller.openStremioImport(false))
+        } finally { device.close() }
+        val transport = FakeStremioTransport()
+        val session = session(transport)
+        session.connect("synthetic@example.invalid", "synthetic-password")
+        assertEquals(setOf(stremioAddonId, stremioSecondAddonId), session.state.value.selectedAddons)
+        session.clearAddons(); assertTrue(session.state.value.selectedAddons.isEmpty())
+        session.selectAllAddons(); session.toggleAddon("broken_addon_12345678901", true)
+        assertEquals(setOf(stremioAddonId, stremioSecondAddonId), session.state.value.selectedAddons, "Unavailable add-ons cannot be chosen")
+        session.reviewItems()
+        assertEquals("review:$stremioHandle:${listOf(stremioAddonId, stremioSecondAddonId).sorted()}:0", transport.calls.last())
     }
 
     @Test fun cancelledAndReplacedRequestsCannotPublishLateResponses(): Unit = runBlocking {
@@ -272,7 +304,7 @@ class StremioImportTest {
         val transport = FakeStremioTransport()
         transport.preview = { stremioAddons(expires = base / 1000 + 60) }
         transport.review = { _, _ -> stremioReview(expires = base / 1000 + 60) }
-        val session = StremioImportSession(local, transport, "2", "Synthetic profile", false, true, now = now)
+        val session = StremioImportSession(local, transport, "2", "Synthetic profile", false, now = now)
         session.connect("synthetic@example.invalid", "synthetic-password"); runCurrent()
         session.reviewItems(); runCurrent()
         assertEquals(StremioImportStage.Items, session.state.value.stage)
@@ -300,6 +332,38 @@ class StremioImportTest {
         session.connect("synthetic@example.invalid", "synthetic-password")
         assertTrue(transport.calls.isEmpty())
         assertEquals(StremioImportStage.Connect, session.state.value.stage)
+    }
+
+    @Test fun failedAddonsAreMarkedClearedWhenUntickedAndReverifiedOnTheNextAttempt() {
+        val many = (1..6).map { StremioAddon("synthetic_addon_${it.toString().padStart(10, '0')}", if (it <= 3) "Synthetic Torrent" else "Synthetic Streams | $it ⚡",
+            if (it % 2 == 0) listOf("stream") else listOf("stream", "catalog", "meta"), if (it == 6) "unavailable" else "add", if (it == 6) "unsupported_transport" else null) }
+        val failing = setOf(many[1].id, many[3].id)
+        val transport = FakeStremioTransport()
+        transport.preview = { stremioAddons(addons = many) }
+        transport.review = { chosen, _ ->
+            val bad = chosen.filter { it in failing }
+            if (bad.isNotEmpty()) throw StremioImportFailure(424, "stremio_addon_unavailable", bad, bad.associateWith { "addon_unreachable" })
+            stremioReview(transport.reviews.toLong())
+        }
+        val session = session(transport)
+        session.toItems()
+        assertEquals(failing, session.state.value.failedAddons)
+        assertEquals(1, session.state.value.failedReports)
+        assertEquals(failing.associateWith { "addon_unreachable" }, session.state.value.failedReasons)
+        assertEquals(StremioImportStage.Addons, session.state.value.stage)
+        session.toggleAddon(many[1].id, false)
+        assertEquals(setOf(many[3].id), session.state.value.failedAddons, "Unticking a failed add-on clears its mark")
+        assertEquals(setOf(many[3].id), session.state.value.failedReasons.keys)
+        session.reviewItems()
+        assertEquals(setOf(many[3].id), session.state.value.failedAddons, "Still selected, still failing")
+        assertEquals(2, session.state.value.failedReports)
+        session.uncheckFailedAddons()
+        assertFalse(many[3].id in session.state.value.selectedAddons)
+        assertTrue(session.state.value.failedAddons.isEmpty())
+        session.reviewItems()
+        assertEquals(StremioImportStage.Items, session.state.value.stage)
+        assertTrue(session.state.value.failedAddons.isEmpty())
+        assertEquals("review:$stremioHandle:${listOf(many[0].id, many[2].id, many[4].id).sorted()}:0", transport.calls.last())
     }
 
     @Test fun failedAddonVerificationNamesTheAddonAndRequiresAnotherReview() {
@@ -331,6 +395,17 @@ class StremioImportTest {
         assertEquals("The server returned an unexpected import review. Start a new preview or update VIPTV.", second.state.value.error)
     }
 
+    @Test fun everyAddonFailureCategoryHasFixedRowCopy() {
+        mapOf("manifest_id_changed" to "This add-on changed since Stremio saved it. Reinstall it from its website, or uncheck it.",
+            "addon_protocol_invalid" to "This add-on uses an address VIPTV can't safely use. Uncheck it.",
+            "addon_unreachable" to "This add-on didn't respond. Try again or uncheck it.",
+            "addon_manifest_invalid" to "This add-on returned an invalid description. Uncheck it.",
+            "addon_checks_busy" to "VIPTV is checking other add-ons. Try again in a moment.",
+            "something_new" to "This add-on couldn't be checked. Uncheck it or try again.",
+            null to "Could not verify this add-on. Uncheck it or continue without add-ons.")
+            .forEach { (code, copy) -> assertEquals(copy, org.viptv.app.features.settings.stremioAddonFailureText(code), "$code") }
+    }
+
     @Test fun everyServerCodeMapsToFixedCopy() {
         val expected = mapOf(
             "stremio_credentials_invalid" to "Stremio sign-in failed. Check your details.",
@@ -343,7 +418,7 @@ class StremioImportTest {
             "stremio_storage_unavailable" to "Import storage is temporarily unavailable. Try again.",
             "stremio_invalid_request" to "This import request could not be accepted. Start a new preview and try again.",
             "secret_store_not_configured" to "The server needs encrypted add-on storage before importing configuration.",
-            "account_session_required" to "Add-ons can only be added from VIPTV on the web.")
+            "account_session_required" to "This session can't add add-ons to your account. Continue without add-ons, or try again from VIPTV on the web.")
         expected.forEach { (code, copy) -> assertEquals(copy, stremioImportError(StremioImportFailure(400, code), false), code) }
         listOf("Invalid review", "Invalid add-ons", "Replaced review").forEach {
             assertEquals("The server returned an unexpected import review. Start a new preview or update VIPTV.", stremioImportError(StremioInvalidResponse(it), false))
@@ -351,6 +426,14 @@ class StremioImportTest {
         assertEquals(stremioUncertainApplyCopy, stremioImportError(StremioInvalidResponse("Invalid completion"), true))
         assertEquals("Could not prepare the import. Check your details or add-on choices and try again.", stremioImportError(StremioImportFailure(500, "private https://upstream"), false))
         assertEquals(stremioUncertainApplyCopy, stremioImportError(IllegalStateException("private"), true))
+        assertEquals(stremioTimeoutCopy, stremioImportError(StremioTransportFailure(true), false))
+        assertEquals(stremioReviewTimeoutCopy, stremioImportError(StremioTransportFailure(true), false, reviewing = true))
+        assertEquals(stremioUnreachableCopy, stremioImportError(StremioTransportFailure(false), false, reviewing = true))
+        assertEquals(stremioUncertainApplyCopy, stremioImportError(StremioTransportFailure(true), true), "Apply may have committed")
+        assertEquals(stremioUncertainApplyCopy, stremioImportError(StremioTransportFailure(false), true))
+        assertEquals("Sign in again to continue.", stremioImportError(StremioImportFailure(401, null), false))
+        assertEquals("Too many requests. Wait a moment and try again.", stremioImportError(StremioImportFailure(429, null), true))
+        assertEquals("Could not read Stremio. Try again.", stremioImportError(StremioImportFailure(424, "stremio_source_unavailable"), false))
     }
 
     // Wire contract: request bodies, device sessions and response validation.
@@ -453,7 +536,6 @@ class StremioImportTest {
             val profiles = listOf(Profile("2", "Synthetic profile", null), Profile("3", "Replacement", null))
             controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "2", profiles = profiles)
             val session = assertNotNull(controller.openStremioImport(false))
-            assertTrue(session.state.value.addonsEditable, "Browser account sessions choose add-ons")
             session.connect("synthetic@example.invalid", "synthetic-password")
             withTimeout(5_000) { while (session.state.value.stage != StremioImportStage.Addons) delay(5) }
             controller.accept(Bootstrap(profiles, "2", null))
@@ -472,5 +554,101 @@ class StremioImportTest {
             next.connect("synthetic@example.invalid", "synthetic-password")
             assertEquals(1, requests.count { it.second.endsWith("/preview") })
         } finally { remote.close() }
+    }
+
+    // Long server work: per-request timeouts, honest copy for gateway pages and lost connections.
+    private fun remote(engine: MockEngine, browser: Boolean = true, shared: Long? = null) = RemoteConnection("https://watch.example", Store(),
+        HttpClient(engine) { if (shared == null) configureTransport() else install(HttpTimeout) { requestTimeoutMillis = shared; socketTimeoutMillis = shared } },
+        browserMode = browser)
+
+    @Test fun importRequestsGetTheirOwnTimeoutsWhileOtherRequestsKeepTheSharedOnes(): Unit = runBlocking {
+        val limits = mutableMapOf<String, Pair<Long?, Long?>>()
+        val connection = remote(MockEngine { request ->
+            val config = request.getCapabilityOrNull(HttpTimeoutCapability)
+            limits["${request.method.value} ${request.url.encodedPath.substringAfterLast('/')}"] = config?.requestTimeoutMillis to config?.socketTimeoutMillis
+            val path = request.url.encodedPath
+            respond(when { path.endsWith("/preview") -> addonsJson(); path.endsWith("/review") -> reviewJson(); path.endsWith("/apply") -> completionJson; else -> "{}" },
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        try {
+            val api = RemoteStremioImport(connection)
+            api.preview("2", "synthetic@example.invalid", "synthetic-password", true, true)
+            api.review("2", stremioHandle, emptyList(), 0); api.apply("2", stremioHandle, emptyList(), 1); api.discard("2", stremioHandle)
+            connection.call("/api/auth/status")
+            assertEquals(60_000L to 60_000L, limits["POST preview"])
+            assertEquals(95_000L to 95_000L, limits["POST review"])
+            assertEquals(95_000L to 95_000L, limits["POST apply"])
+            assertEquals(15_000L to 15_000L, limits["DELETE $stremioHandle"], "Discard stays short")
+            assertEquals(15_000L to 15_000L, limits["GET status"], "Other endpoints keep the shared limits")
+        } finally { connection.close() }
+    }
+
+    @Test fun aReviewSlowerThanTheSharedLimitStillSucceedsAndOneSlowerThanItsOwnLimitTimesOut(): Unit = runBlocking {
+        val engine = MockEngine { delay(400); respond(reviewJson(), headers = headersOf(HttpHeaders.ContentType, "application/json")) }
+        val connection = remote(engine, shared = 100)
+        try {
+            val review = RemoteStremioImport(connection, timeouts = StremioImportTimeouts(review = 5_000)).review("2", stremioHandle, emptyList(), 0)
+            assertEquals(1L, review.revision, "The 100 ms shared limit no longer applies to review")
+            val failure = assertFailsWith<StremioTransportFailure> {
+                RemoteStremioImport(connection, timeouts = StremioImportTimeouts(review = 150)).review("2", stremioHandle, emptyList(), 0)
+            }
+            assertTrue(failure.timedOut)
+            assertEquals(stremioReviewTimeoutCopy, stremioImportError(failure, false, reviewing = true))
+            assertEquals(stremioUncertainApplyCopy, stremioImportError(failure, true))
+        } finally { connection.close() }
+    }
+
+    @Test fun gatewayPagesAndLostConnectionsGetHonestCopyWhileJsonCodesWinWhateverTheStatus(): Unit = runBlocking {
+        var reply: suspend MockRequestHandleScope.() -> HttpResponseData = { respondError(HttpStatusCode.BadGateway) }
+        val connection = remote(MockEngine { reply() })
+        try {
+            val api = RemoteStremioImport(connection)
+            suspend fun failure(block: suspend () -> Unit) = assertFails { block() }
+            reply = { respond("error code: 502", HttpStatusCode.BadGateway, headersOf(HttpHeaders.ContentType, "text/plain")) }
+            assertEquals(stremioUnreachableCopy, stremioImportError(failure { api.review("2", stremioHandle, emptyList(), 0) }, false, reviewing = true))
+            reply = { respond("<html>A timeout occurred</html>", HttpStatusCode.fromValue(524), headersOf(HttpHeaders.ContentType, "text/html")) }
+            assertEquals(stremioTimeoutCopy, stremioImportError(failure { api.preview("2", "a@example.invalid", "p", true, true) }, false))
+            assertEquals(stremioUncertainApplyCopy, stremioImportError(failure { api.apply("2", stremioHandle, emptyList(), 1) }, true))
+            reply = { throw java.io.IOException("private host detail") }
+            val lost = failure { api.review("2", stremioHandle, emptyList(), 0) }
+            assertEquals(stremioUnreachableCopy, stremioImportError(lost, false, reviewing = true))
+            assertFalse(lost.message.orEmpty().contains("private"))
+            reply = { respond("""{"error_code":"stremio_addon_unavailable","failed_addon_items":["$stremioAddonId","$stremioSecondAddonId"],
+                "failed_addon_reasons":{"$stremioAddonId":"manifest_id_changed","$stremioSecondAddonId":"Private https://x","not_reported_12345678":"addon_unreachable"}}""",
+                HttpStatusCode.fromValue(424), headersOf(HttpHeaders.ContentType, "application/json")) }
+            val addon = assertFailsWith<StremioImportFailure> { api.review("2", stremioHandle, listOf(stremioAddonId), 0) }
+            assertEquals(listOf(stremioAddonId, stremioSecondAddonId), addon.failedAddons)
+            assertEquals(mapOf(stremioAddonId to "manifest_id_changed"), addon.failedReasons, "Only code-shaped reasons for reported handles")
+            reply = { respond("""{"error_code":"stremio_addon_unavailable","failed_addon_items":["$stremioAddonId"],"failed_addon_reasons":[1]}""",
+                HttpStatusCode.fromValue(424), headersOf(HttpHeaders.ContentType, "application/json")) }
+            assertTrue(assertFailsWith<StremioImportFailure> { api.review("2", stremioHandle, listOf(stremioAddonId), 0) }.failedReasons.isEmpty())
+            reply = { respond("""{"error_code":"stremio_source_unavailable"}""", HttpStatusCode.BadGateway, headersOf(HttpHeaders.ContentType, "application/json")) }
+            assertEquals("Could not read Stremio. Try again.", stremioImportError(failure { api.preview("2", "a@example.invalid", "p", true, true) }, false))
+            reply = { respond("<html>ok</html>", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "text/html")) }
+            assertEquals("The server returned an unexpected import review. Start a new preview or update VIPTV.",
+                stremioImportError(failure { api.review("2", stremioHandle, emptyList(), 0) }, false, reviewing = true))
+        } finally { connection.close() }
+    }
+
+    @Test fun largeSyntheticResponsesShapedLikeARealAccountPassValidation(): Unit = runBlocking {
+        val connection = remote(MockEngine { request ->
+            respond(if (request.url.encodedPath.endsWith("/preview")) StremioSyntheticFixtures.addonsJson() else StremioSyntheticFixtures.reviewJson(2_000),
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        try {
+            val api = RemoteStremioImport(connection)
+            val addons = assertIs<StremioAddonPreview>(api.preview("7", "a@example.invalid", "p", true, true))
+            assertEquals(23, addons.addons.size)
+            assertEquals(2, addons.addons.count { it.status == "unavailable" })
+            assertEquals(listOf(1 to 2, 2 to 2), addons.addons.filter { it.name == "Synthetic Torrent" }.map { stremioDuplicateOrdinals(addons.addons).getValue(it.id) })
+            val review = api.review("7", addons.previewId, emptyList(), 0)
+            assertEquals(2_000, review.items.size)
+            assertEquals(80, review.items.count { !it.selectable })
+            assertTrue(review.items.any { it.season == 0 }, "Season 0 specials are valid")
+            val start = System.nanoTime()
+            val all = stremioSelectedCounts(review.summary, review.items, review.items.map { it.id }.toHashSet())
+            assertTrue((System.nanoTime() - start) / 1_000_000 < 500)
+            assertEquals(0, all.getValue("progress_to_add"))
+        } finally { connection.close() }
     }
 }
