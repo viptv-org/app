@@ -11,8 +11,8 @@ import org.viptv.app.connection.*
  */
 internal object StremioSyntheticFixtures {
     private fun handle(prefix: String, index: Int) = "${prefix}_${index.toString().padStart(12, '0')}"
-    private val addonNames = listOf("Cinemeta", "Synthetic Torrent", "Synthetic Torrent", "Synthetic Torrent TB", "AIOStreams | Synthetic",
-        "AIOStreams [Backup]", "Subtitles+", "vSynthetic ⚡", "OpenSubtitles v3", "Anime Kitsu", "Synthetic Catalogs", "Trakt-ish",
+    private val addonNames = listOf("Cinemeta", "Synthetic Torrent", "Synthetic Torrent", "Synthetic Torrent TB", "MultiStream | Synthetic",
+        "MultiStream [Backup]", "Subtitles+", "vSynthetic ⚡", "OpenSubtitles v3", "Anime Kitsu", "Synthetic Catalogs", "Trakt-ish",
         "Synthetic | Streams", "Mirror [EU]", "Mirror [US]", "Local Files", "Watch Hub", "Synthetic Debrid", "Search+", "Ñandú Meta",
         "Catalog • Plus", "Legacy http add-on", "Broken subtitles")
     private val resources = listOf(listOf("catalog", "meta"), listOf("stream"), listOf("stream"), listOf("stream"), listOf("stream", "catalog", "meta"),
