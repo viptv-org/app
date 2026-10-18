@@ -20,7 +20,7 @@ internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val scale = maxWidth / 1920.dp
         val motion = animateFloatAsState(if (browsing) 1f else 0f, tween(450, easing = CubicBezierEasing(.2f, 0f, 0f, 1f)), label = "Hero artwork departure")
-        Box(Modifier.fillMaxSize().graphicsLayer {
+        if (motion.value < 0.99f) Box(Modifier.fillMaxSize().graphicsLayer {
             alpha = 1f - motion.value; translationY = -80.dp.toPx() * scale * motion.value
             clip = true; compositingStrategy = CompositingStrategy.Auto
         }) {
@@ -28,7 +28,7 @@ internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = 
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = .86f), .36f to Palette.background.copy(alpha = .4f), .7f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f), .45f to Color.Transparent, .8f to Palette.background.copy(alpha = .9f), 1f to Palette.background)))
         }
-        Box(Modifier.fillMaxWidth().height(620.dp * scale).graphicsLayer {
+        if (motion.value > 0.01f) Box(Modifier.fillMaxWidth().height(620.dp * scale).graphicsLayer {
             alpha = motion.value; clip = true; compositingStrategy = CompositingStrategy.Auto
         }.background(Palette.background)) {
             if (portrait) {
