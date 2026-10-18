@@ -18,7 +18,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
-    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null) {
+    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null) {
     var unavailable by remember { mutableStateOf<String?>(null) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -66,6 +66,10 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                 SettingsDivider()
                 if (devices != null) {
                     SettingsItem("Devices", Lucide.Monitor, action = devices)
+                    SettingsDivider()
+                }
+                if (stremioImport != null) {
+                    SettingsItem(stremioImportSection, Lucide.Import, action = stremioImport)
                     SettingsDivider()
                 }
                 if (parental != null) {

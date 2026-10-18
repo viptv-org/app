@@ -203,6 +203,10 @@ class RemoteConnection(
         return value
     }
 
+    /** Status and body without generic failure copy, for endpoints whose callers map fixed error codes. */
+    internal suspend fun exchange(path: String, method: HttpMethod, body: JsonElement? = null): Pair<Int, String> =
+        authenticatedResponse(path, method, body).let { it.status.value to it.bodyAsText() }
+
     private suspend fun authenticatedResponse(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): HttpResponse {
         require(path.startsWith("/api/") && !path.contains('\\'))
         ensureOpen()

@@ -1,6 +1,6 @@
 package org.viptv.app.features.settings
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.dp
@@ -8,7 +8,8 @@ import org.viptv.app.state.*
 import org.viptv.app.connection.ProfilePreferences
 
 @Composable
-internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false) {
+internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
+    desktop: Boolean = false) {
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice,
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
@@ -35,6 +36,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         },
         devices = if (browser && !state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null) }) else null,
+        stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back ->
+            StremioImportRoute(state, controller, compact, if (compact) back else null) }) else null,
         serverAddress = controller.connection?.accountDashboardUrl,
         tvAccount = (state.accountIdentity ?: state.accountDevices?.account)?.let { TvAccountInfo(username = it.username) },
         accountRequested = if (!state.localMode) controller::refreshAccountIdentity else null,
@@ -54,4 +57,19 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         },
         tvParental = { first, sidebar, scale -> ParentControlsNative(state.localMode, controller.connection?.accountDashboardUrl,
             { controller.navigate(Screen.Profiles) }, first, sidebar, scale) })
+}
+
+/** IMP-001 targets browser builds and Android phones/tablets on a server; never TV, desktop or local mode. */
+internal fun stremioImportAvailable(state: ApplicationState, television: Boolean, desktop: Boolean) =
+    !television && !desktop && !state.localMode
+
+@Composable
+private fun StremioImportRoute(state: ApplicationState, controller: ApplicationController, compact: Boolean, back: (() -> Unit)?) {
+    val profile = state.profiles.find { it.id == state.selectedProfile }
+    val restricted = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.kids == true
+    val remote = controller.connection
+    // A new connection, profile or restriction replaces the draft; leaving the section discards it.
+    val session = remember(controller, remote, state.selectedProfile, restricted) { controller.openStremioImport(restricted) }
+    DisposableEffect(session) { onDispose { session?.let(controller::closeStremioImport) } }
+    StremioImportScreen(session, profile?.name, compact, back)
 }

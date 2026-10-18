@@ -16,11 +16,12 @@ import org.viptv.app.theme.Palette
 
 /** W3Account: browser account navigation, distinct from native device settings. */
 @Composable
-internal fun AccountSettingsSidebar(selected: String, profiles: () -> Unit, select: (String) -> Unit) {
+internal fun AccountSettingsSidebar(selected: String, profiles: () -> Unit, stremioImport: Boolean = false, select: (String) -> Unit) {
     LazyColumn(Modifier.width(240.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         item { Text("Account", Modifier.padding(start = 12.dp, bottom = 14.dp), fontSize = 26.sp, lineHeight = 30.sp,
             letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold) }
-        val entries = listOf("Account" to Lucide.UserRound, "Profiles" to Lucide.UsersRound, "Devices" to Lucide.Monitor,
+        val entries = listOfNotNull("Account" to Lucide.UserRound, "Profiles" to Lucide.UsersRound, "Devices" to Lucide.Monitor,
+            (stremioImportSection to Lucide.Import).takeIf { stremioImport },
             "Parental controls" to Lucide.LockKeyhole, "Add-ons" to Lucide.Puzzle, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions)
         entries.forEach { (label, icon) -> item(key = label) {
             Surface(color = if (selected == label) Palette.text.copy(alpha = .1f) else Palette.background,

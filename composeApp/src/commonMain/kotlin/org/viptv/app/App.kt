@@ -109,7 +109,7 @@ fun App(
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
                             Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
                             Screen.History -> HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                            Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact)
+                            Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }

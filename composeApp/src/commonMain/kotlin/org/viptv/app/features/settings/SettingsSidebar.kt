@@ -18,7 +18,7 @@ import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -> Unit, select: (String) -> Unit) {
+internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -> Unit, stremioImport: Boolean = false, select: (String) -> Unit) {
     LazyColumn(Modifier.width(240.dp).fillMaxHeight().background(Palette.surface), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("Settings", Modifier.padding(vertical = 12.dp), fontSize = 24.sp, fontWeight = FontWeight.Bold) }
@@ -29,9 +29,10 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -
                 Column { Text(profile?.name ?: "Profile", fontWeight = FontWeight.SemiBold); Text("Switch profile", fontSize = 12.sp, color = Palette.secondary) }
             }
         }
-        val entries = listOf("General" to Lucide.Settings, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions,
+        val entries = listOfNotNull("General" to Lucide.Settings, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions,
             "Watch on TV" to Lucide.Tv, "Add-ons" to Lucide.Puzzle, "Notifications" to Lucide.Bell,
-            "Parental controls" to Lucide.LockKeyhole, "Account" to Lucide.UserRound, "Help" to Lucide.Info, "About" to Lucide.Info)
+            "Parental controls" to Lucide.LockKeyhole, "Account" to Lucide.UserRound,
+            (stremioImportSection to Lucide.Import).takeIf { stremioImport }, "Help" to Lucide.Info, "About" to Lucide.Info)
         entries.forEach { (label, icon) -> item {
             Surface(color = if (selected == label) Palette.raised else Palette.surface, shape = RoundedCornerShape(10.dp)) {
                 Row(Modifier.fillMaxWidth().clickable { select(label) }.padding(horizontal = 12.dp, vertical = 14.dp),

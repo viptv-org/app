@@ -60,6 +60,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
 
 fun ApplicationController.connect(origin: String, username: String, password: String) {
     pendingIptv = null
+    discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
     val finishing = if (completionSeen) progressJob else saveProgress(false, final = true)
@@ -129,6 +130,7 @@ fun ApplicationController.leaveLocal() {
 
 fun ApplicationController.disconnect() {
     pendingIptv = null
+    discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
     libraryHydration?.cancel(); resetLiveRequests()
@@ -151,6 +153,7 @@ fun ApplicationController.disconnect() {
 
 fun ApplicationController.signOut() = run {
     pendingIptv = null
+    discardStremioImport()
     libraryImportRefresh?.cancel()
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
@@ -176,6 +179,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         profileNotice = if (pendingIptv != null) "Choose a profile for this provider. Details stay on this device." else null,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
+    discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }
     startLibraryImportRefresh(value.libraryImport)
     if (value.library != null) return
