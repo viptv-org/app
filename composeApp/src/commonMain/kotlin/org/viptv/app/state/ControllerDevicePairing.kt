@@ -11,7 +11,6 @@ fun ApplicationController.cancelDevicePairing() {
 }
 
 fun ApplicationController.startDevicePairing(origin: String) {
-    pendingIptv = null
     cancelDevicePairing()
     this.generation++; job?.cancel()
     val generation = pairingGeneration

@@ -26,11 +26,11 @@ import org.viptv.engine.wire.SourceCandidate
 
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
-    choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null) {
+    choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back, detail,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
-            loadingMore = loadingMore, selectedSource = selectedSource)
+            loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders)
         return
     }
     var quality by remember { mutableStateOf<String?>(null) }
@@ -65,7 +65,10 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp)) {
                 error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
                 if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
-                    Text(if (sources.isNotEmpty()) "No sources match these filters." else "No streams found. Enable a provider that supplies sources.", Modifier.padding(20.dp), color = Palette.secondary)
+                    val empty = if (torrentOnlyProviders > 0)
+                        "${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this device cannot stream directly" else "providers returned torrent links this device cannot stream directly"}. Add a debrid service (for example TorBox) to that add-on’s address, or enable a provider with direct streams."
+                    else "No streams found. Enable a provider that supplies sources."
+                    Text(empty, Modifier.padding(20.dp), color = Palette.secondary)
                 }
                 items(visible, key = { it.id }) { SourceRow(it, television, choose, enabled = !busy, selected = it.id == selectedSource) }
             }

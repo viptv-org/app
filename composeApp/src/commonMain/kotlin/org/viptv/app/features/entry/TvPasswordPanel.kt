@@ -27,7 +27,7 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
             Text("Sign in with your password", fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp, letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold)
         }
         Column(Modifier.offset(96.dp * scale, 230.dp * scale).width(1130.dp * scale)) {
-            TvEntryField("Email", email, "name@email.com", scale, !editingPassword) { editingPassword = false }
+            TvEntryField("Username", email, "username", scale, !editingPassword) { editingPassword = false }
             Spacer(Modifier.height(16.dp * scale))
             TvEntryField("Password", if (visible) password else "•".repeat(password.length), "Password", scale, editingPassword, masked = !visible) { editingPassword = true }
             Spacer(Modifier.height(46.dp * scale))

@@ -37,7 +37,7 @@ internal data class TvSourceInfo(val quality: String? = null, val format: String
 @Composable
 internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot?, info: Map<String, TvSourceInfo> = emptyMap(),
-    extras: TvDetailExtras = TvDetailExtras(), loadingMore: Boolean = false, selectedSource: String? = null) {
+    extras: TvDetailExtras = TvDetailExtras(), loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0) {
     TvDetailsScreen(detail, false, null, {}, extras, requestInitialFocus = false)
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
@@ -100,7 +100,13 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         Box(Modifier.fillMaxWidth().height(104.dp * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
                             .semantics { contentDescription = "Loading source" })
                     }
-                    if (!busy && !loadingMore && visible.isEmpty() && error == null) item { Text(if (sources.isNotEmpty()) "No sources match these filters." else "No sources found. Enable a provider that supplies streams.", color = Palette.secondary, fontSize = (22 * scale).sp) }
+                    if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
+                        val empty = if (torrentOnlyProviders > 0)
+                            "${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this TV cannot stream directly" else "providers returned torrent links this TV cannot stream directly"}. Add a debrid service (for example TorBox) to that add-on’s address, or enable a provider with direct streams."
+                        else if (sources.isNotEmpty()) "No sources match these filters."
+                        else "No sources found. Enable a provider that supplies streams."
+                        Text(empty, color = Palette.secondary, fontSize = (22 * scale).sp)
+                    }
                 }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {

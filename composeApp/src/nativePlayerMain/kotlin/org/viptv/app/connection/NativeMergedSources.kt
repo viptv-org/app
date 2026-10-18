@@ -7,7 +7,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
 
 internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: String, card: Card,
-    publish: (List<SourceCandidate>) -> Unit): List<SourceCandidate> = coroutineScope {
+    publish: (List<SourceCandidate>) -> Unit): SourcesOutcome = coroutineScope {
     val prepared = prepareMetadataCard(profile, card)
     val gate = Mutex()
     val found = linkedMapOf<String, SourceCandidate>()
@@ -18,8 +18,12 @@ internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: Stri
     }
     var stremioFailed = false
     var integrationFailed = false
+    var torrentOnly = 0
     val stremio = async {
-        try { fetchLocalSources(profile, prepared, ::append) }
+        try {
+            val outcome = fetchLocalSources(profile, prepared, ::append)
+            torrentOnly += outcome.torrentOnly
+        }
         catch (_: TimeoutCancellationException) { stremioFailed = true }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { stremioFailed = true }
@@ -32,5 +36,5 @@ internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: Stri
     stremio.await(); integrations.await()
     if (found.isEmpty() && (stremioFailed || integrationFailed))
         throw LocalFailure("Could not load sources. Check the configured providers and try again.")
-    found.values.toList()
+    SourcesOutcome(found.values.toList(), if (found.isEmpty()) torrentOnly else 0)
 }

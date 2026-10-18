@@ -35,8 +35,15 @@ import uniffi.viptv_core.LocalEngine
 
 internal data class NativePlaybackOrigin(val profile: String, val revision: Long, val origin: org.viptv.engine.wire.MetadataOrigin?, val mediaContext: JsonObject, val openedAt: Long = System.nanoTime())
 
+internal data class LocalSourcesOutcome(val candidates: List<SourceCandidate>, val torrentOnly: Int)
+
+/** A stream response that lists streams but yields none this connection can play (torrent links without a debrid integration). */
+private fun NativeLocalConnection.reportsStreams(body: String): Boolean = try {
+    json.parseToJsonElement(body).jsonObject["streams"]?.jsonArray?.isNotEmpty() == true
+} catch (_: Exception) { false }
+
 internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, card: Card,
-    publish: suspend (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate> {
+    publish: suspend (List<SourceCandidate>) -> Unit = {}): LocalSourcesOutcome {
     var operation: String? = null
     try {
         // Capture ownership inside IO: cancellation on the return hop must still
@@ -52,6 +59,7 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
         val capacity = Semaphore(3)
         val gate = Mutex()
         var found = emptyList<SourceCandidate>()
+        var torrentOnly = 0
         coroutineScope {
             request.getValue("requests").jsonArray.map { item -> async {
                 val connection = item.jsonObject
@@ -68,6 +76,7 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
                         json.decodeFromString<List<SourceCandidate>>(engine.projectSourcesPartial(id, JsonArray(listOf(response)).toString(), false))
                     }
                     currentCoroutineContext().ensureActive()
+                    if (partial.size == found.size && body != null && reportsStreams(body)) torrentOnly += 1
                     if (partial.map { it.id } != found.map { it.id }) {
                         found = partial
                         publish(partial)
@@ -76,9 +85,10 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
             } }.awaitAll()
         }
         currentCoroutineContext().ensureActive()
-        return withContext(Dispatchers.IO) {
-            json.decodeFromString(engine.projectSourcesPartial(id, "[]", true))
+        val candidates = withContext(Dispatchers.IO) {
+            json.decodeFromString<List<SourceCandidate>>(engine.projectSourcesPartial(id, "[]", true))
         }
+        return LocalSourcesOutcome(candidates, if (candidates.isEmpty()) torrentOnly else 0)
     } finally {
         operation?.let { id -> withContext(NonCancellable) {
             withContext(Dispatchers.IO) {

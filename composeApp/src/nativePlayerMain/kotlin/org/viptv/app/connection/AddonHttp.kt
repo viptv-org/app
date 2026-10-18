@@ -21,8 +21,33 @@ private sealed interface AddonReply {
 
 internal suspend fun addonJson(client: HttpClient, url: String): String = addonBytes(client, url).decodeToString()
 
+/**
+ * Add-on URLs legitimately carry configuration in the path (torrentio joins
+ * provider and debrid settings with `|`), which RFC 3986 forbids raw and
+ * [java.net.URI] rejects with a URISyntaxException. Percent-encode those
+ * characters instead of failing the request with an unrelated device error.
+ * A `%` that does not start a valid escape is encoded too, so the request
+ * target stays a well-formed URI while the engine keeps the raw spelling.
+ */
+private fun addonUri(url: String): URI {
+    val encoded = buildString {
+        var index = 0
+        while (index < url.length) {
+            val ch = url[index]
+            when {
+                ch == '%' && index + 2 < url.length && url[index + 1].isHex() && url[index + 2].isHex() -> { append(url, index, index + 3); index += 3 }
+                ch.isLetterOrDigit() || "-._~!$&'()*+,;=:@/?#".indexOf(ch) >= 0 -> { append(ch); index++ }
+                else -> { append(String.format("%%%02X", ch.code.toByte().toInt() and 0xFF)); index++ }
+            }
+        }
+    }
+    return try { URI(encoded) } catch (error: java.net.URISyntaxException) { throw LocalFailure("This add-on address is not valid.") }
+}
+
+private fun Char.isHex(): Boolean = isDigit() || this in 'a'..'f' || this in 'A'..'F'
+
 internal suspend fun addonBytes(client: HttpClient, url: String): ByteArray {
-    var current = URI(url)
+    var current = addonUri(url)
     val started = System.nanoTime()
     val kind = when { current.path.contains("/catalog/") -> "catalog"; current.path.contains("/meta/") -> "metadata"; current.path.contains("/manifest") -> "manifest"; else -> "addon" }
     repeat(4) { redirects ->

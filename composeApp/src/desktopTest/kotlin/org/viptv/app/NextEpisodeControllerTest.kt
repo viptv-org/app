@@ -93,7 +93,7 @@ class NextEpisodeControllerTest {
     }
 
     @Test fun localPlaybackAutomaticallyPagesActualMetadataForTheNextEpisode() = runBlocking<Unit> {
-        val fixture = IptvSetupFixture(); var pages = 0
+        val fixture = LocalSetupFixture(); var pages = 0
         val local = object : LocalConnection by fixture.local {
             override suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot {
                 pages++; assertEquals(24, offset); assertEquals(96, limit)

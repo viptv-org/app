@@ -8,7 +8,7 @@ import kotlin.test.*
 
 class AddonInstallCompletionTest {
     @Test fun failureReleasesForRetryAndSuccessPrecedesAncillaryRefreshFailure() = runBlocking {
-        val fixture = IptvSetupFixture()
+        val fixture = LocalSetupFixture()
         var attempts = 0
         var committed = false
         val results = mutableListOf<Boolean>()
@@ -40,7 +40,7 @@ class AddonInstallCompletionTest {
     }
 
     @Test fun immediateDuplicateDoesNotCancelTheAcceptedInstallOrSubmitAgain() = runBlocking {
-        val fixture = IptvSetupFixture()
+        val fixture = LocalSetupFixture()
         val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         var installs = 0; val results = mutableListOf<Boolean>(); val duplicateResults = mutableListOf<Boolean>()
         val local = object : LocalConnection by fixture.local {
@@ -64,7 +64,7 @@ class AddonInstallCompletionTest {
 
     @Test fun cancelledInstallCannotPublishLateSuccessOrFailure() = runBlocking {
         for (fails in listOf(false, true)) {
-            val fixture = IptvSetupFixture()
+            val fixture = LocalSetupFixture()
             val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
             val results = mutableListOf<Boolean>(); var refreshes = 0
             val local = object : LocalConnection by fixture.local {
@@ -91,7 +91,7 @@ class AddonInstallCompletionTest {
 
     @Test fun changedProfileOrConnectionSuppressesLateCompletionAndRefresh() = runBlocking {
         for (changeProfile in listOf(false, true)) {
-            val fixture = IptvSetupFixture()
+            val fixture = LocalSetupFixture()
             val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
             val results = mutableListOf<Boolean>(); var refreshes = 0
             val local = object : LocalConnection by fixture.local {

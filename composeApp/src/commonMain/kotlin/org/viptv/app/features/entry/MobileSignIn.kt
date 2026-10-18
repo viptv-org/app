@@ -23,7 +23,7 @@ import org.viptv.app.theme.Palette
 internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?,
     connect: (String, String, String) -> Unit, pairing: org.viptv.app.connection.DevicePairingDisplay? = null,
     startPairing: ((String) -> Unit)? = null, cancelPairing: () -> Unit = {}, backChanged: ((() -> Unit)?) -> Unit = {},
-    iptv: IptvEntryActions? = null) {
+) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
     var server by remember(origin) { mutableStateOf(origin) }
     val back = { step = SignInStep.Choice }
@@ -48,7 +48,6 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
                 MobileSignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }
                 MobileSignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
                 MobileSignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
-                if (iptv != null) MobileSignInChoice(SignInMethod.Iptv, "IPTV provider", "Xtream Codes login or an M3U playlist link") { step = SignInStep.Iptv }
                 if (local != null) MobileSignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", local)
             }
             SignInStep.Password -> MobilePasswordPanel(server, busy, error, back, { step = SignInStep.Email }, connect, serverChanged = { server = it })
@@ -56,7 +55,6 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
                 NativeDevicePairing(server, pairing, busy, error, true, step == SignInStep.Browser,
                     { server = it }, startPairing, cancelPairing, back)
                 else MobileSignInUnavailable(step, back, { step = SignInStep.Password })
-            SignInStep.Iptv -> IptvForm(back, busy, error, iptv, mobile = true)
             else -> MobileSignInUnavailable(step, back, { step = SignInStep.Password })
         }
         Spacer(Modifier.height(24.dp))

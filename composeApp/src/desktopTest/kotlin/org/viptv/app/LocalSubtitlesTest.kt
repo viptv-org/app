@@ -42,7 +42,7 @@ class LocalSubtitlesTest {
         try {
             val addon = connection.installAddon("default", "$origin/manifest.json").single()
             val card = Card(identity = MediaIdentity("tt123", "movie", emptyList()), provider_id = addon.id, title = "Fixture", badges = emptyList())
-            val source = connection.sources("default", card).single()
+            val source = connection.sources("default", card).candidates.single()
             val input = connection.openSource(source.id)
             val subtitles = connection.subtitles("default", card)
             assertEquals(1, subtitles.candidates.size)

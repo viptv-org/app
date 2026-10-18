@@ -57,7 +57,7 @@ class NativeProgressiveSourcesTest {
                 assertEquals(1, partial.size); assertEquals(1080L, partial.single().quality_height)
                 assertTrue(fixture.local.engine.openSource(partial.single().id).contains("fast.example.mp4"))
                 fixture.releaseLate.complete(Unit)
-                val complete = loading.await(); assertEquals(2, complete.size)
+                val complete = loading.await().candidates; assertEquals(2, complete.size)
                 assertEquals(partial.single().id, complete.first().id)
                 assertEquals(listOf(1, 2), updates.map { it.size })
                 assertTrue(fixture.local.engine.openSource(partial.single().id).contains("fast.example.mp4"))

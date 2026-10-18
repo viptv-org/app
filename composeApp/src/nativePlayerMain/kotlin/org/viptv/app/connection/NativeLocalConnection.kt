@@ -120,7 +120,10 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
         val url = try { withContext(Dispatchers.IO) { engine.checkAddonUrl(manifestUrl.trim()) } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { throw LocalFailure("Enter a valid add-on manifest URL.") }
-        val manifest = addonJson(client, url)
+        val manifest = try { addonJson(client, url) }
+        catch (error: CancellationException) { throw error }
+        catch (error: LocalFailure) { throw error }
+        catch (_: Exception) { throw LocalFailure("This add-on could not be reached. Check its address and this device’s connection, then try again.") }
         try { withContext(Dispatchers.IO) { engine.installAddon(profile, url, manifest) } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { throw LocalFailure("The add-on could not be installed. Check the manifest and secure storage.") }
@@ -137,7 +140,7 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
     override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, 24)
     override suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, limit)
 
-    override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): List<SourceCandidate> = fetchMergedLocalSources(profile, card, publish)
+    override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome = fetchMergedLocalSources(profile, card, publish)
 
     override suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot = fetchLocalSubtitles(profile, card)
 

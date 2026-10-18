@@ -69,7 +69,7 @@ class NativePublicMetadataDelegationTest {
             assertEquals(fixture.metadataId, actual.provider_id)
             assertNotEquals(original.metadata_origin, actual.metadata_origin)
             assertEquals(original.identity.id, actual.identity.id)
-            val sources = fixture.local.sources("default", original)
+            val sources = fixture.local.sources("default", original).candidates
             val input = fixture.local.openSource(sources.single().id)
             val subtitles = fixture.local.subtitles("default", original)
             assertTrue(fixture.local.subtitleContent(subtitles.candidates.single().id, input).decodeToString().contains("Delegated caption"))
@@ -91,7 +91,7 @@ class NativePublicMetadataDelegationTest {
             assertEquals(24, detail.episodes.size)
             assertTrue(detail.episodes.none { it.identity.id == episode.identity.id })
             assertEquals(fixture.metadataId, detail.item.provider_id)
-            val source = fixture.local.sources("default", episode).single()
+            val source = fixture.local.sources("default", episode).candidates.single()
             assertContains(fixture.local.openSource(source.id).uri, "delegated.mp4")
             val parentClaims = detail.item.identity.ids
             assertTrue(parentClaims.any { it.namespace == "tmdb" && it.value == "42" })

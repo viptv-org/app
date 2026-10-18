@@ -103,7 +103,7 @@ fun ApplicationController.chooseSource(card: Card) {
     }
     releaseRemotePlayback()
     val origin = if (mutable.value.detail != null) Screen.Details else mutable.value.screen
-    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = origin, sourceTitle = card, sources = emptyList(), findingSources = true)
+    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = origin, sourceTitle = card, sources = emptyList(), torrentOnlySources = 0, findingSources = true)
     run {
         val operation = generation
         try {
@@ -111,11 +111,12 @@ fun ApplicationController.chooseSource(card: Card) {
             val publish: (List<org.viptv.engine.wire.SourceCandidate>) -> Unit = { partial ->
                 if (generation == operation) mutable.value = mutable.value.copy(sources = partial)
             }
-            val sources = local?.sources(requireNotNull(mutable.value.selectedProfile), card, publish)
-                ?: requireNotNull(connection).sources(card, publish)
+            val outcome = local?.sources(requireNotNull(mutable.value.selectedProfile), card, publish)
+                ?: SourcesOutcome(requireNotNull(connection).sources(card, publish))
+            val sources = outcome.candidates
             val profile = requireNotNull(mutable.value.selectedProfile)
             val ranked = local?.rankSources(profile, sources) ?: requireNotNull(connection).rankSources(profile, sources)
-            mutable.value = mutable.value.copy(sources = ranked)
+            mutable.value = mutable.value.copy(sources = ranked, torrentOnlySources = outcome.torrentOnlyProviders)
             if (mutable.value.preferences?.preferences?.source_selection == "best" && ranked.isNotEmpty()) playSource(ranked.first())
         } catch (_: TimeoutCancellationException) {
             throw LocalFailure(if (mutable.value.sources.isNotEmpty())

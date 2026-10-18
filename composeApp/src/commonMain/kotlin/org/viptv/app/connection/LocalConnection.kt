@@ -26,7 +26,8 @@ interface LocalConnection : AutoCloseable {
     suspend fun searchResults(profile: String, term: String): SearchSnapshot? = null
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
     suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = detail(profile, card, offset)
-    suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate>
+    /** Providers that returned torrent links this connection cannot play are reported, not silently dropped. */
+    suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): SourcesOutcome
     suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = LiveCatalogPage(reason = "Live TV is unavailable on this device.")
     suspend fun liveFavorites(profile: String): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
     suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
@@ -59,5 +60,7 @@ interface LocalConnection : AutoCloseable {
 expect fun localConnection(databasePath: String): LocalConnection
 
 class LocalFailure(message: String) : Exception(message)
+
+data class SourcesOutcome(val candidates: List<SourceCandidate> = emptyList(), val torrentOnlyProviders: Int = 0)
 
 data class HistoryDisplay(val entry: HistoryEntry, val dayLabel: String)

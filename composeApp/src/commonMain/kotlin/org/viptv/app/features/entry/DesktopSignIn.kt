@@ -24,7 +24,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.theme.Palette
 
-internal enum class SignInStep { Choice, Password, Browser, Email, Device, Iptv }
+internal enum class SignInStep { Choice, Password, Browser, Email, Device }
 
 @Composable
 internal fun DesktopSignIn(
@@ -37,7 +37,6 @@ internal fun DesktopSignIn(
     startPairing: ((String) -> Unit)? = null,
     cancelPairing: () -> Unit = {},
     backChanged: ((() -> Unit)?) -> Unit = {},
-    iptv: IptvEntryActions? = null,
 ) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
     var server by remember(origin) { mutableStateOf(origin) }
@@ -65,7 +64,6 @@ internal fun DesktopSignIn(
                     SignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }
                     SignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
                     SignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
-                    SignInChoice(SignInMethod.Iptv, "IPTV provider", "Xtream Codes login or an M3U playlist link") { step = SignInStep.Iptv }
                     if (local != null) SignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", last = true, activate = local)
                 }
                 SignInStep.Password -> DesktopPasswordPanel(server, busy, error, back,
@@ -78,7 +76,6 @@ internal fun DesktopSignIn(
                         androidx.compose.material3.TextButton(back) { Text("All sign-in options") }
                     }
                 SignInStep.Email -> DesktopEmailPanel(back)
-                SignInStep.Iptv -> DesktopIptvPanel(back, busy, error, iptv)
             }
         }
     }

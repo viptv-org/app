@@ -15,13 +15,13 @@ class PageRequestOwnershipTest {
     @Test fun abandonedPageFailureDoesNotAttachItsErrorToHome() = verify("details", true)
 
     private fun verify(action: String, fail: Boolean) = runBlocking<Unit> {
-        val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         var sourceCalls = 0
         suspend fun waitForResult() { entered.complete(Unit); withContext(NonCancellable) { release.await() }; if (fail) throw LocalFailure("Retired page failure") }
         val device = object : LocalConnection by fixture.local {
             override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot { waitForResult(); return DetailSnapshot(card, episodes = emptyList()) }
             override suspend fun history(profile: String): List<HistoryDisplay> { waitForResult(); return emptyList() }
-            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): List<SourceCandidate> { sourceCalls++; return emptyList() }
+            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome { sourceCalls++; return SourcesOutcome() }
         }
         val controller = fixture.controller { device }; controller.local = device
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "default", localMode = true, preferences = PreferencesSnapshot())
@@ -38,7 +38,7 @@ class PageRequestOwnershipTest {
     }
 
     @Test fun queuedPlayDoesNotDispatchMetadataAfterNavigationWhileWaitingForRetiredWork() = runBlocking<Unit> {
-        val fixture = IptvSetupFixture(); val priorEntered = CompletableDeferred<Unit>(); val finishPrior = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val priorEntered = CompletableDeferred<Unit>(); val finishPrior = CompletableDeferred<Unit>()
         var metadataCalls = 0
         val device = object : LocalConnection by fixture.local {
             override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot { metadataCalls++; return DetailSnapshot(card, episodes = emptyList()) }

@@ -22,7 +22,6 @@ fun ApplicationController.submitProfilePin(pin: String) = profileMutation {
 internal suspend fun ApplicationController.openProfile(id: String) {
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
-    if (finishIptvSetup(id)) return
     val result=local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)
     accept(result)
     local?.let { mutable.value=mutable.value.copy(home=it.refreshHome(id)) }

@@ -190,7 +190,7 @@ class PhoneAddonSettingsUiTest {
     }
 
     @Test fun busyControllerRejectsStalePhonePropsWithoutLeavingTheNewSheetLatched() = onEdt {
-        val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         var commits = 0
         val local = object : LocalConnection by fixture.local {
             override suspend fun commitAddonInstallation(profile: String, manifestUrl: String) { commits++ }

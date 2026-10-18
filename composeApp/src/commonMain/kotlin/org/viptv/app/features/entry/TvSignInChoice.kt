@@ -33,11 +33,10 @@ internal fun TvSignInChoice(scale: Float, local: (() -> Unit)?, select: (TvSignI
                 Triple(TvSignInStep.Phone, "Use your phone", "Scan a QR code — quickest"),
                 Triple(TvSignInStep.Browser, "Use a browser", "Go to a web address and type a code"),
                 Triple(TvSignInStep.Email, "Email me a code", "Type your email once, then a 6-digit code"),
-                Triple(TvSignInStep.Password, "Use a password", null),
-                Triple(TvSignInStep.Iptv, "IPTV provider", "Xtream Codes login or an M3U playlist"))
+                Triple(TvSignInStep.Password, "Use a password", null))
             options.forEachIndexed { index, (step, title, subtitle) ->
                 TvEntryOption(scale, title, subtitle, if (index == 0) first else null,
-                    { select(step) }) { tint -> Icon(when (step) { TvSignInStep.Phone -> Lucide.Smartphone; TvSignInStep.Browser -> Lucide.ExternalLink; TvSignInStep.Email -> Lucide.Mail; TvSignInStep.Password -> Lucide.KeyRound; else -> Lucide.Server }, null, Modifier.size(32.dp * scale), tint) }
+                    { select(step) }) { tint -> Icon(when (step) { TvSignInStep.Phone -> Lucide.Smartphone; TvSignInStep.Browser -> Lucide.ExternalLink; TvSignInStep.Email -> Lucide.Mail; else -> Lucide.KeyRound }, null, Modifier.size(32.dp * scale), tint) }
             }
             if (local != null) TvEntryOption(scale, "Use without an account", "Everything stays on this TV", null, local) {
                 Icon(Lucide.UserRound, null, Modifier.size(32.dp * scale), it)

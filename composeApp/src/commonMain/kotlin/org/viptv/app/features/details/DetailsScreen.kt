@@ -9,7 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
@@ -17,7 +19,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
-fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null) {
+fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, extras = TvDetailExtras(recommendations = detail?.recommendations.orEmpty()), open = open, save = save, saved = saved, loadPage = loadPage)
         return
@@ -40,34 +42,32 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val gutter = if (phone) 16.dp else 40.dp
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
-            if (!phone) item {
-                IconButton(onClick = back, modifier = Modifier.padding(horizontal = gutter)) {
-                    Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
-                }
-            }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             error?.let { item { Text(it, Modifier.padding(horizontal = gutter, vertical = if (phone) 64.dp else 0.dp), color = Palette.danger) } }
             detail?.let { value ->
+                // Desktop chrome renders its own back/forward in the title bar;
+                // phone/tablet keep the in-content affordances.
+                val desktop = !phone && !tablet
                 item {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved)
-                    else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved, playFromStart) }
+                    else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
+                        DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
+                            sourceLabel = defaultSourceLabel, resumeEpisode = seriesResumeEpisode(value))
+                    } else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved, playFromStart) }
                 }
-                item(key = "sections") {
+                if (!desktop) item(key = "sections") {
                     DetailSections(section, seasons.isNotEmpty(), value.recommendations.isNotEmpty(),
                         { section = it }, Modifier.padding(horizontal = gutter))
                 }
-                if (section == DetailSection.Information) item(key = "information") {
+                if (!desktop && section == DetailSection.Information) item(key = "information") {
                     Column(Modifier.padding(horizontal = gutter), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         org.viptv.app.components.MediaMetadata(value.item)
                         value.item.description?.let { Text(it, color = Palette.body, style = MaterialTheme.typography.bodyLarge) }
                     }
                 }
-                if (section == DetailSection.Related && value.recommendations.isNotEmpty()) item(key = "related") {
-                    RelatedTitles(value.recommendations, open, Modifier.padding(horizontal = gutter), showHeading = false)
-                }
-                if (section == DetailSection.Episodes) selected?.let { season ->
+                if ((!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())) selected?.let { season ->
                     item {
-                        Box(Modifier.padding(horizontal = gutter)) {
+                        Box(Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter))) {
                             DetailSeasonPicker(seasons, season, phone) { number ->
                                 seasonKey = number?.toString() ?: "unknown"
                                 seasons.find { it.number == number }?.nextOffset?.let(loadPage)
@@ -77,7 +77,14 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     if (phone) items(season.episodes, key = ::episodeKey) { episode ->
                         DetailEpisodeCard(episode, true, sources, Modifier.fillMaxWidth().padding(horizontal = gutter))
                     } else items(season.episodes, key = ::episodeKey) { episode ->
-                        DesktopEpisodeRow(episode, sources, modifier = Modifier.padding(horizontal = gutter))
+                        DesktopEpisodeRow(episode, sources, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)))
+                    }
+                }
+                if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {
+                    Column(Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp, bottom = 24.dp) else PaddingValues(horizontal = gutter)),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                        if (desktop) Text("More like this", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        RelatedTitles(value.recommendations, open, Modifier.fillMaxWidth(), showHeading = !desktop)
                     }
                 }
             }
@@ -86,5 +93,16 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             .size(40.dp).background(Color.White.copy(alpha = .12f), CircleShape)) {
             Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
         }
+    }
+}
+
+
+/** The partially watched episode whose coordinates, runtime and progress drive the hero Resume pill. */
+internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
+    if (detail.item.identity.kind != "series") return null
+    return detail.episodes.firstOrNull {
+        val coordinates = it.identity.episode
+        coordinates != null && (coordinates.season ?: 1L) > 0L && coordinates.episode > 0L &&
+            it.progress != null && it.progress > 0.0 && it.progress < 1.0
     }
 }

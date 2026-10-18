@@ -65,13 +65,11 @@ fun App(
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
                     register = if (browser) ({ username, name, password -> controller.registerAccount(browserOrigin().orEmpty(), username, name, password) }) else null,
-                    recover = if (browser) ({ username, code, password -> controller.recoverAccount(browserOrigin().orEmpty(), username, code, password) }) else null,
-                    iptv = if (browser) null else localDatabase?.let { path -> IptvEntryActions({ credentials -> controller.connectIptv(path, credentials) }, controller::cancelIptvEntry) })
+                    recover = if (browser) ({ username, code, password -> controller.recoverAccount(browserOrigin().orEmpty(), username, code, password) }) else null)
                 Screen.RecoveryCodes -> RecoveryCodesScreen(state.recoveryKit, state.busy, state.error, controller::finishAccountEntry, controller::disconnect)
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television)
-                    ProfileSetupNotice(state.profileNotice, state.busy, television, controller::cancelIptvSetup, entryBackChanged)
                 }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
                     state.busy, state.error, controller::submitProfilePin, { controller.navigate(Screen.Profiles) }, television)
@@ -89,7 +87,8 @@ fun App(
 
                     Row(Modifier.weight(1f)) {
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
-                        else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(state.screen, controller::navigate)
+                        else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
+                            if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen else state.screen, controller::navigate)
                         when (state.screen) {
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) })
@@ -101,9 +100,10 @@ fun App(
                             }
                             Screen.Details -> Box(Modifier.fillMaxSize()) {
                                 if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true)
-                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart)
+                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
+                                    defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" })
                             }
-                            Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id)
+                            Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources)
                             Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
                                 type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)

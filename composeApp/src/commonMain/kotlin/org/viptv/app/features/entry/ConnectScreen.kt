@@ -16,18 +16,18 @@ import org.viptv.app.theme.Palette
 fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false, phone: Boolean = false,
     television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
     pairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
-    cancelPairing: () -> Unit = {}, iptv: IptvEntryActions? = null,
+    cancelPairing: () -> Unit = {},
     register: ((String, String, String) -> Unit)? = null, recover: ((String, String, String) -> Unit)? = null) {
     if (television) {
-        TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing, iptv = iptv)
+        TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing)
         return
     }
     if (phone) {
-        MobileSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged, iptv)
+        MobileSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
         return
     }
     if (desktop || !browser && !phone) {
-        DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged, iptv)
+        DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
         return
     }
     var accountMode by remember { mutableStateOf<String?>(null) }

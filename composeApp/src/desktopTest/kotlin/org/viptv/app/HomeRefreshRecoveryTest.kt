@@ -13,7 +13,7 @@ class HomeRefreshRecoveryTest {
     private val finished = cached.copy(revision = 3)
 
     @Test fun failedRefreshKeepsCachedHomeAndBusyUntilProviderFinishesThenRetryReplacesIt() = runBlocking<Unit> {
-        val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         var fails = true
         val local = object : LocalConnection by fixture.local {
             override suspend fun bootstrap(profile: String?) = Bootstrap(listOf(Profile("default", "Default", null)), profile, prepared, library = emptyList())
@@ -41,7 +41,7 @@ class HomeRefreshRecoveryTest {
     }
 
     @Test fun navigationDuringRefreshKeepsDestinationAndSearchDraft() = runBlocking<Unit> {
-        val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         val local = object : LocalConnection by fixture.local {
             override suspend fun bootstrap(profile: String?) = Bootstrap(listOf(Profile("default", "Default", null)), profile, prepared, library = emptyList())
             override suspend fun refreshHome(profile: String): HomeSnapshot { entered.complete(Unit); release.await(); return finished }
@@ -58,7 +58,7 @@ class HomeRefreshRecoveryTest {
     }
 
     @Test fun canceledRefreshCannotPublishLateHomeIntoAnotherSession() = runBlocking<Unit> {
-        val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         val local = object : LocalConnection by fixture.local {
             override suspend fun bootstrap(profile: String?) = Bootstrap(listOf(Profile("default", "Default", null)), profile, prepared, library = emptyList())
             override suspend fun refreshHome(profile: String): HomeSnapshot {

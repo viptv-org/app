@@ -19,9 +19,12 @@ internal object PreviewTvDetails {
     val episodes = titles.mapIndexed { index, title -> Card(
         identity = MediaIdentity("tv-episode-$index", "series", emptyList(), EpisodeCoordinates("aired", 1, (index + 1).toLong())),
         provider_id = "preview", title = title, subtitle = if (index == 0) "52m · Watched" else if (index == 1) "52m · 38m left" else if (index == 2) "52m" else "50m",
-        description = descriptions[index], landscape = art("tv3title-${index + 2}.jpg"), progress = if (index == 1) 0.27 else null, badges = if (index == 0) listOf("Watched") else emptyList()) }
+        description = descriptions[index], landscape = art("tv3title-${index + 2}.jpg"),
+        metadata = CardMetadata(runtime_minutes = if (index == 3) 50L else 52L),
+        progress = if (index == 1) 0.27 else null, badges = if (index == 0) listOf("Watched") else emptyList()) }
     val series = DetailSnapshot(item = Card(identity = MediaIdentity("tv-series", "series", emptyList()), provider_id = "preview", title = "Monster: The Jeffrey Dahmer Story",
         subtitle = "Series · 2022 · Biography, Crime, Drama · IMDb 7.7",
+        metadata = CardMetadata(year = 2022, genres = listOf("Biography", "Crime", "Drama"), rating = 7.7, certification = "TV-MA"),
         description = "This true-crime anthology series delivers a multi-layered psychological study of individuals whose extreme actions shocked society. The series follows the victims’ families and the systemic failures that allowed the crimes to continue for years.",
         landscape = art("tv3title-0.jpg"), logo = art("tv3title-1.png"), badges = listOf("TV-MA", "HD", "5.1", "CC")), episodes = episodes)
     val movieExtras = TvDetailExtras(recommendations = recommendations)

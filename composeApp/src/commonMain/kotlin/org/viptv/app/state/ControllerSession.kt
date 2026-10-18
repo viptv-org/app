@@ -59,7 +59,6 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
 
 
 fun ApplicationController.connect(origin: String, username: String, password: String) {
-    pendingIptv = null
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
     val finishing = if (completionSeen) progressJob else saveProgress(false, final = true)
@@ -83,10 +82,9 @@ fun ApplicationController.connect(origin: String, username: String, password: St
 
 fun ApplicationController.useLocal(path: String) = startLocal(path)
 
-internal fun ApplicationController.startLocal(path: String, iptv: IptvCredentials? = null) {
+internal fun ApplicationController.startLocal(path: String) {
     val priorRemote = connection
     disconnect()
-    pendingIptv = iptv
     run {
         priorRemote?.retire()
         try { withNativeSessionStoreLock { sessionStore.clear() } }
@@ -98,8 +96,7 @@ internal fun ApplicationController.startLocal(path: String, iptv: IptvCredential
         try { withNativeSessionStoreLock { sessionStore.rememberLocalConnection() } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { localPersistenceWarning = "This connection could not be remembered. Choose local mode again after restarting." }
-        val only = bootstrap.profiles.singleOrNull()?.takeUnless { it.locked }
-        if (iptv != null && only != null) openProfile(only.id) else accept(bootstrap)
+        accept(bootstrap)
     }
 }
 
@@ -128,7 +125,6 @@ fun ApplicationController.leaveLocal() {
 }
 
 fun ApplicationController.disconnect() {
-    pendingIptv = null
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
     libraryHydration?.cancel(); resetLiveRequests()
@@ -150,7 +146,6 @@ fun ApplicationController.disconnect() {
 }
 
 fun ApplicationController.signOut() = run {
-    pendingIptv = null
     libraryImportRefresh?.cancel()
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
@@ -173,7 +168,6 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
     resetLiveRequests()
     mutable.value = ApplicationState(screen = screen ?: if (value.selected == null) Screen.Profiles else Screen.Home, busy = busy,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
-        profileNotice = if (pendingIptv != null) "Choose a profile for this provider. Details stay on this device." else null,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }

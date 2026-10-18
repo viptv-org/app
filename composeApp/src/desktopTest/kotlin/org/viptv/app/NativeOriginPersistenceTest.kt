@@ -67,8 +67,8 @@ class NativeOriginPersistenceTest {
             assertEquals(setOf("tt1111111", "tt2222222"), membership.identities.map { it.id }.toSet())
             assertEquals(2, membership.scoped_identities.size)
             assertTrue(membership.scoped_identities.all { it.identity.ids.isNotEmpty() })
-            val sourcesA = local.sources("default", first)
-            val sourcesB = local.sources("default", second)
+            val sourcesA = local.sources("default", first).candidates
+            val sourcesB = local.sources("default", second).candidates
             assertEquals(1, sourcesA.size); assertEquals(1, sourcesB.size)
             assertEquals(first.provider_id, sourcesA.single().provider_id)
             val inputA = local.openSource(sourcesA.single().id); val inputB = local.openSource(sourcesB.single().id)
@@ -111,7 +111,7 @@ class NativeOriginPersistenceTest {
         Fixture().use { fixture ->
             val first = fixture.local.detail("default", fixture.previews.first()).item
             fixture.local.saveFavorite("default", first)
-            val source = fixture.local.sources("default", first).single()
+            val source = fixture.local.sources("default", first).candidates.single()
             val input = fixture.local.openSource(source.id)
             fixture.local.recordProgress(input, first, 17000, 100000)
             fixture.local.close()
@@ -119,7 +119,7 @@ class NativeOriginPersistenceTest {
             try {
                 val membership = reopened.libraryMembership("default")
                 assertEquals(first.metadata_origin, membership.scoped_identities.single().metadata_origin)
-                val resumed = reopened.openSource(reopened.sources("default", first).single().id)
+                val resumed = reopened.openSource(reopened.sources("default", first).candidates.single().id)
                 assertEquals(17000, resumed.positionMillis)
                 assertEquals(first.metadata_origin, reopened.library("default").single().metadata_origin)
             } finally { reopened.close() }

@@ -14,7 +14,7 @@ class AddonRefreshOwnershipTest {
     private val schemas = SourceIntegrationSnapshot(listOf(SourceIntegrationSchema("fixture", "Installed schema", "Ready", true)), 2)
 
     @Test fun ordinaryHomeNavigationDuringInventoryKeepsDestinationAndAcceptsOwnedResults() = runBlocking {
-        val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         val local = object : LocalConnection by fixture.local {
             override suspend fun commitAddonInstallation(profile: String, manifestUrl: String) = Unit
             override suspend fun addons(): List<IntegrationConnection> { entered.complete(Unit); release.await(); return listOf(addon) }
@@ -39,7 +39,7 @@ class AddonRefreshOwnershipTest {
     @Test fun everyFollowupSuppressesLateResultsAndErrorsAfterCoroutineOrOwnerChanges() = runBlocking {
         for (phase in listOf("inventory", "home", "schemas")) for (change in listOf("cancel", "generation", "device", "remote", "profile")) for (fails in listOf(false, true)) {
             val label = "$phase/$change/fails=$fails"
-            val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+            val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
             val reads = mutableListOf<String>(); val results = mutableListOf<Boolean>()
             suspend fun read(name: String) {
                 reads += name
@@ -94,7 +94,7 @@ class AddonRefreshOwnershipTest {
     }
 
     @Test fun busyUnrelatedOperationRejectsSubmissionAndReleasesItsCallbackWithoutChangingTheJob() = runBlocking {
-        val fixture = IptvSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         var commits = 0; val results = mutableListOf<Boolean>()
         val local = object : LocalConnection by fixture.local {
             override suspend fun commitAddonInstallation(profile: String, manifestUrl: String) { commits++ }
