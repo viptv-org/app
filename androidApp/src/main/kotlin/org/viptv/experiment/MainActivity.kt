@@ -53,7 +53,7 @@ open class MainActivity : ComponentActivity() {
             }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
             App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
-                manageControllerLifecycle = false, entryBackChanged = { entryBack = it })
+                manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
         }
     }
     override fun onPause() {
