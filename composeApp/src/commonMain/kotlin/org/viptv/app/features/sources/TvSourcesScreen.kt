@@ -32,13 +32,14 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 import kotlinx.coroutines.launch
 
+@androidx.compose.runtime.Immutable
 internal data class TvSourceInfo(val quality: String? = null, val format: String? = null, val addon: String? = null, val bestMatch: Boolean = false)
 
 @Composable
 internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
-    choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot?, info: Map<String, TvSourceInfo> = emptyMap(),
-    extras: TvDetailExtras = TvDetailExtras(), loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0) {
-    TvDetailsScreen(detail, false, null, {}, extras, requestInitialFocus = false)
+    choose: (SourceCandidate) -> Unit, back: () -> Unit, info: Map<String, TvSourceInfo> = emptyMap(),
+    detail: DetailSnapshot? = null, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0) {
+    // The real details page stays composed behind this drawer.
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -56,10 +57,15 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val visible = remember(sources, info, quality, provider) { sources.filter { (quality == null || info[it.id]?.quality == quality) && (provider == null || it.sourceFilterId() == provider) } }
             val finding = loadingMore || busy && sources.isEmpty()
             val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
-            LaunchedEffect(visible.firstOrNull()?.id != null) {
-                if (focusedSource != null || visible.isEmpty()) return@LaunchedEffect
-                val target = visible.find { it.id == (focusedSource ?: selectedSource) } ?: visible.firstOrNull()
+            // Re-anchor to the top row when the head changes (arrival or final
+            // ranking) unless the user already navigated to another row.
+            var autoFocused by remember { mutableStateOf<String?>(null) }
+            LaunchedEffect(visible.firstOrNull()?.id, error) {
+                if (visible.isEmpty()) return@LaunchedEffect
+                if (focusedSource != null && focusedSource != autoFocused) return@LaunchedEffect
+                val target = visible.find { it.id == selectedSource } ?: visible.firstOrNull()
                 if (target == null) { filterFocus.requestFocus(); return@LaunchedEffect }
+                autoFocused = target.id
                 val index = visible.indexOf(target) + if (error != null) 1 else 0
                 val shown = listState.layoutInfo.visibleItemsInfo.any {
                     it.key == target.id && it.offset >= listState.layoutInfo.viewportStartOffset &&

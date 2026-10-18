@@ -34,7 +34,7 @@ import org.viptv.engine.wire.*
 internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card) -> Unit, retry: () -> Unit,
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null) {
     var browsing by remember(home?.scope?.profile_id) { mutableStateOf(false) }
-    var focused by remember(home?.scope?.profile_id) { mutableStateOf<Card?>(null) }
+    val focused = remember(home?.scope?.profile_id) { mutableStateOf<Card?>(null) }
     var activeRow by remember(home?.scope?.profile_id) { mutableIntStateOf(-1) }
     var rowMotion by remember { mutableStateOf<Job?>(null) }
     var lastRowHeight by remember(home?.scope?.profile_id, home?.rows?.lastOrNull()?.id) { mutableIntStateOf(0) }
@@ -75,7 +75,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         visibleRows.take(index).sumOf { if (it.id == "continue") 384 else 516 }.dp.toPx() * scale
     }
     fun returnHero() {
-        browsing = false; focused = null; activeRow = -1; heroFocusEpoch++
+        browsing = false; focused.value = null; activeRow = -1; heroFocusEpoch++
         if (featured.isNotEmpty()) playFocus.requestFocus() else navigationFocusEpoch++
         rowMotion?.cancel()
         rowMotion = scope.launch { rows.animateScrollBy(-rowOffset(rows.firstVisibleItemIndex, rowScale) - rows.firstVisibleItemScrollOffset, tween(450)) }
@@ -131,7 +131,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                             val visibility = animateFloatAsState(if (browsing && index < activeRow) 0f else 1f, tween(200), label = "Row visibility")
                             TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
                                 up = ::returnHero,
-                                focus = { focused = it; browsing = true
+                                focus = { focused.value = it; browsing = true
                                     if (activeRow != index) {
                                         activeRow = index; rowMotion?.cancel()
                                         rowMotion = scope.launch {

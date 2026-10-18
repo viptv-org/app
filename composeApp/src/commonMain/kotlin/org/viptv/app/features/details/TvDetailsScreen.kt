@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
@@ -28,12 +29,14 @@ internal data class TvDetailExtras(
 
 @Composable
 internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, sources: (Card) -> Unit,
-    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}) {
+    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val card = detail?.item
-        val scroll = key(card?.identity) { rememberLazyListState() }
+        // Saveable so the page behind the sources sheet keeps its position
+        // instead of visibly resetting to the hero when the sheet opens.
+        val scroll = key(card?.identity) { rememberSaveable(saver = LazyListState.Saver) { LazyListState() } }
         val scope = rememberCoroutineScope()
         val playFocus = remember { FocusRequester() }
         val episodesRestore = remember(card?.identity) { TvFocusHandle() }
@@ -85,7 +88,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                         play = { sources(extras.resume ?: detail.item) },
                         save = { save(detail.item) }, saved = saved,
                         trailer = { notice = "No trailer is available for this title." },
-                        restart = { sources(detail.item) }, first = playFocus,
+                        restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
                         down = null, requestInitialFocus = requestInitialFocus && activeRow == 0,
                         downAction = if (detail.episodes.isEmpty()) null else ::returnEpisodes)
                 }

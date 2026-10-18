@@ -21,7 +21,7 @@ import org.viptv.engine.wire.DetailSnapshot
 @Composable
 fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null) {
     if (television) {
-        TvDetailsScreen(detail, busy, error, sources, extras = TvDetailExtras(recommendations = detail?.recommendations.orEmpty()), open = open, save = save, saved = saved, loadPage = loadPage)
+        TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
@@ -105,4 +105,25 @@ internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
         coordinates != null && (coordinates.season ?: 1L) > 0L && coordinates.episode > 0L &&
             it.progress != null && it.progress > 0.0 && it.progress < 1.0
     }
+}
+
+internal fun remainingMinutesLabel(card: Card): String? {
+    val progress = card.progress ?: 0.0
+    val runtime = card.metadata?.runtime_minutes ?: return null
+    val remaining = Math.round((1.0 - progress) * runtime)
+    return if (remaining > 0) "${remaining}m left" else "Almost done"
+}
+
+/** Real resume state for the TV details hero: the episode being watched, its label and time left. */
+internal fun detailExtras(detail: DetailSnapshot?): TvDetailExtras {
+    if (detail == null) return TvDetailExtras()
+    val resume = seriesResumeEpisode(detail)
+        ?: detail.item.takeIf { it.progress != null && it.progress > 0.0 && it.progress < 1.0 }
+    val label = when {
+        resume?.identity?.episode != null -> "Resume S${resume.identity.episode?.season ?: 1L} E${resume.identity.episode?.episode}"
+        resume != null -> "Resume"
+        else -> null
+    }
+    return TvDetailExtras(resume = resume, resumeLabel = label, remaining = resume?.let(::remainingMinutesLabel),
+        recommendations = detail.recommendations)
 }

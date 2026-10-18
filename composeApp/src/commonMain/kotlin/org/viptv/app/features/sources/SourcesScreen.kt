@@ -22,14 +22,16 @@ import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.engine.wire.SourceCandidate
 
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0) {
     if (television) {
-        TvSourcesScreen(title, sources, busy, error, choose, back, detail,
+        TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
+            detail = detail,
             loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders)
         return
     }
@@ -38,7 +40,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val visible = sources.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        if (detail != null) DetailsScreen(detail, false, null, back, {}, television, tablet)
+        // The real details page stays composed behind this overlay.
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)

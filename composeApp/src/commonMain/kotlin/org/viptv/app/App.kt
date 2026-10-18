@@ -98,12 +98,16 @@ fun App(
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
                                     controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)
                             }
-                            Screen.Details -> Box(Modifier.fillMaxSize()) {
-                                if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true)
-                                DetailsScreen(state.detail, state.busy, state.error ?: state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
-                                    defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" })
+                            // The details page stays composed while the sources sheet is
+                            // open, so nothing reloads or flashes behind it.
+                            Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
+                                Box(Modifier.fillMaxSize()) {
+                                    if (browser && state.screen == Screen.Details) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true)
+                                    DetailsScreen(state.detail, state.busy && state.screen == Screen.Details, state.detailPageError, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
+                                        defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" })
+                                    if (state.screen == Screen.Sources) SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources)
+                                }
                             }
-                            Screen.Sources -> SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources)
                             Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
                                 type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)

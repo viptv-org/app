@@ -1,5 +1,6 @@
 package org.viptv.app.features.home
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.*
 import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
@@ -11,12 +12,13 @@ internal data class TvBillboardSelection(val card: Card, val portrait: Boolean)
 
 /** Wait for focus to settle, then prepare both artwork and logo before replacing the summary. */
 @Composable
-internal fun rememberTvBillboardSelection(focused: Card?, browsing: Boolean, portrait: Boolean): TvBillboardSelection? {
+internal fun rememberTvBillboardSelection(focused: State<Card?>, browsing: Boolean, portrait: Boolean): TvBillboardSelection? {
     val context = LocalPlatformContext.current
+    val card = focused.value
     var selected by remember { mutableStateOf<TvBillboardSelection?>(null) }
-    LaunchedEffect(focused, browsing, portrait) {
+    LaunchedEffect(card, browsing, portrait) {
         if (!browsing) return@LaunchedEffect
-        val card = focused ?: return@LaunchedEffect
+        val card = card ?: return@LaunchedEffect
         delay(400)
         withTimeoutOrNull(1900) {
             coroutineScope {

@@ -24,7 +24,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         sourceIntegrations = { Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
-            controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration) } },
+            controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television) } },
         preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences) },
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->

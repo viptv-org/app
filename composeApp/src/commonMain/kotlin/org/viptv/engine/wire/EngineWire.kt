@@ -1,6 +1,7 @@
 // Generated from the Rust engine contracts.
 package org.viptv.engine.wire
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
@@ -27,6 +28,7 @@ enum class Capability {
 }
 
 @Serializable
+@Immutable
 data class CapabilityState(
     val capability: Capability,
     val availability: Availability,
@@ -34,6 +36,7 @@ data class CapabilityState(
 )
 
 @Serializable
+@Immutable
 data class Card(
     val identity: MediaIdentity,
     val category: String? = null,
@@ -53,6 +56,7 @@ data class Card(
 )
 
 @Serializable
+@Immutable
 data class CardMetadata(
     val year: Long? = null,
     val runtime_minutes: Long? = null,
@@ -114,6 +118,7 @@ enum class ControlKind {
 }
 
 @Serializable
+@Immutable
 data class DetailSnapshot(
     val item: Card,
     val recommendations: List<Card> = emptyList(),
@@ -123,6 +128,7 @@ data class DetailSnapshot(
 )
 
 @Serializable
+@Immutable
 data class EpisodeCoordinates(
     val order: String,
     val season: Long? = null,
@@ -130,6 +136,7 @@ data class EpisodeCoordinates(
 )
 
 @Serializable
+@Immutable
 data class EpisodeSeason(
     val season: Long? = null,
     val episode_count: Long,
@@ -169,6 +176,7 @@ enum class HomeBrowseTarget {
 }
 
 @Serializable
+@Immutable
 data class HomeRow(
     val browse: HomeBrowseAction? = null,
     val id: String,
@@ -181,6 +189,7 @@ data class HomeRow(
 )
 
 @Serializable
+@Immutable
 data class HomeSnapshot(
     val scope: Scope,
     val revision: Long,
@@ -191,6 +200,7 @@ data class HomeSnapshot(
 )
 
 @Serializable
+@Immutable
 data class IntegrationConnection(
     val id: String,
     val plugin_id: String,
@@ -360,6 +370,7 @@ data class MappingEvidence(
 )
 
 @Serializable
+@Immutable
 data class MediaIdentity(
     val id: String,
     val kind: String,
@@ -369,6 +380,7 @@ data class MediaIdentity(
 )
 
 @Serializable
+@Immutable
 data class MetadataOrigin(
     val provider_id: String,
     val connection_id: String? = null,
@@ -485,6 +497,7 @@ data class ScopedMediaIdentity(
 )
 
 @Serializable
+@Immutable
 data class SourceCandidate(
     val id: String,
     val provider_id: String,
@@ -496,6 +509,7 @@ data class SourceCandidate(
 )
 
 @Serializable
+@Immutable
 data class SourcePresentation(
     val provider_name: String? = null,
     val source_id: String? = null,

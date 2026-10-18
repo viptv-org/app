@@ -24,17 +24,19 @@ internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: Stri
             val outcome = fetchLocalSources(profile, prepared, ::append)
             torrentOnly += outcome.torrentOnly
         }
-        catch (_: TimeoutCancellationException) { stremioFailed = true }
+        catch (_: TimeoutCancellationException) { sourceFailureFact("addons", null); stremioFailed = true }
         catch (error: CancellationException) { throw error }
-        catch (_: Exception) { stremioFailed = true }
+        catch (error: Exception) { sourceFailureFact("addons", error); stremioFailed = true }
     }
     val integrations = async {
         try { append(fetchIntegrationSources(profile, prepared, ::append)) }
         catch (error: CancellationException) { throw error }
-        catch (_: Exception) { integrationFailed = true }
+        catch (error: Exception) { sourceFailureFact("integration", error); integrationFailed = true }
     }
     stremio.await(); integrations.await()
     if (found.isEmpty() && (stremioFailed || integrationFailed))
-        throw LocalFailure("Could not load sources. Check the configured providers and try again.")
+        throw LocalFailure(if (integrationFailed && !stremioFailed)
+            "VIPTV Sources could not run. Check its TMDB key in Settings, then try again."
+        else "Could not load sources. Check the configured providers and try again.")
     SourcesOutcome(found.values.toList(), if (found.isEmpty()) torrentOnly else 0)
 }

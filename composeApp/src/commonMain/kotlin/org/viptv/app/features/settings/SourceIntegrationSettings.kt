@@ -4,16 +4,33 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.serialization.json.JsonObject
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
-    retry: () -> Unit, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit) {
+    retry: () -> Unit, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit, television: Boolean = false) {
     var editing by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     var deleting by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
+    if (television) {
+        androidx.compose.foundation.layout.BoxWithConstraints {
+            val scale = maxWidth / 1920.dp
+            val schema = editing
+            if (schema != null) {
+                TvSourceIntegrationPage(schema, busy, error, { editing = null }, { configuration ->
+                    configure(schema.plugin_id, configuration); editing = null
+                }, scale)
+            } else Column {
+                Text("Source integrations", fontSize = (40 * scale).sp, letterSpacing = (-0.8f * scale).sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(24.dp * scale))
+                TvSourceIntegrationList(snapshot, busy, error, retry, { editing = it }, { deleting = it }, scale)
+            }
+        }
+    } else
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Source integrations", style = MaterialTheme.typography.titleLarge)
@@ -41,10 +58,11 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
             }
         }
     }
-    editing?.let { schema -> SourceIntegrationForm(schema, busy, error, { editing = null }) {
-        configure(schema.plugin_id, it)
-        editing = null
-    } }
+    editing?.let { schema ->
+        val dismiss = { editing = null }
+        val save: (JsonObject) -> Unit = { configuration -> configure(schema.plugin_id, configuration); editing = null }
+        SourceIntegrationForm(schema, busy, error, dismiss, save = save)
+    }
     deleting?.let { schema -> AlertDialog(onDismissRequest = { deleting = null }, title = { Text("Remove ${schema.name}?") },
         text = { Text("This removes its saved credentials and source assignment from this profile.") },
         confirmButton = { TextButton({ schema.connection_id?.let(remove); deleting = null }, enabled = !busy) { Text("Remove") } },

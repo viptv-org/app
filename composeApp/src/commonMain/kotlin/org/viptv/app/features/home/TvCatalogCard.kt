@@ -1,7 +1,6 @@
 package org.viptv.app.features.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -46,9 +45,9 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
         }
         if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().height(76.dp * scale)) {
             if (!portrait || focus) Column(Modifier.padding(top = 14.dp * scale), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
-                Text(card.title, Modifier.fillMaxWidth().then(if (focus) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier),
+                Text(card.title, Modifier.fillMaxWidth(),
                     fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp, color = if (focus) Palette.text else Palette.body,
-                    fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = if (focus) TextOverflow.Clip else TextOverflow.Ellipsis)
+                    fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 card.subtitle?.let { Text(it, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp,
                     color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }

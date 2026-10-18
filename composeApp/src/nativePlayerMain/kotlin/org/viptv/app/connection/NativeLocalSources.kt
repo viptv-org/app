@@ -64,7 +64,10 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
             request.getValue("requests").jsonArray.map { item -> async {
                 val connection = item.jsonObject
                 val body = try {
-                    capacity.withPermit { withTimeout(10_000) { addonJson(client, connection.getValue("url").jsonPrimitive.content) } }
+                    // Debrid providers (torrentio + TorBox/RealDebrid) resolve cached
+                    // torrents and can take 10-20s; discovery stays progressive so fast
+                    // providers publish while this one finishes.
+                    capacity.withPermit { withTimeout(25_000) { addonJson(client, connection.getValue("url").jsonPrimitive.content) } }
                 } catch (_: TimeoutCancellationException) { null }
                 catch (error: CancellationException) { throw error }
                 catch (_: Exception) { null }

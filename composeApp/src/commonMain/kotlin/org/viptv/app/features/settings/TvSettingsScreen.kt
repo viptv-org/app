@@ -1,14 +1,24 @@
 package org.viptv.app.features.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -58,6 +68,11 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Subtitle preferences" }, actualPreferencesOnly)
                     TvSettingsSection.Addons -> TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
                         { installing = true }, { unavailable = "Add-on management" }, placeholderQr)
+                    TvSettingsSection.Sources -> if (sourceIntegrations != null) sourceIntegrations() else {
+                        Text("Source integrations", fontSize = (40 * scale).sp)
+                        Spacer(Modifier.height(24.dp * scale))
+                        Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
+                    }
                     TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else {
                         Text("Parental controls", fontSize = (40 * scale).sp)
                         TvSettingsRow("Open Profiles", scale = scale, requester = first, left = sidebar, activate = profiles)
@@ -83,14 +98,6 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                 if (section != TvSettingsSection.Account || local || accountRequested == null)
                     error?.let { Text(it, Modifier.padding(top = 20.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp) }
             }
-        }
-        if (section == TvSettingsSection.Addons && sourceIntegrations != null) {
-            var showingSources by remember { mutableStateOf(false) }
-            Box(Modifier.fillMaxSize().padding(32.dp * scale), contentAlignment = androidx.compose.ui.Alignment.BottomEnd) {
-                Button({ showingSources = true }) { Text("Source integrations") }
-            }
-            if (showingSources) AlertDialog(onDismissRequest = { showingSources = false },
-                text = { sourceIntegrations() }, confirmButton = { TextButton({ showingSources = false }) { Text("Close") } })
         }
         if (leaving) TvLeaveConfirmation(local, scale, { leaving = false; leave() }, { leaving = false })
         choice?.let { TvSettingsChoiceDialog(it, scale) { choice = null } }

@@ -39,7 +39,8 @@ internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, reques
                 val tint = if (highlighted) Palette.background else if (section == selected) Palette.text else Palette.secondary
                 Icon(when (section) { TvSettingsSection.Account -> Lucide.UserRound; TvSettingsSection.Profiles -> Lucide.Users;
                     TvSettingsSection.Playback -> Lucide.CirclePlay; TvSettingsSection.Subtitles -> Lucide.Captions;
-                    TvSettingsSection.Addons -> Lucide.Puzzle; TvSettingsSection.Display -> Lucide.Monitor;
+                    TvSettingsSection.Addons -> Lucide.Puzzle; TvSettingsSection.Sources -> Lucide.Server;
+                    TvSettingsSection.Display -> Lucide.Monitor;
                     TvSettingsSection.Parental -> Lucide.LockKeyhole; TvSettingsSection.About -> Lucide.Info }, null, Modifier.size(28.dp * scale), tint)
                 Text(section.label, color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp,
                     fontWeight = if (section == selected) FontWeight.Bold else FontWeight.Medium)

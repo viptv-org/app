@@ -2,7 +2,7 @@ package org.viptv.app.features.settings
 
 internal enum class TvSettingsSection(val label: String) {
     Account("Account"), Profiles("Profiles"), Playback("Playback"), Subtitles("Subtitles & audio"),
-    Addons("Add-ons"), Display("Display"), Parental("Parental controls"), About("About"),
+    Addons("Add-ons"), Sources("Source integrations"), Display("Display"), Parental("Parental controls"), About("About"),
 }
 
 /** Optional profile preferences; absent data does not imply these defaults are saved. */
