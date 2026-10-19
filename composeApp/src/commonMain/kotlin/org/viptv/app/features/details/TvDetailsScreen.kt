@@ -49,10 +49,12 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         fun offset(index: Int): Float = with(density) {
             when (index) { 0 -> 0.dp; 1 -> 816.dp; else -> (816 + if (episodeMode) 656 else 461).dp }.toPx() * scale
         }
+        // Scroll to the item itself, not to an assumed pixel offset: the episode
+        // shelf changes height when it expands, so the hard-coded offsets landed
+        // the next row mid-content and clipped the compact title logo at the top.
         suspend fun moveRow(index: Int) {
             withFrameNanos { }
-            val current = offset(scroll.firstVisibleItemIndex) + scroll.firstVisibleItemScrollOffset
-            scroll.animateScrollBy(offset(index) - current, tween(350))
+            scroll.animateScrollToItem(index)
         }
         fun focusRow(index: Int) {
             if (activeRow == index) return

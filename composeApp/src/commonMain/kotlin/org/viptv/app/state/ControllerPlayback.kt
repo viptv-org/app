@@ -40,7 +40,14 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
             if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
                 saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)
             }
-        } else null, subtitleContent = { id -> store?.subtitleContent(id, opened) ?: requireNotNull(remote).subtitleContent(id).encodeToByteArray() })
+        } else null,
+        // Local playback never asks the server for subtitles: a device-local store
+        // owns them, and a missing track must not fall through to a remote call it
+        // cannot make.
+        subtitleContent = { id ->
+            if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
+            else requireNotNull(remote).subtitleContent(id).encodeToByteArray()
+        })
     remotePlayback = lease
     tracking = if (lease != null && remote != null) {
         val events = RemotePlaybackEvents(remote, input, card)

@@ -1,12 +1,15 @@
 package org.viptv.app
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -27,6 +30,11 @@ fun main() {
 private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
     Window(onCloseRequest = ::exitApplication, title = "VIPTV Experiment", state = windowState, undecorated = true) {
+        // A hairline outline and rounded corners are what make an undecorated
+        // window read as a native app instead of a pasted-on panel. The window
+        // itself is made transparent so the corners actually round off; if the
+        // platform refuses, the app still renders, just square.
+        LaunchedEffect(Unit) { runCatching { window.background = java.awt.Color(0, 0, 0, 0) } }
         val scope = rememberCoroutineScope()
         val controller = remember { ApplicationController(scope) }
         val state by controller.state.collectAsState()
@@ -43,7 +51,16 @@ private fun launchApplication() = application {
                 WindowPlacement.Floating else WindowPlacement.Maximized
         }
         ViptvTheme {
-            Column(Modifier.fillMaxSize().background(Palette.background)) {
+            // Native app framing: a rounded root surface with a hairline outline.
+            // macOS already rounds and outlines its own windows, so it keeps the
+            // plain surface.
+            val windowShape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+            val framed = if (mac) Modifier else Modifier
+                .clip(windowShape)
+                .background(Palette.background)
+                .border(1.dp, Color.White.copy(alpha = 0.09f), windowShape)
+            Box(Modifier.fillMaxSize().then(framed)) {
+            Column(Modifier.fillMaxSize()) {
                 if (state.screen == Screen.Player) {
                     Box(Modifier.fillMaxSize()) {
                         App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
@@ -59,6 +76,7 @@ private fun launchApplication() = application {
                         App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
                     }
                 }
+            }
             }
         }
     }
