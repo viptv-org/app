@@ -1,12 +1,8 @@
 package org.viptv.app.features.entry
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,8 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 
@@ -57,29 +51,8 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
         ProfileAvatarAtTop(profile, scale)
         Text(if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter the PIN for ${profile?.name.orEmpty()}", Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale),
             fontSize = (44 * scale).sp, lineHeight = (50.6f * scale).sp, letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)
-        Row(Modifier.align(Alignment.TopCenter).padding(top = 380.dp * scale), horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {
-            repeat(if (pin.length > 4) 8 else 4) { index ->
-                val shape = RoundedCornerShape(14.dp * scale)
-                Box(Modifier.size(88.dp * scale, 104.dp * scale).background(androidx.compose.ui.graphics.Color.White.copy(alpha = .08f), shape)
-                    .border(2.dp * scale, if (index == pin.length) Palette.text else androidx.compose.ui.graphics.Color.White.copy(alpha = .14f), shape)
-                    .semantics { contentDescription = "PIN digit ${index + 1}, ${if (index < pin.length) "filled" else "empty"}" },
-                    contentAlignment = Alignment.Center) {
-                    if (index < pin.length) Box(Modifier.size(22.dp * scale).background(Palette.text, CircleShape))
-                }
-            }
-        }
-        Column(Modifier.align(Alignment.TopCenter).padding(top = 540.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-            listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("OK", "0", "Erase")).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-                    row.forEach { value ->
-                        if (value == "OK" && pin.length < 4) Spacer(Modifier.size(136.dp * scale, 76.dp * scale))
-                        else TvPinKey(value, scale, !busy, if (value == "5") first else null) {
-                            when (value) { "OK" -> submit(); "Erase" -> erase(); else -> digit(value) }
-                        }
-                    }
-                }
-            }
-        }
+        TvPinDigits(pin, scale, Modifier.align(Alignment.TopCenter).padding(top = 380.dp * scale))
+        TvPinKeys(pin, scale, busy, first, digit, erase, submit, Modifier.align(Alignment.TopCenter).padding(top = 540.dp * scale))
         var forgotFocused by remember { mutableStateOf(false) }
         Text("Forgot PIN?", Modifier.align(Alignment.TopCenter).padding(top = 920.dp * scale)
             .focusRequester(recovery)

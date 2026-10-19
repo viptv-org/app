@@ -35,13 +35,13 @@ internal fun PhoneSubtitlePreferences(value: ProfilePreferences, busy: Boolean, 
             fontWeight = FontWeight.SemiBold)
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Size", color = Palette.secondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text("Size", color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         PhonePreferenceSegments(listOf("0.75" to "S", "1.0" to "M", "1.25" to "L", "1.5" to "XL"),
             value.subtitle_font_scale.toString(), !busy) { scale -> update { it.copy(subtitle_font_scale = scale.toDouble()) } }
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Background", Modifier.weight(1f), color = Palette.secondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("Background", Modifier.weight(1f), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             TextButton({ dialog(PhonePreferenceField.BackgroundColour) }, enabled = !busy, contentPadding = PaddingValues(0.dp)) { Text("Custom background", fontSize = 12.sp) }
         }
         PhonePreferenceSegments(listOf("none" to "None", "box" to "Box"),
@@ -52,7 +52,7 @@ internal fun PhoneSubtitlePreferences(value: ProfilePreferences, busy: Boolean, 
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Text colour", Modifier.weight(1f), color = Palette.secondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("Text colour", Modifier.weight(1f), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             TextButton({ dialog(PhonePreferenceField.TextColour) }, enabled = !busy, contentPadding = PaddingValues(0.dp)) { Text("Custom colour", fontSize = 12.sp) }
         }
         Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -71,9 +71,9 @@ internal fun PhoneSubtitlePreferences(value: ProfilePreferences, busy: Boolean, 
         PhonePreferenceRow("Audio language", phonePreferenceLanguage(value.preferred_audio_language, true), !busy) { dialog(PhonePreferenceField.AudioLanguage) }
         PhonePreferenceDivider()
         Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).toggleable(value.subtitles_enabled, enabled = !busy, role = Role.Switch,
-            onValueChange = { enabled -> update { it.copy(subtitles_enabled = enabled) } }).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            onValueChange = { enabled -> update { it.copy(subtitles_enabled = enabled) } }).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Start with subtitles", Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Switch(value.subtitles_enabled, onCheckedChange = null, enabled = !busy)
+            PhoneSwitch(value.subtitles_enabled, !busy, null)
         }
     }
 }

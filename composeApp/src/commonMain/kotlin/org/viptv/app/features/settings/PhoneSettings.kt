@@ -23,11 +23,11 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
-            Box(Modifier.fillMaxWidth().height(40.dp)) {
-                IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).size(32.dp)) {
-                    Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
+            Box(Modifier.fillMaxWidth().height(48.dp)) {
+                IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).size(44.dp)) {
+                    Icon(Lucide.ChevronLeft, "Back", Modifier.size(26.dp))
                 }
-                Text("Settings", Modifier.align(Alignment.Center), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Settings", Modifier.align(Alignment.Center), fontSize = 17.sp, fontWeight = FontWeight.Bold)
             }
         }
         item {
@@ -35,11 +35,11 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                 Row(Modifier.fillMaxWidth().clickable(onClick = profiles).padding(14.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     ProfileAvatar(profile, 56.dp, 12.dp)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(profile?.name ?: "Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Switch profile", fontSize = 13.sp, color = Palette.secondary)
+                        Text("Switch profile", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Palette.secondary)
                     }
-                    Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Palette.secondary)
+                    Icon(Lucide.ChevronRight, null, Modifier.size(20.dp), tint = Palette.tertiary)
                 }
             }
         }
@@ -49,13 +49,11 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                 SettingsItem("Playback", Lucide.CirclePlay) { if (preferences != null) preferences("Playback") else unavailable = "Playback preferences" }
                 SettingsDivider()
                 SettingsItem("Subtitles & audio", Lucide.Captions) { if (preferences != null) preferences("Subtitles & audio") else unavailable = "Subtitle and audio preferences" }
-                SettingsDivider()
-                SettingsItem("Notifications", Lucide.Bell) { unavailable = "Notifications" }
             }
         }
         item {
             SettingsGroup {
-                SettingsItem("Watch on TV", Lucide.Tv) { if (information != null) information("Watch on TV") else unavailable = "TV pairing" }
+                SettingsItem("Watch on TV", Lucide.Airplay) { if (information != null) information("Watch on TV") else unavailable = "TV pairing" }
                 SettingsDivider()
                 SettingsItem("Add-ons", Lucide.Puzzle, "$addonCount installed", addons)
             }
@@ -69,7 +67,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                     SettingsDivider()
                 }
                 if (parental != null) {
-                    SettingsItem("Parental controls", Lucide.LockKeyhole, action = parental)
+                    SettingsItem("Parental controls", Lucide.Lock, action = parental)
                     SettingsDivider()
                 }
                 SettingsItem("Help", Lucide.Info) { if (information != null) information("Help") else unavailable = "Help" }
@@ -79,7 +77,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
         }
         item {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                TextButton(onClick = leave) { Text(if (local) "Change connection" else "Sign out", color = Palette.danger) }
+                TextButton(onClick = leave) { Text(if (local) "Change connection" else "Sign out", color = Palette.danger, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
             }
         }
         item { Spacer(Modifier.height(24.dp)) }
@@ -93,7 +91,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
 
 @Composable
 private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) { Column(content = content) }
+    Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) { Column(content = content) }
 }
 
 @Composable

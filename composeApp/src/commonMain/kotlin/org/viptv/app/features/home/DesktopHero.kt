@@ -17,21 +17,33 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.DesktopBreakpoints
 import org.viptv.app.components.MediaMetadata
 import org.viptv.engine.wire.Card
 
 @Composable
 internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, carousel: HeroCarousel? = null) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = if (browser) 57.dp else 28.dp, bottom = if (browser) 88.dp else 80.dp)) {
-        if (maxWidth < 900.dp) {
-            Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
+        if (maxWidth < DesktopBreakpoints.heroStackMax) {
+            // D3HomeNarrow: artwork full width, copy under it, 22px apart.
+            Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
                 HeroArtwork(card, Modifier.fillMaxWidth(), carousel)
                 FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel)
             }
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
-                FeaturedSummary(card, open, play, save, saved, Modifier.weight(0.45f), carousel)
-                HeroArtwork(card, Modifier.weight(0.55f), carousel)
+            // D3HomeCompact/Win/Mac/Ultra: copy left, artwork flush right. The old
+            // 0.45/0.55 weights were proportional, so the 2560 board rendered a
+            // 1370dp hero still instead of the specified 774dp.
+            val gap = 48.dp
+            val artWidth = (maxWidth * DesktopBreakpoints.heroArtFraction)
+                .coerceAtMost(DesktopBreakpoints.heroArtMax)
+            val copyWidth = (maxWidth - gap - artWidth).coerceAtMost(
+                if (maxWidth >= DesktopBreakpoints.heroWideMin) DesktopBreakpoints.heroSummaryWideMax
+                else DesktopBreakpoints.heroSummaryMax)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                FeaturedSummary(card, open, play, save, saved, Modifier.width(copyWidth), carousel)
+                HeroArtwork(card, Modifier.width(artWidth), carousel)
             }
         }
     }
@@ -40,7 +52,7 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
 @Composable
 private fun HeroArtwork(card: Card, modifier: Modifier, carousel: HeroCarousel?) {
     val heroArt = card.landscape ?: card.poster
-    if (heroArt == null) HeroArtworkFallback(Modifier.fillMaxSize()) else BufferedArtwork(heroArt,
+    if (heroArt == null) HeroArtworkFallback(modifier.aspectRatio(16f / 9)) else BufferedArtwork(heroArt,
         modifier.aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)).background(Palette.surface),
         onReady = { carousel?.artworkReady(it) })
 }

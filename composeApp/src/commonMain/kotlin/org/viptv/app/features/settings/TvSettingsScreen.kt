@@ -83,11 +83,17 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                             if (dashboardAddress != null) browserFallback = true else unavailable = "Account settings"
                         } else if (dashboardAddress != null) browserFallback = true else unavailable = "Account settings"
                     }, busy = busy, error = error.takeIf { accountRequested != null }, retry = accountRequested)
+                    TvSettingsSection.Display -> {
+                        val display = rememberTvDisplayState()
+                        TvDisplaySettings(display.value, scale, first, sidebar,
+                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, display::change)
+                    }
+                    TvSettingsSection.About -> TvAboutSettings(local, dashboardAddress, profile?.name, addons.size, enabled.size,
+                        error, notice, scale, first, sidebar, openDashboard = accountDashboard)
                     else -> {
                         Text(section.label, fontSize = (40 * scale).sp)
                         Spacer(Modifier.height(48.dp * scale))
-                        TvSettingsRow(if (section == TvSettingsSection.About) "VIPTV · Experimental build" else "Open Profiles", scale = scale, requester = first, left = sidebar) {
-                            if (section == TvSettingsSection.Parental) profiles() else unavailable = section.label }
+                        TvSettingsRow("Open Profiles", scale = scale, requester = first, left = sidebar) { unavailable = section.label }
                     }
                 }
                 if (preferenceSection && preferencesError != null && !failedPreferences) {

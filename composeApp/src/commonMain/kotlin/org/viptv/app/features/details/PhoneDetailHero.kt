@@ -1,7 +1,9 @@
 package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,11 +14,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.resources.Res
@@ -26,7 +33,8 @@ import org.viptv.engine.wire.Card
 
 /** M3Title: full-width artwork, overlapping logo, then a full-width playback action. */
 @Composable
-internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false) {
+internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
+    resumeEpisode: Card? = null) {
     val hasArtwork = card.landscape != null || card.poster != null
     Column(verticalArrangement = Arrangement.spacedBy(if (hasArtwork) (-60).dp else 0.dp)) {
         if (hasArtwork) Box(Modifier.fillMaxWidth().height(300.dp)) {
@@ -41,14 +49,52 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
             MediaMetadata(card, fontSize = 13f, lineHeight = 19f)
-            Button(onClick = { play(card) }, modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-                Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Play", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            // Board pill: coordinates left-aligned, time left hard right, progress underline inside.
+            val resume = resumeEpisode ?: card.takeIf { it.progress != null && it.progress > 0.0 && it.progress < 1.0 }
+            val progress = resume?.progress?.takeIf { it > 0.0 && it < 1.0 }
+            val coordinates = resume?.identity?.episode
+            val remaining = if (progress != null) remainingMinutesLabel(resume ?: card) else null
+            val label = when {
+                coordinates != null -> "Resume S${coordinates.season ?: 1L} E${coordinates.episode}"
+                progress != null -> "Resume"
+                else -> "Play"
             }
-            FavoriteAction(card, saved, save)
+            Box(Modifier.fillMaxWidth()) {
+                Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 19.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Color(0xFF111113))) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = if (remaining != null) Arrangement.SpaceBetween else Arrangement.Center) {
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
+                            Text(label, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                                overflow = TextOverflow.Ellipsis)
+                        }
+                        if (remaining != null) {
+                            Text(remaining, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF111113).copy(alpha = .7f))
+                        }
+                    }
+                }
+                progress?.let { fraction ->
+                    Box(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, end = 16.dp, bottom = 5.dp)
+                        .fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x2E111113))) {
+                        Box(Modifier.fillMaxWidth(fraction.toFloat().coerceIn(.02f, .98f)).fillMaxHeight()
+                            .clip(RoundedCornerShape(2.dp)).background(Color(0xFF111113)))
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.width(76.dp).clickable { save(card) }, horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
+                        Icon(if (saved) Lucide.Check else Lucide.Plus,
+                            if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp), tint = Palette.text)
+                    }
+                    Text("My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
+                }
+            }
             card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
         }

@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronLeft
@@ -45,7 +46,11 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val phone = maxWidth < 640.dp
         val compact = maxWidth < 900.dp
         val gutter = if (phone) 16.dp else 40.dp
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
+        val listState = rememberLazyListState()
+        val scrolled by remember(phone) { derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
+        LazyColumn(Modifier.fillMaxSize(), state = listState,
+            contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = if (phone) 120.dp else 96.dp),
             verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             error?.let { item { Text(it, Modifier.padding(horizontal = gutter, vertical = if (phone) 64.dp else 0.dp), color = Palette.danger) } }
@@ -54,7 +59,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 // phone/tablet keep the in-content affordances.
                 val desktop = !phone && !tablet
                 item {
-                    if (phone) PhoneDetailHero(value.item, sources, save, saved)
+                    if (phone) PhoneDetailHero(value.item, sources, save, saved, seriesResumeEpisode(value))
                     else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
                         DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
                             sourceLabel = defaultSourceLabel, resumeEpisode = seriesResumeEpisode(value))
@@ -94,9 +99,14 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 }
             }
         }
-        if (phone) IconButton(onClick = back, modifier = Modifier.align(Alignment.TopStart).padding(10.dp)
-            .size(40.dp).background(Color.White.copy(alpha = .12f), CircleShape)) {
-            Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
+        if (phone) Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(48.dp)
+            .background(if (scrolled) Palette.background.copy(alpha = .88f) else Color.Transparent)) {
+            IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).padding(horizontal = 10.dp)
+                .size(40.dp).background(Color.White.copy(alpha = .12f), CircleShape)) {
+                Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
+            }
+            if (scrolled) detail?.item?.title?.let { Text(it, Modifier.align(Alignment.Center).widthIn(max = 220.dp),
+                fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
     }
 }

@@ -22,7 +22,7 @@ internal fun TvSeekPreview(point: Long, image: String?, fraction: Float, availab
     val width = (if (image != null) 406 else 140).dp * scale
     val left = (availableWidth * fraction - width / 2).coerceIn(0.dp, availableWidth - width)
     Column(Modifier.wrapContentHeight(Alignment.Top, unbounded = true)
-        .offset(x = left, y = (if (image != null) -273 else -44).dp * scale).width(width),
+        .offset(x = left, y = (if (image != null) -273 else -32).dp * scale).width(width),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
         if (image != null) Box(Modifier.size(406.dp * scale, 231.dp * scale)
             .dropShadow(RoundedCornerShape(15.dp * scale), Shadow(radius = 60.dp * scale,

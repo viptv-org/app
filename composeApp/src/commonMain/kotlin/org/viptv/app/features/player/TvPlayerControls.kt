@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
-import org.viptv.app.components.TvAction
 import org.viptv.app.player.PlayerCommand
 import org.viptv.app.player.playbackEndTime
 import org.viptv.app.theme.Palette
@@ -46,7 +45,7 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
 @Composable
 private fun TvPlayerPill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, scale: Float,
     down: FocusRequester, requester: FocusRequester? = null, activate: () -> Unit) {
-    TvAction(Modifier.height(56.dp * scale).focusProperties { this.down = down }, scale, requester = requester, activate = activate,
+    TvGlassAction(Modifier.height(56.dp * scale), scale, requester = requester, down = down, activate = activate,
         cornerRadius = 28.dp * scale, contentPadding = PaddingValues(horizontal = 22.dp * scale), background = Color.White.copy(alpha = .16f)) {
         Icon(icon, null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(10.dp * scale))
         Text(label, color = it, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold)

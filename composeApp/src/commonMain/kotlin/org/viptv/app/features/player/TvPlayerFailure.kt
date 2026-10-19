@@ -49,12 +49,12 @@ internal fun BoxScope.TvPlayerFailure(extras: TvPlaybackExtras, position: Long, 
                 Text(extras.fallbackLabel?.let { name -> "Try $name" } ?: "Retry", color = it,
                     fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
             }
-            if (choose != null) TvAction(Modifier.width(380.dp * scale).height(72.dp * scale), scale,
+            if (choose != null) TvGlassAction(Modifier.width(380.dp * scale).height(72.dp * scale), scale,
                 requester = if (retry == null) initial else null, activate = choose, background = Color.White.copy(alpha = .16f)) {
                 Icon(Lucide.SlidersHorizontal, null, Modifier.size(28.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
                 Text("Choose another source", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale,
+            TvGlassAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale,
                 requester = if (retry == null && choose == null) initial else null, activate = close, background = Color.White.copy(alpha = .16f)) {
                 Text("Back", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
             }

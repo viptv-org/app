@@ -47,3 +47,27 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
         Spacer(Modifier.height(8.dp))
     }
 }
+
+/**
+ * DUI-04: the desktop window sizes are a single decision, not copies of a magic
+ * number. The rail, the title bar and the hero all read these values so a resize
+ * can never leave the chrome and the content on different breakpoints.
+ *
+ * It lives beside the rail because that is the component every tier is measured
+ * against.
+ */
+object DesktopBreakpoints {
+    /** Narrowest tier — the width of the D3Mini window. */
+    val miniMax = 560.dp
+    /** Rail/menu-button switch: D3HomeNarrow (600, no rail) vs D3HomeCompact (1024, 72dp rail). */
+    val narrowMax = 720.dp
+    /** Below this hero width the copy stacks under the artwork (D3HomeNarrow). */
+    val heroStackMax = 760.dp
+    /** D3HomeUltra and wider get the 800.dp copy column instead of 640.dp. */
+    val heroWideMin = 1800.dp
+    /** Hero artwork takes 53% of the content width, capped at the D3HomeUltra 774px. */
+    const val heroArtFraction = 0.53f
+    val heroArtMax = 774.dp
+    val heroSummaryMax = 640.dp
+    val heroSummaryWideMax = 800.dp
+}

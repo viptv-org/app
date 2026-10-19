@@ -28,7 +28,7 @@ internal fun BoxScope.TvPlaybackTimeline(state: TvPlayerState, extras: TvPlaybac
         Slider(current, { if (length != null) { state.scrub = (it * length).toLong(); state.reveal() } },
             modifier = Modifier.wrapContentWidth(Alignment.Start, unbounded = true).width(maxWidth + 44.dp * scale).offset(x = (-22).dp * scale).height(44.dp * scale)
                 .focusRequester(requester).onFocusChanged { state.timelineFocused = it.isFocused }.focusProperties { this.up = up }
-                .semantics { contentDescription = "Playback position"; if (length != null) setProgress { target ->
+                .semantics { contentDescription = "Position"; if (length != null) setProgress { target ->
                     state.send(PlayerCommand.Seek((target.coerceIn(0f, 1f) * length).toLong()), previewCommand); true } },
             enabled = length != null, onValueChangeFinished = { state.commit(previewCommand) },
             thumb = { Box(Modifier.size(44.dp * scale).background(ColorWhite.copy(alpha = .25f), CircleShape), contentAlignment = Alignment.Center) {

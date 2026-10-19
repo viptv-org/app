@@ -60,26 +60,26 @@ internal fun TvProfileEditScreen(profile: Profile?, count: Int, busy: Boolean, e
             }
         }
         Column(Modifier.offset(640.dp * scale, 220.dp * scale).width(1184.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-            TvSettingsRow("Name", scale = scale, value = profile?.name ?: "Unavailable", leading = Lucide.UserRound,
+            TvSettingsRow("Name", scale = scale, value = profile?.name ?: "Unavailable",
                 requester = first, left = avatarFocus, activate = { if (!busy) action = TvProfileEditAction.Name })
             TvSettingsRow("Maturity rating", "Titles above this rating are hidden for this profile", scale,
-                value = maturity ?: if(pinAvailable) "Not available locally" else "Account policy", leading = Lucide.Shield, left = avatarFocus,
+                value = maturity ?: if(pinAvailable) "Not available locally" else "Account policy", left = avatarFocus,
                 requester = targets.getValue(TvProfileEditAction.Maturity), activate = { action = TvProfileEditAction.Maturity })
             if (pinAvailable) TvSettingsRow("Profile lock", "Ask for a PIN before this profile opens", scale, checked = profile?.locked == true,
-                leading = Lucide.Lock, left = avatarFocus, requester = targets.getValue(TvProfileEditAction.Pin),
+                left = avatarFocus, requester = targets.getValue(TvProfileEditAction.Pin),
                 activate = { if (!busy) action = TvProfileEditAction.Pin })
-            TvSettingsRow("Audio & subtitles", "Default audio and subtitle languages", scale,
-                value = language ?: if(editingCurrent) "In Settings" else "Select profile", leading = Lucide.Languages, left = avatarFocus,
+            TvSettingsRow("Language", "Menus and default audio for this profile", scale,
+                value = language ?: if(editingCurrent) "In Settings" else "Select profile", left = avatarFocus,
                 requester = targets.getValue(TvProfileEditAction.Language), activate = { action = TvProfileEditAction.Language })
             Spacer(Modifier.height(120.dp * scale))
-            if (count > 1 && profile?.canDelete != false) TvSettingsRow("Delete profile", scale = scale, leading = Lucide.Trash2, rowHeight = 80,
+            if (count > 1 && profile?.canDelete != false) TvSettingsRow("Delete profile", scale = scale, rowHeight = 80,
                 labelColor = Color(0xFFFF8A80), left = avatarFocus, requester = targets.getValue(TvProfileEditAction.Delete),
                 activate = { if (!busy) action = TvProfileEditAction.Delete })
             error?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }
         }
+        action?.let { selected -> TvProfileEditDialog(selected, profile, busy,
+            { restore = targets.getValue(selected); action = null }, rename, setPin, delete, pinAvailable, editingCurrent, openSettings, scale) }
     }
-    action?.let { selected -> TvProfileEditDialog(selected, profile, busy,
-        { restore = targets.getValue(selected); action = null }, rename, setPin, delete, pinAvailable, editingCurrent, openSettings) }
     if (avatar) AvatarPicker(profile, busy, { restore = avatarFocus; avatar = false }, { id, pin ->
         setAvatar(id, pin); restore = avatarFocus; avatar = false
     }, pinAvailable = pinAvailable)

@@ -16,13 +16,13 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun SettingsItem(label: String, icon: ImageVector, subtitle: String? = null, action: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = action).padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = action).heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
         Icon(icon, null, Modifier.size(20.dp))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(label, fontSize = 14.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
-            subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
+            subtitle?.let { Text(it, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.Medium, color = Palette.secondary) }
         }
-        Icon(Lucide.ChevronRight, null, Modifier.size(16.dp), tint = Palette.secondary)
+        Icon(Lucide.ChevronRight, null, Modifier.size(17.dp), tint = Palette.tertiary)
     }
 }

@@ -9,6 +9,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import org.viptv.app.features.home.CardActions
+import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.ApplicationState
@@ -29,9 +31,17 @@ internal fun launchUiPreview() = application {
                     DesktopTitleBar(ApplicationState(screen = screen, searchTerm = term, profiles = listOf(PreviewData.profile), selectedProfile = PreviewData.profile.id), false, { screen = it },
                         { term = it; screen = Screen.Search }, {}, { window.isMinimized = true },
                         { window.placement = if (window.placement == WindowPlacement.Maximized) WindowPlacement.Floating else WindowPlacement.Maximized },
-                        ::exitApplication, Modifier, back = if (screen != Screen.Home) { { screen = Screen.Home } } else null)
+                        ::exitApplication, Modifier, back = if (screen != Screen.Home) { { screen = Screen.Home } } else null,
+                        maximized = window.placement == WindowPlacement.Maximized)
                 }
-                UiPreview(desktop = !phone, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
+                // The hover preview and the right-click menu only render where the
+                // desktop chrome published card actions; the harness fakes them so
+                // D3HomeHover / D3Context stay reviewable without an account.
+                val previewActions = remember { CardActions(play = {}, toggleSave = {}, isSaved = { false }) }
+                if (phone) UiPreview(desktop = false, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
+                else CompositionLocalProvider(LocalCardActions provides previewActions) {
+                    UiPreview(desktop = true, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
+                }
             }
         }
     }

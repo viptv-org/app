@@ -8,8 +8,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -23,6 +26,8 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
+import org.viptv.app.features.home.CardActions
+import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.state.*
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -49,21 +54,61 @@ private fun launchApplication() = application {
         // window read as a native app instead of a pasted-on panel. The window
         // itself is made transparent so the corners actually round off; if the
         // platform refuses, the app still renders, just square.
-        LaunchedEffect(Unit) { runCatching { window.background = java.awt.Color(0, 0, 0, 0) } }
+        // The transparent frame is not only a startup concern: after every
+        // placement change (maximize/restore) the native panel repaints its own
+        // opaque background before Compose's rounded surface catches up, which is
+        // the square-corner flash. Keying the effect on placement re-asserts it,
+        // and the root/content panes have to be non-opaque or the frame's own
+        // background still paints the corners square.
+        DisposableEffect(window, windowState.placement) {
+            runCatching {
+                val clear = java.awt.Color(0, 0, 0, 0)
+                window.background = clear
+                window.rootPane.isOpaque = false
+                window.rootPane.background = clear
+                (window.contentPane as? javax.swing.JComponent)?.let { it.isOpaque = false; it.background = clear }
+            }
+            onDispose { }
+        }
         val scope = rememberCoroutineScope()
         val controller = remember { ApplicationController(scope) }
         val state by controller.state.collectAsState()
         val mac = remember { System.getProperty("os.name").startsWith("Mac") }
         val base = remember { desktopDataDirectory() }
         var menuOpen by remember { mutableStateOf(false) }
+        var offlineDismissed by remember { mutableStateOf(false) }
+        // A reconnect (or a different failure) clears the flag, so the next outage
+        // shows the bar again.
+        LaunchedEffect(state.error) { if (state.error != ServerUnreachableMessage) offlineDismissed = false }
         LaunchedEffect(window) {
             windowState.isMinimized = false; window.toFront()
             window.minimumSize = Dimension(420, 360)
         }
+        val density = LocalDensity.current
+        val maximized = windowState.placement == WindowPlacement.Maximized
         val minimize = { windowState.isMinimized = true }
+        // Compose reports the maximised bounds back into WindowState, so restoring
+        // to Floating alone leaves a screen-sized "floating" window. Keep the
+        // floating bounds and put them back once the placement has actually
+        // dropped, in a separate effect — setting size in the same click is
+        // swallowed while the window is still maximised.
+        var restoreTo by remember { mutableStateOf<Pair<DpSize, DpOffset>?>(null) }
+        LaunchedEffect(windowState.placement) {
+            if (windowState.placement == WindowPlacement.Floating) {
+                restoreTo?.let { (size, position) ->
+                    windowState.size = size
+                    windowState.position = WindowPosition(position.x, position.y)
+                }
+                restoreTo = null
+            }
+        }
         val maximize = {
-            windowState.placement = if (windowState.placement == WindowPlacement.Maximized)
-                WindowPlacement.Floating else WindowPlacement.Maximized
+            if (maximized) {
+                windowState.placement = WindowPlacement.Floating
+            } else {
+                restoreTo = windowState.size to with(density) { DpOffset(window.x.toDp(), window.y.toDp()) }
+                windowState.placement = WindowPlacement.Maximized
+            }
         }
         ViptvTheme {
             // Native app framing: a rounded root surface with a hairline outline.
@@ -79,7 +124,7 @@ private fun launchApplication() = application {
                 if (state.screen == Screen.Player) {
                     Box(Modifier.fillMaxSize()) {
                         App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
-                        DesktopWindowButtons(mac, minimize, maximize, ::exitApplication, Modifier.align(Alignment.TopEnd))
+                        DesktopWindowButtons(mac, minimize, maximize, ::exitApplication, Modifier.align(Alignment.TopEnd), maximized = maximized)
                     }
                 } else {
                     WindowDraggableArea(Modifier.fillMaxWidth()) {
@@ -87,10 +132,26 @@ private fun launchApplication() = application {
                             { menuOpen = !menuOpen }, minimize, maximize, ::exitApplication, Modifier,
                             back = if (state.navBack.isNotEmpty() || state.screen != Screen.Home) controller::navigateBack else null,
                             forward = if (state.navForward.isNotEmpty()) controller::navigateForward else null,
-                            searchFocus = searchFocus)
+                            searchFocus = searchFocus,
+                            maximized = maximized)
                     }
                     Box(Modifier.weight(1f)) {
-                        App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
+                        // DUI-04: the card hover preview and right-click menu need
+                        // Play / My List; publishing them once here keeps
+                        // HomeCatalogRow and MediaCard signatures untouched.
+                        CompositionLocalProvider(LocalCardActions provides CardActions(
+                            play = controller::playTitle,
+                            toggleSave = controller::toggleFavorite,
+                            isSaved = { state.isSaved(it) })) {
+                            App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
+                        }
+                        // Board D3Offline: overlays the content area below the title
+                        // bar and leaves the 72 dp rail visible. Home only — that is
+                        // the page whose cached rows the copy promises.
+                        if (state.screen == Screen.Home && state.error == ServerUnreachableMessage && !offlineDismissed) DesktopOfflineBar(
+                            retry = controller::refresh,
+                            dismiss = { offlineDismissed = true },
+                            modifier = Modifier.align(Alignment.TopStart).padding(start = 72.dp))
                     }
                 }
             }

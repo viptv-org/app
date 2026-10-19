@@ -29,11 +29,13 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
             if (section == "Subtitles & audio") PhoneSubtitlePreferences(value, busy, { edit -> draft = draft?.let(edit) }, { dialog = it })
             else {
                 Text("Playback resumes from your saved position. Next episodes start only when you choose.", color = Palette.secondary, fontSize = 13.sp)
-                Text("Sources", color = Palette.secondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                PhonePreferenceGroup {
-                    PhonePreferenceRow("Default source", if (value.source_selection == "best") "Best match" else "Always ask", !busy) { dialog = PhonePreferenceField.Source }
-                    PhonePreferenceDivider()
-                    PhonePreferenceRow("Preferred quality", value.max_quality_height?.let { if (it == 2160) "4K" else "${it}p" } ?: "Best available", !busy) { dialog = PhonePreferenceField.Quality }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Sources", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    PhonePreferenceGroup {
+                        PhonePreferenceRow("Default source", if (value.source_selection == "best") "Best match" else "Always ask", !busy) { dialog = PhonePreferenceField.Source }
+                        PhonePreferenceDivider()
+                        PhonePreferenceRow("Preferred quality", value.max_quality_height?.let { if (it == 2160) "4K" else "${it}p" } ?: "Best available", !busy) { dialog = PhonePreferenceField.Quality }
+                    }
                 }
             }
             Button({ save(value) }, enabled = !busy && value != snapshot?.preferences, modifier = Modifier.fillMaxWidth()) { Text("Save preferences") }

@@ -39,6 +39,7 @@ import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.state.ApplicationState
+import org.viptv.app.components.DesktopBreakpoints
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -59,6 +60,7 @@ internal fun DesktopTitleBar(
     cast: (() -> Unit)? = null,
     remote: (() -> Unit)? = null,
     searchFocus: FocusRequester? = null,
+    maximized: Boolean = false,
 ) {
     val simple = state.screen in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit)
     val barHeight = if (simple) 40.dp else 48.dp
@@ -67,7 +69,8 @@ internal fun DesktopTitleBar(
     var searchFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight).background(Palette.background).then(dragModifier)) {
-        val narrow = maxWidth < 720.dp
+        val narrow = maxWidth < DesktopBreakpoints.narrowMax
+        val mini = maxWidth < DesktopBreakpoints.miniMax
         Row(Modifier.align(Alignment.CenterStart).fillMaxHeight().padding(start = if (simple) 14.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             if (mac) {
@@ -132,15 +135,17 @@ internal fun DesktopTitleBar(
         }
         Row(Modifier.align(Alignment.CenterEnd).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
             if (!simple) {
-                ChromeButton(ChromeIcon.Cast, "Watch on TV", Palette.text, cast)
-                ChromeButton(ChromeIcon.Remote, "TV remote", Palette.text, remote)
+                // D3Mini tier: at ~480dp the cast/remote chips run into the centred
+                // search icon and the window buttons, so only the avatar survives.
+                if (!mini) ChromeButton(ChromeIcon.Cast, "Watch on TV", Palette.text, cast)
+                if (!mini) ChromeButton(ChromeIcon.Remote, "TV remote", Palette.text, remote)
                 state.profiles.find { it.id == state.selectedProfile }?.let { profile ->
                     Box(Modifier.padding(start = 4.dp, end = 8.dp).clickable { navigate(Screen.Profiles) }) {
                         ProfileAvatar(profile, 28.dp, 7.dp)
                     }
                 }
             }
-            if (!mac) DesktopWindowButtons(false, minimize, maximize, close, barHeight = barHeight)
+            if (!mac) DesktopWindowButtons(false, minimize, maximize, close, barHeight = barHeight, maximized = maximized)
             else Spacer(Modifier.width(12.dp))
         }
         Box(Modifier.fillMaxWidth().height(1.dp).align(Alignment.BottomCenter).background(Color(0xFF1E1E21)))

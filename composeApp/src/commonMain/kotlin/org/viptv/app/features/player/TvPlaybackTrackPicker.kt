@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +33,8 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
     val audioFocus = tracks.audio.find { it.selected } ?: tracks.audio.firstOrNull()
     val motion = rememberTvDrawerMotion(close)
     DisposableEffect(motion.dismiss) { dismissChanged(motion.dismiss); onDispose { dismissChanged(null) } }
-        Box(Modifier.fillMaxSize().focusProperties { onExit = { cancelFocusChange() } }.focusGroup()) {
+        Box(Modifier.fillMaxSize().focusProperties { onExit = { cancelFocusChange() } }.focusGroup()
+            .semantics { paneTitle = "Audio and subtitles" }) {
             Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(540.dp * scale)
                 .graphicsLayer { translationY = this.size.height * (1f - motion.progress.value) }
                 .clip(RoundedCornerShape(topStart = 24.dp * scale, topEnd = 24.dp * scale))
