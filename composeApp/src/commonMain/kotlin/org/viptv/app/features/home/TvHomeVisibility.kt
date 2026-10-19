@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
@@ -42,6 +43,10 @@ internal fun TvHomeVisibility(visible: Boolean, scale: Float, offset: Int,
     val position = animateFloatAsState(if (visible) 0f else pixels.toFloat(), tween(duration, easing = easing), label = "Billboard departure")
     if (retain || mounted || visible) {
         Box(Modifier.fillMaxWidth().graphicsLayer { alpha = opacity.value; translationY = position.value }
+            // Hidden content must not stay in the accessibility tree: an
+            // accessibility service bound on the TV re-walks every node on each
+            // focus/scroll change, and invisible buttons would be announced.
+            .then(if (visible) Modifier else Modifier.clearAndSetSemantics { })
             .focusProperties { this.canFocus = focusEnabled() }) { content() }
     }
 }

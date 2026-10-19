@@ -1,6 +1,5 @@
 package org.viptv.app.features.home
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.CubicBezierEasing
@@ -49,6 +48,20 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     val visibleRows = remember(home?.rows) {
         home?.rows.orEmpty().filter { it.cards.isNotEmpty() || it.state == RowState.PENDING || it.state == RowState.FAILED }
     }
+    // Row fades are driven here, not from inside the LazyColumn item scope:
+    // reading browsing/activeRow there recomposes every visible shelf on each
+    // focus move. The alphas are only read inside graphicsLayer blocks.
+    val rowAlphas = remember(visibleRows) { mutableMapOf<String, androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>>() }
+    LaunchedEffect(browsing, activeRow, rowAlphas) {
+        if (rowAlphas.isEmpty()) return@LaunchedEffect
+        kotlinx.coroutines.coroutineScope {
+            visibleRows.forEachIndexed { index, row ->
+                val alpha = rowAlphas[row.id] ?: return@forEachIndexed
+                val target = if (browsing && index < activeRow) 0f else 1f
+                launch { alpha.animateTo(target, tween(200)) }
+            }
+        }
+    }
     val featured = slides.ifEmpty { home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) } }
     val firstReadyRow = visibleRows.indexOfFirst { it.state == RowState.READY && it.cards.isNotEmpty() }
     var firstReadyAttached by remember(home?.scope?.profile_id, visibleRows.getOrNull(firstReadyRow)?.id) { mutableStateOf(false) }
@@ -83,6 +96,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     DisposableEffect(browsing) { backChanged(if (browsing) ::returnHero else null); onDispose { backChanged(null) } }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
+        val viewport = maxWidth
         SideEffect { rowScale = scale }
         val easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
         val targetTop = (if (browsing) 512 else 824).dp * scale
@@ -95,7 +109,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             else { delay(450); heroTimerEnabled = true }
         }
         val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope)
-        val selection = rememberTvBillboardSelection(focused, browsing, activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue")
+        val selection = rememberTvBillboardSelection(focused, { browsing }, { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" })
         val settled = selection?.card
         val original = settled ?: carousel.card
         val card = original?.let { summaryCards[it.identity.id] ?: it }
@@ -127,8 +141,12 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                     LazyColumn(Modifier.fillMaxSize().padding(top = targetTop).graphicsLayer {
                         translationY = (top.value - targetTop).toPx()
                     }, state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = bottomSpace)) {
-                        itemsIndexed(visibleRows, key = { _, row -> row.id }) { index, row ->
-                            val visibility = animateFloatAsState(if (browsing && index < activeRow) 0f else 1f, tween(200), label = "Row visibility")
+                        itemsIndexed(visibleRows, key = { _, row -> row.id }, contentType = { _, _ -> "row" }) { index, row ->
+                            // A row first composed above the active one starts faded,
+                            // exactly like animateFloatAsState's initial value.
+                            val alpha = rowAlphas.getOrPut(row.id) {
+                                androidx.compose.animation.core.Animatable(if (browsing && index < activeRow) 0f else 1f)
+                            }
                             TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
                                 up = ::returnHero,
                                 focus = { focused.value = it; browsing = true
@@ -139,8 +157,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                             rows.animateScrollBy(rowOffset(index, scale) - current, tween(350, easing = easing))
                                         }
                                     }
-                                }, open, retry,
-                                modifier = Modifier.graphicsLayer { alpha = visibility.value }
+                                }, open, retry, viewport = viewport,
+                                modifier = Modifier.graphicsLayer { this.alpha = alpha?.value ?: 1f }
                                     .then(if (index == visibleRows.lastIndex) Modifier.onSizeChanged { lastRowHeight = it.height } else Modifier),
                                 firstPlaced = { firstReadyAttached = true })
                         }
