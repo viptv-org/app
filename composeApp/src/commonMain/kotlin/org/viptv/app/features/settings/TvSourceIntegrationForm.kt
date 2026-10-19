@@ -19,12 +19,22 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.Info
+import com.composables.icons.lucide.List
+import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Puzzle
+import com.composables.icons.lucide.SlidersHorizontal
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Tv
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -140,44 +150,150 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
 @Composable
 internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
     retry: () -> Unit, configure: (SourceIntegrationSchema) -> Unit, remove: (SourceIntegrationSchema) -> Unit,
-    scale: Float, first: FocusRequester? = null, left: FocusRequester? = null) {
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-        if (error != null) {
-            Text(error, color = Palette.danger, fontSize = (22 * scale).sp)
-            TvAction(Modifier.height(56.dp * scale).width(200.dp * scale), scale, requester = first, enabled = !busy, activate = retry) { tint ->
-                Text("Retry", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.SemiBold)
-            }
-            Spacer(Modifier.height(8.dp * scale))
+    scale: Float, first: FocusRequester? = null, left: FocusRequester? = null, profileName: String? = null) {
+    // Board Tv3SetSources: heading, one-line explanation, then one 160px card per
+    // integration (icon tile, name, role, saved detail, status, actions) and a
+    // footer note. The card that a connection cannot use is dimmed, not hidden.
+    Text("Source integrations", fontSize = (40 * scale).sp, letterSpacing = (-0.8f * scale).sp, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(8.dp * scale))
+    Text("Where movies, series and live channels come from.", color = Palette.secondary, fontSize = (24 * scale).sp)
+    Spacer(Modifier.height(34.dp * scale))
+    if (error != null) {
+        Text(error, color = Palette.danger, fontSize = (22 * scale).sp)
+        Spacer(Modifier.height(12.dp * scale))
+        TvAction(Modifier.height(60.dp * scale).width(200.dp * scale), scale, requester = first, enabled = !busy, activate = retry) { tint ->
+            Text("Retry", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
         }
-        Text("Configuration applies to this profile. Saved credentials are never displayed.",
-            color = Palette.secondary, fontSize = (22 * scale).sp)
-        Spacer(Modifier.height(6.dp * scale))
-        snapshot.schemas.forEach { schema ->
-            val state = when {
-                !schema.runtime_enabled -> "Unavailable on this connection"
-                schema.state == "Ready" -> "Configured for this profile"
-                else -> "Needs configuration"
+        Spacer(Modifier.height(16.dp * scale))
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+        snapshot.schemas.forEachIndexed { index, schema ->
+            val configured = schema.connection_id != null
+            val available = schema.runtime_enabled
+            val ready = available && schema.state == "Ready"
+            TvSourceIntegrationCard(schema, scale, enabled = available && !busy,
+                alpha = if (available) 1f else 0.55f,
+                requester = if (index == 0) first else null,
+                configure = { configure(schema) },
+                remove = if (configured) ({ remove(schema) }) else null)
+        }
+    }
+    Spacer(Modifier.height(28.dp * scale))
+    Text("Applies to ${profileName?.let { "$it\u2019s" } ?: "this"} profile only. Saved values are never shown again. To change one, enter a new value.",
+        color = Palette.tertiary, fontSize = (22 * scale).sp)
+}
+
+/** One integration row, matched to board Tv3SetSources. */
+@Composable
+private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Float, enabled: Boolean, alpha: Float,
+    requester: FocusRequester?, configure: () -> Unit, remove: (() -> Unit)?) {
+    val configured = schema.connection_id != null
+    val available = schema.runtime_enabled
+    val ready = available && schema.state == "Ready"
+    Row(Modifier.fillMaxWidth().height(160.dp * scale).graphicsLayer { this.alpha = alpha }
+        .clip(RoundedCornerShape(16.dp * scale))
+        .background(if (available) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.03f))
+        .padding(horizontal = 28.dp * scale, vertical = 24.dp * scale),
+        verticalAlignment = Alignment.Top) {
+        Box(Modifier.size(64.dp * scale).clip(RoundedCornerShape(14.dp * scale)).background(Color.White.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center) {
+            Icon(sourceIntegrationIcon(schema.plugin_id), null, Modifier.size(32.dp * scale))
+        }
+        Spacer(Modifier.width(24.dp * scale))
+        Column(Modifier.weight(1f)) {
+            Text(schema.name, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(4.dp * scale))
+            Text(sourceIntegrationRole(schema.plugin_id), color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(12.dp * scale))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+                if (configured) {
+                    Row(Modifier.height(32.dp * scale).clip(RoundedCornerShape(6.dp * scale))
+                        .border(1.5.dp * scale, Color.White.copy(alpha = 0.14f), RoundedCornerShape(6.dp * scale))
+                        .padding(horizontal = 10.dp * scale), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp * scale)) {
+                        Icon(Lucide.Lock, null, Modifier.size(18.dp * scale))
+                        Text("Saved", fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, color = Palette.body)
+                    }
+                }
+                Text(sourceIntegrationDetail(schema), color = Palette.secondary, fontSize = (22 * scale).sp,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Row(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale)
-                .clip(RoundedCornerShape(14.dp * scale))
-                .background(Color.White.copy(alpha = 0.07f))
-                .focusable()
-                .onFocusChanged { }
-                .padding(horizontal = 24.dp * scale, vertical = 16.dp * scale),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-                Column(Modifier.weight(1f)) {
-                    Text(schema.name, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)
-                    Text(state, fontSize = (20 * scale).sp, color = Palette.secondary)
+        }
+        Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.SpaceBetween) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+                when {
+                    ready -> Icon(Lucide.CircleCheck, null, Modifier.size(24.dp * scale), tint = Palette.body)
+                    available -> Box(Modifier.size(10.dp * scale).clip(RoundedCornerShape(5.dp * scale)).background(Palette.accent))
+                    else -> Icon(Lucide.Info, null, Modifier.size(24.dp * scale), tint = Palette.tertiary)
                 }
-                TvAction(Modifier.height(56.dp * scale).width(220.dp * scale), scale,
-                    requester = if (schema === snapshot.schemas.firstOrNull()) first else null,
-                    enabled = schema.runtime_enabled && !busy, activate = { configure(schema) }) { tint ->
-                    Text(if (schema.connection_id == null) "Configure" else "Replace", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.SemiBold)
-                }
-                if (schema.connection_id != null) TvAction(Modifier.height(56.dp * scale).width(180.dp * scale), scale, enabled = !busy, activate = { remove(schema) }) { tint ->
-                    Text("Remove", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    when {
+                        ready -> "Ready"
+                        available -> "Needs configuration"
+                        else -> "Unavailable on this connection"
+                    },
+                    fontSize = (22 * scale).sp, fontWeight = FontWeight.SemiBold,
+                    color = when {
+                        ready -> Palette.body
+                        available -> Palette.text
+                        else -> Palette.tertiary
+                    })
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+                if (available) {
+                    if (configured) {
+                        TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, primary = true,
+                            requester = requester, enabled = enabled, activate = configure) { tint ->
+                            Icon(Lucide.Pencil, null, Modifier.size(24.dp * scale), tint = tint)
+                            Spacer(Modifier.width(12.dp * scale))
+                            Text("Replace", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
+                        }
+                        remove?.let { onRemove ->
+                            TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, enabled = enabled, activate = onRemove) { tint ->
+                                Icon(Lucide.Trash2, null, Modifier.size(24.dp * scale), tint = Palette.danger)
+                                Spacer(Modifier.width(12.dp * scale))
+                                Text("Remove", color = Palette.danger, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else {
+                        TvAction(Modifier.height(60.dp * scale).width(240.dp * scale), scale, requester = requester,
+                            enabled = enabled, activate = configure) { tint ->
+                            Icon(Lucide.SlidersHorizontal, null, Modifier.size(24.dp * scale), tint = tint)
+                            Spacer(Modifier.width(12.dp * scale))
+                            Text("Configure", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
     }
+}
+
+/** Role copy from the boards, keyed by plugin. */
+private fun sourceIntegrationRole(pluginId: String): String = when {
+    pluginId.contains("xtream", true) -> "Live channels and guide"
+    pluginId.contains("m3u", true) || pluginId.contains("playlist", true) -> "Live channels from a playlist"
+    else -> "Movies and series"
+}
+
+/** The saved/needed detail line: field names when unset, a summary when set. */
+private fun sourceIntegrationDetail(schema: SourceIntegrationSchema): String {
+    if (schema.connection_id != null) {
+        val fields = schema.credential_fields.size.takeIf { it > 0 } ?: return "Saved for this profile"
+        return "${schema.provider_choices.size.coerceAtLeast(1)} provider${if (schema.provider_choices.size == 1) "" else "s"} · $fields field${if (fields == 1) "" else "s"} saved"
+    }
+    val names = schema.credential_fields.map { it.label }
+    return when {
+        names.isEmpty() -> "No configuration required"
+        names.size == 1 -> names.first()
+        else -> names.dropLast(1).joinToString(", ") + " and " + names.last()
+    }
+}
+
+@Composable
+private fun sourceIntegrationIcon(pluginId: String) = when {
+    pluginId.contains("xtream", true) -> Lucide.Tv
+    pluginId.contains("m3u", true) || pluginId.contains("playlist", true) -> Lucide.List
+    else -> Lucide.Puzzle
 }

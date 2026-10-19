@@ -51,7 +51,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     val sidebar = remember { FocusRequester() }; val first = remember { FocusRequester() }
     CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(lineHeightStyle =
         LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None, LineHeightStyle.Mode.Fixed))) {
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val scale = maxWidth / 1920.dp
         org.viptv.app.components.TvRequestedFocus(first, listOf(section, failedPreferences, missingAccount),
             enabled = !leaving && (!(failedPreferences || missingAccount) || !busy))

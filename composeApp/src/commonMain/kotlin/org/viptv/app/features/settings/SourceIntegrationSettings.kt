@@ -13,7 +13,8 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
-    retry: () -> Unit, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit, television: Boolean = false) {
+    retry: () -> Unit, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit, television: Boolean = false,
+    profileName: String? = null) {
     var editing by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     var deleting by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     if (television) {
@@ -24,11 +25,8 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
                 TvSourceIntegrationPage(schema, busy, error, { editing = null }, { configuration ->
                     configure(schema.plugin_id, configuration); editing = null
                 }, scale)
-            } else Column {
-                Text("Source integrations", fontSize = (40 * scale).sp, letterSpacing = (-0.8f * scale).sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(24.dp * scale))
-                TvSourceIntegrationList(snapshot, busy, error, retry, { editing = it }, { deleting = it }, scale)
-            }
+            } else Column { TvSourceIntegrationList(snapshot, busy, error, retry, { editing = it }, { deleting = it }, scale,
+                profileName = profileName) }
         }
     } else
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
