@@ -379,3 +379,36 @@ Reading:
   the desktop pass in `docs/evidence/device-pass-2026-10-19/desktop-*.png` is a
   correctness capture from a software-rendered virtual window (the virtual
   display has no GL, so hardware frame pacing is not measurable there).
+
+---
+
+## 2026-10-19 (later) — image proxy + measurement caveats
+
+Tried `wsrv.nl` for card art and backdrops:
+
+- proxy verified from the shell: a real TMDB poster is **98,479 B** raw and
+  **67,786 B** through wsrv at 464×696 WebP q82; a **blur=12** backdrop is
+  **9,746 B**. So the bytes are real.
+- measured on the ONN (release, `tv_ab.sh`, 4×16 presses) with card art routed
+  through the proxy: **11.2 %** and **12.0 %** missed vsync, gpu p50 15.0–15.5 ms.
+- after reverting the TV card sizing (proxy left as plain WebP): **11.4 %**,
+  gpu p50 15.0 ms.
+
+Conclusion: **no frame win on this TV**, so the TV card path is back to plain
+proxied WebP. The sizing/blur path stays only for phone/tablet/web/desktop, where
+it is a bandwidth win but **is not measured for frame pacing**.
+
+### The earlier 8.4 % number is not a valid A/B baseline
+
+The 8.4 % run happened on a freshly installed, still-populating Home (skeleton
+rows, unloaded shelves). The later runs are on a fully populated Home. Two
+identical builds measured 11.2 % and 12.0 %; a third 11.4 % after a code revert.
+So the honest figure for the populated Home is **≈11–12 % missed vsync**, and the
+app-state difference — not a code change — explains most of the gap.
+
+### Tooling caveat found here
+
+`tools/tv_ab.sh` reports `4950 ms` / `0 %` janky when the app is not on a
+scrolling screen (fresh launch lands on Profiles, or the TV is idle). Those runs
+are **invalid**, not results. A trustworthy run needs the app confirmed on Home
+before the first burst; that state assertion is still missing from the script.

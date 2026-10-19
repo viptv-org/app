@@ -20,11 +20,11 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | PERF-03 | DONE | row fade outside item scope |
 | PERF-04 | DONE | rejected experiments documented |
 | PERF-05 | PARTIAL | release framestats: layout+record **2.6 ms**/frame during D-pad bursts, no per-press spike. An exact zero-measure count needs an instrumented LazyList counter (HARNESS) |
-| PERF-06 | **measured, target NOT met** | release on ONN: **8.4 % missed vsync**, 16.3 % janky, cpu p50 25.0 ms, gpu p50 13.5 ms. framestats: `swap_wait 13.9` vs `layout+record 2.6` → GPU/compositor bound, not Compose. Details in `docs/TV_FRAME_BUDGET.md` |
+| PERF-06 | **measured, target NOT met** | release on ONN, populated Home: **11–12 % missed vsync** (11.2/12.0/11.4 across identical builds), janky ~15.5 %, cpu p50 25.0 ms, gpu p50 15.0 ms. framestats: `swap_wait 13.9` vs `layout+record 2.6` → GPU/compositor bound, not Compose. An earlier 8.4 % run was on a still-populating Home and is not a valid baseline. Details in `docs/TV_FRAME_BUDGET.md` |
 | PERF-07 | HARNESS | no desktop frame-pacing instrument; the virtual display has no GL, so pacing is not measurable there |
 | PERF-08 | POLICY | Wasm default output is served to a physical TV (TEST-04 rule), so no browser perf run is taken against it |
 | PERF-09 | PARTIAL | caches + pre-composed next card give the decode frame >12 ms CPU slack; per-frame decode attribution not captured |
-| PERF-10 | DONE | gpu p50 13.5 ms with blur present; blur retained per R5, cost bounded |
+| PERF-10 | PARTIAL | blur retained per R5. wsrv pre-blur was tried for phone/tablet/web/desktop: 9,746 B per backdrop instead of a runtime blur, but it is unmeasured on those platforms and gave **no** TV win (TV backdrop path is unchanged) |
 
 ## 2. Navigation & interaction
 

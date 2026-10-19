@@ -41,12 +41,15 @@ internal fun rememberTvShelfScroll(state: LazyListState, step: Dp, viewport: Dp,
         if (target != null && target != state.firstVisibleItemIndex) {
             motion?.cancel()
             motion = scope.launch {
-                // Scroll *to the item*, not by index*step pixels: the shelf has a
-                // 96 px leading content padding and mixed card widths, so the pixel
-                // math drifted and after a long run right the first card could end
-                // up outside the viewport while still focused (focus off-screen left).
-                state.animateScrollToItem(target.coerceIn(0, (count - 1).coerceAtLeast(0)),
-                    scrollOffset = 0)
+                // Scroll *to the item* rather than by index*step pixels: the shelf has
+                // a 96 px leading inset and mixed card widths, so pixel math drifted
+                // and the first card could end up outside the viewport while focused.
+                // Long jumps are instant: a repeating D-pad press arrives faster than a
+                // 300 ms animation, so animating every press restarted the scroll each
+                // time and churned composition instead of settling.
+                val item = target.coerceIn(0, (count - 1).coerceAtLeast(0))
+                if (kotlin.math.abs(item - state.firstVisibleItemIndex) > 2) state.scrollToItem(item)
+                else state.animateScrollToItem(item, scrollOffset = 0)
             }
         }
     }

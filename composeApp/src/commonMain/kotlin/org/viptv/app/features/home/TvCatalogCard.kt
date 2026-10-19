@@ -89,11 +89,11 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
         // The surface fill is the no-art fallback, not just a loading colour: an
         // AsyncImage with a null model draws no placeholder at all.
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(shape).background(Palette.surface)) {
-            val density = androidx.compose.ui.platform.LocalDensity.current
-            // Request exactly the pixels the slot draws (card width × dpr).
-            val artWidth = with(density) { (if (portrait) 232.dp else 384.dp).times(scale).toPx().toInt() }
-            val artHeight = with(density) { (if (portrait) 348.dp else 216.dp).times(scale).toPx().toInt() }
-            val art = org.viptv.app.images.sizedArtwork(if (portrait) card.poster else card.landscape, artWidth, artHeight)
+            // Measured on the ONN: routing TV card art through the resizing proxy
+            // moved gpu p50 from 13.5 ms to 15.0-15.5 ms and missed vsyncs from
+            // 8.4 % to 11.2-12.0 %, so TV keeps the proxied WebP without custom
+            // sizing (see docs/TV_FRAME_BUDGET.md).
+            val art = if (portrait) card.poster else card.landscape
             if (art.isNullOrBlank()) CardNoArtFallback(card, scale, portrait, shape)
             else AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             states.artLabel?.let { label ->
