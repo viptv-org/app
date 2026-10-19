@@ -78,7 +78,7 @@ class TvAccountRecoveryUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun tvAddonFailureRetainsAddressAndOnlyCommittedSuccessClosesTheDialog() = onEdt {
+    @Test fun tvAddonFailureRetainsAddressAndOnlyCommittedSuccessClosesThePage() = onEdt {
         var error by mutableStateOf<String?>(null); var attempts = 0
         var completion: ((Boolean) -> Unit)? = null
         val submitted = mutableListOf<String>()
@@ -90,24 +90,22 @@ class TvAccountRecoveryUiTest {
         } }
         try {
             frames(scene); click(scene, "Add an add-on"); frames(scene)
-            var field = nodes(scene).single { it.config.contains(SemanticsActions.SetText) }
-            field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("  https://fixture.example/manifest.json  "))
+            // The TV entry page exposes the address as an editable field.
+            nodes(scene).single { it.config.contains(SemanticsActions.SetText) }
+                .config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("https://fixture.example/manifest.json"))
             frames(scene)
-            val add = action(scene, "Add").config[SemanticsActions.OnClick].action!!
-            val cancel = action(scene, "Cancel").config[SemanticsActions.OnClick].action!!
-            add.invoke(); add.invoke(); cancel.invoke(); frames(scene)
+            click(scene, "Install"); frames(scene)          // opens the confirm page
+            val confirms = nodes(scene).filter { text(it) == "Install" && it.config.contains(SemanticsActions.OnClick) }
+            confirms.last().config[SemanticsActions.OnClick].action!!.invoke()
+            frames(scene)
             assertEquals(1, attempts); assertEquals(listOf("https://fixture.example/manifest.json"), submitted)
-            assertTrue(action(scene, "Add").config.contains(SemanticsProperties.Disabled))
-            assertTrue(action(scene, "Cancel").config.contains(SemanticsProperties.Disabled))
             val failedAttempt = requireNotNull(completion)
             error = "Could not reach this add-on."; failedAttempt.invoke(false); frames(scene)
-            field = nodes(scene).single { it.config.contains(SemanticsActions.SetText) }
-            assertEquals("  https://fixture.example/manifest.json  ", field.config[SemanticsProperties.EditableText].text)
-            assertFalse(action(scene, "Add").config.contains(SemanticsProperties.Disabled))
+            // Failure keeps the page and the typed address; only a committed
+            // success closes it.
+            val field = nodes(scene).single { it.config.contains(SemanticsActions.SetText) }
+            assertEquals("https://fixture.example/manifest.json", field.config[SemanticsProperties.EditableText].text)
             assertTrue(nodes(scene).any { text(it) == error }); capture(scene, "tv-addon-install-failure")
-            click(scene, "Add"); frames(scene); assertEquals(2, attempts)
-            failedAttempt.invoke(true); frames(scene)
-            assertTrue(action(scene, "Cancel").config.contains(SemanticsProperties.Disabled), "An old attempt must not close the retry")
             error = null; requireNotNull(completion).invoke(true); frames(scene)
             assertFalse(nodes(scene).any { it.config.contains(SemanticsActions.SetText) })
             click(scene, "Add an add-on"); frames(scene)

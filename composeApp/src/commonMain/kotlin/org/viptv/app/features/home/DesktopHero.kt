@@ -60,8 +60,8 @@ private fun HeroArtwork(card: Card, modifier: Modifier, carousel: HeroCarousel?)
 @Composable
 private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("FEATURED", fontSize = 13.sp, letterSpacing = 0.6.sp,
-            fontWeight = FontWeight.SemiBold, color = Palette.secondary)
+        Text(if (carousel != null && carousel.count > 1) "Featured · ${carousel.index + 1} of ${carousel.count}" else "Featured",
+            fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
         if (card.logo != null) {
             AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(220.dp).height(120.dp),
                 alignment = Alignment.BottomStart, contentScale = ContentScale.Fit)

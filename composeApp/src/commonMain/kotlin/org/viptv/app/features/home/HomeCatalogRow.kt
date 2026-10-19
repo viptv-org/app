@@ -60,7 +60,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                     MediaCard(it, width, portrait = portrait, onFocus = focus, open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f, cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp, showFocusOutline = showFocusOutline)
                 }
             }
-            RowState.FAILED -> TextButton(onClick = retry) { Text(row.message ?: "Try again") }
+            RowState.FAILED -> TextButton(onClick = retry) { Text("Try again") }
             RowState.PENDING -> LazyRow(horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(4) { Box(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
                     .clip(RoundedCornerShape(9.dp)).background(Palette.surface)) }

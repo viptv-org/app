@@ -12,12 +12,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -54,15 +56,27 @@ internal fun DesktopWindowButtons(
 
 @Composable
 private fun TrafficLight(color: Color, label: String, action: () -> Unit) {
-    Box(Modifier.size(12.dp).background(color, CircleShape).clickable(onClickLabel = label, onClick = action))
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    var focused by remember { mutableStateOf(false) }
+    Box(Modifier.size(12.dp)
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, 6.dp, darkGap = 2.dp, width = 2.dp)
+        .background(if (hovered) color.copy(alpha = .85f) else color, CircleShape)
+        .hoverable(interaction)
+        .clickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action))
 }
 
 @Composable
 private fun WindowButton(icon: DrawableResource?, label: String, action: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
+    var focused by remember { mutableStateOf(false) }
     val background = if (!hovered) Color.Transparent else if (label == "Close") Color(0xFFE81123) else Color.White.copy(alpha = .08f)
-    Box(Modifier.width(46.dp).fillMaxHeight().background(background).hoverable(interaction)
+    Box(Modifier.width(46.dp).fillMaxHeight()
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, 4.dp, darkGap = 2.dp, width = 2.dp)
+        .background(background).hoverable(interaction)
         .clickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action),
         contentAlignment = Alignment.Center) {
         if (icon != null) Icon(painterResource(icon), label, Modifier.size(10.dp), tint = Palette.text)

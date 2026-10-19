@@ -11,6 +11,7 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
@@ -44,7 +45,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 if (visible.isNotEmpty()) first else null, lastWatched.isNotEmpty())
             Spacer(Modifier.height(32.dp * scale))
             if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            (error ?: snapshot?.reason)?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp) }
+            (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp) }
             if (visible.isEmpty()) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                 Text(empty.title, fontSize = (32 * scale).sp)
                 Text(empty.message,

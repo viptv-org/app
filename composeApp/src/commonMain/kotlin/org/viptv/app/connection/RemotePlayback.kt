@@ -22,12 +22,15 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
     var playbackId: String? = null
     val negotiatedFacts = if (requiredAudioIndexSupported) clientFacts
         else JsonObject(clientFacts - "supports_required_audio_index")
+    // R6: a target whose own engine plays the URL must never take a server
+    // gateway lease — that lease is what posts first-frames and reopens on seek.
+    val directOnly = clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull == true
     try {
         return withTimeout(60_000) {
             var response = call("/api/playback", HttpMethod.Post, buildJsonObject {
                 put("request_id", requestId); put("stream_id", source.id)
                 put("client", negotiatedFacts)
-                put("force_gateway", forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true)
+                put("force_gateway", !directOnly && (forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true))
                 put("position", (positionMillis ?: 0).coerceAtLeast(0) / 1000.0); put("resume", positionMillis == null)
             }).jsonObject
             playbackId = response.getValue("id").jsonPrimitive.content
@@ -39,7 +42,9 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
             }
             val delivery = response.getValue("delivery").jsonObject
             val kind = delivery.getValue("kind").jsonPrimitive.content
-            require(kind == "gateway" || (kind == "direct" && clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull == true))
+            require(if (directOnly) kind == "direct" else kind == "gateway") {
+                "This source needs a server gateway that this device does not use."
+            }
             val headers = delivery["headers"]?.jsonObject?.mapValues { it.value.jsonPrimitive.content }.orEmpty()
             val input = PlaybackInput(requireNotNull(playbackId), delivery.getValue("url").jsonPrimitive.content,
                 mimeType = org.viptv.app.player.playbackMimeType(delivery["format"]?.jsonPrimitive?.contentOrNull), headers = headers, positionMillis = ((delivery["position"]?.jsonPrimitive?.doubleOrNull ?: 0.0) * 1000).toLong(), profileId = profile, live = delivery["live"]?.jsonPrimitive?.booleanOrNull ?: response["live"]?.jsonPrimitive?.booleanOrNull ?: false,

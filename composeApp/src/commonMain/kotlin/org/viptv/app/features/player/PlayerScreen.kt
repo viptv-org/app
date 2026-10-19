@@ -32,10 +32,10 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black,
     television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
     playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}, playbackKey: Any? = input,
-    nextEpisodeLoading: Boolean = false) {
+    nextEpisodeLoading: Boolean = false, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> }) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
-            previewFrame = previewFrame, initialFacts = listOfNotNull(preview), playbackKey = playbackKey)
+            previewFrame = previewFrame, initialFacts = listOfNotNull(preview), playbackKey = playbackKey, trackChosen = trackChosen)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -171,7 +171,11 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel)
             }
         }
-        if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { send(it) }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) })
+        if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
+            send(choice)
+            trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
+                .firstOrNull { it.id == choice.id }?.language)
+        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) })
         if (phone && phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
             if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }

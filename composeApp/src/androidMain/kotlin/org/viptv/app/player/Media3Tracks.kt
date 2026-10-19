@@ -31,7 +31,7 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
                     val language = format.language?.takeUnless { it == "und" }
                     val label = listOfNotNull(format.label?.takeIf { it.isNotBlank() }, language,
                         format.channelCount.takeIf { type == C.TRACK_TYPE_AUDIO && it > 0 }?.let { "${it} channels" }).distinct().joinToString(" · ")
-                    PlaybackTrack(id, label.ifBlank { if (type == C.TRACK_TYPE_AUDIO) "Audio track ${index+1}" else "Subtitle ${index+1}" }, group.isTrackSelected(index) && (type != C.TRACK_TYPE_TEXT || providerSelection == null))
+                    PlaybackTrack(id, label.ifBlank { if (type == C.TRACK_TYPE_AUDIO) "Audio track ${index+1}" else "Subtitle ${index+1}" }, group.isTrackSelected(index) && (type != C.TRACK_TYPE_TEXT || providerSelection == null), language)
                 }
             }
         }

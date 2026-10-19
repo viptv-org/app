@@ -28,5 +28,6 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
             nextEpisode = state.nextEpisode, fallbackLabel = fallback?.label),
         chooseSources = controller::closePlayer, playEpisode = { controller.closePlayer(); controller.chooseSource(it) },
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
-        playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading)
+        playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
+        trackChosen = controller::rememberTrackChoice)
 }

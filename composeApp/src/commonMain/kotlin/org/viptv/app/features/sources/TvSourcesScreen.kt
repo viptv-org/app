@@ -146,7 +146,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 }
                 if (!noSources && !torrentOnly) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                     if (loadingMore || busy) CircularProgressIndicator(Modifier.size(20.dp * scale), color = Palette.secondary, strokeWidth = 2.dp * scale)
-                    Text(if (loadingMore || busy && sources.isEmpty()) "Checking providers · ${sources.size} sources so far" else if (busy) "Opening stream…" else "Select a source to start playback.",
+                    Text(if (loadingMore || busy && sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else if (busy) "Opening stream…" else "Play always starts the best match. Change how it’s chosen in Settings › Playback.",
                         color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
                 }
             }

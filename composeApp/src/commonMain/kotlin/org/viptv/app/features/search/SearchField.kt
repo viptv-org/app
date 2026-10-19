@@ -28,7 +28,7 @@ internal fun SearchField(term: String, query: (String) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Lucide.Search, "Search", Modifier.size(18.dp), tint = Palette.text)
                 Box(Modifier.weight(1f)) {
-                    if (term.isEmpty()) Text("Search movies, series and channels", fontSize = 14.sp, color = Palette.secondary)
+                    if (term.isEmpty()) Text("Movies, series and channels", fontSize = 14.sp, color = Palette.secondary)
                     input()
                 }
                 IconButton(onClick = { query("") }, modifier = Modifier.size(40.dp), enabled = term.isNotEmpty()) {

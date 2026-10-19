@@ -28,6 +28,9 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
                 }, scale)
             } else Column { TvSourceIntegrationList(snapshot, busy, error, retry, { editing = it }, { deleting = it }, scale,
                 first = first, left = left, profileName = profileName) }
+            deleting?.let { target -> TvSourceRemoveConfirmation(target, profileName, busy, scale,
+                confirm = { target.connection_id?.let(remove); deleting = null },
+                dismiss = { if (!busy) deleting = null }) }
         }
     } else
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -62,7 +65,7 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
         val save: (JsonObject) -> Unit = { configuration -> configure(schema.plugin_id, configuration); editing = null }
         SourceIntegrationForm(schema, busy, error, dismiss, save = save)
     }
-    deleting?.let { schema -> AlertDialog(onDismissRequest = { deleting = null }, title = { Text("Remove ${schema.name}?") },
+    if (!television) deleting?.let { schema -> AlertDialog(onDismissRequest = { deleting = null }, title = { Text("Remove ${schema.name}?") },
         text = { Text("This removes its saved credentials and source assignment from this profile.") },
         confirmButton = { TextButton({ schema.connection_id?.let(remove); deleting = null }, enabled = !busy) { Text("Remove") } },
         dismissButton = { TextButton({ deleting = null }) { Text("Cancel") } }) }

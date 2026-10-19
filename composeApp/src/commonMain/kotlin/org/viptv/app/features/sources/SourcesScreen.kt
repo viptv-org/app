@@ -68,19 +68,19 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
                 if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
                     val empty = if (torrentOnlyProviders > 0)
-                        "${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this device cannot stream directly" else "providers returned torrent links this device cannot stream directly"}. Add a debrid service (for example TorBox) to that add-on’s address, or enable a provider with direct streams."
+                        "${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this device cannot stream directly" else "providers returned torrent links this device cannot stream directly"}. Add a debrid service (for example TorBox) to play them, or try another title."
                     else "No streams found. Enable a provider that supplies sources."
                     Text(empty, Modifier.padding(20.dp), color = Palette.secondary)
                 }
                 items(visible, key = { it.id }) { SourceRow(it, television, choose, enabled = !busy, selected = it.id == selectedSource) }
             }
             HorizontalDivider(color = Palette.secondary.copy(alpha = .12f))
-            Text("Select a source to start playback.", Modifier.padding(horizontal = 20.dp, vertical = 16.dp), color = Palette.secondary, fontSize = 12.sp)
+            Text("Play always starts the best match. Change this in Settings › Playback.", Modifier.padding(horizontal = 20.dp, vertical = 16.dp), color = Palette.secondary, fontSize = 12.sp)
         }
     }
 }
 
 internal fun sourceSummary(sources: List<SourceCandidate>): String {
-    val providers = sources.map { it.sourceFilterId() }.distinct().size
-    return "${sources.size} ${if (sources.size == 1) "source" else "sources"} from $providers ${if (providers == 1) "provider" else "providers"}"
+    val addons = sources.map { it.sourceFilterId() }.distinct().size
+    return "${sources.size} ${if (sources.size == 1) "source" else "sources"} from $addons ${if (addons == 1) "add-on" else "add-ons"}"
 }

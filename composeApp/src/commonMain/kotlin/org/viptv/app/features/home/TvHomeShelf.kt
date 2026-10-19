@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusRestorer
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.rememberTvShelfScroll
 import androidx.compose.ui.Modifier
@@ -36,7 +37,7 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
         .padding(horizontal = 28.dp * scale, vertical = 24.dp * scale),
         verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
         Text(title, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
-        Text(message ?: "The provider didn’t answer in time.", color = Palette.secondary,
+        Text(ServerMessages.human(message, ServerMessages.ROW_FAILURE), color = Palette.secondary,
             fontSize = (19 * scale).sp, lineHeight = (26 * scale).sp, maxLines = 2,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         TvAction(Modifier.height(60.dp * scale).width(180.dp * scale), scale, primary = true,

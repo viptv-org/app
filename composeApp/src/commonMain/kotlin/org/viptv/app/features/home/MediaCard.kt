@@ -55,6 +55,7 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.tvBackdropBlur
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -237,8 +238,16 @@ private fun CardPreview(card: Card, saved: Boolean,
         }
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(Modifier.height(36.dp).clip(CircleShape).background(Palette.text)
-                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+                val previewPlay = remember { MutableInteractionSource() }
+                val previewPlayHovered by previewPlay.collectIsHoveredAsState()
+                var previewPlayFocused by remember { mutableStateOf(false) }
+                Row(Modifier.height(36.dp)
+                    // DUI-06: the flyout's light pill needs hover + keyboard
+                    // focus like the hero's Play button.
+                    .onFocusChanged { previewPlayFocused = it.isFocused }
+                    .tvFocusOutline(previewPlayFocused, 18.dp, darkGap = 2.dp, width = 2.dp)
+                    .clip(CircleShape).background(if (previewPlayHovered) Color.White else Palette.text)
+                    .clickable(interactionSource = previewPlay, indication = null,
                         onClickLabel = if (card.progress != null) "Resume" else "Play", onClick = onPlay)
                     .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -263,8 +272,17 @@ private fun CardPreview(card: Card, saved: Boolean,
 
 @Composable
 private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable () -> Unit) {
-    Box(Modifier.size(36.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = .14f), CircleShape)
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    var focused by remember { mutableStateOf(false) }
+    Box(Modifier.size(36.dp)
+        // DUI-06: board `Poster · hover` circle is `rgba(255,255,255,0.18)`; the
+        // ring is the shared focus outline, drawn before the clip so it shows.
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
+        .background(if (hovered) Color.White.copy(alpha = .18f) else Color.Transparent, CircleShape)
+        .clip(CircleShape).border(1.dp, Color.White.copy(alpha = .14f), CircleShape)
+        .clickable(interactionSource = interaction, indication = null,
             onClickLabel = label, onClick = action),
         contentAlignment = Alignment.Center) { glyph() }
 }
@@ -294,7 +312,13 @@ private fun CardMenu(card: Card, saved: Boolean, onDismiss: () -> Unit,
 private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, action: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
-    Row(Modifier.fillMaxWidth().height(34.dp).clip(RoundedCornerShape(6.dp))
+    var focused by remember { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth().height(34.dp)
+        // DUI-06: the context menu is a focusable popup, so its rows must show
+        // where the keyboard is. Ring before the clip, otherwise it is cut.
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, 6.dp, darkGap = 2.dp, width = 2.dp)
+        .clip(RoundedCornerShape(6.dp))
         .background(if (hovered) Color.White.copy(alpha = .12f) else Color.Transparent)
         .hoverable(interaction)
         .clickable(interactionSource = interaction, indication = null, onClickLabel = label) { dismiss(); action() }

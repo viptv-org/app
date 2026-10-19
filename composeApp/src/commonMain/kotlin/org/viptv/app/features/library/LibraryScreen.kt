@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -38,7 +39,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
             if (snapshot != null) LibraryHeader(snapshot, query, changeQuery, false, 1f, busy, null, null)
             else LibraryControls(filter, { filter = it }, sort, { sort = it })
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            (error ?: snapshot?.reason)?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
+            (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
             Surface(onClick = history, shape = RoundedCornerShape(16.dp), color = Palette.surface) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {

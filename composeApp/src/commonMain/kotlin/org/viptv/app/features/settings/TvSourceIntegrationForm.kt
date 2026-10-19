@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Info
@@ -296,4 +298,44 @@ private fun sourceIntegrationIcon(pluginId: String) = when {
     pluginId.contains("xtream", true) -> Lucide.Tv
     pluginId.contains("m3u", true) || pluginId.contains("playlist", true) -> Lucide.List
     else -> Lucide.Puzzle
+}
+
+/**
+ * Board Tv3SourcesRemove: the remove confirmation as a TV dialog on the raised
+ * surface — title, what is deleted from which profile, Cancel focused first and
+ * Remove in the danger colour. Back dismisses it.
+ */
+@Composable
+internal fun TvSourceRemoveConfirmation(schema: SourceIntegrationSchema, profileName: String?, busy: Boolean,
+    scale: Float, confirm: () -> Unit, dismiss: () -> Unit) {
+    val initial = remember { FocusRequester() }
+    val fields = schema.credential_fields.map { it.label.lowercase() }
+    val what = when {
+        fields.isEmpty() -> "saved settings"
+        fields.size == 1 -> fields.first()
+        else -> fields.dropLast(1).joinToString(", ") + " and " + fields.last()
+    }
+    Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .78f)), contentAlignment = Alignment.Center) {
+            Column(Modifier.width(860.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Palette.raised)
+                .padding(48.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                Text("Remove ${schema.name}?", fontSize = (44 * scale).sp, lineHeight = (50 * scale).sp,
+                    letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
+                Text("The $what ${if (fields.size == 1) "is" else "are"} deleted from ${profileName?.let { "$it\u2019s" } ?: "this"} profile. " +
+                    "Content from this provider stops showing until you set it up again. Nothing else on the account changes.",
+                    fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, color = Palette.secondary)
+                Row(Modifier.padding(top = 18.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                    TvAction(Modifier.width(240.dp * scale).height(72.dp * scale), scale, primary = true, requester = initial,
+                        enabled = !busy, activate = dismiss) { tint ->
+                        Text("Cancel", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
+                    }
+                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, enabled = !busy, activate = confirm) {
+                        Icon(Lucide.Trash2, null, Modifier.size(28.dp * scale), Palette.danger); Spacer(Modifier.width(12.dp * scale))
+                        Text("Remove", color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        LaunchedEffect(Unit) { initial.requestFocus() }
+    }
 }

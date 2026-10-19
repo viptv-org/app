@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.connection.*
 
 fun ApplicationController.browseFilter(id: String, value: String) {
@@ -46,7 +47,8 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
     val controls = if (mutable.value.browseQuery.type == query.type && mutable.value.browseQuery.genre == query.genre) mutable.value.browseControls else null
     val scoped = controls ?: (local?.discoveryControls(profile, query.type) ?: requireNotNull(connection).discoveryControls(query.type, query.genre))
     if (scoped.discovery.availability != "Available") {
-        mutable.value = mutable.value.copy(browseQuery = query, browseControls = scoped, browseCards = emptyList(), browseNext = null, error = scoped.discovery.message ?: "Configure a browsing integration for this profile.")
+        mutable.value = mutable.value.copy(browseQuery = query, browseControls = scoped, browseCards = emptyList(), browseNext = null,
+            error = ServerMessages.human(scoped.discovery.message, "Configure a browsing integration for this profile."))
         return
     }
     // Simkl advertises only monthly files for a selected genre. A prior Today/

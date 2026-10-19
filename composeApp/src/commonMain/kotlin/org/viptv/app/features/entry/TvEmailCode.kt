@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
@@ -58,7 +59,7 @@ internal fun TvEmailCode(scale: Float, challenge: TvEmailCodeChallenge,
                 }
             }
         }
-        Text(challenge.status, Modifier.offset(96.dp * scale, 410.dp * scale), fontSize = (24 * scale).sp, lineHeight = (34.8f * scale).sp, color = Palette.secondary)
+        Text(ServerMessages.human(challenge.status, ServerMessages.EMAIL_STATUS), Modifier.offset(96.dp * scale, 410.dp * scale), fontSize = (24 * scale).sp, lineHeight = (34.8f * scale).sp, color = Palette.secondary)
         Column(Modifier.offset(1180.dp * scale, 250.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
             listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "Erase")).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) { row.forEach { label ->

@@ -6,7 +6,7 @@ internal fun PlaybackInput.providerSubtitle(id: Int?) = id?.let { track ->
 }
 
 internal fun PlaybackInput.providerTracks(selected: String?) = providerSubtitles.value.map { candidate ->
-    PlaybackTrack(providerTrackId(candidate.id), candidate.label, candidate.id == selected)
+    PlaybackTrack(providerTrackId(candidate.id), candidate.label, candidate.id == selected, candidate.language)
 }
 
 /** A new lease can issue new opaque caption IDs. Never guess among duplicate labels. */

@@ -1,7 +1,10 @@
 package org.viptv.app.state
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import org.viptv.app.connection.*
+import org.viptv.app.player.PlaybackTrackKind
+import org.viptv.app.player.canonicalLanguageTag
 
 internal suspend fun ApplicationController.loadPreferences(owner: AddonOperationOwner? = null) {
     owner?.requireCurrent(this)
@@ -39,4 +42,39 @@ fun ApplicationController.updatePreferences(preferences: ProfilePreferences) = r
         ?: requireNotNull(remote).updateProfilePreferences(profile, snapshot.revision, preferences)
     // A switch that landed while the write was in flight owns the visible preferences.
     if (ownsProfile(profile, remote, device)) mutable.value = mutable.value.copy(preferences = updated, preferencesError = null)
+}
+
+/**
+ * A picker choice is a profile preference, not a session setting: store it with
+ * the same revision-checked write the settings screen uses. Read-side matching
+ * canonicalises tags (`player/SubtitlePreference.kt:7`), so a stored tag
+ * round-trips even when a renderer reports it in another form. Deliberately not
+ * `run { }`: that cancels the current controller job and sets `busy`, which must
+ * not happen while a player is open.
+ */
+fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language: String?) {
+    val snapshot = mutable.value.preferences ?: return
+    val current = snapshot.preferences
+    val tag = language?.takeIf(String::isNotBlank)?.let(::canonicalLanguageTag)
+    val updated = when (kind) {
+        PlaybackTrackKind.Audio -> current.copy(preferred_audio_language = tag)
+        PlaybackTrackKind.Subtitle ->
+            if (tag == null) current.copy(subtitles_enabled = false)
+            else current.copy(preferred_subtitle_language = tag, subtitles_enabled = true)
+    }
+    if (updated == current) return
+    val profile = mutable.value.selectedProfile ?: return
+    val remote = connection
+    val device = local
+    scope.launch {
+        try {
+            val saved = device?.updateProfilePreferences(profile, snapshot.revision, updated)
+                ?: remote?.updateProfilePreferences(profile, snapshot.revision, updated) ?: return@launch
+            if (ownsProfile(profile, remote, device)) mutable.value = mutable.value.copy(preferences = saved, preferencesError = null)
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) {
+            if (ownsProfile(profile, remote, device))
+                mutable.value = mutable.value.copy(preferencesError = "Could not save this track choice to the profile.")
+        }
+    }
 }

@@ -27,7 +27,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     chooseSources: (() -> Unit)?, playEpisode: ((Card) -> Unit)?, retry: (() -> Unit)?, backChanged: ((() -> Unit)?) -> Unit,
     previewFrame: String? = null, scene: TvPlayerScene = TvPlayerScene.Controls, initialFacts: List<PlayerFact> = emptyList(),
     externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
-    playbackKey: Any? = input) {
+    playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> }) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
@@ -106,7 +106,13 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.hasPresented && (state.buffering || input == null && rendering != null))
             androidx.compose.material3.CircularProgressIndicator(Modifier.align(androidx.compose.ui.Alignment.Center).size(48.dp * scale), color = Palette.text)
         if (state.showTracks) TvPlaybackTrackPicker(state.tracks, state.subtitleSize, scale,
-            { state.send(it, previewCommand) }, { state.showTracks = false; state.reveal() }, trackFocus,
+            { choice ->
+                state.send(choice, previewCommand)
+                (choice as? PlayerCommand.SelectTrack)?.let { pick ->
+                    trackChosen(pick.kind, (if (pick.kind == PlaybackTrackKind.Audio) state.tracks.audio else state.tracks.subtitles)
+                        .firstOrNull { it.id == pick.id }?.language)
+                }
+            }, { state.showTracks = false; state.reveal() }, trackFocus,
             dismissChanged = { state.dismissTracks = it })
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
     }

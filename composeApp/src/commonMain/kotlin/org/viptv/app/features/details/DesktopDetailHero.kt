@@ -148,7 +148,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
             }
             if (resuming && playFromStart != null) {
                 TextButton(onClick = { playFromStart(resumeCard ?: card) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                    Text("Play from start", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Play from the beginning", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

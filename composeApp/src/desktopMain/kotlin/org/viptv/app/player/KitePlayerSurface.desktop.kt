@@ -126,8 +126,8 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
                                         player.selectTrack(TrackKind.Subtitle, track)
                                         val snapshot = player.state.value
                                         latestObserve(PlayerFact.Tracks(PlaybackTracks(
-                                            snapshot.tracks.audio.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedAudio) },
-                                            snapshot.tracks.subtitles.filterNot { it.id in providerIds.values }.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedSubtitle) } + input.providerTracks(candidate.id))))
+                                            snapshot.tracks.audio.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedAudio, it.language) },
+                                            snapshot.tracks.subtitles.filterNot { it.id in providerIds.values }.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedSubtitle, it.language) } + input.providerTracks(candidate.id))))
                                     }
                                 } catch (error: CancellationException) { throw error }
                                 catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
@@ -160,8 +160,8 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
         LaunchedEffect(candidates) {
             val snapshot = player.state.value
             latestObserve(PlayerFact.Tracks(PlaybackTracks(
-                snapshot.tracks.audio.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedAudio) },
-                snapshot.tracks.subtitles.filterNot { it.id in providerIds.values }.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedSubtitle) } +
+                snapshot.tracks.audio.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedAudio, it.language) },
+                snapshot.tracks.subtitles.filterNot { it.id in providerIds.values }.map { PlaybackTrack(it.id.value, it.label, it.id == snapshot.tracks.selectedSubtitle, it.language) } +
                     input.providerTracks(providerIds.entries.firstOrNull { it.value == snapshot.tracks.selectedSubtitle }?.key))))
         }
         LaunchedEffect(player) {
@@ -178,8 +178,8 @@ internal fun KitePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: 
                 else if (transport.accept(state.status.name)) latestObserve(PlayerFact.Status(state.status.name))
                 latestObserve(PlayerFact.Properties(state.volume, state.speed, state.subtitleScale))
                 latestObserve(PlayerFact.Tracks(PlaybackTracks(
-                    state.tracks.audio.mapIndexed { index, track -> PlaybackTrack(track.id.value, track.label.takeUnless { it.isBlank() || it == "und" } ?: "Audio track ${index + 1}", track.id == state.tracks.selectedAudio) },
-                    state.tracks.subtitles.filterNot { it.id in providerIds.values }.map { PlaybackTrack(it.id.value, it.label, it.id == state.tracks.selectedSubtitle) } +
+                    state.tracks.audio.mapIndexed { index, track -> PlaybackTrack(track.id.value, track.label.takeUnless { it.isBlank() || it == "und" } ?: "Audio track ${index + 1}", track.id == state.tracks.selectedAudio, track.language) },
+                    state.tracks.subtitles.filterNot { it.id in providerIds.values }.map { PlaybackTrack(it.id.value, it.label, it.id == state.tracks.selectedSubtitle, it.language) } +
                         input.providerTracks(providerIds.entries.firstOrNull { it.value == state.tracks.selectedSubtitle }?.key))))
             }
         }

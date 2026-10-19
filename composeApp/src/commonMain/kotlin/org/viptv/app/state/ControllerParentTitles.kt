@@ -1,6 +1,7 @@
 package org.viptv.app.state
 
 import kotlinx.coroutines.CancellationException
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.connection.*
 
 fun ApplicationController.openParentTitles(profile: String) {
@@ -51,7 +52,7 @@ fun ApplicationController.approveParentTitle(rowId: String, selected: org.viptv.
             val row = state.rows.singleOrNull { it.id == rowId } ?: throw LocalFailure("Search for the title again.")
             val item = row.items.singleOrNull { cardLookupKey(it.card) == cardLookupKey(selected) }
                 ?: throw LocalFailure("Search for the title again.")
-            if (!item.approval_supported) throw LocalFailure(item.message ?: "This title cannot be approved through this integration.")
+            if (!item.approval_supported) throw LocalFailure(ServerMessages.human(item.message, ServerMessages.PARENT_TITLE))
             val saved = remote.saveTitleApproval(state.profile, item.card.identity.kind, item.card.identity.id, true, row.provider_id, row.addon_id, item.card)
             val page = remote.approvedTitles(state.profile)
             state.copy(approved = (page + listOfNotNull(saved)).distinctBy(::approvedTitleKey), loaded = true,

@@ -78,7 +78,7 @@ private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, 
         if (resuming && playFromStart != null) OutlinedButton(onClick = { playFromStart(card) },
             modifier = Modifier.height(48.dp), shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.text)) {
-            Text("Play from start", fontWeight = FontWeight.SemiBold)
+            Text("Play from the beginning", fontWeight = FontWeight.SemiBold)
         }
         FavoriteAction(card, saved, save)
         card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body,

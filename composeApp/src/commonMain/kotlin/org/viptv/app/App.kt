@@ -93,8 +93,12 @@ fun App(
                         when (state.screen) {
                             Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) })
-                            Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime -> BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
-                                multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
+                            // W3Browse: the browser renders the rail-and-content
+                            // page; phone and desktop keep the shared inline chips.
+                            Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->
+                                if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
+                                else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
+                                    multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
                                     controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)

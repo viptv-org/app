@@ -55,7 +55,7 @@ internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, e
             }
         }
         if (local != null) Box(Modifier.fillMaxWidth().offset(y = 960.dp * scale), contentAlignment = Alignment.Center) {
-            Text("Without an account, everything stays on this TV.", color = Palette.secondary, fontSize = (22 * scale).sp)
+            Text("Without an account, everything stays on this TV. No profiles or sync.", color = Palette.secondary, fontSize = (22 * scale).sp)
         }
     }
 }

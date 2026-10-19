@@ -2,13 +2,15 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -29,9 +31,19 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
             if (destination.screen == Screen.Library) {
                 HorizontalDivider(Modifier.width(32.dp).padding(vertical = 8.dp), color = Color.White.copy(alpha = .08f))
             }
-            Column(Modifier.width(56.dp).height(48.dp).clip(RoundedCornerShape(10.dp))
-                .background(if (destination.screen == selected) Color(0xFF2A2A2D) else Color.Transparent)
-                .clickable { navigate(destination.screen) }, horizontalAlignment = Alignment.CenterHorizontally,
+            // DUI-06 / NAV-14: the rail row needs both a hover fill and a
+            // keyboard-focus ring. `clip` is dropped on purpose — the ring is
+            // painted outside the row's bounds and a clip layer would erase it.
+            val interactions = remember { MutableInteractionSource() }
+            val hovered by interactions.collectIsHoveredAsState()
+            var focused by remember { mutableStateOf(false) }
+            Column(Modifier.width(56.dp).height(48.dp)
+                .onFocusChanged { focused = it.isFocused }
+                .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
+                .background(if (hovered) Color.White.copy(alpha = .04f)
+                    else if (destination.screen == selected) Color(0xFF2A2A2D) else Color.Transparent, RoundedCornerShape(10.dp))
+                .clickable(interactionSource = interactions, indication = null, onClickLabel = destination.label) { navigate(destination.screen) },
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center) {
                 val tint = if (destination.screen == selected) Palette.text else Palette.secondary
                 if (destination.screen == Screen.Live) Icon(painterResource(Res.drawable.ic_remote_zip), destination.label, Modifier.size(20.dp), tint = tint)
@@ -42,10 +54,24 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
             if (destination.screen != Screen.Calendar) Spacer(Modifier.height(4.dp))
         }
         Spacer(Modifier.weight(1f))
-        IconButton(onClick = { navigate(Screen.Settings) }) { Icon(Lucide.Puzzle, "Add-ons", Modifier.size(20.dp)) }
-        IconButton(onClick = { navigate(Screen.Settings) }) { Icon(Lucide.Settings, "Settings", Modifier.size(20.dp)) }
+        RailAction(Lucide.Puzzle, "Add-ons") { navigate(Screen.Settings) }
+        RailAction(Lucide.Settings, "Settings") { navigate(Screen.Settings) }
         Spacer(Modifier.height(8.dp))
     }
+}
+
+/** The rail's footer buttons need the row's hover/focus pair (DUI-06, NAV-14). */
+@Composable
+private fun RailAction(icon: ImageVector, label: String, action: () -> Unit) {
+    val interactions = remember { MutableInteractionSource() }
+    val hovered by interactions.collectIsHoveredAsState()
+    var focused by remember { mutableStateOf(false) }
+    Box(Modifier.size(48.dp)
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
+        .background(if (hovered) Color.White.copy(alpha = .04f) else Color.Transparent, RoundedCornerShape(10.dp))
+        .clickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = action),
+        contentAlignment = Alignment.Center) { Icon(icon, label, Modifier.size(20.dp), tint = Palette.secondary) }
 }
 
 /**

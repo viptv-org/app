@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.connection.*
 
 fun ApplicationController.registerAccount(origin: String, username: String, name: String, password: String) =
@@ -31,7 +32,7 @@ private fun ApplicationController.accountEntry(origin: String, username: String,
                 409 -> "That username is unavailable. Choose another."
                 401 -> "The username and recovery code did not match."
                 429 -> "Too many attempts. Wait a moment and try again."
-                else -> failure.message.orEmpty()
+                else -> ServerMessages.human(failure.message, ServerMessages.GENERIC)
             })
         }
     }
@@ -44,7 +45,7 @@ fun ApplicationController.finishAccountEntry() {
         val remote = requireNotNull(connection)
         val owner = generation
         val result = try { remote.bootstrap() } catch (failure: RemoteFailure) {
-            throw LocalFailure(if (failure.status == 401) "Save your recovery code, then sign in again." else failure.message.orEmpty())
+            throw LocalFailure(if (failure.status == 401) "Save your recovery code, then sign in again." else ServerMessages.human(failure.message, ServerMessages.GENERIC))
         }
         if (connection === remote && generation == owner) accept(result)
     }

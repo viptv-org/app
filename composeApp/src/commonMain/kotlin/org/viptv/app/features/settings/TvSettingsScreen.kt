@@ -39,6 +39,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     var unavailable by remember { mutableStateOf<String?>(null) }
     var browserFallback by remember { mutableStateOf(false) }
     var installing by remember { mutableStateOf(false) }
+    var confirming by remember { mutableStateOf(false) }
     var installPending by remember { mutableStateOf(false) }
     var installGeneration by remember { mutableIntStateOf(0) }
     DisposableEffect(Unit) { onDispose { installGeneration++ } }
@@ -53,9 +54,31 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
         LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None, LineHeightStyle.Mode.Fixed))) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val scale = maxWidth / 1920.dp
-        org.viptv.app.components.TvRequestedFocus(first, listOf(section, failedPreferences, missingAccount),
-            enabled = !leaving && (!(failedPreferences || missingAccount) || !busy))
-        Row(Modifier.fillMaxSize()) {
+        org.viptv.app.components.TvRequestedFocus(first, listOf(section, failedPreferences, missingAccount, installing),
+            enabled = !installing && !leaving && (!(failedPreferences || missingAccount) || !busy))
+        if (installing) {
+            TvAddonEntryPage(address, { address = it }, installBusy, error, scale, placeholderQr,
+                back = { if (!installBusy) { installGeneration++; confirming = false; installing = false } },
+                install = { if (!busy && !installPending && address.isNotBlank()) confirming = true })
+            if (confirming) TvAddonInstallConfirm(address.trim(), profile?.name, local, installBusy, scale,
+                confirm = {
+                    if (!busy && !installPending && address.isNotBlank()) {
+                        val complete = installWithCompletion
+                        if (complete == null) install(address.trim())
+                        else {
+                            installPending = true
+                            val attempt = ++installGeneration
+                            complete(address.trim()) { installed ->
+                                if (attempt == installGeneration && installing) {
+                                    installPending = false
+                                    if (installed) { installGeneration++; confirming = false; address = ""; installing = false }
+                                }
+                            }
+                        }
+                    }
+                },
+                cancel = { if (!installBusy) { installGeneration++; confirming = false } })
+        } else Row(Modifier.fillMaxSize()) {
             TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || unavailable != null || browserFallback) {
                 if (it == TvSettingsSection.Profiles) profiles() else section = it
             }
@@ -114,30 +137,6 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                 Text("Open this address in a browser on your phone or computer.")
                 dashboardAddress?.let { SelectionContainer { Text(it, color = Palette.secondary) } }
             } }, confirmButton = { TextButton({ browserFallback = false }) { Text("Close") } })
-        if (installing) AlertDialog(onDismissRequest = { if (!busy && !installPending) { installGeneration++; installing = false } }, title = { Text("Add an add-on") },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(address, { address = it }, enabled = !installBusy, singleLine = true,
-                    label = { Text("Add-on address") }, placeholder = { Text("https://addon.example/manifest.json") })
-                if (installBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
-                error?.let { Text(it, color = Palette.danger) }
-            } },
-            confirmButton = { TextButton(onClick = {
-                if (!busy && !installPending && address.isNotBlank()) {
-                    val complete = installWithCompletion
-                    if (complete == null) install(address.trim())
-                    else {
-                        installPending = true
-                        val attempt = ++installGeneration
-                        complete(address.trim()) { installed ->
-                            if (attempt == installGeneration && installing) {
-                                installPending = false
-                                if (installed) { installGeneration++; address = ""; installing = false }
-                            }
-                        }
-                    }
-                }
-            }, enabled = address.isNotBlank() && !installBusy) { Text("Add") } },
-            dismissButton = { TextButton(onClick = { if (!busy && !installPending) { installGeneration++; installing = false } }, enabled = !installBusy) { Text("Cancel") } })
     }
     }
 }

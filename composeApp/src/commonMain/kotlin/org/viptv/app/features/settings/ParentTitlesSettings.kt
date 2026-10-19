@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
 
@@ -40,14 +41,14 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(row.title, style = MaterialTheme.typography.titleLarge)
-                    row.message?.let { Text(it, color = Palette.secondary) }
+                    row.message?.let { Text(ServerMessages.human(it, ServerMessages.PARENT_ROW), color = Palette.secondary) }
                     if (row.items.isEmpty()) Text(if (row.state == "Ready") "No matching titles." else "These results are unavailable. Try searching again.", color = Palette.secondary)
                 }
             }
             items(row.items) { item ->
                 val card = item.card
                 val approved = state.isApproved(item)
-                ParentTitleRowCard(card.title, card.identity.kind, item.message) {
+                ParentTitleRowCard(card.title, card.identity.kind, item.message?.let { ServerMessages.human(it, ServerMessages.PARENT_TITLE) }) {
                     OutlinedButton({ choice = ApprovalChoice(card.identity.kind, card.identity.id, card.title, row.id, candidate = card) },
                         enabled = !busy && item.approval_supported && !approved) { Text(if (approved) "Approved" else "Approve title") }
                 }

@@ -2,6 +2,7 @@ package org.viptv.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.ui.focus.FocusRequester
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
@@ -92,10 +94,15 @@ internal fun DesktopTitleBar(
                     Modifier.align(Alignment.Center))
             } else {
                 val searchWidth = minOf(460.dp, maxWidth * .36f)
+                // DUI-06 / NAV-14: the field had a ring but no hover, and the
+                // ring is now the board's 2/2 double ring.
+                val searchHover = remember { MutableInteractionSource() }
+                val searchHovered by searchHover.collectIsHoveredAsState()
                 Row(Modifier.align(Alignment.Center).width(searchWidth).height(32.dp)
+                    .hoverable(searchHover)
                     .onFocusChanged { searchFocused = it.hasFocus }
-                    .tvFocusOutline(searchFocused, 8.dp)
-                    .background(Color(0xFF1E1E21), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
+                    .tvFocusOutline(searchFocused, 8.dp, darkGap = 2.dp, width = 2.dp)
+                    .background(if (searchHovered) Color(0xFF26262A) else Color(0xFF1E1E21), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     DesktopChromeIcon(ChromeIcon.Search, Palette.text, Modifier.size(16.dp))
                     BasicTextField(query, { query = it; if (it.isNotEmpty()) navigate(Screen.Search); search(it) },
@@ -123,9 +130,8 @@ internal fun DesktopTitleBar(
                                 inner()
                             }
                         })
-                    if (query.isNotEmpty()) Box(Modifier.size(20.dp).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
-                        query = ""; search(""); focusManager.clearFocus()
-                    }, contentAlignment = Alignment.Center) {
+                    if (query.isNotEmpty()) TitleBarHit("Clear search", { query = ""; search(""); focusManager.clearFocus() },
+                        Modifier.size(20.dp), radius = 10.dp, hover = Color(0xFF34343A)) {
                         Icon(Lucide.X, "Clear search", Modifier.size(14.dp), tint = Palette.secondary)
                     }
                     Text(if (mac) "⌘K" else "Ctrl K", color = Palette.secondary, fontSize = 11.sp,
@@ -140,7 +146,8 @@ internal fun DesktopTitleBar(
                 if (!mini) ChromeButton(ChromeIcon.Cast, "Watch on TV", Palette.text, cast)
                 if (!mini) ChromeButton(ChromeIcon.Remote, "TV remote", Palette.text, remote)
                 state.profiles.find { it.id == state.selectedProfile }?.let { profile ->
-                    Box(Modifier.padding(start = 4.dp, end = 8.dp).clickable { navigate(Screen.Profiles) }) {
+                    TitleBarHit("Switch profile", { navigate(Screen.Profiles) },
+                        Modifier.padding(start = 4.dp, end = 8.dp), radius = 7.dp) {
                         ProfileAvatar(profile, 28.dp, 7.dp)
                     }
                 }
@@ -176,4 +183,22 @@ private fun ChromeButton(icon: ChromeIcon, label: String, color: Color, onClick:
         contentAlignment = Alignment.Center) {
         DesktopChromeIcon(icon, if (onClick == null) color.copy(alpha = color.alpha * .38f) else color, Modifier.size(17.dp))
     }
+}
+
+/**
+ * DUI-06: the title bar's small hit targets share one hover fill and one
+ * keyboard-focus ring, so no title-bar control ships with only one of the two.
+ */
+@Composable
+private fun TitleBarHit(label: String, onClick: () -> Unit, modifier: Modifier = Modifier,
+    radius: Dp = 8.dp, hover: Color = Color.White.copy(alpha = .08f), content: @Composable () -> Unit) {
+    val interactions = remember { MutableInteractionSource() }
+    val hovered by interactions.collectIsHoveredAsState()
+    var focused by remember { mutableStateOf(false) }
+    Box(modifier
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, radius, darkGap = 2.dp, width = 2.dp)
+        .background(if (hovered) hover else Color.Transparent, RoundedCornerShape(radius))
+        .clickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = onClick),
+        contentAlignment = Alignment.Center) { content() }
 }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 
@@ -25,9 +26,10 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
             // When no channels render, the empty state inside LiveScreen carries
             // the page reason or the load error; the top-left overlay must not
             // draw a second message on top of it.
-            val emptyReason = if (empty) state.livePage?.reason ?: state.error else state.livePage?.takeIf { it.channels.isEmpty() }?.reason
+            val emptyReason = if (empty) state.livePage?.reason?.let { ServerMessages.human(it, ServerMessages.LIVE_REASON) } ?: state.error
+                else state.livePage?.takeIf { it.channels.isEmpty() }?.reason?.let { ServerMessages.human(it, ServerMessages.LIVE_REASON) }
             val guide = state.liveGuideChannel?.let(state.liveGuides::get)
-            val notice = if (empty) null else state.error ?: state.liveFavoriteError ?: guide?.reason
+            val notice = if (empty) null else state.error ?: state.liveFavoriteError ?: guide?.reason?.let { ServerMessages.human(it, ServerMessages.LIVE_REASON) }
             val retry: (() -> Unit)? = when {
                 state.error != null -> controller::refreshLive
                 state.liveFavoriteError != null && state.liveFavoritesCanRetry -> controller::refreshLiveFavorites

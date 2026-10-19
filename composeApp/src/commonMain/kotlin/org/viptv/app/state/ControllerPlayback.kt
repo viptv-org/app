@@ -84,10 +84,9 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
 
 fun ApplicationController.retrySource(source: SourceCandidate) {
     if (!completionSeen) saveProgress(false)
-    // Desktop direct play: the gateway is only required for IPTV/live sources;
-    // VOD retries stay direct so gateway connections stay free.
-    val live = mutable.value.playback?.live == true
-    playSource(source, forceGateway = live)
+    // R6: desktop/phone retry with the device engine on the direct URL; a live
+    // or IPTV retry is not a reason to open a server gateway.
+    playSource(source)
 }
 
 fun ApplicationController.pausePlayback() {

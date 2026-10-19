@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,10 +15,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -43,8 +47,19 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!desktop) SearchField(term, query)
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("All", "Movies", "Series", "Anime", "Channels").forEach { tab ->
-                Text(tab, Modifier.background(if (filter == tab) Palette.text else Color(0xFF202022), RoundedCornerShape(18.dp))
-                    .clickable { filter = tab }.padding(horizontal = 14.dp, vertical = 7.dp),
+                // DUI-06: the chips are the desktop search page's only controls and
+                // had neither state. Board `Chip · hover` = white 6%; the ring is
+                // the shared 2/2 focus outline.
+                val interactions = remember { MutableInteractionSource() }
+                val hovered by interactions.collectIsHoveredAsState()
+                var focused by remember { mutableStateOf(false) }
+                Text(tab, Modifier
+                    .onFocusChanged { focused = it.isFocused }
+                    .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
+                    .background(if (hovered) (if (filter == tab) Color.White else Color(0xFF2A2A2E))
+                        else (if (filter == tab) Palette.text else Color(0xFF202022)), RoundedCornerShape(18.dp))
+                    .clickable(interactionSource = interactions, indication = null, onClickLabel = tab) { filter = tab }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
                     color = if (filter == tab) Palette.background else Palette.text,
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
