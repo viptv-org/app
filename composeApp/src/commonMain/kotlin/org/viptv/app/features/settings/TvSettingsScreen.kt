@@ -32,7 +32,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     parental: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
     dashboardAddress: String? = null, preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
-    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null) {
+    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
+    maturity: String? = null, pinAvailable: Boolean = true) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -96,10 +97,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         Spacer(Modifier.height(24.dp * scale))
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
-                    TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else {
-                        Text("Parental controls", fontSize = (40 * scale).sp)
-                        TvSettingsRow("Open Profiles", scale = scale, requester = first, left = sidebar, activate = profiles)
-                    }
+                    TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else
+                        TvParentalSettings(profile, maturity, pinAvailable, scale, first, sidebar, profiles)
                     TvSettingsSection.Account -> TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, {
                         if (local) leaving = true
                         else if (accountDashboard != null) try { accountDashboard() } catch (_: Exception) {

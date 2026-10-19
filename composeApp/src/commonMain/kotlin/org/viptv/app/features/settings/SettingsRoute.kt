@@ -53,6 +53,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             else ParentControlsNative(state.localMode, controller.connection?.accountDashboardUrl,
                 { controller.navigate(Screen.Profiles) })
         },
-        tvParental = { first, sidebar, scale -> ParentControlsNative(state.localMode, controller.connection?.accountDashboardUrl,
-            { controller.navigate(Screen.Profiles) }, first, sidebar, scale) })
+        tvParental = null,
+        tvParentalMaturity = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.let {
+            if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
+        },
+        tvParentalPinAvailable = state.localMode)
 }

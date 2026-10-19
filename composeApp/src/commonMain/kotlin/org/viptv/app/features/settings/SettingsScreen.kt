@@ -19,9 +19,10 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     parentalBack: (() -> Unit)? = null, parental: (@Composable () -> Unit)? = null, tvParental: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
     preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
-    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null) {
+    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
+    tvParentalMaturity: String? = null, tvParentalPinAvailable: Boolean = true) {
     if (television) {
-        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion)
+        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }

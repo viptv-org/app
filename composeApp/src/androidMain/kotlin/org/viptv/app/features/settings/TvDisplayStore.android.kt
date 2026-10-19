@@ -11,7 +11,7 @@ private const val KEY = "display-v1"
  * hook at the Activity. `apply()` keeps the write off the frame the D-pad press
  * arrives on.
  */
-private object AndroidTvDisplayStore(private val context: PlatformContext) : TvDisplayStore {
+private class AndroidTvDisplayStore(private val context: PlatformContext) : TvDisplayStore {
     private val preferences get() = context.getSharedPreferences(STORE, Context.MODE_PRIVATE)
 
     override fun read(): String? = preferences.getString(KEY, null)

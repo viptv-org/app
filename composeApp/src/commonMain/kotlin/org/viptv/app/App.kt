@@ -66,7 +66,7 @@ fun App(
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
                     register = if (browser) ({ username, name, password -> controller.registerAccount(browserOrigin().orEmpty(), username, name, password) }) else null,
                     recover = if (browser) ({ username, code, password -> controller.recoverAccount(browserOrigin().orEmpty(), username, code, password) }) else null)
-                Screen.RecoveryCodes -> RecoveryCodesScreen(state.recoveryKit, state.busy, state.error, controller::finishAccountEntry, controller::disconnect)
+                Screen.RecoveryCodes -> RecoveryCodesScreen(state.recoveryKit, state.busy, state.error, controller::finishAccountEntry, controller::disconnect, television = television)
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television,
