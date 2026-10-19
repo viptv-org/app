@@ -49,6 +49,9 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     var lastRowHeight by remember(home?.scope?.profile_id, home?.rows?.lastOrNull()?.id) { mutableIntStateOf(0) }
     var heroFocusEpoch by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
     val firstCard = remember { FocusRequester() }; val playFocus = remember { FocusRequester() }
+    // Down from the billboard resumes the shelf at the card the viewer left, not
+    // at card 0 (which flashed the old card and then scrolled back to the start).
+    val resumeShelf = remember { FocusRequester() }
     val navigationFocus = remember { FocusRequester() }
     var navigationFocusEpoch by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
     var initialShelfFocusClaimed by remember(home?.scope?.profile_id) { mutableStateOf(false) }
@@ -153,7 +156,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                     }
                     TvHomeVisibility(!browsing, scale, -80, 450, retain = true, focusEnabled = { !browsing }, sequentialFade = true) {
                         carousel.card?.let { hero ->
-                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing && error == null, save = { if (!browsing) save(it) }, isSaved = saved)
+                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) resumeShelf else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing && error == null, save = { if (!browsing) save(it) }, isSaved = saved)
                         }
                     }
                 }
@@ -181,7 +184,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
                                 modifier = Modifier.graphicsLayer { this.alpha = alpha?.value ?: 1f }
                                     .then(if (index == visibleRows.lastIndex) Modifier.onSizeChanged { lastRowHeight = it.height } else Modifier),
-                                firstPlaced = { firstReadyAttached = true })
+                                firstPlaced = { firstReadyAttached = true },
+                                resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null)
                         }
                     }
                 }

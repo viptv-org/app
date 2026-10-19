@@ -2,7 +2,6 @@ package org.viptv.app.components
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalDensity
@@ -42,8 +41,12 @@ internal fun rememberTvShelfScroll(state: LazyListState, step: Dp, viewport: Dp,
         if (target != null && target != state.firstVisibleItemIndex) {
             motion?.cancel()
             motion = scope.launch {
-                val current = state.firstVisibleItemIndex * stepPx + state.firstVisibleItemScrollOffset
-                state.animateScrollBy(target * stepPx - current, tween(300, easing = CubicBezierEasing(.2f, 0f, 0f, 1f)))
+                // Scroll *to the item*, not by index*step pixels: the shelf has a
+                // 96 px leading content padding and mixed card widths, so the pixel
+                // math drifted and after a long run right the first card could end
+                // up outside the viewport while still focused (focus off-screen left).
+                state.animateScrollToItem(target.coerceIn(0, (count - 1).coerceAtLeast(0)),
+                    scrollOffset = 0)
             }
         }
     }

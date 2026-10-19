@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
@@ -56,8 +57,23 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
             RowState.READY -> LazyRow(state = list,
                 contentPadding = PaddingValues(end = if (compact) 24.dp else 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
-                items(cards, key = ::cardLookupKey) {
-                    MediaCard(it, width, portrait = portrait, onFocus = focus, open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f, cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp, showFocusOutline = showFocusOutline)
+                items(cards, key = ::cardLookupKey) { card ->
+                    // Every platform, not just TV: a card that takes focus must be
+                    // scrolled into view. On web the browser focus could land on a
+                    // card that was fully outside the shelf viewport ("focus moves
+                    // off the screen to the left" after scrolling right and back).
+                    val bringIntoView = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+                    Box(Modifier.bringIntoViewRequester(bringIntoView)) {
+                        MediaCard(card, width, portrait = portrait,
+                            onFocus = {
+                                scope.launch { bringIntoView.bringIntoView() }
+                                focus(card)
+                            },
+                            open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
+                            cornerRadius = if (television) 12.dp * scale else 8.dp,
+                            focusWidth = if (television) 4.dp * scale else 3.dp,
+                            showFocusOutline = showFocusOutline)
+                    }
                 }
             }
             RowState.FAILED -> TextButton(onClick = retry) { Text("Try again") }

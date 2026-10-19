@@ -49,7 +49,7 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
 internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: () -> Unit,
     focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, modifier: Modifier = Modifier,
     viewport: Dp, firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
-    appending: Boolean = false, appendError: String? = null) {
+    appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null) {
     val portrait = row.id != "continue"
     // Keep one card composed and measured on each side of the viewport: a card
     // that scrolls in is already composed, so the frame that reveals it does not
@@ -61,6 +61,11 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     // the end. There is never a Load more button.
     val trailing = if (appendError == null && more != null && (row.next_cursor != null || appending)) HOME_ROW_TRAILING else 0
     val scroll = rememberTvShelfScroll(state, (if (portrait) 248 else 404).dp * scale, viewport, cards.size + trailing, 96.dp * scale)
+    // Remember the card the viewer last focused in this shelf. Coming back Down
+    // from the billboard must resume *there*: focusing card 0 restored the scroll
+    // to the start and flashed the previously focused card before snapping away.
+    var lastFocusedIndex by remember(row.id) { mutableIntStateOf(0) }
+    val resumeIndex = lastFocusedIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
     val loadPage = rememberUpdatedState(more)
     LaunchedEffect(row.id, row.next_cursor, appending, appendError, cards.size) {
         val request = loadPage.value ?: return@LaunchedEffect
@@ -78,8 +83,10 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                 when (row.state) {
                     RowState.READY -> {
                         itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->
-                            TvCatalogCard(card, scale, portrait, Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced() } else Modifier),
-                                { scroll(index); focus(it) }, open, showFocus, focusedCaptions = portrait,
+                            val entry = Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced() } else Modifier)
+                                .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
+                            TvCatalogCard(card, scale, portrait, entry,
+                                { lastFocusedIndex = index; scroll(index); focus(it) }, open, showFocus, focusedCaptions = portrait,
                                 onUp = if (index < 7) up else null)
                         }
                         if (appendError != null) item(key = "row-append", contentType = "failed") {
