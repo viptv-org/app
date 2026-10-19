@@ -37,7 +37,7 @@ internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignm
         }
     }
     LaunchedEffect(shown) {
-        if (shown != null) { fade.animateTo(1f, tween(300)); outgoing = null }
+        if (shown != null) { fade.animateTo(1f, tween(200)); outgoing = null }
     }
     Box(modifier.then(size)) {
         outgoing?.let { Image(it.painter, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alignment = alignment) }

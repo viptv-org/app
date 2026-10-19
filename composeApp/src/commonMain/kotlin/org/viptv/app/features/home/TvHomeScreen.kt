@@ -16,12 +16,17 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
 import org.viptv.app.components.TvFocusScroll
@@ -33,6 +38,10 @@ import org.viptv.engine.wire.*
 internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card) -> Unit, retry: () -> Unit,
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null) {
     var browsing by remember(home?.scope?.profile_id) { mutableStateOf(false) }
+    // Timestamp of the last D-pad event: the billboard and prefetch wait for
+    // navigation to go quiet instead of thrashing artwork while a key repeats.
+    val lastNavigation = remember { mutableStateOf<TimeMark?>(null) }
+    val quietForMillis = { lastNavigation.value?.elapsedNow()?.inWholeMilliseconds }
     val focused = remember(home?.scope?.profile_id) { mutableStateOf<Card?>(null) }
     var activeRow by remember(home?.scope?.profile_id) { mutableIntStateOf(-1) }
     var rowMotion by remember { mutableStateOf<Job?>(null) }
@@ -109,7 +118,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             else { delay(450); heroTimerEnabled = true }
         }
         val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope)
-        val selection = rememberTvBillboardSelection(focused, { browsing }, { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" })
+        val portraitSelection = { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" }
+        val selection = rememberTvBillboardSelection(focused, { browsing }, portraitSelection, quietForMillis)
         val settled = selection?.card
         val original = settled ?: carousel.card
         val card = original?.let { summaryCards[it.identity.id] ?: it }
@@ -123,7 +133,10 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             else HomeStatus(home, error ?: "Your catalogs could not load. Try refreshing Home.".takeIf { catalogsFailed }, busy, retry, navigate,
                 Modifier.padding(start = 96.dp * scale, end = 96.dp * scale, top = 300.dp * scale), television = true, scale = scale)
         } else {
-            Box(Modifier.fillMaxSize().then(arrival)) {
+            Box(Modifier.fillMaxSize().then(arrival).onPreviewKeyEvent { event ->
+                if (event.key.isDirectional()) lastNavigation.value = TimeSource.Monotonic.markNow()
+                false
+            }) {
                 TvHomeBackdrop(card, browsing, portrait = selection?.portrait ?: false, hero = carousel.card, heroReady = carousel.artworkReady)
                 if (card != null) {
                     TvHomeVisibility(browsing && settled != null, scale, 24, 450, sequentialFade = true) {
@@ -180,3 +193,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         }
     }
 }
+
+private fun Key.isDirectional(): Boolean =
+    this == Key.DirectionLeft || this == Key.DirectionRight || this == Key.DirectionUp || this == Key.DirectionDown

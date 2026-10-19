@@ -11,24 +11,35 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 
-/** A card remains stationary until it reaches the peeking-card boundary. */
+/**
+ * Scrolls a shelf only when the focused card would leave the safe window, and
+ * always from the *real* scroll position.
+ *
+ * Deriving the target from [LazyListState.layoutInfo] instead of a shadow copy of
+ * the index matters: after a long run to the right and back, a shadow counter can
+ * drift away from what is on screen, and then the correction never fires and focus
+ * walks off the left edge where it cannot be seen or reached.
+ */
 @Composable
 internal fun rememberTvShelfScroll(state: LazyListState, step: Dp, viewport: Dp, count: Int, gutter: Dp): (Int) -> Unit {
     val stepPx = with(LocalDensity.current) { step.toPx() }
     val visible = floor((viewport - gutter) / step).toInt().coerceAtLeast(2)
-    var offset by remember(state) { mutableIntStateOf(0) }
+    val maxOffset = (count - visible + 1).coerceAtLeast(0)
     var motion by remember(state) { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     DisposableEffect(state) { onDispose { motion?.cancel() } }
     return { index ->
+        val items = state.layoutInfo.visibleItemsInfo
+        val first = items.firstOrNull()?.index
+        val last = items.lastOrNull()?.index
+        // Keep one card peeking on the leading edge and two on the trailing one.
         val target = when {
-            index == 0 -> 0
-            index > offset + visible - 2 -> index - (visible - 2)
-            index < offset + 1 -> (index - 1).coerceAtLeast(0)
-            else -> offset
-        }.coerceIn(0, (count - visible + 1).coerceAtLeast(0))
-        if (target != offset || index == 0 && state.firstVisibleItemScrollOffset != 0) {
-            offset = target
+            first == null || last == null -> null
+            index <= first -> (index - 1).coerceAtLeast(0)
+            index >= last -> index - (visible - 2)
+            else -> null
+        }?.coerceIn(0, maxOffset)
+        if (target != null && target != state.firstVisibleItemIndex) {
             motion?.cancel()
             motion = scope.launch {
                 val current = state.firstVisibleItemIndex * stepPx + state.firstVisibleItemScrollOffset
