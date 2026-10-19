@@ -23,6 +23,7 @@ import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
+import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -92,8 +93,7 @@ private fun DesktopMetaLine(card: Card) {
             if (index > 0) Text("·", color = Palette.tertiary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(part, color = Palette.body, fontSize = 14.sp, fontWeight = FontWeight.Medium, softWrap = false)
         }
-        val chips = (listOfNotNull(metadata?.certification?.takeIf { it.isNotBlank() }) + card.badges).distinct()
-        chips.forEach { DesktopMetaChip(it) }
+        card.presentationBadges().forEach { DesktopMetaChip(it) }
     }
 }
 

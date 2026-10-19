@@ -46,11 +46,14 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
         catch (error: RemoteFailure) {
             currentCoroutineContext().ensureActive()
             if (generation != operation || connection !== remote) return@run
-            if (error.status != 401) throw error
+            // Neither an expired saved session nor an unreachable server leaves a
+            // usable connection: release it before Connect so no token-bearing
+            // client survives the failed restore.
             remote.close(); connection = null
-            mutable.value = mutable.value.copy(error = "Session expired. Sign in again.")
+            mutable.value = mutable.value.copy(error = if (error.status == 401) "Session expired. Sign in again." else error.message)
         }
-        catch (error: LocalFailure) {
+        catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
             if (generation == operation && connection === remote) { remote.close(); connection = null }
             throw error
         }
@@ -163,6 +166,16 @@ fun ApplicationController.signOut() = run {
     }
 }
 
+/** A background 401 is an expired session, not a load failure: report it and leave Connect usable. */
+internal fun ApplicationController.expireSession(remote: RemoteConnection?, device: LocalConnection?) {
+    if (remote == null || connection !== remote || local !== device) return
+    releaseRemotePlayback()
+    resetLiveRequests()
+    connection = null
+    remote.close()
+    mutable.value = ApplicationState(error = "Session expired. Sign in again.")
+}
+
 internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = null, busy: Boolean = false) {
     libraryHydration?.cancel()
     resetLiveRequests()
@@ -183,6 +196,9 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
             if (mutable.value.selectedProfile == profile && connection === remote && local === device)
                 updateLibrary(cards, membership = membership)
         } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { /* The library route offers an explicit retry; Home remains usable. */ }
+        catch (error: Exception) {
+            // An expired session is not an empty library: sign out with the shared message.
+            if (error is RemoteFailure && error.status == 401) expireSession(remote, device)
+        }
     }
 }

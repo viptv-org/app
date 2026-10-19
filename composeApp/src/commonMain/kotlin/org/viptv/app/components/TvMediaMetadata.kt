@@ -17,6 +17,7 @@ import org.viptv.engine.wire.Card
 @Composable
 internal fun TvMediaMetadata(card: Card, scale: Float, lineHeight: Float = 30f, subtitleParts: List<String>? = null) {
     val parts = subtitleParts ?: card.metadataParts()
+    val badges = card.presentationBadges()
     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
         if (parts.isNotEmpty()) {
             val fixedLines = LocalTextStyle.current.copy(lineHeightStyle = LineHeightStyle(
@@ -27,9 +28,9 @@ internal fun TvMediaMetadata(card: Card, scale: Float, lineHeight: Float = 30f, 
                     Text(part, fontSize = (24 * scale).sp, lineHeight = (lineHeight * scale).sp, fontWeight = FontWeight.Medium, color = Palette.body, style = fixedLines)
                 }
             }
-            if (parts.isNotEmpty() && card.presentationBadges().isNotEmpty()) Spacer(Modifier.width(6.dp * scale))
+            if (badges.isNotEmpty()) Spacer(Modifier.width(6.dp * scale))
         }
-        card.presentationBadges().forEach { badge -> Box(Modifier.height(maxOf(30f, lineHeight).dp * scale), contentAlignment = Alignment.Center) {
+        badges.forEach { badge -> Box(Modifier.height(maxOf(30f, lineHeight).dp * scale), contentAlignment = Alignment.Center) {
             TvMediaBadge(badge, scale)
         } }
     }

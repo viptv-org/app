@@ -36,7 +36,8 @@ import org.viptv.engine.wire.*
 
 @Composable
 internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card) -> Unit, retry: () -> Unit,
-    navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null) {
+    navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
+    moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap()) {
     var browsing by remember(home?.scope?.profile_id) { mutableStateOf(false) }
     // Timestamp of the last D-pad event: the billboard and prefetch wait for
     // navigation to go quiet instead of thrashing artwork while a key repeats.
@@ -177,6 +178,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                         }
                                     }
                                 }, open, retry, viewport = viewport,
+                                more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
                                 modifier = Modifier.graphicsLayer { this.alpha = alpha?.value ?: 1f }
                                     .then(if (index == visibleRows.lastIndex) Modifier.onSizeChanged { lastRowHeight = it.height } else Modifier),
                                 firstPlaced = { firstReadyAttached = true })

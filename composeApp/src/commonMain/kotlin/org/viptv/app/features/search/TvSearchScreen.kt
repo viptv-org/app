@@ -107,8 +107,10 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                             letterSpacing = (-.3f * scale).sp, fontWeight = FontWeight.SemiBold)
                         TvFocusScroll {
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-                                items(channels, key = { it.provider_id + ":" + it.identity.id }) {
-                                    TvSearchChannel(it, scale, open) { focusRow(groups.size + if (error != null) 1 else 0) }
+                                itemsIndexed(channels, key = { _, it -> it.provider_id + ":" + it.identity.id }) { index, channel ->
+                                    TvSearchChannel(channel, scale, open,
+                                        onFocus = { focusRow(groups.size + if (error != null) 1 else 0) },
+                                        last = index == channels.lastIndex)
                                 }
                             }
                         }

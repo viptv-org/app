@@ -31,9 +31,12 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
         Column(panel.clip(RoundedCornerShape(if (phone) 0.dp else 12.dp)).background(Palette.surface)
             .border(1.dp, Palette.raised, RoundedCornerShape(if (phone) 0.dp else 12.dp)).padding(if (phone) 20.dp else 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (phone) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Audio & subtitles", Modifier.weight(1f), fontSize = 16.sp)
-                IconButton(close, Modifier.size(32.dp)) { Icon(Lucide.X, "Close track selection", Modifier.size(18.dp)) }
+            // NAV-07: the panel is dismissible on every size, not only on phone.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Audio & subtitles", Modifier.weight(1f), fontSize = 16.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                IconButton(close, Modifier.size(if (phone) 32.dp else 28.dp)) {
+                    Icon(Lucide.X, "Close track selection", Modifier.size(if (phone) 18.dp else 16.dp))
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TrackColumn("Audio", tracks.audio, false, Modifier.weight(1f)) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, it)) }

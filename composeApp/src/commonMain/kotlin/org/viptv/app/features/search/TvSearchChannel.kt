@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -30,11 +31,13 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}) {
+internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}, last: Boolean = false) {
     var focused by remember { mutableStateOf(false) }
     val frame by animateFloatAsState(if (focused) 1f else 0f, tween(120), label = "Channel focus")
     val shape = RoundedCornerShape(10.dp * scale)
-    Column(Modifier.width(356.dp * scale).onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
+    Column(Modifier.width(356.dp * scale)
+        .focusProperties { if (last) right = androidx.compose.ui.focus.FocusRequester.Cancel }
+        .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
         Box(Modifier.fillMaxWidth().height(200.dp * scale).clip(shape)
             .background(Brush.linearGradient(listOf(Color(0xFF1D2230), Color(0xFF121318)))), contentAlignment = Alignment.Center) {

@@ -23,6 +23,9 @@ internal suspend fun ApplicationController.openProfile(id: String) {
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
     val result=local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)
+    // Playback intent belongs to the profile that set it; a switch must not drag
+    // "start from the beginning" into the next profile's resume position.
+    restartRequested = false
     accept(result)
     local?.let { mutable.value=mutable.value.copy(home=it.refreshHome(id)) }
 }

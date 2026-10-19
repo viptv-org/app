@@ -34,3 +34,34 @@ internal suspend fun RemoteConnection.browse(query: BrowseQuery, controls: Disco
     if (query.values.isNotEmpty()) params["values"] = Json.encodeToString(query.values)
     return Json { ignoreUnknownKeys = true }.decodeFromJsonElement(call("/api/discover?" + params.entries.joinToString("&") { "${it.key}=${it.value.encodeURLParameter()}" }))
 }
+
+/** The catalog selector a Home row already carries; a client never interprets row ids. */
+internal data class HomeRowPageQuery(val type: String, val catalog: String, val connectionId: String?,
+    val addonId: Long?, val values: List<QueryValue>) {
+    /** The local engine rejects catalog values without the connection they belong to. */
+    fun browseQuery(skip: Int): BrowseQuery = BrowseQuery(type = type, catalog = catalog, connection_id = connectionId,
+        skip = skip, values = values.takeIf { connectionId != null }.orEmpty())
+}
+
+private val rowIdentityKeys = setOf("type", "catalog", "connection_id", "addon_id")
+
+/** Only catalog rows page; personal rows (continue/favorites) have no cursor producer. */
+internal fun HomeRow.pageQuery(): HomeRowPageQuery? {
+    val action = browse ?: return null
+    if (action.target != HomeBrowseTarget.DISCOVER) return null
+    val selector = action.query.associate { it.id to it.values.firstOrNull() }
+    val type = selector["type"] ?: return null
+    val catalog = selector["catalog"] ?: return null
+    return HomeRowPageQuery(type, catalog, selector["connection_id"], selector["addon_id"]?.toLongOrNull(),
+        action.query.filterNot { it.id in rowIdentityKeys })
+}
+
+/** One row page through the catalog cursor the app already owns: no controls round-trip. */
+internal suspend fun RemoteConnection.homeRowPage(row: HomeRow, cursor: String): CatalogPage {
+    val query = row.pageQuery() ?: throw LocalFailure("This row cannot load more.")
+    val parameters = mutableListOf("type=${query.type.encodeURLParameter()}",
+        "catalog=${query.catalog.encodeURLParameter()}", "skip=${cursor.encodeURLParameter()}")
+    query.addonId?.let { parameters += "addon_id=$it" }
+    if (query.values.isNotEmpty()) parameters += "values=${Json.encodeToString(query.values).encodeURLParameter()}"
+    return Json { ignoreUnknownKeys = true }.decodeFromJsonElement(call("/api/discover?" + parameters.joinToString("&")))
+}

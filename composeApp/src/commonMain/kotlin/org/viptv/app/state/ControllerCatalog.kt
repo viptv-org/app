@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
+import org.viptv.engine.wire.RowState
 
 fun ApplicationController.refresh() = run {
     progressJob?.join()
@@ -16,7 +17,80 @@ fun ApplicationController.refresh() = run {
         result.copy(home = device.refreshHome(profile)) else result
     currentCoroutineContext().ensureActive()
     if (mutable.value.screen == Screen.Home || refreshed.selected != profile) accept(refreshed, busy = true)
-    else mutable.value = mutable.value.copy(home = refreshed.home)
+    // A replacement snapshot has fresh cursors, so no row keeps a stale page state.
+    else mutable.value = mutable.value.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap())
+}
+
+/** A row stops appending here, above the engine's 200-card catalog page cap. */
+private const val HOME_ROW_LIMIT = 240
+
+/**
+ * Page one Home row through its own cursor. Cards append in place: the revision,
+ * focus, scroll position and every other row are untouched.
+ */
+fun ApplicationController.homeRowPage(rowId: String) {
+    val home = mutable.value.home ?: return
+    val row = home.rows.find { it.id == rowId } ?: return
+    val cursor = row.next_cursor ?: return
+    if (row.state != RowState.READY || rowId in mutable.value.homeRowBusy) return
+    val profile = mutable.value.selectedProfile ?: return
+    val query = row.pageQuery() ?: return
+    if (row.cards.size >= HOME_ROW_LIMIT) {
+        mutable.value = mutable.value.copy(home = home.copy(rows = home.rows.map {
+            if (it.id == rowId) it.copy(next_cursor = null) else it }))
+        return
+    }
+    val remote = connection
+    val device = local
+    val homeScope = home.scope
+    val operation = generation
+    fun current() = generation == operation && mutable.value.screen == Screen.Home &&
+        mutable.value.selectedProfile == profile && mutable.value.home?.scope == homeScope &&
+        connection === remote && local === device
+    mutable.value = mutable.value.copy(homeRowBusy = mutable.value.homeRowBusy + rowId,
+        homeRowErrors = mutable.value.homeRowErrors - rowId)
+    scope.launch {
+        try {
+            val page = when {
+                device != null -> device.browse(profile, query.browseQuery(cursor.toIntOrNull() ?: return@launch))
+                remote != null -> remote.homeRowPage(row, cursor)
+                else -> return@launch
+            }
+            if (!current()) return@launch
+            val loaded = mutable.value.home ?: return@launch
+            val target = loaded.rows.find { it.id == rowId } ?: return@launch
+            val merged = (target.cards + page.cards).distinctBy(::cardLookupKey).take(HOME_ROW_LIMIT)
+            // A page that repeats cards must not re-arm the same cursor forever.
+            val next = if (merged.size > target.cards.size) advancedCursor(page.next_cursor, cursor) else null
+            mutable.value = mutable.value.copy(home = loaded.copy(rows = loaded.rows.map {
+                if (it.id == rowId) it.copy(cards = merged, next_cursor = next,
+                    state = if (merged.isEmpty()) RowState.EMPTY else RowState.READY) else it }))
+        } catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            if (current()) {
+                if (error is RemoteFailure && error.status == 401 && device == null) {
+                    releaseRemotePlayback(); remote?.close(); connection = null
+                    mutable.value = ApplicationState(error = "Session expired. Sign in again.")
+                } else mutable.value = mutable.value.copy(
+                    homeRowErrors = mutable.value.homeRowErrors + (rowId to "Could not load more titles. Try again."))
+            }
+        } finally {
+            // Clear the busy flag whenever this snapshot is still the one on screen,
+            // even if Home is no longer the visible screen.
+            val state = mutable.value
+            if (rowId in state.homeRowBusy && state.home?.scope == homeScope)
+                mutable.value = state.copy(homeRowBusy = state.homeRowBusy - rowId)
+        }
+    }
+}
+
+/** A cursor that does not move forward would page the same cards forever. */
+private fun advancedCursor(next: String?, current: String): String? {
+    next ?: return null
+    if (next == current) return null
+    val candidate = next.toIntOrNull()
+    val from = current.toIntOrNull()
+    return if (candidate != null && from != null && candidate <= from) null else next
 }
 
 fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mutable.value.searchTerm))

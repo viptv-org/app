@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -278,46 +279,62 @@ class RemoteConnection(
     // Once sent, a rotation may already have consumed its one-use token. Navigation
     // cancellation must wait until its replacement is installed and persisted.
     private suspend fun refreshDevice() = withContext(NonCancellable) {
-        withTimeout(20_000) {
-            val token = refreshToken ?: throw RemoteFailure(401, "Sign in to continue.")
-            val response = send("/api/auth/device/refresh", HttpMethod.Post,
-                buildJsonObject { put("refresh_token", token) }, null, null)
-            if (response.status == HttpStatusCode.Unauthorized) {
-                accessToken = null; refreshToken = null
-                try { sessionStore.clear() }
-                catch (error: CancellationException) { throw error }
-                catch (_: Exception) { /* The server has rejected this session. */ }
-                throw RemoteFailure(401, "Sign in to continue.")
+        try {
+            withTimeout(20_000) {
+                val token = refreshToken ?: throw RemoteFailure(401, "Sign in to continue.")
+                val response = send("/api/auth/device/refresh", HttpMethod.Post,
+                    buildJsonObject { put("refresh_token", token) }, null, null)
+                if (response.status == HttpStatusCode.Unauthorized) {
+                    accessToken = null; refreshToken = null
+                    try { sessionStore.clear() }
+                    catch (error: CancellationException) { throw error }
+                    catch (_: Exception) { /* The server has rejected this session. */ }
+                    throw RemoteFailure(401, "Sign in to continue.")
+                }
+                installDeviceTokens(decode(response).jsonObject)
             }
-            installDeviceTokens(decode(response).jsonObject)
+        } catch (error: TimeoutCancellationException) {
+            // A timeout is not navigation cancellation. Report it: the one-use token may
+            // already be consumed server-side, so the caller must not drop this silently.
+            throw RemoteFailure(504, "Your server took too long to refresh this session. Try again.")
         }
     }
 
     private suspend fun refreshBrowser() = withContext(NonCancellable) {
-        withTimeout(35_000) {
-        val status = requestJson("/api/auth/status").jsonObject
-        if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) throw RemoteFailure(401, "Sign in to continue.")
-        csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
-        val result = requestJson("/api/auth/refresh", HttpMethod.Post, buildJsonObject {})
-        csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        try {
+            withTimeout(35_000) {
+                val status = requestJson("/api/auth/status").jsonObject
+                if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) throw RemoteFailure(401, "Sign in to continue.")
+                csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
+                val result = requestJson("/api/auth/refresh", HttpMethod.Post, buildJsonObject {})
+                csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+            }
+        } catch (error: TimeoutCancellationException) {
+            throw RemoteFailure(504, "Your server took too long to refresh this session. Try again.")
         }
     }
 
     suspend fun signOut() {
         authSession {
             withContext(NonCancellable) {
-                withTimeout(50_000) {
-                    try {
-                        if (browser) refreshBrowser() else if (refreshToken != null) refreshDevice()
-                        refreshVersion++
-                        requestJson("/api/auth/logout", HttpMethod.Post, buildJsonObject {})
-                    } catch (error: RemoteFailure) {
-                        if (error.status != 401) throw error
+                try {
+                    withTimeout(50_000) {
+                        try {
+                            if (browser) refreshBrowser() else if (refreshToken != null) refreshDevice()
+                            refreshVersion++
+                            requestJson("/api/auth/logout", HttpMethod.Post, buildJsonObject {})
+                        } catch (error: RemoteFailure) {
+                            if (error.status != 401) throw error
+                        }
+                        try { sessionStore.clear() }
+                        catch (error: CancellationException) { throw error }
+                        catch (_: Exception) { /* Server revocation has already completed. */ }
+                        accessToken = null; refreshToken = null; csrf = null
                     }
-                    try { sessionStore.clear() }
-                    catch (error: CancellationException) { throw error }
-                    catch (_: Exception) { /* Server revocation has already completed. */ }
-                    accessToken = null; refreshToken = null; csrf = null
+                } catch (error: TimeoutCancellationException) {
+                    // Never let a sign-out timeout masquerade as navigation cancellation:
+                    // the leave dialog would close with a live session and no message.
+                    throw RemoteFailure(504, "Sign out did not finish. Check the connection and try again.")
                 }
             }
         }

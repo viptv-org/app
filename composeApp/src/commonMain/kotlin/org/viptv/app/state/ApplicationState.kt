@@ -36,6 +36,9 @@ data class ApplicationState(
     val managingProfiles: Boolean = false,
     val selectedProfile: String? = null,
     val home: HomeSnapshot? = null,
+    /** Home-row paging: a busy row appends skeletons, a failed row keeps the cards it shows. */
+    val homeRowBusy: Set<String> = emptySet(),
+    val homeRowErrors: Map<String, String> = emptyMap(),
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),
     val library: List<Card> = emptyList(),

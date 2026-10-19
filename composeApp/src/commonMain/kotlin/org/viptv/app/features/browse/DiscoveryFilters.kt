@@ -13,15 +13,21 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.*
 
-/** Provider and per-catalog capabilities determine the controls; search never selects a provider. */
+/** Provider and per-catalog capabilities determine the controls; search never selects a provider.
+ *
+ * `catalogPill` is the phone browse header (M3Browse), which owns the catalog choice in its own
+ * pill: the row then drops the duplicate `catalog` facet and keeps every other facet inline.
+ */
 @Composable
 internal fun DiscoveryFilters(controls: DiscoveryControls, query: BrowseQuery, showType: Boolean,
     changed: (String, String) -> Unit, first: FocusRequester? = null, television: Boolean = false,
-    scale: Float = 1f, multipleChanged: (String, List<String>) -> Unit = { _, _ -> }) {
+    scale: Float = 1f, multipleChanged: (String, List<String>) -> Unit = { _, _ -> },
+    catalogPill: Boolean = false) {
     val catalog = controls.selectedCatalog(query)
     val fields = if (catalog == null) controls.controls else
         controls.controls.filter { it.id in listOf("type", "catalog") } + catalog.controls.filter { it.id !in listOf("type", "catalog") }
-    val visible = fields.filter { (showType || it.id != "type") && (it.id != "search" || catalog != null) && it.maximum_selections != 0L }
+    val visible = fields.filter { (showType || it.id != "type") && (it.id != "search" || catalog != null) &&
+        it.maximum_selections != 0L && !(catalogPill && it.id == "catalog") }
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         if (visible.isEmpty()) Text("No browsing filters", Modifier.then(if (first != null) Modifier.focusRequester(first) else Modifier).focusable())
         visible.forEachIndexed { index, supplied ->

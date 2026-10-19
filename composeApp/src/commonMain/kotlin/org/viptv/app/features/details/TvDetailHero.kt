@@ -26,7 +26,12 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
+// DATA-03: nothing in the wire carries a trailer, so the circle is not drawn
+// rather than opening a dialog that claims a title option exists. The now-unused
+// parameter stays until its stub call site in TvDetailsScreen is deleted, so this
+// file's fix does not break the build.
 @Composable
+@Suppress("UNUSED_PARAMETER")
 internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
     save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
     saved: Boolean = false, downAction: (() -> Unit)? = null) {
@@ -75,7 +80,6 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                 }
             }
             TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = save) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
-            TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = trailer) { Icon(Lucide.Film, "Trailer", Modifier.size(30.dp * scale), it) }
             if (extras.resume != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
         }
     }

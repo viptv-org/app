@@ -2,7 +2,11 @@
 
 Source of truth for boards:
 `design/viptv-design-system/reference/screens/{html,img}/<platform>/<id>`.
-Board counts at this export: TV 56, phone 69, tablet 18, desktop 55, web 40.
+Board counts at this export (`reference/screens/index.json`, 273 entries): TV 56,
+phone 69, tablet 18, desktop 55, web 40, `simkl` 26 = **264 screen boards**, plus 9
+`components` sheets (`CmpPhone1-3`, `CmpDesk1-3`, `CmpTv1-3`). The 26 `simkl` boards
+are the ones this inventory used to omit; "264-board export" elsewhere in the docs
+counts exactly those screen boards.
 
 ## 1. App screens vs. boards
 
@@ -23,14 +27,16 @@ Library, History, Settings.
 | Settings sections | `Tv3Set{Playback,Subs,Addons,Sources,Display,Parental,About}` | `M3Set*` | `D3Set*` | |
 | Profiles / Pin / Edit | `Tv3Profiles`, `Tv3Pin`, `Tv3ProfileEdit` | `M3Profiles*` | `D3Profiles*` | |
 | Welcome / Sign-in | `Tv3Welcome`, `Tv3SignIn*`, `Tv3SignedIn`, `Tv3SignOut` | `M3SignIn*` | `D3SignIn*` | IPTV provider sign-in removed by owner |
-| Recovery codes | **none on TV** | `M3Recovery` | `D3Recovery` | app has `RecoveryCodesScreen` with no TV board |
-| **Calendar** | **none** | **none** | **none** | only `W3`-family/web calendar states exist |
+| Recovery codes | **none on TV** | `M3Recovery` | `D3Recovery` (`W3Recovery` on web) | app has `RecoveryCodesScreen` with no TV board |
+| **Calendar** | `SkTvCalendar` (1920×1080) | `SkMCalendar` | **none** | `simkl` family: `SkCalMonth`, `SkCalAgenda`, `SkCalFilter`, `SkTvCalendar`, `SkMCalendar` |
 | **History** | **none** | **none** | `D3History` | TV now has `TvHistoryScreen` (self-designed, no board) |
 | **Settings → Account** | **none** | `M3Account` | `D3Account` | TV shows the generic fallback row |
 
-So the screens that are genuinely **missing a board**: TV Calendar, TV History
+So the screens that are genuinely **missing a board**: TV History
 (implemented as `TvHistoryScreen`, self-designed), TV Recovery codes,
-TV Settings→Account. Everything else has a board somewhere.
+TV Settings→Account. TV Calendar is **not** missing a board — `SkTvCalendar` covers
+it; it was read as missing while only the `tv`/`phone`/`tablet`/`desktop`/`web`
+folders were counted. Everything else has a board somewhere.
 
 ## 1a. TV focus treatment (implemented 2026-10-19)
 
@@ -86,7 +92,9 @@ subtitle `24px` in `#B6B4AF`, gap `8px`, `34px` to content.
 4. **Parental content pages** (`Tv3SetParental`) and **About / Display**
    (`Tv3SetAbout`, `Tv3SetDisplay`).
 5. **Recovery codes** (`M3Recovery`/`D3Recovery` → needs a TV board, or adapt).
-6. **Missing boards**: TV Calendar, TV History, TV Settings→Account.
+6. **Missing boards**: TV History, TV Settings→Account (TV Calendar is covered by
+   `SkTvCalendar`). The 26 `simkl` boards — calendar, filters, lists, stats, title
+   tracking, connect/off — are not mapped to app screens anywhere in this inventory.
 7. **Desktop chrome** (`D3HomeWin`): window rounded, title bar with back/forward chevrons,
    logo pill, centred search with the `Ctrl K` hint, right-side cast/mic/avatar and
    min/max/close, 1px window outline. This is what currently looks thrown together.

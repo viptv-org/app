@@ -47,7 +47,8 @@ internal fun DiscoveryMultiChoiceSheet(control: QueryControl, selected: List<Str
             Surface(panel.graphicsLayer {
                 if (phone) translationY = size.height * (1f - motion.progress.value)
                 else translationX = size.width * (1f - motion.progress.value)
-            }, color = Palette.surface, shape = if (phone) RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp) else RoundedCornerShape(0.dp)) {
+            }, color = if (phone) Color(0xFF1A1A1D) else Palette.surface,
+                shape = if (phone) RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp) else RoundedCornerShape(0.dp)) {
                 Column(Modifier.fillMaxSize().padding(24.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                     Text(control.label, fontSize = (if (television) 32 * scale else 24f).sp)
                     Text(if (control.required) "Choose at least one · up to $maximum" else "Select up to $maximum",

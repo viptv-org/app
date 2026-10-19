@@ -30,7 +30,7 @@ internal fun TvCalendarPreview(entry: CalendarEntry, action: TvCalendarAction?, 
         entry.description?.let { Text(it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.body,
             maxLines = 4, overflow = TextOverflow.Ellipsis) }
         TvAction(Modifier.width(300.dp * scale).height(72.dp * scale)
-            .focusProperties { if (left != null) this.left = left; this.up = up }, scale, requester = requester,
+            .focusProperties { if (left != null) this.left = left; this.up = up; this.right = FocusRequester.Cancel }, scale, requester = requester,
             activate = { if (action == null) open(entry.card) else watch(action.target) }, arrangement = Arrangement.Start,
             contentPadding = PaddingValues(horizontal = 28.dp * scale)) {
             Icon(if (action == null) Lucide.Info else Lucide.Play, null, Modifier.size(26.dp * scale), it)

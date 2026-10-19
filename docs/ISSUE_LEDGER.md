@@ -21,13 +21,14 @@ Evidence kinds used here:
 | PERF-02 | DONE (prior) | alpha-toggled badges; card state additions are static per card |
 | PERF-03 | DONE (prior) | row fade outside item scope |
 | PERF-04 | DONE (prior) | docs/TV_FRAME_BUDGET.md |
-| PERF-05 | OPEN | no new measurement; `audit:audit-perf-budget.md` says it has no evidence |
-| PERF-06 | OPEN | release + `tools/tv_ab.sh` pass not run this session |
-| PERF-07 | OPEN | no desktop frame-pacing harness exists |
-| PERF-08 | OPEN | no browser long-task harness exists |
-| PERF-09 | OPEN | decode spikes unmeasured |
-| PERF-10 | OPEN | blur cost unmeasured; blur untouched (R5) |
+| PERF-05 | OPEN | no measurement; AC as written ("no LazyRow measure per focus move") contradicts the measured-and-rejected hoisting variant in `docs/TV_FRAME_BUDGET.md`. Procedure: `doc:TV_FRAME_BUDGET.md` §2026-10-19 (later) |
+| PERF-06 | OPEN | unmeasured; `tools/tv_ab.sh` cannot see the first 30 s (its first reset lands ≈30 s after launch). Needs `tools/tv_first_render.sh` plus a `cold`/`fresh` state split |
+| PERF-07 | OPEN | unmeasured; no desktop frame-pacing instrument exists (needs an env-gated `withFrameNanos` gap probe) |
+| PERF-08 | OPEN | unmeasured; no browser long-task harness. Also needs the isolated-output wasm redirect restored first (TEST-04) |
+| PERF-09 | OPEN | unmeasured. Code fact to reconcile before measuring: `TvHomeShelf.kt` claims one prefetched card per edge but sets no `beyondBoundsItemCount` |
+| PERF-10 | OPEN | unmeasured and no baseline exists; blur untouched (R5). Rejected offscreen-backdrop variant already recorded |
 | tooling | DONE | `tools/tv_cycle.sh` was broken (undefined `adb_t`/`SERIAL`, used `tv_bench.sh`); now builds release, installs, and runs the R3 `tv_ab.sh` metric |
+| perf docs | DONE | `docs/TV_FRAME_BUDGET.md` now carries a per-item procedure, the paste row, the missing-tool list and the queued experiments for PERF-05..10. No number added, no status changed |
 
 ## 2. Navigation & interaction
 
@@ -134,15 +135,15 @@ Per `audit:audit-dui-phone-web.md`: NAV-21/22/23 partial, NAV-24 open, NAV-25/26
 | TEST-01 | DONE | `gate:desktop_test` (321 tests, 0 failures) |
 | TEST-02 | DONE (debug) | `gate:android_apk` green; `assembleRelease` not run this session |
 | TEST-03 | DONE | iOS klib gate is now green. It was red before this session: `DesktopDetailHero`/`DetailsScreen` used JVM-only `String.format` and `Math.round` in commonMain; both replaced with KMP-safe calls |
-| TEST-04 | BLOCKED | Wasm excluded by workspace policy (default output served to a physical TV) |
+| TEST-04 | BLOCKED | Wasm excluded by workspace policy (default output served to a physical TV). No redirect mechanism exists in the repo: `/tmp/viptv-isolated-web.gradle` is gone, no committed copy exists, and `composeApp/build.gradle.kts` does not guard the default dist. Blocked on committing an isolated-output init script |
 | TEST-05 | PARTIAL | TV device pass: Home nav/focus/ring + History verified on ONN; full screen sweep via `tools/tv_focus_audit.py` |
 | TEST-06..08 | OPEN | phone/desktop/web passes |
-| TEST-09 | PARTIAL | card-state captures written to `/tmp/cards-after2/`; not committed as goldens |
-| TEST-10 | OPEN | no perf gate run |
-| DOC-01 | OPEN | design-system docs not updated |
+| TEST-09 | PARTIAL | card-state captures written to `/tmp/cards-after2/`; not committed as goldens. Baseline convention: `docs/evidence/<date>-tv-baselines/` + `manifest.json` of sha256s |
+| TEST-10 | OPEN | no perf gate run. `tools/tv_ab.sh` still has no release check and no per-run fingerprint (procedure documented, tooling not applied) |
+| DOC-01 | OPEN | design-system docs not updated. `copy.md`/`components.md`/`decisions.md` live under `design/`, outside this repo; board-exact text for the source-integration, recovery, parental and browse-catalog families was drafted this session but not applied |
 | DOC-02 | DONE | this ledger + OPEN_TASKS/UI_INVENTORY refresh |
-| DOC-03 | PARTIAL | TV_FRAME_BUDGET notes the fixed cycle tool and the unmeasured items |
-| DOC-04 | DONE | missing boards listed (TV Calendar, History, Recovery, Settings→Account) |
+| DOC-03 | PARTIAL | `docs/TV_FRAME_BUDGET.md` now documents the measurement procedure for all six open PERF items, the evidence format and the queued (not applied) experiments. Still PARTIAL: there is no new accepted/rejected *measured* experiment to record until PERF-05..10 are actually run |
+| DOC-04 | DONE | missing boards listed (TV History, TV Recovery, TV Settings→Account). TV Calendar was withdrawn from this list: `SkTvCalendar` (1920×1080) exists in the `simkl` family — see `docs/UI_INVENTORY.md` |
 
 ## Subagent reports (read-only, 2026-10-19)
 
@@ -161,3 +162,25 @@ Per `audit:audit-dui-phone-web.md`: NAV-21/22/23 partial, NAV-24 open, NAV-25/26
 - `/tmp/audit-data-contracts.md`, `/tmp/audit-play-contracts.md`, `/tmp/audit-auth-session.md`
 - `/tmp/audit-perf-budget.md`, `/tmp/audit-test-gates.md`
 - `/tmp/tv-nav-audit.md` (device walk), `/tmp/tv-board-parity.md`
+
+## Docs changes (2026-10-19, session 2 — docs only)
+
+- `docs/TV_FRAME_BUDGET.md` — added `§2026-10-19 (later)`: build type, command,
+  pass bar and the paste row for each of PERF-05..10, the tools those items still
+  need, the conflict notes (PERF-05 AC vs the rejected hoisting variant; PERF-06
+  window vs what `tv_ab.sh` can see) and the two queued experiments. **No number was
+  added and no item changed status.**
+- `docs/ISSUE_LEDGER.md` — PERF-05..10, TEST-04/09/10 and DOC-01/03 notes narrowed to
+  what is actually evidenced. No status upgraded; DOC-03 stays PARTIAL because no
+  *measured* experiment was added.
+- `docs/UI_INVENTORY.md` — board counts corrected against
+  `reference/screens/index.json` (264 screen boards + 9 `components` sheets = 273,
+  including the 26 `simkl` boards that were missing); `SkTvCalendar` recorded, so
+  "TV Calendar has no board" is withdrawn; `W3Recovery` added to the recovery row.
+- Not touched: `docs/OPEN_TASKS.md` (its PERF line is still accurate), any source
+  file, any tool script, any gradle task.
+- **Working tree note.** This session changed docs only, but the tree also carries
+  uncommitted row-paging work in 24 `composeApp` Kotlin files plus an untracked
+  `tools/apply_fix_briefs.py`. That work is not authored or verified here: no gate
+  was run, so no row in this ledger is upgraded for it. It does mean a PERF-05/09
+  baseline must post-date it (see `docs/TV_FRAME_BUDGET.md`, baseline ordering).

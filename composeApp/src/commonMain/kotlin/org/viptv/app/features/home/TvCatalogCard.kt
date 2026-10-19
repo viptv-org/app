@@ -35,6 +35,7 @@ import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.TvMediaBadge
+import org.viptv.app.components.isCapabilityBadge
 import org.viptv.app.components.metadataParts
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -147,10 +148,8 @@ private data class TvCardStates(
             // Presentation badges (4K/HDR/5.1/CC/Dolby) are metadata, not art
             // labels; they stay off the card entirely. Any other badge is a
             // state label (New, Remastered, …) and takes the dark label slot.
-            val presentation = setOf("4k", "hdr", "hdr10", "dv", "dolby", "atmos", "5.1", "cc", "sd", "uhd")
             val other = badges.firstOrNull { badge ->
-                val key = badge.lowercase()
-                key !in presentation && !badge.equals("New episode", true) && !badge.equals("Ended", true) &&
+                !isCapabilityBadge(badge) && !badge.equals("New episode", true) && !badge.equals("Ended", true) &&
                     !badge.equals("Watched", true) && !badge.equals("Returning", true)
             }
             val label = when {

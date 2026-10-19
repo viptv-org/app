@@ -38,8 +38,11 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
             return@BoxWithConstraints
         }
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, scopeKey = detail?.item?.let { it.provider_id to it.identity })
+        val paneWidth = maxWidth
         Row(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxHeight().weight(if (selected == null) 1f else .5f)) {
+            // T3Title: fixed 560 px info pane at board width, proportional when narrower.
+            Box(Modifier.fillMaxHeight().then(if (selected == null) Modifier.fillMaxWidth()
+                else Modifier.width(if (paneWidth >= 1100.dp) 560.dp else paneWidth * .5f))) {
                 detail?.item?.let { card ->
                     AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f),
@@ -64,13 +67,13 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         if (detail.recommendations.isNotEmpty()) item(key = "related") { RelatedTitles(detail.recommendations, open) }
                     }
                 }
-                IconButton(onClick = back, modifier = Modifier.padding(20.dp).size(40.dp)
-                    .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.ChevronLeft, "Back") }
+                IconButton(onClick = back, modifier = Modifier.padding(start = 24.dp, top = 36.dp).size(44.dp)
+                    .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
                 if (busy) LinearProgressIndicator(Modifier.align(Alignment.TopCenter).fillMaxWidth(), color = Palette.accent)
                 error?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 72.dp, start = 32.dp, end = 32.dp), color = Palette.danger) }
             }
             selected?.let { season ->
-                LazyColumn(Modifier.weight(.5f).fillMaxHeight(), contentPadding = PaddingValues(horizontal = 28.dp, vertical = 40.dp),
+                LazyColumn(Modifier.weight(1f).fillMaxHeight(), contentPadding = PaddingValues(horizontal = 28.dp, vertical = 40.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     item { DetailSeasonPicker(seasons, season, false) {
                         selectedKey = it?.toString() ?: "unknown"
