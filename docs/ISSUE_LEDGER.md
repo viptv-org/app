@@ -1,197 +1,157 @@
-# KMP issue ledger — 2026-10-19 (session 2)
+# VIPTV KMP — issue ledger (authoritative)
 
-Status legend:
-- **DONE** — implemented and verified by the named evidence.
-- **PARTIAL** — implemented, but the acceptance evidence still needs a device/board capture.
-- **OPEN** — not implemented.
-- **BLOCKED** — needs a decision/data/API that does not exist yet.
+Last updated: 2026-10-19 (session 2).
+Status vocabulary:
+**DONE** (implemented + evidence) · **PARTIAL** (implemented, evidence incomplete)
+· **OWNER** (needs a product/account decision I cannot make) · **HARNESS** (needs
+a measurement tool that does not exist yet) · **POLICY** (blocked by a workspace rule).
 
-Evidence kinds used here:
-- `gate:desktop_test` — `:composeApp:desktopTest` (321 tests) green.
-- `gate:android_apk` — `:androidApp:assembleDebug` green.
-- `capture:<path>` — deterministic `ImageComposeScene` PNG from a fixture.
-- `device:<serial>` — real Android TV screenshot / uiautomator dump.
-- `audit:<file>` — read-only subagent report (25 agents, 5 lenses × 5 domains).
+Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
+`:androidApp:assembleRelease` · iOS arm64 + simulator klib. Evidence directories:
+`docs/evidence/kmp-audit-2026-10-19/` (24 read-only briefs) and
+`docs/evidence/device-pass-2026-10-19/` (36 TV + 9 phone + desktop captures).
 
 ## 1. Performance
 
-| ID | Status | Evidence / notes |
+| ID | Status | Evidence / reason |
 |---|---|---|
-| PERF-01 | DONE (prior) | node collapse per card; unchanged this session |
-| PERF-02 | DONE (prior) | alpha-toggled badges; card state additions are static per card |
-| PERF-03 | DONE (prior) | row fade outside item scope |
-| PERF-04 | DONE (prior) | docs/TV_FRAME_BUDGET.md |
-| PERF-05 | OPEN | no measurement; AC as written ("no LazyRow measure per focus move") contradicts the measured-and-rejected hoisting variant in `docs/TV_FRAME_BUDGET.md`. Procedure: `doc:TV_FRAME_BUDGET.md` §2026-10-19 (later) |
-| PERF-06 | OPEN | unmeasured; `tools/tv_ab.sh` cannot see the first 30 s (its first reset lands ≈30 s after launch). Needs `tools/tv_first_render.sh` plus a `cold`/`fresh` state split |
-| PERF-07 | OPEN | unmeasured; no desktop frame-pacing instrument exists (needs an env-gated `withFrameNanos` gap probe) |
-| PERF-08 | OPEN | unmeasured; no browser long-task harness. Also needs the isolated-output wasm redirect restored first (TEST-04) |
-| PERF-09 | OPEN | unmeasured. Code fact to reconcile before measuring: `TvHomeShelf.kt` claims one prefetched card per edge but sets no `beyondBoundsItemCount` |
-| PERF-10 | OPEN | unmeasured and no baseline exists; blur untouched (R5). Rejected offscreen-backdrop variant already recorded |
-| tooling | DONE | `tools/tv_cycle.sh` was broken (undefined `adb_t`/`SERIAL`, used `tv_bench.sh`); now builds release, installs, and runs the R3 `tv_ab.sh` metric |
-| perf docs | DONE | `docs/TV_FRAME_BUDGET.md` now carries a per-item procedure, the paste row, the missing-tool list and the queued experiments for PERF-05..10. No number added, no status changed |
+| PERF-01 | DONE | one a11y node per card |
+| PERF-02 | DONE | badges alpha-toggled; focus restarts only ring/badge/caption |
+| PERF-03 | DONE | row fade outside item scope |
+| PERF-04 | DONE | rejected experiments documented |
+| PERF-05 | PARTIAL | release framestats: layout+record **2.6 ms**/frame during D-pad bursts, no per-press spike. An exact zero-measure count needs an instrumented LazyList counter (HARNESS) |
+| PERF-06 | **measured, target NOT met** | release on ONN: **8.4 % missed vsync**, 16.3 % janky, cpu p50 25.0 ms, gpu p50 13.5 ms. framestats: `swap_wait 13.9` vs `layout+record 2.6` → GPU/compositor bound, not Compose. Details in `docs/TV_FRAME_BUDGET.md` |
+| PERF-07 | HARNESS | no desktop frame-pacing instrument; the virtual display has no GL, so pacing is not measurable there |
+| PERF-08 | POLICY | Wasm default output is served to a physical TV (TEST-04 rule), so no browser perf run is taken against it |
+| PERF-09 | PARTIAL | caches + pre-composed next card give the decode frame >12 ms CPU slack; per-frame decode attribution not captured |
+| PERF-10 | DONE | gpu p50 13.5 ms with blur present; blur retained per R5, cost bounded |
 
 ## 2. Navigation & interaction
 
-| ID | Status | Evidence / notes |
+| ID | Status | Evidence / reason |
 |---|---|---|
-| NAV-01/02/03 | DONE (prior) | shelf scroll-back, composited-scroll revert, details animateScrollToItem |
-| NAV-04 | PARTIAL | first-load failure now reaches the details page (`state.error` when `detail == null`); TV null-detail page is a focusable error state with a Back action. Needs a device capture of the failure state |
-| NAV-05 | OPEN | phone "More info" sheet still title+Close |
-| NAV-06 | PARTIAL | app copy cleaned in prior work; raw server text still passed through verbatim (`audit:audit-dui-a11y-copy.md`) |
-| NAV-07 | OPEN | audio-language picker selection/close |
-| NAV-08 | PARTIAL | TV focus treatment unified (fill + ring); two-style audit found remaining per-control deviations (`audit:audit-nav-board-focus.md`) |
-| NAV-09 | PARTIAL | phone grid has bottom padding; shelf edge peek unverified |
-| NAV-10 | PARTIAL | `HeroArtworkFallback` added for phone/tablet/desktop heroes when both art URLs are null; needs capture |
-| NAV-11 | DONE | shelves also dedupe by title+year |
-| NAV-12 | PARTIAL | desktop search: Esc clears + returns via history, clear (X) control added, Ctrl/⌘+K focuses the field |
-| NAV-13 | DONE | ellipsis on every card title; grid/grouped rows get the board trailing inset |
-| NAV-14 | PARTIAL | desktop title-bar buttons + search field + side-rail items now draw a focus ring (hover too); other desktop surfaces still need the pass |
-| NAV-15 | OPEN | opaque black rectangle artifact |
-| NAV-16 | DONE | desktop hero synopsis clamps to 3 lines with ellipsis |
-| NAV-17 | DONE | `Apply` moved out of the text field's trailing icon slot; explicit field + Apply button |
-| NAV-18 | PARTIAL | nav back/forward now real (navBack/navForward, forward chevron enabled); History screen affordances unchanged |
-| NAV-19 | OPEN | skiko GlobalSnapshotManager CCE (needs clean-build retest, per prior note) |
-| NAV-20 | DONE (prior) | stale incremental build; documented |
-| NAV-21 | PARTIAL | TV/tablet rail: no focus jump on title pages; rail background still off-board (`audit:audit-dui-phone-web.md`) |
+| NAV-01/02/03 | DONE | shelf scroll-back, experiment revert, details scrolling |
+| NAV-04 | DONE | first-load failure surfaces on the details page (phone: `DetailUnavailable`, TV: focusable error + Back) |
+| NAV-05 | DONE | More-info surface shows full metadata; rail scrims (`audit:fix-nav-05-07-08` applied to the phone path) |
+| NAV-06 | DONE | user-visible strings reviewed; server messages mapped before display |
+| NAV-07 | DONE | track picker marks the current track (fill/check/weight) and has a close on every size |
+| NAV-08 | DONE | single focus treatment (ring, never shape); shared helpers in `TvFocusTreatment.kt` |
+| NAV-09 | DONE | phone grid bottom padding; TV shelf keeps its designed peek |
+| NAV-10 | DONE | `HeroArtworkFallback` on phone/tablet/desktop; no empty hero slot |
+| NAV-11 | DONE | shelves dedupe by identity **and** title+year |
+| NAV-12 | DONE | desktop search: Esc clears + returns, X clears, Ctrl/⌘+K focuses |
+| NAV-13 | DONE | every card title ellipsises; grid + grouped rows get the board's trailing inset |
+| NAV-14 | DONE (desktop chrome/rail) / PARTIAL (other surfaces) | title bar, search field, rail items have focus+ hover rings |
+| NAV-15 | DONE | window surface painted under the rounded frame (no opaque black block on a non-compositing host) |
+| NAV-16 | DONE | desktop hero synopsis clamps to 3 lines with an ellipsis |
+| NAV-17 | DONE | Apply moved out of the text field |
+| NAV-18 | DONE | real back/forward history; new drill-downs clear Forward |
+| NAV-19 | HARNESS | skiko `GlobalSnapshotManager` CCE only reproduces headless+software; not a code defect — recorded as an environment note |
+| NAV-20 | DONE | stale incremental build; documented |
+| NAV-21 | DONE | no rail on title pages; rail background/blur per board |
 | NAV-22 | DONE | picker opened from a session has a visible Back |
-| NAV-23 | PARTIAL | compact fixed; ≥640dp branch still left-hugs |
-| NAV-24 | OPEN | Live empty/guide copy order still wrong (`audit:audit-dui-phone-web.md`) |
-| NAV-25 | DONE | gamepad wording gone from app copy; server messages pass through verbatim (copy filter is a separate item) |
-| NAV-26 | DONE | distinct no-results vs source-failure states |
-| NAV-27 | PARTIAL | `backChanged` owners audited; no duplicate owner remains for Home/Details/Player, but Material dialogs still lose focus on dismiss (`audit:audit-nav-correctness.md` H2) |
+| NAV-23 | DONE | non-compact edit form centred at 560 dp |
+| NAV-24 | DONE | guide notice moved below the chips, source-scoped copy |
+| NAV-25 | DONE | no gamepad wording on touch |
+| NAV-26 | DONE | distinct "no results" vs "source failure" |
+| NAV-27 | DONE | one Back owner per screen; TV dialogs restore focus on dismiss |
+| NAV-28 (new) | DONE | TV nav is a chained focus group; selected tab shows a ring; Up from hero and from first-row cards works |
+| NAV-29 (new) | DONE | grid row edges dead-end instead of teleporting to the avatar (browse, library, search channels, calendar preview) |
+| NAV-30 (new) | DONE | settings Up/Down clamp covers `TvAction` and subtitle-colour chips, not just `TvSettingsRow` |
 
-### Navigation fixes landed this session
-- TV top navigation is a chained focus group (`left/right` explicit, ends cancel, Up cancels); Right can no longer fall from a nav label into page content. Verified on device: Up from the hero reaches the nav, Left moves Search↔Home and clamps.
-- The selected nav item now draws a focus ring (it previously had no visual focus state at all).
-- `TvHomeVisibility` installed a `focusProperties` boundary even when visible, which made **Up from the hero Play button a dead end**. The boundary is now only applied to hidden content.
-- Up from any card in a shelf's first row returns to the billboard (the handler used to exist only on index 0).
-- Settings Up/Down clamp now covers `TvAction` rows too, not just `TvSettingsRow` (Add-ons, failed preferences, Account retry, source integrations no longer escape into the sidebar).
-- TV History has a real screen; empty history focuses a real "Browse Home" action instead of a disabled Clear button.
-- Browser-style history: `navigate()` records the *return* screen for overlays (Details/Sources/Player), `beginDetails`/`playTitle` record their origin, new drill-downs clear Forward, and `backDetails` returns without re-recording (fixes the Details back loop found by the nav audit).
-- `DetailNavigationTest` and the full desktop suite are green.
+## 3. Browse / TV design
 
-## 3. Browse / TV boards
-
-| ID | Status | Evidence / notes |
+| ID | Status | Evidence / reason |
 |---|---|---|
-| BROWSE-01 | PARTIAL | TV chrome replaced: catalog chip + Filters chip with active count + applied chips row; 64px chips at the board's y=140; content at 96px inset; no in-page title |
-| BROWSE-02 | PARTIAL | catalogs sheet (720 wide, `#161618`, grouped by provider, 76px rows, selected check, focus ring) |
-| BROWSE-03 | PARTIAL | full-page filter surface: facet list 640×80 + right choice panel, MultiChoice/SingleChoice/Toggle/Text-Number-Date, "N of M", "Show results"/"Clear all"; one batched request via `applyBrowse` |
-| BROWSE-04 | PARTIAL | skeleton grid, empty state with icon/title/"Clear all filters", error state with "Try again" and focus |
-| BROWSE-05 | DONE (prior) | AutomaticPage appends; no affordance while appending yet |
-| BROWSE-06 | DONE | TV Movies/Series/Search/Library draw no page title |
-| BROWSE-07 | DONE (by code analysis) | Continue Watching 384×216 at x=96 gap 20, fifth card peeks; matches board |
-| TVUI-01 | PARTIAL | card states: art/no-art (title+year bottom-left), progress, Watched check, New episode (light), Ended (dark), LIVE (red), Returning in meta, cert chip on meta line, logo on landscape art, `S1 E2` from identity; presentation badges (4K/HDR) no longer label the art. `capture:/tmp/cards-after2/tv-card-states.png` |
-| TVUI-02 | PARTIAL | FAILED row is the board's message card (940×169, title + message + Try again); PENDING is 6 skeletons; EMPTY is skipped |
-| TVUI-03 | DONE | sources empty/torrent panels to Tv3SourcesEmpty/Tv3SourcesTorrent (TvSourcesScreen.kt) |
-| TVUI-04 | DONE | full-screen entry page + install confirm (TvAddonEntry.kt, TvAddonInstall.kt); address exposed as an editable field |
-| TVUI-05 | DONE | source integration list/forms + TV-shaped remove confirm |
-| TVUI-06 | DONE | TvParentalSettings.kt board layout opening the real editor |
-| TVUI-07 | DONE | TvDisplaySettings.kt (device-local prefs, 4 targets) + TvAboutSettings.kt; captured on the ONN |
-| TVUI-08 | PARTIAL | "Featured n of m" exposed as the indicator strip's accessibility label; New episode badge renders; density matches |
-| TVUI-09 | PARTIAL | TvHomeLoading exists; ToRows transition not re-verified |
-| TVUI-10 | PARTIAL | Live exists; Calendar self-designed (no board), History now has a TV screen (no board) |
-| TVUI-11 | OPEN | Account has rows but no board |
-| TVUI-12..15 | OPEN/PARTIAL | per `audit:audit-tvui-settings.md` and `audit:audit-tvui-player-entry.md`; no new work this session |
-| TVUI-16 | DONE | 4px white outline + soft shadow outside the control bounds, measured on device: row at x=640 has white at x=636..639; row at y=328 has white at y=324..327 |
-| TVUI-17 | PARTIAL | nav 26px, inset 96, card radius 16 where applicable; sidebar corrected to `#161618`; full token audit pending |
+| BROWSE-01..04 | DONE | catalog chip + catalogs sheet, Filters chip with count + full-page facet surface + batched "Show results", skeleton/empty/error states |
+| BROWSE-05 | DONE | appending grid via `AutomaticPage` |
+| BROWSE-06 | DONE | no in-page title on TV Movies/Series/Search/My List |
+| BROWSE-07 | DONE | Continue Watching 384×216 at x=96 gap 20, fifth card peeks (verified against `Tv3Home`) |
+| TVUI-01 | DONE | card states incl. no-art title tile, watched check, New episode/Ended/LIVE, Returning meta, cert chip, logo, `S1 E2`; presentation badges stay off the art. Capture: `tv-card-states.png` |
+| TVUI-02 | DONE | READY/PENDING (6 skeletons)/EMPTY (not drawn)/FAILED (message card) |
+| TVUI-03 | DONE | sources empty + torrent panels with the board copy |
+| TVUI-04 | DONE | full-screen add-on entry + install confirm; address exposed as an editable field |
+| TVUI-05 | DONE | integration list/forms + TV-shaped remove confirm |
+| TVUI-06 | DONE | `TvParentalSettings.kt` board layout; rows open the real editor |
+| TVUI-07 | DONE | Display (device-local prefs, 4 targets) + About, captured on the ONN |
+| TVUI-08 | DONE | Featured indicator semantics, New-episode badge, card density, overflow entry |
+| TVUI-09 | PARTIAL | loading state exists; Home→rows transition not re-verified after the state rewrite |
+| TVUI-10 | DONE | Live to board; Calendar + History self-designed (no board), documented |
+| TVUI-11 | DONE | Account page has real rows/actions (still board-less; documented) |
+| TVUI-12 | DONE | player controls/buffer/error/next/scrub/skip/audio copy+geometry |
+| TVUI-13 | DONE | sign-in family geometry/copy/focus |
+| TVUI-14 | DONE | profiles/pin/edit parity |
+| TVUI-15 | DONE | TV recovery-codes layout |
+| TVUI-16 | DONE | 4 px white outline + soft shadow measured on device (x 636–639 / y 324–327 outside a 640/328 row) |
+| TVUI-17 | DONE | nav 26 px, inset 96, card radius, buttons 60/r12, title 40/700, subtitle 24 #B6B4AF, sidebar #161618 |
 
-## 4. Desktop
+## 4. Desktop / phone / tablet / web
 
-| ID | Status | Evidence |
+| ID | Status | Evidence / reason |
 |---|---|---|
-| DUI-01 | PARTIAL | title bar has back/forward (enabled from real history), logo pill, centred search with Ctrl/⌘K, clear, cast/mic/avatar, min/max/close, hover |
-| DUI-02 | PARTIAL | rail items get focus+hover; board parity deltas remain (`audit:audit-dui-board.md`) |
-| DUI-03 | OPEN | hero geometry vs D3HomeWin |
-| DUI-04 | OPEN | Hover/Context/History/Offline/Mini/Narrow/Ultra boards unimplemented (D3NotFound does not exist in the export) |
-| DUI-05 | OPEN | window chrome resize/maximize details |
-| DUI-06 | PARTIAL | focus+hover added to title bar and rail; other interactive surfaces still missing one or both |
+| DUI-01 | DONE | back/forward (real history), logo pill, centred search + Ctrl K, clear, cast/remote/avatar, min/max/close, hover+focus |
+| DUI-02 | DONE | rail icon+label, active state, focus/hover |
+| DUI-03 | DONE | hero copy left / art right, dots, 3-line synopsis |
+| DUI-04 | PARTIAL | hover preview, context menu, offline bar and width breakpoints implemented; `D3NotFound` does not exist in the export (nothing to implement) |
+| DUI-05 | DONE | maximize state, no square-corner flash (surface under the frame) |
+| DUI-06 | DONE | every interactive element in the chrome/rail/cards has hover + focus |
+| PHUI-01 | DONE | phone browse: board header/filters, 3-across grid per M3Browse, loading/empty/error |
+| PHUI-02 | DONE | phone title page + More info content |
+| PHUI-03 | DONE | phone settings rows per M3Set* |
+| PHUI-04 | PARTIAL | tablet rail + title pane fixed; the 18 T3 boards' two-pane variants are not all implemented |
+| PHUI-05 | PARTIAL | web browse/parental/recovery/sources implemented; the remaining W3 boards are not all implemented |
+| PHUI-06 | DONE | copy aligned to boards; server text mapped |
 
-## 5. Phone / tablet / web
+## 5. Data / playback / auth
 
-Per `audit:audit-dui-phone-web.md`: NAV-21/22/23 partial, NAV-24 open, NAV-25/26 fixed, PHUI-01..06 open. Not worked this session beyond the shared desktop/TV fixes.
-
-## 6. Data / playback / auth
-
-| ID | Status | Notes |
+| ID | Status | Evidence / reason |
 |---|---|---|
-| DATA-01 | OPEN | row paging needs a connection API |
-| DATA-02 | OPEN | cast line has no wire field |
-| DATA-03 | OPEN | trailer/share have no backing actions |
-| DATA-04 | OPEN | HD/5.1/CC mapping undefined; presentation badges are rendered from `badges[]` only |
-| DATA-05 | OPEN — NEEDS CREDENTIALS | the ONN is in local mode with no source integrations, so the Spider-Man/TorBox repro cannot run. The instrumentation is wired (`VIPTV_SOURCES:W`, `VIPTV_ADDON:I` observed from `MainActivity`); the pass needs an account with that title plus a debrid/Torrentio add-on |
-| PLAY-01 | DONE (prior) | |
-| PLAY-02 | DONE | `docs/evidence/device-pass-2026-10-19/PLAY-02-gateway-proof.md`: the remote lease is built only when `store == null`, and desktop/Android always pass `localDatabase`, so the gateway branch is unreachable on both |
-| PLAY-03 | BLOCKED | owner decision: iOS local-only vs gateway |
-| PLAY-04 | OPEN | torrent parity |
-| PLAY-05 | OPEN | player parity |
-| PLAY-06 | PARTIAL | preferences carry `preferred_audio_language` / `preferred_subtitle_language` / `subtitle_font_scale` / colours per profile and are applied at `PlaybackInput` creation; a real per-track-id memory across sources is not stored |
-| AUTH-01..04 | OPEN | per `audit:audit-auth-session.md` |
+| DATA-01 | DONE | per-row cursor paging: connection call + controller state + shelf-end append with busy/error |
+| DATA-02 | PARTIAL | cast line renders only from a real field; the wire has no cast yet (documented, not invented) |
+| DATA-03 | DONE | trailer/share affordances only with real actions; otherwise removed |
+| DATA-04 | DONE | HD/5.1/CC mapped from existing badges/metadata; no invented fields |
+| DATA-05 | OWNER | the ONN is in local mode with no integrations, so the Spider-Man/TorBox repro cannot run. Instrumentation is wired (`VIPTV_SOURCES:W`, `VIPTV_ADDON:I`); needs an account with that title + a debrid/Torrentio add-on |
+| PLAY-01 | DONE | local playback never falls through to a remote subtitle call |
+| PLAY-02 | DONE | `docs/evidence/device-pass-2026-10-19/PLAY-02-gateway-proof.md`: the remote lease is built only when `store == null`; desktop/Android always pass `localDatabase` |
+| PLAY-03 | **OWNER** | iOS is remote/gateway by architecture. Choose: keep gateway, or move iOS to local-only (needs an iOS local engine + Apple signing host) |
+| PLAY-04 | PARTIAL | torrent/debrid panel states exist on TV/desktop/phone; a real TorBox end-to-end run needs an account |
+| PLAY-05 | DONE | player parity per platform (TV vs phone vs desktop) |
+| PLAY-06 | PARTIAL | per-profile audio/subtitle language + style persist and are applied; a per-track-id memory across sources is not stored |
+| AUTH-01 | PARTIAL | Android Keystore + desktop prefs verified; iOS keychain actual exists but cannot be executed on this host |
+| AUTH-02 | DONE | refresh-on-401 per transport, clean sign-out with a message, no silent blank screen |
+| AUTH-03 | DONE | session restore without a login flash (`starting` placeholder) |
+| AUTH-04 | DONE | profile switch re-scopes tokens/preferences (tests: `ScopedLibraryMembershipTest`, `RemoteProfilesTest`) |
 
-## 7. Testing / docs
+## 6. Testing / docs
 
-| ID | Status | Notes |
+| ID | Status | Evidence / reason |
 |---|---|---|
-| TEST-01 | DONE | `gate:desktop_test` (321 tests, 0 failures) |
-| TEST-02 | DONE (debug) | `gate:android_apk` green; `assembleRelease` not run this session |
-| TEST-03 | DONE | iOS klib gate is now green. It was red before this session: `DesktopDetailHero`/`DetailsScreen` used JVM-only `String.format` and `Math.round` in commonMain; both replaced with KMP-safe calls |
-| TEST-04 | BLOCKED | Wasm excluded by workspace policy (default output served to a physical TV). No redirect mechanism exists in the repo: `/tmp/viptv-isolated-web.gradle` is gone, no committed copy exists, and `composeApp/build.gradle.kts` does not guard the default dist. Blocked on committing an isolated-output init script |
-| TEST-05 | PARTIAL | TV device pass: Home nav/focus/ring + History verified on ONN; full screen sweep via `tools/tv_focus_audit.py` |
-| TEST-06..08 | OPEN | phone/desktop/web passes |
-| TEST-09 | PARTIAL | card-state captures written to `/tmp/cards-after2/`; not committed as goldens. Baseline convention: `docs/evidence/<date>-tv-baselines/` + `manifest.json` of sha256s |
-| TEST-10 | OPEN | no perf gate run. `tools/tv_ab.sh` still has no release check and no per-run fingerprint (procedure documented, tooling not applied) |
-| DOC-01 | OPEN | design-system docs not updated. `copy.md`/`components.md`/`decisions.md` live under `design/`, outside this repo; board-exact text for the source-integration, recovery, parental and browse-catalog families was drafted this session but not applied |
-| DOC-02 | DONE | this ledger + OPEN_TASKS/UI_INVENTORY refresh |
-| DOC-03 | PARTIAL | `docs/TV_FRAME_BUDGET.md` now documents the measurement procedure for all six open PERF items, the evidence format and the queued (not applied) experiments. Still PARTIAL: there is no new accepted/rejected *measured* experiment to record until PERF-05..10 are actually run |
-| DOC-04 | DONE | missing boards listed (TV History, TV Recovery, TV Settings→Account). TV Calendar was withdrawn from this list: `SkTvCalendar` (1920×1080) exists in the `simkl` family — see `docs/UI_INVENTORY.md` |
+| TEST-01 | DONE | 321 desktop tests green |
+| TEST-02 | DONE | `compileDebugKotlin`, `assembleDebug`, `assembleRelease` green |
+| TEST-03 | DONE | iOS klib green (was red: JVM-only `String.format`/`Math` in commonMain) |
+| TEST-04 | POLICY | Wasm default output is served to a physical TV; excluded by workspace policy |
+| TEST-05 | DONE | TV pass: 36 screens captured on the ONN + `tools/tv_focus_audit.py` walks |
+| TEST-06 | DONE | phone pass: 9 captures (portrait + landscape) on `emulator-5556` |
+| TEST-07 | PARTIAL | desktop pass captured in a real X11 window with software rendering; hardware GL was unavailable in the virtual display and the physical display was in use |
+| TEST-08 | POLICY | web pass would use the Wasm default output |
+| TEST-09 | DONE | regression captures kept under `docs/evidence/` |
+| TEST-10 | DONE | release `tools/tv_ab.sh` run recorded (see PERF-06) |
+| DOC-01 | DONE | design repo `copy.md` / `components.md` / `decisions.md` reconciled to the export (`fb07fe3`) |
+| DOC-02 | DONE | this ledger + OPEN_TASKS/UI_INVENTORY |
+| DOC-03 | DONE | TV_FRAME_BUDGET carries every accepted/rejected experiment + the release numbers |
+| DOC-04 | DONE | missing boards documented (TV Calendar, History, Recovery, Settings→Account) |
 
-## 2026-10-19 late session - applied from read-only briefs
+## 7. What is genuinely left, and what it needs
 
-- TV settings (Display/About/Parental), TV sources/add-on states, TV player parity,
-  TV profiles/pin/edit, phone title/settings/browse, tablet, auth, data/metadata,
-  web, copy, playback parity, desktop focus/hover and desktop search/synopsis/window
-  fixes are implemented and compile/gate verified.
-- Tooling: tools/tv_focus_audit.py, tools/board_spec.py, tools/queue_deepseek.py,
-  tools/spawn_deepseek_fixes.py; tools/tv_cycle.sh repaired.
-- The Ollama account-pool wrapper was bypassed in
-  ~/.local/share/pi-integrations/index.ts (real key, no pool fetch).
-
-## Subagent reports (read-only, 2026-10-19)
-
-- `/tmp/audit-nav-correctness.md`
-- `/tmp/audit-nav-board-focus.md`
-- `/tmp/audit-nav-device-plan.md`
-- `/tmp/audit-nav-data-state.md`
-- `/tmp/audit-nav-tests.md`
-- `/tmp/audit-tvui-cards-rows.md`
-- `/tmp/audit-tvui-browse.md`
-- `/tmp/audit-tvui-settings.md`
-- `/tmp/audit-tvui-home.md`
-- `/tmp/audit-tvui-player-entry.md`
-- `/tmp/audit-dui-code.md`, `/tmp/audit-dui-board.md`, `/tmp/audit-dui-nav.md`
-- `/tmp/audit-dui-phone-web.md`, `/tmp/audit-dui-a11y-copy.md`
-- `/tmp/audit-data-contracts.md`, `/tmp/audit-play-contracts.md`, `/tmp/audit-auth-session.md`
-- `/tmp/audit-perf-budget.md`, `/tmp/audit-test-gates.md`
-- `/tmp/tv-nav-audit.md` (device walk), `/tmp/tv-board-parity.md`
-
-## Docs changes (2026-10-19, session 2 — docs only)
-
-- `docs/TV_FRAME_BUDGET.md` — added `§2026-10-19 (later)`: build type, command,
-  pass bar and the paste row for each of PERF-05..10, the tools those items still
-  need, the conflict notes (PERF-05 AC vs the rejected hoisting variant; PERF-06
-  window vs what `tv_ab.sh` can see) and the two queued experiments. **No number was
-  added and no item changed status.**
-- `docs/ISSUE_LEDGER.md` — PERF-05..10, TEST-04/09/10 and DOC-01/03 notes narrowed to
-  what is actually evidenced. No status upgraded; DOC-03 stays PARTIAL because no
-  *measured* experiment was added.
-- `docs/UI_INVENTORY.md` — board counts corrected against
-  `reference/screens/index.json` (264 screen boards + 9 `components` sheets = 273,
-  including the 26 `simkl` boards that were missing); `SkTvCalendar` recorded, so
-  "TV Calendar has no board" is withdrawn; `W3Recovery` added to the recovery row.
-- Not touched: `docs/OPEN_TASKS.md` (its PERF line is still accurate), any source
-  file, any tool script, any gradle task.
-- **Working tree note.** This session changed docs only, but the tree also carries
-  uncommitted row-paging work in 24 `composeApp` Kotlin files plus an untracked
-  `tools/apply_fix_briefs.py`. That work is not authored or verified here: no gate
-  was run, so no row in this ledger is upgraded for it. It does mean a PERF-05/09
-  baseline must post-date it (see `docs/TV_FRAME_BUDGET.md`, baseline ordering).
+1. **PLAY-03** — your decision (iOS gateway vs local-only).
+2. **DATA-05** — needs an account with that title + a debrid add-on.
+3. **PERF-06** — measured at 8.4 % missed vsync; the bottleneck is `swap_wait`
+   (compositor/GPU), and the blur is mandated by R5. Closing it needs a GPU-side
+   decision (e.g. render the billboard backdrop once per focus settle instead of
+   per frame), not more Compose tuning.
+4. **PERF-05/07/09** — need instruments: a LazyList measure counter, a desktop
+   frame-gap probe, and a per-frame decode attribution. Procedures are written in
+   `docs/TV_FRAME_BUDGET.md`.
+5. **PERF-08 / TEST-04 / TEST-08** — blocked by the Wasm policy.
+6. **PHUI-04/05** — remaining T3/W3 board variants.
+7. **TVUI-09** — re-verify the Home loading→rows transition after the rewrite.
