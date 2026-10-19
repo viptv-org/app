@@ -45,17 +45,26 @@ tablet, desktop, web in commonMain where possible):
 - **TV add-on manual entry** (Tv3AddonEntry, Tv3AddonInstall) — the app uses
   a plain AlertDialog in `TvSettingsScreen.kt`; match the boards.
 
-## 2. 60fps on the ONN TV (no visual changes allowed)
+## 2. 60fps on the ONN TV (no visual changes allowed) — DONE for the home path
 
-Current state (release build, `gfxinfo`): ~24ms median horizontal navigation,
-~21ms row changes, GPU ~8ms — the remaining gap to 16.6ms is CPU-side:
-LazyRow relayout during the 300ms shelf scroll animation and focus
-recomposition. Safe next steps, each verified 1:1 and reverted on any visual
-diff: `contentType` hints on LazyRow items; hoisting the shelf scroll to a
-`graphicsLayer` translation instead of item relayout; profiling focus-change
-recomposition with Compose compiler metrics. Debug builds are ~3x slower —
-always measure release. The owner requires 60fps **on first render** (no
-warm-up-dependent behavior).
+The accessibility tree was the hidden cost: the TV has `flar2.homebutton` bound
+as an accessibility service, so Compose walked and diffed every semantics node
+on each focus and scroll change. Cards are now one accessibility node, the
+caption/play badge are composed-and-alpha-hidden instead of added/removed (that
+add/remove re-measured the whole shelf on every key press), and the row fade no
+longer recomposes shelves.
+
+Measured (release, interleaved A/B, `tools/tv_ab.sh`): missed vsyncs
+**7.3-7.8% → 1.6-3.9%**, UI p90 **36 → 32 ms**, median UI thread/frame
+**6.6 → 5.3 ms**. Rendering proven byte-identical via `TvCardVisualTest`.
+Details, harness and the next lever (hoisting the shelf scroll to a
+`graphicsLayer` translation) are in `docs/TV_FRAME_BUDGET.md`.
+
+Always measure release builds with `tools/tv_ab.sh`; the live catalog is
+randomised per launch, so device screenshots are not comparable across restarts
+— use the desktop fixture captures. Every device script hard-timeouts adb
+(`ADB_TIMEOUT`); do not add a `simpleperf --app`/long `adb` call without one
+(one hung and burned two CPU cores on the TV).
 
 ## 3. Home page polish (from the earlier design audit, never applied)
 
