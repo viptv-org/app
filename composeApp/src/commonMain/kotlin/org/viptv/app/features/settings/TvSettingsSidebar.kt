@@ -15,12 +15,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, requester: FocusRequester,
     content: FocusRequester, modal: Boolean = false, select: (TvSettingsSection) -> Unit) {
-    Column(Modifier.width(560.dp * scale).fillMaxHeight().background(Color(0xFF151515))) {
+    Column(Modifier.width(560.dp * scale).fillMaxHeight().background(Color(0xFF161618))) {
         Box(Modifier.fillMaxWidth().height(149.dp * scale)) {
             Text("Settings", Modifier.offset(96.dp * scale, 93.dp * scale), fontSize = (44 * scale).sp,
                 lineHeight = (53 * scale).sp, letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
@@ -33,6 +34,7 @@ internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, reques
                 .then(if (section == selected) Modifier.focusRequester(requester) else Modifier)
                 .focusProperties { right = content }.onFocusChanged { focused = it.isFocused }
                 .background(if (highlighted) Palette.text else if (section == selected) Color(0xFF333333) else Color.Transparent, RoundedCornerShape(12.dp * scale))
+                .tvFocusOutline(highlighted, 12.dp * scale, scale, width = 3.dp, darkGap = 3.dp)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { select(section) }
                 .padding(horizontal = 24.dp * scale), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {

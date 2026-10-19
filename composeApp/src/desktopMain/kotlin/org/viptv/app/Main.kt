@@ -9,6 +9,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -29,7 +36,15 @@ fun main() {
 
 private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
-    Window(onCloseRequest = ::exitApplication, title = "VIPTV Experiment", state = windowState, undecorated = true) {
+    val searchFocus = remember { FocusRequester() }
+    Window(onCloseRequest = ::exitApplication, title = "VIPTV Experiment", state = windowState, undecorated = true,
+        onPreviewKeyEvent = { event ->
+            // Ctrl/⌘+K is advertised in the title bar; it has to actually work.
+            if (event.type == KeyEventType.KeyDown && (event.isCtrlPressed || event.isMetaPressed) && event.key == Key.K) {
+                runCatching { searchFocus.requestFocus() }
+                true
+            } else false
+        }) {
         // A hairline outline and rounded corners are what make an undecorated
         // window read as a native app instead of a pasted-on panel. The window
         // itself is made transparent so the corners actually round off; if the
@@ -70,7 +85,9 @@ private fun launchApplication() = application {
                     WindowDraggableArea(Modifier.fillMaxWidth()) {
                         DesktopTitleBar(state, mac, controller::navigate, controller::search,
                             { menuOpen = !menuOpen }, minimize, maximize, ::exitApplication, Modifier,
-                            back = if (state.screen != Screen.Home) controller::navigateBack else null)
+                            back = if (state.navBack.isNotEmpty() || state.screen != Screen.Home) controller::navigateBack else null,
+                            forward = if (state.navForward.isNotEmpty()) controller::navigateForward else null,
+                            searchFocus = searchFocus)
                     }
                     Box(Modifier.weight(1f)) {
                         App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)

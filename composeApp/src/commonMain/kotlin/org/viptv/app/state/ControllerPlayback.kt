@@ -70,7 +70,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
     lastProgress=null
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
-    mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = Screen.Player, error = null)
+    mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = Screen.Player, error = null, navForward = emptyList())
     loadNextEpisode()
     subtitleDiscovery = scope.launch {
         try {

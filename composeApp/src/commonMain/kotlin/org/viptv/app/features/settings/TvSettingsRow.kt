@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.animation.core.tween
 import com.composeunstyled.UnstyledSwitch
@@ -23,6 +24,8 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.components.rememberTvColumnItem
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -31,9 +34,27 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
     leading: ImageVector? = null, rowHeight: Int = 96, labelColor: Color? = null, activate: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
-    Row(Modifier.fillMaxWidth().height(rowHeight.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
-        .focusProperties { if (left != null) this.left = left }.onFocusChanged { focused = it.isFocused }
+    val fallback = remember { FocusRequester() }
+    val target = requester ?: fallback
+    // Up/Down stay inside this page's column; Left goes to the sidebar only
+    // when the caller says so. Without the clamp the geometric search jumps
+    // from the last row to the sidebar's last item.
+    val (columnUp, columnDown) = rememberTvColumnItem(target)
+    Row(Modifier.fillMaxWidth().height(rowHeight.dp * scale).focusRequester(target)
+        .focusProperties {
+            if (left != null) this.left = left
+            columnUp?.let { this.up = it }
+            columnDown?.let { this.down = it }
+        }.onFocusChanged { focused = it.isFocused }
         .semantics { if (checked != null) { role = Role.Switch; toggleableState = if (checked) ToggleableState.On else ToggleableState.Off } }
+        // The ring is drawn outside the row bounds, so it must sit outside the
+        // graphics layer and the background fill or it gets clipped away.
+        .tvFocusOutline(focused, 14.dp * scale, scale)
+        .graphicsLayer {
+            this.shape = RoundedCornerShape(14.dp * scale)
+            shadowElevation = if (focused) 24.dp.toPx() * scale else 0f
+            clip = false
+        }
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = activate)
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {

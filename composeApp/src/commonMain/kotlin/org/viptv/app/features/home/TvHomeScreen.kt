@@ -86,6 +86,12 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             initialShelfFocusClaimed = focusWhenPlaced(firstCard) { firstReadyAttached }
         }
     }
+    // While Home has no content at all there is no hero or shelf to focus, but
+    // the top navigation is already on screen. Focus it so the remote is never
+    // dead during the first load or a failed catalog refresh.
+    LaunchedEffect(home == null && error == null) {
+        if (home == null && error == null) { withFrameNanos { }; navigationFocusEpoch++ }
+    }
     LaunchedEffect(navigationFocusEpoch) {
         if (navigationFocusEpoch != 0) {
             focusWhenPlaced(navigationFocus) { navigationAttached }

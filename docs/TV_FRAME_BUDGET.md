@@ -92,3 +92,19 @@ that composites layers cheaply.
 
 Remaining headroom is therefore in the pixels (hero/backdrop fill, ~6 Mpx per
 frame) rather than in layout.
+
+
+---
+
+## 2026-10-19 — tooling correction, no new perf claims
+
+- `tools/tv_cycle.sh` never ran: it referenced `adb_t` and `$SERIAL`, which are local
+  to the other scripts, and it called `tv_bench.sh` (percentiles) instead of the R3
+  `tv_ab.sh` metric. It now builds `assembleRelease`, installs with a timeout-guarded
+  adb call, and runs `tools/tv_ab.sh`.
+- PERF-05 (shelf re-measure), PERF-06 (first-render 60 fps), PERF-07/08 (desktop/web
+  interaction), PERF-09 (decode spikes) and PERF-10 (blur cost) still have **no**
+  release-build measurement. They are not claimed as fixed.
+- The deterministic capture harness (`TvCardVisualTest`, `TvShelfScrollVisualTest`)
+  was extended with the canvas §A1 card-state matrix; captures live in
+  `docs/evidence/kmp-audit-2026-10-19/tv-card-states.png`.

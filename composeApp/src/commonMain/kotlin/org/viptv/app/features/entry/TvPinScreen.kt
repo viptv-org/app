@@ -33,7 +33,16 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
     LaunchedEffect(forgot, restore, windowFocused) {
         if (!forgot && restore && windowFocused) { withFrameNanos { }; recovery.requestFocus(); restore = false }
     }
-    LaunchedEffect(busy) { if (!busy) first.requestFocus() }
+    // Requesting focus in the first frame can run before the key is placed
+    // (the requester exists but is not attached yet), which left the PIN screen
+    // with no focused control at all. Retry until the target is laid out.
+    LaunchedEffect(busy) {
+        if (busy) return@LaunchedEffect
+        repeat(60) {
+            if (runCatching { first.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+            withFrameNanos { }
+        }
+    }
     val numberKeys = listOf(Key.Zero, Key.One, Key.Two, Key.Three, Key.Four, Key.Five, Key.Six, Key.Seven, Key.Eight, Key.Nine)
     BoxWithConstraints(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown || busy) false else when {

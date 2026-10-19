@@ -83,7 +83,7 @@ private fun DesktopMetaLine(card: Card) {
         card.identity.kind.replaceFirstChar { it.uppercase() },
         metadata?.year?.toString(),
         metadata?.genres?.takeIf { it.isNotEmpty() }?.joinToString(", "),
-        metadata?.rating?.let { rating -> "IMDb ${"%.1f".format(rating)}" },
+        metadata?.rating?.let { rating -> "IMDb ${kotlin.math.round(rating * 10) / 10.0}" },
     )
     // Reference wraps whole items to the next line (flex-wrap), never glyphs.
     FlowRow(Modifier.wrapContentWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -165,6 +165,6 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
 private fun remainingMinutes(card: Card): String? {
     val progress = card.progress ?: 0.0
     val runtime = card.metadata?.runtime_minutes ?: return null
-    val remaining = Math.round((1.0 - progress) * runtime)
+    val remaining = kotlin.math.round((1.0 - progress) * runtime)
     return if (remaining > 0) "${remaining}m left" else "Almost done"
 }

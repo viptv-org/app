@@ -33,7 +33,14 @@ internal fun TvProfileEditScreen(profile: Profile?, count: Int, busy: Boolean, e
     val windowFocused = LocalWindowInfo.current.isWindowFocused
     val currentBack by rememberUpdatedState(back)
     DisposableEffect(Unit) { backChanged { currentBack() }; onDispose { backChanged(null) } }
-    LaunchedEffect(profile?.id) { first.requestFocus() }
+    // Same first-frame race as the PIN screen: wait until the row is placed,
+    // otherwise the page opens with no focused control.
+    LaunchedEffect(profile?.id) {
+        repeat(60) {
+            if (runCatching { first.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+            withFrameNanos { }
+        }
+    }
     LaunchedEffect(action, avatar, restore, windowFocused) {
         if (action == null && !avatar && windowFocused) restore?.let {
             withFrameNanos { }; it.requestFocus(); restore = null

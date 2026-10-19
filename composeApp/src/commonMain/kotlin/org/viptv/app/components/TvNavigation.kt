@@ -1,6 +1,7 @@
 package org.viptv.app.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.state.Screen
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -27,22 +29,48 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         Box(Modifier.fillMaxWidth().height(132.dp * scale)) {
         val initial = remember { FocusRequester() }
         LaunchedEffect(selected) {
-            if (selected in listOf(Screen.Movies, Screen.Series, Screen.Anime, Screen.Live, Screen.Calendar, Screen.Library)) initial.requestFocus()
+            if (selected in listOf(Screen.Movies, Screen.Series, Screen.Anime, Screen.Live, Screen.Calendar, Screen.Library, Screen.History)) initial.requestFocus()
         }
         var menu by remember { mutableStateOf(false) }
         Box(Modifier.offset(96.dp * scale, 44.dp * scale)) {
             Brand(44.dp * scale, (32 * scale).sp, 12.dp * scale, (-1.28f * scale).sp, (32 * scale).sp)
         }
-        Row(Modifier.offset(300.dp * scale, 38.dp * scale).height(56.dp * scale),
+        val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) }
+        // One focus target per nav item, chained left/right. Without the chain
+        // Compose's 2D search happily drops from "Home" into a card that sits
+        // below and to the right, so the remote leaves the navigation row
+        // sideways instead of reaching the next label.
+        val navFocus = remember { List(destinations.size + 1) { androidx.compose.ui.focus.FocusRequester() } }
+        Row(Modifier.offset(300.dp * scale, 38.dp * scale).height(56.dp * scale).focusGroup(),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-            IconButton(onClick = { navigate(Screen.Search) }, modifier = Modifier.size(56.dp * scale)) {
-                Icon(Lucide.Search, "Search", Modifier.size(30.dp * scale))
+            var searchFocused by remember { mutableStateOf(false) }
+            // Material's IconButton clips itself to a circle, so the ring has to
+            // be drawn by a wrapper outside that clip.
+            Box(Modifier.size(56.dp * scale).tvFocusOutline(searchFocused, 28.dp * scale, scale, width = 3.dp)) {
+                IconButton(onClick = { navigate(Screen.Search) },
+                    modifier = Modifier.fillMaxSize().focusRequester(navFocus[0]).focusProperties {
+                        left = androidx.compose.ui.focus.FocusRequester.Cancel
+                        right = navFocus[1]
+                        up = androidx.compose.ui.focus.FocusRequester.Cancel
+                    }.onFocusChanged { searchFocused = it.isFocused }) {
+                    Icon(Lucide.Search, "Search", Modifier.size(30.dp * scale))
+                }
             }
-            desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) }.forEach { destination ->
+            destinations.forEachIndexed { index, destination ->
                 var focused by remember { mutableStateOf(false) }
+                val own = navFocus[index + 1]
                 Box(Modifier.width(IntrinsicSize.Max).height(56.dp * scale).then(if (destination.screen == selected) Modifier.focusRequester(initial) else Modifier)
+                    .focusRequester(own)
+                    .focusProperties {
+                        left = if (index == 0) navFocus[0] else navFocus[index]
+                        right = if (index == destinations.lastIndex) androidx.compose.ui.focus.FocusRequester.Cancel else navFocus[index + 2]
+                        up = androidx.compose.ui.focus.FocusRequester.Cancel
+                    }
                     .onFocusChanged { focused = it.isFocused }
-                    .background(if (focused && selected != destination.screen) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp * scale))
+                    // The selected item still needs a visible focus state; the
+                    // board draws the ring on whatever the remote is on.
+                    .background(if (focused) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp * scale))
+                    .tvFocusOutline(focused, 8.dp * scale, scale, width = 3.dp)
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { navigate(destination.screen) }
                     .padding(horizontal = 18.dp * scale), contentAlignment = Alignment.Center) {
                     Text(destination.label, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp,
@@ -54,9 +82,13 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
             }
         }
         Box(Modifier.align(Alignment.TopEnd).padding(end = 96.dp * scale, top = 38.dp * scale)) {
-            IconButton(onClick = { menu = true }, modifier = Modifier.size(56.dp * scale)) {
-                if (profile != null) ProfileAvatar(profile, 56.dp * scale, 28.dp * scale)
-                else Icon(Lucide.UserRound, "Profile menu", Modifier.size(28.dp * scale))
+            var profileFocused by remember { mutableStateOf(false) }
+            Box(Modifier.size(56.dp * scale).tvFocusOutline(profileFocused, 28.dp * scale, scale, width = 3.dp)) {
+                IconButton(onClick = { menu = true },
+                    modifier = Modifier.fillMaxSize().onFocusChanged { profileFocused = it.isFocused }) {
+                    if (profile != null) ProfileAvatar(profile, 56.dp * scale, 28.dp * scale)
+                    else Icon(Lucide.UserRound, "Profile menu", Modifier.size(28.dp * scale))
+                }
             }
             DropdownMenu(menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text("Switch profile") }, onClick = { menu = false; navigate(Screen.Profiles) })

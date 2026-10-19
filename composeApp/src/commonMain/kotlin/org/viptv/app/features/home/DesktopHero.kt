@@ -39,7 +39,8 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
 
 @Composable
 private fun HeroArtwork(card: Card, modifier: Modifier, carousel: HeroCarousel?) {
-    BufferedArtwork(card.landscape ?: card.poster,
+    val heroArt = card.landscape ?: card.poster
+    if (heroArt == null) HeroArtworkFallback(Modifier.fillMaxSize()) else BufferedArtwork(heroArt,
         modifier.aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)).background(Palette.surface),
         onReady = { carousel?.artworkReady(it) })
 }

@@ -4,6 +4,9 @@ Generated 2026-10-19 from the handoff prompt, the design export, this session's 
 per-platform audits. One line = one issue. Each has acceptance criteria (AC) and a
 verification method (V). "DONE" items are shipped in `experiment/kmp-v2`.
 
+Per-issue implementation status and evidence: **`docs/ISSUE_LEDGER.md`**
+(updated 2026-10-19; subagent audits in `docs/evidence/kmp-audit-2026-10-19/`).
+
 Design source of truth: `design/viptv-design-system/reference/screens/{html,img}/<platform>/<id>`,
 `reference/canvas-data-dictionary.md`, `plans/DESIGN_REQUEST-2026-10-18.md`.
 

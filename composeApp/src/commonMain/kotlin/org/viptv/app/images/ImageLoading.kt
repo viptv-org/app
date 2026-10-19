@@ -12,8 +12,14 @@ import okio.Path
 
 internal expect fun imageCacheDirectory(context: PlatformContext): Path?
 
+private var imageLoaderConfigured = false
+
 @Composable
 internal fun ConfigureImageLoading(diagnostics: ((String) -> Unit)? = null) {
+    // Coil refuses a second factory once its singleton loader exists. Preview
+    // scenes and UI tests compose this more than once per process.
+    if (imageLoaderConfigured) return
+    imageLoaderConfigured = true
     setSingletonImageLoaderFactory { context ->
         ImageLoader.Builder(context)
             .components { add(PublicArtworkMapper()) }

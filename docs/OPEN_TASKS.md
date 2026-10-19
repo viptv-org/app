@@ -2,14 +2,40 @@
 
 Status legend: [x] done + verified · [~] done, needs verification · [ ] todo
 
+Per-issue status + evidence: **`docs/ISSUE_LEDGER.md`** (2026-10-19 session 2).
+Subagent audits: `docs/evidence/kmp-audit-2026-10-19/`.
+
 ## Performance (TV, measured)
 - [x] Accessibility node collapse per card (missed vsyncs 7.5% → 1.6–4.0%)
 - [x] Caption/play badge composed + alpha-toggled (was re-measuring the shelf per key press)
 - [x] Row fade out of the LazyColumn item scope; theme Typography identity-stable
 - [x] Rejected + documented: composited shelf scroll (GPU +6 ms), offscreen backdrop (±1 px)
 - [ ] Shelf scroll still re-measures ~2.5×/press (measured; no cheaper path found yet)
+- [x] `tools/tv_cycle.sh` was dead on arrival (undefined `adb_t`/`SERIAL`, wrong benchmark).
+      It now builds release, installs, and runs the R3 `tools/tv_ab.sh` metric.
+- [ ] PERF-05..10 remain unmeasured; `docs/TV_FRAME_BUDGET.md` says what each needs.
 
 ## Interaction bugs you reported
+
+Fixed this session (see ledger for evidence):
+- [x] TV top nav is a chained focus group; Right no longer drops into page content.
+- [x] Selected nav item now has a visible focus ring (previously invisible).
+- [x] Up from the hero Play button was a dead end (visible `TvHomeVisibility` installed a
+      focus boundary) — boundary is now hidden-only.
+- [x] Up from every card in the first shelf row returns to the billboard (was index 0 only).
+- [x] Settings Up/Down clamp covers `TvAction` rows (Add-ons, Account retry, source integrations).
+- [x] TV History screen; empty history focuses a real "Browse Home" action.
+- [x] Desktop nav back/forward is a real history stack; new drill-downs clear Forward.
+- [x] Desktop search: Esc clears and returns, X clears, Ctrl/⌘+K focuses the field.
+- [x] "Apply" no longer renders inside the text field.
+- [x] Details first-load error is surfaced (no blank page) with a focusable Back action.
+- [x] Hero art-less fallback on phone/tablet/desktop.
+- [x] TV browse chrome: catalog chip, Filters chip + count, applied chips, catalogs sheet,
+      full-page facet filter, empty/error/loading states, batched "Show results".
+- [x] TV card states: no-art title tile, Watched check, New episode/Ended/LIVE labels,
+      Returning in meta, cert chip on the meta line, logo on art, S1E2 meta.
+- [x] TV FAILED row is the board's message card; PENDING shows 6 skeletons.
+
 - [x] Billboard artwork follows focus (gated on 220 ms of key quiet; no swap while held)
 - [x] Frames + logo flash: logo fades in only when its trimmed bitmap is ready
 - [x] Shelf scroll-back: focus no longer walks off the left edge (layoutInfo-driven)

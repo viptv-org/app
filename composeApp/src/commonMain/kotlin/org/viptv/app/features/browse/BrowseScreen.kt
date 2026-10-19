@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.features.home.MediaCard
+import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.state.Screen
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
@@ -25,7 +26,8 @@ import org.viptv.engine.wire.HomeSnapshot
 fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, loadedCards: List<Card>? = null, controls: org.viptv.app.connection.DiscoveryControls? = null,
     query: org.viptv.app.connection.BrowseQuery = org.viptv.app.connection.BrowseQuery("movie"), busy: Boolean = false, error: String? = null,
     filterChanged: (String, String) -> Unit = { _, _ -> }, more: (() -> Unit)? = null,
-    multipleChanged: (String, List<String>) -> Unit = { _, _ -> }, browser: Boolean = false) {
+    multipleChanged: (String, List<String>) -> Unit = { _, _ -> }, browser: Boolean = false,
+    applyQuery: (BrowseQuery) -> Unit = {}) {
     var sort by remember(screen) { mutableStateOf("Popular") }
     var menu by remember { mutableStateOf(false) }
     val cards = remember(home, loadedCards, screen, sort) {
@@ -40,9 +42,12 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         when (sort) { "A–Z" -> loaded.sortedBy { it.title.lowercase() }; "Z–A" -> loaded.sortedByDescending { it.title.lowercase() }; else -> loaded }
     }
     if (television) {
-        TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, more = more, error = error,
-            filters = controls?.let { { first, scale -> DiscoveryFilters(it, query, screen == Screen.Discover,
-                filterChanged, first, television = true, scale = scale, multipleChanged = multipleChanged) } })
+        TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, controls = controls, query = query,
+            onQuery = { next ->
+                // One batched request for the whole draft (Show results).
+                if (next.type != query.type) filterChanged("type", next.type) else applyQuery(next)
+            },
+            more = more, error = error, retry = { applyQuery(query) })
         return
     }
     val grid = rememberLazyGridState()

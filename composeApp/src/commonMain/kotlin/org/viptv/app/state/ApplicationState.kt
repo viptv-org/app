@@ -15,6 +15,9 @@ data class ApplicationState(
     val starting: Boolean = false,
     val recoveryKit: RecoveryKit? = null,
     val screen: Screen = Screen.Connect,
+    /** Screen-level browser history for the desktop chrome's back/forward. */
+    val navBack: List<Screen> = emptyList(),
+    val navForward: List<Screen> = emptyList(),
     val settingsEntrySection: String? = null,
     val busy: Boolean = false,
     val error: String? = null,

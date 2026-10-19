@@ -41,6 +41,7 @@ class TvCardVisualTest {
     private fun card(poster: String?, progress: Double? = null) = Card(
         MediaIdentity("tt1", "movie", emptyList()), provider_id = "simkl", title = "Cached title",
         subtitle = "1h 52m left", badges = listOf("Simkl", "4K"), progress = progress, poster = poster,
+        metadata = CardMetadata(year = 2025, runtime_minutes = 108, rating = 7.4, certification = "R"),
     )
 
     @Test fun captureFocusedCards() = onEdt {
@@ -64,6 +65,47 @@ class TvCardVisualTest {
                 }
             } finally { scene.close() }
         }
+    }
+
+    /**
+     * The canvas dictionary §A1 matrix from Tv3CardStates: every state the wire
+     * can produce, rendered from a fixed fixture so a regression is a pixel diff
+     * instead of a hunt through the live catalog.
+     */
+    @Test fun captureEveryCardState() = onEdt {
+        val states = listOf(
+            "full" to card(null),
+            "watched" to card(null).copy(badges = listOf("Watched", "4K")),
+            "new-episode" to card(null).copy(badges = listOf("New episode", "Returning"),
+                identity = MediaIdentity("tt2", "series", emptyList())),
+            "ended" to card(null).copy(badges = listOf("Ended"), identity = MediaIdentity("tt3", "series", emptyList())),
+            "title-only" to card(null).copy(metadata = null),
+            "episode" to card(null).copy(subtitle = "S1 E2 · 52m",
+                identity = MediaIdentity("tt4", "series", emptyList(), episode = EpisodeCoordinates("aired", 1, 2))),
+            "live" to card(null).copy(badges = listOf("LIVE"), identity = MediaIdentity("ch1", "channel", emptyList())),
+            "progress" to card(null, 0.42),
+        )
+        val scene = ImageComposeScene(1100, 1000, Density(1f)) { ViptvTheme(true) {
+            Column(Modifier.fillMaxSize().background(Palette.background).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                states.chunked(4).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        row.forEach { (_, model) ->
+                            TvCatalogCard(model, 1f, true, focused = {}, open = {}, focusedCaptions = true)
+                        }
+                    }
+                }
+            }
+        } }
+        try {
+            repeat(10) { scene.render(it * 16_666_667L).close(); delay(4) }
+            System.getenv("VIPTV_CARD_CAPTURE_DIR")?.let { path ->
+                File(path).mkdirs()
+                scene.render(4_000_000_000L).use { image ->
+                    image.encodeToData()!!.use { File(path, "tv-card-states.png").writeBytes(it.bytes) }
+                }
+            }
+        } finally { scene.close() }
     }
 
     @Test fun captureCardsWithAndWithoutArtwork() = onEdt {

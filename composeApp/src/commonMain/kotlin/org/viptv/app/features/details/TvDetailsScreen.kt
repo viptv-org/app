@@ -7,6 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
@@ -29,8 +33,15 @@ internal data class TvDetailExtras(
 
 @Composable
 internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, sources: (Card) -> Unit,
-    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null) {
+    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null,
+    back: (() -> Unit)? = null) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
+    if (detail == null) {
+        // NAV-04: never a blank, focus-dead page. Explain the failure and give
+        // the remote a real action.
+        TvDetailUnavailable(error, scale = 1f, back = back, retry = if (error != null && back == null) null else back)
+        return
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val card = detail?.item
@@ -113,5 +124,28 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         notice?.let { message -> AlertDialog(onDismissRequest = { notice = null },
             title = { Text("Title options") }, text = { Text(message) },
             confirmButton = { TextButton(onClick = { notice = null }) { Text("OK") } }) }
+    }
+}
+
+
+@Composable
+private fun TvDetailUnavailable(error: String?, scale: Float, back: (() -> Unit)?, retry: (() -> Unit)?) {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { repeat(30) { if (runCatching { focus.requestFocus() }.getOrDefault(false)) return@LaunchedEffect; withFrameNanos { } } }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val s = maxWidth / 1920.dp
+        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp * s)) {
+            Text("This title couldn’t load", fontSize = (40 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(error ?: "The provider didn’t return this title’s details.", color = Palette.secondary,
+                fontSize = (24 * s).sp, lineHeight = (34 * s).sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.widthIn(max = 900.dp * s))
+            (retry ?: back)?.let { action ->
+                org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s).focusRequester(focus), s, primary = true,
+                    activate = action, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
+                    Text("Go back", color = it, fontSize = (24 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                }
+            }
+        }
     }
 }

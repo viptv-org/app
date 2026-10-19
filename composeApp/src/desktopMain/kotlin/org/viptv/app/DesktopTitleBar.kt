@@ -2,6 +2,21 @@ package org.viptv.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -24,6 +39,7 @@ import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.state.ApplicationState
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 
@@ -42,11 +58,14 @@ internal fun DesktopTitleBar(
     forward: (() -> Unit)? = null,
     cast: (() -> Unit)? = null,
     remote: (() -> Unit)? = null,
+    searchFocus: FocusRequester? = null,
 ) {
     val simple = state.screen in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit)
     val barHeight = if (simple) 40.dp else 48.dp
     var query by remember { mutableStateOf("") }
     LaunchedEffect(state.searchTerm) { query = state.searchTerm }
+    var searchFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
     BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight).background(Palette.background).then(dragModifier)) {
         val narrow = maxWidth < 720.dp
         Row(Modifier.align(Alignment.CenterStart).fillMaxHeight().padding(start = if (simple) 14.dp else 8.dp),
@@ -71,11 +90,28 @@ internal fun DesktopTitleBar(
             } else {
                 val searchWidth = minOf(460.dp, maxWidth * .36f)
                 Row(Modifier.align(Alignment.Center).width(searchWidth).height(32.dp)
+                    .onFocusChanged { searchFocused = it.hasFocus }
+                    .tvFocusOutline(searchFocused, 8.dp)
                     .background(Color(0xFF1E1E21), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     DesktopChromeIcon(ChromeIcon.Search, Palette.text, Modifier.size(16.dp))
-                    BasicTextField(query, { query = it; navigate(Screen.Search); search(it) },
-                        Modifier.weight(1f), singleLine = true, cursorBrush = SolidColor(Palette.text),
+                    BasicTextField(query, { query = it; if (it.isNotEmpty()) navigate(Screen.Search); search(it) },
+                        Modifier.weight(1f).then(if (searchFocus != null) Modifier.focusRequester(searchFocus) else Modifier)
+                            .onPreviewKeyEvent { event ->
+                                if (event.type != KeyEventType.KeyDown) false else when (event.key) {
+                                    Key.Escape -> {
+                                        // Esc dismisses search: clear the query, drop focus and
+                                        // leave the results page so the content gets focus back.
+                                        query = ""; search(""); focusManager.clearFocus()
+                                        // Return to the page search was opened from, not to the
+                                        // details route's return target.
+                                        if (state.screen == Screen.Search) (back ?: { navigate(Screen.Home) })()
+                                        true
+                                    }
+                                    else -> false
+                                }
+                            },
+                        singleLine = true, cursorBrush = SolidColor(Palette.text),
                         textStyle = TextStyle(color = Palette.text, fontSize = 13.sp,
                             fontFamily = MaterialTheme.typography.bodyMedium.fontFamily),
                         decorationBox = { inner ->
@@ -84,6 +120,11 @@ internal fun DesktopTitleBar(
                                 inner()
                             }
                         })
+                    if (query.isNotEmpty()) Box(Modifier.size(20.dp).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                        query = ""; search(""); focusManager.clearFocus()
+                    }, contentAlignment = Alignment.Center) {
+                        Icon(Lucide.X, "Clear search", Modifier.size(14.dp), tint = Palette.secondary)
+                    }
                     Text(if (mac) "⌘K" else "Ctrl K", color = Palette.secondary, fontSize = 11.sp,
                         modifier = Modifier.background(Color(0xFF121214), RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp))
                 }
@@ -119,8 +160,15 @@ private fun DesktopBrand() {
 
 @Composable
 private fun ChromeButton(icon: ChromeIcon, label: String, color: Color, onClick: (() -> Unit)?, modifier: Modifier = Modifier) {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    var focused by remember { mutableStateOf(false) }
     Box(modifier.size(36.dp).semantics { contentDescription = label }
-        .clickable(enabled = onClick != null, onClickLabel = label) { onClick?.invoke() }, contentAlignment = Alignment.Center) {
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, 8.dp)
+        .background(if (focused || hovered) Color.White.copy(alpha = if (focused) .16f else .08f) else Color.Transparent, RoundedCornerShape(8.dp))
+        .clickable(interactionSource = interaction, enabled = onClick != null, onClickLabel = label) { onClick?.invoke() },
+        contentAlignment = Alignment.Center) {
         DesktopChromeIcon(icon, if (onClick == null) color.copy(alpha = color.alpha * .38f) else color, Modifier.size(17.dp))
     }
 }

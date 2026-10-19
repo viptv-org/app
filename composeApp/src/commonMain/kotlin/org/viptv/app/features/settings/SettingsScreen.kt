@@ -11,7 +11,7 @@ import org.viptv.engine.wire.IntegrationConnection
 internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
     remove: (String) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile? = null,
-    back: () -> Unit = {}, television: Boolean = false, initialSection: String? = null, initialLeave: Boolean = false, account: (@Composable () -> Unit)? = null, sourceIntegrations: (@Composable () -> Unit)? = null, preferences: (@Composable () -> Unit)? = null,
+    back: () -> Unit = {}, television: Boolean = false, initialSection: String? = null, initialLeave: Boolean = false, account: (@Composable () -> Unit)? = null, sourceIntegrations: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null, preferences: (@Composable () -> Unit)? = null,
     devices: (@Composable (Boolean, () -> Unit) -> Unit)? = null, addonsRequested: (() -> Unit)? = null,
     tvPreferences: TvSettingsPreferences? = null, changeTvPreferences: ((TvSettingsPreferences) -> Unit)? = null,
     serverAddress: String? = null,
@@ -24,6 +24,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion)
         return
     }
+    val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val phoneSourceIntegrations: (@Composable () -> Unit)? = sourceIntegrations?.let { render -> { render(unusedRequester, unusedRequester, 1f) } }
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     // The addon count must be known before the section opens; one eager
@@ -43,7 +45,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
                         { section = "Add-ons" }, { leaving = true }, back, account = account?.let { { section = "Account" } }, devices = devices?.let { { section = "Devices" } }, preferences = if (preferences != null || sectionPreferences != null) ({ section = it }) else null, parental = parental?.let { { section = "Parental controls" } }, information = { section = it })
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
-                        sessionNotice, install, toggle, remove, if (compact) ({ section = null }) else null, sourceIntegrations = sourceIntegrations,
+                        sessionNotice, install, toggle, remove, if (compact) ({ section = null }) else null, sourceIntegrations = phoneSourceIntegrations,
                         installWithCompletion = installWithCompletion)
                     section == "Parental controls" && parental != null -> SettingsDetailContent(compact, parentalBack ?: { section = null }, parental)
                     section == "Account" && account != null -> SettingsDetailContent(compact, { section = null }, account)

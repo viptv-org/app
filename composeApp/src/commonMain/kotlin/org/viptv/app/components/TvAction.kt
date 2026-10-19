@@ -26,15 +26,27 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     cornerRadius: androidx.compose.ui.unit.Dp = 12.dp * scale,
     arrangement: Arrangement.Horizontal = Arrangement.Center, content: @Composable RowScope.(Color) -> Unit) {
     var focused by remember { mutableStateOf(false) }
+    // Register with an enclosing TvFocusColumn so Up/Down clamp at the page's
+    // edges instead of falling across into the settings sidebar.
+    val fallback = remember { FocusRequester() }
+    val target = requester ?: fallback
+    val (columnUp, columnDown) = org.viptv.app.components.rememberTvColumnItem(target)
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     val shape = if (round) CircleShape else RoundedCornerShape(cornerRadius)
     val light = enabled && focused
     val fill by animateColorAsState(when { enabled && pressed -> Palette.body; light -> Palette.text; else -> background }, tween(150), label = "TV action fill")
     val ink by animateColorAsState(if (light || enabled && pressed) Palette.background else Palette.text, tween(150), label = "TV action content")
-    Row(modifier.then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
+    Row(modifier.focusRequester(target)
+        .focusProperties {
+            columnUp?.let { this.up = it }
+            columnDown?.let { this.down = it }
+        }
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused }
-        .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 18.dp.toPx() * scale else 0f }
+        // Ring before the clip/layer: inside them the part outside the button
+        // bounds is clipped away.
+        .tvFocusOutline(light, cornerRadius, scale)
+        .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
         .clickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = activate).padding(contentPadding),
         horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) { content(ink) }

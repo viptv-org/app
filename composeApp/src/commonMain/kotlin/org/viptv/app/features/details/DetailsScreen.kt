@@ -21,7 +21,7 @@ import org.viptv.engine.wire.DetailSnapshot
 @Composable
 fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null) {
     if (television) {
-        TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart)
+        TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
@@ -110,7 +110,7 @@ internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
 internal fun remainingMinutesLabel(card: Card): String? {
     val progress = card.progress ?: 0.0
     val runtime = card.metadata?.runtime_minutes ?: return null
-    val remaining = Math.round((1.0 - progress) * runtime)
+    val remaining = kotlin.math.round((1.0 - progress) * runtime)
     return if (remaining > 0) "${remaining}m left" else "Almost done"
 }
 

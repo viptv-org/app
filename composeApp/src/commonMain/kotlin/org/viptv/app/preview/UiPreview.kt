@@ -111,7 +111,9 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                             Screen.Library -> if (television) TvLibraryScreen(if (tvDetailVariant in listOf("Empty", "Unavailable")) emptyList() else PreviewTvLibrary.cards,
                                 tvDetailVariant != "Unavailable", { go(Screen.Details) }, { go(Screen.Home) }, PreviewTvLibrary.watched)
                                 else LibraryScreen(PreviewData.posters, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) })
-                            Screen.History -> HistoryScreen(PreviewData.history, false, null, { go(Screen.Details) }, {}, { go(Screen.Home) })
+                            Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(PreviewData.history, false, null,
+                                { go(Screen.Details) }, {}, { go(Screen.Home) })
+                            else HistoryScreen(PreviewData.history, false, null, { go(Screen.Details) }, {}, { go(Screen.Home) })
                             Screen.Search -> if (television) TvSearchScreen(searchTerm ?: term,
                                 if (tvDetailVariant == "Loading") emptyList() else PreviewData.posters + PreviewLive.channels.take(3).map { it.card },
                                 emptyList(), tvDetailVariant == "Loading", null, query, { go(Screen.Details) }, editQuery, listOf("the whisper man", "the wild robot", "the white lotus"))
@@ -127,7 +129,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 { managingProfiles = true }, { managingProfiles = false }, {}, television)
                             Screen.Movies, Screen.Series, Screen.Anime, Screen.Discover -> if (television) TvBrowseScreen(
                                 if (tvDetailVariant in listOf("Loading", "Empty")) emptyList() else PreviewTvHome.movies,
-                                tvDetailVariant == "Loading", { go(Screen.Details) }, PreviewTvHome.genres, PreviewTvHome.membership, 4)
+                                tvDetailVariant == "Loading", { go(Screen.Details) })
                                 else BrowseScreen(current, PreviewData.home, television, open = { go(Screen.Details) })
                             else -> if (television) TvHomeScreen(if (tvDetailVariant == "Loading" || !homeArrived) null else PreviewTvHome.home, { go(Screen.Details) }, { go(Screen.Sources) }, {}, go,
                                 PreviewData.profile, PreviewTvHome.summaries, listOf(PreviewData.hero) + PreviewData.posters.take(4))

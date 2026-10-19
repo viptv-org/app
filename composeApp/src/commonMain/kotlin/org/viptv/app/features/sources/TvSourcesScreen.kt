@@ -78,7 +78,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }.background(Color.Black.copy(alpha = 0.55f))
                 .focusProperties { canFocus = false }.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(960.dp * scale).fillMaxHeight()
-                .graphicsLayer { translationX = size.width * (1f - motion.progress.value) }.background(Color(0xFF151515))
+                .graphicsLayer { translationX = size.width * (1f - motion.progress.value) }.background(Color(0xFF161618))
                 .padding(start = 64.dp * scale, end = 96.dp * scale, top = 72.dp * scale, bottom = 56.dp * scale)) {
                 Text("Choose a source", fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp, letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp * scale))

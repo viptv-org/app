@@ -43,10 +43,10 @@ internal fun TvHomeVisibility(visible: Boolean, scale: Float, offset: Int,
     val position = animateFloatAsState(if (visible) 0f else pixels.toFloat(), tween(duration, easing = easing), label = "Billboard departure")
     if (retain || mounted || visible) {
         Box(Modifier.fillMaxWidth().graphicsLayer { alpha = opacity.value; translationY = position.value }
-            // Hidden content must not stay in the accessibility tree: an
-            // accessibility service bound on the TV re-walks every node on each
-            // focus/scroll change, and invisible buttons would be announced.
-            .then(if (visible) Modifier else Modifier.clearAndSetSemantics { })
-            .focusProperties { this.canFocus = focusEnabled() }) { content() }
+            // Hidden content must not stay in the accessibility tree or the
+            // focus graph. The visible case must NOT install a focus boundary:
+            // `focusProperties` on this non-focusable container made Up from the
+            // hero button a dead end, so the remote could not reach the nav.
+            .then(if (visible) Modifier else Modifier.clearAndSetSemantics { }.focusProperties { canFocus = false })) { content() }
     }
 }

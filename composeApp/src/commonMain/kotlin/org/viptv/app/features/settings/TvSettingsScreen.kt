@@ -28,7 +28,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     notice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile?,
     initialSection: TvSettingsSection = TvSettingsSection.Playback, prefs: TvSettingsPreferences? = null,
     change: ((TvSettingsPreferences) -> Unit)? = null, addonInfo: Map<String, TvAddonInfo> = emptyMap(), account: TvAccountInfo? = null,
-    initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable () -> Unit)? = null, actualPreferencesOnly: Boolean = false,
+    initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null, actualPreferencesOnly: Boolean = false,
     parental: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
     dashboardAddress: String? = null, preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
@@ -59,7 +59,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || unavailable != null || browserFallback) {
                 if (it == TvSettingsSection.Profiles) profiles() else section = it
             }
-            Column(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+            org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
                 else when (section) {
                     TvSettingsSection.Playback -> TvPlaybackSettings(profile?.name, prefs, scale, first, sidebar, { change?.invoke(it) },
@@ -68,7 +68,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Subtitle preferences" }, actualPreferencesOnly)
                     TvSettingsSection.Addons -> TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
                         { installing = true }, { unavailable = "Add-on management" }, placeholderQr)
-                    TvSettingsSection.Sources -> if (sourceIntegrations != null) sourceIntegrations() else {
+                    TvSettingsSection.Sources -> if (sourceIntegrations != null) sourceIntegrations(first, sidebar, scale) else {
                         Text("Source integrations", fontSize = (40 * scale).sp)
                         Spacer(Modifier.height(24.dp * scale))
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)

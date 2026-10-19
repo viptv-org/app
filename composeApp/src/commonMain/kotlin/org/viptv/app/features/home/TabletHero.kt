@@ -30,7 +30,9 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val portrait = maxWidth < 900.dp
         Box(Modifier.fillMaxWidth().height(if (portrait) 600.dp else 480.dp)) {
-            BufferedArtwork(card.landscape ?: card.poster, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
+            val art = card.landscape ?: card.poster
+            if (art == null) HeroArtworkFallback(Modifier.fillMaxSize())
+            else BufferedArtwork(art, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha = 0.65f), Color.Transparent))))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.65f to Color.Black.copy(alpha = 0.15f), 1f to Palette.background)))
             Box(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 16.dp)) {

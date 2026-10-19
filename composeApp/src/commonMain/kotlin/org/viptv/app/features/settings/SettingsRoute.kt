@@ -21,11 +21,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             controller::refreshAccounts, controller::linkSimkl, controller::unlinkSimkl, leave,
             identity = state.accountIdentity ?: state.accountDevices?.account,
             dashboardAddress = controller.connection?.accountDashboardUrl) },
-        sourceIntegrations = { Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
-            profileName = state.profiles.find { it.id == state.selectedProfile }?.name) } },
+            profileName = state.profiles.find { it.id == state.selectedProfile }?.name, first = first, left = sidebar) } },
         preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences) },
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->

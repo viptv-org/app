@@ -27,6 +27,15 @@ fun ApplicationController.browseSelections(id: String, values: List<String>) {
     run { loadBrowse(query) }
 }
 
+/**
+ * Apply a whole draft query in one request (the TV filter page's "Show results").
+ * Per-control apply still exists for the phone/desktop inline controls.
+ */
+fun ApplicationController.applyBrowse(query: BrowseQuery) {
+    if (query == mutable.value.browseQuery) return
+    run { loadBrowse(query.copy(skip = 0)) }
+}
+
 fun ApplicationController.browseMore() = run {
     val skip = mutable.value.browseNext?.toIntOrNull() ?: return@run
     loadBrowse(mutable.value.browseQuery.copy(skip = skip), append = true)

@@ -60,10 +60,15 @@ fun ApplicationController.open(card: Card) {
 /** Resolve provider metadata before source discovery, including the native identity evidence cache. */
 fun ApplicationController.playTitle(card: Card) {
     val navigation = navigationGeneration
+    // Play can be pressed from a row without opening the title page. Keep the
+    // page that sources should return to, so Back does not use an older visit's
+    // return target.
+    val origin = mutable.value.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
+        ?: mutable.value.detailReturnScreen
     runPage {
     val profile = requireNotNull(mutable.value.selectedProfile)
     val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-    mutable.value = mutable.value.copy(detail = detail)
+    mutable.value = mutable.value.copy(detail = detail, detailReturnScreen = origin)
     val target = sourceTarget(card, detail)
     chooseSource(target)
     }
@@ -103,7 +108,8 @@ fun ApplicationController.chooseSource(card: Card) {
     }
     releaseRemotePlayback()
     val origin = if (mutable.value.detail != null) Screen.Details else mutable.value.screen
-    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = origin, sourceTitle = card, sources = emptyList(), torrentOnlySources = 0, findingSources = true)
+    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = origin, sourceTitle = card,
+        sources = emptyList(), torrentOnlySources = 0, findingSources = true, navForward = emptyList())
     run {
         val operation = generation
         try {
@@ -197,6 +203,12 @@ internal fun ApplicationController.beginDetails() {
     val origin = previous.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: previous.detailReturnScreen
     val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
+    // Details is entered directly (not through navigate()), so record the
+    // browser-style history here too; otherwise the desktop Back chevron has
+    // nothing to pop on a first-level details page.
+    val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
+        else (previous.navBack + previous.screen).takeLast(32)
     mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
+        navBack = navBack, navForward = emptyList(),
         screen = Screen.Details, detail = null)
 }

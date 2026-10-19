@@ -25,11 +25,23 @@ Library, History, Settings.
 | Welcome / Sign-in | `Tv3Welcome`, `Tv3SignIn*`, `Tv3SignedIn`, `Tv3SignOut` | `M3SignIn*` | `D3SignIn*` | IPTV provider sign-in removed by owner |
 | Recovery codes | **none on TV** | `M3Recovery` | `D3Recovery` | app has `RecoveryCodesScreen` with no TV board |
 | **Calendar** | **none** | **none** | **none** | only `W3`-family/web calendar states exist |
-| **History** | **none** | **none** | `D3History` | TV has no board at all |
+| **History** | **none** | **none** | `D3History` | TV now has `TvHistoryScreen` (self-designed, no board) |
 | **Settings → Account** | **none** | `M3Account` | `D3Account` | TV shows the generic fallback row |
 
-So the screens that are genuinely **missing a board**: TV Calendar, TV History,
-TV Recovery codes, TV Settings→Account. Everything else has a board somewhere.
+So the screens that are genuinely **missing a board**: TV Calendar, TV History
+(implemented as `TvHistoryScreen`, self-designed), TV Recovery codes,
+TV Settings→Account. Everything else has a board somewhere.
+
+## 1a. TV focus treatment (implemented 2026-10-19)
+
+`components/TvFocusTreatment.kt` is the single implementation:
+- content rows/buttons: filled `#F4F2EE`, 4 px white outline **outside** the bounds,
+  24 dp soft shadow; drawn before `graphicsLayer`/`clip` so it is not clipped;
+- sidebar: 3 px dark gap + 3 px white ring (board `0 0 0 3px #0B0B0C, 0 0 0 6px #F4F2EE`);
+- cards: inset 3 px white ring (no fill/size change).
+
+`TvSettingsRow`, `TvAction`, `TvSettingsSidebar`, the top-nav labels/search icon and
+`TvHistoryRow` use it. `TvColumnFocus` clamps Up/Down inside a settings page.
 
 ## 2. Custom UI that is not in the design (the part you noticed)
 

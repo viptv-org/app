@@ -29,7 +29,9 @@ import org.viptv.engine.wire.Card
 @Composable
 internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {
     Box(Modifier.fillMaxWidth().height(470.dp).clip(RoundedCornerShape(16.dp)).background(Palette.surface)) {
-        BufferedArtwork(card.landscape ?: card.poster, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
+        val art = card.landscape ?: card.poster
+        if (art == null) HeroArtworkFallback(Modifier.fillMaxSize())
+        else BufferedArtwork(art, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
             0f to Color.Transparent, 0.48f to Color.Transparent,
             0.8f to Color.Black.copy(alpha = 0.65f), 1f to Palette.background.copy(alpha = 0.96f))))
