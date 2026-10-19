@@ -17,7 +17,7 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = false, hero: Card? = card, heroReady: (String?) -> Unit = {}) {
-    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val scale = maxWidth / 1920.dp
         val motion = animateFloatAsState(if (browsing) 1f else 0f, tween(450, easing = CubicBezierEasing(.2f, 0f, 0f, 1f)), label = "Hero artwork departure")
         Box(Modifier.fillMaxSize().graphicsLayer {
