@@ -32,10 +32,14 @@ byte-identical.
 
 | metric | before | after |
 |---|---|---|
-| missed vsyncs | 7.3–7.8 % | 1.6–3.9 % |
-| UI-thread 90th percentile | 36 ms | 32 ms |
-| median frame duration | 22 ms | 21 ms |
+| missed vsyncs | 7.3–7.8 % (3 runs) | 1.6–4.0 % (5 runs) |
+| UI-thread 90th percentile | 36 ms | 32–34 ms |
+| median frame duration | 22 ms | 21–23 ms (noise) |
 | median UI-thread time/frame (trace) | 6.6 ms | 5.3 ms |
+
+The median frame duration barely moves because the app's own work is only
+5–8 ms of the 16.6 ms budget; the rest is the compositor/buffer handshake. What
+improves is the tail: fewer frames miss their deadline.
 
 Per-frame cost on this box: UI thread ~5 ms, RenderThread ~9 ms (≈6 ms of which
 is buffer/handoff), rest is compositor wait. The device is not the limit — the
@@ -61,9 +65,10 @@ app was doing avoidable per-frame work.
    driven from the screen and read only inside `graphicsLayer`.
 4. **Theme identity.** `viptvTypography()` rebuilt the `FontFamily` on every
    composition, invalidating `LocalTextStyle` for every text in the tree.
-5. **Backdrop layer.** The static backdrop now composites as one reused
-   offscreen layer instead of base fill + artwork + two full-screen gradients
-   every frame.
+5. **Backdrop layer (reverted).** Compositing the static backdrop as one reused
+   offscreen layer was a marginal CPU win, but it rounded 6041 pixels (0.3%) by
+   one level each, so the home screen was no longer pixel-identical. It was
+   dropped; the frame-drop win comes from the items above.
 
 ## Not done (next step if more is needed)
 
