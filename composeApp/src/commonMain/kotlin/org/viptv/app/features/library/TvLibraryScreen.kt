@@ -57,7 +57,10 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                     contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                     itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
                         TvCatalogCard(card, scale, true, Modifier.then(if (index == 0) Modifier.focusRequester(first) else Modifier)
-                            .focusProperties { if (index < 7) up = selectedFilter }, {}, open, focusedCaptions = true)
+                            .focusProperties {
+                                if (index < 7) up = selectedFilter
+                                if (index % 7 == 6) right = FocusRequester.Cancel
+                            }, {}, open, focusedCaptions = true)
                     }
                 }
             }

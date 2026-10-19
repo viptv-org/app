@@ -98,7 +98,7 @@ fun ApplicationController.showLiveGuide(channel: String, force: Boolean = false)
             }
             val guide = if (fetched.channel_id != channel) LiveGuideSnapshot(channel, availability = "TemporarilyUnavailable", reason = "Could not load the program guide.")
                 else if (fetched.availability == "Available" && fetched.programs.isEmpty() && fetched.reason == null)
-                    fetched.copy(reason = "No guide programs are available for this channel.") else fetched
+                    fetched.copy(reason = "Guide data isn’t available for this source yet. You can still watch this channel.") else fetched
             if (ownsLive(context) && generation == operation && liveGuideRequest == request && mutable.value.livePage?.channels?.any { it.id == channel } == true) {
                 liveGuideFetchedAt[channel] = TimeSource.Monotonic.markNow()
                 mutable.value = mutable.value.copy(liveGuides = mutable.value.liveGuides + (channel to guide))

@@ -84,7 +84,11 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                             itemsIndexed(selected, key = { _, card -> cardLookupKey(card) }) { index, card ->
                                 TvCatalogCard(card, scale, true,
                                     Modifier.then(if (index == targetIndex) Modifier.focusRequester(first) else Modifier)
-                                        .focusProperties { if (index < 7) up = chromeFocus },
+                                        .focusProperties {
+                                            if (index < 7) up = chromeFocus
+                                            // Row edge: RIGHT must dead-end, not jump to the avatar.
+                                            if (index % 7 == 6) right = FocusRequester.Cancel
+                                        },
                                     {}, open, focusedCaptions = true)
                             }
                         }

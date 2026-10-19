@@ -32,7 +32,11 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     val showFocusOutline = television || !compact && !browser
     val width = if (portrait) { if (compact) 112 else if (television) (240 * scale).toInt() else if (tablet) 164 else 176 }
         else { if (compact) 240 else if (television) (384 * scale).toInt() else if (tablet) 300 else if (browser) 212 else 280 }
+    // NAV-11: providers can return the same title under different ids/origins.
+    // Dedupe by identity first, then by title+year so a shelf never shows the
+    // same name twice.
     val cards = row.cards.distinctBy(::cardLookupKey)
+        .distinctBy { it.title.trim().lowercase() to it.metadata?.year }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
@@ -47,12 +51,15 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
             }
         }
         when (row.state) {
-            RowState.READY -> LazyRow(state = list, horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
+            // Board Tv3RowStates: an EMPTY row is not drawn at all.
+            RowState.EMPTY -> Unit
+            RowState.READY -> LazyRow(state = list,
+                contentPadding = PaddingValues(end = if (compact) 24.dp else 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(cards, key = ::cardLookupKey) {
                     MediaCard(it, width, portrait = portrait, onFocus = focus, open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f, cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp, showFocusOutline = showFocusOutline)
                 }
             }
-            RowState.EMPTY -> Text("Nothing here yet.", color = Palette.secondary)
             RowState.FAILED -> TextButton(onClick = retry) { Text(row.message ?: "Try again") }
             RowState.PENDING -> LazyRow(horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(4) { Box(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)

@@ -118,7 +118,9 @@ private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, requester: FocusRe
     val card = entry.entry.card
     val shape = RoundedCornerShape(16.dp * scale)
     Row(Modifier.fillMaxWidth().height(148.dp * scale).focusRequester(requester)
-        .focusProperties { this.left = left }
+        // No control sits left of a full-width row; LEFT must dead-end instead
+        // of jumping diagonally to Clear history.
+        .focusProperties { this.left = FocusRequester.Cancel; this.right = FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused }
         .graphicsLayer { this.shape = shape; shadowElevation = if (focused) 24.dp.toPx() * scale else 0f; clip = false }
         .background(if (focused) Palette.text else Color.White.copy(alpha = .06f), shape)

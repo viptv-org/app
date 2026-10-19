@@ -30,8 +30,9 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
         Row(horizontalArrangement = Arrangement.spacedBy(60.dp * scale)) {
             TvFocusScroll {
                 LazyColumn(Modifier.width(760.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-                    items(addons, key = { it.id }) { addon ->
+                    itemsIndexed(addons, key = { _, addon -> addon.id }) { index, addon ->
                         TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }
+                            .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
                             .semantics { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off }, scale, enabled = !busy,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { toggle(addon.id, addon.id !in enabled) }) { tint ->
@@ -47,7 +48,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                             TvSettingsSwitch(addon.id in enabled, scale)
                         }
                     }
-                    item { TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }, scale, requester = initial,
+                    item { TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }, scale,
                         enabled = !busy, activate = { install() }, arrangement = Arrangement.Start,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                         Box(Modifier.size(60.dp * scale).background(it.copy(alpha = 0.1f), RoundedCornerShape(14.dp * scale)), contentAlignment = Alignment.Center) {

@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 
@@ -15,7 +16,8 @@ import org.viptv.app.theme.Palette
 fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, now: Int?, watch: (LiveChannel) -> Unit, manage: () -> Unit, groupLabels: Map<String, String> = emptyMap(),
     groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, favoriteChanged: ((LiveChannel) -> Unit)? = null,
     favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null, sources: Map<String, String> = emptyMap(), selectedSource: String? = null,
-    sourceChanged: ((String) -> Unit)? = null, emptyReason: String? = null) {
+    sourceChanged: ((String) -> Unit)? = null, emptyReason: String? = null,
+    statusNotice: String? = null, noticeRetry: (() -> Unit)? = null) {
     if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged); return }
     var fullGuide by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("All") }
@@ -40,6 +42,14 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
         Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = if (phone) 8.dp else 28.dp * scale),
             verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
             if (sources.size > 1 && sourceChanged != null) LiveSourceSelector(sources, selectedSource, sourceChanged, enabled = !busy)
+            // NAV-24: the guide/connection notice belongs in the page flow,
+            // under the chips, not as an overlay on top of them.
+            statusNotice?.let { message ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text(message, Modifier.weight(1f), color = Palette.secondary, fontSize = if (phone) 13.sp else 15.sp)
+                    noticeRetry?.let { retry -> TextButton(retry, enabled = !busy) { Text("Retry") } }
+                }
+            }
             if (phone && (categories.isNotEmpty() || favoritesFilter != null)) LiveFilters(categories, category, chooseGroup, labels = groupLabels, favoritesSelected = favoritesOnly, favorites = favoritesFilter)
             if (!fullGuide) selected?.let { LivePreview(it, selectedProgram ?: it.current(now), now, phone, television, scale,
                 { watch(it) }, { favoriteChanged?.invoke(it) ?: run { notice = true } }, if (!phone && start != null) ({ fullGuide = true }) else null) }

@@ -18,7 +18,18 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun TvSubtitleColor(value: Long, label: String, selected: Boolean, scale: Float, sidebar: FocusRequester?, choose: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
-    Box(Modifier.size(64.dp * scale).focusProperties { if (sidebar != null) left = sidebar }.onFocusChanged { focused = it.isFocused }
+    // Colour circles are custom clickables; register them with the settings
+    // column so DOWN at the bottom of the page dead-ends instead of jumping into
+    // the sidebar (the TvSettingsRow/TvAction clamp does not cover them).
+    val own = remember { FocusRequester() }
+    val (columnUp, columnDown) = org.viptv.app.components.rememberTvColumnItem(own)
+    Box(Modifier.size(64.dp * scale).focusRequester(own)
+        .focusProperties {
+            if (sidebar != null) left = sidebar
+            columnUp?.let { up = it }
+            columnDown?.let { down = it }
+        }
+        .onFocusChanged { focused = it.isFocused }
         .semantics { contentDescription = label; this.selected = selected; role = Role.RadioButton }
         .then(if (focused || selected) Modifier.border(3.dp * scale, Palette.text, CircleShape) else Modifier)
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = choose), contentAlignment = Alignment.Center) {

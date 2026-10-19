@@ -25,6 +25,11 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
+    if (detail == null && !busy) {
+        // NAV-04: an initial-load failure used to compose nothing at all.
+        DetailUnavailable(error, back)
+        return
+    }
     if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage); return }
     if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
@@ -126,4 +131,17 @@ internal fun detailExtras(detail: DetailSnapshot?): TvDetailExtras {
     }
     return TvDetailExtras(resume = resume, resumeLabel = label, remaining = resume?.let(::remainingMinutesLabel),
         recommendations = detail.recommendations)
+}
+
+
+@Composable
+private fun DetailUnavailable(error: String?, back: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center,
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+        Text("This title couldn’t load", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(12.dp))
+        Text(error ?: "The provider didn’t return this title’s details.", color = Palette.secondary)
+        Spacer(Modifier.height(20.dp))
+        Button(onClick = back) { Text("Go back") }
+    }
 }

@@ -32,8 +32,9 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
             if (busy && home != null) item(key = "refreshing") {
                 LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
             }
-            item(key = "hero") {
-                val hero = carousel.card
+            val heroForSlot = carousel.card
+            if (heroForSlot != null || (home == null && busy)) item(key = "hero") {
+                val hero = heroForSlot
                 Box(Modifier.fillMaxWidth()) {
                     if (!television && !tablet && !(compact && !desktopChrome)) hero?.landscape?.let { HomeBackdrop(it) }
                     Box(Modifier.padding(start = if (television || tablet) 0.dp else gutter, end = if (television || tablet) 0.dp else gutter, top = if (television || tablet || browser) 0.dp else 12.dp)) {

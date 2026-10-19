@@ -25,15 +25,25 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 import com.composables.icons.lucide.Lock
+import com.composables.icons.lucide.ChevronLeft
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 
 @Composable
 internal fun MobileProfiles(
     profiles: List<Profile>, busy: Boolean, error: String?, local: Boolean, managing: Boolean,
     select: (String) -> Unit, edit: (String) -> Unit, manage: () -> Unit, done: () -> Unit,
-    add: () -> Unit,
+    back: (() -> Unit)? = null, add: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().height(62.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            // NAV-22: a picker opened from inside a session needs a visible way
+            // back to the content; the entry-time picker has none.
+            back?.let { goBack ->
+                IconButton(onClick = goBack, modifier = Modifier.size(44.dp)) {
+                    Icon(Lucide.ChevronLeft, "Back", Modifier.size(24.dp))
+                }
+            }
             Spacer(Modifier.weight(1f))
             if (local) TextButton(onClick = if (managing) done else manage, enabled = !busy) {
                 Text(if (managing) "Done" else "Edit", fontSize = 16.sp, fontWeight = FontWeight.Bold)

@@ -26,14 +26,6 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
             // the page reason or the load error; the top-left overlay must not
             // draw a second message on top of it.
             val emptyReason = if (empty) state.livePage?.reason ?: state.error else state.livePage?.takeIf { it.channels.isEmpty() }?.reason
-            LiveScreen(channels, television, if (channels.any { it.programs.isNotEmpty() }) 0 else null, clock.nowMinute, { controller.playLive(it.id) }, { controller.navigate(Screen.Settings) },
-                groupLabels = state.livePage?.groups.orEmpty().associate { it.id to it.label }, groupChanged = controller::filterLive,
-                guideRequested = { controller.showLiveGuide(it.id) }, more = if (state.livePage?.next_cursor != null && (!state.liveFavoritesOnly || state.liveFavorites.any { id -> state.livePage.channels.none { it.id == id } })) controller::moreLive else null, busy = state.busy,
-                favoriteChanged = if (state.liveFavoritesAvailable) ({ controller.toggleLiveFavorite(it.id) }) else null,
-                favoritesOnly = state.liveFavoritesOnly, favoritesFilter = if (state.liveFavoritesAvailable) controller::filterLiveFavorites else null,
-                sources = state.livePage?.connections.orEmpty().filter { it.enabled }.associate { it.id to it.name }, selectedSource = state.liveQuery.connection_id,
-                sourceChanged = controller::selectLiveConnection, emptyReason = emptyReason)
-            if (state.busy || state.liveGuideLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             val guide = state.liveGuideChannel?.let(state.liveGuides::get)
             val notice = if (empty) null else state.error ?: state.liveFavoriteError ?: guide?.reason
             val retry: (() -> Unit)? = when {
@@ -44,10 +36,15 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 guide?.availability == "TemporarilyUnavailable" -> controller::retryLiveGuide
                 else -> null
             }
-            if (notice != null) Column(Modifier.padding(24.dp)) {
-                Text(notice, color = Palette.secondary)
-                retry?.let { TextButton(it, enabled = !state.busy && !state.liveGuideLoading) { Text("Retry") } }
-            }
+            LiveScreen(channels, television, if (channels.any { it.programs.isNotEmpty() }) 0 else null, clock.nowMinute, { controller.playLive(it.id) }, { controller.navigate(Screen.Settings) },
+                groupLabels = state.livePage?.groups.orEmpty().associate { it.id to it.label }, groupChanged = controller::filterLive,
+                guideRequested = { controller.showLiveGuide(it.id) }, more = if (state.livePage?.next_cursor != null && (!state.liveFavoritesOnly || state.liveFavorites.any { id -> state.livePage.channels.none { it.id == id } })) controller::moreLive else null, busy = state.busy,
+                favoriteChanged = if (state.liveFavoritesAvailable) ({ controller.toggleLiveFavorite(it.id) }) else null,
+                favoritesOnly = state.liveFavoritesOnly, favoritesFilter = if (state.liveFavoritesAvailable) controller::filterLiveFavorites else null,
+                sources = state.livePage?.connections.orEmpty().filter { it.enabled }.associate { it.id to it.name }, selectedSource = state.liveQuery.connection_id,
+                sourceChanged = controller::selectLiveConnection, emptyReason = emptyReason,
+                statusNotice = notice, noticeRetry = retry)
+            if (state.busy || state.liveGuideLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         }
     }
 }

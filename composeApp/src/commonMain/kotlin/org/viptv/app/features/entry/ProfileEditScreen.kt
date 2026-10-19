@@ -30,7 +30,9 @@ fun ProfileEditScreen(
     var newPin by remember(profile?.id) { mutableStateOf("") }
     var confirmingDelete by remember(profile?.id) { mutableStateOf(false) }
     var pickingAvatar by remember(profile?.id) { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
+    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center,
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+        Column(Modifier.widthIn(max = 560.dp).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
         Text("Edit profile", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 88.dp, 18.dp)
@@ -54,6 +56,7 @@ fun ProfileEditScreen(
         TextButton({ guidance = true }, enabled = !busy) { Text("Audio & subtitles") }
         TextButton({ guidance = false }, enabled = !busy) { Text("Maturity rating") }
         if (count > 1 && profile?.canDelete != false) TextButton(onClick = { confirmingDelete = true }, enabled = !busy) { Text("Delete profile") }
+        }
     }
     if (confirmingDelete) AlertDialog(onDismissRequest = { confirmingDelete = false },
         title = { Text("Delete ${profile?.name}?") }, text = { Text("This removes this profile’s history and add-on choices.") },
