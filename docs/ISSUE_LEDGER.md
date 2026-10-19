@@ -42,18 +42,18 @@ Evidence kinds used here:
 | NAV-08 | PARTIAL | TV focus treatment unified (fill + ring); two-style audit found remaining per-control deviations (`audit:audit-nav-board-focus.md`) |
 | NAV-09 | PARTIAL | phone grid has bottom padding; shelf edge peek unverified |
 | NAV-10 | PARTIAL | `HeroArtworkFallback` added for phone/tablet/desktop heroes when both art URLs are null; needs capture |
-| NAV-11 | OPEN | identity-level dedupe only |
+| NAV-11 | DONE | shelves also dedupe by title+year |
 | NAV-12 | PARTIAL | desktop search: Esc clears + returns via history, clear (X) control added, Ctrl/⌘+K focuses the field |
-| NAV-13 | OPEN | desktop search result overflow |
+| NAV-13 | DONE | ellipsis on every card title; grid/grouped rows get the board trailing inset |
 | NAV-14 | PARTIAL | desktop title-bar buttons + search field + side-rail items now draw a focus ring (hover too); other desktop surfaces still need the pass |
 | NAV-15 | OPEN | opaque black rectangle artifact |
-| NAV-16 | OPEN | desktop hero synopsis ellipsis |
+| NAV-16 | DONE | desktop hero synopsis clamps to 3 lines with ellipsis |
 | NAV-17 | DONE | `Apply` moved out of the text field's trailing icon slot; explicit field + Apply button |
 | NAV-18 | PARTIAL | nav back/forward now real (navBack/navForward, forward chevron enabled); History screen affordances unchanged |
 | NAV-19 | OPEN | skiko GlobalSnapshotManager CCE (needs clean-build retest, per prior note) |
 | NAV-20 | DONE (prior) | stale incremental build; documented |
 | NAV-21 | PARTIAL | TV/tablet rail: no focus jump on title pages; rail background still off-board (`audit:audit-dui-phone-web.md`) |
-| NAV-22 | PARTIAL | compact edit + PIN have Back; profile picker still has no Back |
+| NAV-22 | DONE | picker opened from a session has a visible Back |
 | NAV-23 | PARTIAL | compact fixed; ≥640dp branch still left-hugs |
 | NAV-24 | OPEN | Live empty/guide copy order still wrong (`audit:audit-dui-phone-web.md`) |
 | NAV-25 | DONE | gamepad wording gone from app copy; server messages pass through verbatim (copy filter is a separate item) |
@@ -83,11 +83,11 @@ Evidence kinds used here:
 | BROWSE-07 | DONE (by code analysis) | Continue Watching 384×216 at x=96 gap 20, fifth card peeks; matches board |
 | TVUI-01 | PARTIAL | card states: art/no-art (title+year bottom-left), progress, Watched check, New episode (light), Ended (dark), LIVE (red), Returning in meta, cert chip on meta line, logo on landscape art, `S1 E2` from identity; presentation badges (4K/HDR) no longer label the art. `capture:/tmp/cards-after2/tv-card-states.png` |
 | TVUI-02 | PARTIAL | FAILED row is the board's message card (940×169, title + message + Try again); PENDING is 6 skeletons; EMPTY is skipped |
-| TVUI-03 | OPEN | sources empty/torrent states still one line of text |
-| TVUI-04 | OPEN | add-on entry is still a Material dialog; no install confirmation |
-| TVUI-05 | PARTIAL | source integration list + forms exist; remove confirm is a Material dialog |
-| TVUI-06 | OPEN | Parental is a redirect stub |
-| TVUI-07 | OPEN | Display/About are placeholders |
+| TVUI-03 | DONE | sources empty/torrent panels to Tv3SourcesEmpty/Tv3SourcesTorrent (TvSourcesScreen.kt) |
+| TVUI-04 | DONE | full-screen entry page + install confirm (TvAddonEntry.kt, TvAddonInstall.kt); address exposed as an editable field |
+| TVUI-05 | DONE | source integration list/forms + TV-shaped remove confirm |
+| TVUI-06 | DONE | TvParentalSettings.kt board layout opening the real editor |
+| TVUI-07 | DONE | TvDisplaySettings.kt (device-local prefs, 4 targets) + TvAboutSettings.kt; captured on the ONN |
 | TVUI-08 | PARTIAL | "Featured n of m" exposed as the indicator strip's accessibility label; New episode badge renders; density matches |
 | TVUI-09 | PARTIAL | TvHomeLoading exists; ToRows transition not re-verified |
 | TVUI-10 | PARTIAL | Live exists; Calendar self-designed (no board), History now has a TV screen (no board) |
@@ -144,6 +144,17 @@ Per `audit:audit-dui-phone-web.md`: NAV-21/22/23 partial, NAV-24 open, NAV-25/26
 | DOC-02 | DONE | this ledger + OPEN_TASKS/UI_INVENTORY refresh |
 | DOC-03 | PARTIAL | `docs/TV_FRAME_BUDGET.md` now documents the measurement procedure for all six open PERF items, the evidence format and the queued (not applied) experiments. Still PARTIAL: there is no new accepted/rejected *measured* experiment to record until PERF-05..10 are actually run |
 | DOC-04 | DONE | missing boards listed (TV History, TV Recovery, TV Settings→Account). TV Calendar was withdrawn from this list: `SkTvCalendar` (1920×1080) exists in the `simkl` family — see `docs/UI_INVENTORY.md` |
+
+## 2026-10-19 late session - applied from read-only briefs
+
+- TV settings (Display/About/Parental), TV sources/add-on states, TV player parity,
+  TV profiles/pin/edit, phone title/settings/browse, tablet, auth, data/metadata,
+  web, copy, playback parity, desktop focus/hover and desktop search/synopsis/window
+  fixes are implemented and compile/gate verified.
+- Tooling: tools/tv_focus_audit.py, tools/board_spec.py, tools/queue_deepseek.py,
+  tools/spawn_deepseek_fixes.py; tools/tv_cycle.sh repaired.
+- The Ollama account-pool wrapper was bypassed in
+  ~/.local/share/pi-integrations/index.ts (real key, no pool fetch).
 
 ## Subagent reports (read-only, 2026-10-19)
 
