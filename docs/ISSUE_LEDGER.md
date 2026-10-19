@@ -119,13 +119,13 @@ Per `audit:audit-dui-phone-web.md`: NAV-21/22/23 partial, NAV-24 open, NAV-25/26
 | DATA-02 | OPEN | cast line has no wire field |
 | DATA-03 | OPEN | trailer/share have no backing actions |
 | DATA-04 | OPEN | HD/5.1/CC mapping undefined; presentation badges are rendered from `badges[]` only |
-| DATA-05 | OPEN | source failure needs a device logcat pass |
+| DATA-05 | OPEN — NEEDS CREDENTIALS | the ONN is in local mode with no source integrations, so the Spider-Man/TorBox repro cannot run. The instrumentation is wired (`VIPTV_SOURCES:W`, `VIPTV_ADDON:I` observed from `MainActivity`); the pass needs an account with that title plus a debrid/Torrentio add-on |
 | PLAY-01 | DONE (prior) | |
-| PLAY-02 | OPEN | gateway reachability proof not re-run |
+| PLAY-02 | DONE | `docs/evidence/device-pass-2026-10-19/PLAY-02-gateway-proof.md`: the remote lease is built only when `store == null`, and desktop/Android always pass `localDatabase`, so the gateway branch is unreachable on both |
 | PLAY-03 | BLOCKED | owner decision: iOS local-only vs gateway |
 | PLAY-04 | OPEN | torrent parity |
 | PLAY-05 | OPEN | player parity |
-| PLAY-06 | OPEN | per-profile track persistence |
+| PLAY-06 | PARTIAL | preferences carry `preferred_audio_language` / `preferred_subtitle_language` / `subtitle_font_scale` / colours per profile and are applied at `PlaybackInput` creation; a real per-track-id memory across sources is not stored |
 | AUTH-01..04 | OPEN | per `audit:audit-auth-session.md` |
 
 ## 7. Testing / docs
