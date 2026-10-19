@@ -129,7 +129,11 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 }
                 Spacer(Modifier.height(20.dp * scale))
                 TvFocusScroll {
-                LazyColumn(Modifier.weight(1f), state = listState, verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
+                // The status line under the list is drawn over it otherwise; the list
+                // needs its own trailing inset so the last source clears the footer.
+                LazyColumn(Modifier.weight(1f), state = listState,
+                    verticalArrangement = Arrangement.spacedBy(10.dp * scale),
+                    contentPadding = PaddingValues(bottom = 24.dp * scale)) {
                     error?.let { item { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) } }
                     itemsIndexed(visible, key = { _, source -> source.id }) { index, source ->
                         TvSourceRow(source, info[source.id], scale, rowFocus.getOrPut(source.id) { FocusRequester() }, true, { if (!busy) choose(it) },

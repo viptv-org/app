@@ -30,7 +30,26 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var dismissTracks: (() -> Unit)? = null
     var interaction by mutableIntStateOf(0)
     var controlError by mutableStateOf<String?>(null)
+    /**
+     * Position advances but no frame has ever been presented: the device opened a
+     * decoder it cannot actually display (a Dolby Vision profile the TV's HEVC
+     * decoder reports as unsupported, for instance). Watching a black picture with
+     * a moving timeline is worse than saying so.
+     */
+    var undecodable by mutableStateOf(false)
+    private var startedAt = TimeSource.Monotonic.markNow()
+    private var lastPosition = position
+    private var positionMovedAt = TimeSource.Monotonic.markNow()
     init { initial.forEach(::observe) }
+
+    /** Called from a 1 s tick while the player is on screen. */
+    fun checkFirstFrame() {
+        if (hasPresented || failed || undecodable) return
+        if (position != lastPosition) { lastPosition = position; positionMovedAt = TimeSource.Monotonic.markNow() }
+        // Audio/clock advancing for 6 s without a single presented frame means the
+        // video path is not producing pictures.
+        if (positionMovedAt.elapsedNow() > 2.seconds && startedAt.elapsedNow() > 6.seconds) undecodable = true
+    }
 
     fun observe(fact: PlayerFact) {
         when (fact) {

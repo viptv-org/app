@@ -45,6 +45,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         Unit
     }
     DisposableEffect(state) { backChanged(back); onDispose { backChanged(null) } }
+    // A stream whose clock advances without ever presenting a frame is a black
+    // screen this TV cannot decode; surface it instead of playing nothing.
+    LaunchedEffect(state) { while (true) { delay(1000); state.checkFirstFrame() } }
     LaunchedEffect(externalFacts, state) { externalFacts.collect(state::observe) }
     LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, state.failed, state.scrub) {
         if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { delay(5000); state.visible = false }
@@ -91,7 +94,12 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
         if (state.showNext) Box(video.background(Color.Black.copy(alpha = 0.25f)))
         when {
-            state.failed -> TvPlayerFailure(extras, state.position, error, scale, retry, chooseSources, close)
+            // `undecodable` is the "clock runs, no picture" case: the TV opened a
+            // decoder it cannot display (unsupported Dolby Vision profile). Saying so
+            // is the only honest state; a black screen with a moving bar is not.
+            state.failed || state.undecodable -> TvPlayerFailure(extras, state.position,
+                if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error,
+                scale, retry, chooseSources, close)
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale, { playEpisode?.invoke(extras.nextEpisode) }, { state.showNext = false; state.visible = false }, extras.creditsLabel)
             else -> {

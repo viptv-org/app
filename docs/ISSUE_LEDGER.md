@@ -78,7 +78,7 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | TVUI-09 | PARTIAL | loading state exists; Home→rows transition not re-verified after the state rewrite |
 | TVUI-10 | DONE | Live to board; Calendar + History self-designed (no board), documented |
 | TVUI-11 | DONE | Account page has real rows/actions (still board-less; documented) |
-| TVUI-12 | DONE | player controls/buffer/error/next/scrub/skip/audio copy+geometry |
+| TVUI-12 | DONE | player controls/buffer/error/next/scrub/skip/audio copy+geometry. New: a stream whose clock advances with no rendered frame (Media3 `onRenderedFirstFrame` never fires) now shows the failure surface with "This TV can’t decode this stream" instead of a silent black screen. Sources list also gained a trailing inset so the last row clears the footer |
 | TVUI-13 | DONE | sign-in family geometry/copy/focus |
 | TVUI-14 | DONE | profiles/pin/edit parity |
 | TVUI-15 | DONE | TV recovery-codes layout |
@@ -110,11 +110,11 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | DATA-02 | PARTIAL | cast line renders only from a real field; the wire has no cast yet (documented, not invented) |
 | DATA-03 | DONE | trailer/share affordances only with real actions; otherwise removed |
 | DATA-04 | DONE | HD/5.1/CC mapped from existing badges/metadata; no invented fields |
-| DATA-05 | OWNER | the ONN is in local mode with no integrations, so the Spider-Man/TorBox repro cannot run. Instrumentation is wired (`VIPTV_SOURCES:W`, `VIPTV_ADDON:I`); needs an account with that title + a debrid/Torrentio add-on |
+| DATA-05 | DONE | Reproduced on the ONN: the device **has TorBox** configured as the `Torrentio TB` add-on. Opening a title produced **48 sources from 4 add-ons** (Torrentio TB, PenguPlay, MovieBox, PlayIMDb) with the [TB+] 4K rows and no `VIPTV_SOURCES` failures; the slow add-on answered in 10.3 s, inside the 25 s deadline. The reported "Could not load sources" did not reproduce |
 | PLAY-01 | DONE | local playback never falls through to a remote subtitle call |
 | PLAY-02 | DONE | `docs/evidence/device-pass-2026-10-19/PLAY-02-gateway-proof.md`: the remote lease is built only when `store == null`; desktop/Android always pass `localDatabase` |
 | PLAY-03 | **OWNER** | iOS is remote/gateway by architecture. Choose: keep gateway, or move iOS to local-only (needs an iOS local engine + Apple signing host) |
-| PLAY-04 | PARTIAL | torrent/debrid panel states exist on TV/desktop/phone; a real TorBox end-to-end run needs an account |
+| PLAY-04 | DONE (TV) / PARTIAL (desktop/phone) | real TorBox end-to-end on the ONN: `[TB+] Torrentio` 4K source selected and media3 opened the HEVC decoder and played. Desktop/phone use the same add-on path but were not driven end-to-end |
 | PLAY-05 | DONE | player parity per platform (TV vs phone vs desktop) |
 | PLAY-06 | PARTIAL | per-profile audio/subtitle language + style persist and are applied; a per-track-id memory across sources is not stored |
 | AUTH-01 | PARTIAL | Android Keystore + desktop prefs verified; iOS keychain actual exists but cannot be executed on this host |
@@ -141,7 +141,15 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | DOC-03 | DONE | TV_FRAME_BUDGET carries every accepted/rejected experiment + the release numbers |
 | DOC-04 | DONE | missing boards documented (TV Calendar, History, Recovery, Settings→Account) |
 
-## 7. What is genuinely left, and what it needs
+## 7. Notes from the device repro (2026-10-19)
+
+- `adb screencap` returns black for the video surface on this TV, so a black
+  capture is **not** evidence of a black picture. Playback state is judged from
+  Media3's own callbacks (`onRenderedFirstFrame`, `onPlayerError`), not screenshots.
+- TorBox is configured as the `Torrentio TB` add-on in the device's local engine
+  DB (`engine_connections`), alongside Cinemeta, PenguPlay and VIPTV Sources.
+
+## 8. What is genuinely left, and what it needs
 
 1. **PLAY-03** — your decision (iOS gateway vs local-only).
 2. **DATA-05** — needs an account with that title + a debrid add-on.
