@@ -36,6 +36,7 @@ class StremioImportUiTest {
             val probe = Probe(scene); probe.frames(12)
             assertTrue(probe.has("Step 1 of 4: Connect Stremio")); assertTrue(probe.has("Import into: Synthetic profile"))
             assertTrue(probe.has("Preview first. Nothing is saved until you confirm the import."))
+            assertTrue(probe.has("Review add-ons, verify metadata, then choose exactly which items to import. Viewing data goes to Synthetic profile. Selected add-ons are shared across your account's profiles."))
             assertEquals(ToggleableState.On, probe.toggleState("My List")); assertEquals(ToggleableState.On, probe.toggleState("Watch history and resume"))
             assertTrue(probe.disabled("Next: Choose add-ons"), "Credentials are required before a preview")
             probe.setText("Stremio email", "synthetic@example.invalid"); probe.setText("Stremio password", "synthetic-password")
@@ -114,7 +115,7 @@ class StremioImportUiTest {
         try {
             val probe = Probe(scene); probe.frames(12)
             probe.setText("Stremio email", "synthetic@example.invalid"); probe.setText("Stremio password", "synthetic-password")
-            probe.click("Next: Choose add-ons")
+            probe.scrollToEnd(); probe.click("Next: Choose add-ons")
             assertTrue(probe.has("Step 2 of 4: Choose add-ons"))
             assertTrue(probe.has("Do you want to bring these add-ons into VIPTV? Uncheck any you do not want."))
             assertTrue(probe.has("21 of 21 available add-ons selected · 21 new to your account"))
@@ -281,6 +282,82 @@ class StremioImportUiTest {
             probe.click("Include matching")
             assertTrue(probe.has("No items match this filter."))
             assertTrue(session.state.value.excluded.isEmpty())
+        } finally { scene.close() }
+    }
+
+    /** Dashboard parity: every row detail, add-on status, the connect draft, the recap and the locked retry. */
+    @Test fun rowsDraftRecapRetryAndCompletionShowEveryExplanationAndDetail() {
+        val none = mapOf("favorites_to_add" to 0, "progress_to_add" to 0, "progress_to_update" to 0, "existing_preserved" to 0, "already_imported" to 0)
+        val items = listOf(
+            stremioMovie.copy(id = "synthetic_row_resume_12345", name = "Resumed movie", favoriteAction = "none", progressAction = "update",
+                counts = none + ("progress_to_update" to 1), position = 754.0, duration = 5400.0),
+            stremioEpisode.copy(id = "synthetic_row_watched_1234", name = "Watched series", season = 2, episode = 3, favoriteAction = "none",
+                progressAction = "preserve", status = "preserved", counts = none + ("existing_preserved" to 1), watched = true,
+                watchDateKnown = false, completionOnly = true, resumeActive = true),
+            stremioMovie.copy(id = "synthetic_row_review_12345", name = "Unmatched title", favoriteAction = "none", progressAction = "none",
+                status = "needs_review", selectable = false, counts = none, reason = "watch_date_unknown"))
+        val counts = mapOf("source_items" to 3, "favorites_to_add" to 0, "progress_to_add" to 0, "progress_to_update" to 1,
+            "existing_preserved" to 1, "already_imported" to 0, "needs_review" to 1, "skipped_items" to 0)
+        val transport = FakeStremioTransport()
+        transport.preview = { stremioAddons(addons = listOf(
+            StremioAddon("existing_addon_12345678", "Existing metadata", listOf("meta"), "existing"),
+            StremioAddon(stremioAddonId, "New metadata", listOf("meta", "stream"), "add"),
+            StremioAddon("broken_addon_12345678901", "Broken", listOf("stream"), "unavailable", "unsupported_transport"))) }
+        transport.review = { _, _ -> stremioReview(items = items, counts = counts, addonsToAdd = 1) }
+        transport.apply = { throw StremioTransportFailure(true) }
+        var managed = 0
+        val session = session(transport)
+        val scene = ImageComposeScene(1000, 3000, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                StremioImportScreen(session, "Synthetic profile", false, null) { managed++ }
+            } }
+        }
+        try {
+            val probe = Probe(scene); probe.frames(12)
+            probe.click("Manage existing add-ons"); assertEquals(1, managed)
+            assertTrue(probe.has("Your password is used for this request only and is not saved by VIPTV."))
+            probe.setText("Stremio email", "synthetic@example.invalid"); probe.setText("Stremio password", "synthetic-password")
+            probe.click("Next: Choose add-ons")
+            assertTrue(probe.has("Already configured in your account")); assertTrue(probe.has("Add to your account on confirmation"))
+            assertTrue(probe.has("Unavailable — not added")); assertTrue(probe.has("This add-on uses an unsupported connection method."))
+            assertTrue(probe.has("Selected new add-ons are account-wide, not limited to this profile. Their private configuration is encrypted and is never shown here. Nothing is added until final confirmation."))
+            assertTrue(probe.has("2 of 2 available add-ons selected · 1 new to your account"))
+            probe.click("Back")
+            assertTrue(probe.focused("Connect Stremio"))
+            assertTrue(probe.has("Stremio is connected for this preview. Your add-on and item choices are still saved in this draft."))
+            assertTrue(probe.has("synthetic@example.invalid")); assertTrue(probe.has("My List · Watch history and resume"))
+            assertTrue(probe.has("Your password was cleared after connecting. Changing the connection starts a new preview."))
+            assertNull(probe.fieldOrNull("Stremio password")); assertNotNull(probe.clickableOrNull("Change connection"))
+            probe.click("Next: Choose add-ons"); probe.click("Next: Review items")
+            assertTrue(probe.has("New add-ons to register for your account: 1"))
+            assertTrue(probe.has("Resume 12:34 of 1:30:00")); assertTrue(probe.has("History/resume: Update older entry"))
+            assertTrue(probe.has("Series · Season 2, episode 3")); assertTrue(probe.has("History/resume: Keep existing entry"))
+            assertTrue(probe.has("Watched · Rewatch in progress · watch date unavailable"))
+            assertTrue(probe.has("Completion only — does not change Continue Watching"))
+            assertTrue(probe.has("Preserving existing data")); assertTrue(probe.has("Needs review — left unchanged"))
+            assertTrue(probe.has("Watched state is known, but the episode watch date is unavailable. Left unchanged."))
+            assertEquals(ToggleableState.Off, probe.describedState("Include Unmatched title"))
+            assertTrue(probe.described("Include Unmatched title")!!.config.contains(SemanticsProperties.Disabled), "Needs-review rows cannot be included")
+            probe.clickDescription("Include Resumed movie")
+            assertTrue(probe.has("Excluded — will not be imported"))
+            assertTrue(probe.has("1 review items included · 1 excluded · 3 shown in this preview"))
+            probe.click("Next: Confirm import")
+            assertTrue(probe.has("Review your chosen import into Synthetic profile."))
+            assertTrue(probe.has("Selected review items: 1. New account-wide add-ons: 1."))
+            assertTrue(probe.has("• Existing metadata (already configured)")); assertTrue(probe.has("• New metadata"))
+            assertTrue(probe.has("Selected new add-ons are added to your account only when you confirm."))
+            probe.click("I confirm this import is for Synthetic profile.")
+            probe.click("Confirm import", button = true)
+            assertTrue(probe.has(stremioUncertainApplyCopy))
+            assertTrue(probe.has("This selection is locked while its result is being confirmed. Retrying uses the same items."))
+            assertTrue(probe.disabled("Back")); assertTrue(probe.disabled("Cancel"))
+            transport.apply = { stremioCompletion.copy(addonsAdded = 1, excludedItems = 1) }
+            probe.click("Confirm import", button = true)
+            val applies = transport.calls.filter { it.startsWith("apply") }
+            assertEquals(2, applies.size); assertEquals(applies[0], applies[1], "Retry sends the identical selection")
+            assertTrue(probe.focused("Import complete"))
+            assertTrue(probe.has("Add-ons added to your account: 1")); assertTrue(probe.has("Review items excluded: 1"))
+            assertTrue(probe.has("Start another preview"))
         } finally { scene.close() }
     }
 

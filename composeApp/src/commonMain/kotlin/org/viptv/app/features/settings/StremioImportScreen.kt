@@ -263,6 +263,7 @@ internal fun StremioImportScreen(session: StremioImportSession?, profileName: St
                 add("explain") {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("VIPTV reads your Stremio account once for a read-only preview. You choose add-ons and items before anything is saved.", fontSize = 14.sp)
+                        ImportNote("Review add-ons, verify metadata, then choose exactly which items to import. Viewing data goes to $name. Selected add-ons are shared across your account's profiles.")
                         ImportNote("Imported: titles saved to My List, movie and episode resume points, and watched episodes that can be verified against metadata. Compatible metadata add-ons help verify titles, episodes and watched flags. Watched entries without dates are labelled as imported and do not change Continue Watching.")
                         ImportNote("Left for review: entries whose title or episode can't be verified. Likes/loves are not imported.")
                     }
