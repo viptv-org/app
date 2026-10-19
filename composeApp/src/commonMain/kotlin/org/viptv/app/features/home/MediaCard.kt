@@ -106,7 +106,11 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
-            AsyncImage(if (portrait) card.poster else card.landscape, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val slotW = with(density) { width.dp.toPx().toInt() }
+            val slotH = with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() }
+            val art = org.viptv.app.images.sizedArtwork(if (portrait) card.poster else card.landscape, slotW, slotH)
+            AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             if (card.badges.any { !it.equals("Simkl", true) }) Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
                 Text(card.badges.first { !it.equals("Simkl", true) }, Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
             }
