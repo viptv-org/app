@@ -69,7 +69,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
-            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -83,7 +83,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                 }
             }
         } else {
-            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 24.dp)) {
+            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
                 items(visible, key = ::searchCardKey) { MediaCard(it, width = if (phone) 112 else 172, portrait = true, showLabels = true, open = open) }
             }
         }

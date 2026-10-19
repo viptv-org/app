@@ -70,7 +70,9 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Un
         }
         MediaMetadata(card)
         card.description?.let {
-            Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = 3)
+            // D3HomeWin clamps the synopsis to three lines *with* an ellipsis (NAV-16).
+            Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = 3,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
         DesktopHeroActions({ play(card) }, { open(card) }, { save(card) }, saved)
         carousel?.let { HeroIndicators(it.count, it.index, it.progress) }

@@ -129,7 +129,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         }
         if (showLabels) {
             Spacer(Modifier.height(9.dp))
-            Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = if (focused) TextOverflow.Clip else TextOverflow.Ellipsis)
+            Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, // Ellipsis in every state; basicMarquee already clips its own slice. (NAV-13)
+                overflow = TextOverflow.Ellipsis)
             card.subtitle?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         if (actions != null) {

@@ -119,6 +119,11 @@ private fun launchApplication() = application {
                 .clip(windowShape)
                 .background(Palette.background)
                 .border(1.dp, Color.White.copy(alpha = 0.09f), windowShape)
+            // NAV-15: the transparent AWT frame composites as an opaque black
+            // rectangle on an X11 host without a compositor. Paint the window's
+            // own surface underneath so no unpainted pixel can go black; the
+            // rounded layer stays on top where transparency is available.
+            Box(Modifier.fillMaxSize().background(Palette.background)) {
             Box(Modifier.fillMaxSize().then(framed)) {
             Column(Modifier.fillMaxSize()) {
                 if (state.screen == Screen.Player) {
@@ -154,6 +159,7 @@ private fun launchApplication() = application {
                             modifier = Modifier.align(Alignment.TopStart).padding(start = 72.dp))
                     }
                 }
+            }
             }
             }
         }
