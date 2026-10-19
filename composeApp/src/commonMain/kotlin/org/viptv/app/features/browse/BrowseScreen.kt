@@ -75,7 +75,8 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     val grid = rememberLazyGridState()
     AutomaticPage(cards.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val compact = maxWidth < 640.dp && !television
+        val width = maxWidth
+        val compact = width < 640.dp && !television
         val gutter = if (television) 70.dp else if (compact) 16.dp else 40.dp
         var catalogs by remember { mutableStateOf(false) }
         var facetsOpen by remember { mutableStateOf(false) }
@@ -86,26 +87,39 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = if (television) 32.dp else 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(screen.name, fontSize = if (television) 36.sp else 28.sp, fontWeight = FontWeight.Bold)
+            // The Catalog/Filters bar only exists when the server supplied
+            // browsable controls; without them it would be two dead chips.
             if (loading && controls == null) BrowseHeaderSkeleton()
-            else PhoneBrowseBar(catalog, applied, { if (controls != null) catalogs = true }) { facetsOpen = !facetsOpen }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            else if (controls != null) PhoneBrowseBar(catalog, applied, { catalogs = true }) { facetsOpen = !facetsOpen }
+            // Server-supplied facets already include Sort; a second local sort
+            // control would contradict them (and duplicated on phone).
+            val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
+                controls?.controls?.any { it.id == "sort" } == true
+            if (facets.isNotEmpty() || !serverSort) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PhoneFilterChips(facets, Modifier.weight(1f)) { control, value ->
                     val values = facets.firstOrNull { it.first.id == control.id }?.second.orEmpty()
                     if (values.size <= 1) filterChanged(control.id, "") else multipleChanged(control.id, values - value)
                 }
-                SortMenu(sort, menu, { sort = it; menu = false }, { menu = !menu })
+                if (!serverSort) SortMenu(sort, menu, { sort = it; menu = false }, { menu = !menu })
             }
             if (facetsOpen && controls != null) DiscoveryFilters(controls, query, screen == Screen.Discover, filterChanged,
                 multipleChanged = multipleChanged, catalogPill = true)
             if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
+            // Column count from the boards: M3Browse is 3 across on a phone,
+            // D3Browse is 6 across at desktop width and 4 in its narrower
+            // variant. Cards fill their cell (minmax(0,1fr)), never a fixed px.
+            val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
             if (error != null && cards.isEmpty()) BrowseErrorState(catalog, error, Modifier.weight(1f), { applyQuery(query) }) { if (controls != null) catalogs = true }
-            else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Adaptive(if (television) 220.dp else if (compact) 155.dp else 172.dp), Modifier.weight(1f))
+            else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Fixed(columns), Modifier.weight(1f))
             else if (cards.isEmpty()) BrowseEmptyState(catalog, applied, Modifier.weight(1f)) { applyQuery(clearedFilters(query)) }
-            else LazyVerticalGrid(GridCells.Adaptive(if (television) 220.dp else if (compact) 155.dp else 172.dp),
-                state = grid, horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
+            else LazyVerticalGrid(GridCells.Fixed(columns),
+                state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
                 contentPadding = PaddingValues(bottom = if (compact) 88.dp else 24.dp)) {
                 items(cards, key = ::cardLookupKey) {
-                    MediaCard(it, width = if (television) 220 else if (compact) 155 else 172, portrait = true, showLabels = compact || television, open = open, showFocusOutline = television || !compact || !browser)
+                    MediaCard(it, width = 0, portrait = true, showLabels = true, open = open,
+                        modifier = Modifier.fillMaxWidth(), showFocusOutline = !compact || !browser)
                 }
             }
             if (catalogs && controls != null) PhoneCatalogsSheet(controls, query, { catalogs = false }) { selected ->
