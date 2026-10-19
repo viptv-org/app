@@ -70,12 +70,25 @@ app was doing avoidable per-frame work.
    one level each, so the home screen was no longer pixel-identical. It was
    dropped; the frame-drop win comes from the items above.
 
-## Not done (next step if more is needed)
+## Measured and rejected: hoisting the shelf scroll out of layout
 
-`rememberTvShelfScroll` still animates the `LazyListState` offset, so the shelf
-is re-measured ~2.5 times per key press (≈4.5 ms each). Hoisting the scroll to a
-`graphicsLayer` translation (jump the list, animate the offset delta) should
-remove those passes. It needs an over-scanning LazyRow (extra width, shifted
-`contentPadding`, clipping parent) and mid-animation frame comparison against
-the desktop fixture scene, because a naive translation clips cards sliding in
-from the edge.
+`rememberTvShelfScroll` animates the `LazyListState` offset, which re-measures
+and re-records the row. A variant that hops the list to its target once and
+animates a translation instead was implemented and **proven pixel-identical**
+(`TvShelfScrollVisualTest` compares 15 frames, 10 of them inside the 300 ms
+animation in both directions — all byte-identical), but it is **slower on this
+GPU** and was therefore not kept:
+
+| variant | cpu50 | gpu50 | missed vsync |
+|---|---|---|---|
+| animate the list offset (current) | 22 ms | 9–10 ms | 3.9 % |
+| jump + `graphicsLayer` translation | 25 ms | 16 ms | 5.1 % |
+| jump + draw-time translate + clip | 23–24 ms | 14–15 ms | 5.7–6.2 % |
+
+The translation needs a clip outside it, and either the clip layer or the
+full-width composited layer costs this GPU 5–6 ms per frame — more than the
+4.5 ms per press it saves on the UI thread. Do not retry this without a GPU
+that composites layers cheaply.
+
+Remaining headroom is therefore in the pixels (hero/backdrop fill, ~6 Mpx per
+frame) rather than in layout.
