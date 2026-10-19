@@ -78,7 +78,7 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | TVUI-09 | PARTIAL | loading state exists; Home→rows transition not re-verified after the state rewrite |
 | TVUI-10 | DONE | Live to board; Calendar + History self-designed (no board), documented |
 | TVUI-11 | DONE | Account page has real rows/actions (still board-less; documented) |
-| TVUI-12 | DONE | player controls/buffer/error/next/scrub/skip/audio copy+geometry. New: a stream whose clock advances with no rendered frame (Media3 `onRenderedFirstFrame` never fires) now shows the failure surface with "This TV can’t decode this stream" instead of a silent black screen. Sources list also gained a trailing inset so the last row clears the footer |
+| TVUI-12 | DONE | player controls/buffer/error/next/scrub/skip/audio copy+geometry. A stream whose clock advances without Media3 ever calling `onRenderedFirstFrame` now shows the failure surface instead of playing silent black (safety net only — **not** a confirmed defect: see the correction below). Sources list gained a trailing inset so the last row clears the footer |
 | TVUI-13 | DONE | sign-in family geometry/copy/focus |
 | TVUI-14 | DONE | profiles/pin/edit parity |
 | TVUI-15 | DONE | TV recovery-codes layout |
@@ -146,6 +146,14 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 - `adb screencap` returns black for the video surface on this TV, so a black
   capture is **not** evidence of a black picture. Playback state is judged from
   Media3's own callbacks (`onRenderedFirstFrame`, `onPlayerError`), not screenshots.
+- **Correction:** an earlier pass wrote this up as a Dolby Vision decode bug. The
+  owner confirmed the picture and audio were playing normally at that moment, so
+  the black `screencap` was the protected-surface artefact above. `MediaCodecInfo`
+  reporting `NoSupport [dvhe.08.06]` is informational — the DV profile-8 stream
+  plays through its HDR10 base layer. There is no DV defect to fix; the first-frame
+  watchdog stays as a safety net and cannot fire while frames are being rendered.
+- Real TorBox playback on the TV was confirmed by the owner watching it, which is
+  stronger evidence than any capture I can take of that surface.
 - TorBox is configured as the `Torrentio TB` add-on in the device's local engine
   DB (`engine_connections`), alongside Cinemeta, PenguPlay and VIPTV Sources.
 
