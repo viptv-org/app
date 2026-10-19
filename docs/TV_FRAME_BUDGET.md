@@ -335,3 +335,47 @@ unmeasurable claim is not a fix.
    comment that claims it) so the stated prefetch contract matches the code. Keep
    only if bitmap-upload stalls fall **without** raising frame p99 — extra
    composition is charged to the same budget as decode.
+
+---
+
+## 2026-10-19 — first release-build measurement on the ONN TV
+
+Build: `:androidApp:assembleRelease` (R8 minified), installed over the previous
+build, measured with `tools/tv_ab.sh` (R3 metric) and `tools/tv_framestats.sh`
+on the same session. Device `192.168.88.30:5555`, 1920×1080 UI.
+
+| Metric | Value |
+|---|---|
+| bursts | 4 × 16 D-pad presses (right then left) |
+| frames | 629 |
+| missed vsync | 53 → **8.4 %** |
+| janky frames | **16.3 %** |
+| CPU frame p50 | **25.0 ms** (24–25 across bursts) |
+| CPU frame p90 | 38.0 ms |
+| GPU frame p50 | 13.5 ms |
+| phase medians (framestats) | input 0.4 · anim 1.2 · **layout+record 2.6** · submit 3.7 · **swap_wait 13.9** |
+
+Reading:
+
+- **PERF-06 (<1 % missed vsync) is not met.** It is **not** a Compose problem:
+  layout+record is 2.6 ms of a 25.2 ms frame. `swap_wait` (13.9 ms) plus GPU work
+  dominates, i.e. the cost is in the compositor/GPU path for this full-screen
+  UI with the mandated backdrop blur (rule R5). CPU-side work would have to shrink
+  by more than half to matter, and there is not 13 ms of it.
+- **PERF-05**: the same trace shows layout+record at 2.6 ms per frame during
+  D-pad bursts, consistent with the earlier per-press finding; no per-press
+  measure spike appears in the frame phases. Zero-`LazyRow`-measure proof still
+  needs an instrumented counter; the frame evidence does not support a
+  per-press measure storm.
+- **PERF-10 (blur cost)**: gpu p50 13.5 ms with blur present. The earlier
+  rasterized-backdrop and offscreen-plane experiments were rejected for a ±1 px
+  visual delta and a GPU regression respectively (`PERF-04`), so blur stays and
+  its cost is bounded at the number above rather than reduced.
+- **PERF-09 (decode spikes)**: not isolated this pass; the release build's disk
+  and memory caches plus the pre-composed next card mean a new card's decode
+  lands on a frame that already has 12+ ms of slack in the CPU budget, but no
+  per-frame attribution was captured.
+- Desktop and web frame budgets (PERF-07/08) have **no** harness in this repo;
+  the desktop pass in `docs/evidence/device-pass-2026-10-19/desktop-*.png` is a
+  correctness capture from a software-rendered virtual window (the virtual
+  display has no GL, so hardware frame pacing is not measurable there).
