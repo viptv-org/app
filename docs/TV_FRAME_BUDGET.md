@@ -412,3 +412,30 @@ app-state difference — not a code change — explains most of the gap.
 scrolling screen (fresh launch lands on Profiles, or the TV is idle). Those runs
 are **invalid**, not results. A trustworthy run needs the app confirmed on Home
 before the first burst; that state assertion is still missing from the script.
+
+### Correction: the TV blur *was* still running (it was not moved)
+
+The earlier note said the proxy blur gave no TV win. That was wrong because the
+change had only touched `HomeBackdrop` (phone/tablet/desktop). The TV's blur lives
+in `SoftArtwork`, used by the `TvHomeBackdrop` browsing plane — the plane that is
+visible the moment focus enters a shelf, i.e. exactly during a D-pad burst.
+
+Moving *that* pass to wsrv (`blur=<sigma>` on the poster, runtime `Modifier.blur`
+skipped) measured, release build, same script, populated Home:
+
+| build | missed vsync | janky | cpu p50 | gpu p50 |
+|---|---|---|---|---|
+| runtime TV blur | 11.4 % | 15.8 % | 25.0 ms | 15.0 ms |
+| wsrv TV blur | **9.9 %** | 15.3 % | **23.0 ms** | **11.0 ms** |
+
+So blur was indeed part of the GPU cost: **−4.0 ms gpu p50, −2.0 ms cpu p50,
+−1.5 points missed vsync**. One valid run; a confirmation run is still owed
+because the sampling script is flaky about app state (see below).
+
+### Harness limitation (still open)
+
+`tv_ab.sh` now asserts that Home rendered (a shelf heading is on screen) before
+sampling, and aborts instead of reporting `4950 ms`. Even so, several runs after a
+fresh install still sampled zero frames, because key delivery depends on which
+control holds focus (a burst that does not scroll a shelf produces no frames).
+A trustworthy gate needs the script to focus a known shelf before each burst.

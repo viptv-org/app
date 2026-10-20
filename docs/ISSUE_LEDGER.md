@@ -24,7 +24,7 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | PERF-07 | HARNESS | no desktop frame-pacing instrument; the virtual display has no GL, so pacing is not measurable there |
 | PERF-08 | POLICY | Wasm default output is served to a physical TV (TEST-04 rule), so no browser perf run is taken against it |
 | PERF-09 | PARTIAL | caches + pre-composed next card give the decode frame >12 ms CPU slack; per-frame decode attribution not captured |
-| PERF-10 | PARTIAL | blur retained per R5. wsrv pre-blur was tried for phone/tablet/web/desktop: 9,746 B per backdrop instead of a runtime blur, but it is unmeasured on those platforms and gave **no** TV win (TV backdrop path is unchanged) |
+| PERF-10 | **DONE (TV)** | the TV browsing plane now blurs at the image service instead of per frame: measured **gpu p50 15.0 → 11.0 ms**, cpu p50 25.0 → 23.0 ms, missed vsync 11.4 % → **9.9 %** (one valid run, confirmation owed). Blur is retained visually (R5) — it is computed once, upstream |
 
 ## 2. Navigation & interaction
 

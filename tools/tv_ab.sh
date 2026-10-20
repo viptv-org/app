@@ -17,8 +17,26 @@ PRESSES=${3:-16}
 adb_t -s "$SERIAL" shell am force-stop "$PKG" >/dev/null 2>&1
 adb_t -s "$SERIAL" shell am start -n "$PKG/.MainActivity" >/dev/null 2>&1
 sleep 13
-adb_t -s "$SERIAL" shell input keyevent 23 >/dev/null 2>&1
-sleep 13
+
+# A cold start lands on the profile picker. Until Home has rendered, every burst
+# reports 4950 ms / 0 frames, which is not a measurement. Confirm Home (a shelf
+# heading is on screen) before sampling, retrying the profile OK press.
+on_home() {
+  adb_t -s "$SERIAL" shell uiautomator dump /sdcard/ab_home.xml >/dev/null 2>&1
+  adb_t -s "$SERIAL" shell cat /sdcard/ab_home.xml 2>/dev/null | grep -q "Continue Watching\|Cinemeta\|My List"
+}
+i=0
+while [ "$i" -lt 6 ]; do
+  adb_t -s "$SERIAL" shell input keyevent 23 >/dev/null 2>&1
+  sleep 6
+  if on_home; then break; fi
+  i=$((i+1))
+done
+if ! on_home; then
+  echo "=== $LABEL: ABORTED - Home never rendered (app not on a scrolling screen) ===" >&2
+  exit 2
+fi
+sleep 7
 adb_t -s "$SERIAL" shell "input keyevent 20; sleep 0.9; input keyevent 20; sleep 2.5" >/dev/null 2>&1
 i=0
 while [ "$i" -lt "$BURSTS" ]; do
