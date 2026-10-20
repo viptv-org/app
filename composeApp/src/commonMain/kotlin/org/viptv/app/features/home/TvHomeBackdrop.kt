@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
+private const val ScrimWidth = .7f
+
 @Composable
 internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = false, hero: Card? = card, heroReady: (String?) -> Unit = {}) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
@@ -25,7 +27,9 @@ internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = 
             clip = true; compositingStrategy = CompositingStrategy.Auto
         }) {
             BufferedArtwork(hero?.landscape ?: hero?.poster, Modifier.fillMaxSize(), onReady = heroReady)
-            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = .86f), .36f to Palette.background.copy(alpha = .4f), .7f to Color.Transparent)))
+            // The scrim is transparent past 70 % of the width: draw only that part, with the
+            // stops rescaled to the narrower box (same pixels, 30 % less fill per frame).
+            Box(Modifier.fillMaxHeight().fillMaxWidth(ScrimWidth).background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = .86f), (.36f / ScrimWidth) to Palette.background.copy(alpha = .4f), 1f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f), .45f to Color.Transparent, .8f to Palette.background.copy(alpha = .9f), 1f to Palette.background)))
         }
         Box(Modifier.fillMaxWidth().height(620.dp * scale).graphicsLayer {
