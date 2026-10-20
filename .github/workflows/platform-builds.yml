@@ -2,7 +2,7 @@ name: Experimental KMP platforms
 on:
   workflow_dispatch:
   push:
-    branches: [experiment/kmp-v2]
+    branches: [main, experiment/kmp-v2]
 permissions:
   contents: read
 concurrency:
