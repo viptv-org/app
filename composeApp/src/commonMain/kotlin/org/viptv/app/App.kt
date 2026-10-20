@@ -45,8 +45,11 @@ fun App(
     val scope = rememberCoroutineScope()
     val controller = providedController ?: remember { ApplicationController(scope) }
     val state by controller.state.collectAsState()
+    val deviceLink by controller.deviceLink.collectAsState()
     val routes = rememberSaveableStateHolder()
     LaunchedEffect(controller, manageControllerLifecycle, localDatabase) { if (manageControllerLifecycle) controller.restore(localDatabase) }
+    // A device sign-in link opens Add a device only once signed in with a profile chosen.
+    LaunchedEffect(deviceLink, state.screen, state.starting) { controller.deliverDeviceCode() }
     DisposableEffect(controller, manageControllerLifecycle) { onDispose { if (manageControllerLifecycle) controller.disconnect() } }
     ViptvTheme(television) {
         BoxWithConstraints(Modifier.fillMaxSize().background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {

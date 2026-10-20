@@ -13,6 +13,9 @@ android {
         val defaultServer = providers.gradleProperty("viptv.defaultServer").orNull.orEmpty()
         require(defaultServer.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?").matches(defaultServer)) { "viptv.defaultServer must be an https origin" }
         buildConfigField("String", "DEFAULT_SERVER", "\"$defaultServer\"")
+        // App Links (the sign-in QR opens the app): the default server's host. Android cannot verify a
+        // port, so those servers, and builds without one, get a host that matches nothing real.
+        manifestPlaceholders["viptvLinkHost"] = Regex("https://([A-Za-z0-9.-]+)").matchEntire(defaultServer)?.groupValues?.get(1) ?: "viptv-links.invalid"
     }
     buildFeatures { compose = true; buildConfig = true }
     buildTypes {

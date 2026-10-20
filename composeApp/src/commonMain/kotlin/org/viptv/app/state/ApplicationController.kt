@@ -14,6 +14,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) }) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
+    /** Outside [mutable]: signing in replaces the whole state, and a link can arrive before that. */
+    internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
     internal var connection: RemoteConnection? = null
     internal var local: LocalConnection? = null
     internal var localPersistenceWarning: String? = null

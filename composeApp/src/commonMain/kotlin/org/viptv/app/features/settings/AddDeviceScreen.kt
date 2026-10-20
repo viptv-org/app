@@ -20,7 +20,7 @@ private enum class AddDeviceStep { Code, Confirm, Done, Denied }
  * signed in. Approval is always explicit and goes through the account this app already holds.
  */
 @Composable
-internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean) {
+internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedCode: String? = null, linkConsumed: () -> Unit = {}) {
     val approval = remember(remote) { RemoteDeviceApproval(remote) }
     val scope = rememberCoroutineScope()
     var step by remember { mutableStateOf(AddDeviceStep.Code) }
@@ -51,6 +51,11 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean) {
         step = if (approve) AddDeviceStep.Done else AddDeviceStep.Denied
     }
     fun startOver() { code = ""; device = null; error = null; step = AddDeviceStep.Code }
+
+    // The TV's QR code opened the app with its code: skip typing and check it straight away.
+    LaunchedEffect(linkedCode) {
+        if (linkedCode != null) { code = linkedCode; device = null; error = null; step = AddDeviceStep.Code; linkConsumed(); lookup() }
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding()
         .padding(horizontal = 24.dp, vertical = if (compact) 16.dp else 32.dp),
