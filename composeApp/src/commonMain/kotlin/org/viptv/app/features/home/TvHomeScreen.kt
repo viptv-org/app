@@ -1,5 +1,6 @@
 package org.viptv.app.features.home
 
+import org.viptv.app.state.owner
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.CubicBezierEasing
@@ -122,12 +123,12 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val top = animateDpAsState(targetTop, tween(450, easing = easing), label = "Billboard to rows", finishedListener = {})
         val measuredLastHeight = with(LocalDensity.current) { lastRowHeight.toDp() }
         val bottomSpace = maxOf(96.dp * scale, maxHeight - targetTop - measuredLastHeight)
-        var heroTimerEnabled by remember(home?.scope) { mutableStateOf(true) }
+        var heroTimerEnabled by remember(home?.scope?.owner()) { mutableStateOf(true) }
         LaunchedEffect(browsing) {
             if (browsing) heroTimerEnabled = false
             else { delay(450); heroTimerEnabled = true }
         }
-        val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope)
+        val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope?.owner())
         val portraitSelection = { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" }
         val selection = rememberTvBillboardSelection(focused, { browsing }, portraitSelection, quietForMillis)
         val settled = selection?.card

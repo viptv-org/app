@@ -63,9 +63,14 @@ internal class HeroProgress {
 @Composable
 internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey: Any?): HeroCarousel {
     var index by remember(scopeKey) { mutableIntStateOf(0) }
-    val active = if (cards.isEmpty()) 0 else index % cards.size
+    // A refreshed Home can reorder or replace the featured cards. The hero keeps
+    // the card it shows while that card survives instead of jumping by index.
+    var anchor by remember(scopeKey) { mutableStateOf<Any?>(null) }
+    val anchored = anchor?.let { shown -> cards.indexOfFirst { org.viptv.app.connection.cardLookupKey(it) == shown }.takeIf { it >= 0 } }
+    val active = if (cards.isEmpty()) 0 else anchored ?: (index % cards.size)
     val card = cards.getOrNull(active)
     val key = card?.let { org.viptv.app.connection.cardLookupKey(it) }
+    LaunchedEffect(key) { if (key != null) { anchor = key; index = active } }
     val artwork = card?.landscape ?: card?.poster
     var ready by remember(scopeKey, artwork) { mutableStateOf(artwork == null) }
     val progress = remember(scopeKey) { HeroProgress() }
@@ -74,7 +79,8 @@ internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey:
     LaunchedEffect(key, enabled, ready, cards.size) {
         if (enabled && ready && cards.size > 1) {
             progress.run(key)
-            index = (active + 1) % cards.size
+            val next = (active + 1) % cards.size
+            anchor = org.viptv.app.connection.cardLookupKey(cards[next]); index = next
         }
     }
     LaunchedEffect(key, enabled, ready, cards.size) {

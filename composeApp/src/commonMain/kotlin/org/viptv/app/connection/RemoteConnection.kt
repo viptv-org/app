@@ -25,7 +25,9 @@ import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
 
 data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null)
-data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null)
+data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null,
+    /** Change tokens read before [home] was built; null for local and older servers. */
+    val revisions: org.viptv.app.state.Revisions? = null)
 class RemoteFailure(val status: Int, message: String) : Exception(message)
 
 private val nativeSessionGate = Mutex()
@@ -153,7 +155,8 @@ class RemoteConnection(
             library = value["library"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<CatalogPage>(it).cards },
             preferences = value["preferences"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
             libraryMembership = value["library_membership"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
-            libraryImport = value["library_import"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) })
+            libraryImport = value["library_import"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
+            revisions = parseRevisions(value["revisions"]))
     }
 
     suspend fun selectProfile(id: String): Bootstrap {

@@ -14,9 +14,9 @@ fun ApplicationController.detailPage(offset: Long) {
     val operation = generation
     val remote = connection
     val device = local
-    val homeScope = mutable.value.home?.scope
+    val homeScope = mutable.value.home?.scope?.owner()
     fun current() = generation == operation && mutable.value.screen == Screen.Details &&
-        mutable.value.selectedProfile == profile && mutable.value.home?.scope == homeScope &&
+        mutable.value.selectedProfile == profile && mutable.value.home?.scope?.owner() == homeScope &&
         mutable.value.detail?.item?.let(::cardLookupKey) == cardLookupKey(previous.item) && connection === remote && local === device
     mutable.value = mutable.value.copy(detailLoadingOffset = offset, detailPageError = null)
     detailPagingJob = scope.launch {

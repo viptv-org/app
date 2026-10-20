@@ -154,8 +154,10 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
+    val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)
     mutable.value = mutable.value.copy(playback = null, screen = Screen.Sources, error = null, busy = false)
     lastProgress=null
+    afterPlayback(live)
 }

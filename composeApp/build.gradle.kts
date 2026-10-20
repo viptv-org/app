@@ -25,6 +25,7 @@ kotlin {
             implementation("io.github.alexzhirkevich:qrose:1.3.1")
             implementation("dev.chrisbanes.haze:haze-blur:2.0.1")
             implementation(compose.components.resources)
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
             implementation("io.ktor:ktor-client-core:3.4.0")

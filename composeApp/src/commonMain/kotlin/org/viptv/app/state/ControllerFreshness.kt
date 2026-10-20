@@ -1,0 +1,175 @@
+package org.viptv.app.state
+
+import kotlinx.coroutines.*
+import org.viptv.app.connection.*
+import org.viptv.engine.wire.HomeSnapshot
+import org.viptv.engine.wire.RowState
+import org.viptv.engine.wire.Scope
+
+/** What the background lane does next. A refresh outranks a check when requests coalesce. */
+enum class QuietWork { Check, Refresh }
+
+/** A background result belongs to the session and profile that asked for it. */
+internal data class QuietOwner(val remote: RemoteConnection?, val local: LocalConnection?, val profile: String)
+
+/** Home identity without its revision: a refreshed Home is the same Home to paging, focus and the hero. */
+internal fun Scope.owner() = copy(revision = 0)
+
+/**
+ * The app came to the front or went behind (Android start/stop, desktop
+ * window focus, browser tab visibility). Returning checks immediately; the
+ * watcher runs only while the app is in front.
+ */
+fun ApplicationController.appForeground(foreground: Boolean) {
+    freshness.foreground(foreground)
+    freshnessWatcher?.cancel(); freshnessWatcher = null
+    if (!foreground) return
+    freshen()
+    freshnessWatcher = scope.launch { while (isActive) { delay(Freshness.TICK); freshnessTick() } }
+}
+
+/** Key, remote, touch or pointer input. An aged Home waits until the viewer is idle. */
+fun ApplicationController.userActivity() = freshness.input()
+
+/** Foreground return or entry to a screen: check now, or rebuild an aged Home. */
+fun ApplicationController.freshen() {
+    val state = mutable.value
+    if (!freshness.active() || state.screen == Screen.Player || state.selectedProfile == null) return
+    if (state.home != null && freshness.homeStale()) requestQuiet(QuietWork.Refresh)
+    else if (freshness.checkDue(polling = false)) requestQuiet(QuietWork.Check)
+}
+
+/** While Home is visible: poll the revisions, and rebuild an aged Home once the viewer is idle. */
+internal fun ApplicationController.freshnessTick() {
+    val state = mutable.value
+    if (!freshness.active() || state.screen != Screen.Home || state.home == null || state.selectedProfile == null) return
+    if (freshness.homeStale() && freshness.idle()) requestQuiet(QuietWork.Refresh)
+    else if (freshness.checkDue(polling = true)) requestQuiet(QuietWork.Check)
+}
+
+/** Progress changed: rebuild Home and the details Back returns to once the final save lands. */
+internal fun ApplicationController.afterPlayback(live: Boolean = false) {
+    if (!live) requestQuiet(QuietWork.Refresh, detail = true)
+}
+
+/** One background lane. A request during work runs once more afterwards instead of being dropped. */
+internal fun ApplicationController.requestQuiet(work: QuietWork, detail: Boolean = false) {
+    val owner = QuietOwner(connection, local, mutable.value.selectedProfile ?: return)
+    if (owner.remote == null && owner.local == null) return
+    if (quietJob?.isActive == true && quietOwner == owner) {
+        quietPending = quietPending?.let { maxOf(it, work) } ?: work
+        quietDetail = quietDetail || detail
+        return
+    }
+    quietJob?.cancel()
+    quietOwner = owner; quietPending = null; quietDetail = false
+    quietJob = scope.launch {
+        var next: QuietWork? = work
+        var withDetail = detail
+        while (next != null && current(owner)) {
+            quietly(owner) { if (next == QuietWork.Check) checkRevisions(owner) else refreshQuietly(owner, null, withDetail) }
+            next = quietPending; withDetail = quietDetail
+            quietPending = null; quietDetail = false
+        }
+    }
+}
+
+private fun ApplicationController.current(owner: QuietOwner) =
+    connection === owner.remote && local === owner.local && mutable.value.selectedProfile == owner.profile
+
+/** Failures keep the last good data and stay silent; only an expired session is surfaced. */
+private suspend fun ApplicationController.quietly(owner: QuietOwner, work: suspend () -> Unit) {
+    try { work() }
+    catch (error: CancellationException) { throw error }
+    catch (error: Exception) {
+        if (error is RemoteFailure && error.status == 401 && current(owner)) expireSession(owner.remote, owner.local)
+    }
+}
+
+private suspend fun ApplicationController.checkRevisions(owner: QuietOwner) {
+    val remote = owner.remote ?: return freshness.unsupported()
+    freshness.checked()
+    val observed = remote.revisions(owner.profile)
+    if (!current(owner)) return
+    if (observed == null) return freshness.unsupported()
+    if (freshness.changed(observed)) refreshQuietly(owner, observed, detail = false) else freshness.adopt(observed)
+}
+
+private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, observed: Revisions?, detail: Boolean) {
+    progressJob?.join()
+    val libraryMoved = observed?.let(freshness::libraryChanged) ?: true
+    val device = owner.local
+    if (device != null) {
+        val home = device.refreshHome(owner.profile)
+        val membership = device.libraryMembership(owner.profile)
+        val cards = device.library(owner.profile)
+        if (!current(owner)) return
+        publishHome(home)
+        updateLibrary(cards, membership = membership)
+        freshness.homeBuilt(null)
+    } else {
+        val result = requireNotNull(owner.remote).bootstrap()
+        if (!current(owner) || result.selected != owner.profile) return
+        publishHome(result.home)
+        val state = mutable.value
+        mutable.value = state.copy(profiles = result.profiles, profileManagement = result.profileManagement ?: state.profileManagement,
+            preferences = result.preferences ?: state.preferences, policyRefreshNeeded = false)
+        result.library?.let { updateLibrary(it, membership = result.libraryMembership) }
+        freshness.homeBuilt(result.revisions ?: observed)
+    }
+    if (libraryMoved) reloadVisibleLibrary(owner)
+    if (detail) reloadDetailQuietly(owner)
+}
+
+/** A missing Home never erases the shown one. Paging state survives for rows that still exist. */
+private fun ApplicationController.publishHome(fresh: HomeSnapshot?) {
+    val state = mutable.value
+    val merged = mergeHome(state.home, fresh) ?: return
+    val ids = merged.rows.mapTo(mutableSetOf()) { it.id }
+    mutable.value = state.copy(home = merged, homeRowBusy = state.homeRowBusy intersect ids,
+        homeRowErrors = state.homeRowErrors.filterKeys { it in ids })
+}
+
+/**
+ * Fresh rows replace shown rows, except that a catalog row the viewer has
+ * already paged keeps its loaded tail: a refresh never shrinks a row under focus.
+ */
+internal fun mergeHome(current: HomeSnapshot?, fresh: HomeSnapshot?): HomeSnapshot? {
+    if (current == null || fresh == null || current.scope.owner() != fresh.scope.owner()) return fresh
+    val shown = current.rows.associateBy { it.id }
+    return fresh.copy(rows = fresh.rows.map { row ->
+        val old = shown[row.id]
+        if (old == null || row.state != RowState.READY || old.state != RowState.READY || row.pageQuery() == null ||
+            row.browse != old.browse || old.cards.size <= row.cards.size) row
+        else row.copy(cards = (row.cards + old.cards).distinctBy(::cardLookupKey), next_cursor = old.next_cursor)
+    })
+}
+
+private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner) {
+    when (mutable.value.screen) {
+        Screen.Library -> if (mutable.value.libraryPage != null && current(owner)) loadLibraryPage(refresh = true)
+        Screen.History -> {
+            val history = owner.local?.history(owner.profile) ?: requireNotNull(owner.remote).history(owner.profile)
+            if (current(owner) && mutable.value.screen == Screen.History) mutable.value = mutable.value.copy(history = history)
+        }
+        else -> Unit
+    }
+}
+
+/** Watched state and progress for the page Back returns to; loaded episodes, focus and paging stay. */
+private suspend fun ApplicationController.reloadDetailQuietly(owner: QuietOwner) {
+    val shown = mutable.value.detail ?: return
+    val played = mutable.value.sourceTitle?.identity?.episode
+    val season = played?.let { coordinates -> shown.seasons.firstOrNull { it.season == coordinates.season } }
+    val offset = season?.offset?.toInt()?.coerceIn(0, 10_000) ?: 0
+    val limit = (season?.episode_count?.toInt() ?: 24).coerceIn(1, 96)
+    val fresh = owner.local?.detailPage(owner.profile, shown.item, offset, limit)
+        ?: requireNotNull(owner.remote).detail(shown.item, offset, limit)
+    if (!current(owner)) return
+    val loaded = mutable.value.detail ?: return
+    val key = cardLookupKey(shown.item)
+    if (cardLookupKey(loaded.item) != key || cardLookupKey(fresh.item) != key) return
+    val updated = fresh.episodes.associateBy(::cardLookupKey)
+    mutable.value = mutable.value.copy(detail = loaded.copy(item = fresh.item,
+        episodes = loaded.episodes.map { updated[cardLookupKey(it)] ?: it }))
+}

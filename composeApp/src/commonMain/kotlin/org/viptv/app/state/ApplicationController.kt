@@ -11,7 +11,8 @@ import kotlin.time.TimeSource
 class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore(),
     internal val playbackDiagnostics: ((String) -> Unit)? = null,
     internal val localFactory: (String) -> LocalConnection = ::localConnection,
-    internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) }) {
+    internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) },
+    internal val freshness: Freshness = Freshness()) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     /** Outside [mutable]: signing in replaces the whole state, and a link can arrive before that. */
@@ -53,6 +54,12 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var backgroundPlayback: org.viptv.app.player.PlaybackInput? = null
     internal var completionSeen = false
     internal var progressSavedAt = TimeSource.Monotonic.markNow()
+    /** The background refresh lane: never [busy], never cancels [job]. */
+    internal var quietJob: Job? = null
+    internal var quietOwner: QuietOwner? = null
+    internal var quietPending: QuietWork? = null
+    internal var quietDetail = false
+    internal var freshnessWatcher: Job? = null
 
     internal fun run(operation: suspend () -> Unit) {
         val prior = job

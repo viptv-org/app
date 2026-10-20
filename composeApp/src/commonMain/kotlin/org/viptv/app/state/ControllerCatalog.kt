@@ -18,7 +18,10 @@ fun ApplicationController.refresh() = run {
     currentCoroutineContext().ensureActive()
     if (mutable.value.screen == Screen.Home || refreshed.selected != profile) accept(refreshed, busy = true)
     // A replacement snapshot has fresh cursors, so no row keeps a stale page state.
-    else mutable.value = mutable.value.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap())
+    else {
+        mutable.value = mutable.value.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap())
+        freshness.homeBuilt(refreshed.revisions)
+    }
 }
 
 /** A row stops appending here, above the engine's 200-card catalog page cap. */
@@ -42,10 +45,10 @@ fun ApplicationController.homeRowPage(rowId: String) {
     }
     val remote = connection
     val device = local
-    val homeScope = home.scope
+    val homeScope = home.scope.owner()
     val operation = generation
     fun current() = generation == operation && mutable.value.screen == Screen.Home &&
-        mutable.value.selectedProfile == profile && mutable.value.home?.scope == homeScope &&
+        mutable.value.selectedProfile == profile && mutable.value.home?.scope?.owner() == homeScope &&
         connection === remote && local === device
     mutable.value = mutable.value.copy(homeRowBusy = mutable.value.homeRowBusy + rowId,
         homeRowErrors = mutable.value.homeRowErrors - rowId)
@@ -78,7 +81,7 @@ fun ApplicationController.homeRowPage(rowId: String) {
             // Clear the busy flag whenever this snapshot is still the one on screen,
             // even if Home is no longer the visible screen.
             val state = mutable.value
-            if (rowId in state.homeRowBusy && state.home?.scope == homeScope)
+            if (rowId in state.homeRowBusy && state.home?.scope?.owner() == homeScope)
                 mutable.value = state.copy(homeRowBusy = state.homeRowBusy - rowId)
         }
     }
