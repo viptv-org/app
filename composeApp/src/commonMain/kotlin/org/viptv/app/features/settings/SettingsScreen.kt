@@ -22,7 +22,9 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
     tvParentalMaturity: String? = null, tvParentalPinAvailable: Boolean = true,
     /** (compact, back, manageAddons): the import may open the Add-ons section from its first stage, as on the web. */
-    stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null) {
+    stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null,
+    /** Signs in another device from this signed-in app; without it, "Watch on TV" points at the server's web page. */
+    addDevice: (@Composable (Boolean) -> Unit)? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable)
         return
@@ -46,7 +48,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             Box(Modifier.weight(1f, fill = !webAccount).then(if (webAccount) Modifier.widthIn(max = 760.dp) else Modifier)) {
                 when {
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
-                        { section = "Add-ons" }, { leaving = true }, back, account = account?.let { { section = "Account" } }, devices = devices?.let { { section = "Devices" } }, stremioImport = stremioImport?.let { { section = stremioImportSection } }, preferences = if (preferences != null || sectionPreferences != null) ({ section = it }) else null, parental = parental?.let { { section = "Parental controls" } }, information = { section = it })
+                        { section = "Add-ons" }, { leaving = true }, back, account = account?.let { { section = "Account" } }, devices = devices?.let { { section = "Devices" } }, stremioImport = stremioImport?.let { { section = stremioImportSection } }, preferences = if (preferences != null || sectionPreferences != null) ({ section = it }) else null, parental = parental?.let { { section = "Parental controls" } }, information = { section = it }, addDevice = addDevice != null)
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) ({ section = null }) else null, sourceIntegrations = phoneSourceIntegrations,
                         installWithCompletion = installWithCompletion)
@@ -59,6 +61,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, { section = null }) {
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()
                     }
+                    section == "Watch on TV" && addDevice != null -> SettingsDetailContent(compact, { section = null }) { addDevice(compact) }
                     section in listOf("General", "Help", "About", "Watch on TV") -> SettingsDetailContent(compact, { section = null }) {
                         SettingsInformation(requireNotNull(section), local, serverAddress, profile?.name, profiles) { leaving = true }
                     }

@@ -126,18 +126,7 @@ internal class DeviceApprovalController(
         }
     }
 
-    private suspend fun parentFailure(failure: Throwable): Throwable {
-        currentCoroutineContext().ensureActive()
-        if (failure is RemoteFailure && failure.status == 403) {
-            val parent = try {
-                Json { ignoreUnknownKeys = true }.decodeFromJsonElement<ParentAccess>(remote().call("/api/parent/status"))
-            } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { null }
-            currentCoroutineContext().ensureActive()
-            if (parent?.restricted == true && !parent.unlocked && parent.pin_configured) return ParentAuthorizationRequired()
-        }
-        return failure
-    }
+    private suspend fun parentFailure(failure: Throwable): Throwable = remote().parentRestriction(failure)
 
     fun unlockParent(pin: String, onResult: (Result<Unit>) -> Unit) {
         if (isBusy()) return
