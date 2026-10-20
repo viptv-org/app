@@ -38,6 +38,8 @@ fun App(
     manageControllerLifecycle: Boolean = true,
     imageDiagnostics: ((String) -> Unit)? = null,
     entryBackChanged: ((() -> Unit)?) -> Unit = {},
+    /** Prefilled server address for native sign-in; browsers always use their own origin. */
+    defaultServer: String = "",
 ) {
     org.viptv.app.images.ConfigureImageLoading(imageDiagnostics)
     val scope = rememberCoroutineScope()
@@ -62,7 +64,7 @@ fun App(
             val compact = maxWidth < 640.dp && !television
             val tablet = !compact && !television && !browser && !desktopChrome
             when (state.screen) {
-                Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: "", state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
+                Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: defaultServer, state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
                     register = if (browser) ({ username, name, password -> controller.registerAccount(browserOrigin().orEmpty(), username, name, password) }) else null,
                     recover = if (browser) ({ username, code, password -> controller.recoverAccount(browserOrigin().orEmpty(), username, code, password) }) else null)
@@ -123,7 +125,7 @@ fun App(
                             Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
                                 controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
                             else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                            Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact)
+                            Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
                     }

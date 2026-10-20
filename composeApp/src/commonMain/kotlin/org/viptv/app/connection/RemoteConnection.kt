@@ -2,6 +2,7 @@ package org.viptv.app.connection
 
 import io.ktor.client.request.*
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.timeout
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
@@ -204,11 +205,19 @@ class RemoteConnection(
         return value
     }
 
-    private suspend fun authenticatedResponse(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): HttpResponse {
+    /**
+     * Status and body without generic failure copy, for endpoints whose callers map fixed error codes.
+     * [timeoutMillis] replaces the shared request and socket timeouts for this one slow request only.
+     */
+    internal suspend fun exchange(path: String, method: HttpMethod, body: JsonElement? = null, timeoutMillis: Long? = null): Pair<Int, String> =
+        authenticatedResponse(path, method, body, timeoutMillis).let { it.status.value to it.bodyAsText() }
+
+    private suspend fun authenticatedResponse(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null,
+        timeoutMillis: Long? = null): HttpResponse {
         require(path.startsWith("/api/") && !path.contains('\\'))
         ensureOpen()
         val version = refreshVersion
-        var response = send(path, method, body, accessToken, csrf)
+        var response = send(path, method, body, accessToken, csrf, timeoutMillis)
         if (response.status == HttpStatusCode.Unauthorized && path !in setOf("/api/auth/login", "/api/auth/device/login", "/api/auth/logout")) {
             response.bodyAsText()
             authSession {
@@ -219,12 +228,13 @@ class RemoteConnection(
             }
             currentCoroutineContext().ensureActive()
             ensureOpen()
-            response = send(path, method, body, accessToken, csrf)
+            response = send(path, method, body, accessToken, csrf, timeoutMillis)
         }
         return response
     }
 
-    private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?): HttpResponse {
+    private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?,
+        timeoutMillis: Long? = null): HttpResponse {
         // A retirement can happen while a rotation is finishing. That rotation
         // already owns the gate; its request must complete, while ordinary new
         // calls are rejected by their entry points.
@@ -236,6 +246,8 @@ class RemoteConnection(
             access?.let { bearerAuth(it) }
             csrfValue?.let { header("x-csrf-token", it) }
             body?.let { setBody(it.toString()) }
+            // Overrides the HttpTimeout plugin defaults per request on OkHttp, Js and Darwin; connect stays shared.
+            timeoutMillis?.let { limit -> timeout { requestTimeoutMillis = limit; socketTimeoutMillis = limit } }
         }
     }
 

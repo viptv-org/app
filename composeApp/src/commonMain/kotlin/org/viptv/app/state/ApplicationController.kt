@@ -42,6 +42,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var nextEpisodeGeneration = 0L
     internal var pairingJob: Job? = null
     internal var pairingGeneration = 0L
+    internal var stremioImport: StremioImportSession? = null
     /** Set when the next playback open should start from the beginning instead of resuming. */
     internal var restartRequested = false
     internal var firstFrameSeen = false
@@ -64,6 +65,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                 if (generation == current && e is RemoteFailure && e.status == 401 && local == null) {
                     releaseRemotePlayback()
                     resetLiveRequests()
+                    discardStremioImport()
                     connection?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
                 } else if (generation == current) mutable.value = mutable.value.copy(error = when (e) {

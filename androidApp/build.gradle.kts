@@ -9,8 +9,12 @@ android {
         applicationId = "org.viptv.experiment"; minSdk = 26; targetSdk = 36; versionCode = 1; versionName = "0.1.0-experiment"
         // Package only ABIs with both the Rust engine and FFmpeg audio decoder.
         ndk { abiFilters += setOf("armeabi-v7a", "arm64-v8a", "x86_64") }
+        // Optional prefilled sign-in server for dev builds: -Pviptv.defaultServer=https://host
+        val defaultServer = providers.gradleProperty("viptv.defaultServer").orNull.orEmpty()
+        require(defaultServer.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?").matches(defaultServer)) { "viptv.defaultServer must be an https origin" }
+        buildConfigField("String", "DEFAULT_SERVER", "\"$defaultServer\"")
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true

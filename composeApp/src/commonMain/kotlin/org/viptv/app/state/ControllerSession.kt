@@ -62,6 +62,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
 
 
 fun ApplicationController.connect(origin: String, username: String, password: String) {
+    discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
     val finishing = if (completionSeen) progressJob else saveProgress(false, final = true)
@@ -128,6 +129,7 @@ fun ApplicationController.leaveLocal() {
 }
 
 fun ApplicationController.disconnect() {
+    discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
     libraryHydration?.cancel(); resetLiveRequests()
@@ -149,6 +151,7 @@ fun ApplicationController.disconnect() {
 }
 
 fun ApplicationController.signOut() = run {
+    discardStremioImport()
     libraryImportRefresh?.cancel()
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
@@ -183,6 +186,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
+    discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }
     startLibraryImportRefresh(value.libraryImport)
     if (value.library != null) return

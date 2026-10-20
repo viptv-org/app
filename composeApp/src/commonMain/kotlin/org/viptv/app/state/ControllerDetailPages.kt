@@ -35,7 +35,7 @@ fun ApplicationController.detailPage(offset: Long) {
         catch (error: Exception) {
             if (current()) {
                 if (error is RemoteFailure && error.status == 401 && device == null) {
-                    releaseRemotePlayback(); remote?.close(); connection = null
+                    releaseRemotePlayback(); discardStremioImport(); remote?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
                 } else mutable.value = mutable.value.copy(detailPageError = "Could not load the remaining episodes. Try selecting the season again.")
             }
