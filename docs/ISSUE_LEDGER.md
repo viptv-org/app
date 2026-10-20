@@ -1,6 +1,6 @@
 # VIPTV KMP — issue ledger (authoritative)
 
-Last updated: 2026-10-19 (session 2).
+Last updated: 2026-10-20 (session 3 — wsrv-blur confirmation).
 Status vocabulary:
 **DONE** (implemented + evidence) · **PARTIAL** (implemented, evidence incomplete)
 · **OWNER** (needs a product/account decision I cannot make) · **HARNESS** (needs
@@ -20,11 +20,11 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | PERF-03 | DONE | row fade outside item scope |
 | PERF-04 | DONE | rejected experiments documented |
 | PERF-05 | PARTIAL | release framestats: layout+record **2.6 ms**/frame during D-pad bursts, no per-press spike. An exact zero-measure count needs an instrumented LazyList counter (HARNESS) |
-| PERF-06 | **measured, target NOT met** | release on ONN, populated Home: **11–12 % missed vsync** (11.2/12.0/11.4 across identical builds), janky ~15.5 %, cpu p50 25.0 ms, gpu p50 15.0 ms. framestats: `swap_wait 13.9` vs `layout+record 2.6` → GPU/compositor bound, not Compose. An earlier 8.4 % run was on a still-populating Home and is not a valid baseline. Details in `docs/TV_FRAME_BUDGET.md` |
+| PERF-06 | **measured, target NOT met** | release on ONN, populated Home: **8.2–10.4 % missed vsync** (six release runs on 2026-10-20, two builds, same focused shelf), janky ~15 %, cpu p50 25.0 ms (rock stable), gpu p50 13–16 ms. framestats: `swap_wait 13.9` vs `layout+record 2.6` → GPU/compositor bound, not Compose. The earlier 11.2/12.0/11.4 % baseline came from the unasserted `tv_ab.sh` and is not a code baseline. Details in `docs/TV_FRAME_BUDGET.md` |
 | PERF-07 | HARNESS | no desktop frame-pacing instrument; the virtual display has no GL, so pacing is not measurable there |
 | PERF-08 | POLICY | Wasm default output is served to a physical TV (TEST-04 rule), so no browser perf run is taken against it |
 | PERF-09 | PARTIAL | caches + pre-composed next card give the decode frame >12 ms CPU slack; per-frame decode attribution not captured |
-| PERF-10 | **DONE (TV)** | the TV browsing plane now blurs at the image service instead of per frame: measured **gpu p50 15.0 → 11.0 ms**, cpu p50 25.0 → 23.0 ms, missed vsync 11.4 % → **9.9 %** (one valid run, confirmation owed). Blur is retained visually (R5) — it is computed once, upstream |
+| PERF-10 | **measured, NO WIN** | the TV browsing-plane blur was moved to wsrv in `07c44ab`; a 3-vs-3 release A/B on 2026-10-20 (`docs/evidence/2026-10-20-tv-perf/`) shows cpu p50 25.0 ms in all six runs and gpu p50 13–16 ms in **both** builds, missed vsync 8.3/9.7/10.4 % (runtime blur) vs 8.2/8.9/9.4 % (wsrv). The claimed 15.0→11.0 ms / 25→23 ms was a single scene-dependent sample and does not reproduce. Blur is still on screen (R5), so this is a wash, not a regression. Open decision: keep the extra wsrv request or restore the runtime blur (identical pixels, one less network dependency) |
 
 ## 2. Navigation & interaction
 
@@ -135,7 +135,7 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | TEST-07 | PARTIAL | desktop pass captured in a real X11 window with software rendering; hardware GL was unavailable in the virtual display and the physical display was in use |
 | TEST-08 | POLICY | web pass would use the Wasm default output |
 | TEST-09 | DONE | regression captures kept under `docs/evidence/` |
-| TEST-10 | DONE | release `tools/tv_ab.sh` run recorded (see PERF-06) |
+| TEST-10 | DONE | release `tools/tv_ab.sh` runs recorded; the harness now asserts a paging shelf before sampling (2026-10-20) — see PERF-06/PERF-10 |
 | DOC-01 | DONE | design repo `copy.md` / `components.md` / `decisions.md` reconciled to the export (`fb07fe3`) |
 | DOC-02 | DONE | this ledger + OPEN_TASKS/UI_INVENTORY |
 | DOC-03 | DONE | TV_FRAME_BUDGET carries every accepted/rejected experiment + the release numbers |
@@ -161,10 +161,11 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 
 1. **PLAY-03** — your decision (iOS gateway vs local-only).
 2. **DATA-05** — needs an account with that title + a debrid add-on.
-3. **PERF-06** — measured at 8.4 % missed vsync; the bottleneck is `swap_wait`
-   (compositor/GPU), and the blur is mandated by R5. Closing it needs a GPU-side
-   decision (e.g. render the billboard backdrop once per focus settle instead of
-   per frame), not more Compose tuning.
+3. **PERF-06** — measured at 8.2–10.4 % missed vsync (2026-10-20, asserted harness);
+   the bottleneck is `swap_wait` (compositor/GPU), and the blur is mandated by R5.
+   Closing it needs a GPU-side decision (e.g. render the billboard backdrop once per
+   focus settle instead of per frame), not more Compose tuning. **PERF-10 no longer
+   counts as a lever**: the upstream blur was measured at 0 ms.
 4. **PERF-05/07/09** — need instruments: a LazyList measure counter, a desktop
    frame-gap probe, and a per-frame decode attribution. Procedures are written in
    `docs/TV_FRAME_BUDGET.md`.

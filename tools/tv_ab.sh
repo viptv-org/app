@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Reliable A/B frame benchmark: one app session, several measured bursts,
 # aggregated frame-duration percentiles and missed-vsync rate.
-# Usage: tools/tv_ab.sh <label> [bursts] [presses_per_burst]
+# Usage: tools/tv_ab.sh <label> [bursts] [presses_per_burst] [focus_mode]
+#   focus_mode=shelf (default) walks Down to a shelf that provably pages.
+#   focus_mode=blind reproduces the pre-2026-10-20 behaviour (Down x2 from the
+#   hero) and exists ONLY to show why its numbers are not comparable: which
+#   control it lands on is whatever the randomised Home puts there.
 set -u
 
 # Hard guard: never let a device call block the shell. Every adb invocation
@@ -13,6 +17,8 @@ PKG=${PKG:-org.viptv.experiment}
 LABEL=${1:-ab}
 BURSTS=${2:-5}
 PRESSES=${3:-16}
+FOCUS_MODE=${4:-shelf}
+FOCUS_HELPER="$(cd "$(dirname "$0")" && pwd)/tv_focus_node.py"
 
 adb_t -s "$SERIAL" shell am force-stop "$PKG" >/dev/null 2>&1
 adb_t -s "$SERIAL" shell am start -n "$PKG/.MainActivity" >/dev/null 2>&1
@@ -37,7 +43,75 @@ if ! on_home; then
   exit 2
 fi
 sleep 7
-adb_t -s "$SERIAL" shell "input keyevent 20; sleep 0.9; input keyevent 20; sleep 2.5" >/dev/null 2>&1
+
+# Focus a KNOWN shelf. Pressing Right/Left only measures anything when the
+# focused control is a content card that scrolls its row; on the top bar it just
+# walks tabs and every burst reports ~0 frames. So: walk Down until the focused
+# node looks like a media card, then prove the row pages (Right must change the
+# focused card). Abort instead of reporting a number otherwise.
+# A focused node in a uiautomator dump looks like
+#   <node ... content-desc="Some Title, 2024" focused="true" bounds="[96,564][328,988]"/>
+# -> "x1<TAB>y1<TAB>x2<TAB>y2<TAB>desc" (numbers first: titles contain spaces).
+#
+# Shape, not position, identifies a card: an earlier pass gated on "y >= 400",
+# which aborted on a legitimate Home because the *x* of the first card is 96 and
+# the field order had been read transposed. A card is "title, year" and >= 150
+# px tall; the nav tabs, filter chips and shelf headings are none of those.
+# A row with a single item (a one-title My List) also cannot page, so a failed
+# Right probe moves down to the next row instead of giving up.
+focused_node() {
+  adb_t -s "$SERIAL" shell uiautomator dump /sdcard/ab_home.xml >/dev/null 2>&1
+  adb_t -s "$SERIAL" shell cat /sdcard/ab_home.xml 2>/dev/null | python3 "$FOCUS_HELPER"
+}
+is_card() { # desc, height
+  case "$1" in *", "[0-9][0-9][0-9][0-9]*) ;;
+    *) return 1 ;; esac
+  [ "${2:-0}" -ge 150 ]
+}
+key() { adb_t -s "$SERIAL" shell "input keyevent $1; sleep $2" >/dev/null 2>&1; }
+read_node() { # $1 = helper output -> f_x1 f_y1 f_x2 f_y2 f_desc
+  IFS=$'\t' read -r f_x1 f_y1 f_x2 f_y2 f_desc <<<"$1"
+}
+
+f_x1=""; f_y1=""; f_x2=""; f_y2=""; f_desc=""; probe_desc=""
+shelf_ok=0
+if [ "$FOCUS_MODE" = blind ]; then
+  # Legacy path: no claim about what holds focus. Kept for A/B archaeology only.
+  echo "    focus_mode=blind (legacy): NOT a comparable measurement" >&2
+  adb_t -s "$SERIAL" shell "input keyevent 20; sleep 0.9; input keyevent 20; sleep 2.5" >/dev/null 2>&1
+  node=$(focused_node)
+  [ -n "$node" ] && read_node "$node"
+  shelf_ok=1
+fi
+for _step in 1 2 3 4 5 6 7 8 9 10; do
+  [ "$shelf_ok" -eq 1 ] && break
+  node=$(focused_node)
+  [ -n "$node" ] && read_node "$node" || f_desc=""
+  if ! is_card "$f_desc" "$(( ${f_y2:-0} - ${f_y1:-0} ))"; then
+    key 20 1.0
+    continue
+  fi
+  key 22 1.2
+  probe=$(focused_node)
+  probe_desc=""
+  [ -n "$probe" ] && IFS=$'\t' read -r _px _py _px2 _py2 probe_desc <<<"$probe"
+  key 21 1.0
+  if [ -n "$probe_desc" ] && [ "$probe_desc" != "$f_desc" ]; then
+    shelf_ok=1
+    break
+  fi
+  # Single-item row: nothing to page. Try the shelf below.
+  key 20 1.2
+done
+if [ "$shelf_ok" -ne 1 ]; then
+  echo "=== $LABEL: ABORTED - no paging shelf found (last focused: '${f_desc:-none}' at ${f_x1:-?},${f_y1:-?}) ===" >&2
+  exit 3
+fi
+if [ "$FOCUS_MODE" = blind ]; then
+  echo "    focus='${f_desc:-unknown}' (blind: paging not asserted)"
+else
+  echo "    shelf='$f_desc' -> pages to '$probe_desc'"
+fi
 i=0
 while [ "$i" -lt "$BURSTS" ]; do
   adb_t -s "$SERIAL" shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1

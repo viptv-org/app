@@ -439,3 +439,43 @@ sampling, and aborts instead of reporting `4950 ms`. Even so, several runs after
 fresh install still sampled zero frames, because key delivery depends on which
 control holds focus (a burst that does not scroll a shelf produces no frames).
 A trustworthy gate needs the script to focus a known shelf before each burst.
+
+---
+
+## 2026-10-20 — the wsrv-blur claim did NOT reproduce; harness now asserts focus
+
+The section above claimed the TV blur move gave gpu 15.0 → 11.0 ms, cpu 25 → 23 ms,
+missed vsync 11.4 → 9.9 %. That was one run from the unasserted harness, and a
+three-vs-three A/B with the same script, device, app data and focused shelf
+contradicts it. Full write-up and raw `dumpsys gfxinfo` per burst:
+`docs/evidence/2026-10-20-tv-perf/`.
+
+| build (release) | cpu50 | gpu50 | janky | missed vsync |
+|---|---|---|---|---|
+| runtime blur (`SoftArtwork` @ `f0796e0`) ×3 | 25.0 / 25.0 / 25.0 | 15 / 16 / 14 | 14.9 / 14.8 / 16.6 % | 8.3 / 9.7 / 10.4 % |
+| wsrv pre-blur (`07c44ab` = HEAD) ×3 | 25.0 / 25.0 / 25.0 | 14 / 15 / 14 | 15.8 / 15.5 / 15.8 % | 8.2 / 8.9 / 9.4 % |
+
+Conclusions that are safe to act on:
+
+1. **The blur move is worth 0 ms.** cpu p50 is 25.0 in all six runs; gpu p50 spans
+   13–16 ms in both builds. The 11.0 ms sample is not reproducible — gpu p50 does
+   follow the focused scene (legacy blind positioning measured 13 ms), which is
+   the likeliest source of that outlier.
+2. **The old baseline was never valid.** The same pre-blur code measures 8.3–10.4 %
+   missed vsync here, not the 11.2–12.0 % used as PERF-06's baseline. Every number
+   taken before this harness fix has to be treated as scene-dependent, not code-
+   dependent.
+3. **PERF-06's remaining gap is unchanged**: `swap_wait` still dominates; the art
+   pipeline is not where the frame budget goes.
+
+### Harness change (this is what makes the numbers above comparable)
+
+`tools/tv_ab.sh` no longer presses Down a fixed number of times. It walks Down
+until the focused `uiautomator` node is a media card (`content-desc` = "title,
+year", ≥ 150 px tall), then proves the row pages — Right must change the focused
+card; a single-item row falls through to the shelf below — and aborts (`exit 3`)
+rather than reporting a number when nothing pages. The focused shelf is printed
+on every run, e.g. `shelf='Love of Your Life, 2026' -> pages to 'Tenzing, 2026'`,
+so a number is only comparable to another run that names the same shelf.
+`focus_mode=blind` restores the old behaviour and labels itself non-comparable.
+Helper: `tools/tv_focus_node.py`.
