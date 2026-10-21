@@ -665,3 +665,7 @@ Also fixed in this pass (visual/behavioural, owner-reported):
 - Sparse billboard: Continue Watching cards get logo/description/art from one
   cached detail fetch (`ApplicationController.enrichSummary` →
   `state.summaryCards`), read when a selection settles.
+
+Vertical cadence stress (final build, full AOT): 0.5 s/press 1.2-1.5 % missed,
+0.25 s 1.2 %, 0.15 s (mashing) 1.2 % — cpu90 23-25 ms at all cadences.
+`CADENCE` now also applies to the vertical burst pattern.

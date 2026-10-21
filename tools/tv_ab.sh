@@ -126,7 +126,7 @@ while [ "$i" -lt "$BURSTS" ]; do
     # 350 ms row motion finish), then Up to the billboard and Down back to
     # the first shelf: a self-resetting loop that never bottoms out at the
     # last row, where Down is a dead end by design.
-    adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $PRESSES ]; do input keyevent 20; sleep 0.5; input keyevent 20; sleep 0.5; input keyevent 20; sleep 0.5; input keyevent 19; sleep 0.8; input keyevent 20; sleep 0.8; j=\$((j+1)); done" >/dev/null 2>&1
+    adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $PRESSES ]; do input keyevent 20; sleep $CADENCE; input keyevent 20; sleep $CADENCE; input keyevent 20; sleep $CADENCE; input keyevent 19; sleep 0.8; input keyevent 20; sleep 0.8; j=\$((j+1)); done" >/dev/null 2>&1
   else
     adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 22; j=\$((j+1)); sleep $CADENCE; done; j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 21; j=\$((j+1)); sleep $CADENCE; done" >/dev/null 2>&1
   fi
