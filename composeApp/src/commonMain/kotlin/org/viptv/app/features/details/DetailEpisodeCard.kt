@@ -48,6 +48,8 @@ private fun EpisodeCaption(episode: Card, modifier: Modifier, phone: Boolean) {
         val label = number?.let { "$it. ${episode.title}" } ?: episode.title
         Text(label, fontSize = if (phone) 15.sp else 14.sp, fontWeight = FontWeight.SemiBold,
             maxLines = if (phone) 2 else 1, overflow = TextOverflow.Ellipsis)
+        // Wraps onto its own caption line, so neither it nor the number is ellipsized.
+        if (episode.watchedEpisode()) EpisodeWatchedPill(television = false)
         episode.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
 }
@@ -60,7 +62,7 @@ private fun EpisodeArtwork(episode: Card, modifier: Modifier) {
             .border(1.5.dp, Color.White.copy(alpha = .8f), CircleShape), contentAlignment = Alignment.Center) {
             Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(11.dp), tint = Palette.text)
         }
-        episode.progress?.takeIf { it.isFinite() && it > 0 }?.let { progress ->
+        episode.progress?.takeIf { it.isFinite() && it > 0 && !episode.watchedEpisode() }?.let { progress ->
             Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = .25f))) {
                 Box(Modifier.fillMaxWidth(progress.toFloat().coerceIn(0f, 1f)).fillMaxHeight().background(Palette.accent))
             }

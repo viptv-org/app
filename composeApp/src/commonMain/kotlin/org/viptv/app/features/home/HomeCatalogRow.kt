@@ -22,12 +22,19 @@ import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 
+/** Home's Continue Watching row id. */
+internal const val CONTINUE_ROW = "continue"
+
 @Composable
 internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean, modifier: Modifier,
-    focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false) {
+    focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false,
+    play: (Card) -> Unit = open) {
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val portrait = row.id != "continue"
+    // A Continue Watching card resumes: tapping/clicking it opens that exact
+    // episode's (or movie's) sources. Info in the desktop preview still opens Details.
+    val select = if (row.id == CONTINUE_ROW) play else null
     // Touch platforms (phone web/app) have no focus navigation; the swipe
     // outline a focused card would show must not render during scrolling.
     val showFocusOutline = television || !compact && !browser
@@ -69,7 +76,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                                 scope.launch { bringIntoView.bringIntoView() }
                                 focus(card)
                             },
-                            open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
+                            open = open, select = select, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
                             cornerRadius = if (television) 12.dp * scale else 8.dp,
                             focusWidth = if (television) 4.dp * scale else 3.dp,
                             showFocusOutline = showFocusOutline,

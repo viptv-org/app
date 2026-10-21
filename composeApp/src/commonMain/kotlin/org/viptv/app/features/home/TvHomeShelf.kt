@@ -55,8 +55,10 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     viewport: Dp, firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
     rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
-    onHeightChange: ((Int) -> Unit)? = null) {
+    onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open) {
     val portrait = row.id != "continue"
+    // OK on a Continue Watching card goes straight to that episode's sources.
+    val activate = if (row.id == CONTINUE_ROW) play else open
     val state = rememberLazyListState()
     val arrival = rememberTvContentArrival(row.state == RowState.READY)
     val cards = remember(row.cards) { row.cards.distinctBy(::cardLookupKey) }
@@ -113,7 +115,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                                 .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
                                 .then(if (index == resumeIndex) Modifier.focusRequester(recover) else Modifier)
                             TvCatalogCard(card, scale, portrait, entry,
-                                { lastFocusedIndex = index; focusedKey = cardLookupKey(it); scroll(index); focus(it) }, open, showFocus, focusedCaptions = portrait,
+                                { lastFocusedIndex = index; focusedKey = cardLookupKey(it); scroll(index); focus(it) }, activate, showFocus, focusedCaptions = portrait,
                                 onUp = if (index < 7) up else null)
                         }
                         if (appendError != null) item(key = "row-append", contentType = "failed") {

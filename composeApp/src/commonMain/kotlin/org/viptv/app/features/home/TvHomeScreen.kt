@@ -220,7 +220,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 firstPlaced = { firstReadyAttached = true },
                                 resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null,
                                 rowAlpha = alpha,
-                                onHeightChange = if (index == visibleRows.lastIndex) ({ height -> lastRowHeight = height }) else null)
+                                onHeightChange = if (index == visibleRows.lastIndex) ({ height -> lastRowHeight = height }) else null,
+                                play = play)
                         }
                     }
                 }
