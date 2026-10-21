@@ -72,7 +72,8 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                             open = open, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
                             cornerRadius = if (television) 12.dp * scale else 8.dp,
                             focusWidth = if (television) 4.dp * scale else 3.dp,
-                            showFocusOutline = showFocusOutline)
+                            showFocusOutline = showFocusOutline,
+                            watchedBadgeSize = if (television) 34.dp * scale else null)
                     }
                 }
             }

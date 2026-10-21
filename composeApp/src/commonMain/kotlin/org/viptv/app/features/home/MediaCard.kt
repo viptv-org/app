@@ -53,7 +53,11 @@ import com.composables.icons.lucide.Plus
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.ArtWatchedBadge
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.WATCHED_BADGE
+import org.viptv.app.components.WatchedBadge
+import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.resources.Res
@@ -77,7 +81,9 @@ internal class CardActions(
 internal val LocalCardActions = compositionLocalOf<CardActions?> { null }
 
 @Composable
-fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit, labelScale: Float = 1f, cornerRadius: androidx.compose.ui.unit.Dp = 8.dp, focusWidth: androidx.compose.ui.unit.Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier) {
+fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit, labelScale: Float = 1f, cornerRadius: androidx.compose.ui.unit.Dp = 8.dp, focusWidth: androidx.compose.ui.unit.Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier,
+    /** TV screens pass the Tv3CardStates check (34 px × scale); others size it from the art. */
+    watchedBadgeSize: Dp? = null) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
     // Desktop pointer affordances (boards D3HomeHover / D3Context). `desktop` is
@@ -111,8 +117,15 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             val slotH = with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() }
             val art = org.viptv.app.images.sizedArtwork(if (portrait) card.poster else card.landscape, slotW, slotH)
             AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            if (card.badges.any { !it.equals("Simkl", true) }) Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
-                Text(card.badges.first { !it.equals("Simkl", true) }, Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+            // Watched is the corner check below, never this text label.
+            card.badges.firstOrNull { !it.equals("Simkl", true) && !it.equals(WATCHED_BADGE, true) }?.let { label ->
+                Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
+                    Text(label, Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            if (card.isWatched()) {
+                if (watchedBadgeSize != null) WatchedBadge(watchedBadgeSize, Modifier.align(Alignment.TopEnd))
+                else ArtWatchedBadge(Modifier.matchParentSize())
             }
             card.progress?.let { progress ->
                 // Thin continue-watching bar at the artwork's bottom edge,
