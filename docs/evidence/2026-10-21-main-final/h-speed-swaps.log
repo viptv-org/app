@@ -1,0 +1,7 @@
+    shelf='Love of Your Life, 2026' -> pages to 'Tenzing, 2026'
+=== speedswap: bursts=4 pattern=horizontal
+    cpu50 median=16.0ms  [16, 16, 16, 17]
+    cpu90 median=22.0ms
+    gpu50 median=10.0ms
+    janky=8.1%
+    frames=1077 missed_vsync=2 (0.2%)

@@ -618,3 +618,50 @@ Owner question: why is the UI 1080p. Verified on the ONN (192.168.88.30):
 - No app-side API can raise the app surface past the forced viewport. Native-4K
   UI on this hardware would also miss more frames (4× fill); the 1080p surface
   + upscale is the deliberate vendor design for exactly that reason.
+
+---
+
+## 2026-10-21 (evening) — the real bottleneck was the JIT; full AOT is the floor
+
+After the draw/plane work above, every remaining path still missed ~8-18 % of
+vsyncs on the ONN. The decisive experiment: `cmd package compile -f -m speed`
+(full AOT) on the installed release build.
+
+| path | JIT/verify (all earlier numbers) | full AOT (`-m speed`) |
+|---|---|---|
+| horizontal burst, missed vsync | 8.1-9.6 % | **0.3 / 0.4 / 0.8 %** |
+| horizontal cpu50 / cpu90 | 21-24 / 42-48 ms | 19-22 / **22-25 ms** |
+| vertical burst, missed vsync | 15.5-17.7 % | **1.2 / 1.3 / 1.5 %** |
+| vertical cpu90 | 105-111 ms | **24-25 ms** |
+| horizontal at 0.6 s cadence (billboard settles + swaps every press) | — | **0.2 % missed**, janky 8.1 % |
+
+The ~110 ms cpu90 tail was JIT compilation stealing cores during the
+billboard↔browse transition, not the transition's draw work.
+
+Shipped/recorded:
+
+- `androidApp/src/release/generated/baselineProfiles/baseline-prof.txt` —
+  collected on the TV emulator via the new `:baselineprofile` module
+  (deterministic preview Home journey; the androidx.baselineprofile gradle
+  plugin does not support AGP 9, so generation is the manual `am instrument`
+  run documented in `baselineprofile/build.gradle.kts`). Regenerate it against
+  the final release APK whenever the home code changes — a stale profile
+  silently matches nothing (`status=verify`).
+- Caveat: on this box the *speed-profile* compile from the embedded profile
+  measured no better than stock (~10 % missed) — the preview journey does not
+  cover enough of the real data path. **The measured win is full `-m speed`.**
+- `tools/tv_aot.sh` — re-applies full AOT on the device (ART resets it on every
+  install/update).
+
+Also fixed in this pass (visual/behavioural, owner-reported):
+
+- `BufferedArtwork` held the outgoing image at full alpha while the incoming
+  faded in, then hard-cut it — a bright hump mid-swap ("flash bang"). It now
+  crossfades 1-α/α.
+- Home opening focus: the shelf fallback claim now waits for a *complete*
+  snapshot, and a late-arriving hero takes focus back until the first keypress.
+  Home no longer opens on Continue Watching.
+- Hero actions no longer draw the focus ring (fill change is the indicator).
+- Sparse billboard: Continue Watching cards get logo/description/art from one
+  cached detail fetch (`ApplicationController.enrichSummary` →
+  `state.summaryCards`), read when a selection settles.
