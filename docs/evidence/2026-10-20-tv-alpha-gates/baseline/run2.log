@@ -1,0 +1,7 @@
+    shelf='Love of Your Life, 2026' -> pages to 'Tenzing, 2026'
+=== base2: bursts=5
+    cpu50 median=24.0ms  [24, 24, 24, 24, 25]
+    cpu90 median=42.0ms
+    gpu50 median=14.0ms
+    janky=13.9%
+    frames=748 missed_vsync=65 (8.7%)

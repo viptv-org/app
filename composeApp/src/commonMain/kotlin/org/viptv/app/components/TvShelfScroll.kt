@@ -27,7 +27,9 @@ internal fun rememberTvShelfScroll(state: LazyListState, step: Dp, viewport: Dp,
     var motion by remember(state) { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     DisposableEffect(state) { onDispose { motion?.cancel() } }
-    return { index ->
+    // One remembered lambda: a fresh closure per composition used to cascade
+    // into every card's focus callback and restart the whole shelf on a move.
+    return remember(state, scope, stepPx, visible, maxOffset, count) { { index: Int ->
         val items = state.layoutInfo.visibleItemsInfo
         val first = items.firstOrNull()?.index
         val last = items.lastOrNull()?.index
@@ -52,5 +54,5 @@ internal fun rememberTvShelfScroll(state: LazyListState, step: Dp, viewport: Dp,
                 else state.animateScrollToItem(item, scrollOffset = 0)
             }
         }
-    }
+    } }
 }

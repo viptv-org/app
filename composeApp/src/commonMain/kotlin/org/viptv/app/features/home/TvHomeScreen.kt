@@ -8,12 +8,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.gestures.animateScrollBy
 import kotlinx.coroutines.Job
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
@@ -129,7 +129,16 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         }
         val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope)
         val portraitSelection = { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" }
-        val selection = rememberTvBillboardSelection(focused, { browsing }, portraitSelection, quietForMillis)
+        // The exact request the browse plane's SoftArtwork makes, so the settle
+        // swap finds it warm instead of popping in after the sharp art.
+        val softPlane = remember(viewport, scale, density) {
+            val wPx = with(density) { viewport.toPx().toInt() }
+            val hPx = with(density) { (620.dp * scale).toPx().toInt() }
+            val sigma = with(density) { (70.dp * scale).toPx() / 4f }.toInt().coerceIn(1, 200)
+            val build = { c: Card -> c.poster?.let { org.viptv.app.images.sizedArtwork(it, wPx, hPx, blur = sigma) } }
+            build
+        }
+        val selection = rememberTvBillboardSelection(focused, { browsing }, portraitSelection, quietForMillis, softArtwork = softPlane)
         val settled = selection?.card
         val original = settled ?: carousel.card
         val card = original?.let { summaryCards[it.identity.id] ?: it }
@@ -148,12 +157,11 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                 false
             }) {
                 TvHomeBackdrop(card, browsing, portrait = selection?.portrait ?: false, hero = carousel.card, heroReady = carousel.artworkReady)
+                // The summary is text and a prefetched logo: it follows the focus
+                // immediately. Only the artwork planes wait for navigation to
+                // settle, and the focus read stays scoped out of the screen body.
+                TvFollowSummary(focused, { browsing }, summaryCards, scale)
                 if (card != null) {
-                    TvHomeVisibility(browsing && settled != null, scale, 24, 450, sequentialFade = true) {
-                        org.viptv.app.components.FadeThrough(card) {
-                            TvBrowseSummary(it, scale)
-                        }
-                    }
                     TvHomeVisibility(!browsing, scale, -80, 450, retain = true, focusEnabled = { !browsing }, sequentialFade = true) {
                         carousel.card?.let { hero ->
                             TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) resumeShelf else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing && error == null, save = { if (!browsing) save(it) }, isSaved = saved)
@@ -163,10 +171,16 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                 TvFocusScroll(manual = true) {
                     LazyColumn(Modifier.fillMaxSize().padding(top = targetTop).graphicsLayer {
                         translationY = (top.value - targetTop).toPx()
-                    }, state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = bottomSpace)) {
+                    }, state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = bottomSpace),
+                        // Compose and start loading the row past each edge, so a
+                        // vertical move never reveals a shelf whose card art has
+                        // not even started fetching. One row is ~560 dp at scale.
+                        cacheWindow = remember(scale) { LazyLayoutCacheWindow(560.dp * scale, 560.dp * scale) }) {
                         itemsIndexed(visibleRows, key = { _, row -> row.id }, contentType = { _, _ -> "row" }) { index, row ->
                             // A row first composed above the active one starts faded,
-                            // exactly like animateFloatAsState's initial value.
+                            // exactly like animateFloatAsState's initial value. Stable
+                            // instances only: a focus move must not re-hand every shelf
+                            // a fresh modifier chain (the fade reads in the draw phase).
                             val alpha = rowAlphas.getOrPut(row.id) {
                                 androidx.compose.animation.core.Animatable(if (browsing && index < activeRow) 0f else 1f)
                             }
@@ -182,10 +196,10 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                     }
                                 }, open, retry, viewport = viewport,
                                 more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
-                                modifier = Modifier.graphicsLayer { this.alpha = alpha?.value ?: 1f }
-                                    .then(if (index == visibleRows.lastIndex) Modifier.onSizeChanged { lastRowHeight = it.height } else Modifier),
                                 firstPlaced = { firstReadyAttached = true },
-                                resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null)
+                                resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null,
+                                rowAlpha = alpha,
+                                onHeightChange = if (index == visibleRows.lastIndex) ({ height -> lastRowHeight = height }) else null)
                         }
                     }
                 }
@@ -208,3 +222,20 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
 
 private fun Key.isDirectional(): Boolean =
     this == Key.DirectionLeft || this == Key.DirectionRight || this == Key.DirectionUp || this == Key.DirectionDown
+
+/**
+ * The browse summary follows the focused card on the same press (text and a
+ * prefetched logo are cheap); the artwork planes settle separately. Reading
+ * `focused` here keeps a card move from recomposing the whole Home screen.
+ */
+@Composable
+private fun TvFollowSummary(focused: State<Card?>, browsing: () -> Boolean, summaryCards: Map<String, Card>, scale: Float) {
+    val current = if (browsing()) focused.value?.let { summaryCards[it.identity.id] ?: it } else null
+    // Keep the last card composed through the exit fade, never a blank plane.
+    var last by remember { mutableStateOf<Card?>(null) }
+    SideEffect { if (current != null) last = current }
+    val shown = current ?: last
+    TvHomeVisibility(current != null, scale, 24, 450, sequentialFade = true) {
+        if (shown != null) org.viptv.app.components.FadeThrough(shown) { TvBrowseSummary(it, scale) }
+    }
+}

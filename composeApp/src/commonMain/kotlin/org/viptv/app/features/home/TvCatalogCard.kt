@@ -11,12 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -226,10 +226,11 @@ private fun CardFocusRing(focus: State<Boolean>, showFocus: Boolean, scale: Floa
 
 @Composable
 private fun CardPlayBadge(focus: State<Boolean>, showFocus: Boolean, scale: Float, modifier: Modifier) {
-    // Always composed, hidden with alpha: adding or removing this overlay on
-    // focus invalidated the layout of the whole shelf for every key press.
-    val shown = focus.value && showFocus
-    Box(modifier.size(72.dp * scale).graphicsLayer { alpha = if (shown) 1f else 0f }
+    // Always composed, never drawn unfocused: adding or removing this overlay
+    // on focus invalidated the layout of the whole shelf for every key press,
+    // and drawing it at alpha 0 still paid a composited layer per card. The
+    // draw-phase read keeps focus moves from recomposing the badge as well.
+    Box(modifier.size(72.dp * scale).drawWithContent { if (focus.value && showFocus) drawContent() }
         .background(Color.White.copy(alpha = 0.16f), CircleShape), contentAlignment = Alignment.Center) {
         Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(30.dp * scale))
     }
@@ -237,12 +238,12 @@ private fun CardPlayBadge(focus: State<Boolean>, showFocus: Boolean, scale: Floa
 
 @Composable
 private fun CardCaptions(card: Card, states: TvCardStates, focus: State<Boolean>, portrait: Boolean, focusedCaptions: Boolean, scale: Float) {
+    // Portrait shelves only show the caption on the focused card. Keep the
+    // text composed and skip its draw while hidden, so focus changes never
+    // re-lay-out text and hidden captions cost no composited layer either.
+    // The colour read stays in composition; the visibility read is draw-phase.
     val focused = focus.value
-    // Portrait shelves only show the caption on the focused card. Keep the text
-    // composed and hide it with alpha so focus changes never re-lay-out text,
-    // and keep the caption colour constant where it is never visible unfocused.
-    val shown = !portrait || focused
-    Column(Modifier.graphicsLayer { alpha = if (shown) 1f else 0f }
+    Column(Modifier.drawWithContent { if (!portrait || focus.value) drawContent() }
         .padding(top = 14.dp * scale), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
         // Logo cards render the wordmark on the art, so the caption is meta
         // only (board "Logo — no text title").

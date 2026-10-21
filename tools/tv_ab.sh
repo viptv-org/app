@@ -18,6 +18,9 @@ LABEL=${1:-ab}
 BURSTS=${2:-5}
 PRESSES=${3:-16}
 FOCUS_MODE=${4:-shelf}
+# PATTERN=horizontal (default) pages one shelf right/left; PATTERN=vertical
+# crosses rows (down/up) — the row-swap + backdrop-swap path.
+PATTERN=${5:-horizontal}
 FOCUS_HELPER="$(cd "$(dirname "$0")" && pwd)/tv_focus_node.py"
 
 adb_t -s "$SERIAL" shell am force-stop "$PKG" >/dev/null 2>&1
@@ -115,14 +118,22 @@ fi
 i=0
 while [ "$i" -lt "$BURSTS" ]; do
   adb_t -s "$SERIAL" shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1
-  adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 22; j=\$((j+1)); sleep 0.12; done; j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 21; j=\$((j+1)); sleep 0.12; done" >/dev/null 2>&1
+  if [ "$PATTERN" = vertical ]; then
+    # Three row descents (row swap + backdrop swap each, cadence lets the
+    # 350 ms row motion finish), then Up to the billboard and Down back to
+    # the first shelf: a self-resetting loop that never bottoms out at the
+    # last row, where Down is a dead end by design.
+    adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $PRESSES ]; do input keyevent 20; sleep 0.5; input keyevent 20; sleep 0.5; input keyevent 20; sleep 0.5; input keyevent 19; sleep 0.8; input keyevent 20; sleep 0.8; j=\$((j+1)); done" >/dev/null 2>&1
+  else
+    adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 22; j=\$((j+1)); sleep 0.12; done; j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 21; j=\$((j+1)); sleep 0.12; done" >/dev/null 2>&1
+  fi
   sleep 1.0
   adb_t -s "$SERIAL" shell dumpsys gfxinfo "$PKG" > "/tmp/ab_${LABEL}_$i.txt" 2>/dev/null
   i=$((i+1))
 done
-python3 - "$LABEL" "$BURSTS" <<'PY'
+python3 - "$LABEL" "$BURSTS" "$PATTERN" <<'PY'
 import sys, re, statistics
-label, n = sys.argv[1], int(sys.argv[2])
+label, n, pattern = sys.argv[1], int(sys.argv[2]), sys.argv[3]
 p50=[]; p90=[]; gpu=[]; jank=[]; frames=[]
 for i in range(n):
     txt=open(f'/tmp/ab_{label}_{i}.txt',errors='ignore').read()
@@ -138,7 +149,7 @@ for i in range(n):
     if gp: gpu.append(gp)
     if j is not None: jank.append(j)
     if f and mv is not None: frames.append((f,mv))
-print(f"=== {label}: bursts={n}")
+print(f"=== {label}: bursts={n} pattern={pattern}")
 if p50:
     print(f"    cpu50 median={statistics.median(p50):.1f}ms  {sorted(p50)}")
     print(f"    cpu90 median={statistics.median(p90):.1f}ms")

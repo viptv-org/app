@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalDensity
@@ -43,6 +44,11 @@ internal fun TvHomeVisibility(visible: Boolean, scale: Float, offset: Int,
     val position = animateFloatAsState(if (visible) 0f else pixels.toFloat(), tween(duration, easing = easing), label = "Billboard departure")
     if (retain || mounted || visible) {
         Box(Modifier.fillMaxWidth().graphicsLayer { alpha = opacity.value; translationY = position.value }
+            // A retained-but-hidden plane (the hero while browsing) must not
+            // rasterize its subtree every frame: alpha 0 leaves every pixel
+            // untouched, so skipping the draw is pixel-identical. Read in the
+            // draw phase, so the gate itself never recomposes.
+            .drawWithContent { if (opacity.value > 0f) drawContent() }
             // Hidden content must not stay in the accessibility tree or the
             // focus graph. The visible case must NOT install a focus boundary:
             // `focusProperties` on this non-focusable container made Up from the

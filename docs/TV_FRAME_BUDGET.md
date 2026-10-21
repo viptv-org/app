@@ -479,3 +479,92 @@ on every run, e.g. `shelf='Love of Your Life, 2026' -> pages to 'Tenzing, 2026'`
 so a number is only comparable to another run that names the same shelf.
 `focus_mode=blind` restores the old behaviour and labels itself non-comparable.
 Helper: `tools/tv_focus_node.py`.
+
+---
+
+## 2026-10-21 — alpha-0 plane draw gates + billboard prewarm; vertical harness
+
+**Harness:** `tools/tv_ab.sh` grows a fifth argument, `pattern=vertical`: three
+row descents at a 500 ms cadence, then Up to the billboard and Down back to the
+first shelf — a self-resetting loop. (The first attempt walked Down six times,
+which bottoms out at the last row where Down is a dead end; those bursts
+rendered zero frames and were discarded.) The pattern label is printed per run.
+
+### What was measured (release, ONN, same focused shelf as the 10-20 runs)
+
+Horizontal bursts, baseline HEAD (`199b0a3`, apk `c57c6a4d`):
+
+| run | cpu50 | gpu50 | janky | missed vsync |
+|---|---|---|---|---|
+| base1 | 25.0 | 13.0 | 16.0 % | 8.1 % |
+| base2 | 24.0 | 14.0 | 13.9 % | 8.7 % |
+| base3 | 25.0 | 14.0 | 14.8 % | 8.3 % |
+
+Candidate (draw gates + stable shelf lambdas, apk `3a54fdb5`):
+
+| run | cpu50 | gpu50 | janky | missed vsync |
+|---|---|---|---|---|
+| cand1 | 24.0 | 13.0 | 14.8 % | 9.5 % |
+| cand2 | 23.0 | 11.0 | 12.6 % | 8.0 % |
+| cand3 | 22.0 | 12.0 | 11.8 % | 7.8 % |
+
+framestats on the candidate (final burst window): layout+record median **1.6 ms**
+(was 2.6 ms in the 10-20 session), swap_wait 9.8 ms (13.9 ms there — different
+window, indicative only).
+
+Vertical reference (same installed build as cand; the vertical path is identical
+at HEAD), `pattern=vertical` 4×3 crossings:
+
+| run | cpu50 | cpu90 | gpu50 | janky | missed vsync |
+|---|---|---|---|---|---|
+| vbase2 | 24.0 | 111.0 | 12.0 | 30.3 % | 17.7 % |
+| vbase3 | 24.5 | 109.0 | 13.0 | 29.4 % | 17.6 % |
+
+**Vertical navigation is the janky path: ~2× the horizontal missed-vsync rate,
+cpu90 in the 110 ms band.** One earlier exploratory run caught the tail directly:
+p95 150 ms on a row descent.
+
+### Changes (pixel-identity proven)
+
+Deterministic captures before/after (`TvCardVisualTest`, `TvShelfScrollVisualTest`
+15 frames, new `TvBackdropGateVisualTest` 10 frames incl. a gate-sensitivity
+check): all byte-identical. Evidence: `docs/evidence/2026-10-20-tv-alpha-gates/`.
+
+1. **Alpha-0 planes no longer draw.** `TvHomeVisibility` (retained hero while
+   browsing), and both `TvHomeBackdrop` planes (hero plane while browsing,
+   browse plane while the hero is settled) skip `drawContent()` when their
+   alpha is exactly 0 — read in the draw phase, so no recomposition is added.
+   Pixel-identical to drawing at alpha 0; removes up to three fullscreen draws
+   plus the retained hero subtree per frame in the resting states.
+2. **Card overlays gate on the draw phase.** `CardPlayBadge` and portrait
+   `CardCaptions` used an always-on `graphicsLayer` alpha toggle; they now skip
+   drawing when hidden, and the badge no longer recomposes on focus at all.
+3. **One remembered shelf-scroll lambda** (`rememberTvShelfScroll`) so a parent
+   recomposition stops cascading fresh focus callbacks into every card.
+4. **Shelf fade/height hooks are passed as stable instances** (`rowAlpha`,
+   `onHeightChange`) instead of a per-recomposition modifier chain.
+5. **Billboard rework (behavioural, owner-requested):** artwork prefetch starts
+   the moment a card is focused — sharp art, logo, *and* the blurred soft-plane
+   URL, which was never warmed and popped in a beat after the rest. The visible
+   swap still waits for 220 ms of quiet, but no longer gates on a 1.9 s decode
+   window: `BufferedArtwork` keeps the outgoing plane until the incoming bitmap
+   is ready, so an early swap cannot flash empty. The text/logo summary now
+   follows the focus immediately (`TvFollowSummary`) instead of waiting for the
+   artwork settle.
+6. **Cache windows:** the shelf `LazyColumn` and shelf `LazyRow`s get a
+   `LazyLayoutCacheWindow` of roughly one row/card past each edge (this
+   foundation version replaced `beyondBoundsItemCount`), so revealed content is
+   already composed and fetching. This makes the old prefetch comment true.
+
+Vertical A/B for items 5–6: pending (device dropped off adb mid-session;
+reference numbers above are the "before").
+
+### Outside-the-box note: the panel is 3840×2160
+
+`dumpsys display` on the ONN: the TCL panel runs **3840×2160@60** (mode 32) while
+the app surface is 1920×1080 — every frame is upscaled by the compositor on this
+box's GPU. That fixed cost is why `swap_wait` dominates regardless of app-side
+work, and it has a device-side ceiling no code change can cross. App-side work
+can only shrink what the GPU is asked to draw (above). Slow bitmap uploads
+remain ≈0; rows are lazy (`LazyColumn`/`LazyRow`) and were never the bottleneck
+(layout+record median is 1.6 ms of the 16.6 ms budget).

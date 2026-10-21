@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package org.viptv.app.features.home
 
 import org.viptv.app.connection.cardLookupKey
@@ -5,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.focusGroup
@@ -14,7 +17,9 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.rememberTvShelfScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -49,11 +54,10 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
 internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: () -> Unit,
     focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, modifier: Modifier = Modifier,
     viewport: Dp, firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
-    appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null) {
+    appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
+    rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
+    onHeightChange: ((Int) -> Unit)? = null) {
     val portrait = row.id != "continue"
-    // Keep one card composed and measured on each side of the viewport: a card
-    // that scrolls in is already composed, so the frame that reveals it does not
-    // pay composition and text layout.
     val state = rememberLazyListState()
     val arrival = rememberTvContentArrival(row.state == RowState.READY)
     val cards = remember(row.cards) { row.cards.distinctBy(::cardLookupKey) }
@@ -75,11 +79,22 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
             .first { index -> index > cards.lastIndex }
         request(row.id)
     }
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+    // The screen passes the row fade/height hooks as stable instances so a
+    // focus move does not hand every visible shelf a fresh modifier chain.
+    Column(modifier
+        .then(if (rowAlpha != null) Modifier.graphicsLayer { alpha = rowAlpha.value } else Modifier)
+        .then(if (onHeightChange != null) Modifier.onSizeChanged { onHeightChange(it.height) } else Modifier)
+        .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         Text(row.title, Modifier.padding(start = 96.dp * scale).height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
             letterSpacing = (-0.3f * scale).sp, fontWeight = FontWeight.SemiBold)
         TvFocusScroll(manual = true) {
-            LazyRow(state = state, modifier = arrival.focusRestorer().focusGroup(), contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
+            // Keep the cards just past each viewport edge composed and fetching:
+            // a card that scrolls in is already composed and its artwork already
+            // in flight, so the frame that reveals it pays neither composition
+            // nor the first network byte.
+            val step = (if (portrait) 248 else 404) + (if (portrait) 16 else 20)
+            val cacheWindow = remember(step, scale) { LazyLayoutCacheWindow(step.dp * scale, step.dp * scale) }
+            LazyRow(state = state, modifier = arrival.focusRestorer().focusGroup(), contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale), cacheWindow = cacheWindow) {
                 when (row.state) {
                     RowState.READY -> {
                         itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->

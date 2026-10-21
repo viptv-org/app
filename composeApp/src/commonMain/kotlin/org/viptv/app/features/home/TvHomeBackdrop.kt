@@ -9,6 +9,7 @@ import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.dp
@@ -23,14 +24,19 @@ internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = 
         Box(Modifier.fillMaxSize().graphicsLayer {
             alpha = 1f - motion.value; translationY = -80.dp.toPx() * scale * motion.value
             clip = true; compositingStrategy = CompositingStrategy.Auto
-        }) {
+        // Once the browse plane has fully arrived, the hero plane is invisible:
+        // skipping its draw (fullscreen art + two fullscreen scrims) is
+        // pixel-identical to drawing it at alpha 0, and reads in the draw phase.
+        }.drawWithContent { if (motion.value < 1f) drawContent() }) {
             BufferedArtwork(hero?.landscape ?: hero?.poster, Modifier.fillMaxSize(), onReady = heroReady)
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = .86f), .36f to Palette.background.copy(alpha = .4f), .7f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f), .45f to Color.Transparent, .8f to Palette.background.copy(alpha = .9f), 1f to Palette.background)))
         }
         Box(Modifier.fillMaxWidth().height(620.dp * scale).graphicsLayer {
             alpha = motion.value; clip = true; compositingStrategy = CompositingStrategy.Auto
-        }.background(Palette.background)) {
+        // While the hero is settled, the whole browsing plane sits at alpha 0;
+        // skip its draw entirely (pixel-identical to drawing it).
+        }.drawWithContent { if (motion.value > 0f) drawContent() }.background(Palette.background)) {
             if (portrait) {
                 SoftArtwork(card?.poster, Modifier.fillMaxWidth().height(620.dp * scale)
                     .graphicsLayer { scaleX = 1.2f; scaleY = 1.2f }, 70.dp * scale, .45f)
