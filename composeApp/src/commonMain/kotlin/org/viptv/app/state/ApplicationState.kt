@@ -93,6 +93,8 @@ data class ApplicationState(
     val torrentOnlySources: Int = 0,
     val findingSources: Boolean = false,
     val playingSource: SourceCandidate? = null,
+    /** Measured startup stage of a source this device acquires itself ("Finding peers…"), else null. */
+    val openingStage: String? = null,
     val playback: PlaybackInput? = null,
     val nextEpisode: Card? = null,
     val nextEpisodeStatus: org.viptv.engine.wire.ContinuationStatus? = null,

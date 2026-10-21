@@ -43,7 +43,7 @@ class RemoteConnection(
     private val browser = browserMode
     internal val accountManagementEnabled: Boolean get() = browser
     internal val accountDashboardUrl: String get() = origin + "/"
-    private val origin = validatedRemoteOrigin(rawOrigin)
+    internal val origin = validatedRemoteOrigin(rawOrigin)
     private val client = client ?: platformClient()
     private var csrf: String? = null
     private var accessToken: String? = null

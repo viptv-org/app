@@ -13,5 +13,7 @@
                 <data android:scheme="https" android:host="${viptvLinkHost}" android:path="/device" />
             </intent-filter>
         </activity>
+        <!-- Shared torrent runtime (native transport v2): app-private worker process, never exported. -->
+        <service android:name="org.viptv.experiment.TorrentRuntimeService" android:process=":torrent_runtime" android:exported="false" android:stopWithTask="true" />
     </application>
 </manifest>

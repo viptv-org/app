@@ -17,7 +17,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private fun emit(fact: PlayerFact) = observe(fact)
     private val sourceFactory = DefaultMediaSourceFactory(context).setDataSourceFactory(
         androidx.media3.datasource.DefaultDataSource.Factory(context,
-            DefaultHttpDataSource.Factory().setDefaultRequestProperties(input.headers)))
+            DefaultHttpDataSource.Factory().setDefaultRequestProperties(input.headers)
+                // A torrent read can wait for peers well past Media3's 8 s default.
+                .apply { if (input.localTorrent) setReadTimeoutMs(LOCAL_TORRENT_READ_TIMEOUT_MS) }))
     val player: ExoPlayer = ExoPlayer.Builder(context, androidx.media3.exoplayer.DefaultRenderersFactory(context)
         .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER))
         .setMediaSourceFactory(sourceFactory)
@@ -148,3 +150,5 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         closed = true; player.removeListener(listener); subtitles.close(); player.release(); view = null
     }
 }
+
+private const val LOCAL_TORRENT_READ_TIMEOUT_MS = 60_000

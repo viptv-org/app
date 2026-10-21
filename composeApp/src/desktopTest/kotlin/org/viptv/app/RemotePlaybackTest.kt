@@ -104,6 +104,114 @@ class RemotePlaybackTest {
         }
     }
 
+    private class FakeTorrents(val supported: Boolean, val failure: Exception? = null) : LocalTorrents {
+        val events = mutableListOf<String>()
+        var acquired: JsonObject? = null
+        override val capability = buildJsonObject { put("version", 2); put("network_policy", "public_discovery_verified_v2") }
+        override suspend fun negotiate(remote: RemoteConnection): Boolean { events += "negotiate"; return supported }
+        override suspend fun acquire(remote: RemoteConnection, id: String, request: JsonObject, stage: (String) -> Unit): LocalTorrentPlayback {
+            events += "acquire $id"; acquired = request
+            stage("Finding peers…")
+            failure?.let { throw it }
+            return object : LocalTorrentPlayback {
+                override val mediaUrl = "http://127.0.0.1:41999/media/private"
+                override val positionSeconds = 12.5
+                override suspend fun renew() { events += "renew" }
+                override suspend fun firstFrame() { events += "first_frame" }
+                override suspend fun close() { events += "close" }
+            }
+        }
+    }
+    private val androidFacts = buildJsonObject {
+        put("platform", "android"); put("can_play_direct", true); put("supports_required_audio_index", true)
+        put("max_width", 1920); put("max_height", 1080)
+        put("video_codecs", JsonArray(listOf(JsonPrimitive("h264")))); put("audio_codecs", JsonArray(listOf(JsonPrimitive("aac"))))
+    }
+    private val nativeReady = """{"id":"lease","status":"ready","expires_at":1792562096,"renew_after_seconds":20,"error_code":null,"error":null,
+        "delivery":{"kind":"native_torrent","live":false,"format":"original","position":12.5,"preferences":{"audio_language":null,"subtitle_language":null,"subtitles_enabled":false},"grant":{}}}"""
+
+    /** Android plays torrent sources with its own runtime: the native grant, never a server gateway. */
+    @Test fun torrentGrantPlaysTheDevicesOwnRuntime() = runBlocking {
+        val calls = mutableListOf<String>()
+        var sent: JsonObject? = null
+        val client = HttpClient(MockEngine { request ->
+            calls += "${request.method.value} ${request.url.encodedPath}"
+            val response = when (request.url.encodedPath) {
+                "/api/playback" -> { sent = Json.parseToJsonElement((request.body as TextContent).text).jsonObject; """{"id":"lease","status":"starting"}""" }
+                "/api/playback/lease" -> if (request.method == HttpMethod.Delete) "{}" else nativeReady
+                else -> "{}"
+            }
+            respond(response, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+        val torrents = FakeTorrents(supported = true)
+        val stages = mutableListOf<String>()
+        val lease = connection.openPlayback(SourceCandidate("opaque-torrent", "addon:1", "Fixture"), "profile", androidFacts, torrents = torrents, stage = { stages += it })
+        assertEquals(listOf("Finding peers…"), stages)
+        val client0 = sent!!.getValue("client").jsonObject
+        assertEquals(torrents.capability, client0["native_torrent"])
+        assertFalse(sent!!.getValue("force_gateway").jsonPrimitive.boolean)
+        assertEquals(sent, torrents.acquired)
+        assertEquals("http://127.0.0.1:41999/media/private", lease.input.uri)
+        assertEquals(12_500L, lease.input.positionMillis)
+        assertTrue(lease.input.localTorrent)
+        assertFalse(lease.reopensForSeek)
+        lease.firstFrame(); lease.renew(); lease.close()
+        assertEquals(listOf("negotiate", "acquire lease", "first_frame", "renew", "close"), torrents.events)
+        // The device reports frames and renews through its own runtime adapter.
+        assertFalse(calls.any { it.endsWith("/first-frame") || it.endsWith("/heartbeat") })
+        assertEquals("DELETE /api/playback/lease", calls.last())
+        connection.close()
+    }
+
+    @Test fun serverWithoutNativeTorrentsKeepsTheLegacyStart() = runBlocking {
+        var sent: JsonObject? = null
+        val client = HttpClient(MockEngine { request ->
+            if (request.url.encodedPath == "/api/playback") sent = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            respond("""{"id":"direct","status":"ready","delivery":{"kind":"direct","url":"https://media.example/movie.mp4"}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+        val torrents = FakeTorrents(supported = false)
+        val lease = connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", androidFacts, torrents = torrents)
+        assertNull(sent!!.getValue("client").jsonObject["native_torrent"])
+        assertEquals("https://media.example/movie.mp4", lease.input.uri)
+        assertEquals(listOf("negotiate"), torrents.events)
+        connection.close()
+    }
+
+    @Test fun failedLocalAcquisitionReleasesTheLease() = runBlocking {
+        val calls = mutableListOf<String>()
+        val client = HttpClient(MockEngine { request ->
+            calls += "${request.method.value} ${request.url.encodedPath}"
+            respond(if (request.url.encodedPath == "/api/playback") """{"id":"lease","status":"starting"}"""
+                else if (request.method == HttpMethod.Delete) "{}" else nativeReady,
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+        val torrents = FakeTorrents(supported = true, failure = RemoteFailure(502, "No peers are sharing this torrent right now."))
+        val error = assertFailsWith<RemoteFailure> {
+            connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", androidFacts, torrents = torrents)
+        }
+        assertEquals("No peers are sharing this torrent right now.", error.message)
+        assertEquals("DELETE /api/playback/lease", calls.last())
+        connection.close()
+    }
+
+    /** A direct-only device given gateway media reports a playback failure, not a server-address error. */
+    @Test fun gatewayDeliveryOnDirectDeviceIsAPlaybackFailure() = runBlocking {
+        val client = HttpClient(MockEngine { request ->
+            respond(if (request.method == HttpMethod.Delete) "{}" else
+                """{"id":"lease","status":"ready","delivery":{"kind":"gateway","url":"https://media.example/index.m3u8"}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+        assertFailsWith<RemoteFailure> {
+            connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", androidFacts, torrents = null)
+        }
+        connection.close()
+    }
+
     @Test fun cancellingStartingLeaseStopsIt() = runBlocking {
         val started = CompletableDeferred<Unit>()
         val stopped = mutableListOf<String>()

@@ -36,6 +36,9 @@ android {
         manifest.srcFile("src/debug/AndroidManifest.xml")
     }
     sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/rustJni").get().asFile)
+    // Shared torrent runtime (TORRENT_RUNTIME_REF). Without it the app never advertises native torrents.
+    sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/torrentRuntime/jniLibs").get().asFile)
+    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/torrentRuntime/assets").get().asFile)
 }
 dependencies {
     // Diagnostic semantics inspection must compile against the shared app's UI
@@ -63,3 +66,14 @@ val buildAndroidEngine by tasks.registering(Exec::class) {
     outputs.dir(layout.buildDirectory.dir("generated/rustJni"))
 }
 tasks.named("preBuild") { dependsOn(buildAndroidEngine) }
+
+// -Pviptv.torrentRuntime=false builds without it (no Go/playback-gateway); torrents then need a gateway.
+val torrentRuntime = providers.gradleProperty("viptv.torrentRuntime").orNull != "false"
+val buildTorrentRuntime by tasks.registering(Exec::class) {
+    onlyIf { torrentRuntime }
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/build_torrent_runtime.py")
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_torrent_runtime.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
+    outputs.dir(layout.buildDirectory.dir("generated/torrentRuntime"))
+}
+tasks.named("preBuild") { dependsOn(buildTorrentRuntime) }
