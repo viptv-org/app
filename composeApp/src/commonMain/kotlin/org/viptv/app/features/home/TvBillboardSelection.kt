@@ -44,6 +44,12 @@ internal fun rememberTvBillboardSelection(
     quietForMillis: () -> Long?,
     /** The pre-blurred soft-plane URL for a card, sized exactly as SoftArtwork requests it. */
     softArtwork: (Card) -> String? = { null },
+    /**
+     * True while a shelf or the rows column is animating. The swap waits for
+     * calm *and* stillness: the decode + crossfade + semantics diff must never
+     * land inside an animated frame — those are the 100 ms+ tail frames.
+     */
+    motionBusy: () -> Boolean = { false },
 ): TvBillboardSelection? {
     val context = LocalPlatformContext.current
     val card = focused.value
@@ -54,33 +60,30 @@ internal fun rememberTvBillboardSelection(
     var selected by remember { mutableStateOf<TvBillboardSelection?>(null) }
     LaunchedEffect(card, browsingNow, portraitNow) {
         if (!browsingNow) return@LaunchedEffect
-        val warm = card ?: return@LaunchedEffect
-        coroutineScope {
-            listOfNotNull(
-                (if (portraitNow) warm.poster else warm.landscape ?: warm.poster)?.let {
-                    ImageRequest.Builder(context).data(it).size(if (portraitNow) 280 else 1160, if (portraitNow) 420 else 620).build()
-                },
-                warm.logo?.let { org.viptv.app.images.logoRequest(context, it).newBuilder().size(420, 120).build() },
-                // The blurred plane's proxied URL is its own cache entry; left
-                // cold it pops in a beat after the sharp art. The small decode
-                // size only samples; the URL key is what is warmed. Portrait
-                // shelves are the only ones with a soft plane.
-                if (portraitNow) softArtwork(warm)?.let { ImageRequest.Builder(context).data(it).size(480, 155).build() } else null,
-            ).map { request -> async { SingletonImageLoader.get(context).execute(request) } }.awaitAll()
-        }
-    }
-    LaunchedEffect(card, browsingNow, portraitNow) {
-        if (!browsingNow) return@LaunchedEffect
         val card = card ?: return@LaunchedEffect
         // Never swap artwork while the D-pad is held or clicked in quick
         // succession: that is what made fast navigation feel like it froze.
         // The swap happens once navigation goes quiet, like a key release.
-        // BufferedArtwork keeps the outgoing plane until the incoming bitmap is
-        // ready, so swapping as soon as we settle cannot flash an empty plane.
         while (true) {
             val quiet = quietForMillis()
-            if (quiet == null || quiet >= SelectionSettleMillis) break
+            if ((quiet == null || quiet >= SelectionSettleMillis) && !motionBusy()) break
             delay(QuietPollMillis)
+        }
+        // Warm every plane the swap will show *before* the swap: sharp art,
+        // logo, and the pre-blurred soft-plane URL, which is its own cache
+        // entry and otherwise pops in a beat after the rest. Awaiting the set
+        // here keeps the crossing frames free of decode work; the swap itself
+        // is then a single coordinated fade.
+        withTimeoutOrNull(1900) {
+            coroutineScope {
+                listOfNotNull(
+                    (if (portraitNow) card.poster else card.landscape ?: card.poster)?.let {
+                        ImageRequest.Builder(context).data(it).size(if (portraitNow) 280 else 1160, if (portraitNow) 420 else 620).build()
+                    },
+                    card.logo?.let { org.viptv.app.images.logoRequest(context, it).newBuilder().size(420, 120).build() },
+                    if (portraitNow) softArtwork(card)?.let { ImageRequest.Builder(context).data(it).size(480, 155).build() } else null,
+                ).map { request -> async { SingletonImageLoader.get(context).execute(request) } }.awaitAll()
+            }
         }
         selected = TvBillboardSelection(card, portraitNow)
     }

@@ -1,0 +1,65 @@
+Applications Graphics Acceleration Info:
+Uptime: 31350999 Realtime: 31350999
+
+** Graphics info for pid 26591 [org.viptv.experiment] **
+
+Stats since: 31338676575191ns
+Total frames rendered: 413
+Janky frames: 126 (30.51%)
+Janky frames (legacy): 215 (52.06%)
+50th percentile: 25ms
+90th percentile: 105ms
+95th percentile: 121ms
+99th percentile: 150ms
+Number Missed Vsync: 66
+Number High input latency: 552
+Number Slow UI thread: 108
+Number Slow bitmap uploads: 0
+Number Slow issue draw commands: 97
+Number Frame deadline missed: 126
+Number Frame deadline missed (legacy): 127
+HISTOGRAM: 5ms=0 6ms=0 7ms=0 8ms=0 9ms=0 10ms=0 11ms=1 12ms=0 13ms=0 14ms=2 15ms=1 16ms=4 17ms=1 18ms=9 19ms=9 20ms=12 21ms=33 22ms=41 23ms=34 24ms=29 25ms=32 26ms=11 27ms=13 28ms=5 29ms=5 30ms=2 31ms=3 32ms=4 34ms=7 36ms=3 38ms=1 40ms=1 42ms=4 44ms=0 46ms=2 48ms=11 53ms=10 57ms=9 61ms=7 65ms=9 69ms=12 73ms=7 77ms=2 81ms=0 85ms=3 89ms=9 93ms=5 97ms=2 101ms=8 105ms=12 109ms=7 113ms=8 117ms=2 121ms=7 125ms=3 129ms=1 133ms=0 150ms=10 200ms=0 250ms=0 300ms=0 350ms=0 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=0 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0
+50th gpu percentile: 14ms
+90th gpu percentile: 4950ms
+95th gpu percentile: 4950ms
+99th gpu percentile: 4950ms
+GPU HISTOGRAM: 1ms=0 2ms=0 3ms=0 4ms=0 5ms=5 6ms=12 7ms=22 8ms=31 9ms=31 10ms=28 11ms=26 12ms=28 13ms=21 14ms=13 15ms=11 16ms=12 17ms=12 18ms=8 19ms=13 20ms=9 21ms=3 22ms=2 23ms=3 24ms=0 25ms=2 4950ms=121
+
+Pipeline=Skia (OpenGL)
+Memory policy:
+  Max surface area: 2073600
+  Max resource usage: 99.53MB (x48)
+  Background retention: 50% (altUiHidden = true)
+  GPU Context timeout: 10
+Contexts: 1 (stopped = 0)
+CPU Caches:
+  Glyph Cache: 124.02 KB (1 entry)
+  Glyph Count: 41 
+Total CPU memory usage:
+  126992 bytes, 124.02 KB (0.00 bytes is purgeable)
+GPU Caches:
+  Other:
+    Other: 41.75 KB (1 entry)
+    Buffer Object: 2.05 KB (2 entries)
+  Image:
+    Texture: 4.26 MB (61 entries)
+  Scratch:
+    Texture: 2.00 MB (2 entries)
+    RenderTarget: 35.06 MB (12 entries)
+    Buffer Object: 78.00 KB (2 entries)
+Total GPU memory usage:
+  43452700 bytes, 41.44 MB (39.31 MB is purgeable)
+
+Profile data in ms:
+
+	org.viptv.experiment/org.viptv.experiment.MainActivity/android.view.ViewRootImpl@8edf2c8 (visibility=0)
+View hierarchy:
+
+  org.viptv.experiment/org.viptv.experiment.MainActivity/android.view.ViewRootImpl@8edf2c8
+  7 views, 9.38 kB of render nodes
+
+
+Total ViewRootImpl   : 1
+Total attached Views : 7
+Total RenderNode     : 9.38 kB (used) / 34.08 kB (capacity)
+

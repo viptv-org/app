@@ -568,3 +568,53 @@ work, and it has a device-side ceiling no code change can cross. App-side work
 can only shrink what the GPU is asked to draw (above). Slow bitmap uploads
 remain ≈0; rows are lazy (`LazyColumn`/`LazyRow`) and were never the bottleneck
 (layout+record median is 1.6 ms of the 16.6 ms budget).
+
+### 2026-10-21 (later) — vertical series, regressions reverted, scroll-gated swap
+
+All vertical runs use `pattern=vertical` (3 row descents + billboard reset per
+burst, 4 bursts/run), same focused shelf as the horizontal runs. Reference is the
+pre-prewarm build (batch A only, which equals HEAD on this path).
+
+| variant | what it was | missed vsync | janky | cpu50 | cpu90 | verdict |
+|---|---|---|---|---|---|---|
+| vbase | settle-220 decode-then-swap | 17.6 / 17.7 % | ~30 % | 24-24.5 | 109-111 | reference |
+| B | prefetch-on-focus + immediate summary + row/card cache windows | 21.9-23.4 % | ~37-41 % | 32-37 | ~109 | **regression, reverted** |
+| V2 | prefetch at 120 ms quiet, summary at 120 ms, no row window | 19.7-19.9 % | ~33-36 % | 30-34 | ~109 | still worse, reverted |
+| V3 | = vbase + soft-plane URL in the settle decode + batch A gates | 16.9-17.7 % | ~30-31 % | 24.5-26 | ~108 | restored, flash fixed |
+| V4 | V3 + LazyColumn row cache window (ahead 560 dp) | 17.1-18.3 % | ~31 % | 24.5-26.5 | ~107 | no win, reverted |
+| V5 | V3 + swap waits for scroll idle (`motionBusy`) | **15.5 / 16.5 / 17.1 %** | ~30-32 % | 24.5-28.5 | ~109 | **kept** |
+
+Final horizontal confirmation (V5 code, 1080p override): cpu50 21-24 ms,
+gpu50 10-13 ms, missed 8.1-9.6 %, janky 12.9-15.6 % (baseline was 24-25 /
+13-14 / 8.1-8.7 % / 13.9-16.0 %).
+
+Lessons recorded:
+
+- **Prefetching on focus and extra cache windows cost more frames than they
+  save on this box.** Decode work competes with the crossing frames; the only
+  warm-up that survives measurement is the one that already existed — inside
+  the settle window, before the swap.
+- The blurred soft-plane URL is now part of that settle-time decode set
+  (`softArtwork` on `rememberTvBillboardSelection`), so the planes arrive
+  together instead of the blur popping in late.
+- The billboard swap now also waits for the rows/shelves to stop scrolling, so
+  the decode + crossfade + semantics diff never lands inside an animated frame.
+- The 110 ms cpu90 tail survives every variant; it is the mandated
+  billboard↔browse multi-plane transition on this GPU, not a regression.
+
+### 2026-10-21 — the app cannot render 4K on this device
+
+Owner question: why is the UI 1080p. Verified on the ONN (192.168.88.30):
+
+- Panel/output: `user_preferred_resolution 3840×2160`, display mode
+  `3840×2160@60` — 4K output is active.
+- App surface: `mOverrideDisplayInfo real 1920×1080` and `wm size` reports
+  "Override size: 1920x1080". **`wm size reset` and `wm size 3840x2160` both
+  leave the override at 1920×1080** — it is enforced by the OEM build
+  (`ro.sf.lcd_density=320`, forced app viewport), not by a user setting.
+- Consequence: every UI frame is rendered at 1080p and then upscaled to 4K by
+  the compositor on the same weak GPU — the fixed cost behind the `swap_wait`
+  dominance. Video playback is unaffected (native 4K through the video path).
+- No app-side API can raise the app surface past the forced viewport. Native-4K
+  UI on this hardware would also miss more frames (4× fill); the 1080p surface
+  + upscale is the deliberate vendor design for exactly that reason.

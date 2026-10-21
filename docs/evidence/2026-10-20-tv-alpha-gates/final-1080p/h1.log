@@ -1,0 +1,7 @@
+    shelf='Love of Your Life, 2026' -> pages to 'Tenzing, 2026'
+=== v3h_1: bursts=5 pattern=horizontal
+    cpu50 median=22.0ms  [21, 21, 22, 22, 22]
+    cpu90 median=44.0ms
+    gpu50 median=13.0ms
+    janky=13.5%
+    frames=743 missed_vsync=71 (9.6%)

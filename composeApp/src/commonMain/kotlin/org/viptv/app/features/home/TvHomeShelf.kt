@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.focusGroup
@@ -88,13 +87,10 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
         Text(row.title, Modifier.padding(start = 96.dp * scale).height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
             letterSpacing = (-0.3f * scale).sp, fontWeight = FontWeight.SemiBold)
         TvFocusScroll(manual = true) {
-            // Keep the cards just past each viewport edge composed and fetching:
-            // a card that scrolls in is already composed and its artwork already
-            // in flight, so the frame that reveals it pays neither composition
-            // nor the first network byte.
-            val step = (if (portrait) 248 else 404) + (if (portrait) 16 else 20)
-            val cacheWindow = remember(step, scale) { LazyLayoutCacheWindow(step.dp * scale, step.dp * scale) }
-            LazyRow(state = state, modifier = arrival.focusRestorer().focusGroup(), contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale), cacheWindow = cacheWindow) {
+            // A cache window (cards precomposed past the edges) was measured on
+            // the ONN and *cost* frames instead of saving them, so the shelf
+            // relies on the built-in scroll prefetch only.
+            LazyRow(state = state, modifier = arrival.focusRestorer().focusGroup(), contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
                 when (row.state) {
                     RowState.READY -> {
                         itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->
