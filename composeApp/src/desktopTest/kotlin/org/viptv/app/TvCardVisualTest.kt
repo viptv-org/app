@@ -78,7 +78,7 @@ class TvCardVisualTest {
             "watched" to card(null).copy(badges = listOf("Watched", "4K")),
             "new-episode" to card(null).copy(badges = listOf("New episode", "Returning"),
                 identity = MediaIdentity("tt2", "series", emptyList())),
-            "new-episodes" to card(null).copy(badges = listOf("+2 new episodes"), subtitle = "S1 E2 · Chapter 2",
+            "new-episodes" to card(null).copy(badges = listOf("+2"), subtitle = "S1 E2 · Chapter 2",
                 identity = MediaIdentity("tt6", "series", emptyList(), episode = EpisodeCoordinates("aired", 1, 2))),
             "ended" to card(null).copy(badges = listOf("Ended"), identity = MediaIdentity("tt3", "series", emptyList())),
             "title-only" to card(null).copy(metadata = null),
@@ -112,14 +112,14 @@ class TvCardVisualTest {
 
     /** Continue Watching (landscape) with the new-episodes label, focused and not. */
     @Test fun captureContinueWatchingNewEpisodes() = onEdt {
-        val model = card(null).copy(title = "Fixture Show", badges = listOf("+2 new episodes"), subtitle = "S1 E2 · Chapter 2",
+        val model = card(null).copy(title = "Fixture Show", badges = listOf("+2"), subtitle = "S1 E2 · Chapter 2",
             identity = MediaIdentity("tt100:1:2", "series", emptyList(), episode = EpisodeCoordinates("aired", 1, 2)))
         val scene = ImageComposeScene(900, 360, Density(1f)) { ViptvTheme(true) {
             val requester = remember { FocusRequester() }
             LaunchedEffect(Unit) { requester.requestFocus() }
             Row(Modifier.fillMaxSize().background(Palette.background).padding(24.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 TvCatalogCard(model, 1f, false, Modifier.focusRequester(requester), focused = {}, open = {})
-                TvCatalogCard(model.copy(badges = listOf("New episode")), 1f, false, focused = {}, open = {})
+                TvCatalogCard(model.copy(badges = listOf("+1")), 1f, false, focused = {}, open = {})
             }
         } }
         try {

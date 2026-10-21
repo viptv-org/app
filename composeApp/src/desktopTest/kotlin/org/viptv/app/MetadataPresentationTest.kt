@@ -5,6 +5,7 @@ import org.viptv.app.components.metadataParts
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.components.isNewEpisodesBadge
 import org.viptv.app.components.newEpisodesBadge
+import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.cardChip
 import org.viptv.app.features.search.searchGroups
 import org.viptv.engine.wire.*
@@ -30,22 +31,29 @@ class MetadataPresentationTest {
 class NewEpisodesBadgeTest {
     private val show = Card(MediaIdentity("tt100:1:2", "series", emptyList()), provider_id = "addon:1", title = "Fixture Show", badges = emptyList())
     @Test fun recognisesTheServerCountLabelsOnly() {
+        assertTrue(isNewEpisodesBadge("+1"))
+        assertTrue(isNewEpisodesBadge("+12"))
         assertTrue(isNewEpisodesBadge("New episode"))
-        assertTrue(isNewEpisodesBadge("+2 new episodes"))
-        assertTrue(isNewEpisodesBadge("+12 new episodes"))
         assertFalse(isNewEpisodesBadge("Watched"))
-        assertFalse(isNewEpisodesBadge("+two new episodes"))
-        assertFalse(isNewEpisodesBadge("New"))
+        assertFalse(isNewEpisodesBadge("+"))
+        assertFalse(isNewEpisodesBadge("+2 new"))
+        assertFalse(isNewEpisodesBadge("4K"))
+    }
+    @Test fun theCompactLabelIsSpokenInWords() {
+        assertEquals("1 new episode", newEpisodesDescription("+1"))
+        assertEquals("2 new episodes", newEpisodesDescription("+2"))
+        assertEquals("New episode", newEpisodesDescription("New episode"))
+        assertEquals("Ended", newEpisodesDescription("Ended"))
     }
     @Test fun theCountLabelWinsTheArtSlotAndNeverBecomesAMetaChip() {
-        val card = show.copy(badges = listOf("Simkl", "4K", "+2 new episodes"))
-        assertEquals("+2 new episodes", card.newEpisodesBadge())
-        assertEquals("+2 new episodes", card.cardChip())
+        val card = show.copy(badges = listOf("Simkl", "4K", "+2"))
+        assertEquals("+2", card.newEpisodesBadge())
+        assertEquals("+2", card.cardChip())
         assertEquals(listOf("4K"), card.presentationBadges())
         assertEquals("4K", show.copy(badges = listOf("Simkl", "4K")).cardChip())
         assertNull(show.cardChip())
         // Watched is the corner check, never the text chip.
         assertNull(show.copy(badges = listOf("Watched")).cardChip())
-        assertEquals("New episode", show.copy(badges = listOf("Watched", "New episode")).cardChip())
+        assertEquals("+1", show.copy(badges = listOf("Watched", "+1")).cardChip())
     }
 }

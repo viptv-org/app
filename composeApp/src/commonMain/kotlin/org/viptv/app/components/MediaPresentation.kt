@@ -13,15 +13,22 @@ internal fun Card.metadataParts(): List<String> = metadata?.let { value -> build
 /** Card *state* labels: drawn on the art or as meta text, never as a meta chip (Tv3CardStates). */
 private val stateLabels = setOf("watched", "new episode", "returning", "ended", "live")
 
-private val newEpisodesCount = Regex("""\+\d+ new episodes""")
+private val newEpisodesCount = Regex("""\+(\d+)""")
 
 /**
  * Continue Watching labels a series with episodes released since the profile
- * last finished one: "New episode", then "+2 new episodes" while more arrive
- * (backend `continuation::new_episodes_badge`). Exact server strings only.
+ * last finished one with a compact count, "+1", "+2" (backend
+ * `continuation::new_episodes_badge`); providers may still send the board's
+ * "New episode". Exact strings only.
  */
 internal fun isNewEpisodesBadge(badge: String): Boolean =
     badge == "New episode" || newEpisodesCount.matches(badge)
+
+/** The words a screen reader says for a card label: "+2" is "2 new episodes". */
+internal fun newEpisodesDescription(badge: String): String =
+    newEpisodesCount.matchEntire(badge)?.groupValues?.get(1)?.let { count ->
+        if (count == "1") "1 new episode" else "$count new episodes"
+    } ?: badge
 
 internal fun Card.newEpisodesBadge(): String? = badges.firstOrNull(::isNewEpisodesBadge)
 

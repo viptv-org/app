@@ -39,6 +39,7 @@ import org.viptv.app.components.isWatched
 import org.viptv.app.components.isCapabilityBadge
 import org.viptv.app.components.isNewEpisodesBadge
 import org.viptv.app.components.newEpisodesBadge
+import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.metadataParts
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -144,7 +145,7 @@ private data class TvCardStates(
             val watched = card.isWatched()
             val live = card.identity.kind.equals("channel", true) || card.identity.kind.equals("tv", true) ||
                 "live" in lower
-            // "New episode" or "+2 new episodes": the server's count wins the art slot.
+            // "+1", "+2" (or a provider's "New episode"): the count wins the art slot.
             val newEpisode = card.newEpisodesBadge()
             val ended = badges.firstOrNull { it.equals("Ended", true) }
             val returning = badges.firstOrNull { it.equals("Returning", true) }
@@ -192,7 +193,7 @@ private data class TvCardStates(
 private fun cardDescription(card: Card, states: TvCardStates): String = buildString {
     append(card.title)
     states.metaText?.let { append(", ").append(it) }
-    states.artLabel?.let { append(", ").append(it) }
+    states.artLabel?.let { append(", ").append(newEpisodesDescription(it)) }
     if (states.watched) append(", ").append(WATCHED_BADGE)
     states.metaLabel?.let { append(", ").append(it) }
     states.certification?.let { append(", rated ").append(it) }
