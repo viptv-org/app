@@ -40,7 +40,12 @@ internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignm
         if (shown != null) { fade.animateTo(1f, tween(200)); outgoing = null }
     }
     Box(modifier.then(size)) {
-        outgoing?.let { Image(it.painter, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alignment = alignment) }
+        // True crossfade: the outgoing plane leaves as the incoming one
+        // arrives. Holding the outgoing at full alpha while the incoming fades
+        // in stacked both images — a bright flash mid-swap, then a hard cut.
+        outgoing?.let { Image(it.painter, null, Modifier.fillMaxSize().graphicsLayer {
+            alpha = 1f - fade.value; compositingStrategy = CompositingStrategy.ModulateAlpha
+        }, contentScale = ContentScale.Crop, alignment = alignment) }
         shown?.let { Image(it.painter, null, Modifier.fillMaxSize().graphicsLayer {
             alpha = fade.value; compositingStrategy = CompositingStrategy.ModulateAlpha
         }, contentScale = ContentScale.Crop, alignment = alignment) }

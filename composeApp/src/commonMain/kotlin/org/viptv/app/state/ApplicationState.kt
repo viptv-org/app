@@ -36,6 +36,10 @@ data class ApplicationState(
     val managingProfiles: Boolean = false,
     val selectedProfile: String? = null,
     val home: HomeSnapshot? = null,
+    /** Detail-enriched display fields for the TV billboard, keyed by identity id.
+     *  Feed rows (Continue Watching) can arrive without a logo or description;
+     *  the billboard fills them in once per title instead of showing a sparse summary. */
+    val summaryCards: Map<String, Card> = emptyMap(),
     /** Home-row paging: a busy row appends skeletons, a failed row keeps the cards it shows. */
     val homeRowBusy: Set<String> = emptySet(),
     val homeRowErrors: Map<String, String> = emptyMap(),

@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "VIPTV"
-include(":composeApp", ":androidApp")
+include(":composeApp", ":androidApp", ":baselineprofile")
 
 include(":media3-ffmpeg")
 project(":media3-ffmpeg").projectDir = file("native/media3-ffmpeg")

@@ -47,6 +47,10 @@ dependencies {
         "debugImplementation"("androidx.media3:$module:1.11.1")
     }
     implementation(project(":composeApp"))
+    // The release APK ships a generated baseline profile from
+    // src/release/generated/baselineProfiles (see the :baselineprofile module):
+    // the ONN's JIT was the single biggest source of missed vsyncs
+    // (8-9.6 % -> 0.3-0.4 % with full AOT in measurement).
     implementation("androidx.activity:activity-compose:1.10.1")
     "qaImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     "debugImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")

@@ -125,6 +125,32 @@ fun ApplicationController.search(term: String) {
     }
 }
 
+/** Cards whose feed row is sparse get their billboard fields from one detail fetch. */
+private val summaryRequested = mutableSetOf<String>()
+
+/**
+ * Continue Watching rows can arrive with neither a logo nor a real description;
+ * the billboard then shows a bare title. Fetch the title once and remember the
+ * enriched card; [ApplicationState.summaryCards] is what the billboard reads.
+ */
+fun ApplicationController.enrichSummary(card: Card) {
+    val sparse = card.logo == null || card.description.isNullOrBlank()
+    if (!sparse || !summaryRequested.add(card.identity.id)) return
+    val profile = mutable.value.selectedProfile ?: return
+    scope.launch {
+        val detail = runCatching { local?.detail(profile, card) ?: connection?.detail(card) }.getOrNull() ?: return@launch
+        val richer = detail.item
+        val merged = card.copy(
+            logo = card.logo ?: richer.logo,
+            description = if ((richer.description?.length ?: 0) > (card.description?.length ?: 0)) richer.description else card.description,
+            landscape = card.landscape ?: richer.landscape,
+            poster = card.poster ?: richer.poster,
+            metadata = card.metadata ?: richer.metadata,
+        )
+        if (merged != card) mutable.value = mutable.value.copy(summaryCards = mutable.value.summaryCards + (card.identity.id to merged))
+    }
+}
+
 fun ApplicationController.open(card: Card) {
     beginDetails()
     val navigation = navigationGeneration

@@ -15,9 +15,10 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 
 @Composable
-fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null) {
+fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
+    summaryCards: Map<String, Card> = emptyMap(), enrichSummary: (Card) -> Unit = {}) {
     if (television) {
-        TvHomeScreen(home, open, play, retry, navigate, profile, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error)
+        TvHomeScreen(home, open, play, retry, navigate, profile, summaryCards = summaryCards, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error, enrichSummary = enrichSummary)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {

@@ -21,6 +21,9 @@ FOCUS_MODE=${4:-shelf}
 # PATTERN=horizontal (default) pages one shelf right/left; PATTERN=vertical
 # crosses rows (down/up) — the row-swap + backdrop-swap path.
 PATTERN=${5:-horizontal}
+# CADENCE: seconds between presses for horizontal bursts. 0.12 pages faster than
+# the billboard can follow (outline-only); 0.6 lets each swap load + play out.
+CADENCE=${CADENCE:-0.12}
 FOCUS_HELPER="$(cd "$(dirname "$0")" && pwd)/tv_focus_node.py"
 
 adb_t -s "$SERIAL" shell am force-stop "$PKG" >/dev/null 2>&1
@@ -125,7 +128,7 @@ while [ "$i" -lt "$BURSTS" ]; do
     # last row, where Down is a dead end by design.
     adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $PRESSES ]; do input keyevent 20; sleep 0.5; input keyevent 20; sleep 0.5; input keyevent 20; sleep 0.5; input keyevent 19; sleep 0.8; input keyevent 20; sleep 0.8; j=\$((j+1)); done" >/dev/null 2>&1
   else
-    adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 22; j=\$((j+1)); sleep 0.12; done; j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 21; j=\$((j+1)); sleep 0.12; done" >/dev/null 2>&1
+    adb_t -s "$SERIAL" shell "j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 22; j=\$((j+1)); sleep $CADENCE; done; j=0; while [ \$j -lt $((PRESSES/2)) ]; do input keyevent 21; j=\$((j+1)); sleep $CADENCE; done" >/dev/null 2>&1
   fi
   sleep 1.0
   adb_t -s "$SERIAL" shell dumpsys gfxinfo "$PKG" > "/tmp/ab_${LABEL}_$i.txt" 2>/dev/null

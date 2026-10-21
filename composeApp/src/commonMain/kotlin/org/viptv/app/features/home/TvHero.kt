@@ -38,13 +38,13 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             TvHeroSummary(it, scale)
         }
         Row(Modifier.offset(96.dp * scale, 648.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-            TvAction(Modifier.width(220.dp * scale).height(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale,
+            TvAction(Modifier.width(220.dp * scale).height(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, ring = false,
                 primary = true, requester = first, activate = { play(presented) }, contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) {
                 Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
                 Text("Play", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { save(presented) }) { Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, if (presentedSaved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
-            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
+            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { save(presented) }) { Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, if (presentedSaved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
+            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
         progress?.let { HeroIndicators(indicators, selected, it, Modifier.offset(96.dp * scale, 760.dp * scale), scale) }
 

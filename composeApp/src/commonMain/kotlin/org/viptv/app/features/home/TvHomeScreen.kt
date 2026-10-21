@@ -37,7 +37,8 @@ import org.viptv.engine.wire.*
 @Composable
 internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card) -> Unit, retry: () -> Unit,
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
-    moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap()) {
+    moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap(),
+    enrichSummary: (Card) -> Unit = {}) {
     var browsing by remember(home?.scope?.profile_id) { mutableStateOf(false) }
     // Timestamp of the last D-pad event: the billboard and prefetch wait for
     // navigation to go quiet instead of thrashing artwork while a key repeats.
@@ -85,9 +86,19 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         true
     } ?: false
     LaunchedEffect(home?.scope?.profile_id, visibleRows.getOrNull(firstReadyRow)?.id, featured.isEmpty(), error) {
-        if (!initialShelfFocusClaimed && featured.isEmpty() && error == null && firstReadyRow >= 0) {
+        // The shelf claim is a fallback for a Home that has rows but no hero.
+        // A still-loading snapshot (rows first, hero later) must not steal the
+        // opening focus to Continue Watching.
+        if (!initialShelfFocusClaimed && featured.isEmpty() && home?.complete == true && error == null && firstReadyRow >= 0) {
             rows.scrollToItem(firstReadyRow)
             initialShelfFocusClaimed = focusWhenPlaced(firstCard) { firstReadyAttached }
+        }
+    }
+    // If the shelf claimed focus only because the hero had not arrived yet, and
+    // the viewer has not pressed anything, the hero takes its focus back.
+    LaunchedEffect(featured.isNotEmpty()) {
+        if (featured.isNotEmpty() && initialShelfFocusClaimed && browsing && lastNavigation.value == null) {
+            browsing = false; focused.value = null; activeRow = -1; heroFocusEpoch++
         }
     }
     // While Home has no content at all there is no hero or shelf to focus, but
@@ -145,6 +156,12 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val selection = rememberTvBillboardSelection(focused, { browsing }, portraitSelection, quietForMillis, softArtwork = softPlane,
             motionBusy = { rows.isScrollInProgress })
         val settled = selection?.card
+        // A sparse row card (Continue Watching) gets its billboard fields from
+        // one detail fetch, cached in the controller's summaryCards.
+        LaunchedEffect(settled?.identity?.id) {
+            val c = settled ?: return@LaunchedEffect
+            if (c.logo == null || c.description.isNullOrBlank()) enrichSummary(c)
+        }
         val original = settled ?: carousel.card
         val card = original?.let { summaryCards[it.identity.id] ?: it }
         val arrival = rememberTvContentArrival(home != null)

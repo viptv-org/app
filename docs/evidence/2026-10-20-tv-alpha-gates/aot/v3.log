@@ -1,0 +1,7 @@
+    shelf='Love of Your Life, 2026' -> pages to 'Tenzing, 2026'
+=== aotv_3: bursts=4 pattern=vertical
+    cpu50 median=22.5ms  [22, 22, 23, 23]
+    cpu90 median=101.0ms
+    gpu50 median=12.0ms
+    janky=26.6%
+    frames=1813 missed_vsync=272 (15.0%)

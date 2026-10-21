@@ -24,6 +24,8 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     requester: FocusRequester? = null, activate: () -> Unit, contentPadding: PaddingValues = PaddingValues(0.dp),
     enabled: Boolean = true, background: Color = Palette.text.copy(alpha = 0.16f),
     cornerRadius: androidx.compose.ui.unit.Dp = 12.dp * scale,
+    /** The hero's actions focus by fill alone; the ring reads as clutter there. */
+    ring: Boolean = true,
     arrangement: Arrangement.Horizontal = Arrangement.Center, content: @Composable RowScope.(Color) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     // Register with an enclosing TvFocusColumn so Up/Down clamp at the page's
@@ -45,7 +47,7 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused }
         // Ring before the clip/layer: inside them the part outside the button
         // bounds is clipped away.
-        .tvFocusOutline(light, cornerRadius, scale)
+        .then(if (ring) Modifier.tvFocusOutline(light, cornerRadius, scale) else Modifier)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
         .clickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = activate).padding(contentPadding),
