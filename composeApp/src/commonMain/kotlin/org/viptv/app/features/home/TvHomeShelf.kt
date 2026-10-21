@@ -46,7 +46,7 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
 }
 
 @Composable
-internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: () -> Unit,
+internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: (() -> Unit)?,
     focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, modifier: Modifier = Modifier,
     viewport: Dp, firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null) {
