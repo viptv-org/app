@@ -23,6 +23,7 @@ open class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AndroidSecrets.attach(applicationContext)
         AndroidAccountAuthorization.attach(applicationContext)
+        org.viptv.app.connection.AndroidTorrentRuntime.attach(applicationContext, TorrentRuntimeService::class.java)
         org.viptv.app.connection.observeAddonFetches { android.util.Log.i("VIPTV_ADDON", it) }
         org.viptv.app.connection.observeSourceFailures { android.util.Log.w("VIPTV_SOURCES", it) }
         val tv = getSystemService(UiModeManager::class.java).currentModeType == Configuration.UI_MODE_TYPE_TELEVISION

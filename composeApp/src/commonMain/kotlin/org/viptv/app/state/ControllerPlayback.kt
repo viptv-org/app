@@ -29,13 +29,16 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
     val profile = requireNotNull(mutable.value.selectedProfile)
     if (mutable.value.preferences == null) loadPreferences()
     val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
-    val lease = if (store == null) requireNotNull(remote).openPlayback(source, profile, forceGateway = forceGateway, positionMillis = positionMillis) else null
+    val lease = if (store == null) try {
+        requireNotNull(remote).openPlayback(source, profile, forceGateway = forceGateway, positionMillis = positionMillis,
+            stage = { text -> mutable.value = mutable.value.copy(openingStage = text) })
+    } finally { mutable.value = mutable.value.copy(openingStage = null) } else null
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
     val card = requireNotNull(mutable.value.sourceTitle)
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId,
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
-        requiredAudioIndex = opened.requiredAudioIndex,
+        requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent,
         remoteSeek = if (lease?.reopensForSeek == true) { target ->
             if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
                 saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)

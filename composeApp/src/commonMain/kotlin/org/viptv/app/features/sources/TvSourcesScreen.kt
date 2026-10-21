@@ -44,7 +44,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     choose: (SourceCandidate) -> Unit, back: () -> Unit, info: Map<String, TvSourceInfo> = emptyMap(),
     detail: DetailSnapshot? = null, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     checkedAddons: Int = 0, checkedProviders: Int = 0, checkAgain: () -> Unit = {}, manageAddons: () -> Unit = {},
-    debridHelp: () -> Unit = {}) {
+    debridHelp: () -> Unit = {}, openingStage: String? = null) {
     // The real details page stays composed behind this drawer.
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
@@ -150,7 +150,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 }
                 if (!noSources && !torrentOnly) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                     if (loadingMore || busy) CircularProgressIndicator(Modifier.size(20.dp * scale), color = Palette.secondary, strokeWidth = 2.dp * scale)
-                    Text(if (loadingMore || busy && sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else if (busy) "Opening stream…" else "Play always starts the best match. Change how it’s chosen in Settings › Playback.",
+                    Text(if (loadingMore || busy && sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else if (busy) openingStage ?: "Opening stream…" else "Play always starts the best match. Change how it’s chosen in Settings › Playback.",
                         color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
                 }
             }

@@ -114,7 +114,7 @@ Gate status: `:composeApp:desktopTest` 321/321 · `:androidApp:assembleDebug` ·
 | PLAY-01 | DONE | local playback never falls through to a remote subtitle call |
 | PLAY-02 | DONE | `docs/evidence/device-pass-2026-10-19/PLAY-02-gateway-proof.md`: the remote lease is built only when `store == null`; desktop/Android always pass `localDatabase` |
 | PLAY-03 | **OWNER** | iOS is remote/gateway by architecture. Choose: keep gateway, or move iOS to local-only (needs an iOS local engine + Apple signing host) |
-| PLAY-04 | DONE (TV) / PARTIAL (desktop/phone) | real TorBox end-to-end on the ONN: `[TB+] Torrentio` 4K source selected and media3 opened the HEVC decoder and played. Desktop/phone use the same add-on path but were not driven end-to-end |
+| PLAY-04 | DONE (TV) / PARTIAL (desktop/phone) | real TorBox end-to-end on the ONN: `[TB+] Torrentio` 4K source selected and media3 opened the HEVC decoder and played. Desktop/phone use the same add-on path but were not driven end-to-end. 2026-10-21: plain (non-debrid) torrents on Android phone/TV now play through the bundled native torrent runtime (native transport v2, `NativeTorrents.kt`); before, every one was refused with `gateway_required`. Verified on an emulated Android TV with the public-domain Sintel torrent |
 | PLAY-05 | DONE | player parity per platform (TV vs phone vs desktop) |
 | PLAY-06 | PARTIAL | per-profile audio/subtitle language + style persist and are applied; a per-track-id memory across sources is not stored |
 | AUTH-01 | PARTIAL | Android Keystore + desktop prefs verified; iOS keychain actual exists but cannot be executed on this host |

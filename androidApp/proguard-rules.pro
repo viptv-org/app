@@ -6,3 +6,5 @@
 -dontwarn java.awt.GraphicsEnvironment
 -dontwarn java.awt.HeadlessException
 -dontwarn java.awt.Window
+# The torrent runtime's JNI bridge binds this exact class and native method name.
+-keep class org.playbackgateway.runtime.NativeRuntime { *; }
