@@ -14,7 +14,9 @@ fun ApplicationController.openStremioImport(restricted: Boolean): StremioImportS
     val name = mutable.value.profiles.find { it.id == profile }?.name ?: return null
     discardStremioImport()
     return StremioImportSession(scope, RemoteStremioImport(remote), profile, name, restricted,
-        owned = { connection === remote && local == null && mutable.value.selectedProfile == profile }).also { stremioImport = it }
+        owned = { connection === remote && local == null && mutable.value.selectedProfile == profile },
+        // The quiet freshness lane compares revisions and rebuilds Home (and a visible My List) only if they moved.
+        changed = { requestQuiet(QuietWork.Check) }).also { stremioImport = it }
 }
 
 fun ApplicationController.closeStremioImport(session: StremioImportSession) {

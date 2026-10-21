@@ -25,7 +25,7 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, first: FocusRequester? = null,
-    down: FocusRequester? = null, indicators: Int = 1, selected: Int = 0, progress: () -> Float = { 1f }, focusEpoch: Int = 0, requestFocus: Boolean = false,
+    down: FocusRequester? = null, indicators: Int = 1, selected: Int = 0, progress: HeroProgress? = null, focusEpoch: Int = 0, requestFocus: Boolean = false,
     save: (Card) -> Unit = {}, saved: Boolean = false, isSaved: (Card) -> Boolean = { saved }) {
     org.viptv.app.components.TvRequestedFocus(first, focusEpoch, requestFocus)
     var presented by remember { mutableStateOf(card) }
@@ -46,7 +46,7 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { save(presented) }) { Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, if (presentedSaved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
-        HeroIndicators(indicators, selected, progress, Modifier.offset(96.dp * scale, 760.dp * scale), scale)
+        progress?.let { HeroIndicators(indicators, selected, it, Modifier.offset(96.dp * scale, 760.dp * scale), scale) }
 
         }
     }

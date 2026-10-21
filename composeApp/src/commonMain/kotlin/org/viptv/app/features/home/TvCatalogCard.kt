@@ -31,11 +31,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.TvMediaBadge
+import org.viptv.app.components.WATCHED_BADGE
+import org.viptv.app.components.WatchedBadge
+import org.viptv.app.components.isWatched
 import org.viptv.app.components.isCapabilityBadge
+import org.viptv.app.components.isNewEpisodesBadge
+import org.viptv.app.components.newEpisodesBadge
+import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.metadataParts
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -104,12 +108,8 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
                     fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if (states.watched) {
-                Box(Modifier.align(Alignment.TopEnd).padding(10.dp * scale).size(34.dp * scale)
-                    .background(Color(0xFF0B0B0C).copy(alpha = .78f), CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(Lucide.Check, "Watched", Modifier.size(20.dp * scale), tint = Palette.text)
-                }
-            }
+            // The card's one accessibility node says "Watched" (cardDescription).
+            if (states.watched) WatchedBadge(34.dp * scale, Modifier.align(Alignment.TopEnd), description = null)
             card.progress?.let {
                 TvWatchProgress(it, Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                     .padding(start = 3.dp * scale, end = 3.dp * scale, bottom = 3.dp * scale).height(5.dp * scale), scale)
@@ -142,10 +142,11 @@ private data class TvCardStates(
         fun of(card: Card): TvCardStates {
             val badges = card.badges.filter { !it.equals("Simkl", true) }
             val lower = badges.map { it.lowercase() }
-            val watched = "watched" in lower
+            val watched = card.isWatched()
             val live = card.identity.kind.equals("channel", true) || card.identity.kind.equals("tv", true) ||
                 "live" in lower
-            val newEpisode = badges.firstOrNull { it.equals("New episode", true) }
+            // "+1", "+2" (or a provider's "New episode"): the count wins the art slot.
+            val newEpisode = card.newEpisodesBadge()
             val ended = badges.firstOrNull { it.equals("Ended", true) }
             val returning = badges.firstOrNull { it.equals("Returning", true) }
             // Only *state* labels belong on the artwork (board Tv3CardStates).
@@ -153,16 +154,16 @@ private data class TvCardStates(
             // labels; they stay off the card entirely. Any other badge is a
             // state label (New, Remastered, …) and takes the dark label slot.
             val other = badges.firstOrNull { badge ->
-                !isCapabilityBadge(badge) && !badge.equals("New episode", true) && !badge.equals("Ended", true) &&
+                !isCapabilityBadge(badge) && !isNewEpisodesBadge(badge) && !badge.equals("New episode", true) && !badge.equals("Ended", true) &&
                     !badge.equals("Watched", true) && !badge.equals("Returning", true)
             }
             val label = when {
                 live && badges.any { it.equals("LIVE", true) } -> "LIVE"
-                newEpisode != null -> "New episode"
+                newEpisode != null -> newEpisode
                 ended != null -> "Ended"
                 else -> other
             }
-            val loud = label == "New episode"
+            val loud = label != null && isNewEpisodesBadge(label)
             val fill = when {
                 loud -> Palette.text
                 label == "LIVE" -> Color(0xFFE5484D)
@@ -192,7 +193,8 @@ private data class TvCardStates(
 private fun cardDescription(card: Card, states: TvCardStates): String = buildString {
     append(card.title)
     states.metaText?.let { append(", ").append(it) }
-    states.artLabel?.let { append(", ").append(it) }
+    states.artLabel?.let { append(", ").append(newEpisodesDescription(it)) }
+    if (states.watched) append(", ").append(WATCHED_BADGE)
     states.metaLabel?.let { append(", ").append(it) }
     states.certification?.let { append(", rated ").append(it) }
     card.progress?.takeIf { it.isFinite() }?.let { append(", ").append(((it.toFloat().coerceIn(0f, 1f)) * 100).toInt()).append("% watched") }

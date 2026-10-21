@@ -6,6 +6,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
 import org.viptv.app.state.*
@@ -45,11 +48,32 @@ fun App(
     val scope = rememberCoroutineScope()
     val controller = providedController ?: remember { ApplicationController(scope) }
     val state by controller.state.collectAsState()
+    val deviceLink by controller.deviceLink.collectAsState()
     val routes = rememberSaveableStateHolder()
     LaunchedEffect(controller, manageControllerLifecycle, localDatabase) { if (manageControllerLifecycle) controller.restore(localDatabase) }
+    // A device sign-in link opens Add a device only once signed in with a profile chosen.
+    LaunchedEffect(deviceLink, state.screen, state.starting) { controller.deliverDeviceCode() }
     DisposableEffect(controller, manageControllerLifecycle) { onDispose { if (manageControllerLifecycle) controller.disconnect() } }
+    // Android start/stop, desktop minimise/restore and window focus, browser tab visibility.
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(controller, lifecycle, manageControllerLifecycle) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_START -> controller.appForeground(true)
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> controller.freshen()
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> controller.appForeground(false)
+                else -> Unit
+            }
+        }
+        if (manageControllerLifecycle) lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
+    }
     ViptvTheme(television) {
-        BoxWithConstraints(Modifier.fillMaxSize().background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
+        BoxWithConstraints(Modifier.fillMaxSize()
+            // Observed, never consumed: an aged Home waits until the viewer stops interacting.
+            .onPreviewKeyEvent { controller.userActivity(); false }
+            .pointerInput(controller) { awaitPointerEventScope { while (true) { awaitPointerEvent(PointerEventPass.Initial); controller.userActivity() } } }
+            .background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             if (state.starting) {
                 if (television) {
                     DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }

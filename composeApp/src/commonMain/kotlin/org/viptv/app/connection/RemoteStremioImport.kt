@@ -25,6 +25,12 @@ data class StremioReview(override val previewId: String, override val profileId:
     val summary: Map<String, Int>, val items: List<StremioReviewItem>, val addonsToAdd: Int, val revision: Long) : StremioPreview
 data class StremioCompletion(val profileId: String, val summary: Map<String, Int>, val alreadyCompleted: Boolean = false,
     val addonsAdded: Int? = null, val excludedItems: Int? = null)
+/**
+ * The server's background run that gives imported titles their Details card: whether it is active,
+ * titles looked up so far, titles it has found to fill (0 until it has listed them) and, when the
+ * server reports it, how many looked-up titles actually gained a card.
+ */
+data class StremioDetailsStatus(val running: Boolean, val done: Int, val total: Int, val filled: Int? = null)
 
 /**
  * Server refusal. Only the fixed `error_code` and validated add-on handles from the JSON body
@@ -59,6 +65,8 @@ internal interface StremioImportTransport {
     suspend fun review(profile: String, preview: String, addons: List<String>, expectedRevision: Long): StremioReview
     suspend fun apply(profile: String, preview: String, excluded: List<String>, revision: Long): StremioCompletion
     suspend fun discard(profile: String, preview: String)
+    /** Null when the server predates title-details progress. */
+    suspend fun details(profile: String): StremioDetailsStatus? = null
 }
 
 @OptIn(ExperimentalTime::class)
@@ -95,6 +103,15 @@ internal class RemoteStremioImport(private val remote: RemoteConnection, private
 
     override suspend fun discard(profile: String, preview: String) {
         send("${root(profile)}/${preview.encodeURLPathPart()}", HttpMethod.Delete, null, review = false, timeout = null)
+    }
+
+    /** One in-memory counter read; it never starts work on the server. */
+    override suspend fun details(profile: String): StremioDetailsStatus? {
+        val (status, text) = remote.exchange("/api/profiles/${profile.encodeURLPathPart()}/library/details", HttpMethod.Get)
+        if (status == 404) return null
+        if (status !in 200..299) throw StremioImportFailure(status, null)
+        val value = try { Json.parseToJsonElement(text) } catch (_: Exception) { null }
+        return parseDetails(value) ?: throw StremioInvalidResponse("Invalid details")
     }
 
     private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, review: Boolean, timeout: Long?): JsonElement? {
@@ -219,4 +236,14 @@ internal fun parseCompletion(value: JsonElement?, profile: String): StremioCompl
     val added = if (record["addons_added"].absent()) null else record["addons_added"].count() ?: return null
     val excluded = if (record["excluded_items"].absent()) null else record["excluded_items"].count() ?: return null
     return StremioCompletion(profile, summary, record["already_completed"].flag() == true, added, excluded)
+}
+
+internal fun parseDetails(value: JsonElement?): StremioDetailsStatus? {
+    val record = value as? JsonObject ?: return null
+    val running = record["running"].flag() ?: return null
+    val done = record["done"].count() ?: return null
+    val total = record["total"].count() ?: return null
+    if (total > 0 && done > total) return null
+    val filled = if (record["filled"].absent()) null else record["filled"].count()?.takeIf { it <= done } ?: return null
+    return StremioDetailsStatus(running, done, total, filled)
 }

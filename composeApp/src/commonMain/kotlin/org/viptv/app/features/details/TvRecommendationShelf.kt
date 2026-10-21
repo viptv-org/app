@@ -31,7 +31,7 @@ internal fun TvRecommendationShelf(cards: List<Card>, scale: Float, open: (Card)
         }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
             itemsIndexed(visible, key = { _, card -> card.provider_id + ":" + card.identity.kind + ":" + card.identity.id }) { index, card ->
                 MediaCard(card, (232 * scale).toInt(), portrait = true, showLabels = false, open = open, onFocus = { scroll(index); focused() },
-                    cornerRadius = 12.dp * scale, focusWidth = 3.dp * scale)
+                    cornerRadius = 12.dp * scale, focusWidth = 3.dp * scale, watchedBadgeSize = 34.dp * scale)
             }
         }
         }

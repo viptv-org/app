@@ -185,13 +185,13 @@ internal fun DeviceApprovalPage(
 }
 
 @Composable
-private fun DeviceError(text: String) {
+internal fun DeviceError(text: String) {
     Text(text, color = Palette.danger, fontSize = 13.sp, textAlign = TextAlign.Center)
 }
 
 /** Primary button: cream background, dark text (W3 token `button.primary`). */
 @Composable
-private fun DevicePrimaryButton(label: String, enabled: Boolean, busy: Boolean, onClick: () -> Unit) {
+internal fun DevicePrimaryButton(label: String, enabled: Boolean, busy: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -211,7 +211,7 @@ private fun DevicePrimaryButton(label: String, enabled: Boolean, busy: Boolean, 
 
 /** Deny action: bare tertiary text link per W3DeviceConfirm. */
 @Composable
-private fun DeviceSecondaryButton(label: String, onClick: () -> Unit) {
+internal fun DeviceSecondaryButton(label: String, onClick: () -> Unit) {
     TextButton(
         onClick = onClick,
         colors = ButtonDefaults.textButtonColors(contentColor = Palette.tertiary),
@@ -231,7 +231,7 @@ private fun DeviceSessionFootnote(username: String, notYou: () -> Unit) {
 
 /** W3DeviceConfirm device card: TV glyph, name, status dot, and code. */
 @Composable
-private fun DeviceConfirmCard(device: DeviceApproval, code: String) {
+internal fun DeviceConfirmCard(device: DeviceApproval, code: String) {
     Row(
         Modifier.fillMaxWidth().background(Color(0x0FFFFFFF), RoundedCornerShape(14.dp)).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -312,7 +312,7 @@ private fun DeviceField(
 
 /** W3DeviceDone check tile: cream circle with a drawn check. */
 @Composable
-private fun DeviceCheckTile() {
+internal fun DeviceCheckTile() {
     Box(
         Modifier.size(76.dp).background(Palette.text, RoundedCornerShape(38.dp)),
         contentAlignment = Alignment.Center,

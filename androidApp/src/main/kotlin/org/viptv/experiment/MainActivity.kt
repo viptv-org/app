@@ -14,9 +14,11 @@ import org.viptv.app.preview.UiPreview
 import org.viptv.app.connection.AndroidSecrets
 import org.viptv.app.connection.AndroidAccountAuthorization
 import androidx.lifecycle.ViewModelProvider
+import android.content.Intent
 
 open class MainActivity : ComponentActivity() {
     private var applicationModel: ApplicationModel? = null
+    private var television = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidSecrets.attach(applicationContext)
@@ -24,6 +26,7 @@ open class MainActivity : ComponentActivity() {
         org.viptv.app.connection.observeAddonFetches { android.util.Log.i("VIPTV_ADDON", it) }
         org.viptv.app.connection.observeSourceFailures { android.util.Log.w("VIPTV_SOURCES", it) }
         val tv = getSystemService(UiModeManager::class.java).currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+        television = tv
         if (intent.getBooleanExtra("ui_preview", false)) {
             val screen = runCatching { Screen.valueOf(intent.getStringExtra("ui_screen") ?: "Home") }.getOrDefault(Screen.Home)
             setContent {
@@ -39,6 +42,8 @@ open class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
         model.start(filesDir.resolve("local.sqlite").absolutePath)
+        // A recreated activity gets the launching intent again; only the first creation may act on it.
+        if (savedInstanceState == null) offerDeviceCode(intent)
         setContent {
             val controller = model.controller
             val state by controller.state.collectAsState()
@@ -58,6 +63,21 @@ open class MainActivity : ComponentActivity() {
                 manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
         }
     }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        offerDeviceCode(intent)
+    }
+
+    /** The QR code on a TV's sign-in screen is https://server/device?code=...; phones and tablets approve it in the app. */
+    private fun offerDeviceCode(intent: Intent) {
+        val link = intent.data ?: return
+        if (television || intent.action != Intent.ACTION_VIEW || link.scheme != "https" || link.path != "/device") return
+        val host = link.host ?: return
+        val code = link.getQueryParameter("code") ?: return
+        applicationModel?.controller?.offerDeviceCode("https://$host", code)
+    }
+
     override fun onPause() {
         // Lifecycle ON_STOP observers may pause the renderer before onStop is
         // called. Capture whether playback should resume before that feedback.

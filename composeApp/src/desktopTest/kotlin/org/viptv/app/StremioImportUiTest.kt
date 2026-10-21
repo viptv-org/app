@@ -361,6 +361,104 @@ class StremioImportUiTest {
         } finally { scene.close() }
     }
 
+    /** The server keeps filling imported titles' Details cards after apply; the completion stage shows it without blocking. */
+    @Test fun completionShowsAnAnimatedTitleDetailsBarAndKeepsEveryActionAvailable() {
+        var status = StremioDetailsStatus(true, 0, 0)
+        val transport = FakeStremioTransport()
+        transport.details = { status }
+        val session = StremioImportSession(scope, transport, "2", "Synthetic profile", false, detailsPoll = 5)
+        var left = 0
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                StremioImportScreen(session, "Synthetic profile", true, back = { left++ })
+            } }
+        }
+        try {
+            val probe = Probe(scene); probe.frames(12)
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); session.toConfirm()
+            session.setConfirmed(true); session.apply(); probe.frames(12)
+            assertTrue(probe.has("Import complete")); assertTrue(probe.focused("Import complete"))
+            val label = probe.textNode("Getting title details…")
+            assertEquals(LiveRegionMode.Polite, label.config.getOrNull(SemanticsProperties.LiveRegion), "Announced like the busy status")
+            assertEquals(ProgressBarRangeInfo.Indeterminate, probe.progress().config[SemanticsProperties.ProgressBarRangeInfo],
+                "Totals are not known yet")
+            val before = probe.pixels(probe.progress()); probe.frames(18)
+            assertNotEquals(before, probe.pixels(probe.progress()), "The indeterminate bar moves")
+            assertTrue(probe.has("You can leave this screen. Details keep filling in the background."))
+            assertFalse(probe.disabled("Start another preview")); assertFalse(probe.disabled("Back to settings"))
+            probe.capture("phone-details-starting")
+
+            status = StremioDetailsStatus(true, 40, 162); probe.frames(12)
+            assertTrue(probe.has("40 of 162 titles"))
+            val moving = probe.progress().config[SemanticsProperties.ProgressBarRangeInfo].current
+            assertTrue(moving > 0f && moving < 40f / 162, "The bar animates toward the new count ($moving)")
+            probe.frames(150)
+            assertEquals(40f / 162, probe.progress().config[SemanticsProperties.ProgressBarRangeInfo].current, .001f)
+            assertTrue(probe.focused("Import complete"), "Progress updates never move focus")
+            probe.capture("phone-details-progress")
+            status = StremioDetailsStatus(true, 120, 162); probe.frames(60)
+            probe.capture("phone-details-progress-later")
+
+            status = StremioDetailsStatus(false, 162, 162, 162); probe.frames(12)
+            assertTrue(probe.has("Title details are ready."))
+            assertTrue(probe.has("Imported titles now show their description, artwork and ratings."))
+            assertEquals(LiveRegionMode.Polite, probe.textNode("Title details are ready.").config.getOrNull(SemanticsProperties.LiveRegion))
+            assertNull(probe.progressOrNull(), "The bar goes once the fill is finished")
+            probe.assertInside(390, "details ready")
+            probe.capture("phone-details-ready")
+            probe.click("Back to settings"); assertEquals(1, left)
+        } finally { scene.close() }
+    }
+
+    @Test fun aFinishedFillSaysHowManyTitlesActuallyGotDetails() {
+        val transport = FakeStremioTransport()
+        transport.details = { StremioDetailsStatus(false, 163, 163, 0) }
+        val session = StremioImportSession(scope, transport, "2", "Synthetic profile", false, detailsPoll = 5)
+        val scene = scene(390, 844, session, compact = true)
+        try {
+            val probe = Probe(scene); probe.frames(12)
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); session.toConfirm()
+            session.setConfirmed(true); session.apply()
+            repeat(20) { if (!probe.has("Finished getting title details.")) probe.frames(3) }
+            assertTrue(probe.has("Finished getting title details."), "Not \"ready\" when no card was filled")
+            assertTrue(probe.has("Details were found for 0 of 163 titles. The others keep their name and poster."))
+            assertNull(probe.progressOrNull())
+            probe.assertInside(390, "partly filled")
+            probe.capture("phone-details-partly")
+        } finally { scene.close() }
+    }
+
+    @Test fun aFillLeftToTheBackgroundSaysSoWithoutABar() {
+        val transport = FakeStremioTransport()
+        transport.details = { throw StremioTransportFailure(false) }
+        val session = StremioImportSession(scope, transport, "2", "Synthetic profile", false, detailsPoll = 5)
+        val scene = scene(1000, 1200, session)
+        try {
+            val probe = Probe(scene); probe.frames(12)
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); session.toConfirm()
+            session.setConfirmed(true); session.apply()
+            repeat(20) { if (!probe.has("Title details are still being added in the background.")) probe.frames(3) }
+            assertTrue(probe.has("Title details are still being added in the background."))
+            assertNull(probe.progressOrNull())
+            assertTrue(probe.has("Start another preview"))
+        } finally { scene.close() }
+    }
+
+    /** TV and desktop have no import entry; the `ImportDetails` preview renders the same completion stage there for review. */
+    @Test fun importDetailsPreviewReachesTheCompletionStageOnTelevision() {
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) {
+            org.viptv.app.preview.UiPreview(initialScreen = Screen.Settings, television = true, tvDetailVariant = "ImportDetails")
+        }
+        try {
+            val probe = Probe(scene)
+            repeat(60) { if (!probe.has("Getting title details…")) probe.frames(3) }
+            assertTrue(probe.has("Import complete")); assertTrue(probe.has("Getting title details…"))
+            assertNotNull(probe.progressOrNull())
+            assertTrue(probe.has("Start another preview"))
+            probe.capture("tv-preview-details")
+        } finally { scene.close() }
+    }
+
     @Test fun importEntryIsGatedToBrowserAndAndroidRemoteSettings() {
         val profiles = listOf(Profile("2", "Synthetic profile", null))
         fun entries(width: Int, browser: Boolean, television: Boolean = false, desktop: Boolean = false, local: Boolean = false): List<SemanticsNode> {
@@ -448,6 +546,15 @@ class StremioImportUiTest {
             val node = clickableOrFail(label, button)
             assertFalse(node.config.contains(SemanticsProperties.Disabled), "$label is disabled")
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); frames(10)
+        }
+        fun progressOrNull() = nodes().firstOrNull { it.config.contains(SemanticsProperties.ProgressBarRangeInfo) }
+        fun progress() = requireNotNull(progressOrNull()) { "Missing progress bar" }
+        /** The rendered colours across the middle of [node], to tell whether it is drawn differently between frames. */
+        fun pixels(node: SemanticsNode): List<Int> = scene.render(frame++ * 16_666_667L).use { image ->
+            val bitmap = org.jetbrains.skia.Bitmap.makeFromImage(image)
+            val bounds = node.boundsInRoot
+            val y = ((bounds.top + bounds.bottom) / 2).toInt()
+            (bounds.left.toInt() until bounds.right.toInt()).map { bitmap.getColor(it, y) }
         }
         fun focused(heading: String) = nodes().any { node -> node.config.contains(SemanticsProperties.Heading) &&
             text(node) == heading && node.config.getOrNull(SemanticsProperties.Focused) == true }

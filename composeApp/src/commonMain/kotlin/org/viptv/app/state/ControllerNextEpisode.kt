@@ -23,7 +23,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
         cancelNextEpisode()
         return
     }
-    val key = NextEpisodeKey(input, profile, card.identity, parent, card.provider_id, connection, local, state.home?.scope, card.metadata_origin)
+    val key = NextEpisodeKey(input, profile, card.identity, parent, card.provider_id, connection, local, state.home?.scope?.owner(), card.metadata_origin)
     if (!force && nextEpisodeKey == key) return
     cancelNextEpisode()
     nextEpisodeKey = key
@@ -33,7 +33,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
         mutable.value.screen == Screen.Player && mutable.value.playback === input &&
         mutable.value.selectedProfile == profile && mutable.value.sourceTitle?.identity == card.identity &&
         mutable.value.sourceTitle?.metadata_origin == key.origin && mutable.value.sourceTitle?.parent_identity == parent && mutable.value.sourceTitle?.provider_id == card.provider_id &&
-        mutable.value.home?.scope == key.homeScope && connection === key.remote && local === key.local
+        mutable.value.home?.scope?.owner() == key.homeScope && connection === key.remote && local === key.local
     mutable.value = mutable.value.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.PENDING, nextEpisodeLoading = true)
     nextEpisodeJob = scope.launch {
         try {

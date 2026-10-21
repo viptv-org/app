@@ -10,6 +10,7 @@ import org.viptv.app.connection.ProfilePreferences
 @Composable
 internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
     desktop: Boolean = false) {
+    val deviceLink by controller.deviceLink.collectAsState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice,
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
@@ -37,6 +38,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         },
         devices = if (browser && !state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null) }) else null,
+        addDevice = controller.connection.takeUnless { state.localMode }?.let { remote -> { compact: Boolean -> AddDeviceScreen(remote, compact, deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode) } },
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
             StremioImportRoute(state, controller, compact, if (compact) back else null, manageAddons) }) else null,
         serverAddress = controller.connection?.accountDashboardUrl,

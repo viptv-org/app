@@ -1,5 +1,6 @@
 package org.viptv.app.features.home
 
+import org.viptv.app.state.owner
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.CubicBezierEasing
@@ -118,15 +119,19 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         SideEffect { rowScale = scale }
         val easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
         val targetTop = (if (browsing) 512 else 824).dp * scale
+        // The rows are laid out at the browsing top and only translated: a list
+        // whose top padding jumped to the billboard position lost 312 dp of
+        // height in one frame and clipped the sliding rows.
+        val listTop = 512.dp * scale
         val top = animateDpAsState(targetTop, tween(450, easing = easing), label = "Billboard to rows", finishedListener = {})
         val measuredLastHeight = with(LocalDensity.current) { lastRowHeight.toDp() }
-        val bottomSpace = maxOf(96.dp * scale, maxHeight - targetTop - measuredLastHeight)
-        var heroTimerEnabled by remember(home?.scope) { mutableStateOf(true) }
+        val bottomSpace = maxOf(96.dp * scale, maxHeight - listTop - measuredLastHeight)
+        var heroTimerEnabled by remember(home?.scope?.owner()) { mutableStateOf(true) }
         LaunchedEffect(browsing) {
             if (browsing) heroTimerEnabled = false
             else { delay(450); heroTimerEnabled = true }
         }
-        val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope)
+        val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope?.owner())
         val portraitSelection = { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" }
         // The exact request the browse plane's SoftArtwork makes, so the settle
         // swap finds it warm instead of popping in after the sharp art.
@@ -170,8 +175,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                     }
                 }
                 TvFocusScroll(manual = true) {
-                    LazyColumn(Modifier.fillMaxSize().padding(top = targetTop).graphicsLayer {
-                        translationY = (top.value - targetTop).toPx()
+                    LazyColumn(Modifier.fillMaxSize().padding(top = listTop).graphicsLayer {
+                        translationY = (top.value - listTop).toPx()
                     }, state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = bottomSpace)) {
                         itemsIndexed(visibleRows, key = { _, row -> row.id }, contentType = { _, _ -> "row" }) { index, row ->
                             // A row first composed above the active one starts faded,
@@ -182,7 +187,9 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 androidx.compose.animation.core.Animatable(if (browsing && index < activeRow) 0f else 1f)
                             }
                             TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
-                                up = ::returnHero,
+                                // Only the first row returns to the billboard; Up from any
+                                // lower row moves to the row above.
+                                up = if (index == 0) ::returnHero else null,
                                 focus = { focused.value = it; browsing = true
                                     if (activeRow != index) {
                                         activeRow = index; rowMotion?.cancel()

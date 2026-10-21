@@ -25,7 +25,11 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true) {
         job?.cancel()
         mutable.value = mutable.value.copy(findingSources = false, busy = false)
     }
-    if (screen != Screen.Player && mutable.value.playback != null) { if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releaseRemotePlayback(); mutable.value = mutable.value.copy(playback = null) }
+    if (screen != Screen.Player && mutable.value.playback != null) {
+        val live = mutable.value.playback?.live == true
+        if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releaseRemotePlayback(); mutable.value = mutable.value.copy(playback = null)
+        afterPlayback(live)
+    }
     // Overlays (Details/Sources/Player) are not browser destinations; record
     // the page they return to instead so Back never lands on a stale sheet.
     val recorded = when (previousScreen) {
@@ -43,6 +47,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true) {
         loadBrowse(BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }
     if (screen == Screen.Home && mutable.value.policyRefreshNeeded) refresh()
+    else if (screen == Screen.Home) freshen()
     if (screen != Screen.Live) liveGuideJob?.cancel()
     if (screen == Screen.Live) run { loadLive(LiveQuery()) }
     if (screen == Screen.Settings && connection?.accountManagementEnabled != true) refreshAddons()

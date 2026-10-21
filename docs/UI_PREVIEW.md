@@ -37,6 +37,13 @@ settings fixture. Its preferences and profile add-on toggles change in memory;
 those actions do not prove persistent engine settings. The sign-out fixture
 uses a remote-style account confirmation and never calls a real logout endpoint.
 
+`Settings --es ui_variant ImportDetails` (desktop `VIPTV_UI_VARIANT=ImportDetails`, browser
+`#ui-preview/Settings/ImportDetails`) renders the Stremio import completion stage while a
+synthetic server fills 162 titles' Details cards over about 45 s: an indeterminate bar for
+3 s, then the animated "N of 162 titles" bar, then "Title details are ready.". The real import
+session and screen run against an in-memory transport. TV and desktop have no import entry
+(IMP-001), so this is the way to review that stage there.
+
 TV `Home --es ui_variant LoadingThenReady` keeps the loading placeholders visible
 for three seconds, then supplies the fixture snapshot to the same screen instance.
 This exercises the real loading-to-content transition without account, provider,

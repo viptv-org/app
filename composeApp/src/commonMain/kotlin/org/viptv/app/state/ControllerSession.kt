@@ -133,6 +133,7 @@ fun ApplicationController.disconnect() {
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
     libraryHydration?.cancel(); resetLiveRequests()
+    quietJob?.cancel(); quietJob = null; freshness.reset()
     cancelDetailPaging()
     val stopping = releaseRemotePlayback()
     val priorRemote = connection
@@ -182,6 +183,9 @@ internal fun ApplicationController.expireSession(remote: RemoteConnection?, devi
 internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = null, busy: Boolean = false) {
     libraryHydration?.cancel()
     resetLiveRequests()
+    freshness.reset()
+    if (local != null) freshness.unsupported()
+    if (value.home != null) freshness.homeBuilt(value.revisions)
     mutable.value = ApplicationState(screen = screen ?: if (value.selected == null) Screen.Profiles else Screen.Home, busy = busy,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,

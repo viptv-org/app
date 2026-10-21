@@ -13,6 +13,28 @@ internal fun Card.metadataParts(): List<String> = metadata?.let { value -> build
 /** Card *state* labels: drawn on the art or as meta text, never as a meta chip (Tv3CardStates). */
 private val stateLabels = setOf("watched", "new episode", "returning", "ended", "live")
 
+private val newEpisodesCount = Regex("""\+(\d+)""")
+
+/**
+ * Continue Watching labels a series with episodes released since the profile
+ * last finished one with a compact count, "+1", "+2" (backend
+ * `continuation::new_episodes_badge`); providers may still send the board's
+ * "New episode". Exact strings only.
+ */
+internal fun isNewEpisodesBadge(badge: String): Boolean =
+    badge == "New episode" || newEpisodesCount.matches(badge)
+
+/** The words a screen reader says for a card label: "+2" is "2 new episodes". */
+internal fun newEpisodesDescription(badge: String): String =
+    newEpisodesCount.matchEntire(badge)?.groupValues?.get(1)?.let { count ->
+        if (count == "1") "1 new episode" else "$count new episodes"
+    } ?: badge
+
+internal fun Card.newEpisodesBadge(): String? = badges.firstOrNull(::isNewEpisodesBadge)
+
+/** The one label a phone/desktop/web card draws on its art: new episodes first. */
+internal fun Card.cardChip(): String? = newEpisodesBadge() ?: badges.firstOrNull { !it.equals("Simkl", true) && !it.equals(WATCHED_BADGE, true) }
+
 /** Capability chips in the order every board draws them: 4K, HDR, HD, 5.1, CC. */
 private val capabilityChipOrder = listOf("4K", "HDR", "HD", "5.1", "CC")
 
@@ -52,6 +74,6 @@ internal fun Card.presentationBadges(): List<String> {
     val capabilities = capabilityChipOrder.filter { chip -> tokens.any { canonicalChip(it) == chip } }
         // 4K subsumes HD; the boards never draw both (Tv3Home "4K HDR 5.1").
         .let { chips -> if ("4K" in chips) chips - "HD" else chips }
-    val others = tokens.filterNot(::isCapabilityBadge).filterNot { it.lowercase() in stateLabels }.distinct()
+    val others = tokens.filterNot(::isCapabilityBadge).filterNot { it.lowercase() in stateLabels || isNewEpisodesBadge(it) }.distinct()
     return capabilities + listOfNotNull(metadata?.certification?.takeIf { it.isNotBlank() }) + others
 }

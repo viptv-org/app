@@ -42,6 +42,8 @@ internal class FakeStremioTransport : StremioImportTransport {
     var preview: suspend () -> StremioPreview = { stremioAddons() }
     var review: suspend (List<String>, Long) -> StremioReview = { _, _ -> stremioReview(reviews.toLong()) }
     var apply: suspend () -> StremioCompletion = { stremioCompletion }
+    /** The server's title-details fill after apply; null is an older server without it. */
+    var details: suspend () -> StremioDetailsStatus? = { null }
     val reviews get() = calls.count { it.startsWith("review") }
     override suspend fun preview(profile: String, email: String, password: String, library: Boolean, progress: Boolean): StremioPreview {
         calls += "preview:$profile:$email:$library:$progress"; passwords += password; return preview()
@@ -53,6 +55,9 @@ internal class FakeStremioTransport : StremioImportTransport {
         calls += "apply:$preview:$excluded:$revision"; return apply()
     }
     override suspend fun discard(profile: String, preview: String) { calls += "discard:$profile:$preview" }
+    /** Kept apart from [calls], whose last entry is the import's final request. */
+    val detailsReads = java.util.concurrent.atomic.AtomicInteger()
+    override suspend fun details(profile: String): StremioDetailsStatus? { assertEquals("2", profile); detailsReads.incrementAndGet(); return details() }
 }
 
 class StremioImportTest {

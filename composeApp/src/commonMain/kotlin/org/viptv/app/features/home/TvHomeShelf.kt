@@ -50,7 +50,7 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
 }
 
 @Composable
-internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: () -> Unit,
+internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: (() -> Unit)?,
     focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, modifier: Modifier = Modifier,
     viewport: Dp, firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
@@ -69,6 +69,18 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     // to the start and flashed the previously focused card before snapping away.
     var lastFocusedIndex by remember(row.id) { mutableIntStateOf(0) }
     val resumeIndex = lastFocusedIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
+    // A background refresh can remove the focused card (finished on another
+    // device). Focus moves to the surviving card at the same position instead
+    // of falling out of the shelf. Only a shelf that held focus does this.
+    var focusedKey by remember(row.id) { mutableStateOf<Any?>(null) }
+    val latestCards = rememberUpdatedState(cards)
+    val recover = remember { FocusRequester() }
+    LaunchedEffect(cards) {
+        val lost = focusedKey ?: return@LaunchedEffect
+        if (cards.isEmpty() || cards.any { cardLookupKey(it) == lost }) return@LaunchedEffect
+        focusedKey = null
+        repeat(30) { withFrameNanos { }; if (runCatching { recover.requestFocus() }.getOrDefault(false)) return@LaunchedEffect }
+    }
     val loadPage = rememberUpdatedState(more)
     LaunchedEffect(row.id, row.next_cursor, appending, appendError, cards.size) {
         val request = loadPage.value ?: return@LaunchedEffect
@@ -90,14 +102,18 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
             // A cache window (cards precomposed past the edges) was measured on
             // the ONN and *cost* frames instead of saving them, so the shelf
             // relies on the built-in scroll prefetch only.
-            LazyRow(state = state, modifier = arrival.focusRestorer().focusGroup(), contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
+            LazyRow(state = state, modifier = arrival.focusRestorer().focusGroup().onFocusChanged {
+                    // Focus moving elsewhere forgets the card; a removed card keeps it for recovery.
+                    if (!it.hasFocus && latestCards.value.any { card -> cardLookupKey(card) == focusedKey }) focusedKey = null
+                }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
                 when (row.state) {
                     RowState.READY -> {
                         itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->
                             val entry = Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced() } else Modifier)
                                 .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
+                                .then(if (index == resumeIndex) Modifier.focusRequester(recover) else Modifier)
                             TvCatalogCard(card, scale, portrait, entry,
-                                { lastFocusedIndex = index; scroll(index); focus(it) }, open, showFocus, focusedCaptions = portrait,
+                                { lastFocusedIndex = index; focusedKey = cardLookupKey(it); scroll(index); focus(it) }, open, showFocus, focusedCaptions = portrait,
                                 onUp = if (index < 7) up else null)
                         }
                         if (appendError != null) item(key = "row-append", contentType = "failed") {
