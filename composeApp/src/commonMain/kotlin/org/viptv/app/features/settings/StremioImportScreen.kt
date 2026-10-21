@@ -1,5 +1,8 @@
 package org.viptv.app.features.settings
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
@@ -101,6 +104,7 @@ internal fun StremioImportScreen(session: StremioImportSession?, profileName: St
                     Text(if (completion.alreadyCompleted) "This import was already completed." else "The confirmed changes were saved to this profile.",
                         Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 14.sp)
                 }
+                state.details?.let { details -> add("details") { TitleDetailsStatus(details) } }
                 add("summary") { StremioSummary(completion.summary, stremioCompletionLabels) }
                 add("extras") {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -374,6 +378,42 @@ private fun BusyStatus(busy: StremioImportBusy) {
         Text(busy.label, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 14.sp)
         Text(busy.expectation, fontSize = 13.sp, color = Palette.secondary)
         if (elapsed >= 10) Text("Still working · ${elapsed} s", fontSize = 13.sp, color = Palette.secondary)
+    }
+}
+
+/**
+ * The server's fill of imported titles' Details cards. Nothing here is focusable and it never blocks
+ * the actions: the fill continues on the server when the viewer leaves. The first line is one polite
+ * live region whose text changes only when the phase does, so counts are not announced every poll.
+ */
+@Composable
+private fun TitleDetailsStatus(details: StremioTitleDetails) {
+    val running = details.phase == StremioDetailsPhase.Running
+    val counted = details.total > 0
+    // A title is looked up even when no metadata add-on knows it; say so rather than claim every card is complete.
+    val partly = details.phase == StremioDetailsPhase.Ready && details.filled != null && details.filled < details.total
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(when (details.phase) {
+            StremioDetailsPhase.Running -> "Getting title details…"
+            StremioDetailsPhase.Ready -> if (partly) "Finished getting title details." else "Title details are ready."
+            StremioDetailsPhase.Background -> "Title details are still being added in the background."
+        }, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        if (running) {
+            val share = if (counted) details.done.toFloat() / details.total else 0f
+            // Glides between reads (one every couple of seconds) so the bar keeps moving while titles fill.
+            val shown by animateFloatAsState(share, tween(1_800, easing = LinearEasing), label = "title details")
+            // Until a first title is done there is nothing to measure yet; the indeterminate bar shows work is happening.
+            if (counted && details.done > 0) LinearProgressIndicator({ shown },
+                Modifier.fillMaxWidth().semantics { stateDescription = "${details.done} of ${details.total} titles" }, color = Palette.accent)
+            else LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+            if (counted) Text("${details.done} of ${details.total} titles", fontSize = 13.sp, color = Palette.secondary)
+        }
+        ImportNote(when (details.phase) {
+            StremioDetailsPhase.Running -> "You can leave this screen. Details keep filling in the background."
+            StremioDetailsPhase.Ready -> if (partly) "Details were found for ${details.filled} of ${details.total} titles. The others keep their name and poster."
+                else "Imported titles now show their description, artwork and ratings."
+            StremioDetailsPhase.Background -> "My List updates as they arrive."
+        })
     }
 }
 

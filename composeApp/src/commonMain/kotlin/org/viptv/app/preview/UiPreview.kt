@@ -118,7 +118,8 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 if (tvDetailVariant == "Loading") emptyList() else PreviewData.posters + PreviewLive.channels.take(3).map { it.card },
                                 emptyList(), tvDetailVariant == "Loading", null, query, { go(Screen.Details) }, editQuery, listOf("the whisper man", "the wild robot", "the white lotus"))
                                 else SearchScreen(searchTerm ?: term, PreviewData.posters, emptyList(), false, null, desktop, query, { go(Screen.Details) }, editQuery = editQuery)
-                            Screen.Settings -> if (television) PreviewTvSettings(tvDetailVariant, go) else PreviewNonTvSettings(tvDetailVariant, go)
+                            Screen.Settings -> if (tvDetailVariant == "ImportDetails") PreviewImportDetails(phone)
+                                else if (television) PreviewTvSettings(tvDetailVariant, go) else PreviewNonTvSettings(tvDetailVariant, go)
                             Screen.ProfilePin -> if (television) PreviewTvPin(tvDetailVariant, go, entryBackChanged)
                                 else ProfilePinScreen(PreviewData.profiles[2], phone, false, null, {}, { go(Screen.Profiles) }, false)
                             Screen.ProfileEdit -> if (television) PreviewTvProfileEdit(go, entryBackChanged, profileToEdit)

@@ -15,6 +15,14 @@ enum class StremioImportBusy(val label: String, val expectation: String) {
     Apply("Saving the confirmed import…", "This can take up to a minute. Stay on this screen to see the result.")
 }
 
+/** Running: the server is still filling. Ready: it finished. Background: no longer followed here (cap or failures). */
+enum class StremioDetailsPhase { Running, Ready, Background }
+/**
+ * After apply, the server gives imported titles their Details card; [total] is 0 until it has counted them.
+ * [filled] (null from servers that do not report it) is how many looked-up titles actually gained a card.
+ */
+data class StremioTitleDetails(val done: Int, val total: Int, val phase: StremioDetailsPhase, val filled: Int? = null)
+
 /** Never holds the Stremio password: the field owns it until [StremioImportSession.connect] drops it. */
 data class StremioImportState(
     val profileName: String,
@@ -43,6 +51,8 @@ data class StremioImportState(
     val notice: String? = null,
     /** Increments when the draft is discarded so the form clears its fields and restores email focus. */
     val resets: Int = 0,
+    /** The title-details fill after a completed import; null when there is nothing to show. */
+    val details: StremioTitleDetails? = null,
 ) {
     val connected: Boolean get() = addons != null || review != null
     val chosenCounts: Map<String, Int>? get() = review?.let { stremioSelectedCounts(it.summary, it.items, excluded) }
@@ -112,6 +122,10 @@ class StremioImportSession internal constructor(
     restricted: Boolean,
     private val now: () -> Long = ::epochMillis,
     internal val owned: () -> Boolean = { true },
+    /** The profile's library changed here (an applied import, then its filled cards): Home and My List look again. */
+    internal val changed: () -> Unit = {},
+    private val detailsPoll: Long = DETAILS_POLL_MILLIS,
+    private val detailsLimit: Long = DETAILS_LIMIT_MILLIS,
 ) {
     private val mutable = MutableStateFlow(StremioImportState(profileName, restricted))
     val state = mutable.asStateFlow()
@@ -119,6 +133,7 @@ class StremioImportSession internal constructor(
     private var epoch = 0L
     private var pending: Job? = null
     private var timer: Job? = null
+    private var details: Job? = null
     private var handle: String? = null
     private var disposed = false
 
@@ -274,12 +289,48 @@ class StremioImportSession internal constructor(
             if (!live(request)) return
             mutable.value = current.copy(completion = value, review = null, confirmed = false, stage = StremioImportStage.Complete)
             scheduleExpiry()
+            changed()
+            followDetails(request)
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
             if (!live(request)) return
             if (error is StremioImportFailure && error.code in staleCodes) {
                 reset(); mutable.value = current.copy(expired = true, error = stremioStaleCopy)
             } else mutable.value = current.copy(error = stremioImportError(error, true))
+        }
+    }
+
+    /**
+     * The server keeps filling imported titles' Details cards after apply (about 45 s for 160 titles).
+     * Polls its counters without making the screen busy, until it finishes, the draft ends (leaving the
+     * screen, another preview, sign-out), [detailsLimit] passes or [DETAILS_FAILURES] reads fail in a row.
+     */
+    private fun followDetails(request: Long) {
+        details?.cancel()
+        mutable.value = current.copy(details = StremioTitleDetails(0, 0, StremioDetailsPhase.Running))
+        val until = now() + detailsLimit
+        details = scope.launch {
+            var failures = 0
+            fun show(done: Int, total: Int, phase: StremioDetailsPhase, filled: Int? = current.details?.filled) {
+                mutable.value = current.copy(details = StremioTitleDetails(done, total, phase, filled))
+            }
+            while (true) {
+                val answer = try { Result.success(transport.details(profileId)) }
+                    catch (error: CancellationException) { throw error }
+                    catch (error: Exception) { Result.failure(error) }
+                if (!live(request)) return@launch
+                val status = answer.getOrNull()
+                val shown = current.details ?: return@launch
+                when {
+                    answer.isFailure -> if (++failures >= DETAILS_FAILURES) return@launch show(shown.done, shown.total, StremioDetailsPhase.Background)
+                    // An older server, or nothing was left to fill: no status to show.
+                    status == null || (!status.running && status.total == 0) -> { mutable.value = current.copy(details = null); return@launch }
+                    !status.running -> { show(status.done, status.total, StremioDetailsPhase.Ready, status.filled); changed(); return@launch }
+                    else -> { failures = 0; show(status.done, status.total, StremioDetailsPhase.Running, status.filled) }
+                }
+                if (now() >= until) return@launch show(current.details?.done ?: 0, current.details?.total ?: 0, StremioDetailsPhase.Background)
+                delay(detailsPoll)
+            }
         }
     }
 
@@ -322,6 +373,7 @@ class StremioImportSession internal constructor(
         epoch++
         pending?.cancel(); pending = null
         timer?.cancel(); timer = null
+        details?.cancel(); details = null
         discardPreview()
         val draft = current
         mutable.value = StremioImportState(draft.profileName, draft.restricted,
@@ -335,6 +387,7 @@ class StremioImportSession internal constructor(
         epoch++
         pending?.cancel(); pending = null
         timer?.cancel(); timer = null
+        details?.cancel(); details = null
         discardPreview()
         val draft = current
         mutable.value = StremioImportState(draft.profileName, draft.restricted, resets = draft.resets + 1)
@@ -365,3 +418,9 @@ class StremioImportSession internal constructor(
         }
     }
 }
+
+/** Modest polling of in-memory counters; the bar animates between reads. */
+internal const val DETAILS_POLL_MILLIS = 2_000L
+/** Large imports keep filling on the server; past this the screen stops following and says so. */
+internal const val DETAILS_LIMIT_MILLIS = 5 * 60_000L
+internal const val DETAILS_FAILURES = 3
