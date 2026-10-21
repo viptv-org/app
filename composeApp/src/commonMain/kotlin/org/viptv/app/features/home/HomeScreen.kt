@@ -51,7 +51,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 items(home.rows, key = { it.id }) { row ->
                     HomeCatalogRow(row, compact, television,
                         Modifier.padding(horizontal = gutter),
-                        { focused = it }, open, retry, scale, tablet, browser)
+                        { focused = it }, open, retry, scale, tablet, browser, play)
                 }
             }
         }

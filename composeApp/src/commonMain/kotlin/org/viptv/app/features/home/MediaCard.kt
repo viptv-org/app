@@ -83,7 +83,9 @@ internal val LocalCardActions = compositionLocalOf<CardActions?> { null }
 @Composable
 fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit, labelScale: Float = 1f, cornerRadius: androidx.compose.ui.unit.Dp = 8.dp, focusWidth: androidx.compose.ui.unit.Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier,
     /** TV screens pass the Tv3CardStates check (34 px × scale); others size it from the art. */
-    watchedBadgeSize: Dp? = null) {
+    watchedBadgeSize: Dp? = null,
+    /** Replaces Details as the card's primary activation (Continue Watching resumes). */
+    select: ((Card) -> Unit)? = null) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
     // Desktop pointer affordances (boards D3HomeHover / D3Context). `desktop` is
@@ -110,7 +112,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     Column(modifier.width(width.dp).hoverable(hover)
         .cardContextClick(desktop) { previewOpen = false; menuAt = it }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
+        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             val density = androidx.compose.ui.platform.LocalDensity.current
             val slotW = with(density) { width.dp.toPx().toInt() }

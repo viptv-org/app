@@ -45,6 +45,8 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (browser) 4.dp else 6.dp)) {
             Text(episode.title, fontSize = if (browser) 15.sp else 16.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            // The browser row has no trailing Watched/runtime column.
+            if (browser && watched) EpisodeWatchedPill(television = false)
             episode.description?.let { Text(it, color = Palette.secondary, fontSize = if (browser) 13.sp else 14.sp,
                 lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }

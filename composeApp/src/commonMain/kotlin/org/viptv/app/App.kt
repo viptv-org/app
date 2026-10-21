@@ -133,8 +133,11 @@ fun App(
                             // open, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
                                 Box(Modifier.fillMaxSize()) {
-                                    if (browser && state.screen == Screen.Details) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true)
-                                    DetailsScreen(state.detail, state.busy && state.screen == Screen.Details,
+                                    if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
+                                    // The browser Details is a Dialog window, which floats above
+                                    // everything: while choosing a source it would hide the panel.
+                                    // Back from Sources reopens it.
+                                    if (!(browser && state.screen == Screen.Sources)) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details,
                                         // A failed first load lands in state.error; the details page
                                         // must show it instead of rendering blank (NAV-04).
                                         state.detailPageError ?: state.error.takeIf { state.detail == null }, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,

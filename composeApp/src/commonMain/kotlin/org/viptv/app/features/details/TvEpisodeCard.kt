@@ -36,7 +36,7 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
             AsyncImage(card.landscape ?: card.poster, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            card.badges.firstOrNull { !it.equals("Simkl", true) }?.let { badge -> Text(badge, Modifier.align(Alignment.TopStart).padding(12.dp * scale)
+            card.episodeArtLabel()?.let { badge -> Text(badge, Modifier.align(Alignment.TopStart).padding(12.dp * scale)
                 .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.75f), RoundedCornerShape(4.dp * scale))
                 .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale), color = Palette.text,
                 fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
@@ -46,12 +46,15 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(30.dp * scale), tint = Palette.text)
                 }
             }
-            if (card.progress != null) LinearProgressIndicator(progress = { card.progress.toFloat() },
+            if (card.progress != null && !card.watchedEpisode()) LinearProgressIndicator(progress = { card.progress.toFloat() },
                 modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 3.dp * scale, vertical = 3.dp * scale).height(5.dp * scale), color = Palette.text, trackColor = Palette.text.copy(alpha = 0.3f))
         }
         Spacer(Modifier.height(14.dp * scale))
-        Text(card.identity.episode?.let { "${it.episode}. ${card.title}" } ?: card.title, color = if (focused) Palette.text else Palette.body,
-            fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+            Text(card.identity.episode?.let { "${it.episode}. ${card.title}" } ?: card.title, Modifier.weight(1f, fill = false), color = if (focused) Palette.text else Palette.body,
+                fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (card.watchedEpisode()) EpisodeWatchedPill(television = true, scale = scale)
+        }
         card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary) }
         card.description?.let { Text(it, Modifier.padding(top = 8.dp * scale), fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp,
             color = Palette.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis) }

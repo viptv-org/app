@@ -49,8 +49,11 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
 internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: (() -> Unit)?,
     focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, modifier: Modifier = Modifier,
     viewport: Dp, firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
-    appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null) {
+    appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
+    play: (Card) -> Unit = open) {
     val portrait = row.id != "continue"
+    // OK on a Continue Watching card goes straight to that episode's sources.
+    val activate = if (row.id == CONTINUE_ROW) play else open
     // Keep one card composed and measured on each side of the viewport: a card
     // that scrolls in is already composed, so the frame that reveals it does not
     // pay composition and text layout.
@@ -102,7 +105,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                                 .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
                                 .then(if (index == resumeIndex) Modifier.focusRequester(recover) else Modifier)
                             TvCatalogCard(card, scale, portrait, entry,
-                                { lastFocusedIndex = index; focusedKey = cardLookupKey(it); scroll(index); focus(it) }, open, showFocus, focusedCaptions = portrait,
+                                { lastFocusedIndex = index; focusedKey = cardLookupKey(it); scroll(index); focus(it) }, activate, showFocus, focusedCaptions = portrait,
                                 onUp = if (index < 7) up else null)
                         }
                         if (appendError != null) item(key = "row-append", contentType = "failed") {

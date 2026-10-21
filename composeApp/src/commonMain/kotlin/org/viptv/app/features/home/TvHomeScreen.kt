@@ -192,7 +192,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 modifier = Modifier.graphicsLayer { this.alpha = alpha?.value ?: 1f }
                                     .then(if (index == visibleRows.lastIndex) Modifier.onSizeChanged { lastRowHeight = it.height } else Modifier),
                                 firstPlaced = { firstReadyAttached = true },
-                                resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null)
+                                resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null,
+                                play = play)
                         }
                     }
                 }

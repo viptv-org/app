@@ -165,8 +165,14 @@ class RemoteConnection(
     }
 
     suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
+    /**
+     * Details of [card]'s title. An episode card (Continue Watching, the player)
+     * looks up its parent, so the metadata expectation must describe that parent:
+     * the host rejects an episode expectation for a title lookup with 400
+     * "Metadata expectation does not match lookup".
+     */
     suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = (card.parent_identity ?: card.identity).let {
-        detail(it.kind, it.id, offset, limit, card.provider_id, card)
+        detail(it.kind, it.id, offset, limit, card.provider_id, if (card.parent_identity == null) card else card.copy(identity = it, parent_identity = null))
     }
     suspend fun detail(kind: String, id: String, offset: Int = 0, limit: Int = 24, provider: String? = null, expected: Card? = null): DetailSnapshot {
         require(offset in 0..10_000)
