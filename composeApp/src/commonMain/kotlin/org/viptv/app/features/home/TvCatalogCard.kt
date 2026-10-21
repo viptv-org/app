@@ -37,6 +37,8 @@ import org.viptv.app.components.WATCHED_BADGE
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.isCapabilityBadge
+import org.viptv.app.components.isNewEpisodesBadge
+import org.viptv.app.components.newEpisodesBadge
 import org.viptv.app.components.metadataParts
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -142,7 +144,8 @@ private data class TvCardStates(
             val watched = card.isWatched()
             val live = card.identity.kind.equals("channel", true) || card.identity.kind.equals("tv", true) ||
                 "live" in lower
-            val newEpisode = badges.firstOrNull { it.equals("New episode", true) }
+            // "New episode" or "+2 new episodes": the server's count wins the art slot.
+            val newEpisode = card.newEpisodesBadge()
             val ended = badges.firstOrNull { it.equals("Ended", true) }
             val returning = badges.firstOrNull { it.equals("Returning", true) }
             // Only *state* labels belong on the artwork (board Tv3CardStates).
@@ -150,16 +153,16 @@ private data class TvCardStates(
             // labels; they stay off the card entirely. Any other badge is a
             // state label (New, Remastered, …) and takes the dark label slot.
             val other = badges.firstOrNull { badge ->
-                !isCapabilityBadge(badge) && !badge.equals("New episode", true) && !badge.equals("Ended", true) &&
+                !isCapabilityBadge(badge) && !isNewEpisodesBadge(badge) && !badge.equals("New episode", true) && !badge.equals("Ended", true) &&
                     !badge.equals("Watched", true) && !badge.equals("Returning", true)
             }
             val label = when {
                 live && badges.any { it.equals("LIVE", true) } -> "LIVE"
-                newEpisode != null -> "New episode"
+                newEpisode != null -> newEpisode
                 ended != null -> "Ended"
                 else -> other
             }
-            val loud = label == "New episode"
+            val loud = label != null && isNewEpisodesBadge(label)
             val fill = when {
                 loud -> Palette.text
                 label == "LIVE" -> Color(0xFFE5484D)

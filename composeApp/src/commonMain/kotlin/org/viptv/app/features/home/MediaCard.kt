@@ -55,8 +55,8 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtWatchedBadge
 import org.viptv.app.components.MediaMetadata
-import org.viptv.app.components.WATCHED_BADGE
 import org.viptv.app.components.WatchedBadge
+import org.viptv.app.components.cardChip
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.components.tvFocusOutline
@@ -117,12 +117,10 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             val slotH = with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() }
             val art = org.viptv.app.images.sizedArtwork(if (portrait) card.poster else card.landscape, slotW, slotH)
             AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            // Watched is the corner check below, never this text label.
-            card.badges.firstOrNull { !it.equals("Simkl", true) && !it.equals(WATCHED_BADGE, true) }?.let { label ->
-                Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
-                    Text(label, Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
+            // New episodes win the text label; Watched is the corner check below.
+            card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
+                Text(chip, Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Palette.background, fontSize = (10 * labelScale.coerceAtLeast(1f)).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            } }
             if (card.isWatched()) {
                 if (watchedBadgeSize != null) WatchedBadge(watchedBadgeSize, Modifier.align(Alignment.TopEnd))
                 else ArtWatchedBadge(Modifier.matchParentSize())
