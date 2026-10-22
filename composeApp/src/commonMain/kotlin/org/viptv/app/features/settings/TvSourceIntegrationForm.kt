@@ -171,6 +171,12 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
         }
         Spacer(Modifier.height(16.dp * scale))
     }
+    // A connection without integrations (local mode) shows the reason instead
+    // of a heading above nothing.
+    if (error == null && snapshot.schemas.isEmpty()) {
+        Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
+        Spacer(Modifier.height(16.dp * scale))
+    }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
         snapshot.schemas.forEachIndexed { index, schema ->
             val configured = schema.connection_id != null
@@ -282,11 +288,13 @@ private fun sourceIntegrationRole(pluginId: String): String = when {
     else -> "Movies and series"
 }
 
-/** The saved/needed detail line: field names when unset, a summary when set. */
+/** The saved/needed detail line: field names when unset, a summary when set.
+ *  Saved provider selections are write-only, so a configured card reports the
+ *  saved fields, never a count of the available providers. */
 private fun sourceIntegrationDetail(schema: SourceIntegrationSchema): String {
     if (schema.connection_id != null) {
         val fields = schema.credential_fields.size.takeIf { it > 0 } ?: return "Saved for this profile"
-        return "${schema.provider_choices.size.coerceAtLeast(1)} provider${if (schema.provider_choices.size == 1) "" else "s"} · $fields field${if (fields == 1) "" else "s"} saved"
+        return "$fields field${if (fields == 1) "" else "s"} saved"
     }
     val names = schema.credential_fields.map { it.label }
     return when {
