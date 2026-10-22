@@ -19,6 +19,28 @@ class PlayerBufferSeekTest {
         assertEquals(60_000, state.position)
     }
 
+    @Test fun slowStartWithStalledClockIsNotUndecodable() {
+        val state = state()
+        state.observe(PlayerFact.Status("Buffering"))
+        repeat(30) { state.checkFirstFrame() }
+        assertFalse(state.undecodable)
+        state.observe(PlayerFact.Status("Playing"))
+        repeat(5) { state.observe(PlayerFact.Progress(60_000L + (it + 1) * 1000, 300_000)); state.checkFirstFrame() }
+        assertFalse(state.undecodable)
+        state.observe(PlayerFact.Presentation(PresentationProof.NativeRendererPresented))
+        repeat(10) { state.observe(PlayerFact.Progress(70_000L + it * 1000, 300_000)); state.checkFirstFrame() }
+        assertFalse(state.undecodable)
+    }
+
+    @Test fun runningClockWithoutAFrameIsUndecodableUntilAFrameArrives() {
+        val state = state()
+        state.observe(PlayerFact.Status("Playing"))
+        repeat(6) { state.observe(PlayerFact.Progress(60_000L + (it + 1) * 1000, 300_000)); state.checkFirstFrame() }
+        assertTrue(state.undecodable)
+        state.observe(PlayerFact.Presentation(PresentationProof.NativeRendererPresented))
+        assertFalse(state.undecodable)
+    }
+
     @Test fun committedSeekKeepsTargetWhileDecoderReportsItsResetPosition() {
         val state = state()
         var command: PlayerCommand? = null
