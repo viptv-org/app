@@ -25,7 +25,7 @@ internal fun TvPreferencesFailure(section: String, error: String, busy: Boolean,
 
 @Composable
 internal fun TvPreferencesRetry(busy: Boolean, scale: Float, initial: FocusRequester?, sidebar: FocusRequester, retry: (() -> Unit)?) {
-    if (retry != null) TvAction(Modifier.fillMaxWidth().height(96.dp * scale).focusProperties { left = sidebar }, scale,
+    if (retry != null) TvAction(Modifier.fillMaxWidth().height(96.dp * scale).focusProperties { left = sidebar }, scale, ring = false,
         requester = initial, enabled = !busy, activate = retry) {
         Text(if (busy) "Loading settings…" else "Retry settings", color = it,
             fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)

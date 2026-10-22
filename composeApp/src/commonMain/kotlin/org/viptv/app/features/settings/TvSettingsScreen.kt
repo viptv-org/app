@@ -85,15 +85,20 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || unavailable != null || browserFallback) {
                 if (it == TvSettingsSection.Profiles) profiles() else section = it
             }
-            org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+            // Add-ons owns a LazyColumn (its own scroll + focus search); nesting it in
+            // the page's scrolling column would hand the list an infinite height.
+            if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+                TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
+                    { installing = true }, { unavailable = "Add-on management" }, placeholderQr)
+            }
+            else org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
                 else when (section) {
                     TvSettingsSection.Playback -> TvPlaybackSettings(profile?.name, prefs, scale, first, sidebar, { change?.invoke(it) },
                         { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Playback preferences" }, actualPreferencesOnly)
                     TvSettingsSection.Subtitles -> TvSubtitleSettings(prefs, scale, first, sidebar, { change?.invoke(it) },
                         { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Subtitle preferences" }, actualPreferencesOnly)
-                    TvSettingsSection.Addons -> TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
-                        { installing = true }, { unavailable = "Add-on management" }, placeholderQr)
+                    TvSettingsSection.Addons -> { } // handled above: the add-on list scrolls itself
                     TvSettingsSection.Sources -> if (sourceIntegrations != null) sourceIntegrations(first, sidebar, scale) else {
                         Text("Source integrations", fontSize = (40 * scale).sp)
                         Spacer(Modifier.height(24.dp * scale))

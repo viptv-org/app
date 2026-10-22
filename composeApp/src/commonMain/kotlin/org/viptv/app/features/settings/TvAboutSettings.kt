@@ -94,7 +94,7 @@ private fun TvAboutPanelContent(panel: TvAboutPanel, local: Boolean, address: St
                 val open = openDashboard
                 if (open != null) {
                     var failed by remember { mutableStateOf(false) }
-                    TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, activate = {
+                    TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, ring = false, activate = {
                         try { open(); failed = false } catch (_: Exception) { failed = true }
                     }) { Text("Open server dashboard", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold) }
                     if (failed) AboutParagraph("Open the address above in a browser on your phone or computer.", scale, Palette.secondary)

@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.rememberTvColumnItem
-import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -47,9 +46,6 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
             columnDown?.let { this.down = it }
         }.onFocusChanged { focused = it.isFocused }
         .semantics { if (checked != null) { role = Role.Switch; toggleableState = if (checked) ToggleableState.On else ToggleableState.Off } }
-        // The ring is drawn outside the row bounds, so it must sit outside the
-        // graphics layer and the background fill or it gets clipped away.
-        .tvFocusOutline(focused, 14.dp * scale, scale)
         .graphicsLayer {
             this.shape = RoundedCornerShape(14.dp * scale)
             shadowElevation = if (focused) 24.dp.toPx() * scale else 0f

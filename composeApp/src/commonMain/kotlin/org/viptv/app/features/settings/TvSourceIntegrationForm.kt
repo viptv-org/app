@@ -235,7 +235,7 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
             val ready = available && schema.state == "Ready"
             TvSourceIntegrationCard(schema, scale, enabled = available && !busy,
                 alpha = if (available) 1f else 0.55f,
-                requester = if (index == 0) first else null,
+                requester = if (index == 0) first else null, left = left,
                 configure = { configure(schema) },
                 remove = if (configured) ({ remove(schema) }) else null)
         }
@@ -252,7 +252,7 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
  */
 @Composable
 private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Float, enabled: Boolean, alpha: Float,
-    requester: FocusRequester?, configure: () -> Unit, remove: (() -> Unit)?) {
+    requester: FocusRequester?, left: FocusRequester? = null, configure: () -> Unit, remove: (() -> Unit)?) {
     val configured = schema.connection_id != null
     val available = schema.runtime_enabled
     val ready = available && schema.state == "Ready"
@@ -311,13 +311,13 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
                 horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 if (configured) {
                     TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, primary = true,
-                        requester = requester, enabled = enabled, activate = configure) { tint ->
+                        requester = requester, left = left, ring = false, enabled = enabled, activate = configure) { tint ->
                         Icon(Lucide.Pencil, null, Modifier.size(24.dp * scale), tint = tint)
                         Spacer(Modifier.width(12.dp * scale))
                         Text("Replace", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                     remove?.let { onRemove ->
-                        TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, enabled = enabled, activate = onRemove) { tint ->
+                        TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, left = left, ring = false, enabled = enabled, activate = onRemove) { tint ->
                             Icon(Lucide.Trash2, null, Modifier.size(24.dp * scale), tint = Palette.danger)
                             Spacer(Modifier.width(12.dp * scale))
                             Text("Remove", color = Palette.danger, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
@@ -325,7 +325,7 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
                     }
                 } else {
                     TvAction(Modifier.height(60.dp * scale).width(240.dp * scale), scale, requester = requester,
-                        enabled = enabled, activate = configure) { tint ->
+                        left = left, ring = false, enabled = enabled, activate = configure) { tint ->
                         Icon(Lucide.SlidersHorizontal, null, Modifier.size(24.dp * scale), tint = tint)
                         Spacer(Modifier.width(12.dp * scale))
                         Text("Configure", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)

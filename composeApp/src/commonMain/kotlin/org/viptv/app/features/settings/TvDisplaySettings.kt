@@ -104,7 +104,6 @@ private fun TvDisplayAccentRow(prefs: TvDisplayPreferences, scale: Float, reques
             columnDown?.let { this.down = it }
         }.onFocusChanged { focused = it.isFocused }
         .semantics { stateDescription = selected.name }
-        .tvFocusOutline(focused, 14.dp * scale, scale)
         .graphicsLayer {
             this.shape = RoundedCornerShape(14.dp * scale)
             shadowElevation = if (focused) 24.dp.toPx() * scale else 0f

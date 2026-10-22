@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
-import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -33,8 +32,9 @@ internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, reques
             Row(Modifier.padding(start = 72.dp * scale, end = 48.dp * scale, bottom = 8.dp * scale).fillMaxWidth().height(72.dp * scale)
                 .then(if (section == selected) Modifier.focusRequester(requester) else Modifier)
                 .focusProperties { right = content }.onFocusChanged { focused = it.isFocused }
+                // Fill alone marks focus here: a ring on top of the white fill read
+                // as a double indicator (board Tv3SetSources has no sidebar ring).
                 .background(if (highlighted) Palette.text else if (section == selected) Color(0xFF333333) else Color.Transparent, RoundedCornerShape(12.dp * scale))
-                .tvFocusOutline(highlighted, 12.dp * scale, scale, width = 3.dp, darkGap = 3.dp)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { select(section) }
                 .padding(horizontal = 24.dp * scale), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {

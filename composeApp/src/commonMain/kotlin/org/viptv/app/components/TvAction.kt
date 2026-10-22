@@ -26,6 +26,8 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     cornerRadius: androidx.compose.ui.unit.Dp = 12.dp * scale,
     /** The hero's actions focus by fill alone; the ring reads as clutter there. */
     ring: Boolean = true,
+    /** Pins Left, e.g. to the settings sidebar so it reopens on the selected row. */
+    left: FocusRequester? = null,
     arrangement: Arrangement.Horizontal = Arrangement.Center, content: @Composable RowScope.(Color) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     // Register with an enclosing TvFocusColumn so Up/Down clamp at the page's
@@ -41,6 +43,7 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     val ink by animateColorAsState(if (light || enabled && pressed) Palette.background else Palette.text, tween(150), label = "TV action content")
     Row(modifier.focusRequester(target)
         .focusProperties {
+            left?.let { this.left = it }
             columnUp?.let { this.up = it }
             columnDown?.let { this.down = it }
         }

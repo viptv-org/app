@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.TvAction
-import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 
@@ -48,7 +47,6 @@ internal fun TvParentalSettings(profile: Profile?, maturity: String?, pinAvailab
                 Row(Modifier.height(72.dp * scale).focusRequester(if (item == pills.first()) first else remember { FocusRequester() })
                     .focusProperties { left = sidebar }
                     .onFocusChanged { focused = it.isFocused }
-                    .tvFocusOutline(focused, 36.dp * scale, scale)
                     .background(if (focused) Palette.text else Color.White.copy(alpha = .12f), RoundedCornerShape(36.dp * scale))
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = profiles)
                     .padding(horizontal = 22.dp * scale).padding(start = 10.dp * scale),
@@ -95,8 +93,9 @@ private fun RatingRow(label: String, ratings: List<String>, maturity: String?, p
                 var focused by remember { mutableStateOf(false) }
                 Row(Modifier.height(64.dp * scale)
                     .onFocusChanged { focused = it.isFocused }
-                    .tvFocusOutline(focused, 32.dp * scale, scale)
-                    .background(if (focused || selected) Palette.text else Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp * scale))
+                    // Selected wears the accent, focused wears white: the two states
+                    // stay distinct without a ring.
+                    .background(if (focused) Palette.text else if (selected) Palette.accent else Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp * scale))
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = profiles)
                     .padding(horizontal = 20.dp * scale), verticalAlignment = Alignment.CenterVertically) {
                     Text(rating, color = if (focused || selected) Palette.background else Palette.text,
@@ -112,7 +111,6 @@ private fun PolicyRow(title: String, subtitle: String?, value: String?, scale: F
     var focused by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(88.dp * scale)
         .onFocusChanged { focused = it.isFocused }
-        .tvFocusOutline(focused, 14.dp * scale, scale)
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))
         .focusProperties { left = sidebar }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = action)

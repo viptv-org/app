@@ -33,11 +33,11 @@ internal fun TvLeaveConfirmation(local: Boolean, scale: Float, confirm: () -> Un
                     fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, color = Palette.secondary)
                 Spacer(Modifier.height(36.dp * scale))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, primary = true, requester = initial, activate = confirm) {
+                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, primary = true, ring = false, requester = initial, activate = confirm) {
                         Icon(Lucide.LogOut, null, Modifier.size(28.dp * scale), Color(0xFFCE211D)); Spacer(Modifier.width(12.dp * scale))
                         Text(if (local) "Leave" else "Sign out", color = Color(0xFFCE211D), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
-                    TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, activate = dismiss) {
+                    TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, ring = false, activate = dismiss) {
                         Text("Cancel", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -58,7 +58,7 @@ internal fun TvSettingsChoiceDialog(choice: TvSettingsChoice, scale: Float, dism
                 verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 Text(choice.title, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
                 choice.values.forEachIndexed { index, value ->
-                    TvAction(Modifier.fillMaxWidth().height(64.dp * scale), scale, requester = if (index == 0) initial else null, activate = { choice.select(value); dismiss() }) {
+                    TvAction(Modifier.fillMaxWidth().height(64.dp * scale), scale, ring = false, requester = if (index == 0) initial else null, activate = { choice.select(value); dismiss() }) {
                         Text(value, color = it, fontSize = (26 * scale).sp)
                     }
                 }
