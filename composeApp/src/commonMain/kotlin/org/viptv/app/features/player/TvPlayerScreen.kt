@@ -39,7 +39,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.back(latestClose)) scope.launch {
             withFrameNanos { }
             if (state.visible && !state.showTracks && !state.showNext && !state.showEpisodes) {
-                if ((state.duration ?: 0) > 0) timeline.requestFocus() else audio.requestFocus()
+                // The timeline is disabled for live content; never focus it there.
+                val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
+                if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.requestFocus() else audio.requestFocus()
             } else if (!state.showTracks && !state.showNext && !state.showEpisodes) root.requestFocus()
         }
         Unit
@@ -55,7 +57,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     val skipActive = extras.skip?.let { state.position in it.startMillis until it.endMillis } == true && !state.visible
     LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive) {
         if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes) {
-            if (!state.focusAudio && (state.duration ?: 0) > 0) timeline.requestFocus() else audio.requestFocus()
+            // The timeline is disabled for live content; never focus it there.
+            val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
+            if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.requestFocus() else audio.requestFocus()
         }
         else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive) root.requestFocus()
     }
@@ -122,6 +126,6 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                 }
             }, { state.showTracks = false; state.reveal() }, trackFocus,
             dismissChanged = { state.dismissTracks = it })
-        if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
+        if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
     }
 }

@@ -112,8 +112,11 @@ internal fun TvProfileLockDialog(profile: Profile?, busy: Boolean, scale: Float,
                 TvPinDigits(pin, scale)
                 Spacer(Modifier.height(36.dp * scale))
                 TvPinKeys(pin, scale, busy, first, type, erase, submit = {
-                    if (enteringCurrent) { if (authorized) currentEntered = true }
-                    else { runCatching { save.requestFocus() } }
+                    // A validated PIN hands focus straight to Continue instead of
+                    // parking it on the keypad; the same handoff as a fresh PIN.
+                    if (enteringCurrent) {
+                        if (authorized) { currentEntered = true; runCatching { save.requestFocus() } }
+                    } else { runCatching { save.requestFocus() } }
                 })
                 Spacer(Modifier.height(36.dp * scale))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {

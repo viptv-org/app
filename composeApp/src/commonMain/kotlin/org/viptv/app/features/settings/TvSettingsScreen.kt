@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
@@ -129,13 +131,24 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
         }
         if (leaving) TvLeaveConfirmation(local, scale, { leaving = false; leave() }, { leaving = false })
         choice?.let { TvSettingsChoiceDialog(it, scale) { choice = null } }
-        unavailable?.let { label -> AlertDialog(onDismissRequest = { unavailable = null }, title = { Text(label) },
-            text = { Text("$label is not available on this connection yet.") }, confirmButton = { TextButton(onClick = { unavailable = null }) { Text("OK") } }) }
-        if (browserFallback) AlertDialog(onDismissRequest = { browserFallback = false }, title = { Text("Open server dashboard") },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Open this address in a browser on your phone or computer.")
-                dashboardAddress?.let { SelectionContainer { Text(it, color = Palette.secondary) } }
-            } }, confirmButton = { TextButton({ browserFallback = false }) { Text("Close") } })
+        // Fallback dialogs still need an initial focus: the first remote press
+        // should never land on nothing.
+        unavailable?.let { label ->
+            val ok = remember { FocusRequester() }
+            AlertDialog(onDismissRequest = { unavailable = null }, title = { Text(label) },
+                text = { Text("$label is not available on this connection yet.") },
+                confirmButton = { TextButton(onClick = { unavailable = null }, modifier = Modifier.focusRequester(ok)) { Text("OK") } })
+            LaunchedEffect(Unit) { withFrameNanos { }; runCatching { ok.requestFocus() } }
+        }
+        if (browserFallback) {
+            val close = remember { FocusRequester() }
+            AlertDialog(onDismissRequest = { browserFallback = false }, title = { Text("Open server dashboard") },
+                text = { Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Open this address in a browser on your phone or computer.")
+                    dashboardAddress?.let { SelectionContainer { Text(it, color = Palette.secondary) } }
+                } }, confirmButton = { TextButton({ browserFallback = false }, Modifier.focusRequester(close)) { Text("Close") } })
+            LaunchedEffect(Unit) { withFrameNanos { }; runCatching { close.requestFocus() } }
+        }
     }
     }
 }

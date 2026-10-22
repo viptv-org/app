@@ -52,6 +52,7 @@ internal fun TvBrowseChrome(controls: DiscoveryControls?, query: BrowseQuery, sc
     requestFocus: FocusRequester?, onQuery: (BrowseQuery) -> Unit, onClear: () -> Unit) {
     var catalogsOpen by remember { mutableStateOf(false) }
     var filtersOpen by remember { mutableStateOf(false) }
+    val filtersFocus = remember { FocusRequester() }
     val catalog = controls?.selectedCatalog(query)
     val facets = remember(controls, query, catalog) { tvFacets(controls, query, catalog) }
     val applied = remember(facets, query) { tvAppliedChips(facets, query) }
@@ -59,14 +60,14 @@ internal fun TvBrowseChrome(controls: DiscoveryControls?, query: BrowseQuery, sc
         ?: "Catalog"
     Row(Modifier.fillMaxWidth().height(64.dp * scale), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-        TvAction(Modifier.height(64.dp * scale).widthIn(min = 300.dp * scale).focusProperties { right = requestFocus ?: FocusRequester.Default },
+        TvAction(Modifier.height(64.dp * scale).widthIn(min = 300.dp * scale).focusProperties { right = filtersFocus },
             scale, requester = requestFocus, cornerRadius = 32.dp * scale, activate = { catalogsOpen = true },
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text(catalogLabel, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.width(12.dp * scale))
             Icon(Lucide.ChevronDown, null, Modifier.size(24.dp * scale), tint = it)
         }
-        TvAction(Modifier.height(64.dp * scale), scale, cornerRadius = 32.dp * scale, activate = { filtersOpen = true },
+        TvAction(Modifier.height(64.dp * scale).focusRequester(filtersFocus), scale, cornerRadius = 32.dp * scale, activate = { filtersOpen = true },
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Icon(Lucide.SlidersHorizontal, null, Modifier.size(24.dp * scale), tint = it)
             Spacer(Modifier.width(12.dp * scale))
@@ -101,7 +102,7 @@ internal fun TvBrowseChrome(controls: DiscoveryControls?, query: BrowseQuery, sc
         TvFiltersPage(controls, facets, query, catalogLabel, scale, { filtersOpen = false }, onQuery = { draft ->
             filtersOpen = false
             onQuery(draft)
-        }, onClear = onClear)
+        })
     }
 }
 
@@ -188,14 +189,15 @@ private fun LazyColumnLike(modifier: Modifier, reach: androidx.compose.ui.unit.D
 
 @Composable
 private fun TvFiltersPage(controls: DiscoveryControls, facets: List<QueryControl>, query: BrowseQuery,
-    catalogLabel: String, scale: Float, dismiss: () -> Unit, onQuery: (BrowseQuery) -> Unit, onClear: () -> Unit) {
+    catalogLabel: String, scale: Float, dismiss: () -> Unit, onQuery: (BrowseQuery) -> Unit) {
     var draft by remember(query.catalog, query.type) { mutableStateOf(query) }
     var active by remember { mutableStateOf(facets.firstOrNull()?.id) }
     val activeControl = facets.find { it.id == active } ?: facets.firstOrNull()
     val firstFacet = remember { FocusRequester() }
     val firstChoice = remember { FocusRequester() }
-    LaunchedEffect(activeControl?.id) {
-        if (activeControl == null) return@LaunchedEffect
+    // Claim the first facet once when the page opens; keying this on the active
+    // control re-stole focus to the first facet on every selection.
+    LaunchedEffect(Unit) {
         repeat(30) {
             if (runCatching { firstFacet.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
             withFrameNanos { }
@@ -274,7 +276,7 @@ private fun TvFiltersPage(controls: DiscoveryControls, facets: List<QueryControl
                         Text("Show results", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                     TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale,
-                        activate = { draft = BrowseQuery(draft.type); onClear() }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                        activate = { draft = BrowseQuery(draft.type) }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                         Text("Clear all", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                     TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale, activate = dismiss,

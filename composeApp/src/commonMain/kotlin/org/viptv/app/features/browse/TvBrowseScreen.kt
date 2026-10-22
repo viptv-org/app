@@ -103,7 +103,9 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
 private fun TvBrowseStatus(scale: Float, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String,
     message: String, action: Pair<String, () -> Unit>?, focus: FocusRequester) {
     var attached by remember { mutableStateOf(false) }
-    TvRequestedFocus(focus, action, enabled = true)
+    // The action lambda is a fresh instance per recomposition; keying the claim
+    // on it re-stole focus on every reload. The label is the stable identity.
+    TvRequestedFocus(focus, action?.first, enabled = true)
     Column(Modifier.fillMaxWidth().padding(top = 96.dp * scale), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
         Icon(icon, null, Modifier.size(56.dp * scale), tint = Palette.secondary)

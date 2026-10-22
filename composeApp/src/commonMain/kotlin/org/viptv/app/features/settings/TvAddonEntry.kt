@@ -6,7 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,10 +39,13 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun TvAddonEntryPage(address: String, addressChange: (String) -> Unit, busy: Boolean, error: String?,
     scale: Float, placeholderQr: Boolean, back: () -> Unit, install: () -> Unit) {
+    // Backspace edits only while focus is inside the keyboard area; on Install or
+    // Cancel it must not silently delete address characters.
+    var keyboardActive by remember { mutableStateOf(true) }
     Box(Modifier.fillMaxSize().onPreviewKeyEvent {
         if (it.type != KeyEventType.KeyDown) false else when (it.key) {
             Key.Back, Key.Escape -> { back(); true }
-            Key.Backspace -> { if (!busy) addressChange(address.dropLast(1)); true }
+            Key.Backspace -> { if (!busy && keyboardActive) addressChange(address.dropLast(1)); keyboardActive }
             else -> false
         }
     }) {
@@ -73,8 +77,9 @@ internal fun TvAddonEntryPage(address: String, addressChange: (String) -> Unit, 
                 color = if (address.isEmpty()) Palette.secondary else Palette.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Box(Modifier.padding(start = 6.dp * scale).size(3.dp * scale, 34.dp * scale).background(Palette.accent))
         }
-        Box(Modifier.offset(96.dp * scale, 400.dp * scale).width(1060.dp * scale)) {
-            TvEntryKeyboard(scale) { value -> if (!busy) addressChange((address + value).take(2048)) }
+        Box(Modifier.offset(96.dp * scale, 400.dp * scale).width(1060.dp * scale)
+            .onFocusChanged { keyboardActive = it.hasFocus }) {
+            TvEntryKeyboard(scale, onDelete = { if (!busy) addressChange(address.dropLast(1)) }) { value -> if (!busy) addressChange((address + value).take(2048)) }
         }
         Row(Modifier.offset(96.dp * scale, 860.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, primary = true,

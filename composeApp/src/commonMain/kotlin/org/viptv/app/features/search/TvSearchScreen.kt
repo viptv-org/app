@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -37,6 +38,8 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
         val scale = maxWidth / 1920.dp
         var focusedId by rememberSaveable(term) { mutableStateOf<String?>(null) }
         val restoreId = remember(term) { focusedId }
+        val keyboardFocus = remember { FocusRequester() }
+        var resultsHaveFocus by remember { mutableStateOf(false) }
         val rows = rememberLazyListState()
         val scope = rememberCoroutineScope()
         var activeRow by remember { mutableIntStateOf(-1) }
@@ -66,7 +69,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                     }
                 }
                 Spacer(Modifier.height(24.dp * scale))
-                TvSearchKeyboard(editQuery, scale, requestInitialFocus = restoreId == null)
+                TvSearchKeyboard(editQuery, scale, requestInitialFocus = restoreId == null, first = keyboardFocus)
                 Spacer(Modifier.height(68.dp * scale))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
                     suggestions.forEach { suggestion ->
@@ -80,7 +83,15 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                     }
                 }
             }
-            LazyColumn(Modifier.weight(1f), state = rows, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
+            // A restore target that vanished (results re-fetched while away) must not
+            // leave the page focusless: fall back to the keyboard after two frames.
+            LaunchedEffect(restoreId) {
+                if (restoreId != null) {
+                    withFrameNanos { }; withFrameNanos { }
+                    if (!resultsHaveFocus) runCatching { keyboardFocus.requestFocus() }
+                }
+            }
+            LazyColumn(Modifier.weight(1f).onFocusChanged { resultsHaveFocus = it.hasFocus }, state = rows, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                 if (busy && !hasResults && groups.none { it.message != null }) item { TvSearchLoading(scale) }
                 error?.let { item { Text(it, color = Palette.danger) } }
                 groups.forEachIndexed { rowIndex, group -> item(key = group.id) {

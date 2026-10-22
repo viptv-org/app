@@ -28,7 +28,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             identity = state.accountIdentity ?: state.accountDevices?.account,
             dashboardAddress = controller.connection?.accountDashboardUrl) },
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-            BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider)
+            BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
             profileName = state.profiles.find { it.id == state.selectedProfile }?.name,

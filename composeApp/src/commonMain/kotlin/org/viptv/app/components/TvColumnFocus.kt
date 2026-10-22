@@ -2,6 +2,8 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -36,7 +38,9 @@ internal val LocalTvColumnFocus = compositionLocalOf<TvColumnFocusState?> { null
 internal fun TvFocusColumn(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val state = remember { TvColumnFocusState() }
     CompositionLocalProvider(LocalTvColumnFocus provides state) {
-        Column(modifier) { content() }
+        // Settings pages must scroll: a plain column lays rows out below the
+        // window edge on wide ratios while they stay D-pad-focusable.
+        Column(modifier.verticalScroll(rememberScrollState())) { content() }
     }
 }
 

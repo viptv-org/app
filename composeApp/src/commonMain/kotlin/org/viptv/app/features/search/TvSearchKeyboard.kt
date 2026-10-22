@@ -19,8 +19,8 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvSearchKeyboard(edit: ((String) -> String) -> Unit, scale: Float, requestInitialFocus: Boolean = true) {
-    val initial = remember { FocusRequester() }
+internal fun TvSearchKeyboard(edit: ((String) -> String) -> Unit, scale: Float, requestInitialFocus: Boolean = true, first: FocusRequester? = null) {
+    val initial = remember(first) { first ?: FocusRequester() }
     org.viptv.app.components.TvRequestedFocus(initial, Unit, requestInitialFocus)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
