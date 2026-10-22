@@ -37,18 +37,20 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
      * a moving timeline is worse than saying so.
      */
     var undecodable by mutableStateOf(false)
-    private var startedAt = TimeSource.Monotonic.markNow()
     private var lastPosition = position
-    private var positionMovedAt = TimeSource.Monotonic.markNow()
+    private var advancingTicks = 0
     init { initial.forEach(::observe) }
 
     /** Called from a 1 s tick while the player is on screen. */
     fun checkFirstFrame() {
         if (hasPresented || failed || undecodable) return
-        if (position != lastPosition) { lastPosition = position; positionMovedAt = TimeSource.Monotonic.markNow() }
-        // Audio/clock advancing for 6 s without a single presented frame means the
-        // video path is not producing pictures.
-        if (positionMovedAt.elapsedNow() > 2.seconds && startedAt.elapsedNow() > 6.seconds) undecodable = true
+        val moved = position != lastPosition
+        lastPosition = position
+        // Audio/clock advancing for 6 consecutive ticks without a single presented
+        // frame means the video path is not producing pictures. A stalled clock is
+        // a slow start (a torrent waiting on peers), not an undecodable stream.
+        advancingTicks = if (moved && !buffering) advancingTicks + 1 else 0
+        if (advancingTicks >= 6) undecodable = true
     }
 
     fun observe(fact: PlayerFact) {
@@ -63,7 +65,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
-            is PlayerFact.Presentation -> { hasPresented = true; buffering = false }
+            is PlayerFact.Presentation -> { hasPresented = true; buffering = false; undecodable = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
         }
