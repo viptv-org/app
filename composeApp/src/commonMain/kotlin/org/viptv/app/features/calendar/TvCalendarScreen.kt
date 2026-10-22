@@ -13,6 +13,8 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.tvRingReach
+import org.viptv.app.components.tvRingRoom
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -60,8 +62,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             }
         }
         LazyColumn(Modifier.offset(96.dp * scale, contentY).width(1100.dp * scale)
-            .height((maxHeight - contentY - 48.dp * scale).coerceAtLeast(0.dp)), state = rows,
-            verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
+            .height((maxHeight - contentY - 48.dp * scale).coerceAtLeast(0.dp)).tvRingRoom(tvRingReach(scale), horizontal = false), state = rows,
+            contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
             itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                 TvCalendarRow(entry, scale, focused?.id == entry.id, rowFocus.getOrPut(entry.id) { FocusRequester() },
                     if (index == 0) date else null, preview, { focusedId = entry.id }, { open(entry.card) })

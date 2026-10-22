@@ -33,6 +33,8 @@ import com.composables.icons.lucide.X
 import org.viptv.app.components.TvAction
 import org.viptv.app.features.entry.TvEntryKeyboard
 import org.viptv.app.components.tvFocusOutline
+import org.viptv.app.components.tvRingReach
+import org.viptv.app.components.tvRingRoom
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.ControlKind
@@ -144,7 +146,7 @@ private fun TvCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery, sca
                 Spacer(Modifier.height(14.dp * scale))
                 val peers = controls.catalogs.filter { it.type == query.type }
                 val groups = peers.groupBy { it.connection_name?.takeIf(String::isNotBlank) ?: "VIPTV Sources" }
-                            LazyColumnLike(Modifier.weight(1f)) {
+                            LazyColumnLike(Modifier.weight(1f), tvRingReach(scale)) {
                     groups.forEach { (group, entries) ->
                         item(key = "group:$group") {
                             Text(group.uppercase(), color = Palette.tertiary, fontSize = (22 * scale).sp,
@@ -178,8 +180,10 @@ private fun TvCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery, sca
 
 /** LazyColumn without the lazy-state import noise in this file. */
 @Composable
-private fun LazyColumnLike(modifier: Modifier, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
-    androidx.compose.foundation.lazy.LazyColumn(modifier, verticalArrangement = Arrangement.spacedBy(6.dp * 1f)) { content() }
+private fun LazyColumnLike(modifier: Modifier, reach: androidx.compose.ui.unit.Dp, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
+    // Room for the rows' outside ring, which the viewport would clip at the edges.
+    androidx.compose.foundation.lazy.LazyColumn(modifier.tvRingRoom(reach, horizontal = false), contentPadding = PaddingValues(vertical = reach),
+        verticalArrangement = Arrangement.spacedBy(6.dp * 1f)) { content() }
 }
 
 @Composable
@@ -205,7 +209,8 @@ private fun TvFiltersPage(controls: DiscoveryControls, facets: List<QueryControl
                 Text(catalogLabel, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
                 Spacer(Modifier.height(28.dp * scale))
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(64.dp * scale)) {
-                    Column(Modifier.width(640.dp * scale).verticalScroll(rememberScrollState()),
+                    Column(Modifier.width(640.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false)
+                        .verticalScroll(rememberScrollState()).padding(vertical = tvRingReach(scale)),
                         verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                         facets.forEachIndexed { index, facet ->
                             var focused by remember { mutableStateOf(false) }
@@ -292,7 +297,8 @@ private fun TvFacetChoices(control: QueryControl, draft: BrowseQuery, scale: Flo
     single: Boolean, change: (List<String>) -> Unit) {
     val selected = draft.selections(control.id)
     val cap = control.maximum_selections ?: Int.MAX_VALUE.toLong()
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+    Column(Modifier.fillMaxWidth().tvRingRoom(tvRingReach(scale), horizontal = false)
+        .verticalScroll(rememberScrollState()).padding(vertical = tvRingReach(scale)),
         verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         control.choices.chunked(3).forEachIndexed { rowIndex, row ->
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {

@@ -12,6 +12,8 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.tvRingReach
+import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 
@@ -55,7 +57,8 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                 }
             } else if (hasGuide) LiveGuide(visible, start!!, now, true, scale,
                 { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, filter, more = more, busy = busy)
-            else LazyColumn(state = channelList, verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+            else LazyColumn(Modifier.tvRingRoom(tvRingReach(scale), horizontal = false), state = channelList,
+                contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
                 itemsIndexed(visible, key = { _, item -> item.card.provider_id + ":" + item.card.identity.id }) { index, item ->
                     TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) filter else null,
                         { channel = item; program = item.current(now); guideRequested(item) }, { watch(item) })

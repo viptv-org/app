@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.tvRingReach
+import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.rememberTvDrawerMotion
 import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.player.*
@@ -66,7 +68,8 @@ private fun TvTrackColumn(label: String, modifier: Modifier, scale: Float, conte
     Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Text(label, Modifier.padding(start = 20.dp * scale), color = Palette.secondary, fontSize = (24 * scale).sp,
             lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold)
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp * scale), content = content)
+        LazyColumn(Modifier.tvRingRoom(tvRingReach(scale), horizontal = false), contentPadding = PaddingValues(vertical = tvRingReach(scale)),
+            verticalArrangement = Arrangement.spacedBy(6.dp * scale), content = content)
     }
 }
 
