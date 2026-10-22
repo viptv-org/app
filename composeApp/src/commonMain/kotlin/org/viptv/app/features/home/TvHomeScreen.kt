@@ -66,9 +66,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     // reading browsing/activeRow there recomposes every visible shelf on each
     // focus move. The alphas are only read inside graphicsLayer blocks.
     val rowAlphas = remember(visibleRows) { mutableMapOf<String, androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>>() }
-    // Per-row selection memory: the LazyColumn disposes rows that scroll off, so the
-    // card the viewer left on each shelf lives here (per profile) instead.
-    val rowResume = remember(home?.scope?.profile_id) { mutableMapOf<String, Int>() }
     LaunchedEffect(browsing, activeRow, rowAlphas) {
         if (rowAlphas.isEmpty()) return@LaunchedEffect
         kotlinx.coroutines.coroutineScope {
@@ -117,18 +114,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     }
     val density = LocalDensity.current
     var rowScale by remember { mutableFloatStateOf(1f) }
-    // Rows are measured, not assumed: the fixed 384/516 dp guesses placed the
-    // next shelf ~80 px too low, so its heading showed with no cards peeking.
-    val rowHeightsPx = remember(home?.scope?.profile_id) { mutableStateMapOf<String, Int>() }
-    fun rowOffset(index: Int, scale: Float): Float {
-        var px = 0f
-        for (i in 0 until index) {
-            val row = visibleRows.getOrNull(i) ?: break
-            px += rowHeightsPx[row.id]?.toFloat()
-                ?: with(density) { (if (row.id == "continue") 384 else 516).dp.toPx() * scale }
-            px += with(density) { (40.dp * scale).toPx() }
-        }
-        return px
+    fun rowOffset(index: Int, scale: Float): Float = with(density) {
+        visibleRows.take(index).sumOf { if (it.id == "continue") 384 else 516 }.dp.toPx() * scale
     }
     fun returnHero() {
         browsing = false; focused.value = null; activeRow = -1; heroFocusEpoch++
@@ -142,9 +129,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val viewport = maxWidth
         SideEffect { rowScale = scale }
         val easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-        // Browsing sits the focused shelf higher so the next shelf's heading
-        // *and* a real slice of its cards show, instead of a bare title peek.
-        val targetTop = (if (browsing) 464 else 824).dp * scale
+        val targetTop = (if (browsing) 512 else 824).dp * scale
         // The rows are laid out at the browsing top and only translated: a list
         // whose top padding jumped to the billboard position lost 312 dp of
         // height in one frame and clipped the sliding rows.
@@ -202,8 +187,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                     }
                     TvHomeVisibility(!browsing, scale, -80, 450, retain = true, focusEnabled = { !browsing }, sequentialFade = true) {
                         carousel.card?.let { hero ->
-                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, // The first shelf's container holds the row-level focus; the hero's Down lands there.
-if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing && error == null, save = { if (!browsing) save(it) }, isSaved = saved)
+                            TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) resumeShelf else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing && error == null, save = { if (!browsing) save(it) }, isSaved = saved)
                         }
                     }
                 }
@@ -211,7 +195,6 @@ if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null,
                     LazyColumn(Modifier.fillMaxSize().padding(top = listTop).graphicsLayer {
                         translationY = (top.value - listTop).toPx()
                     }, state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = bottomSpace)) {
-                        // Selections outlive the LazyColumn's disposal of scrolled-off rows.
                         itemsIndexed(visibleRows, key = { _, row -> row.id }, contentType = { _, _ -> "row" }) { index, row ->
                             // A row first composed above the active one starts faded,
                             // exactly like animateFloatAsState's initial value. Stable
@@ -237,8 +220,8 @@ if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) firstCard else null,
                                 firstPlaced = { firstReadyAttached = true },
                                 resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null,
                                 rowAlpha = alpha,
-                                onHeightChange = { height -> rowHeightsPx[row.id] = height; if (index == visibleRows.lastIndex) lastRowHeight = height },
-                                play = play, resumeIndex = rowResume[row.id] ?: 0, onResumeIndex = { rowResume[row.id] = it })
+                                onHeightChange = if (index == visibleRows.lastIndex) ({ height -> lastRowHeight = height }) else null,
+                                play = play)
                         }
                     }
                 }

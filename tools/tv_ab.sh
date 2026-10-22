@@ -71,8 +71,6 @@ focused_node() {
 }
 is_card() { # desc, height
   case "$1" in *", "[0-9][0-9][0-9][0-9]*) ;;
-    # Fixed-focus shelf: the row container holds focus and announces the selection.
-    *"item "[0-9]*" of "*) ;;
     *) return 1 ;; esac
   [ "${2:-0}" -ge 150 ]
 }

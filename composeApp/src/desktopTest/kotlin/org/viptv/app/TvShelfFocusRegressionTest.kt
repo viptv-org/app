@@ -87,7 +87,7 @@ class TvShelfFocusRegressionTest {
     private fun focusNode(node: SemanticsNode): Boolean =
         node.config[SemanticsActions.RequestFocus].action?.invoke() ?: false
 
-    @Test fun f_leftWalkAfterLongRunKeepsSelectionOnScreen() = onEdt {
+    @Test fun f_leftWalkAfterLongRunKeepsFocusOnScreen() = onEdt {
         val first = FocusRequester()
         var frame = 0L
         var stranded = 0
@@ -105,20 +105,24 @@ class TvShelfFocusRegressionTest {
         try {
             render(8); delay(30)
             first.requestFocus(); render(4)
-            // Walk right like a remote holding the button, then all the way back.
-            repeat(24) { press(scene, Key.DirectionRight); render(5); delay(5) }
-            repeat(30) { press(scene, Key.DirectionLeft); render(5); delay(5) }
+            // Walk right like a remote: always step to the right-most composed card.
+            repeat(24) {
+                val next = visibleCards(scene).lastOrNull() ?: return@repeat
+                if (text(next).startsWith("Title 18")) return@repeat
+                focusNode(next); render(5); delay(5)
+            }
+            // Walk all the way back to the left the same way.
+            repeat(30) {
+                render(5); delay(5)
+                val prev = visibleCards(scene).firstOrNull() ?: return@repeat
+                focusNode(prev)
+            }
             render(12); delay(40); render(12)
-            println("SCROLLDEBUG container: " + nodes(scene).filter { text(it).startsWith("Continue Watching") }.map { text(it) }.joinToString())
-            println("SCROLLDEBUG title nodes: " + nodes(scene).filter { text(it).startsWith("Title ") }.map { text(it).take(12) + " focused=" + it.config.getOrNull(SemanticsProperties.Focused) + "@" + it.boundsInRoot.left.toInt() }.take(4).joinToString(" | "))
-            // The fixed-focus shelf announces selection on the row container (one
-            // accessibility node per row); the card's own Focused flag is derived.
-            val rowNode = nodes(scene).firstOrNull { text(it).startsWith("Continue Watching, item") }
-                ?: error("no shelf container after walking back")
-            assertTrue(text(rowNode).contains("item 1 of 18: Title 1"), "expected the first card selected, got '${text(rowNode)}'")
-            val node = nodes(scene).firstOrNull { text(it).startsWith("Title 1") } ?: error("first card not composed")
+            val node = focused(scene) ?: error("no focus after walking back")
+            assertTrue(text(node).contains("Title 1"), "expected the first card focused, got '${text(node)}'")
             val bounds = node.boundsInRoot
-            // The reported defect: the first card was selected but off the left edge.
+            // The reported defect: focus stayed on the first card but the card was
+            // outside the viewport (focus "off the screen to the left").
             assertTrue(bounds.left >= 90f, "first card left edge ${bounds.left} is outside the 96dp inset")
             assertTrue(bounds.right <= 910f, "first card right edge ${bounds.right} is outside the viewport")
         } finally { scene.close() }
@@ -146,12 +150,10 @@ class TvShelfFocusRegressionTest {
             render(8); delay(30)
             first.requestFocus(); render(4)
             // The viewer focuses the third card, leaves to the billboard, comes back.
-            first.requestFocus(); render(4)
-            // The viewer selects the third card, leaves to the billboard, comes back.
-            press(scene, Key.DirectionRight); render(5); delay(5)
-            press(scene, Key.DirectionRight); render(5); delay(5)
+            assertTrue(focusCard(scene, "Title 3"), "Title 3 must be focusable")
+            render(6); delay(10)
             hero.requestFocus(); render(4)
-            first.requestFocus(); render(8); delay(20); render(8)
+            resume.requestFocus(); render(8); delay(20); render(8)
             val back = focused(scene) ?: error("no focus after returning")
             assertTrue(text(back).contains("Title 3"),
                 "returning from the billboard must resume the card the viewer left, got '${text(back)}'")

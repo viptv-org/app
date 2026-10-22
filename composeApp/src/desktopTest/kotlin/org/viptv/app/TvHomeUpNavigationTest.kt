@@ -41,15 +41,9 @@ class TvHomeUpNavigationTest {
         node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty()
             .ifBlank { node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty() }
     private fun focused(scene: ImageComposeScene) = nodes(scene).firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }
-    /** Focus the shelf container for a row, then walk the virtual selection to the card. */
     private fun focusCard(scene: ImageComposeScene, label: String): Boolean {
-        // "Card B3" -> row "Row B"; the container announces "Row B, item N of M: Card B3".
-        val rowTitle = "Row " + label.removePrefix("Card ").take(1)
-        val node = nodes(scene).firstOrNull { text(it).startsWith("$rowTitle, item") && it.config.contains(SemanticsActions.RequestFocus) } ?: return false
-        if (node.config[SemanticsActions.RequestFocus].action?.invoke() != true) return false
-        val target = label.removePrefix("Card " + label.removePrefix("Card ").take(1)).toIntOrNull() ?: return false
-        repeat(target - 1) { press(scene, Key.DirectionRight) }
-        return true
+        val node = nodes(scene).firstOrNull { text(it).contains(label) && it.config.contains(SemanticsActions.RequestFocus) } ?: return false
+        return node.config[SemanticsActions.RequestFocus].action?.invoke() ?: false
     }
     private var focusManager: androidx.compose.ui.focus.FocusManager? = null
     /** Like Android: key handlers see the press first; an unconsumed D-pad press moves focus. */
@@ -115,16 +109,16 @@ class TvHomeUpNavigationTest {
             assertTrue(focusCard(scene, "Card A2"), "Card A2 must be focusable"); settle()
             press(scene, Key.DirectionDown); settle(); press(scene, Key.DirectionDown); settle()
             val lower = focused(scene) ?: error("Down twice left nothing focused")
-            assertTrue(text(lower).startsWith("Row C"), "Down twice from row A must reach row C, got '${text(lower)}'")
+            assertTrue(text(lower).contains("Card C"), "Down twice from row A must reach row C, got '${text(lower)}'")
             press(scene, Key.DirectionUp); settle()
             val above = focused(scene) ?: error("Up from row C left nothing focused")
-            assertTrue(text(above).startsWith("Row B"), "Up from row C must focus row B, got '${text(above)}'")
+            assertTrue(text(above).contains("Card B"), "Up from row C must focus row B, got '${text(above)}'")
             press(scene, Key.DirectionUp); settle()
             val first = focused(scene) ?: error("Up from row B left nothing focused")
-            assertTrue(text(first).startsWith("Row A"), "Up from row B must focus row A, got '${text(first)}'")
+            assertTrue(text(first).contains("Card A"), "Up from row B must focus row A, got '${text(first)}'")
             press(scene, Key.DirectionUp); settle()
             val top = focused(scene)
-            assertFalse(top != null && text(top).startsWith("Row "), "Up from the first row returns to the billboard, got '${top?.let(::text)}'")
+            assertFalse(top != null && text(top).startsWith("Card "), "Up from the first row returns to the billboard, got '${top?.let(::text)}'")
         } finally { scene.close() }
     }
 }

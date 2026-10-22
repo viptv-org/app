@@ -46,15 +46,10 @@ class TvShelfRefreshFocusTest {
         node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty()
             .ifBlank { node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty() }
     private fun focused(scene: ImageComposeScene) = nodes(scene).firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }
-    private fun press(scene: ImageComposeScene, key: androidx.compose.ui.input.key.Key) {
-        scene.sendKeyEvent(androidx.compose.ui.input.key.KeyEvent(key, androidx.compose.ui.input.key.KeyEventType.KeyDown))
-        scene.sendKeyEvent(androidx.compose.ui.input.key.KeyEvent(key, androidx.compose.ui.input.key.KeyEventType.KeyUp))
-    }
-    private fun container(scene: ImageComposeScene, label: String): Boolean {
-        val node = nodes(scene).firstOrNull { text(it).startsWith(label) && it.config.contains(SemanticsActions.RequestFocus) } ?: return false
+    private fun focusCard(scene: ImageComposeScene, label: String): Boolean {
+        val node = nodes(scene).firstOrNull { text(it).contains(label) && it.config.contains(SemanticsActions.RequestFocus) } ?: return false
         return node.config[SemanticsActions.RequestFocus].action?.invoke() ?: false
     }
-    private fun focusCard(scene: ImageComposeScene, label: String): Boolean = container(scene, "Continue Watching")
 
     private fun shelf(row: MutableState<HomeRow>, hero: FocusRequester) = ImageComposeScene(1920, 400, Density(1f)) { ViptvTheme(true) {
         Column(Modifier.fillMaxSize().background(Palette.background)) {
@@ -71,10 +66,7 @@ class TvShelfRefreshFocusTest {
         fun render(n: Int = 4) = repeat(n) { scene.render(frame++ * 16_666_667L).close() }
         try {
             render(8); delay(30)
-            assertTrue(container(scene, "Continue Watching")); render(4)
-            press(scene, androidx.compose.ui.input.key.Key.DirectionRight); render(5); delay(5)
-            press(scene, androidx.compose.ui.input.key.Key.DirectionRight); render(5); delay(5)
-            assertTrue(requireNotNull(focused(scene)).let { text(it).contains("Title 3") })
+            assertTrue(focusCard(scene, "Title 3")); render(6); delay(10)
             row.value = row.value.copy(cards = cards(1, 2, 4, 5))
             render(8); delay(30); render(8)
             val now = focused(scene) ?: error("focus fell out of the shelf after a refresh removed its card")
@@ -93,8 +85,7 @@ class TvShelfRefreshFocusTest {
         fun render(n: Int = 4) = repeat(n) { scene.render(frame++ * 16_666_667L).close() }
         try {
             render(8); delay(30)
-            assertTrue(container(scene, "Continue Watching")); render(4)
-            press(scene, androidx.compose.ui.input.key.Key.DirectionRight); render(5); delay(5)
+            assertTrue(focusCard(scene, "Title 2")); render(6); delay(10)
             hero.requestFocus(); render(6); delay(10)
             row.value = row.value.copy(cards = cards(1, 3))
             render(8); delay(30); render(8)
