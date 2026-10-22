@@ -67,4 +67,30 @@ class RemoteAddonsTest {
         assertFailsWith<RemoteFailure> { connection.removeAddon("simkl:2") }
         connection.close()
     }
+
+    @Test fun inventoryKeepsOnlyTheServerLogoRouteAndFetchesItWithTheSession() = runBlocking {
+        val png = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
+        val requested = mutableListOf<String>()
+        val client = HttpClient(MockEngine { request ->
+            when {
+                request.url.encodedPath.endsWith("/integrations") -> respond(configuration, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                request.url.encodedPath == "/api/addons" -> respond("""{"items":[{"id":1,"name":"Existing","enabled":true,"logo":"/api/addons/1/logo?v=ab12"},""" +
+                    """{"id":2,"name":"New","enabled":true,"logo":"https://art.example/private-token/logo.png"},{"id":3,"name":"Other","enabled":true,"logo":"/api/addons/1/logo?v=ab12"},""" +
+                    """{"id":4,"name":"Plain","enabled":true,"logo":null}],"next_cursor":null}""",
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                else -> {
+                    requested += request.url.encodedPath + "?" + request.url.encodedQuery
+                    respond(png, headers = headersOf(HttpHeaders.ContentType, "image/png"))
+                }
+            }
+        }) { configureTransport() }
+        val connection = RemoteConnection("https://watch.example", MemoryStore(), client, browserMode = false)
+        val inventory = connection.addons("12").addons.associate { it.id to it.logo }
+        assertEquals(mapOf("addon:1" to "/api/addons/1/logo?v=ab12", "addon:2" to null, "addon:3" to null, "addon:4" to null), inventory)
+        assertContentEquals(png, connection.addonLogo("/api/addons/1/logo?v=ab12"))
+        assertEquals(listOf("/api/addons/1/logo?v=ab12"), requested)
+        assertFailsWith<RemoteFailure> { connection.addonLogo("/api/profiles/12/integrations") }
+        assertFailsWith<RemoteFailure> { connection.addonLogo("/api/addons/1/logo?v=ab12&next=https://art.example") }
+        connection.close()
+    }
 }

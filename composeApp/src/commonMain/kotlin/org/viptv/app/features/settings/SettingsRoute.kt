@@ -6,12 +6,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.dp
 import org.viptv.app.state.*
 import org.viptv.app.connection.ProfilePreferences
+import org.viptv.app.connection.addonLogo
 
 @Composable
 internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
     desktop: Boolean = false) {
     val deviceLink by controller.deviceLink.collectAsState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
+    val remote = controller.connection.takeUnless { state.localMode }
+    val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
+    CompositionLocalProvider(LocalAddonLogos provides logos) {
     SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice,
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
@@ -63,6 +67,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
         tvParentalPinAvailable = state.localMode)
+    }
 }
 
 /** IMP-001 targets browser builds and Android phones/tablets on a server; never TV, desktop or local mode. */

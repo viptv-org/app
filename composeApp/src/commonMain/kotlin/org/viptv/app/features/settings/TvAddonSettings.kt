@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
@@ -6,8 +8,14 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.gestures.BringIntoViewSpec
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -16,10 +24,10 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 
@@ -28,19 +36,32 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
     install: () -> Unit, unavailable: () -> Unit, placeholderQr: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-        TvSettingsHeading("Add-ons", scale, "Add-ons find the movies, series and channels you watch here.")
+        TvSettingsHeading("Add-ons", scale)
         Row(horizontalArrangement = Arrangement.spacedBy(60.dp * scale)) {
-            TvFocusScroll {
+            // The lazy list composes only the rows on screen, so the page's
+            // TvFocusColumn clamp (which only knows composed rows) would stop
+            // Down at the last visible row. Inside the list, its own focus
+            // search moves through every row and scrolls each into view; the
+            // ends are cancelled explicitly so focus never falls to the sidebar.
+            val density = LocalDensity.current
+            val scroll = remember(density, scale) { with(density) {
+                TvAddonListScroll((tvRingReach(scale) * 2).toPx(), (TvAddonListBottom * scale).toPx()) } }
+            CompositionLocalProvider(LocalTvColumnFocus provides null, LocalBringIntoViewSpec provides scroll) {
                 LazyColumn(Modifier.width(760.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false),
-                    contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+                    contentPadding = PaddingValues(top = tvRingReach(scale), bottom = TvAddonListBottom * scale),
+                    verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     itemsIndexed(addons, key = { _, addon -> addon.id }) { index, addon ->
-                        TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }
+                        TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
+                            .focusProperties { left = sidebar; if (index == 0) up = FocusRequester.Cancel }
                             .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
                             .semantics { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off }, scale, enabled = !busy,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { toggle(addon.id, addon.id !in enabled) }) { tint ->
-                            Box(Modifier.size(60.dp * scale).background(Color(info[addon.id]?.color ?: 0xFF3D6C88), RoundedCornerShape(14.dp * scale)), contentAlignment = Alignment.Center) {
-                                Text(info[addon.id]?.letter ?: addon.name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "A", color = Palette.text, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)
+                            AddonLogoTile(addon.logo, Modifier.size(60.dp * scale).clip(RoundedCornerShape(14.dp * scale))
+                                .background(Color.White.copy(alpha = 0.08f)), Modifier.padding(6.dp * scale)) {
+                                Box(Modifier.fillMaxSize().background(Color(info[addon.id]?.color ?: 0xFF3D6C88)), contentAlignment = Alignment.Center) {
+                                    Text(info[addon.id]?.letter ?: addon.name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "A", color = Palette.text, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                             Spacer(Modifier.width(20.dp * scale))
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
@@ -51,7 +72,9 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                             TvSettingsSwitch(addon.id in enabled, scale)
                         }
                     }
-                    item { TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }, scale,
+                    item { TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
+                        .focusProperties { left = sidebar; down = FocusRequester.Cancel; if (addons.isEmpty()) up = FocusRequester.Cancel }
+                        .then(if (addons.isEmpty()) Modifier.focusRequester(initial) else Modifier), scale,
                         enabled = !busy, activate = { install() }, arrangement = Arrangement.Start,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                         Box(Modifier.size(60.dp * scale).background(it.copy(alpha = 0.1f), RoundedCornerShape(14.dp * scale)), contentAlignment = Alignment.Center) {
@@ -75,5 +98,22 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
+    }
+}
+
+/** Room under the last row, so it can rise clear of the TV's overscan edge. */
+private val TvAddonListBottom = 72.dp
+
+/**
+ * Scrolls only when the focused row is not already clear of the list's edges:
+ * [top] keeps its ring inside the list, [bottom] keeps the row off the screen
+ * edge with the next row peeking below it.
+ */
+private class TvAddonListScroll(private val top: Float, private val bottom: Float) : BringIntoViewSpec {
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float = when {
+        size > containerSize - top - bottom -> offset - top
+        offset < top -> offset - top
+        offset + size > containerSize - bottom -> offset + size - (containerSize - bottom)
+        else -> 0f
     }
 }

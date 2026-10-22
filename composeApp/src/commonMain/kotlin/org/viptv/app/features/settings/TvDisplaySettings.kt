@@ -60,18 +60,16 @@ internal fun TvDisplaySettings(prefs: TvDisplayPreferences, scale: Float, initia
         TvSettingsHeading("Display", scale)
         // Board order; the accent row carries the page's landing focus.
         TvDisplayAccentRow(prefs, scale, initial, sidebar, change)
-        TvSettingsRow("Show ratings on cards", "★ 7.8 under focused titles", scale, checked = prefs.ratings, left = sidebar) {
+        TvSettingsRow("Show ratings on cards", scale = scale, checked = prefs.ratings, left = sidebar) {
             change(prefs.copy(ratings = !prefs.ratings))
         }
         TvSettingsRow("Text size", scale = scale, value = prefs.textSize, left = sidebar) {
             choose("Text size", listOf("Default", "Large", "Larger")) { change(prefs.copy(textSize = it)) }
         }
-        TvSettingsRow("Reduce motion", "Slides become cuts. Follows the TV’s setting unless you change it", scale,
-            value = prefs.reduceMotion, left = sidebar) {
+        TvSettingsRow("Reduce motion", scale = scale, value = prefs.reduceMotion, left = sidebar) {
             choose("Reduce motion", listOf("Follow TV", "On", "Off")) { change(prefs.copy(reduceMotion = it)) }
         }
-        TvSettingsRow("Screen saver", "Dims to slow-moving art when nothing is playing", scale,
-            value = prefs.screenSaver, left = sidebar) {
+        TvSettingsRow("Screen saver", scale = scale, value = prefs.screenSaver, left = sidebar) {
             choose("Screen saver", listOf("Off", "After 5 minutes", "After 10 minutes", "After 30 minutes")) {
                 change(prefs.copy(screenSaver = it)) }
         }

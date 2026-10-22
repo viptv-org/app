@@ -158,12 +158,10 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
 internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
     retry: () -> Unit, configure: (SourceIntegrationSchema) -> Unit, remove: (SourceIntegrationSchema) -> Unit,
     scale: Float, first: FocusRequester? = null, left: FocusRequester? = null, profileName: String? = null) {
-    // Board Tv3SetSources: heading, one-line explanation, then one 160px card per
+    // Board Tv3SetSources: heading, then one 160px card per
     // integration (icon tile, name, role, saved detail, status, actions) and a
     // footer note. The card that a connection cannot use is dimmed, not hidden.
     Text("Source integrations", fontSize = (40 * scale).sp, letterSpacing = (-0.8f * scale).sp, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(8.dp * scale))
-    Text("Where movies, series and live channels come from.", color = Palette.secondary, fontSize = (24 * scale).sp)
     Spacer(Modifier.height(34.dp * scale))
     if (error != null) {
         Text(error, color = Palette.danger, fontSize = (22 * scale).sp)
