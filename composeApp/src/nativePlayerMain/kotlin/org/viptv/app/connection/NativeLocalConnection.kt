@@ -146,9 +146,9 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
 
     override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray = fetchLocalSubtitleContent(id, input)
 
-    // TODO(SRC-BEST-MATCH-001): pass deviceMaxHeight once the core's rankSources uniffi signature takes it.
     override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): List<SourceCandidate> = withContext(Dispatchers.IO) {
-        json.decodeFromString(engine.rankSources(profile, json.encodeToString(sources)))
+        json.decodeFromString(engine.rankSourcesForDevice(profile, json.encodeToString(sources),
+            deviceMaxHeight?.takeIf { it in 144..4320 }?.toUInt()))
     }
     override suspend fun openSource(id: String): PlaybackInput = fetchLocalOpenSource(id)
 
