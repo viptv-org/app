@@ -114,8 +114,18 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     }
     val density = LocalDensity.current
     var rowScale by remember { mutableFloatStateOf(1f) }
-    fun rowOffset(index: Int, scale: Float): Float = with(density) {
-        visibleRows.take(index).sumOf { if (it.id == "continue") 384 else 516 }.dp.toPx() * scale
+    // Rows are measured, not assumed: the fixed 384/516 dp guesses placed the
+    // next shelf ~80 px too low, so its heading showed with no cards peeking.
+    val rowHeightsPx = remember(home?.scope?.profile_id) { mutableStateMapOf<String, Int>() }
+    fun rowOffset(index: Int, scale: Float): Float {
+        var px = 0f
+        for (i in 0 until index) {
+            val row = visibleRows.getOrNull(i) ?: break
+            px += rowHeightsPx[row.id]?.toFloat()
+                ?: with(density) { (if (row.id == "continue") 384 else 516).dp.toPx() * scale }
+            px += with(density) { (40.dp * scale).toPx() }
+        }
+        return px
     }
     fun returnHero() {
         browsing = false; focused.value = null; activeRow = -1; heroFocusEpoch++
@@ -129,7 +139,9 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val viewport = maxWidth
         SideEffect { rowScale = scale }
         val easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-        val targetTop = (if (browsing) 512 else 824).dp * scale
+        // Browsing sits the focused shelf higher so the next shelf's heading
+        // *and* a real slice of its cards show, instead of a bare title peek.
+        val targetTop = (if (browsing) 464 else 824).dp * scale
         // The rows are laid out at the browsing top and only translated: a list
         // whose top padding jumped to the billboard position lost 312 dp of
         // height in one frame and clipped the sliding rows.
@@ -220,7 +232,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 firstPlaced = { firstReadyAttached = true },
                                 resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null,
                                 rowAlpha = alpha,
-                                onHeightChange = if (index == visibleRows.lastIndex) ({ height -> lastRowHeight = height }) else null,
+                                onHeightChange = { height -> rowHeightsPx[row.id] = height; if (index == visibleRows.lastIndex) lastRowHeight = height },
                                 play = play)
                         }
                     }
