@@ -53,7 +53,7 @@ internal fun TvAboutSettings(local: Boolean, address: String?, profileName: Stri
         TvSettingsRow("Version", VIPTV_VERSION, scale, requester = initial, left = sidebar) { panel = TvAboutPanel.Build }
         TvSettingsRow("Connected to", scale = scale, value = if (local) "Local mode" else address ?: "Not connected", left = sidebar) {
             panel = TvAboutPanel.Connection }
-        TvSettingsRow("Send diagnostics", "See exactly what a support report would include", scale = scale, left = sidebar) {
+        TvSettingsRow("Send diagnostics", scale = scale, left = sidebar) {
             panel = TvAboutPanel.Diagnostics }
         TvSettingsRow("Privacy", scale = scale, left = sidebar) { panel = TvAboutPanel.Privacy }
         TvSettingsRow("Open-source licences", scale = scale, left = sidebar) { panel = TvAboutPanel.Licences }

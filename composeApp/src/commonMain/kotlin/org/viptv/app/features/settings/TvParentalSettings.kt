@@ -69,10 +69,9 @@ internal fun TvParentalSettings(profile: Profile?, maturity: String?, pinAvailab
         Spacer(Modifier.height(18.dp * scale))
         PolicyRow("Hide titles with no rating", null, null, scale, sidebar, profiles)
         Spacer(Modifier.height(12.dp * scale))
-        PolicyRow("Blocked titles", "Hidden for ${profile?.name ?: "this profile"} even if the rating allows them", null, scale, sidebar, profiles)
+        PolicyRow("Blocked titles", null, null, scale, sidebar, profiles)
         Spacer(Modifier.height(12.dp * scale))
-        PolicyRow("PIN to leave ${profile?.name ?: "this profile"}’s profile",
-            "Ask for a PIN before leaving this profile on this device",
+        PolicyRow("PIN to leave ${profile?.name ?: "this profile"}’s profile", null,
             if (profile?.locked == true) "On" else "Off", scale, sidebar, profiles)
     }
 }
