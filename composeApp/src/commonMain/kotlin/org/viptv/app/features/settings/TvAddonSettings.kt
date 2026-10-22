@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.tvRingReach
+import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
@@ -29,7 +31,8 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
         TvSettingsHeading("Add-ons", scale, "Add-ons find the movies, series and channels you watch here.")
         Row(horizontalArrangement = Arrangement.spacedBy(60.dp * scale)) {
             TvFocusScroll {
-                LazyColumn(Modifier.width(760.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+                LazyColumn(Modifier.width(760.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false),
+                    contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     itemsIndexed(addons, key = { _, addon -> addon.id }) { index, addon ->
                         TvAction(Modifier.fillMaxWidth().height(100.dp * scale).focusProperties { left = sidebar }
                             .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)

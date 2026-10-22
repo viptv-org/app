@@ -14,6 +14,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
@@ -29,13 +31,19 @@ import org.viptv.app.theme.Palette
  * clip a draw scope to the node bounds unless a parent asks it to, so this stays
  * a paint-only effect. The inner dark ring is the board's `0 0 0 3px #0B0B0C`
  * shadow: it keeps a filled control legible on a light page.
+ *
+ * [radius] is the control's own corner radius exactly as its shape uses it
+ * (already scaled); the ring stays concentric with it. [width] and [darkGap] are
+ * board pixels at 1920 and are scaled here. Scaling the radius again made the
+ * ring's corners tighter than the control's on every TV below 1920 dp wide, so
+ * pills got a squarish outline that did not follow them.
  */
 internal fun Modifier.tvFocusOutline(focused: Boolean, radius: Dp, scale: Float = 1f,
     width: Dp = 4.dp, darkGap: Dp = 0.dp): Modifier = if (!focused) this else drawWithContent {
     drawContent()
     val w = width.toPx() * scale
     val g = darkGap.toPx() * scale
-    val r = radius.toPx() * scale
+    val r = radius.toPx()
     if (g > 0f) {
         // The sidebar's double ring: 3 px dark, then 3 px white (board
         // `0 0 0 3px #0B0B0C, 0 0 0 6px #F4F2EE`).
@@ -62,6 +70,27 @@ private val OwnFocusRipple = RippleConfiguration(rippleAlpha = RippleAlpha(
 internal fun OwnFocusTreatment(content: @Composable () -> Unit) =
     CompositionLocalProvider(LocalRippleConfiguration provides OwnFocusRipple, content = content)
 
+/**
+ * How far an outside ring reaches past its control: the 4 px outline plus the
+ * sidebar's 3 px dark gap, rounded up.
+ */
+internal fun tvRingReach(scale: Float): Dp = 8.dp * scale
+
+/**
+ * Scroll containers clip to their viewport, which cuts the outside ring off a
+ * control that touches the edge (the first filter pill, the top row of a list).
+ * This grows the container by [room] on each side of the chosen axes without
+ * moving it; give the content the same padding so the items stay where they were.
+ */
+internal fun Modifier.tvRingRoom(room: Dp, horizontal: Boolean = true, vertical: Boolean = true): Modifier =
+    layout { measurable, constraints ->
+        val x = if (horizontal) room.roundToPx() else 0
+        val y = if (vertical) room.roundToPx() else 0
+        val placeable = measurable.measure(constraints.offset(2 * x, 2 * y))
+        layout((placeable.width - 2 * x).coerceIn(constraints.minWidth, constraints.maxWidth),
+            (placeable.height - 2 * y).coerceIn(constraints.minHeight, constraints.maxHeight)) { placeable.place(-x, -y) }
+    }
+
 /** Card focus is an *inset* ring: the board never grows a card on focus. */
 internal fun Modifier.tvCardFocusOutline(focused: Boolean, radius: Dp, scale: Float = 1f,
     width: Dp = 3.dp): Modifier = if (!focused) this else drawWithContent {
@@ -69,7 +98,7 @@ internal fun Modifier.tvCardFocusOutline(focused: Boolean, radius: Dp, scale: Fl
     val w = width.toPx() * scale
     drawRoundRect(Color.White, Offset(w / 2f, w / 2f),
         Size((size.width - w).coerceAtLeast(0f), (size.height - w).coerceAtLeast(0f)),
-        CornerRadius(radius.toPx() * scale), style = Stroke(w))
+        CornerRadius((radius.toPx() - w / 2f).coerceAtLeast(0f)), style = Stroke(w))
 }
 
 /**

@@ -51,7 +51,7 @@ internal fun TvPinKey(label: String, scale: Float, enabled: Boolean, requester: 
         // Tv3Pin keys paint focus inside their own cell (ring = false): the outside
         // 4 px outline rows use would grow a 136 px key to 144 px and eat the keypad's
         // 12 px pitch.
-        .tvFocusOutline(light && ring, 10.dp, scale)
+        .tvFocusOutline(light && ring, 10.dp * scale, scale)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light && ring) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
         .clickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = action),

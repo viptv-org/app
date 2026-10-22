@@ -12,13 +12,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.tvRingReach
+import org.viptv.app.components.tvRingRoom
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvLiveFilters(categories: List<String>, selected: String, choose: (String) -> Unit, scale: Float,
     filter: FocusRequester, first: FocusRequester?, modifier: Modifier, labels: Map<String, String> = emptyMap(), favoritesSelected: Boolean = false, favorites: (() -> Unit)? = null,
     sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null, busy: Boolean = false) {
-    Row(modifier.horizontalScroll(rememberScrollState()).focusProperties { onEnter = { filter.requestFocus() } }.focusGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
+    // Room for the pills' outside ring, which the scroll viewport would clip.
+    val reach = tvRingReach(scale)
+    Row(modifier.tvRingRoom(reach, vertical = false).horizontalScroll(rememberScrollState()).padding(horizontal = reach)
+        .focusProperties { onEnter = { filter.requestFocus() } }.focusGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
         if (sources.size > 1 && sourceChanged != null) LiveSourceSelector(sources, selectedSource, sourceChanged, enabled = !busy, television = true, scale = scale)
         (listOf("All") + categories).distinct().forEach { option ->
             TvAction(Modifier.height(52.dp * scale).focusProperties { if (first != null) down = first }, scale,
