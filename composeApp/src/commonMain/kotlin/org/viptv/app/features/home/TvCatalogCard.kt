@@ -1,5 +1,15 @@
 package org.viptv.app.features.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import kotlin.math.roundToInt
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -64,8 +74,12 @@ import org.viptv.engine.wire.Card
 @Composable
 internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier: Modifier = Modifier,
     focused: (Card) -> Unit, open: (Card) -> Unit, showFocus: Boolean = true, focusedCaptions: Boolean = false,
-    onUp: (() -> Unit)? = null) {
-    val focus = remember { mutableStateOf(false) }
+    onUp: (() -> Unit)? = null, selected: Boolean = false) {
+    val ownFocus = remember { mutableStateOf(false) }
+    // The fixed-focus shelf drives selection from the row: a selected card shows
+    // the focus treatment without holding platform focus. Computed in the body,
+    // not cached: a cached derived state went stale against the row's selection.
+    val focus = androidx.compose.runtime.rememberUpdatedState(ownFocus.value || selected)
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
     val states = remember(card) { TvCardStates.of(card) }
     val description = remember(card, states) { cardDescription(card, states) }
@@ -81,7 +95,7 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             if (onUp != null && event.type == androidx.compose.ui.input.key.KeyEventType.KeyDown &&
                 event.key == androidx.compose.ui.input.key.Key.DirectionUp) { onUp(); true } else false
         }
-        .onFocusChanged { if (focus.value != it.isFocused) { focus.value = it.isFocused; if (it.isFocused) focused(card) } }
+        .onFocusChanged { if (ownFocus.value != it.isFocused) { ownFocus.value = it.isFocused; if (it.isFocused) focused(card) } }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }
         .clearAndSetSemantics {
             role = Role.Button
@@ -91,7 +105,10 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             onClick { open(card); true }
         }) {
         // The surface fill is the no-art fallback, not just a loading colour: an
-        // AsyncImage with a null model draws no placeholder at all.
+        // AsyncImage with a null model draws no placeholder at all. The wrapper
+        // stays unclipped so the focus ring can draw a gap outside the art (board
+        // Tv3CardStates): inside the clipped box the stroke hugged the art edge.
+        Box {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(shape).background(Palette.surface)) {
             // Measured on the ONN: routing TV card art through the resizing proxy
             // moved gpu p50 from 13.5 ms to 15.0-15.5 ms and missed vsyncs from
@@ -119,8 +136,9 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             if (!portrait && card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
                 Modifier.align(Alignment.BottomStart).padding(18.dp * scale).fillMaxWidth(.62f).height(56.dp * scale),
                 contentScale = ContentScale.Fit, alignment = Alignment.BottomStart)
-            CardFocusRing(focus, showFocus, scale, Modifier.matchParentSize())
             if (!portrait) CardPlayBadge(focus, showFocus, scale, Modifier.align(Alignment.Center))
+        }
+        CardFocusRing(focus, showFocus, scale, Modifier.matchParentSize())
         }
         if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().height(76.dp * scale)) {
             CardCaptions(card, states, focus, portrait, focusedCaptions, scale)
@@ -223,7 +241,28 @@ private fun CardNoArtFallback(card: Card, scale: Float, portrait: Boolean, shape
 
 @Composable
 private fun CardFocusRing(focus: State<Boolean>, showFocus: Boolean, scale: Float, modifier: Modifier) {
-    org.viptv.app.components.FocusOutline(focus.value && showFocus, 10.dp * scale, 3.dp * scale, modifier)
+    // Board Tv3CardStates: the ring floats outside the art with a gap between the
+    // art's edge and the stroke, and the ring's corners are wider than the art's.
+    // The canvas overflows the card on every side; the wrapper does not clip it.
+    val opacity = animateFloatAsState(if (focus.value && showFocus) 1f else 0f, tween(120), label = "Card focus ring")
+    val stroke = 3.dp * scale
+    val gap = 5.dp * scale
+    val radius = (10.dp * scale) + gap + (stroke / 2)
+    val expanded = modifier.layout { measurable, constraints ->
+        val extra = ((gap + stroke / 2).toPx()).roundToInt()
+        val placeable = measurable.measure(constraints)
+        layout(placeable.width + extra * 2, placeable.height + extra * 2) { placeable.place(extra, extra) }
+    }.offset {
+        val extra = ((gap + stroke / 2).toPx()).roundToInt()
+        androidx.compose.ui.unit.IntOffset(-extra, -extra)
+    }
+    androidx.compose.foundation.Canvas(expanded) {
+        val strokePx = stroke.toPx()
+        drawRoundRect(Palette.text.copy(alpha = opacity.value),
+            Offset(strokePx / 2, strokePx / 2),
+            Size((size.width - strokePx).coerceAtLeast(0f), (size.height - strokePx).coerceAtLeast(0f)),
+            CornerRadius(radius.toPx()), style = Stroke(strokePx))
+    }
 }
 
 @Composable
