@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,24 +15,33 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
     retry: () -> Unit, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit, television: Boolean = false,
-    profileName: String? = null, first: androidx.compose.ui.focus.FocusRequester? = null,
+    profileName: String? = null, origin: String? = null, tvScale: Float = 1f, first: androidx.compose.ui.focus.FocusRequester? = null,
     left: androidx.compose.ui.focus.FocusRequester? = null) {
     var editing by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     var deleting by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     if (television) {
-        androidx.compose.foundation.layout.BoxWithConstraints {
-            val scale = maxWidth / 1920.dp
-            val schema = editing
-            if (schema != null) {
-                TvSourceIntegrationPage(schema, busy, error, { editing = null }, { configuration ->
-                    configure(schema.plugin_id, configuration); editing = null
-                }, scale)
-            } else Column { TvSourceIntegrationList(snapshot, busy, error, retry, { editing = it }, { deleting = it }, scale,
-                first = first, left = left, profileName = profileName) }
-            deleting?.let { target -> TvSourceRemoveConfirmation(target, profileName, busy, scale,
-                confirm = { target.connection_id?.let(remove); deleting = null },
-                dismiss = { if (!busy) deleting = null }) }
+        // The screen hands down the canvas scale (screen/1920); deriving it from
+        // this pane again shrank every card below its content and clipped them.
+        val schema = editing
+        if (schema != null) {
+            // The board's form is a full-screen page: no settings sidebar. A
+            // focusable window-level popup covers the shell, like the remove dialog.
+            androidx.compose.ui.window.Popup(
+                onDismissRequest = { if (!busy) editing = null },
+                properties = androidx.compose.ui.window.PopupProperties(focusable = true),
+            ) {
+                Box(Modifier.fillMaxSize().background(Palette.background)) {
+                    TvSourceIntegrationPage(schema, busy, error, { editing = null }, { configuration ->
+                        configure(schema.plugin_id, configuration); editing = null
+                    }, tvScale, profileName, origin)
+                }
+            }
         }
+        Column { TvSourceIntegrationList(snapshot, busy, error, retry, { editing = it }, { deleting = it }, tvScale,
+            first = first, left = left, profileName = profileName) }
+        deleting?.let { target -> TvSourceRemoveConfirmation(target, profileName, busy, tvScale,
+            confirm = { target.connection_id?.let(remove); deleting = null },
+            dismiss = { if (!busy) deleting = null }) }
     } else
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -60,7 +70,7 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
             }
         }
     }
-    editing?.let { schema ->
+    if (!television) editing?.let { schema ->
         val dismiss = { editing = null }
         val save: (JsonObject) -> Unit = { configuration -> configure(schema.plugin_id, configuration); editing = null }
         SourceIntegrationForm(schema, busy, error, dismiss, save = save)

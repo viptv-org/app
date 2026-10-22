@@ -19,6 +19,8 @@ data class SourceIntegrationSchema(
     val connection_id: String? = null,
     val provider_choices: List<SourceProviderChoice> = emptyList(),
     val maximum_providers: Int = 12,
+    /** Saved selection size when configured (a count, never the ids). */
+    val saved_provider_count: Int? = null,
 )
 
 @Serializable
