@@ -29,7 +29,7 @@ internal fun PhonePreferenceRow(label: String, value: String, enabled: Boolean, 
     Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(enabled = enabled, onClick = choose).padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
         Text(label, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-        Text(value, Modifier.widthIn(max = 150.dp), color = Palette.secondary, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(value, Modifier.widthIn(max = 190.dp), color = Palette.secondary, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Icon(Lucide.ChevronRight, null, Modifier.size(17.dp), tint = Palette.tertiary)
     }
 }
@@ -64,7 +64,7 @@ internal fun phonePreferenceColor(value: String, fallback: Color = Color.White):
     ?.let { Color(if (value.length == 7) it or 0xFF000000 else it) } ?: fallback
 
 internal fun phonePreferenceLanguage(value: String?, audio: Boolean): String = when (value?.lowercase()) {
-    null, "" -> if (audio) "Original" else "Default"
+    null, "" -> if (audio) "Original language" else "Default"
     "en" -> "English"; "es" -> "Spanish"; "pt" -> "Portuguese"; "fr" -> "French"; "de" -> "German"
     else -> value.orEmpty()
 }

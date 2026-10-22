@@ -224,7 +224,8 @@ fun ApplicationController.chooseSource(card: Card) {
                 ?: SourcesOutcome(requireNotNull(connection).sources(card, publish))
             val sources = outcome.candidates
             val profile = requireNotNull(mutable.value.selectedProfile)
-            val ranked = local?.rankSources(profile, sources) ?: requireNotNull(connection).rankSources(profile, sources)
+            val deviceHeight = org.viptv.app.connection.deviceMaxVideoHeight()
+            val ranked = local?.rankSources(profile, sources, deviceHeight) ?: requireNotNull(connection).rankSources(profile, sources, deviceHeight)
             mutable.value = mutable.value.copy(sources = ranked, torrentOnlySources = outcome.torrentOnlyProviders)
             if (mutable.value.preferences?.preferences?.source_selection == "best" && ranked.isNotEmpty()) playSource(ranked.first())
         } catch (_: TimeoutCancellationException) {

@@ -11,6 +11,7 @@ import androidx.media3.extractor.text.SubtitleParser
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.SubtitleView
 import kotlinx.coroutines.*
+import org.viptv.app.connection.subtitleMode
 import org.viptv.engine.wire.SubtitleCandidate
 
 /** Sidecars never replace the primary MediaSource: its rolling HLS origin and audio stay intact. */
@@ -60,11 +61,54 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     }
 
     fun autoSelect(values: List<SubtitleCandidate>) {
-        if (closed || touched || desired != null || pending != null || player.currentTracks.isEmpty || player.currentMediaItem == null) return
+        if (closed || touched || player.currentTracks.isEmpty || player.currentMediaItem == null) return
+        if (input.preferences.subtitleMode == "foreign") { foreignAudio(values); return }
+        if (desired != null || pending != null) return
         val language = input.preferences.preferred_subtitle_language
         if (player.currentTracks.groups.any { group -> group.type == C.TRACK_TYPE_TEXT &&
                 (0 until group.length).any { group.isTrackSelected(it) && group.getTrackFormat(it).language == language } }) return
         preferredProviderSubtitle(input, values)?.let(::attach)
+    }
+
+    // PLAY-SUBTITLE-MODE-001 "When audio isn't …": decided again whenever the
+    // selected audio's language changes, until the viewer picks a subtitle or Off.
+    private var decidedAudio: String? = null
+    private var decided = false
+    private var foreignSatisfied = false
+
+    private fun foreignAudio(values: List<SubtitleCandidate>) {
+        val audio = player.currentTracks.groups.firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected }?.let { group ->
+            (0 until group.length).firstOrNull(group::isTrackSelected)?.let { group.getTrackFormat(it).language.orEmpty() }
+        } ?: return
+        if (!decided || audio != decidedAudio) { decided = true; decidedAudio = audio; foreignSatisfied = false; automaticOff() }
+        if (foreignSatisfied) return
+        val preferences = input.preferences
+        val embedded = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }.flatMap { group ->
+            (0 until group.length).filter { group.isTrackSupported(it) }.mapNotNull { index ->
+                val format = group.getTrackFormat(index)
+                if (format.id?.startsWith(Media3Tracks.PROVIDER_PREFIX) == true) null
+                else SubtitleModeTrack(group.mediaTrackGroup to index, format.language, format.selectionFlags and C.SELECTION_FLAG_FORCED != 0)
+            }
+        }
+        val track = subtitleModeChoice("foreign", preferences.preferred_audio_language, preferences.preferred_subtitle_language, audio, embedded)
+        if (track != null) {
+            foreignSatisfied = true
+            val (group, index) = track.key
+            player.trackSelectionParameters = player.trackSelectionParameters.buildUpon().clearOverridesOfType(C.TRACK_TYPE_TEXT)
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setOverrideForType(TrackSelectionOverride(group, listOf(index))).build()
+            return
+        }
+        if (!audioIsForeign(audio, preferences.preferred_audio_language) || desired != null || pending != null) return
+        preferredProviderSubtitle(input, values)?.let { foreignSatisfied = true; attach(it) }
+    }
+
+    /** Undo only this mode's own choice: embedded text off and any sidecar it attached. */
+    private fun automaticOff() {
+        generation++; job?.cancel(); job = null; pending = null
+        if (desired != null) clear()
+        val parameters = player.trackSelectionParameters
+        if (!parameters.disabledTrackTypes.contains(C.TRACK_TYPE_TEXT) || parameters.overrides.keys.any { it.type == C.TRACK_TYPE_TEXT })
+            player.trackSelectionParameters = parameters.buildUpon().clearOverridesOfType(C.TRACK_TYPE_TEXT).setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
     }
 
     private fun attach(candidate: SubtitleCandidate) {
@@ -89,9 +133,9 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
 
     fun sourcesChanged(values: List<SubtitleCandidate>) {
         if (pending?.let { id -> values.none { it.id == id } } == true) {
-            generation++; job?.cancel(); job = null; pending = null
+            generation++; job?.cancel(); job = null; pending = null; foreignSatisfied = false
         }
-        if (desired?.let { id -> values.none { it.id == id } } == true) clear()
+        if (desired?.let { id -> values.none { it.id == id } } == true) { clear(); foreignSatisfied = false }
         autoSelect(values)
     }
 

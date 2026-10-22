@@ -146,7 +146,8 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
 
     override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray = fetchLocalSubtitleContent(id, input)
 
-    override suspend fun rankSources(profile: String, sources: List<SourceCandidate>): List<SourceCandidate> = withContext(Dispatchers.IO) {
+    // TODO(SRC-BEST-MATCH-001): pass deviceMaxHeight once the core's rankSources uniffi signature takes it.
+    override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): List<SourceCandidate> = withContext(Dispatchers.IO) {
         json.decodeFromString(engine.rankSources(profile, json.encodeToString(sources)))
     }
     override suspend fun openSource(id: String): PlaybackInput = fetchLocalOpenSource(id)
@@ -170,7 +171,7 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
         json.decodeFromString(engine.profilePreferences(profile))
     }
     override suspend fun updateProfilePreferences(profile: String, revision: Long, preferences: ProfilePreferences): PreferencesSnapshot = withContext(Dispatchers.IO) {
-        json.decodeFromString(engine.updateProfilePreferences(profile, revision.toULong(), Json { encodeDefaults = true }.encodeToString(preferences)))
+        json.decodeFromString(engine.updateProfilePreferences(profile, revision.toULong(), profilePreferencesWire(preferences).toString()))
     }
     override suspend fun sourceIntegrationSchemas(profile: String): SourceIntegrationSnapshot = readSourceIntegrationSchemas(profile)
     override suspend fun configureSourceIntegration(profile: String, revision: Long, plugin: String, configuration: JsonObject) = saveSourceIntegration(profile, revision, plugin, configuration)

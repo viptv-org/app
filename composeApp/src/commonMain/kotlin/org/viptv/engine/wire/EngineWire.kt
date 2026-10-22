@@ -508,6 +508,18 @@ data class SourceCandidate(
     val quality_height: Long? = null,
     val audio_languages: List<String> = emptyList(),
     val presentation: SourcePresentation? = null,
+    // Normalized release facts (SRC-BEST-MATCH-001). Every one is optional;
+    // absent means unknown, never "not HDR" or "no seeders".
+    /** `web_dl`, `webrip`, `bluray`, `remux`, `hdtv`, `dvd`, `other_rip` or `cam`. */
+    val release_type: String? = null,
+    val three_d: Boolean = false,
+    /** Any of `dv`, `hdr10_plus`, `hdr10`, `hdr`, `hlg`. */
+    val dynamic_range: List<String> = emptyList(),
+    /** Any of `dual`, `multi`, `dubbed`. */
+    val audio_flags: List<String> = emptyList(),
+    val seeders: Long? = null,
+    /** `direct` or `torrent`. */
+    val delivery: String? = null,
 )
 
 @Serializable

@@ -33,7 +33,7 @@ interface LocalConnection : AutoCloseable {
     suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
     suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = LiveGuideSnapshot(channel, reason = "The program guide is unavailable.")
     suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = throw LocalFailure("This live channel is unavailable.")
-    suspend fun rankSources(profile: String, sources: List<SourceCandidate>): List<SourceCandidate> = sources
+    suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int? = null): List<SourceCandidate> = sources
     suspend fun openSource(id: String): PlaybackInput
     suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot
     suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray

@@ -9,6 +9,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.CoroutineScope
+import org.viptv.app.connection.subtitleMode
 import org.viptv.engine.wire.SubtitleCandidate
 
 @UnstableApi
@@ -65,7 +66,8 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         val selection = player.trackSelectionParameters.buildUpon()
             .setPreferredAudioLanguage(input.preferences.preferred_audio_language)
             .setPreferredTextLanguage(input.preferences.preferred_subtitle_language)
-            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !input.preferences.subtitles_enabled)
+            // "When audio isn't …" starts with text off; Media3ProviderSubtitles turns it on once the audio is known.
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, input.preferences.subtitleMode != "always")
         input.preferences.max_quality_height?.takeIf { it > 0 }?.let { selection.setMaxVideoSize(Int.MAX_VALUE, it) }
         player.trackSelectionParameters = selection.build()
         player.setAudioAttributes(AudioAttributes.DEFAULT, true)
