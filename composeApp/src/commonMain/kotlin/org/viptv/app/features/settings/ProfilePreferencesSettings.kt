@@ -17,7 +17,9 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
     val preferences = snapshot?.preferences
     var audio by remember(snapshot) { mutableStateOf(preferences?.preferred_audio_language.orEmpty()) }
     var subtitle by remember(snapshot) { mutableStateOf(preferences?.preferred_subtitle_language.orEmpty()) }
-    var enabled by remember(snapshot) { mutableStateOf(preferences?.subtitles_enabled ?: true) }
+    var mode by remember(snapshot) { mutableStateOf(preferences?.subtitleMode ?: "always") }
+    var hdr by remember(snapshot) { mutableStateOf(preferences?.hdr_preference ?: "any") }
+    val deviceHeight = remember { deviceMaxVideoHeight() }
     var selection by remember(snapshot) { mutableStateOf(preferences?.source_selection ?: "ask") }
     var quality by remember(snapshot) { mutableStateOf(preferences?.max_quality_height) }
     var subtitleScale by remember(snapshot) { mutableStateOf(preferences?.subtitle_font_scale ?: 1.0) }
@@ -30,10 +32,15 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
         TextButton(retry, enabled = !busy) { Text("Refresh") }
         if (preferences != null) {
             OutlinedTextField(audio, { audio = it }, label = { Text("Preferred audio language") },
-                supportingText = { Text("Language tag, for example en or pt-BR. Leave empty for original audio.") }, enabled = !busy, singleLine = true)
+                supportingText = { Text("Language tag, for example en or pt-BR. Leave empty for the original language.") }, enabled = !busy, singleLine = true)
             OutlinedTextField(subtitle, { subtitle = it }, label = { Text("Preferred subtitle language") },
                 supportingText = { Text("Leave empty to use the media’s default subtitle track.") }, enabled = !busy, singleLine = true)
-            Row { Switch(enabled, { enabled = it }, enabled = !busy); Text("Start with subtitles", Modifier.padding(12.dp)) }
+            Text("Subtitles")
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                subtitleModeChoices(audio.trim().takeIf(String::isNotEmpty)).forEach { (value, label) ->
+                    FilterChip(mode == value, { mode = value }, label = { Text(label) }, enabled = !busy)
+                }
+            }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("ask" to "Always ask", "best" to "Best match").forEach { (value, label) ->
                     FilterChip(selection == value, { selection = value }, label = { Text(label) }, enabled = !busy)
@@ -42,7 +49,13 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
             Text("Preferred quality")
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(null, 720, 1080, 2160).forEach { height ->
-                    FilterChip(quality == height, { quality = height }, label = { Text(height?.let { if (it == 2160) "4K" else "${it}p" } ?: "Best available") }, enabled = !busy)
+                    FilterChip(quality == height, { quality = height }, label = { Text(qualityLabel(height, deviceHeight)) }, enabled = !busy)
+                }
+            }
+            Text("HDR and Dolby Vision")
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                hdrPreferenceChoices.forEach { (value, label) ->
+                    FilterChip(hdr == value, { hdr = value }, label = { Text(label) }, enabled = !busy)
                 }
             }
             Text("Subtitle size")
@@ -56,8 +69,9 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
             OutlinedTextField(subtitleBackground, { subtitleBackground = it }, label = { Text("Subtitle background colour") },
                 supportingText = { Text("Hex colour with optional alpha; #00000000 is transparent.") }, enabled = !busy, singleLine = true)
             Button({ save(preferences.copy(preferred_audio_language = audio.trim().takeIf(String::isNotEmpty), preferred_subtitle_language = subtitle.trim().takeIf(String::isNotEmpty),
-                subtitles_enabled = enabled, source_selection = selection, max_quality_height = quality,
-                subtitle_font_scale = subtitleScale, subtitle_text_color = subtitleColor.trim(), subtitle_background_color = subtitleBackground.trim())) }, enabled = !busy) { Text("Save preferences") }
+                source_selection = selection, max_quality_height = quality, hdr_preference = hdr,
+                subtitle_font_scale = subtitleScale, subtitle_text_color = subtitleColor.trim(), subtitle_background_color = subtitleBackground.trim())
+                .let { if (it.subtitleMode == mode) it else it.withSubtitleMode(mode) }) }, enabled = !busy) { Text("Save preferences") }
         }
     }
 }

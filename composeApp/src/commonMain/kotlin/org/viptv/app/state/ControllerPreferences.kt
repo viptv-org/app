@@ -58,9 +58,15 @@ fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language:
     val tag = language?.takeIf(String::isNotBlank)?.let(::canonicalLanguageTag)
     val updated = when (kind) {
         PlaybackTrackKind.Audio -> current.copy(preferred_audio_language = tag)
-        PlaybackTrackKind.Subtitle ->
-            if (tag == null) current.copy(subtitles_enabled = false)
-            else current.copy(preferred_subtitle_language = tag, subtitles_enabled = true)
+        // "When audio isn't …" is a standing rule; one manual pick or Off in the
+        // player overrides it for that playback only (PLAY-SUBTITLE-MODE-001).
+        PlaybackTrackKind.Subtitle -> when {
+            current.subtitleMode == "foreign" -> if (tag == null) current else current.copy(preferred_subtitle_language = tag)
+            // A profile without a stored mode keeps the legacy on/off it derives from.
+            tag == null -> if (current.subtitle_mode == null) current.copy(subtitles_enabled = false) else current.withSubtitleMode("never")
+            else -> current.copy(preferred_subtitle_language = tag).let {
+                if (it.subtitle_mode == null) it.copy(subtitles_enabled = true) else it.withSubtitleMode("always") }
+        }
     }
     if (updated == current) return
     val profile = mutable.value.selectedProfile ?: return

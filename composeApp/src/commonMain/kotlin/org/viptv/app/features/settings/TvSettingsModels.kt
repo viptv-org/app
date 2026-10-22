@@ -10,11 +10,15 @@ internal data class TvSettingsPreferences(
     val nextEpisode: Boolean = true,
     val skipIntros: Boolean = false,
     val source: String = "Best match",
-    val quality: String = "Best available",
+    /** `Auto` (no cap: the device's own resolution) or a fixed cap such as `1080p`. */
+    val quality: String = "Auto",
+    /** `No preference`, `Prefer` or `Avoid`. */
+    val hdr: String = "No preference",
     val frameRate: Boolean = true,
-    val startSubtitles: String = "Off",
+    /** `always`, `foreign` or `never`; rows show it with [subtitleModeLabel]. */
+    val subtitleMode: String = "always",
     val subtitleLanguage: String = "English",
-    val audioLanguage: String = "Original",
+    val audioLanguage: String = "Original language",
     val subtitleSize: String = "Large",
     val subtitleBackground: String = "Shadow",
     val subtitleColor: Long = 0xFFFFFFFF,

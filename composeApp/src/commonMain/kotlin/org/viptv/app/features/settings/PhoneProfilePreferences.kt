@@ -18,6 +18,7 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
     retry: () -> Unit, save: (ProfilePreferences) -> Unit) {
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     var dialog by remember(section) { mutableStateOf<PhonePreferenceField?>(null) }
+    val deviceHeight = remember { deviceMaxVideoHeight() }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(section, Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontSize = 17.sp, fontWeight = FontWeight.Bold)
@@ -34,7 +35,9 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
                     PhonePreferenceGroup {
                         PhonePreferenceRow("Default source", if (value.source_selection == "best") "Best match" else "Always ask", !busy) { dialog = PhonePreferenceField.Source }
                         PhonePreferenceDivider()
-                        PhonePreferenceRow("Preferred quality", value.max_quality_height?.let { if (it == 2160) "4K" else "${it}p" } ?: "Best available", !busy) { dialog = PhonePreferenceField.Quality }
+                        PhonePreferenceRow("Preferred quality", qualityLabel(value.max_quality_height, deviceHeight), !busy) { dialog = PhonePreferenceField.Quality }
+                        PhonePreferenceDivider()
+                        PhonePreferenceRow("HDR and Dolby Vision", hdrPreferenceLabel(value.hdr_preference), !busy) { dialog = PhonePreferenceField.Hdr }
                     }
                 }
             }

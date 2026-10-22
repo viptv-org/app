@@ -41,6 +41,7 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceC
                         quality_height = value["quality_height"]?.jsonPrimitive?.longOrNull,
                         audio_languages = value["audio_languages"]?.jsonArray.orEmpty().mapNotNull { it.jsonPrimitive.contentOrNull },
                         presentation = value["presentation"]?.takeUnless { it is JsonNull }?.let { presentationCodec.decodeFromJsonElement<SourcePresentation>(it) })
+                        .withReleaseFacts(value)
                 }
             }
             after += events.size
@@ -58,3 +59,15 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceC
     }
 }
 
+private fun JsonObject.text(key: String): String? = (get(key) as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
+private fun JsonObject.texts(key: String): List<String> = (get(key) as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.takeIf { value -> value.isString }?.content }
+
+/** Reads the optional SRC-BEST-MATCH-001 facts of one server stream card; a malformed or absent value stays unknown. */
+internal fun SourceCandidate.withReleaseFacts(card: JsonObject): SourceCandidate = copy(
+    release_type = card.text("release_type")?.takeUnless { it == "unknown" },
+    three_d = (card["three_d"] as? JsonPrimitive)?.booleanOrNull ?: false,
+    dynamic_range = card.texts("dynamic_range"),
+    audio_flags = card.texts("audio_flags"),
+    seeders = (card["seeders"] as? JsonPrimitive)?.takeUnless { it.isString }?.longOrNull,
+    delivery = card.text("delivery"),
+)

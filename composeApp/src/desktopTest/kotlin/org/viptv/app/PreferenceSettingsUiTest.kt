@@ -36,7 +36,9 @@ class PreferenceSettingsUiTest {
             preferences = TvSettingsPreferences(source = "Always ask"); error = null; busy = false; frames(scene, 40)
             assertFalse(nodes(scene).any { text(it) == "Retry settings" })
             assertTrue(nodes(scene).any { text(it).startsWith("Default source") && text(it).contains("Always ask") })
-            assertEquals(true, nodes(scene).single { text(it).startsWith("Next episode button") && it.config.contains(SemanticsActions.OnClick) }
+            // A real connection hides the rows the server does not store; focus starts on the first stored one.
+            assertFalse(nodes(scene).any { text(it).startsWith("Next episode button") || text(it).startsWith("Match frame rate") })
+            assertEquals(true, nodes(scene).single { text(it).startsWith("Default source") && it.config.contains(SemanticsActions.OnClick) }
                 .config.getOrNull(SemanticsProperties.Focused))
             assertEquals(0, changed)
         } finally { scene.close() }
@@ -74,7 +76,7 @@ class PreferenceSettingsUiTest {
         var saved: ProfilePreferences? = null
         val scene = phone("Subtitles & audio", save = { saved = it })
         try {
-            frames(scene); click(scene, "L"); colour(scene, "Text colour Yellow"); click(scene, "Start with subtitles"); frames(scene, 20)
+            frames(scene); click(scene, "L"); colour(scene, "Text colour Yellow"); click(scene, "Subtitles Always"); frames(scene, 10); click(scene, "Never"); frames(scene, 20)
             click(scene, "Audio language cs-CZ"); frames(scene, 40); type(scene, "Language tag", "pt-BR"); frames(scene, 60)
             click(scene, "Use value"); frames(scene, 80)
             click(scene, "Custom background"); frames(scene, 100); type(scene, "Background colour", "#40223344"); frames(scene, 120)
@@ -85,7 +87,7 @@ class PreferenceSettingsUiTest {
             assertEquals(22.5f, results.single().layoutInput.style.fontSize.value)
             assertEquals(phonePreferenceColor("#FFE16B"), results.single().layoutInput.style.color)
             capture(scene, "phone-subtitle-preferences"); click(scene, "Save preferences")
-            assertEquals(original.copy(preferred_audio_language = "pt-BR", subtitles_enabled = false, subtitle_font_scale = 1.25,
+            assertEquals(original.copy(preferred_audio_language = "pt-BR", subtitles_enabled = false, subtitle_mode = "never", subtitle_font_scale = 1.25,
                 subtitle_text_color = "#FFE16B", subtitle_background_color = "#40223344"), saved)
         } finally { scene.close() }
     }

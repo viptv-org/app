@@ -47,5 +47,6 @@ suspend fun RemoteConnection.liveSources(profile: String, channel: String): List
             row["label"]?.jsonPrimitive?.contentOrNull ?: row["name"]?.jsonPrimitive?.contentOrNull ?: "Live source",
             detail = row["detail"]?.jsonPrimitive?.contentOrNull, quality_height = row["quality_height"]?.jsonPrimitive?.longOrNull,
             audio_languages = row["audio_languages"]?.jsonArray.orEmpty().mapNotNull { it.jsonPrimitive.contentOrNull })
+            .withReleaseFacts(row)
     }
 }

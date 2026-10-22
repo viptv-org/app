@@ -1,5 +1,6 @@
 package org.viptv.app.player
 
+import org.viptv.app.connection.subtitleMode
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -75,7 +76,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             // A gateway VOD playlist can initially omit ENDLIST. Keep the
             // requested VOD origin instead of letting Hls choose a live-sync edge.
             hlsController = Hls(hlsPreferences(input.preferences.preferred_audio_language.orEmpty(),
-                if (input.preferences.subtitles_enabled) input.preferences.preferred_subtitle_language.orEmpty() else "",
+                if ((input.preferences.subtitleMode != "never")) input.preferences.preferred_subtitle_language.orEmpty() else "",
                 if (input.live) -1.0 else input.positionMillis.coerceAtLeast(0) / 1000.0)).also {
                 val controller = it
                 val event = Hls.Events.ERROR
@@ -83,7 +84,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                     if (!disposed) latestObserve(PlayerFact.Failed)
                 }
                 removeHlsErrors = { removeHlsErrorListener(controller, event, listener) }
-                it.subtitleDisplay = input.preferences.subtitles_enabled
+                it.subtitleDisplay = (input.preferences.subtitleMode != "never")
                 it.loadSource(input.uri); it.attachMedia(video)
             }
         } else { video.src = input.uri }

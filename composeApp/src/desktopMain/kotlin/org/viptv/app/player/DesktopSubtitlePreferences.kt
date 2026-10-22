@@ -3,6 +3,7 @@ package org.viptv.app.player
 import io.github.yuroyami.kiteplayer.SubtitleConfig
 import io.github.yuroyami.kiteplayer.subtitle.SubtitleStyleOverride
 import org.viptv.app.connection.ProfilePreferences
+import org.viptv.app.connection.subtitleMode
 
 /** Keep authored styles for defaults; apply only explicit supported viewer overrides. */
 internal fun desktopSubtitleConfig(preferences: ProfilePreferences): SubtitleConfig {
@@ -10,10 +11,12 @@ internal fun desktopSubtitleConfig(preferences: ProfilePreferences): SubtitleCon
     val background = desktopCaptionColor(preferences.subtitle_background_color)?.takeUnless { it ushr 24 == 0 }
     val style = if (foreground != null || background != null)
         SubtitleStyleOverride(primaryColor = foreground, backgroundColor = background) else null
+    // "When audio isn't …" behaves as on here until this player reports audio languages (PLAY-SUBTITLE-MODE-001).
+    val enabled = preferences.subtitleMode != "never"
     return SubtitleConfig(
-        preferredLanguages = if (preferences.subtitles_enabled) listOfNotNull(preferences.preferred_subtitle_language) else emptyList(),
-        autoSelect = preferences.subtitles_enabled,
-        autoSelectForced = preferences.subtitles_enabled,
+        preferredLanguages = if (enabled) listOfNotNull(preferences.preferred_subtitle_language) else emptyList(),
+        autoSelect = enabled,
+        autoSelectForced = enabled,
         fontScale = preferences.subtitle_font_scale.takeIf { it.isFinite() }?.coerceIn(.5, 2.0)?.toFloat() ?: 1f,
         style = style,
         // Kite's libass tier ignores colour overrides. Its built-in text renderer

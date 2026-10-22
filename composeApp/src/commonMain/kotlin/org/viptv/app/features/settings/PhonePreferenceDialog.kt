@@ -13,8 +13,10 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.ProfilePreferences
+import org.viptv.app.connection.subtitleMode
+import org.viptv.app.connection.withSubtitleMode
 
-internal enum class PhonePreferenceField { Source, Quality, AudioLanguage, SubtitleLanguage, TextColour, BackgroundColour }
+internal enum class PhonePreferenceField { Source, Quality, Hdr, SubtitleMode, AudioLanguage, SubtitleLanguage, TextColour, BackgroundColour }
 
 internal fun phonePreferenceTag(value: String): Boolean = value.isEmpty() || value.length <= 32 &&
     value.split('-').let { parts -> parts.first().length in 2..3 && parts.withIndex().all { (i, part) ->
@@ -26,11 +28,13 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
     update: (ProfilePreferences) -> Unit, close: () -> Unit, keyboardInsets: WindowInsets? = null) {
     val title = when (field) {
         PhonePreferenceField.Source -> "Default source"; PhonePreferenceField.Quality -> "Preferred quality"
+        PhonePreferenceField.Hdr -> "HDR and Dolby Vision"; PhonePreferenceField.SubtitleMode -> "Subtitles"
         PhonePreferenceField.AudioLanguage -> "Audio language"; PhonePreferenceField.SubtitleLanguage -> "Subtitle language"
         PhonePreferenceField.TextColour -> "Text colour"; PhonePreferenceField.BackgroundColour -> "Background colour"
     }
     val current = when (field) {
         PhonePreferenceField.Source -> value.source_selection; PhonePreferenceField.Quality -> value.max_quality_height?.toString().orEmpty()
+        PhonePreferenceField.Hdr -> value.hdr_preference; PhonePreferenceField.SubtitleMode -> value.subtitleMode
         PhonePreferenceField.AudioLanguage -> value.preferred_audio_language.orEmpty(); PhonePreferenceField.SubtitleLanguage -> value.preferred_subtitle_language.orEmpty()
         PhonePreferenceField.TextColour -> value.subtitle_text_color; PhonePreferenceField.BackgroundColour -> value.subtitle_background_color
     }
@@ -41,6 +45,8 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
         update(when (field) {
             PhonePreferenceField.Source -> value.copy(source_selection = selected)
             PhonePreferenceField.Quality -> value.copy(max_quality_height = selected.toIntOrNull())
+            PhonePreferenceField.Hdr -> value.copy(hdr_preference = selected)
+            PhonePreferenceField.SubtitleMode -> value.withSubtitleMode(selected)
             PhonePreferenceField.AudioLanguage -> value.copy(preferred_audio_language = selected.takeIf(String::isNotEmpty))
             PhonePreferenceField.SubtitleLanguage -> value.copy(preferred_subtitle_language = selected.takeIf(String::isNotEmpty))
             PhonePreferenceField.TextColour -> value.copy(subtitle_text_color = selected.uppercase())
@@ -50,7 +56,9 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
     val choices = when (field) {
         PhonePreferenceField.Source -> listOf("best" to "Best match", "ask" to "Always ask")
         PhonePreferenceField.Quality -> (listOf<Int?>(null, 720, 1080, 2160) + value.max_quality_height).distinct().map {
-            it?.toString().orEmpty() to (it?.let { height -> if (height == 2160) "4K" else "${height}p" } ?: "Best available") }
+            it?.toString().orEmpty() to (it?.let { height -> if (height == 2160) "4K" else "${height}p" } ?: "Auto") }
+        PhonePreferenceField.Hdr -> hdrPreferenceChoices
+        PhonePreferenceField.SubtitleMode -> subtitleModeChoices(value.preferred_audio_language)
         PhonePreferenceField.AudioLanguage, PhonePreferenceField.SubtitleLanguage -> listOf("", "en", "es", "pt", "fr", "de").map {
             it to phonePreferenceLanguage(it, field == PhonePreferenceField.AudioLanguage) }
         else -> emptyList()

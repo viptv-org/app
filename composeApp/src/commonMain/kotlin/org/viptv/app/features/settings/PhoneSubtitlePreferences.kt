@@ -7,7 +7,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.connection.ProfilePreferences
+import org.viptv.app.connection.subtitleMode
 import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
 
@@ -66,14 +66,10 @@ internal fun PhoneSubtitlePreferences(value: ProfilePreferences, busy: Boolean, 
         }
     }
     PhonePreferenceGroup {
-        PhonePreferenceRow("Subtitle language", phonePreferenceLanguage(value.preferred_subtitle_language, false), !busy) { dialog(PhonePreferenceField.SubtitleLanguage) }
-        PhonePreferenceDivider()
         PhonePreferenceRow("Audio language", phonePreferenceLanguage(value.preferred_audio_language, true), !busy) { dialog(PhonePreferenceField.AudioLanguage) }
         PhonePreferenceDivider()
-        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).toggleable(value.subtitles_enabled, enabled = !busy, role = Role.Switch,
-            onValueChange = { enabled -> update { it.copy(subtitles_enabled = enabled) } }).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Start with subtitles", Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            PhoneSwitch(value.subtitles_enabled, !busy, null)
-        }
+        PhonePreferenceRow("Subtitles", subtitleModeLabel(value.subtitleMode, value.preferred_audio_language), !busy) { dialog(PhonePreferenceField.SubtitleMode) }
+        PhonePreferenceDivider()
+        PhonePreferenceRow("Subtitle language", phonePreferenceLanguage(value.preferred_subtitle_language, false), !busy) { dialog(PhonePreferenceField.SubtitleLanguage) }
     }
 }

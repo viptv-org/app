@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,7 +39,9 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
             source.formatLabel()?.let { Text(it, fontSize = 10.sp, maxLines = 1, softWrap = false, color = foreground.copy(alpha = .7f)) }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(source.label, fontSize = if (television) 24.sp else 14.sp, fontWeight = FontWeight.SemiBold, color = foreground)
+            SourceTitleLine(source.label, TextStyle(fontSize = if (television) 24.sp else 14.sp, fontWeight = FontWeight.SemiBold), foreground,
+                source.factBadges(), if (television) SourceBadgeStyle(16.sp, 20.sp, 8.dp, 8.dp, 2.dp, 8.dp) else SourceBadgeStyle(10.sp, 13.sp, 4.dp, 5.dp, 2.dp, 6.dp),
+                Modifier.fillMaxWidth())
             source.releaseDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp, color = foreground) }
             source.technicalDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp,
                 color = foreground.copy(alpha = 0.7f)) }
