@@ -41,6 +41,9 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         // below and to the right, so the remote leaves the navigation row
         // sideways instead of reaching the next label.
         val navFocus = remember { List(destinations.size + 1) { androidx.compose.ui.focus.FocusRequester() } }
+        // The profile menu (Switch profile, Settings) ends the chain; it is the
+        // only way to Settings with a remote.
+        val profileFocus = remember { androidx.compose.ui.focus.FocusRequester() }
         Row(Modifier.offset(300.dp * scale, 38.dp * scale).height(56.dp * scale).focusGroup(),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             var searchFocused by remember { mutableStateOf(false) }
@@ -64,7 +67,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                     .focusRequester(own)
                     .focusProperties {
                         left = if (index == 0) navFocus[0] else navFocus[index]
-                        right = if (index == destinations.lastIndex) androidx.compose.ui.focus.FocusRequester.Cancel else navFocus[index + 2]
+                        right = if (index == destinations.lastIndex) profileFocus else navFocus[index + 2]
                         up = androidx.compose.ui.focus.FocusRequester.Cancel
                     }
                     .onFocusChanged { focused = it.isFocused }
@@ -86,7 +89,11 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
             var profileFocused by remember { mutableStateOf(false) }
             Box(Modifier.size(56.dp * scale).tvFocusOutline(profileFocused, 28.dp * scale, scale, width = 3.dp)) { OwnFocusTreatment {
                 IconButton(onClick = { menu = true },
-                    modifier = Modifier.fillMaxSize().onFocusChanged { profileFocused = it.isFocused }) {
+                    modifier = Modifier.fillMaxSize().focusRequester(profileFocus).focusProperties {
+                        left = navFocus[destinations.size]
+                        right = androidx.compose.ui.focus.FocusRequester.Cancel
+                        up = androidx.compose.ui.focus.FocusRequester.Cancel
+                    }.onFocusChanged { profileFocused = it.isFocused }) {
                     if (profile != null) ProfileAvatar(profile, 56.dp * scale, 28.dp * scale)
                     else Icon(Lucide.UserRound, "Profile menu", Modifier.size(28.dp * scale))
                 }
