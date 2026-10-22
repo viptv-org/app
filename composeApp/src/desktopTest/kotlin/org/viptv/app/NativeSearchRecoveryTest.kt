@@ -48,12 +48,15 @@ class NativeSearchRecoveryTest {
             try {
                 controller.search("fixture"); controller.job?.join()
                 assertNull(controller.state.value.error)
+                // One carousel per catalog: each provider answers Movies and Series
+                // separately, and a failed catalog never sinks the provider's row.
                 val rows = controller.state.value.searchRows
-                assertEquals(2, rows.size)
-                val partial = rows.single { it.title == "Mixed provider" }
-                val failed = rows.single { it.title == "Offline provider" }
-                assertEquals("Ready", partial.state); assertNotNull(partial.message)
-                assertEquals("Failed", failed.state); assertTrue(failed.cards.isEmpty())
+                assertEquals(4, rows.size)
+                val partial = rows.single { it.title == "Mixed provider · Movies" }
+                val partialSeries = rows.single { it.title == "Mixed provider · Series" }
+                assertEquals("Ready", partial.state); assertNull(partial.message)
+                assertEquals("Failed", partialSeries.state); assertTrue(partialSeries.cards.isEmpty())
+                assertEquals(2, rows.count { it.title.startsWith("Offline provider") && it.state == "Failed" })
                 val card = partial.cards.single()
                 assertNotNull(card.metadata_origin)
                 assertEquals(partial.provider_id, card.provider_id)
@@ -69,11 +72,13 @@ class NativeSearchRecoveryTest {
         Fixture().use { fixture ->
             fixture.failAll = true
             val failed = requireNotNull(fixture.local.searchResults("default", "fixture"))
-            assertEquals(2, failed.rows.size); assertTrue(failed.complete)
+            assertEquals(4, failed.rows.size); assertTrue(failed.complete)
             assertTrue(failed.rows.all { it.state == "Failed" && it.cards.isEmpty() })
             assertTrue(searchResultGroups(failed.rows).all { it.message != null })
             fixture.failAll = false
             val recovered = requireNotNull(fixture.local.searchResults("default", "fixture"))
+            // The fixture's series route always 503s and one provider is always
+            // offline; the healthy provider's movie catalog recovers alone.
             assertEquals(1, recovered.rows.sumOf { it.cards.size })
             assertEquals(failed.rows.map { it.id }, recovered.rows.map { it.id })
         }

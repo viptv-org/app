@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -60,7 +61,7 @@ internal fun TvBrowseChrome(controls: DiscoveryControls?, query: BrowseQuery, sc
         ?: "Catalog"
     Row(Modifier.fillMaxWidth().height(64.dp * scale), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-        TvAction(Modifier.height(64.dp * scale).widthIn(min = 300.dp * scale).focusProperties { right = filtersFocus },
+        TvAction(Modifier.height(64.dp * scale).widthIn(min = 300.dp * scale).focusProperties { right = filtersFocus; left = FocusRequester.Cancel },
             scale, requester = requestFocus, cornerRadius = 32.dp * scale, activate = { catalogsOpen = true },
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text(catalogLabel, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -75,9 +76,15 @@ internal fun TvBrowseChrome(controls: DiscoveryControls?, query: BrowseQuery, sc
             if (applied.isNotEmpty()) {
                 Spacer(Modifier.width(10.dp * scale))
                 Box(Modifier.height(32.dp * scale).widthIn(min = 32.dp * scale)
-                    .background(if (it == Palette.background) Palette.text.copy(alpha = .18f) else Palette.text.copy(alpha = .18f), RoundedCornerShape(16.dp * scale))
-                    .padding(horizontal = 8.dp * scale), contentAlignment = Alignment.Center) {
-                    Text("${applied.size}", color = it, fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold)
+                    .background(Palette.text.copy(alpha = .18f), RoundedCornerShape(16.dp * scale)),
+                    contentAlignment = Alignment.Center) {
+                    // Font padding pushed the glyph low in the pill; tight, trimmed
+                    // line metrics keep the count centred.
+                    Text("${applied.size}", color = it, fontSize = (18 * scale).sp, lineHeight = (18 * scale).sp,
+                        fontWeight = FontWeight.Bold,
+                        style = LocalTextStyle.current.copy(lineHeightStyle = androidx.compose.ui.text.style.LineHeightStyle(
+                            androidx.compose.ui.text.style.LineHeightStyle.Alignment.Center, androidx.compose.ui.text.style.LineHeightStyle.Trim.Both,
+                            androidx.compose.ui.text.style.LineHeightStyle.Mode.Fixed)))
                 }
             }
         }
@@ -306,7 +313,9 @@ private fun TvFacetChoices(control: QueryControl, draft: BrowseQuery, scale: Flo
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                 row.forEachIndexed { index, choice ->
                     val checked = choice.value in selected
-                    val enabled = checked || selected.size < cap
+                    // Single-choice (genre) replaces on selection: the other chips
+                    // must stay focusable or the remote is stranded on the pick.
+                    val enabled = single || checked || selected.size < cap
                     var focused by remember { mutableStateOf(false) }
                     val shape = RoundedCornerShape(32.dp * scale)
                     Row(Modifier.height(64.dp * scale).widthIn(min = 200.dp * scale)

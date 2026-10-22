@@ -141,7 +141,7 @@ private fun TvDetailUnavailable(error: String?, scale: Float, back: (() -> Unit)
                 fontSize = (24 * s).sp, lineHeight = (34 * s).sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.widthIn(max = 900.dp * s))
             (retry ?: back)?.let { action ->
-                org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s).focusRequester(focus), s, primary = true,
+                org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s).focusRequester(focus), s, primary = true, ring = false,
                     activate = action, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
                     Text("Go back", color = it, fontSize = (24 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 }

@@ -114,6 +114,9 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                             val entry = Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced() } else Modifier)
                                 .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
                                 .then(if (index == resumeIndex) Modifier.focusRequester(recover) else Modifier)
+                                // The leading card dead-ends Left: the geometric search
+                                // can otherwise wander to the profile avatar.
+                                .then(if (index == 0) Modifier.focusProperties { left = FocusRequester.Cancel } else Modifier)
                             TvCatalogCard(card, scale, portrait, entry,
                                 { lastFocusedIndex = index; focusedKey = cardLookupKey(it); scroll(index); focus(it) }, activate, showFocus, focusedCaptions = portrait,
                                 onUp = if (index < 7) up else null)

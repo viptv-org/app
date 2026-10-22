@@ -64,8 +64,8 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
         Row(Modifier.offset(96.dp * scale, (if (series) 648 else 668).dp * scale),
             horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width((if (extras.resume != null) 420 else 260).dp * scale).height(72.dp * scale)
-                .focusProperties { if (down != null) this.down = down },
-                scale = scale, primary = true, requester = first, activate = play,
+                .focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel },
+                scale = scale, primary = true, ring = false, requester = first, activate = play,
                 contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) { tint ->
                 Box(Modifier.fillMaxSize()) {
                     Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
@@ -79,8 +79,10 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         color = tint, trackColor = tint.copy(alpha = 0.2f)) }
                 }
             }
-            TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = save) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
-            if (extras.resume != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
+            // The hero actions focus by fill alone (board Tv3Movie): a ring on the
+            // round buttons read as a double outline around the circle.
+            TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = save) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
+            if (extras.resume != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
         }
     }
 }

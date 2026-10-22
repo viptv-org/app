@@ -3,19 +3,18 @@ package org.viptv.app.connection
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.RowState
 
-/** Keep one carousel per add-on without dropping failed or empty catalogs. */
+/** One carousel per add-on catalog: a Stremio search answers per catalog, so
+ * merging a provider's catalogs into one row loses the Movies/Series split and
+ * a single slow catalog marked the whole provider unavailable. */
 internal fun nativeSearchSnapshot(snapshot: HomeSnapshot): SearchSnapshot = SearchSnapshot(
-    rows = snapshot.rows.groupBy { it.provider_id }.map { (provider, catalogs) ->
-        val cards = catalogs.flatMap { it.cards }
-        val failed = catalogs.any { it.state == RowState.FAILED }
-        val pending = catalogs.any { it.state == RowState.PENDING }
-        SearchResultRow(id = "local:$provider", title = catalogs.first().title, provider_id = provider,
-            state = when {
-                cards.isNotEmpty() -> "Ready"
-                pending -> "Pending"
-                failed -> "Failed"
+    rows = snapshot.rows.map { catalog ->
+        SearchResultRow(id = "local:${catalog.id}", title = catalog.title, provider_id = catalog.provider_id,
+            state = when (catalog.state) {
+                RowState.READY -> "Ready"
+                RowState.PENDING -> "Pending"
+                RowState.FAILED -> "Failed"
                 else -> "Empty"
-            }, cards = cards,
-            message = if (failed) "Some search catalogs could not respond." else null)
+            }, cards = catalog.cards,
+            message = catalog.message ?: if (catalog.state == RowState.FAILED) "This search catalog could not respond." else null)
     }, complete = snapshot.complete,
 )
