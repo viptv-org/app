@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
+import org.viptv.app.components.OwnFocusTreatment
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
@@ -25,7 +26,8 @@ import org.viptv.engine.wire.SourceCandidate
 internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false) {
     var focused by remember { mutableStateOf(false) }
     val foreground = if (focused) Palette.background else Palette.text
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
+    // The fill is the row's focus treatment; Material's focus layer would double it.
+    OwnFocusTreatment { Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
         .background(if (focused) Palette.text else if (television || selected) Palette.raised else Palette.surface)
         .onFocusChanged { focused = it.isFocused }.clickable(enabled = enabled) { choose(source) }
         .padding(horizontal = if (television) 28.dp else 20.dp, vertical = if (television) 24.dp else 18.dp),
@@ -42,5 +44,5 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
                 color = foreground.copy(alpha = 0.7f)) }
         }
         Icon(if (selected) Lucide.Check else Lucide.ChevronRight, if (selected) "Selected source" else null, Modifier.size(if (television) 24.dp else 18.dp), tint = foreground)
-    }
+    } }
 }

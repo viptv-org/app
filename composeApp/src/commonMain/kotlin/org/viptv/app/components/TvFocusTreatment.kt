@@ -2,7 +2,11 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
@@ -43,6 +47,20 @@ internal fun Modifier.tvFocusOutline(focused: Boolean, radius: Dp, scale: Float 
     drawRoundRect(Color.White, Offset(-g - w / 2f, -g - w / 2f),
         Size(size.width + 2 * g + w, size.height + 2 * g + w), CornerRadius(r + g + w / 2f), style = Stroke(w))
 }
+
+/**
+ * Material's ripple paints its own focus state layer on every default-indication
+ * `clickable` and on Material buttons. Under a control that already draws the
+ * board's focus treatment that layer reads as a second, differently shaped ring
+ * (the IconButton's circle, an unclipped column's rectangle). Press and hover
+ * feedback keep Material's alphas.
+ */
+private val OwnFocusRipple = RippleConfiguration(rippleAlpha = RippleAlpha(
+    draggedAlpha = .16f, focusedAlpha = 0f, hoveredAlpha = .08f, pressedAlpha = .1f))
+
+@Composable
+internal fun OwnFocusTreatment(content: @Composable () -> Unit) =
+    CompositionLocalProvider(LocalRippleConfiguration provides OwnFocusRipple, content = content)
 
 /** Card focus is an *inset* ring: the board never grows a card on focus. */
 internal fun Modifier.tvCardFocusOutline(focused: Boolean, radius: Dp, scale: Float = 1f,

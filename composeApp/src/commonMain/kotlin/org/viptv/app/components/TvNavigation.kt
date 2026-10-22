@@ -45,8 +45,9 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             var searchFocused by remember { mutableStateOf(false) }
             // Material's IconButton clips itself to a circle, so the ring has to
-            // be drawn by a wrapper outside that clip.
-            Box(Modifier.size(56.dp * scale).tvFocusOutline(searchFocused, 28.dp * scale, scale, width = 3.dp)) {
+            // be drawn by a wrapper outside that clip; its own focus layer would
+            // be a second ring inside ours.
+            Box(Modifier.size(56.dp * scale).tvFocusOutline(searchFocused, 28.dp * scale, scale, width = 3.dp)) { OwnFocusTreatment {
                 IconButton(onClick = { navigate(Screen.Search) },
                     modifier = Modifier.fillMaxSize().focusRequester(navFocus[0]).focusProperties {
                         left = androidx.compose.ui.focus.FocusRequester.Cancel
@@ -55,7 +56,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                     }.onFocusChanged { searchFocused = it.isFocused }) {
                     Icon(Lucide.Search, "Search", Modifier.size(30.dp * scale))
                 }
-            }
+            } }
             destinations.forEachIndexed { index, destination ->
                 var focused by remember { mutableStateOf(false) }
                 val own = navFocus[index + 1]
@@ -83,13 +84,13 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         }
         Box(Modifier.align(Alignment.TopEnd).padding(end = 96.dp * scale, top = 38.dp * scale)) {
             var profileFocused by remember { mutableStateOf(false) }
-            Box(Modifier.size(56.dp * scale).tvFocusOutline(profileFocused, 28.dp * scale, scale, width = 3.dp)) {
+            Box(Modifier.size(56.dp * scale).tvFocusOutline(profileFocused, 28.dp * scale, scale, width = 3.dp)) { OwnFocusTreatment {
                 IconButton(onClick = { menu = true },
                     modifier = Modifier.fillMaxSize().onFocusChanged { profileFocused = it.isFocused }) {
                     if (profile != null) ProfileAvatar(profile, 56.dp * scale, 28.dp * scale)
                     else Icon(Lucide.UserRound, "Profile menu", Modifier.size(28.dp * scale))
                 }
-            }
+            } }
             DropdownMenu(menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text("Switch profile") }, onClick = { menu = false; navigate(Screen.Profiles) })
                 DropdownMenuItem(text = { Text("Settings") }, onClick = { menu = false; navigate(Screen.Settings) })

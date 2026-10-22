@@ -42,6 +42,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.connection.SourceIntegrationSchema
 import org.viptv.app.connection.SourceIntegrationSnapshot
 import org.viptv.app.features.entry.TvEntryKeyboard
@@ -109,12 +110,16 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                 Row(Modifier.fillMaxWidth(0.62f), horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
                     chunk.forEach { provider ->
                         val chosen = provider.id in selected
+                        var focused by remember { mutableStateOf(false) }
+                        // One focus target with the board ring: the separate focusable()
+                        // took focus without any treatment, and the clickable's own
+                        // Material focus layer showed only when it won the focus search.
                         Row(Modifier.weight(1f).height(64.dp * scale)
+                            .onFocusChanged { focused = it.isFocused }
+                            .tvFocusOutline(focused && !busy, 10.dp * scale, scale, width = 3.dp)
                             .clip(RoundedCornerShape(10.dp * scale))
                             .background(if (chosen) Color.White.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.06f))
-                            .focusable(enabled = !busy)
-                            .onFocusChanged { }
-                            .clickable(enabled = !busy) {
+                            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) {
                                 selected = if (chosen) selected - provider.id
                                     else if (selected.size < schema.maximum_providers) selected + provider.id else selected
                             }
