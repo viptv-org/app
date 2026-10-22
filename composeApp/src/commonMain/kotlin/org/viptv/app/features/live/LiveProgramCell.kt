@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -22,7 +23,8 @@ internal fun LiveProgramCell(program: LiveProgram, now: Int?, start: Int, televi
     modifier: Modifier, focus: () -> Unit, activate: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val foreground = if (focused) { if (television) Color(0xFF111113) else Palette.background } else Palette.text
-    Box(modifier.clip(RoundedCornerShape((if (television) 10 else 8).dp * scale))
+    // The fill is the cell's focus treatment; Material's focus layer would double it.
+    OwnFocusTreatment { Box(modifier.clip(RoundedCornerShape((if (television) 10 else 8).dp * scale))
         .background(if (focused) Palette.text else if (television) Color.White.copy(alpha = .09f) else Palette.raised)
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) focus() }.clickable(onClick = activate)) {
         if (television && now != null && now in program.start until program.end) Box(Modifier.fillMaxHeight()
@@ -39,5 +41,5 @@ internal fun LiveProgramCell(program: LiveProgram, now: Int?, start: Int, televi
             }
             if (!television) Text(liveTime(program.start), fontSize = 10.sp, lineHeight = 14.sp, color = Palette.secondary)
         }
-    }
+    } }
 }

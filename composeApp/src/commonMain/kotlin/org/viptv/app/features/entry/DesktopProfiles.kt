@@ -4,7 +4,6 @@ import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -22,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 
@@ -66,8 +66,11 @@ private fun DesktopProfileTile(profile: Profile, busy: Boolean, initialFocus: Bo
     var focused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(profile.id, initialFocus) { if (initialFocus) focusRequester.requestFocus() }
-    Column(Modifier.width(148.dp).focusRequester(focusRequester).onFocusChanged { focused = it.isFocused }
-        .focusable().clickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
+    // The avatar border is the tile's focus treatment. Material's focus layer
+    // would paint a second, rectangular one around the whole column, and a
+    // separate focusable() made the tile two focus stops.
+    OwnFocusTreatment { Column(Modifier.width(148.dp).focusRequester(focusRequester).onFocusChanged { focused = it.isFocused }
+        .clickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(148.dp).border(2.dp, if (focused) Palette.text else Color.Transparent,
             RoundedCornerShape(26.dp)), contentAlignment = Alignment.Center) {
             ProfileAvatar(profile, 140.dp, 22.dp)
@@ -77,7 +80,7 @@ private fun DesktopProfileTile(profile: Profile, busy: Boolean, initialFocus: Bo
             if (profile.locked) LockMark()
             Text(profile.name, fontSize = 15.sp, color = Palette.text, maxLines = 1)
         }
-    }
+    } }
 }
 
 @Composable
