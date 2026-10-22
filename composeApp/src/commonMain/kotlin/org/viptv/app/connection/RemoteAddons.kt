@@ -24,11 +24,14 @@ suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
         val page = call("/api/addons?limit=200" + (cursor?.let { "&cursor=${it.encodeURLParameter()}" } ?: "")).jsonObject
         page.getValue("items").jsonArray.forEach { element ->
             val row = element.jsonObject
-            val id = "addon:${row.getValue("id").jsonPrimitive.content}"
+            val numeric = row.getValue("id").jsonPrimitive.content
+            val id = "addon:$numeric"
+            // Only the server's own logo route for this add-on is ever fetched.
+            val logo = (row["logo"] as? JsonPrimitive)?.contentOrNull?.takeIf { it.startsWith("/api/addons/$numeric/logo") }
             // Disabled account add-ons have no execution descriptor; their capabilities remain unknown.
-            inventory += config.connections.find { it.id == id } ?: IntegrationConnection(id, "stremio",
+            inventory += (config.connections.find { it.id == id } ?: IntegrationConnection(id, "stremio",
                 config.profile.scope.account_id, null, row.getValue("name").jsonPrimitive.content,
-                row.getValue("enabled").jsonPrimitive.boolean, config.profile.scope.revision, emptyList())
+                row.getValue("enabled").jsonPrimitive.boolean, config.profile.scope.revision, emptyList())).copy(logo = logo)
         }
         cursor = page["next_cursor"]?.jsonPrimitive?.contentOrNull
         if (cursor != null && !visited.add(cursor)) throw RemoteFailure(502, "The server repeated an add-on page.")
@@ -62,3 +65,9 @@ suspend fun RemoteConnection.removeAddon(id: String) {
 
 private fun addonNumericId(id: String): Long = id.removePrefix("addon:").toLongOrNull()
     ?.takeIf { id.startsWith("addon:") && it > 0 } ?: throw RemoteFailure(400, "Invalid add-on identifier.")
+
+/** An add-on logo's bytes from the server's authenticated logo route. */
+suspend fun RemoteConnection.addonLogo(path: String): ByteArray {
+    if (!Regex("/api/addons/[1-9][0-9]*/logo(\\?v=[0-9a-f]{1,64})?").matches(path)) throw RemoteFailure(400, "Invalid add-on logo.")
+    return bytes(path)
+}

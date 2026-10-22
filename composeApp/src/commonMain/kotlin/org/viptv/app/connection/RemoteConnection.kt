@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.timeout
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.readRawBytes
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -199,6 +200,12 @@ class RemoteConnection(
         "/api/subtitle-content/${id.encodeURLPathPart()}").let { response ->
         checkStatus(response)
         response.bodyAsText()
+    }
+
+    /** Raw bytes of an authenticated GET, such as an add-on logo. */
+    internal suspend fun bytes(path: String): ByteArray = authenticatedResponse(path).let { response ->
+        checkStatus(response)
+        response.readRawBytes()
     }
 
     suspend fun call(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement {

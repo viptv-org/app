@@ -210,6 +210,8 @@ data class IntegrationConnection(
     val enabled: Boolean,
     val revision: Long,
     val capabilities: List<Capability>,
+    /** Server path of the add-on's logo (`/api/addons/:id/logo?v=…`), never the add-on's own address. */
+    val logo: String? = null,
 )
 
 @Serializable
