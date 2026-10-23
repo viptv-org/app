@@ -19,7 +19,7 @@ private data class LoadedArtwork(val url: String, val painter: Painter)
 
 /** Keep decoded artwork visible during loading; fade bitmap paints without a full-size offscreen texture. */
 @Composable
-internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}) {
+internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}, onError: (String) -> Unit = {}) {
     val size = rememberConstraintsSizeResolver()
     val incoming = rememberAsyncImagePainter(ImageRequest.Builder(LocalPlatformContext.current).data(url).size(size).build(), contentScale = ContentScale.Crop)
     val status by incoming.state.collectAsState()
@@ -28,6 +28,7 @@ internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignm
     val fade = remember { Animatable(1f) }
     LaunchedEffect(url, status) {
         if (url == null) { shown = null; outgoing = null; return@LaunchedEffect }
+        if (status is AsyncImagePainter.State.Error && url != null) onError(url)
         val ready = status as? AsyncImagePainter.State.Success
         if (ready != null && ready.result.request.data == url && shown?.url != url) {
             outgoing = shown

@@ -35,7 +35,17 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { play(card) }) {
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
-            AsyncImage(card.landscape ?: card.poster, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            // A missing or failed episode still shows the episode identity tile,
+            // not a bare dark box (sparse metas ship no thumbnails at all).
+            val art = card.landscape ?: card.poster
+            var artFailed by remember { mutableStateOf(false) }
+            if (art == null || artFailed) {
+                Text(card.episodeArtLabel() ?: card.title, Modifier.align(Alignment.Center).padding(24.dp * scale),
+                    color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
+                    fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            } else AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                onError = { artFailed = true })
             card.episodeArtLabel()?.let { badge -> Text(badge, Modifier.align(Alignment.TopStart).padding(12.dp * scale)
                 .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.75f), RoundedCornerShape(4.dp * scale))
                 .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale), color = Palette.text,

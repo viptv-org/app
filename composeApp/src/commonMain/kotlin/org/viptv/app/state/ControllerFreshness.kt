@@ -170,6 +170,10 @@ private suspend fun ApplicationController.reloadDetailQuietly(owner: QuietOwner)
     val key = cardLookupKey(shown.item)
     if (cardLookupKey(loaded.item) != key || cardLookupKey(fresh.item) != key) return
     val updated = fresh.episodes.associateBy(::cardLookupKey)
-    mutable.value = mutable.value.copy(detail = loaded.copy(item = fresh.item,
+    // A sparse refresh (no art fields) must not wipe the art the page already
+    // showed — the quiet reload used to blank the backdrop after a merge.
+    val item = fresh.item.copy(landscape = fresh.item.landscape ?: loaded.item.landscape,
+        poster = fresh.item.poster ?: loaded.item.poster, logo = fresh.item.logo ?: loaded.item.logo)
+    mutable.value = mutable.value.copy(detail = loaded.copy(item = item,
         episodes = loaded.episodes.map { updated[cardLookupKey(it)] ?: it }))
 }

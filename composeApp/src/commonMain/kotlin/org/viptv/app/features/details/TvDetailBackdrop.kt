@@ -2,7 +2,7 @@ package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
@@ -19,8 +19,13 @@ internal fun TvDetailBackdrop(card: Card?, scale: Float, scrollPixels: () -> Flo
             translationY = -scrollPixels()
             compositingStrategy = CompositingStrategy.Offscreen
         }) {
-            BufferedArtwork(card?.landscape ?: card?.poster, Modifier.fillMaxSize(),
-                if (card?.identity?.kind == "series") BiasAlignment(.2f, -.6f) else BiasAlignment(0f, -.4f))
+            // The card's landscape can be a dead link (metahub 307s land on a 404):
+            // fall back to the poster when the backdrop's first choice fails.
+            var artFailed by remember(card?.identity) { mutableStateOf(false) }
+            val art = if (artFailed) card?.poster ?: card?.landscape else card?.landscape ?: card?.poster
+            BufferedArtwork(art, Modifier.fillMaxSize(),
+                if (card?.identity?.kind == "series") BiasAlignment(.2f, -.6f) else BiasAlignment(0f, -.4f),
+                onError = { artFailed = true })
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(
                 0f to Palette.background.copy(alpha = .92f),
                 .36f to Palette.background.copy(alpha = if (card?.identity?.kind == "series") .7f else .65f),

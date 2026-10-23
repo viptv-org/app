@@ -157,8 +157,15 @@ fun ApplicationController.open(card: Card) {
     runPage {
         val profile = requireNotNull(mutable.value.selectedProfile)
         val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-        mutable.value = mutable.value.copy(detail = detail)
+        mutable.value = mutable.value.copy(detail = detail.withCardArt(card))
     }
+}
+
+/** A sparse meta (no art fields at all) must not wipe the art the catalog card
+ * already had — the details hero/backdrop would render a black page. */
+internal fun org.viptv.engine.wire.DetailSnapshot.withCardArt(card: Card): org.viptv.engine.wire.DetailSnapshot {
+    val merged = item.copy(landscape = item.landscape ?: card.landscape, poster = item.poster ?: card.poster, logo = item.logo ?: card.logo)
+    return if (merged == item) this else copy(item = merged)
 }
 /** Resolve provider metadata before source discovery, including the native identity evidence cache. */
 fun ApplicationController.playTitle(card: Card) {
@@ -171,7 +178,7 @@ fun ApplicationController.playTitle(card: Card) {
     runPage {
     val profile = requireNotNull(mutable.value.selectedProfile)
     val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-    mutable.value = mutable.value.copy(detail = detail, detailReturnScreen = origin)
+    mutable.value = mutable.value.copy(detail = detail.withCardArt(card), detailReturnScreen = origin)
     val target = sourceTarget(card, detail)
     chooseSource(target)
     }
