@@ -40,7 +40,8 @@ suspend fun RemoteConnection.liveGuide(profile: String, channel: String): LiveGu
     liveCodec.decodeFromJsonElement(call("/api/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/guide"))
 
 suspend fun RemoteConnection.liveSources(profile: String, channel: String): List<SourceCandidate> {
-    val page = call("/api/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/sources").jsonObject
+    val page = call("/api/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/sources",
+        HttpMethod.Post, buildJsonObject {}).jsonObject
     return page.getValue("streams").jsonArray.map { element ->
         val row = element.jsonObject
         SourceCandidate(row.getValue("id").jsonPrimitive.content, row["provider_id"]?.jsonPrimitive?.contentOrNull ?: "server",
