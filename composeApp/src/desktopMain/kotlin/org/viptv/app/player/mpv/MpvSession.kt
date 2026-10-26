@@ -20,7 +20,11 @@ internal data class MpvState(
 
 internal class MpvSession(input: PlaybackInput) {
     val api = MpvNative.api
-    val handle = requireNotNull(api.mpv_create())
+    // The JVM's startup setlocale(LC_ALL, "") leaves the host's numeric locale
+    // in place, and libmpv refuses to create a client unless LC_NUMERIC is "C".
+    // Without this, desktop playback fails on every non-C locale (MpvNativeTest
+    // reproduced it under LANG=en_US.UTF-8).
+    val handle = run { MpvLocale.requireNumericCLocale(); requireNotNull(api.mpv_create()) }
     private val dispatcher = Executors.newSingleThreadExecutor { r -> Thread(r, "mpv-control").apply { isDaemon = true } }.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val closing = AtomicBoolean(false)
