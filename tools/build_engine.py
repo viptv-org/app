@@ -8,7 +8,14 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument("target", choices=["desktop", "android"])
+# Every shipped Android ABI; androidApp passes -Pviptv.abis through here.
+ANDROID_ABIS = ["armeabi-v7a", "arm64-v8a", "x86_64"]
+parser.add_argument("--abis", default=",".join(ANDROID_ABIS), help="comma-separated Android ABIs to build (android only)")
 args = parser.parse_args()
+abis = [abi.strip() for abi in args.abis.split(",") if abi.strip()]
+unknown = sorted(set(abis) - set(ANDROID_ABIS))
+if not abis or unknown:
+    parser.error(f"--abis: unknown ABI {', '.join(unknown) or '(empty)'}; supported: {', '.join(ANDROID_ABIS)}")
 root = Path(__file__).resolve().parents[1]
 core = root / "native/core"
 env = os.environ.copy()
@@ -30,7 +37,10 @@ if args.target == "android":
             raise SystemExit("Android NDK is missing")
         env["ANDROID_NDK_HOME"] = str(ndks[-1])
     output = root / "androidApp/build/generated/rustJni"
-    subprocess.run(["cargo", "ndk", "-t", "armeabi-v7a", "-t", "arm64-v8a", "-t", "x86_64", "--platform", "26", "-o", str(output), *build], cwd=core, env=env, check=True)
+    # Drop libraries of ABIs this build no longer selects; cargo keeps their objects cached.
+    shutil.rmtree(output, ignore_errors=True)
+    targets = [flag for abi in abis for flag in ("-t", abi)]
+    subprocess.run(["cargo", "ndk", *targets, "--platform", "26", "-o", str(output), *build], cwd=core, env=env, check=True)
 else:
     subprocess.run(["cargo", *build], env=env, check=True)
     system = platform.system()
