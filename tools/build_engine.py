@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("target", choices=["desktop", "android"])
 # Every shipped Android ABI; androidApp passes -Pviptv.abis through here.
 ANDROID_ABIS = ["armeabi-v7a", "arm64-v8a", "x86_64"]
-parser.add_argument("--abis", default=",".join(ANDROID_ABIS), help="comma-separated Android ABIs to build")
+parser.add_argument("--abis", default=",".join(ANDROID_ABIS), help="comma-separated Android ABIs to build (android only)")
 args = parser.parse_args()
 abis = [abi.strip() for abi in args.abis.split(",") if abi.strip()]
 unknown = sorted(set(abis) - set(ANDROID_ABIS))
