@@ -13,7 +13,7 @@ class FreshnessTest {
 
     @Test fun eventChecksCoalesceOnlyWithinTwoSecondsOfTheLastCheck() {
         assertTrue(freshness.checkDue(polling = false))
-        freshness.checked()
+        freshness.checkFinished()
         assertFalse(freshness.checkDue(polling = false), "The start and resume callbacks of one return coalesce")
         time += 1.seconds
         assertFalse(freshness.checkDue(polling = false))
@@ -21,8 +21,17 @@ class FreshnessTest {
         assertTrue(freshness.checkDue(polling = false), "A return two seconds after the last check checks again")
     }
 
+    @Test fun aCheckRequestedBeforeTheAppWentBehindDoesNotCoverTheReturn() {
+        freshness.checkRequested()
+        assertFalse(freshness.checkDue(polling = false), "A resume right behind a start joins the requested check")
+        freshness.foreground(false); freshness.foreground(true)
+        assertTrue(freshness.checkDue(polling = false), "That check may have read the tokens before the change")
+        freshness.checkFinished()
+        assertFalse(freshness.checkDue(polling = false))
+    }
+
     @Test fun pollingChecksEveryFifteenSecondsOnlyWhileForeground() {
-        freshness.checked()
+        freshness.checkFinished()
         time += 14.seconds
         assertFalse(freshness.checkDue(polling = true))
         time += 1.seconds
@@ -74,7 +83,7 @@ class FreshnessTest {
 
     @Test fun anUnbuiltHomeIsNotStaleAndResetForgetsTheSession() {
         assertFalse(freshness.homeStale())
-        freshness.homeBuilt(base); freshness.unsupported(); freshness.checked()
+        freshness.homeBuilt(base); freshness.unsupported(); freshness.checkFinished()
         time += 10.minutes
         freshness.reset()
         assertFalse(freshness.homeStale())

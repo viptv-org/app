@@ -56,8 +56,7 @@ internal fun ApplicationController.afterPlayback(live: Boolean = false) {
 internal fun ApplicationController.requestQuiet(work: QuietWork, detail: Boolean = false) {
     val owner = QuietOwner(connection, local, mutable.value.selectedProfile ?: return)
     if (owner.remote == null && owner.local == null) return
-    // Marked now, not when the lane runs: a resume right behind a start joins this check.
-    if (work == QuietWork.Check) freshness.checked()
+    if (work == QuietWork.Check) freshness.checkRequested()
     if (quietJob?.isActive == true && quietOwner == owner) {
         quietPending = quietPending?.let { maxOf(it, work) } ?: work
         quietDetail = quietDetail || detail
@@ -90,7 +89,8 @@ private suspend fun ApplicationController.quietly(owner: QuietOwner, work: suspe
 
 private suspend fun ApplicationController.checkRevisions(owner: QuietOwner) {
     val remote = owner.remote ?: return freshness.unsupported()
-    val observed = try { remote.revisions(owner.profile) } finally { freshness.checked() }
+    // A check that outlived its session must not mark the next session's clock.
+    val observed = try { remote.revisions(owner.profile) } finally { if (current(owner)) freshness.checkFinished() }
     if (!current(owner)) return
     if (observed == null) return freshness.unsupported()
     if (freshness.changed(observed)) refreshQuietly(owner, observed, detail = false) else freshness.adopt(observed)
@@ -119,7 +119,7 @@ private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, obse
         freshness.homeBuilt(result.revisions ?: observed)
     }
     if (libraryMoved) reloadVisibleLibrary(owner)
-    if (detail || libraryMoved && mutable.value.screen in DETAIL_SCREENS) reloadDetailQuietly(owner)
+    if (detail || (libraryMoved && mutable.value.screen in DETAIL_SCREENS)) reloadDetailQuietly(owner)
 }
 
 /** Details stays composed behind the sources sheet, so both show its progress. */

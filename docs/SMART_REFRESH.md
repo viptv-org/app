@@ -147,8 +147,9 @@ from "add-ons changed".
 **Rules:**
 
 - **Foreground or entering Home/My List/History.** Run `CheckRevisions` every
-  time. Skip it only when a check was requested or finished less than 2 s ago,
-  so the start and resume callbacks of one return make one check.
+  time. Skip it only when a check finished less than 2 s ago, or was
+  requested since this return less than 2 s ago, so the start and resume
+  callbacks of one return make one check.
 - **Home visible and in the foreground.** Run `CheckRevisions` every 15 s, as
   the spec requires. Each check is one tiny DB-only request. The timer stops
   on other screens and in the background.
@@ -157,7 +158,7 @@ from "add-ons changed".
   | Token | Action |
   |---|---|
   | `library`, `configuration`, `addons` or `policy` | silent `RefreshHome` |
-  | `library` while My List, History or Details is visible | also reload that page in place |
+  | `library` while My List, History or Details (also behind the sources sheet) is visible | also reload that page in place |
   | `profiles` | `ReloadProfiles` |
   | `preferences` | reload preferences |
 

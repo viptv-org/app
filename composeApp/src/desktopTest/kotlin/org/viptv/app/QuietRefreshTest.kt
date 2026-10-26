@@ -61,6 +61,9 @@ class QuietRefreshTest {
         appForeground(false); elsewhere()
         appForeground(true); freshen(); settle()
     }
+    /** The foreground watcher loops until stopped: stop it even when an assertion fails, or the test hangs. */
+    private suspend fun ApplicationController.whileForeground(body: suspend ApplicationController.() -> Unit) =
+        try { body() } finally { appForeground(false); connection?.close() }
     private suspend fun ApplicationController.settle() { while (true) { val running = quietJob ?: return; running.join(); if (quietJob === running) return } }
 
     @Test fun unchangedRevisionsMakeOneRevisionsRequestAndNeverRebuildHome() = runBlocking<Unit> {
@@ -280,22 +283,22 @@ class QuietRefreshTest {
             }
         }
         val time = TestTimeSource()
-        val controller = controller(server, time)
-        controller.returnAfter {}
-        time += 3.seconds
-        controller.returnAfter { revisions = moved }
-        assertEquals(listOf("new", "old"), controller.state.value.home?.rows?.first()?.cards?.map { it.identity.id })
-        assertEquals(listOf("/api/profiles/12/revisions", "/api/profiles/12/revisions", "/api/bootstrap"), server.paths)
-        assertFalse(controller.state.value.busy); assertNull(controller.state.value.error)
-        controller.appForeground(false); controller.connection?.close()
+        controller(server, time).whileForeground {
+            returnAfter {}
+            time += 3.seconds
+            returnAfter { revisions = moved }
+            assertEquals(listOf("new", "old"), state.value.home?.rows?.first()?.cards?.map { it.identity.id })
+            assertEquals(listOf("/api/profiles/12/revisions", "/api/profiles/12/revisions", "/api/bootstrap"), server.paths)
+            assertFalse(state.value.busy); assertNull(state.value.error)
+        }
     }
 
     @Test fun theStartAndResumeOfOneReturnMakeOneCheck() = runBlocking<Unit> {
         val server = Server { path -> if (path == "/api/profiles/12/revisions") json(revisionsJson(base)) else error("Unexpected $path") }
-        val controller = controller(server)
-        controller.returnAfter {}
-        assertEquals(listOf("/api/profiles/12/revisions"), server.paths)
-        controller.appForeground(false); controller.connection?.close()
+        controller(server).whileForeground {
+            returnAfter {}
+            assertEquals(listOf("/api/profiles/12/revisions"), server.paths)
+        }
     }
 
     @Test fun aReturnWithAMovedLibraryTokenReloadsTheScreenOnDisplay() = runBlocking<Unit> {
@@ -317,18 +320,18 @@ class QuietRefreshTest {
                     else -> error("Unexpected $path")
                 }
             }
-            val controller = controller(server, state = ApplicationState(screen = screen, selectedProfile = "12", home = shown,
-                libraryQuery = query, libraryPage = list, detail = DetailSnapshot(movie, episodes = emptyList())))
-            controller.returnAfter { revisions = moved }
-            val state = controller.state.value
-            assertEquals(screen, state.screen); assertFalse(state.busy); assertNull(state.error)
-            assertEquals(listOf("new"), state.home?.rows?.first()?.cards?.map { it.identity.id }, "Home behind $screen is current")
-            when (screen) {
-                Screen.Library -> assertEquals(listOf("new", "old"), state.libraryPage?.cards?.map { it.identity.id })
-                Screen.History -> assertEquals(listOf("new"), state.history.map { it.entry.card.identity.id })
-                else -> assertEquals(0.4, state.detail?.item?.progress, "Details on display shows the new progress")
+            controller(server, state = ApplicationState(screen = screen, selectedProfile = "12", home = shown,
+                libraryQuery = query, libraryPage = list, detail = DetailSnapshot(movie, episodes = emptyList()))).whileForeground {
+                returnAfter { revisions = moved }
+                val now = state.value
+                assertEquals(screen, now.screen); assertFalse(now.busy); assertNull(now.error)
+                assertEquals(listOf("new"), now.home?.rows?.first()?.cards?.map { it.identity.id }, "Home behind $screen is current")
+                when (screen) {
+                    Screen.Library -> assertEquals(listOf("new", "old"), now.libraryPage?.cards?.map { it.identity.id })
+                    Screen.History -> assertEquals(listOf("new"), now.history.map { it.entry.card.identity.id })
+                    else -> assertEquals(0.4, now.detail?.item?.progress, "Details on display shows the new progress")
+                }
             }
-            controller.appForeground(false); controller.connection?.close()
         }
     }
 
