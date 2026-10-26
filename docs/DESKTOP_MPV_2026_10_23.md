@@ -6,6 +6,8 @@ The player owns native frame images explicitly, bounds demux caching to 64 MiB a
 
 Compose's desktop render delegate records pictures without a current GL context. This implementation therefore uses mpv raster output with native copy-back decoding where available, preserving Compose overlays on all desktop targets. It does not claim GPU zero-copy rendering or 4K/HDR performance qualification. Source frame-rate diagnostics are explicitly distinguished from observed image draws.
 
+libmpv requires the process-wide `LC_NUMERIC` locale to be `C`; the JVM's startup `setlocale(LC_ALL, "")` leaves the host locale in place, which makes `mpv_create()` return NULL on any normal desktop locale (app#4). `MpvSession` therefore re-asserts `LC_NUMERIC=C` through libc immediately before creating a client, on both Windows CRTs (`msvcrt` and `ucrtbase`) because the bundled mpv may link either one. Java-side formatting uses `java.util.Locale`, so the rest of the app is unaffected.
+
 ## Linux observations
 
 Three cold-cache torrent smoke runs used the optimized e49dca8 worker, an owned virtual display and a null audio sink. Each watched 45 seconds, sought to 95% of the observed movie duration, watched 15 seconds, sought back to 30 seconds and watched 15 seconds. Recovery requires three new destination-image draw reports. The smoke threshold is at least 20 drawn fps, no sampled frame age above 500 ms, and timeline advancement of at least 80% of wall time.
