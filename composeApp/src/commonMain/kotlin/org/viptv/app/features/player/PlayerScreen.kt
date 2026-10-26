@@ -32,7 +32,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black,
     television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
     playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}, playbackKey: Any? = input,
-    nextEpisodeLoading: Boolean = false, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> }) {
+    nextEpisodeLoading: Boolean = false, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
+    /** The video and its scrims draw edge to edge, under a display cutout; tappable controls stay inside these insets. */
+    controlInsets: WindowInsets = WindowInsets.safeDrawing) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), playbackKey = playbackKey, trackChosen = trackChosen)
@@ -136,13 +138,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     }) {
         Box(Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
         if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
-            modifier = Modifier.align(Alignment.CenterStart).padding(start = 32.dp).size(56.dp)) {
+            modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
             Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
         }
         if (visible && !locked && !(phone && (showTracks || phonePanel != null || failed || error != null))) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
                 0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
-            Row(Modifier.align(Alignment.TopStart).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
+            Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconButton(onClick = close) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
                 Column {
@@ -150,10 +152,10 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }
                 }
             }
-            if (phone) Box(Modifier.align(Alignment.Center)) {
+            if (phone) Box(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal))) {
                 PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
             }
-            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets).padding(horizontal = 24.dp, vertical = 12.dp)) {
                 if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
                     Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
@@ -175,23 +177,23 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             send(choice)
             trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
                 .firstOrNull { it.id == choice.id }?.language)
-        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) })
+        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets)
         if (phone && phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
             if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }
             }
-        }, ::dismissPanel)
+        }, ::dismissPanel, controlInsets)
         if (phone && phonePanel == PhonePlaybackPanel.Next) nextChoice?.let { candidate -> PhoneNextEpisode(candidate, {
             if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
                 latestNext?.let(::cardLookupKey) == cardLookupKey(candidate)) {
                 phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
             }
-        }, ::dismissPanel) }
+        }, ::dismissPanel, controlInsets) }
         if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
-            "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title)
+            "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
         else {
             if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
-            (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).padding(24.dp), color = Palette.danger) }
+            (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
         }
         }
     }

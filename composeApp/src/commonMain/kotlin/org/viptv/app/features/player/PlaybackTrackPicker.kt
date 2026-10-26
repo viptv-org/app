@@ -23,14 +23,17 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.SelectTrack) -> Unit,
-    close: () -> Unit, phone: Boolean, size: Float, setSize: (Float) -> Unit) {
+    close: () -> Unit, phone: Boolean, size: Float, setSize: (Float) -> Unit, insets: WindowInsets = WindowInsets.safeDrawing) {
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize().clickable(onClick = close))
         val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.56f)
             else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = 76.dp).widthIn(max = 560.dp).fillMaxWidth().heightIn(max = 300.dp)
         Column(panel.clip(RoundedCornerShape(if (phone) 0.dp else 12.dp)).background(Palette.surface)
-            .border(1.dp, Palette.raised, RoundedCornerShape(if (phone) 0.dp else 12.dp)).padding(if (phone) 20.dp else 12.dp),
+            .border(1.dp, Palette.raised, RoundedCornerShape(if (phone) 0.dp else 12.dp))
+            // The phone sheet's surface reaches the right edge; its content stays clear of a cutout there.
+            .then(if (phone) Modifier.windowInsetsPadding(insets.only(WindowInsetsSides.Vertical + WindowInsetsSides.End)) else Modifier)
+            .padding(if (phone) 20.dp else 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // NAV-07: the panel is dismissible on every size, not only on phone.
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
