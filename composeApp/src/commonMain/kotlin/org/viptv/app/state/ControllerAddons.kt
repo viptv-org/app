@@ -21,17 +21,27 @@ internal suspend fun ApplicationController.loadAddons(operation: AddonOperationO
         } else requireNotNull(owner.remote).addons(profile)
     } catch (error: Exception) { owner.requireCurrent(this); throw error }
     owner.requireCurrent(this)
-    mutable.value = mutable.value.copy(addons = result.addons, enabledAddonIds = result.enabled,
-        browsingConfiguration = result.browsing, browseControls = null, browseCards = emptyList(), browseNext = null)
+    publishAddons(result)
+}
+
+/**
+ * The add-on list and what derives from it. Browse state is dropped so the
+ * next Browse entry loads controls for these add-ons, unless [keepBrowse].
+ */
+internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrowse: Boolean = false) {
+    val state = mutable.value
+    mutable.value = state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
+        browseControls = state.browseControls.takeIf { keepBrowse }, browseCards = if (keepBrowse) state.browseCards else emptyList(),
+        browseNext = state.browseNext.takeIf { keepBrowse })
 }
 
 fun ApplicationController.refreshAddons() = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     loadAddons(owner); loadSourceIntegrations(owner); loadPreferences(owner)
 }
 
 fun ApplicationController.refreshAddonConfiguration() = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     loadAddons(owner); loadSourceIntegrations(owner)
 }
 
@@ -56,6 +66,7 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
     val profile = mutable.value.selectedProfile
     val expectedGeneration = generation + 1
     run {
+        markAddonOperation()
         val owner = AddonOperationOwner(expectedGeneration, device, remote, profile, currentCoroutineContext()[Job])
         try {
             val selected = profile ?: throw LocalFailure("Choose a profile first.")
@@ -77,7 +88,7 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
 }
 
 fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     val profile = requireNotNull(owner.profile)
     if (owner.device != null) owner.device.setAddonEnabled(profile, id, enabled)
     else requireNotNull(owner.remote).setAddonEnabled(profile, id, enabled)
@@ -88,7 +99,7 @@ fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
 }
 
 fun ApplicationController.removeAddon(id: String) = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     if (owner.device != null) owner.device.removeAddon(id) else requireNotNull(owner.remote).removeAddon(id)
     owner.requireCurrent(this)
     loadAddons(owner)
