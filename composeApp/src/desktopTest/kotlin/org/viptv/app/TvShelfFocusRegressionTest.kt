@@ -96,7 +96,7 @@ class TvShelfFocusRegressionTest {
                 TvHomeShelf(
                     row = HomeRow(id = "continue", title = "Continue Watching", provider_id = "simkl",
                         state = RowState.READY, cards = cards(18)),
-                    scale = 1f, first = first, up = {}, focus = {}, open = {}, retry = {},
+                    scale = 1f, first = first, up = {}, focus = {}, open = {},
                     modifier = Modifier.padding(top = 40.dp),
                 )
             }
@@ -140,7 +140,7 @@ class TvShelfFocusRegressionTest {
                 TvHomeShelf(
                     row = HomeRow(id = "continue", title = "Continue Watching", provider_id = "simkl",
                         state = RowState.READY, cards = cards(12)),
-                    scale = 1f, first = first, up = { hero.requestFocus() }, focus = {}, open = {}, retry = {},
+                    scale = 1f, first = first, up = { hero.requestFocus() }, focus = {}, open = {},
                     resume = resume,
                 )
             }
