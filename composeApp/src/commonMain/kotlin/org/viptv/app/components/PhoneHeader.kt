@@ -9,6 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Cast
@@ -38,13 +41,11 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
                 Icon(painterResource(Res.drawable.ic_remote_zip), "Remote control", Modifier.size(22.dp))
             }
             Box {
-                Box(Modifier.size(40.dp).clickable { profileMenu = true }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).semantics { contentDescription = "Profile menu" }
+                    .clickable { profileMenu = true }, contentAlignment = Alignment.Center) {
                     ProfileAvatar(profile, 28.dp, 7.dp)
                 }
-                DropdownMenu(profileMenu, onDismissRequest = { profileMenu = false }) {
-                    DropdownMenuItem(text = { Text("Switch profile") }, onClick = { profileMenu = false; navigate(Screen.Profiles) })
-                    DropdownMenuItem(text = { Text("Settings") }, onClick = { profileMenu = false; navigate(Screen.Settings) })
-                }
+                ProfileMenu(profileMenu, profile, { profileMenu = false }, navigate)
             }
         }
         if (screen == Screen.Home) {

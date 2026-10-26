@@ -1,5 +1,7 @@
 package org.viptv.app.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,6 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -64,15 +69,14 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
         }
         IconButton(onClick = { navigate(Screen.Search) }) { Icon(Lucide.Search, "Search", Modifier.size(20.dp)) }
         Box {
-            Row(Modifier.clip(RoundedCornerShape(8.dp)).clickable { profileMenu = true }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val chevron by animateFloatAsState(if (profileMenu) 180f else 0f, tween(150), label = "Profile menu chevron")
+            Row(Modifier.clip(RoundedCornerShape(8.dp)).semantics { contentDescription = "Profile menu" }.clickable { profileMenu = true },
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (profile != null) org.viptv.app.features.entry.ProfileAvatar(profile, 28.dp, 7.dp)
-                else Icon(Lucide.UserRound, "Profile menu", Modifier.size(20.dp))
-                Icon(Lucide.ChevronDown, null, Modifier.size(14.dp))
+                else Icon(Lucide.UserRound, null, Modifier.size(20.dp))
+                Icon(Lucide.ChevronDown, null, Modifier.size(14.dp).rotate(chevron))
             }
-            DropdownMenu(profileMenu, { profileMenu = false }) {
-                DropdownMenuItem(text = { Text("Switch profile") }, onClick = { profileMenu = false; navigate(Screen.Profiles) })
-                DropdownMenuItem(text = { Text("Settings") }, onClick = { profileMenu = false; navigate(Screen.Settings) })
-            }
+            ProfileMenu(profileMenu, profile, { profileMenu = false }, navigate)
         }
     }
     }
