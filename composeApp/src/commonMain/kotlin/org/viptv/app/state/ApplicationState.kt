@@ -19,6 +19,8 @@ data class ApplicationState(
     val navBack: List<Screen> = emptyList(),
     val navForward: List<Screen> = emptyList(),
     val settingsEntrySection: String? = null,
+    /** The page Settings shows while it is open, so global Back can leave a sub-page first; null until Settings reports one. */
+    val settingsPage: SettingsPage? = null,
     val busy: Boolean = false,
     val error: String? = null,
     val profiles: List<Profile> = emptyList(),

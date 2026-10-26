@@ -39,6 +39,14 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null
+    /** How the controller opens a server playback lease; tests replace it. */
+    internal var leaseOpener: PlaybackLeaseOpener = PlaybackLeaseOpener.Server
+    /** Playback held paused on return until its lease is confirmed or re-acquired. */
+    internal var resumeAfterRenewal: org.viptv.app.player.PlaybackInput? = null
+    /** False while the app is behind (Android stop, minimised window, hidden tab). */
+    internal val inFront = MutableStateFlow(true)
+    /** Bumped to make a sleeping lease renewal run now: a return to the front or a held resume. */
+    internal val leaseWake = MutableStateFlow(0L)
     internal var subtitleDiscovery: Job? = null
     internal var nextEpisodeJob: Job? = null
     internal var nextEpisodeKey: NextEpisodeKey? = null

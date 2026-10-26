@@ -9,6 +9,7 @@ internal fun ApplicationController.releaseRemotePlayback(): Job? {
     cancelNextEpisode()
     cancelPlaybackSeason()
     backgroundPlayback = null
+    resumeAfterRenewal = null
     val trackingStop = if (firstFrameSeen) tracking?.transition(PlaybackEvent.Stop, lastProgress, ended = completionSeen) else null
     tracking = null
     val acknowledgment = frameAcknowledgment

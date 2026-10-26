@@ -10,7 +10,14 @@ import org.viptv.app.connection.addonLogo
 
 @Composable
 internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
-    desktop: Boolean = false) {
+    desktop: Boolean = false, entryBackChanged: ((() -> Unit)?) -> Unit = {}) {
+    // Android's system Back: while a sub-page is open it takes the same step as the in-page arrow;
+    // on the Settings list the activity keeps its own behaviour.
+    val backStaysInSettings = state.parentTitles != null || state.settingsPage?.subpage == true
+    DisposableEffect(backStaysInSettings) {
+        entryBackChanged(if (backStaysInSettings) controller::navigateBack else null)
+        onDispose { entryBackChanged(null) }
+    }
     val deviceLink by controller.deviceLink.collectAsState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
@@ -21,6 +28,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         { controller.navigate(Screen.Profiles) }, leave,
         state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
+        page = state.settingsPage, pageChanged = controller::showSettingsPage,
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,
