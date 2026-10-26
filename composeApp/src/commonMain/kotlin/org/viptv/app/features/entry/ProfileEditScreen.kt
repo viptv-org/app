@@ -12,7 +12,7 @@ import org.viptv.app.connection.Profile
 fun ProfileEditScreen(
     profile: Profile?, count: Int, busy: Boolean, error: String?, compact: Boolean,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
-    setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
+    setAvatar: (String, Int, String) -> Unit, delete: (String) -> Unit,
     television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {}, pinAvailable: Boolean = true,
     editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null, maturity: String? = null, language: String? = null,
 ) {
@@ -62,8 +62,8 @@ fun ProfileEditScreen(
         title = { Text("Delete ${profile?.name}?") }, text = { Text("This removes this profile’s history and add-on choices.") },
         confirmButton = { TextButton(onClick = { delete(oldPin); confirmingDelete = false }) { Text("Delete") } },
         dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") } })
-    if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }, { avatarId, pin ->
-        setAvatar(avatarId, pin); pickingAvatar = false
+    if (pickingAvatar) AvatarPicker(profile, busy, AvatarPickerLayout.Desktop, { pickingAvatar = false }, { pick, pin ->
+        setAvatar(pick.style, pick.choice, pin); pickingAvatar = false
     }, pinAvailable = pinAvailable)
     guidance?.let { ProfilePreferenceGuidance(it, pinAvailable, editingCurrent, profile?.name, { guidance = null }, openSettings) }
 }

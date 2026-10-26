@@ -25,7 +25,14 @@ import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
 
-data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null)
+/**
+ * A profile card. [avatarStyle] + 1-based [avatarChoice] are the design catalog pick
+ * (`avatarChoice` is null until one is made); [avatarUrl] is the server's image for
+ * the profile (a random seed when nothing was picked); [avatarId] is a legacy
+ * bundled avatar, sent only while there is no catalog pick.
+ */
+data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null,
+    val avatarStyle: String? = null, val avatarChoice: Int? = null, val avatarUrl: String? = null)
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null,
     /** Change tokens read before [home] was built; null for local and older servers. */
     val revisions: org.viptv.app.state.Revisions? = null)
@@ -148,7 +155,9 @@ class RemoteConnection(
         val profiles = identity["profiles"]?.jsonArray.orEmpty().map {
             val p = it.jsonObject
             Profile(p.getValue("id").jsonPrimitive.content, p.getValue("name").jsonPrimitive.content, p["avatar"]?.jsonPrimitive?.contentOrNull,
-                p["locked"]?.jsonPrimitive?.booleanOrNull ?: false, p["avatar_id"]?.jsonPrimitive?.contentOrNull)
+                p["locked"]?.jsonPrimitive?.booleanOrNull ?: false, p["avatar_id"]?.jsonPrimitive?.contentOrNull,
+                avatarStyle = p["avatar_style"]?.jsonPrimitive?.contentOrNull, avatarChoice = p["avatar_choice"]?.jsonPrimitive?.intOrNull,
+                avatarUrl = p["avatar_url"]?.jsonPrimitive?.contentOrNull)
         }
         val management = value["profile_management"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<ProfileManagement>(it) }
         return Bootstrap(management?.cards() ?: profiles, identity["profile_id"]?.jsonPrimitive?.contentOrNull,

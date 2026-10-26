@@ -31,7 +31,8 @@ import java.util.concurrent.ConcurrentHashMap
 actual fun localConnection(databasePath: String): LocalConnection = NativeLocalConnection(databasePath)
 
 @Serializable
-private data class LocalProfileCard(val id: String, val name: String, val locked: Boolean, val avatar_id: String?)
+private data class LocalProfileCard(val id: String, val name: String, val locked: Boolean, val avatar_id: String?,
+    val avatar_style: String? = null, val avatar_choice: Int? = null)
 
 internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.SecretStore = platformSecrets(),
     internal val client: io.ktor.client.HttpClient = platformClient()) : LocalConnection {
@@ -42,7 +43,9 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
 
 
     override suspend fun bootstrap(profile: String?): Bootstrap {
-        val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<LocalProfileCard>>(engine.profileCards()) }.map { Profile(it.id, it.name, null, it.locked, it.avatar_id) }
+        val profiles = withContext(Dispatchers.IO) { json.decodeFromString<List<LocalProfileCard>>(engine.profileCards()) }.map {
+            Profile(it.id, it.name, null, it.locked, it.avatar_id, avatarStyle = it.avatar_style, avatarChoice = it.avatar_choice)
+        }
         val home = profile?.let {
             val plan=withContext(Dispatchers.IO){engine.planHome(it)}
             val id=json.parseToJsonElement(plan).jsonObject.getValue("id").jsonPrimitive.content
@@ -61,8 +64,8 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
         try { engine.renameProfile(id, name, pin) }
         catch (_: Exception) { throw LocalFailure("Could not rename the profile. Check its name and current PIN.") }
     }
-    override suspend fun setProfileAvatar(id: String, avatarId: String, pin: String) = withContext(Dispatchers.IO) {
-        try { engine.setProfileAvatar(id, avatarId, pin) }
+    override suspend fun setProfileAvatar(id: String, style: String, choice: Int, pin: String) = withContext(Dispatchers.IO) {
+        try { engine.setProfileAvatarChoice(id, style, choice.toUShort(), pin) }
         catch (_: Exception) { throw LocalFailure("Could not change the avatar. Check the current PIN.") }
     }
     override suspend fun deleteProfile(id: String, pin: String) = withContext(Dispatchers.IO) {

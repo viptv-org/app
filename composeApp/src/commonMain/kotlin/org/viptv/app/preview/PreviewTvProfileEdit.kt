@@ -10,6 +10,6 @@ internal fun PreviewTvProfileEdit(navigate: (Screen) -> Unit, backChanged: ((() 
     TvProfileEditScreen(profile, 4, false, null, { navigate(Screen.Profiles) },
         rename = { name, _ -> profile = profile.copy(name = name) },
         setPin = { _, pin -> profile = profile.copy(locked = pin.isNotEmpty()) },
-        setAvatar = { id, _ -> profile = profile.copy(avatarId = id) }, delete = { navigate(Screen.Profiles) },
+        setAvatar = { style, choice, _ -> profile = profile.copy(avatarStyle = style, avatarChoice = choice) }, delete = { navigate(Screen.Profiles) },
         maturity = "All ratings", language = "English", backChanged = backChanged)
 }
