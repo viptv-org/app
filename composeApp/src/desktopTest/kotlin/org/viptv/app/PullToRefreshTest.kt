@@ -123,6 +123,7 @@ class PullToRefreshTest {
         controller.pullToRefresh()
         assertEquals(Screen.Connect, controller.state.value.screen)
         assertEquals("Session expired. Sign in again.", controller.state.value.error)
+        server.client.close()
     }
 
     @Test fun aPullDuringAnAutomaticCheckEndsOnlyAfterItsOwnRebuild() = runBlocking<Unit> {
@@ -136,9 +137,9 @@ class PullToRefreshTest {
         }
         val controller = controller(server)
         controller.freshen(); checking.await()
-        val pull = launch { controller.pullToRefresh() }
-        yield()
-        assertTrue(pull.isActive, "The indicator stays while the check is still in flight")
+        val pull = launch(start = CoroutineStart.UNDISPATCHED) { controller.pullToRefresh() }
+        delay(100)
+        assertFalse(pull.isCompleted, "The indicator stays while the check is still in flight")
         release.complete(Unit); pull.join()
         assertEquals(listOf("/api/profiles/12/revisions", "/api/bootstrap"), server.paths, "Unchanged tokens still rebuild after a pull")
         assertEquals("new", controller.state.value.home?.rows?.first()?.cards?.single()?.identity?.id)
