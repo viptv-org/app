@@ -3,7 +3,8 @@ package org.viptv.app.state
 import org.viptv.app.connection.*
 import kotlinx.coroutines.CancellationException
 
-fun ApplicationController.navigate(screen: Screen, record: Boolean = true) {
+/** [browse] replaces the default first Browse query of a browse screen (a Home genre, for example). */
+fun ApplicationController.navigate(screen: Screen, record: Boolean = true, browse: BrowseQuery? = null) {
     val previousScreen = mutable.value.screen
     val navigation = ++navigationGeneration
     pageRequestJob?.let { pending ->
@@ -46,7 +47,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true) {
         // A page belongs to one visit: arriving from elsewhere starts at settingsEntrySection.
         settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) mutable.value.settingsPage else null)
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
-        loadBrowse(BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
+        loadBrowse(browse ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }
     if (screen == Screen.Home && mutable.value.policyRefreshNeeded) refresh()
     else if (screen == Screen.Home) freshen()
