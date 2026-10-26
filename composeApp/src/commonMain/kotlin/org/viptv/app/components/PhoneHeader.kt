@@ -9,9 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Cast
@@ -28,7 +25,6 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
-    var profileMenu by remember { mutableStateOf(false) }
     var unavailable by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -40,13 +36,7 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
             if (screen !in listOf(Screen.Library, Screen.Live, Screen.Calendar)) IconButton(onClick = { unavailable = "Remote control" }, modifier = Modifier.size(40.dp)) {
                 Icon(painterResource(Res.drawable.ic_remote_zip), "Remote control", Modifier.size(22.dp))
             }
-            Box {
-                Box(Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).semantics { contentDescription = "Profile menu" }
-                    .clickable { profileMenu = true }, contentAlignment = Alignment.Center) {
-                    ProfileAvatar(profile, 28.dp, 7.dp)
-                }
-                ProfileMenu(profileMenu, profile, { profileMenu = false }, navigate)
-            }
+            ProfileMenuButton(profile, navigate, RoundedCornerShape(10.dp), Modifier.size(40.dp)) { ProfileAvatar(profile, 28.dp, 7.dp) }
         }
         if (screen == Screen.Home) {
             Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {

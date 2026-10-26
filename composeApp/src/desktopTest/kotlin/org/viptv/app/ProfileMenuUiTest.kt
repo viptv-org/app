@@ -37,7 +37,7 @@ class ProfileMenuUiTest {
         try {
             open(scene)
             assertFalse(nodes(scene).any { text(it).contains("Watching as") })
-            assertEquals(profileMenuActions.map { it.label }, actions(scene))
+            assertEquals(listOf("Switch profile", "Settings"), actions(scene))
             click(scene, "Settings"); assertEquals(Screen.Settings, navigated)
         } finally { scene.close() }
     }
@@ -51,25 +51,6 @@ class ProfileMenuUiTest {
             scene.sendPointerEvent(PointerEventType.Release, Offset(400f, 600f))
             frames(scene, 40)
             assertFalse(menuOpen(scene)); assertNull(navigated)
-        } finally { scene.close() }
-    }
-
-    /** Opens the menu, checks header, icons and actions, then that each action closes it and navigates as before. */
-    private fun checkMenu(width: Int, height: Int, header: @Composable ((Screen) -> Unit) -> Unit) {
-        val navigated = mutableListOf<Screen>()
-        val scene = scene(width, height) { header { navigated += it } }
-        try {
-            open(scene)
-            val headerNode = nodes(scene).single { text(it) == "Watching as Stremio import QA" }  // the avatar initial is not read out
-            assertTrue(headerNode.boundsInRoot.width > 0f, "header row at ${width}x$height")
-            assertEquals(listOf("Switch profile", "Settings"), actions(scene), "actions at ${width}x$height")
-            assertEquals(2, unmergedNodes(scene).count { it.config.getOrNull(SemanticsProperties.TestTag) == PopoverMenuItemIconTag }, "one leading icon per action")
-            val menuBounds = nodes(scene).filter { text(it) in listOf("Switch profile", "Settings") }.map { it.boundsInRoot }
-            assertTrue(menuBounds.all { it.left >= 0f && it.right <= width && it.bottom <= height }, "menu inside the ${width}x$height window: $menuBounds")
-            click(scene, "Switch profile")
-            assertEquals(listOf(Screen.Profiles), navigated); assertFalse(menuOpen(scene))
-            open(scene); click(scene, "Settings")
-            assertEquals(listOf(Screen.Profiles, Screen.Settings), navigated); assertFalse(menuOpen(scene))
         } finally { scene.close() }
     }
 
@@ -96,6 +77,25 @@ class ProfileMenuUiTest {
     }
     private data class Shot(val name: String, val w: Int, val h: Int, val density: Float, val browser: Boolean)
 
+    /** Opens the menu, checks header, icons and actions, then that each action closes it and navigates as before. */
+    private fun checkMenu(width: Int, height: Int, header: @Composable ((Screen) -> Unit) -> Unit) {
+        val navigated = mutableListOf<Screen>()
+        val scene = scene(width, height) { header { navigated += it } }
+        try {
+            open(scene)
+            val headerNode = nodes(scene).single { text(it) == "Watching as Stremio import QA" }
+            assertTrue(headerNode.boundsInRoot.width > 0f, "header row at ${width}x$height")
+            assertEquals(listOf("Switch profile", "Settings"), actions(scene), "actions at ${width}x$height")
+            assertEquals(2, unmergedNodes(scene).count { it.config.getOrNull(SemanticsProperties.TestTag) == PopoverMenuItemIconTag }, "one leading icon per action")
+            val menuBounds = nodes(scene).filter { text(it) in listOf("Switch profile", "Settings") }.map { it.boundsInRoot }
+            assertTrue(menuBounds.all { it.left >= 0f && it.right <= width && it.bottom <= height }, "menu inside the ${width}x$height window: $menuBounds")
+            click(scene, "Switch profile")
+            assertEquals(listOf(Screen.Profiles), navigated); assertFalse(menuOpen(scene))
+            open(scene); click(scene, "Settings")
+            assertEquals(listOf(Screen.Profiles, Screen.Settings), navigated); assertFalse(menuOpen(scene))
+        } finally { scene.close() }
+    }
+
     private fun scene(width: Int, height: Int, content: @Composable () -> Unit): ImageComposeScene {
         frame = 0
         return ImageComposeScene(width, height, Density(1f)) {
@@ -104,13 +104,14 @@ class ProfileMenuUiTest {
     }
     private fun open(scene: ImageComposeScene) {
         frames(scene)
-        val trigger = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().contains("Profile menu") }
+        // Announced as "Profile menu" alone, not with the avatar's initial or artwork name.
+        val trigger = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Profile menu") && text(it).isEmpty() }
         assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke())
         frames(scene, 40)
         assertTrue(menuOpen(scene))
     }
     private fun menuOpen(scene: ImageComposeScene) = nodes(scene).any { text(it) == "Switch profile" }
-    private fun actions(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) && text(it) in profileMenuActions.map { a -> a.label } }
+    private fun actions(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) && text(it) in listOf("Switch profile", "Settings") }
         .sortedBy { it.boundsInRoot.top }.map(::text)
     private fun click(scene: ImageComposeScene, label: String) {
         val node = nodes(scene).single { text(it) == label && it.config.contains(SemanticsActions.OnClick) }

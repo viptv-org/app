@@ -1,12 +1,16 @@
 package org.viptv.app.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -21,28 +25,40 @@ import org.viptv.app.features.entry.profileColor
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 
-internal data class ProfileMenuAction(val label: String, val icon: ImageVector, val destination: Screen)
+private class ProfileMenuAction(val label: String, val icon: ImageVector, val destination: Screen)
 
-/** What the profile picture offers in every non-TV header. */
-internal val profileMenuActions = listOf(
+private val profileMenuActions = listOf(
     ProfileMenuAction("Switch profile", Lucide.Users, Screen.Profiles),
     ProfileMenuAction("Settings", Lucide.Settings, Screen.Settings),
 )
 
 /**
- * The menu opened by the profile picture in [PhoneHeader] and [TopNavigation]. Place it in the
- * same Box as the trigger. A header names the current profile; the top of the card takes a wash
- * of the profile's colour. Choosing an action dismisses the menu, then navigates.
+ * The profile picture of the non-TV headers ([PhoneHeader], [TopNavigation]) and the menu it
+ * opens. [trigger] draws the picture and receives whether the menu is open; the button is
+ * announced as "Profile menu". The menu names the current profile over a wash of its colour,
+ * then offers Switch profile and Settings; choosing one dismisses the menu and navigates.
  */
 @Composable
-internal fun ProfileMenu(expanded: Boolean, profile: Profile?, onDismissRequest: () -> Unit, navigate: (Screen) -> Unit) {
-    PopoverMenu(expanded, onDismissRequest, wash = profile?.let(::profileColor)) {
-        if (profile != null) {
-            ProfileMenuHeader(profile)
-            PopoverMenuDivider()
+internal fun ProfileMenuButton(
+    profile: Profile?,
+    navigate: (Screen) -> Unit,
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    trigger: @Composable (open: Boolean) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        Box(modifier.clip(shape).semantics { contentDescription = "Profile menu" }.clickable { open = true }, contentAlignment = Alignment.Center) {
+            Box(Modifier.clearAndSetSemantics {}) { trigger(open) }
         }
-        profileMenuActions.forEach { action ->
-            PopoverMenuItem(action.label, action.icon) { onDismissRequest(); navigate(action.destination) }
+        PopoverMenu(open, { open = false }, wash = profile?.let(::profileColor)) {
+            if (profile != null) {
+                ProfileMenuHeader(profile)
+                PopoverMenuDivider()
+            }
+            profileMenuActions.forEach { action ->
+                PopoverMenuItem(action.label, action.icon) { open = false; navigate(action.destination) }
+            }
         }
     }
 }

@@ -15,8 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +39,6 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
     val visible = if (phone) emptyList() else if (collapsed) destinations.filter {
         it.screen in listOf(Screen.Home, Screen.Movies, Screen.Series, Screen.Live)
     } else destinations
-    var profileMenu by remember { mutableStateOf(false) }
     var overflow by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(68.dp)
         .padding(horizontal = if (collapsed) 16.dp else 57.dp),
@@ -68,15 +65,13 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
             }
         }
         IconButton(onClick = { navigate(Screen.Search) }) { Icon(Lucide.Search, "Search", Modifier.size(20.dp)) }
-        Box {
-            val chevron by animateFloatAsState(if (profileMenu) 180f else 0f, tween(150), label = "Profile menu chevron")
-            Row(Modifier.clip(RoundedCornerShape(8.dp)).semantics { contentDescription = "Profile menu" }.clickable { profileMenu = true },
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ProfileMenuButton(profile, navigate, RoundedCornerShape(8.dp)) { open ->
+            val chevron by animateFloatAsState(if (open) 180f else 0f, tween(150), label = "Profile menu chevron")
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (profile != null) org.viptv.app.features.entry.ProfileAvatar(profile, 28.dp, 7.dp)
                 else Icon(Lucide.UserRound, null, Modifier.size(20.dp))
                 Icon(Lucide.ChevronDown, null, Modifier.size(14.dp).rotate(chevron))
             }
-            ProfileMenu(profileMenu, profile, { profileMenu = false }, navigate)
         }
     }
     }
