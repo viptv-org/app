@@ -255,17 +255,14 @@ internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapsh
             throw LocalFailure("This episode’s metadata changed. Open its details again.")
     } else detail.episodes.find {
         it.identity == card.identity && (card.metadata_origin == null || it.metadata_origin == card.metadata_origin)
-    }) ?: if (delegated) {
+    }) ?: if (delegated || unscopedEpisodeOf(card, detail.item)) {
         // The host validates this exact episode against the complete metadata document
         // before returning a page. An off-page episode keeps its raw selector and uses
         // the actual producer, just like an episode present in the returned page.
-        card.copy(provider_id = detail.item.provider_id, metadata_origin = detail.item.metadata_origin,
-            parent_identity = detail.item.identity)
-    } else if (unscopedEpisodeOf(card, detail.item)) {
-        // A Continue Watching row names its episode under the library, not under a
-        // metadata provider, and its episode is often past the first details page.
-        // It takes the scope of the details just read for its parent, like an episode
-        // found on the page, so the player gets that title's episodes and next episode.
+        // A Continue Watching row names its episode under the library rather than a
+        // metadata provider, and that episode is often past the first page. It takes
+        // the scope of its own parent's details the same way, so the player gets that
+        // title's episodes and next episode.
         card.copy(provider_id = detail.item.provider_id, metadata_origin = detail.item.metadata_origin,
             parent_identity = detail.item.identity)
     } else card

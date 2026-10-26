@@ -105,6 +105,7 @@ class ContinueWatchingPlayerEpisodesTest {
 
     private class Started(val controller: ApplicationController, val remote: RemoteConnection) {
         val state get() = controller.state.value
+        fun close() { controller.job?.cancel(); controller.cancelNextEpisode(); controller.cancelPlaybackSeason(); remote.close() }
     }
 
     /** Tap the Continue Watching card, let sources open, then start playing like a chosen source does. */
@@ -136,9 +137,10 @@ class ContinueWatchingPlayerEpisodesTest {
             assertEquals("$show:2:20", playing.identity.id, "sources and playback are for S2 E20")
             assertEquals("$show:2:21", state.nextEpisode?.identity?.id, "Next episode is S2 E21")
             assertEquals(ContinuationStatus.NEXT, state.nextEpisodeStatus)
-            val episodes = playerEpisodes(playing, state.detail)
+            val episodes = playerEpisodes(playing, state.detail?.episodes.orEmpty() + state.playbackSeason)
             assertEquals((1L..24L).map { "$show:2:$it" }, episodes.map { it.identity.id }, "Episodes lists season 2")
             assertTrue(episodes.any { cardLookupKey(it) == cardLookupKey(playing) }, "the playing episode is in the list (marked)")
+            assertEquals(24, state.detail?.episodes?.size, "the Details pages stay as Details paged them")
             val pick = episodes.single { it.identity.id == "$show:2:22" }
             val played = phoneChoices(playing, episodes, state.nextEpisode, nextEnabled = true, pick = pick, capture = "cw-player-controls")
             assertEquals(listOf(pick, state.nextEpisode), played, "Episodes and Next episode hand over the exact cards")
@@ -149,7 +151,7 @@ class ContinueWatchingPlayerEpisodesTest {
                 assertEquals(Screen.Sources, started.state.screen)
                 assertEquals(cardLookupKey(card!!), started.state.sourceTitle?.let(::cardLookupKey), "sources are for the chosen episode")
             }
-        } finally { started.controller.job?.cancel(); started.controller.cancelNextEpisode(); started.remote.close() }
+        } finally { started.close() }
     }
 
     @Test fun seriesFinaleFromContinueWatchingKeepsEpisodesAndShowsNextUnavailable() = runBlocking<Unit> {
@@ -157,13 +159,13 @@ class ContinueWatchingPlayerEpisodesTest {
         try {
             val state = started.state
             val playing = assertNotNull(state.sourceTitle)
-            val episodes = playerEpisodes(playing, state.detail)
+            val episodes = playerEpisodes(playing, state.detail?.episodes.orEmpty() + state.playbackSeason)
             assertEquals((1L..14L).map { "$show:3:$it" }, episodes.map { it.identity.id }, "Episodes lists season 3")
             assertNull(state.nextEpisode, "nothing after the finale")
             assertEquals(ContinuationStatus.CAUGHTUP, state.nextEpisodeStatus)
             val pick = episodes[episodes.size - 2]
             assertEquals(listOf(pick), phoneChoices(playing, episodes, null, nextEnabled = false, pick = pick, capture = "cw-player-finale"))
-        } finally { started.controller.job?.cancel(); started.controller.cancelNextEpisode(); started.remote.close() }
+        } finally { started.close() }
     }
 
     @Test fun anEpisodeAlreadyOnTheFirstDetailsPageListsOnlyItsSeason() = runBlocking<Unit> {
@@ -172,10 +174,10 @@ class ContinueWatchingPlayerEpisodesTest {
         try {
             val state = started.state
             val playing = assertNotNull(state.sourceTitle)
-            assertEquals((1L..23L).map { "$show:1:$it" }, playerEpisodes(playing, state.detail).map { it.identity.id },
+            assertEquals((1L..23L).map { "$show:1:$it" }, playerEpisodes(playing, state.detail?.episodes.orEmpty() + state.playbackSeason).map { it.identity.id },
                 "the whole of season 1, without the specials")
             assertEquals("$show:1:4", state.nextEpisode?.identity?.id)
-        } finally { started.controller.job?.cancel(); started.controller.cancelNextEpisode(); started.remote.close() }
+        } finally { started.close() }
     }
 
     @Test fun anOffPageLibraryEpisodeTakesTheDetailsScopeOnlyForItsOwnParent() {
@@ -189,6 +191,14 @@ class ContinueWatchingPlayerEpisodesTest {
         assertEquals(detail.item.identity, target.parent_identity)
         val stranger = resume.copy(parent_identity = resume.parent_identity!!.copy(id = "tt0000001"))
         assertEquals(stranger, sourceTarget(stranger, detail), "another title's episode is never re-scoped")
+    }
+
+    @Test fun episodesWithoutASeasonNumberStillListTogether() {
+        val codec = Json { ignoreUnknownKeys = true }
+        val episodes = (1L..3L).map { number ->
+            codec.decodeFromString<Card>(metaEpisode(1, number).replace("\"season\":1", "\"season\":null"))
+        }
+        assertEquals(episodes, playerEpisodes(episodes[1], episodes.reversed()))
     }
 
     /**
