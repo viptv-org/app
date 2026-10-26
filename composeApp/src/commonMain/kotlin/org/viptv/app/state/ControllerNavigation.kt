@@ -43,7 +43,8 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true) {
         mutable.value.copy(navBack = (mutable.value.navBack + recorded).takeLast(32), navForward = emptyList())
     else mutable.value
     mutable.value = history.copy(screen = screen, error = null, settingsEntrySection = if (screen == Screen.Settings) mutable.value.settingsEntrySection else null,
-        settingsPage = if (screen == Screen.Settings) mutable.value.settingsPage else null)
+        // A page belongs to one visit: arriving from elsewhere starts at settingsEntrySection.
+        settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) mutable.value.settingsPage else null)
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
         loadBrowse(BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }

@@ -35,8 +35,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val phoneSourceIntegrations: (@Composable () -> Unit)? = sourceIntegrations?.let { render -> { render(unusedRequester, unusedRequester, 1f) } }
     var localPage by remember { mutableStateOf<SettingsPage?>(null) }
-    val stored = if (pageChanged != null) page else localPage
-    val current = stored ?: SettingsPage(initialSection)
+    val savedPage = if (pageChanged != null) page else localPage
+    val current = savedPage ?: SettingsPage(initialSection)
     val section = current.section
     val show: (SettingsPage) -> Unit = pageChanged ?: { localPage = it }
     var leaving by remember { mutableStateOf(initialLeave) }
@@ -51,9 +51,10 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
         val compact = maxWidth < 640.dp
         val webAccount = devices != null && !compact
         // A phone-width layout opens every section from the Settings list; wider layouts use a sidebar.
-        val shown = current.copy(subpage = compact && section != null)
-        SideEffect { if (stored != shown) show(shown) }
-        val open: (String?) -> Unit = { show(SettingsPage(it, compact && it != null)) }
+        // Report the laid-out page so global Back knows whether a sub-page is open.
+        val shown = current.laidOut(compact)
+        SideEffect { if (savedPage != shown) show(shown) }
+        val open: (String?) -> Unit = { show(SettingsPage(it).laidOut(compact)) }
         // The in-page arrow takes the same step as the app's global Back (navigateBack).
         val back: () -> Unit = { show(shown.parent() ?: SettingsPage()) }
         Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = 57.dp, vertical = 32.dp) else Modifier)) {

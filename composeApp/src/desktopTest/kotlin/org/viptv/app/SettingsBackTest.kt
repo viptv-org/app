@@ -9,9 +9,16 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.app.features.settings.SettingsRoute
+import org.viptv.app.features.settings.stremioImportSection
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
+
+private object NoSavedSession : RemoteSessionStore {
+    override suspend fun read(): SavedRemoteSession? = null
+    override suspend fun save(session: SavedRemoteSession) = Unit
+    override suspend fun clear() = Unit
+}
 
 /** app#7: Back from a Settings sub-page returns to Settings, one level at a time. */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -19,11 +26,7 @@ class SettingsBackTest {
     /** Phone-width Settings rendered from the controller, as App does. */
     private class Harness(browser: Boolean, start: ApplicationState, height: Int = 844) : AutoCloseable {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-        val controller = ApplicationController(scope, object : RemoteSessionStore {
-            override suspend fun read(): SavedRemoteSession? = null
-            override suspend fun save(session: SavedRemoteSession) = Unit
-            override suspend fun clear() = Unit
-        }).also { it.mutable.value = start }
+        val controller = ApplicationController(scope, NoSavedSession).also { it.mutable.value = start }
         var systemBack: (() -> Unit)? = null
         val scene = ImageComposeScene(390, height, Density(1f)) {
             val state by controller.state.collectAsState()
@@ -51,9 +54,18 @@ class SettingsBackTest {
         ApplicationState(screen = Screen.Settings, navBack = navBack, selectedProfile = "1", localMode = localMode)
 
     @Test fun backFromEachPhoneSubPageReturnsToTheSettingsList() = Harness(browser = false, settings()).use { ui ->
+        assertBackFromEachRow(ui, listOf("Add-ons", "Playback", "Subtitles & audio", "Account", "Parental controls", "Help", "About VIPTV"))
+    }
+
+    @Test fun backFromEachServerSubPageOfAPhoneWidthBrowserReturnsToTheSettingsList() =
+        Harness(browser = true, settings(localMode = false), height = 1400).use { ui ->
+            assertBackFromEachRow(ui, listOf("Devices", stremioImportSection, "Watch on TV", "Add-ons", "Account", "Parental controls"))
+        }
+
+    private fun assertBackFromEachRow(ui: Harness, rows: List<String>) {
         ui.render()
         assertTrue(ui.atSettingsList())
-        for (row in listOf("Add-ons", "Playback", "Subtitles & audio", "Account", "Parental controls", "Help", "About VIPTV")) {
+        for (row in rows) {
             ui.click(row)
             assertFalse(ui.atSettingsList(), "$row did not open a sub-page")
             ui.controller.navigateBack(); ui.render()
@@ -107,18 +119,18 @@ class SettingsBackTest {
         }
     }
 
-    @Test fun wideSettingsSectionsAreNotSubPages() {
+    @Test fun wideSectionsAreNotSubPagesAndAPageLastsOneVisit() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-        val controller = ApplicationController(scope, object : RemoteSessionStore {
-            override suspend fun read(): SavedRemoteSession? = null
-            override suspend fun save(session: SavedRemoteSession) = Unit
-            override suspend fun clear() = Unit
-        })
+        val controller = ApplicationController(scope, NoSavedSession)
         // A sidebar section on a wide layout: Back leaves Settings as it always did.
         controller.mutable.value = settings(navBack = listOf(Screen.Search)).copy(settingsPage = SettingsPage("Devices"))
         controller.navigateBack()
         assertEquals(Screen.Search, controller.state.value.screen)
         assertNull(controller.state.value.settingsPage, "Leaving Settings must forget its page")
+        // A page left behind by a direct screen change never outlives its visit.
+        controller.mutable.value = controller.state.value.copy(screen = Screen.Search, settingsPage = SettingsPage("Add-ons", subpage = true))
+        controller.navigate(Screen.Settings)
+        assertNull(controller.state.value.settingsPage, "Settings must open at its entry section, not a stale sub-page")
         scope.cancel()
     }
 
