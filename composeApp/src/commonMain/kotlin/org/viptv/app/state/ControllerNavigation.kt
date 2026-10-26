@@ -42,7 +42,8 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true) {
         // Browser-style history: a new destination drops the forward stack.
         mutable.value.copy(navBack = (mutable.value.navBack + recorded).takeLast(32), navForward = emptyList())
     else mutable.value
-    mutable.value = history.copy(screen = screen, error = null, settingsEntrySection = if (screen == Screen.Settings) mutable.value.settingsEntrySection else null)
+    mutable.value = history.copy(screen = screen, error = null, settingsEntrySection = if (screen == Screen.Settings) mutable.value.settingsEntrySection else null,
+        settingsPage = if (screen == Screen.Settings) mutable.value.settingsPage else null)
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
         loadBrowse(BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }
@@ -78,6 +79,7 @@ fun ApplicationController.backSources() {
 
 /** Chrome and other global Back controls use the same route-specific return state. */
 fun ApplicationController.navigateBack() {
+    if (backWithinSettings()) return
     val state = mutable.value
     when (state.screen) {
         Screen.Sources -> backSources()
@@ -89,6 +91,21 @@ fun ApplicationController.navigateBack() {
             else -> navigate(Screen.Home)
         }
     }
+}
+
+/** Settings reports the page it shows, so global Back can leave a sub-page before leaving Settings. */
+fun ApplicationController.showSettingsPage(page: SettingsPage) {
+    if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page) mutable.value = mutable.value.copy(settingsPage = page)
+}
+
+/** Back inside Settings, one level at a time: Parental controls' Titles, then a sub-page back to the Settings list. */
+private fun ApplicationController.backWithinSettings(): Boolean {
+    val state = mutable.value
+    if (state.screen != Screen.Settings) return false
+    if (state.parentTitles != null) { closeParentTitles(); return true }
+    val parent = state.settingsPage?.parent() ?: return false
+    mutable.value = state.copy(settingsPage = parent)
+    return true
 }
 
 /** The desktop chrome's Forward chevron. */
