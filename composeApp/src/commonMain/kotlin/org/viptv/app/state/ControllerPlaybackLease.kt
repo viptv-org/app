@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.first
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.engine.wire.SourceCandidate
-import kotlin.time.Duration.Companion.seconds
 
 /** Opens a server playback lease for one source. */
 internal fun interface PlaybackLeaseOpener {
@@ -31,88 +30,90 @@ internal fun interface PlaybackLeaseOpener {
  *   only when that fails does the viewer go back to Sources.
  */
 
-/** A lease confirmed this recently still has at least half its 60-second server life. */
-private val LEASE_CERTAIN = 30.seconds
-private const val RENEW_ATTEMPTS = 5
-private const val REACQUIRE_ATTEMPTS = 3
+/** Transient renewal failures retry while the lease can still be alive: 60 s server life less one interval. */
+private const val RENEW_RETRY_MILLIS = 40_000L
+/** A network outage gets this long to recover before the viewer is sent back to Sources. */
+private const val REACQUIRE_RETRY_MILLIS = 60_000L
 private const val FIRST_RETRY_MILLIS = 1_000L
+private const val MAX_RETRY_MILLIS = 15_000L
 
 /** Called from [appForeground]: the app came to the front or went behind. */
 internal fun ApplicationController.playbackInFront(front: Boolean) {
     inFront.value = front
-    if (front) frontReturns.value++
+    if (front) leaseWake.value++
+}
+
+/**
+ * Lifecycle resume after the app was behind. The lease may have lapsed meanwhile
+ * (and a sleeping device stops monotonic clocks, so elapsed time cannot tell):
+ * keep the player paused until the lease is renewed or re-acquired.
+ */
+internal fun ApplicationController.resumeAfterLease(input: PlaybackInput) {
+    resumeAfterRenewal = input
+    leaseWake.value++
 }
 
 internal fun ApplicationController.keepPlaybackLease(lease: RemotePlaybackLease, source: SourceCandidate, forceGateway: Boolean, input: PlaybackInput) {
-    leaseConfirmedAt = playbackTime.markNow()
     playbackRenewal = scope.launch {
         val interval = lease.renewSeconds.coerceIn(1, 30) * 1000
         while (true) {
-            // One interval, cut short by a return to the front.
-            val returns = frontReturns.value
-            withTimeoutOrNull(interval) { frontReturns.first { it != returns } }
+            // One interval, cut short by a return to the front or a held resume.
+            val wake = leaseWake.value
+            withTimeoutOrNull(interval) { leaseWake.first { it != wake } }
             awaitLeaseNeeded()
             if (remotePlayback !== lease) return@launch
-            if (!renewWithRetry(lease)) break
-            leaseConfirmedAt = playbackTime.markNow()
+            if (retryTransient(RENEW_RETRY_MILLIS) { lease.renew() } != null) break
             if (resumeAfterRenewal === input) {
                 resumeAfterRenewal = null
                 if (mutable.value.playback === input) mutable.value = mutable.value.copy(paused = false)
             }
         }
-        if (remotePlayback === lease) reacquirePlayback(source, forceGateway, input)
+        reacquirePlayback(lease, source, forceGateway, input)
     }
 }
-
-/** True when the lease may have lapsed, so the player must wait for it before using the stream. */
-internal fun ApplicationController.leaseUnconfirmed(): Boolean =
-    remotePlayback != null && (leaseConfirmedAt?.elapsedNow()?.let { it >= LEASE_CERTAIN } ?: true)
 
 /** Behind with playback paused nothing needs the lease; wait for the app to return or media to play. */
 private suspend fun ApplicationController.awaitLeaseNeeded() {
     combine(inFront, mutable) { front, state -> front || !state.paused }.first { it }
 }
 
-/** Transient failures retry with a short backoff; false once the lease is lost. */
-private suspend fun renewWithRetry(lease: RemotePlaybackLease): Boolean {
+/**
+ * Runs [block] until it succeeds, fails for a non-transient reason, or the next
+ * backoff would exceed [budgetMillis]. Null on success, otherwise the last failure.
+ */
+private suspend fun retryTransient(budgetMillis: Long, block: suspend () -> Unit): Exception? {
     var wait = FIRST_RETRY_MILLIS
-    for (attempt in 1..RENEW_ATTEMPTS) {
-        try { lease.renew(); return true }
-        catch (error: CancellationException) { throw error }
-        catch (error: Exception) {
-            if (!error.transientFailure() || attempt == RENEW_ATTEMPTS) return false
-            delay(wait); wait *= 2
-        }
+    var spent = 0L
+    while (true) {
+        val failure = try { block(); return null }
+            catch (error: CancellationException) { if (error is TimeoutCancellationException) error else throw error }
+            catch (error: Exception) { error }
+        if (!failure.transientFailure() || spent + wait > budgetMillis) return failure
+        delay(wait); spent += wait; wait = (wait * 2).coerceAtMost(MAX_RETRY_MILLIS)
     }
-    return false
 }
 
 /** Open the same source again where the viewer was, paused only if they had paused. */
-private suspend fun ApplicationController.reacquirePlayback(source: SourceCandidate, forceGateway: Boolean, input: PlaybackInput) {
+private suspend fun ApplicationController.reacquirePlayback(lease: RemotePlaybackLease, source: SourceCandidate, forceGateway: Boolean, input: PlaybackInput) {
     // Nothing needs a new lease while the app is behind and paused; Android may have no network there.
     awaitLeaseNeeded()
-    if (mutable.value.playback !== input) return
+    // Let a viewer action already in the job lane finish; if it replaced this playback, there is nothing to reopen.
+    job?.join()
+    if (remotePlayback !== lease || mutable.value.playback !== input) return
     val position = if (input.live) null else lastProgress?.positionMillis ?: input.positionMillis
     val paused = mutable.value.paused && resumeAfterRenewal !== input
     resumeAfterRenewal = null
     if (!completionSeen) saveProgress(false)
+    // The controller's job lane, not this renewal coroutine: opening releases the old
+    // lease, which cancels the renewal, and closing the player cancels the reopen.
     run {
-        var wait = FIRST_RETRY_MILLIS
-        for (attempt in 1..REACQUIRE_ATTEMPTS) {
-            val failure = try { openSourceNow(source, forceGateway, position, pausedAfterOpen = paused); return@run }
-                catch (error: TimeoutCancellationException) { error }
-                catch (error: CancellationException) { throw error }
-                catch (error: RemoteFailure) { if (error.status == 401) throw error else error }
-                catch (error: Exception) { error }
-            if (attempt == REACQUIRE_ATTEMPTS || !(failure is TimeoutCancellationException || failure.transientFailure())) {
-                releaseRemotePlayback()
-                val gone = failure is RemoteFailure && failure.status in listOf(404, 410)
-                mutable.value = mutable.value.copy(playback = null, screen = Screen.Sources, error =
-                    if (gone) "The server playback session ended and this source is no longer available. Choose the source again."
-                    else "The server playback session ended and could not be reopened. Choose the source again.")
-                return@run
-            }
-            delay(wait); wait *= 2
-        }
+        val failure = retryTransient(REACQUIRE_RETRY_MILLIS) { openSourceNow(source, forceGateway, position, pausedAfterOpen = paused) }
+            ?: return@run
+        if (failure is RemoteFailure && failure.status == 401) throw failure
+        releaseRemotePlayback()
+        val gone = failure is RemoteFailure && failure.status in listOf(404, 410)
+        mutable.value = mutable.value.copy(playback = null, screen = Screen.Sources, error =
+            if (gone) "The server playback session ended and this source is no longer available. Choose the source again."
+            else "The server playback session ended and could not be reopened. Check the connection and choose the source again.")
     }
 }

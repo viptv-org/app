@@ -73,7 +73,6 @@ class PlaybackLeaseTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(backgroundScope, store)
         controller.connection = remote
-        controller.playbackTime = testScheduler.timeSource
         controller.leaseOpener = PlaybackLeaseOpener { connection, candidate, profile, forceGateway, position, stage ->
             connection.openPlayback(candidate, profile, facts, forceGateway, position, torrents = null, stage = stage)
         }
@@ -119,18 +118,33 @@ class PlaybackLeaseTest {
         controller.closePlayer()
     }
 
-    @Test fun aTransientRenewalFailureIsRetriedBeforeTheLeaseIsGivenUp() = runTest {
+    @Test fun aNetworkOutageWithinTheLeasesLifeIsRetriedWithoutReopening() = runTest {
         val server = Server()
         val controller = controller(server)
         play(controller)
         val input = controller.state.value.playback
-        var failures = 2
-        server.heartbeat = { if (failures-- > 0) throw java.io.IOException("offline") else HttpStatusCode.OK }
-        advanceTimeBy(20_001); advanceTimeBy(10_000); runCurrent()
-        assertEquals(1, server.opens.size, "A network blip must not reopen the source")
-        assertEquals(3, server.heartbeats.size)
+        // Offline from the first heartbeat (20 s) until 45 s: the server lease would still be alive.
+        server.heartbeat = { if (testScheduler.currentTime < 45_000) throw java.io.IOException("offline") else HttpStatusCode.OK }
+        advanceTimeBy(55_000); runCurrent()
+        assertEquals(1, server.opens.size, "An outage the lease outlives must not reopen the source")
+        assertEquals(6, server.heartbeats.size, "Backoff 1, 2, 4, 8, 15 s after the first failure")
         assertSame(input, controller.state.value.playback)
         assertNull(controller.state.value.error)
+        controller.closePlayer()
+    }
+
+    @Test fun aResumeWithoutLeavingTheFrontConfirmsTheLeaseAtOnce() = runTest {
+        val server = Server()
+        val controller = controller(server)
+        play(controller)
+        val input = controller.state.value.playback
+        advanceTimeBy(5_000)
+        // A translucent Activity: pause and resume without stop and start.
+        controller.suspendPlayback(); advanceTimeBy(1_000)
+        controller.resumePlayback(); runCurrent()
+        assertEquals(listOf("lease-1"), server.heartbeats)
+        assertSame(input, controller.state.value.playback)
+        assertFalse(controller.state.value.paused)
         controller.closePlayer()
     }
 

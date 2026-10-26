@@ -106,8 +106,7 @@ fun ApplicationController.resumePlayback() {
     val input = backgroundPlayback ?: return
     backgroundPlayback = null
     if (mutable.value.playback !== input || completionSeen) return
-    // A lease that may have lapsed is renewed or re-acquired first; that resumes playback.
-    if (leaseUnconfirmed()) resumeAfterRenewal = input
+    if (remotePlayback != null) resumeAfterLease(input)
     else mutable.value = mutable.value.copy(paused = false)
 }
 
