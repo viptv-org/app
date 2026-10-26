@@ -1,9 +1,14 @@
 package org.viptv.app
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
+import coil3.compose.LocalPlatformContext
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
@@ -21,7 +26,7 @@ import kotlin.test.*
  * the server's genres, choosing one opens Browse filtered to it, and Back returns to Home.
  * With VIPTV_GENRES_CAPTURE_DIR set it also writes the PR screenshots.
  */
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class HomeGenresAppUiTest {
     @Test fun genresChipOpensFilteredBrowseInThePhoneApp() = runBlocking {
         val discover = mutableListOf<Url>()
@@ -47,8 +52,15 @@ class HomeGenresAppUiTest {
             profiles = PreviewData.profiles, home = PreviewData.home)
         val capture = System.getenv("VIPTV_GENRES_CAPTURE_DIR")?.let(::File)
         val density = if (capture != null) 2f else 1f
+        var previousLoader: ImageLoader? = null
+        var appLoader: ImageLoader? = null
         val scene = ImageComposeScene((390 * density).toInt(), (844 * density).toInt(), Density(density)) {
+            val context = LocalPlatformContext.current
+            // App configures Coil's singleton loader; earlier component tests may already have
+            // created the default one (as in StartupShellUiTest).
+            remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
             App(providedController = controller, manageControllerLifecycle = false)
+            appLoader = SingletonImageLoader.get(context)
         }
         var frame = 0L
         fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
@@ -83,7 +95,10 @@ class HomeGenresAppUiTest {
             controller.navigateBack()
             frames()
             assertEquals(Screen.Home, controller.state.value.screen)
-        } finally { scene.close(); scope.cancel(); remote.close() }
+        } finally {
+            scene.close(); scope.cancel(); remote.close()
+            appLoader?.shutdown(); previousLoader?.let { SingletonImageLoader.setUnsafe(it) }
+        }
     }
 
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
