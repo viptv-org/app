@@ -9,6 +9,32 @@ import org.viptv.app.player.mpv.*
 import kotlin.test.*
 
 class MpvNativeTest {
+    @Test fun createsAClientEvenWhenTheProcessNumericLocaleIsNotC() {
+        runBlocking {
+            // The JVM calls setlocale(LC_ALL, "") at startup, leaving a normal
+            // desktop locale such as en_US.UTF-8 in place; libmpv refuses to
+            // create a client in that state. Use any installed non-C locale to
+            // reproduce it deterministically instead of depending on the host's
+            // LANG, then prove session creation repairs LC_NUMERIC.
+            val original = MpvLocale.numericLocale()
+            val pathological = listOf("C.utf8", "C.UTF-8", "en_US.utf8", "en_US.UTF-8")
+                .firstOrNull { MpvLocale.setNumericLocale(it) }
+            try {
+                pathological?.let { assertEquals(it, MpvLocale.numericLocale()) }
+                val session = MpvSession(PlaybackInput("owned", "about:blank"))
+                try {
+                    assertEquals("C", MpvLocale.numericLocale())
+                    assertNotNull(session.handle)
+                } finally {
+                    session.closeAfterRenderer()
+                    withTimeout(5_000) { session.closed.await() }
+                }
+            } finally {
+                original?.let { MpvLocale.setNumericLocale(it) }
+            }
+        }
+    }
+
     @Test fun nativeNodeHeadersPreserveCommasQuotesAndUtf8WithoutOptionStringSplitting() = runBlocking {
         val headers = mapOf("Authorization" to "Bearer test,with,commas", "X-Fixture" to "quoted \"résumé\"")
         val session = MpvSession(PlaybackInput("owned", "about:blank", headers))

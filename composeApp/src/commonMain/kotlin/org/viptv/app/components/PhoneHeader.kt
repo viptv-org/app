@@ -25,7 +25,6 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
-    var profileMenu by remember { mutableStateOf(false) }
     var unavailable by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -37,15 +36,7 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
             if (screen !in listOf(Screen.Library, Screen.Live, Screen.Calendar)) IconButton(onClick = { unavailable = "Remote control" }, modifier = Modifier.size(40.dp)) {
                 Icon(painterResource(Res.drawable.ic_remote_zip), "Remote control", Modifier.size(22.dp))
             }
-            Box {
-                Box(Modifier.size(40.dp).clickable { profileMenu = true }, contentAlignment = Alignment.Center) {
-                    ProfileAvatar(profile, 28.dp, 7.dp)
-                }
-                DropdownMenu(profileMenu, onDismissRequest = { profileMenu = false }) {
-                    DropdownMenuItem(text = { Text("Switch profile") }, onClick = { profileMenu = false; navigate(Screen.Profiles) })
-                    DropdownMenuItem(text = { Text("Settings") }, onClick = { profileMenu = false; navigate(Screen.Settings) })
-                }
-            }
+            ProfileMenuButton(profile, navigate, RoundedCornerShape(10.dp), Modifier.size(40.dp)) { ProfileAvatar(profile, 28.dp, 7.dp) }
         }
         if (screen == Screen.Home) {
             Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {

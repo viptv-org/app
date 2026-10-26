@@ -19,6 +19,8 @@ data class ApplicationState(
     val navBack: List<Screen> = emptyList(),
     val navForward: List<Screen> = emptyList(),
     val settingsEntrySection: String? = null,
+    /** The page Settings shows while it is open, so global Back can leave a sub-page first; null until Settings reports one. */
+    val settingsPage: SettingsPage? = null,
     val busy: Boolean = false,
     val error: String? = null,
     val profiles: List<Profile> = emptyList(),
@@ -99,6 +101,8 @@ data class ApplicationState(
     val nextEpisode: Card? = null,
     val nextEpisodeStatus: org.viptv.engine.wire.ContinuationStatus? = null,
     val nextEpisodeLoading: Boolean = false,
+    /** The playing episode's season, read for the player when Details had not loaded it. */
+    val playbackSeason: List<Card> = emptyList(),
     val paused: Boolean = false,
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
