@@ -121,7 +121,9 @@ class ContinueWatchingPlayerEpisodesTest {
         val controller = ApplicationController(this, store); controller.connection = remote
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = boot.selected ?: "2", home = boot.home)
         controller.playTitle(card)
-        withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources || controller.state.value.busy) delay(10) }
+        // Sources open on the tap; the title's Details arrive beside discovery (app#11).
+        withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources || controller.state.value.busy ||
+            controller.state.value.detail == null) delay(10) }
         controller.mutable.value = controller.state.value.copy(screen = Screen.Player,
             playback = PlaybackInput("attempt", "https://media.example/fixture.mp4", profileId = "2"))
         controller.loadNextEpisode(); controller.loadPlaybackSeason()

@@ -142,7 +142,8 @@ class ContinueWatchingActivationTest {
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "1", home = home)
         try {
             controller.playTitle(resume)
-            withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources) delay(10) }
+            // The selector opens on the tap; the title's Details fill in behind it (app#11).
+            withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources || controller.state.value.detail == null) delay(10) }
             val state = controller.state.value
             assertEquals(resume.identity, state.sourceTitle?.identity, "sources are for S1 E3")
             assertEquals(series.identity, state.sourceTitle?.parent_identity)

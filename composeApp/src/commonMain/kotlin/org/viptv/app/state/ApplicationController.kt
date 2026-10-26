@@ -54,6 +54,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var playbackSeasonJob: Job? = null
     internal var playbackSeasonKey: PlaybackSeasonKey? = null
     internal var playbackSeasonGeneration = 0L
+    /** Details read beside source discovery for a Continue Watching episode (app#11). */
+    internal var sourceDetailJob: Job? = null
     internal var pairingJob: Job? = null
     internal var pairingGeneration = 0L
     internal var stremioImport: StremioImportSession? = null
