@@ -1,0 +1,13 @@
+# aapt2 dump badging, release APK (commit 9615485)
+# sha256 1f27c3496679830b4ed683c889c027157e4811eef8693b8c595e141fe0234125
+package: name='org.viptv.experiment' versionCode='1' versionName='0.1.0-experiment' platformBuildVersionName='17' platformBuildVersionCode='37' compileSdkVersion='37' compileSdkVersionCodename='17'
+application-icon-160:'res/BW.xml'
+application-icon-240:'res/BW.xml'
+application-icon-320:'res/BW.xml'
+application-icon-480:'res/BW.xml'
+application-icon-640:'res/BW.xml'
+application-icon-65534:'res/BW.xml'
+application-icon-65535:'res/BW.xml'
+application: label='VIPTV Experiment' icon='res/BW.xml' banner='res/9n.png'
+launchable-activity: name='org.viptv.experiment.MainActivity'  label='' icon='res/BW.xml'
+leanback-launchable-activity: name='org.viptv.experiment.MainActivity'  label='' icon='res/BW.xml' banner='res/9n.png'
