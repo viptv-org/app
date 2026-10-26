@@ -23,7 +23,6 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
-    var castNotice by remember { mutableStateOf(false) }
     Column(Modifier.width(92.dp).fillMaxHeight().tvBackdropBlur(24.dp)
         .background(Color(0xFF0B0B0C).copy(alpha = .55f))
         .drawBehind { drawRect(Color.White.copy(alpha = .08f), Offset(size.width - 1.dp.toPx(), 0f), Size(1.dp.toPx(), size.height)) }
@@ -45,12 +44,8 @@ internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Sc
         }
         Spacer(Modifier.weight(1f))
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            IconButton(onClick = { castNotice = true }, modifier = Modifier.size(44.dp)) { Icon(Lucide.Cast, "Cast", Modifier.size(22.dp), tint = Palette.text) }
             IconButton(onClick = { navigate(Screen.Settings) }, modifier = Modifier.size(44.dp)) { Icon(Lucide.Settings, "Settings", Modifier.size(22.dp), tint = Palette.text) }
             Box(Modifier.size(36.dp).clickable { navigate(Screen.Profiles) }, contentAlignment = Alignment.Center) { ProfileAvatar(profile, 36.dp, 9.dp) }
         }
     }
-    if (castNotice) AlertDialog(onDismissRequest = { castNotice = false }, title = { Text("Casting") },
-        text = { Text("Casting is not available in this experiment yet.") },
-        confirmButton = { TextButton(onClick = { castNotice = false }) { Text("OK") } })
 }
