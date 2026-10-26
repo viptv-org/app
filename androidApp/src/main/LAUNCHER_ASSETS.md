@@ -26,10 +26,19 @@ The "V" outline comes from `composeResources/font/bricolage.ttf`, the font the
 app renders `BrandMark` with. Its "V" glyph is identical to the one in design's
 `assets/fonts/remote_bricolage_800.ttf`.
 
+Design's `docs/branding.md` names `viptv-wordmark.png` as the master V. That V
+is the older geometric white mark used by the Roku `channel-poster-hd.jpg`. The
+icon uses the amber `BrandMark` V instead, because that is what the KMP app
+shows on every screen. Design is asked to record a square icon master, and to
+confirm or replace this choice, in viptv-org/design#21.
+
+The colours and ratios are copied into the script by hand. If `Palette` or
+`BrandMark` changes, update the script and regenerate.
+
 Regenerate:
 
 ```sh
 python3 -m venv /tmp/viptv-icons
-/tmp/viptv-icons/bin/pip install pillow fonttools
+/tmp/viptv-icons/bin/pip install pillow==13.0.0 fonttools==4.67.0
 /tmp/viptv-icons/bin/python tools/make_launcher_assets.py
 ```
