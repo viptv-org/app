@@ -50,11 +50,14 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
 
 @Composable
 internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: (() -> Unit)?,
-    focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, modifier: Modifier = Modifier,
+    focus: (Card) -> Unit, open: (Card) -> Unit, modifier: Modifier = Modifier,
     firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
     rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
     onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open, state: LazyListState = rememberLazyListState()) {
+    // Home only composes rows with content; this guard keeps a direct caller
+    // from drawing a heading or a retry card for a hidden row.
+    if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val portrait = row.id != "continue"
     // OK on a Continue Watching card goes straight to that episode's sources.
@@ -128,11 +131,8 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                 }
                 // The board shows one full row of six skeletons while a row loads.
                 RowState.PENDING -> items(6, contentType = { "skeleton" }) { TvHomeSkeletonCard(scale, portrait) }
-                RowState.EMPTY -> item(contentType = "empty") { Text("Nothing here yet.", color = Palette.secondary, fontSize = (24 * scale).sp) }
-                RowState.FAILED -> item(contentType = "failed") {
-                    // Board Tv3RowStates: a message card, not a bare button.
-                    TvRowMessageCard(scale, "Couldn’t load this row", row.message, retry)
-                }
+                // The screen never composes empty or failed rows; keep the switch exhaustive.
+                RowState.EMPTY, RowState.FAILED -> Unit
             }
         }
 

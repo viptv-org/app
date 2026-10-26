@@ -18,9 +18,20 @@ internal data class MpvState(
     val sourceFps: Double = 0.0, val buffering: Boolean = false, val error: Int? = null,
 )
 
+/**
+ * libmpv's 8-digit colour form is `#AARRGGBB` (mpv(1)), which matches the
+ * profile preference Int. Sending `#RRGGBBAA` swaps alpha into the red
+ * channel, so gold (`#FFFFC107`) renders as purple (`#C107FF`).
+ */
+internal fun mpvSubtitleColour(value: Int): String = "#%08X".format(value)
+
 internal class MpvSession(input: PlaybackInput) {
     val api = MpvNative.api
-    val handle = requireNotNull(api.mpv_create())
+    // The JVM's startup setlocale(LC_ALL, "") leaves the host's numeric locale
+    // in place, and libmpv refuses to create a client unless LC_NUMERIC is "C".
+    // Without this, desktop playback fails on every non-C locale (MpvNativeTest
+    // reproduced it under LANG=en_US.UTF-8).
+    val handle = run { MpvLocale.requireNumericCLocale(); requireNotNull(api.mpv_create()) }
     private val dispatcher = Executors.newSingleThreadExecutor { r -> Thread(r, "mpv-control").apply { isDaemon = true } }.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val closing = AtomicBoolean(false)
@@ -48,10 +59,9 @@ internal class MpvSession(input: PlaybackInput) {
             val caption = desktopSubtitleConfig(input.preferences)
             option("sub-scale", caption.fontScale.toString())
             caption.style?.let { style ->
-                fun color(value: Int) = "#%08X".format(((value.toLong() and 0xFFFFFF) shl 8) or (value.toLong() ushr 24 and 255))
                 option("sub-ass-override", "force")
-                style.primaryColor?.let { option("sub-color", color(it)) }
-                style.backgroundColor?.let { option("sub-back-color", color(it)); option("sub-border-style", "background-box") }
+                style.primaryColor?.let { option("sub-color", mpvSubtitleColour(it)) }
+                style.backgroundColor?.let { option("sub-back-color", mpvSubtitleColour(it)); option("sub-border-style", "background-box") }
             }
             if (input.headers.isNotEmpty()) setHeaders(input.headers)
             mpvCheck(api.mpv_initialize(handle))

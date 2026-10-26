@@ -80,7 +80,7 @@ class ContinueWatchingActivationTest {
             val opened = mutableListOf<Card>(); val played = mutableListOf<Card>()
             val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
-                    HomeScreen(home, television = false, open = { opened += it }, retry = {}, play = { played += it }, busy = false)
+                    HomeScreen(home, television = false, retry = {}, open = { opened += it }, play = { played += it }, busy = false)
                 }
             } }
             try {
@@ -97,9 +97,9 @@ class ContinueWatchingActivationTest {
         val first = FocusRequester(); val savedFirst = FocusRequester()
         val scene = ImageComposeScene(1920, 900, Density(1f)) { ViptvTheme(true) {
             Column(Modifier.fillMaxSize().background(Palette.background)) {
-                TvHomeShelf(home.rows[0], 1f, first, up = null, focus = {}, open = { opened += it }, retry = {},
+                TvHomeShelf(home.rows[0], 1f, first, up = null, focus = {}, open = { opened += it },
                     play = { played += it })
-                TvHomeShelf(home.rows[1], 1f, savedFirst, up = null, focus = {}, open = { opened += it }, retry = {},
+                TvHomeShelf(home.rows[1], 1f, savedFirst, up = null, focus = {}, open = { opened += it },
                     play = { played += it })
             }
         } }
