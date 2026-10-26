@@ -255,10 +255,14 @@ internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapsh
             throw LocalFailure("This episode’s metadata changed. Open its details again.")
     } else detail.episodes.find {
         it.identity == card.identity && (card.metadata_origin == null || it.metadata_origin == card.metadata_origin)
-    }) ?: if (delegated) {
+    }) ?: if (delegated || unscopedEpisodeOf(card, detail.item)) {
         // The host validates this exact episode against the complete metadata document
         // before returning a page. An off-page episode keeps its raw selector and uses
         // the actual producer, just like an episode present in the returned page.
+        // A Continue Watching row names its episode under the library rather than a
+        // metadata provider, and that episode is often past the first page. It takes
+        // the scope of its own parent's details the same way, so the player gets that
+        // title's episodes and next episode.
         card.copy(provider_id = detail.item.provider_id, metadata_origin = detail.item.metadata_origin,
             parent_identity = detail.item.identity)
     } else card
@@ -268,6 +272,13 @@ internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapsh
     } ?: throw LocalFailure("Choose an episode from this title’s details.")
     else -> detail.item
     }
+}
+
+/** An episode card without a metadata origin whose parent is exactly the title [item] describes. */
+private fun unscopedEpisodeOf(card: Card, item: Card): Boolean {
+    val parent = card.parent_identity ?: return false
+    return card.metadata_origin == null && card.identity.kind == "series" && item.identity.episode == null &&
+        parent.kind == item.identity.kind && parent.id == item.identity.id && parent.episode == null
 }
 
 /** Presentation may follow an already host-verified public lookup, never infer an alias. */
