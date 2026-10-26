@@ -5,14 +5,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import org.viptv.app.state.*
 import org.viptv.app.state.ApplicationState
+import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
 internal fun PlayerRoute(state: ApplicationState, controller: ApplicationController, television: Boolean,
     phone: Boolean, browser: Boolean, backChanged: ((() -> Unit)?) -> Unit) {
     val detail = state.detail
-    val episodes = detail?.episodes.orEmpty()
+    val episodes = playerEpisodes(state.sourceTitle, detail)
     LaunchedEffect(state.playback, state.selectedProfile, state.sourceTitle?.identity, state.sourceTitle?.provider_id, state.sourceTitle?.parent_identity) {
         controller.loadNextEpisode()
+        controller.loadPlaybackSeason()
     }
     val fallback = state.sources.firstOrNull { it.id != state.playingSource?.id } ?: state.playingSource
     val title = state.sourceTitle?.let { card ->
@@ -30,4 +33,12 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
         trackChosen = controller::rememberTrackChoice)
+}
+
+/** The player's Episodes list: the playing episode's season, in its exact metadata scope. */
+internal fun playerEpisodes(current: Card?, detail: DetailSnapshot?): List<Card> {
+    val season = current?.identity?.episode?.season ?: return emptyList()
+    return phonePlaybackEpisodes(current, detail?.episodes.orEmpty())
+        .filter { it.identity.episode?.season == season }
+        .sortedBy { it.identity.episode?.episode }
 }
