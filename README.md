@@ -8,3 +8,5 @@ The supplied design is held in the companion design repository. This repository 
 Implementation status and missing designs are recorded in `docs/STATUS.md` and `docs/DESIGN_GAPS.md`.
 
 Desktop mpv build, qualification limits and numeric evidence: [migration report](docs/DESKTOP_MPV_2026_10_23.md).
+
+Android build, shipped ABIs and the single-ABI emulator loop: [Android builds](docs/ANDROID_BUILD.md).
