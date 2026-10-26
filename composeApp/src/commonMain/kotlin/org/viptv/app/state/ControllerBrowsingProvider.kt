@@ -3,7 +3,7 @@ package org.viptv.app.state
 import org.viptv.app.connection.*
 
 fun ApplicationController.selectBrowsingProvider(plugin: String) = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     val profile = requireNotNull(owner.profile)
     val current = mutable.value.browsingConfiguration ?: throw LocalFailure("Refresh add-on settings first.")
     if (owner.device != null) {

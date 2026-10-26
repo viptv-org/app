@@ -99,6 +99,10 @@ private suspend fun ApplicationController.checkRevisions(owner: QuietOwner) {
 private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, observed: Revisions?, detail: Boolean) {
     progressJob?.join()
     val libraryMoved = observed?.let(freshness::libraryChanged) ?: true
+    // A refresh with no observation follows playback: only progress is known to have moved.
+    val addonsMoved = observed?.let(freshness::addonsChanged) ?: false
+    // An add-on change in progress on this device is never interrupted: rebuild from what it leaves behind.
+    if (addonsMoved) addonOperation?.join()
     val device = owner.local
     if (device != null) {
         val home = device.refreshHome(owner.profile)
@@ -120,6 +124,7 @@ private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, obse
     }
     if (libraryMoved) reloadVisibleLibrary(owner)
     if (detail || (libraryMoved && mutable.value.screen in DETAIL_SCREENS)) reloadDetailQuietly(owner)
+    if (addonsMoved) reloadAddonsQuietly(owner)
 }
 
 /** Details stays composed behind the sources sheet, so both show its progress. */
@@ -157,6 +162,31 @@ private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner
             if (current(owner) && mutable.value.screen == Screen.History) mutable.value = mutable.value.copy(history = history)
         }
         else -> Unit
+    }
+}
+
+private val BROWSE_SCREENS = setOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)
+
+/**
+ * The add-on list (Settings → Add-ons), the enabled set and the browsing
+ * configuration. A Browse page on display keeps its cards; elsewhere Browse
+ * state is dropped so its next entry loads controls for the new add-ons.
+ */
+private suspend fun ApplicationController.reloadAddonsQuietly(owner: QuietOwner) {
+    val remote = owner.remote ?: return
+    while (true) {
+        addonOperation?.join()
+        val followed = addonOperation
+        val result = remote.addons(owner.profile)
+        if (!current(owner)) return
+        // An add-on operation that started meanwhile may publish a newer list: wait for it and read again.
+        if (addonOperation !== followed) continue
+        val state = mutable.value
+        val browsing = state.screen in BROWSE_SCREENS
+        mutable.value = state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
+            browseControls = state.browseControls.takeIf { browsing }, browseCards = if (browsing) state.browseCards else emptyList(),
+            browseNext = state.browseNext.takeIf { browsing })
+        return
     }
 }
 

@@ -31,6 +31,19 @@ class QuietRefreshTest {
                 id = "top", title = "Top", provider_id = "addon:1", state = RowState.READY, cards = catalog, next_cursor = "2")),
         complete = true)
     private val shown = home(6, listOf(card("old")))
+    /** A Home with one catalog row per installed add-on. */
+    private fun addonHome(revision: Long, vararg installed: Int) = home(revision, listOf(card("old"))).let { home ->
+        home.copy(rows = home.rows.take(1) + installed.map { n ->
+            HomeRow(id = "addon:$n", title = "Addon $n", provider_id = "addon:$n", state = RowState.READY, cards = listOf(card("a$n")))
+        })
+    }
+    private fun addon(n: Int) = IntegrationConnection("addon:$n", "stremio", "7", null, "Addon $n", true, 3, listOf(Capability.DISCOVERY))
+    private fun integrationsJson(vararg installed: Int) = """{"configuration":{"scope":{"connection_id":"server","account_id":"7","profile_id":"12","revision":9},""" +
+        """"mode":"Server","name":"Parent","browsing_plugin":"stremio","assignments":[""" +
+        installed.joinToString(",") { """{"connection_id":"addon:$it","enabled":["Discovery"]}""" } + """]},"connections":[""" +
+        installed.joinToString(",") { """{"id":"addon:$it","plugin_id":"stremio","account_id":"7","name":"Addon $it","enabled":true,"revision":3,"capabilities":["Discovery"]}""" } + "]}"
+    private fun addonsJson(vararg installed: Int) =
+        """{"items":[""" + installed.joinToString(",") { """{"id":$it,"name":"Addon $it","enabled":true}""" } + """],"next_cursor":null}"""
     private fun bootstrap(home: HomeSnapshot, revisions: Map<String, String>?) = buildJsonObject {
         put("identity", buildJsonObject {
             put("profiles", buildJsonArray { add(buildJsonObject { put("id", "12"); put("name", "Parent") }) })
@@ -109,6 +122,8 @@ class QuietRefreshTest {
             when (path) {
                 "/api/profiles/12/revisions" -> json(revisionsJson(moved))
                 "/api/bootstrap" -> json(bootstrap(home(9, listOf(card("old"))), moved))
+                "/api/profiles/12/integrations" -> json(integrationsJson(1))
+                "/api/addons" -> json(addonsJson(1))
                 else -> error("Unexpected $path")
             }
         }
@@ -120,6 +135,7 @@ class QuietRefreshTest {
         assertTrue(operation.isActive, "The viewer's operation keeps running")
         assertTrue(controller.state.value.busy)
         assertEquals(9L, controller.state.value.home?.revision)
+        assertEquals(listOf("addon:1"), controller.state.value.addons.map { it.id })
         gate.complete(Unit); operation.join()
         controller.connection?.close()
     }
@@ -333,6 +349,98 @@ class QuietRefreshTest {
                 }
             }
         }
+    }
+
+    @Test fun aMovedAddonsTokenReloadsTheAddOnListAndHome() = runBlocking<Unit> {
+        val moved = base + ("addons" to "a2")
+        for (screen in listOf(Screen.Settings, Screen.Discover)) {
+            var revisions = base
+            val server = Server { path ->
+                when (path) {
+                    "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                    "/api/bootstrap" -> json(bootstrap(addonHome(7, 1, 3), moved))
+                    "/api/profiles/12/integrations" -> json(integrationsJson(1, 3))
+                    "/api/addons" -> json(addonsJson(1, 3))
+                    else -> error("Unexpected $path")
+                }
+            }
+            val browsed = listOf(card("b1"))
+            controller(server, state = ApplicationState(screen = screen, selectedProfile = "12", home = addonHome(6, 1, 2),
+                addons = listOf(addon(1), addon(2)), enabledAddonIds = setOf("addon:1", "addon:2"), browseCards = browsed)).whileForeground {
+                // Elsewhere: add-on 2 removed, add-on 3 installed.
+                returnAfter { revisions = moved }
+                val now = state.value
+                assertEquals(listOf("addon:1", "addon:3"), now.addons.map { it.id }, "The add-on list on $screen is current")
+                assertEquals(setOf("addon:1", "addon:3"), now.enabledAddonIds)
+                assertEquals(listOf("continue", "addon:1", "addon:3"), now.home?.rows?.map { it.id }, "Home has the new add-on's row, not the removed one's")
+                assertEquals(screen, now.screen); assertFalse(now.busy); assertNull(now.error)
+                if (screen == Screen.Discover) assertEquals(browsed, now.browseCards, "The Browse page on display is not emptied")
+                else assertEquals(emptyList(), now.browseCards, "Browse loads the new add-ons on its next entry")
+            }
+        }
+    }
+
+    @Test fun aMovedLibraryTokenAloneLeavesTheAddOnListAlone() = runBlocking<Unit> {
+        val moved = base + ("library" to "5")
+        var revisions = base
+        val server = Server { path ->
+            when (path) {
+                "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                "/api/bootstrap" -> json(bootstrap(home(7, listOf(card("new"))), moved))
+                else -> error("Unexpected $path")
+            }
+        }
+        val installed = listOf(addon(1))
+        controller(server, state = ApplicationState(screen = Screen.Settings, selectedProfile = "12", home = shown, addons = installed)).whileForeground {
+            returnAfter { revisions = moved }
+            assertEquals(listOf("/api/profiles/12/revisions", "/api/bootstrap"), server.paths, "No add-on requests")
+            assertSame(installed, state.value.addons)
+            assertEquals(listOf("new"), state.value.home?.rows?.first()?.cards?.map { it.identity.id })
+        }
+    }
+
+    @Test fun anAddOnOperationOnThisDeviceFinishesBeforeTheAddOnListReloads() = runBlocking<Unit> {
+        var installed = intArrayOf(1, 2, 3)
+        var revisions = base + ("addons" to "a2")
+        val events = java.util.Collections.synchronizedList(mutableListOf<String>())
+        val removing = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val server = Server { path ->
+            when (path) {
+                "/api/addons/2" -> {
+                    removing.complete(Unit); release.await()
+                    installed = intArrayOf(1, 3); revisions = base + ("addons" to "a3")
+                    events += "removed"; json("""{"ok":true}""")
+                }
+                "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                "/api/bootstrap" -> json(bootstrap(addonHome(8, *installed), revisions))
+                "/api/profiles/12/integrations" -> json(integrationsJson(*installed))
+                "/api/addons" -> { events += "list"; json(addonsJson(*installed)) }
+                "/api/profiles/12/source-integrations" -> json("{}", HttpStatusCode.NotFound)
+                else -> error("Unexpected $path")
+            }
+        }
+        controller(server, state = ApplicationState(screen = Screen.Settings, selectedProfile = "12", home = addonHome(6, 1, 2),
+            addons = listOf(addon(1), addon(2)))).whileForeground {
+            // The viewer removes add-on 2 here while add-on 3 was installed elsewhere.
+            try { removeAddonWhileReturning(removing, release, events) } finally { release.complete(Unit) }
+        }
+    }
+    /** Removes add-on 2 on this device; a return happens while the removal is in flight. */
+    private suspend fun ApplicationController.removeAddonWhileReturning(removing: CompletableDeferred<Unit>, release: CompletableDeferred<Unit>,
+        events: List<String>) {
+        removeAddon("addon:2"); removing.await()
+        val operation = requireNotNull(job)
+        appForeground(false); appForeground(true); freshen()
+        assertNull(withTimeoutOrNull(500) { settle() }, "The background lane waits for the viewer's add-on operation")
+        assertTrue(operation.isActive, "The add-on operation is not interrupted")
+        assertEquals(emptyList(), events.toList(), "No add-on list is read under the operation")
+        release.complete(Unit); operation.join(); settle()
+        assertFalse(operation.isCancelled)
+        val now = state.value
+        assertEquals(listOf("addon:1", "addon:3"), now.addons.map { it.id })
+        assertEquals(listOf("continue", "addon:1", "addon:3"), now.home?.rows?.map { it.id })
+        assertNull(now.error); assertFalse(now.busy)
+        assertEquals(listOf("removed", "list", "list"), events.toList(), "The operation's own reload, then the background one")
     }
 
     @Test fun aRefreshKeepsTheTailOfARowTheViewerPaged() {

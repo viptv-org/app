@@ -26,12 +26,12 @@ internal suspend fun ApplicationController.loadAddons(operation: AddonOperationO
 }
 
 fun ApplicationController.refreshAddons() = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     loadAddons(owner); loadSourceIntegrations(owner); loadPreferences(owner)
 }
 
 fun ApplicationController.refreshAddonConfiguration() = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     loadAddons(owner); loadSourceIntegrations(owner)
 }
 
@@ -56,6 +56,7 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
     val profile = mutable.value.selectedProfile
     val expectedGeneration = generation + 1
     run {
+        addonOperationStarted()
         val owner = AddonOperationOwner(expectedGeneration, device, remote, profile, currentCoroutineContext()[Job])
         try {
             val selected = profile ?: throw LocalFailure("Choose a profile first.")
@@ -77,7 +78,7 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
 }
 
 fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     val profile = requireNotNull(owner.profile)
     if (owner.device != null) owner.device.setAddonEnabled(profile, id, enabled)
     else requireNotNull(owner.remote).setAddonEnabled(profile, id, enabled)
@@ -88,7 +89,7 @@ fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
 }
 
 fun ApplicationController.removeAddon(id: String) = run {
-    val owner = addonOperationOwner()
+    val owner = beginAddonOperation()
     if (owner.device != null) owner.device.removeAddon(id) else requireNotNull(owner.remote).removeAddon(id)
     owner.requireCurrent(this)
     loadAddons(owner)

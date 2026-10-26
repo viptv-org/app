@@ -2,7 +2,8 @@
 
 Status: first implemented in app `360e597` and backend `63b2ecd`. The foreground
 gap, the no-baseline rule and the visible-Details reload were revised for
-app#2 (2026-10-26); see the rules in section 2.
+app#2 (2026-10-26); see the rules in section 2. A moved `addons` token also
+reloads the add-on list since app#3 (2026-10-26).
 
 ## Audit
 
@@ -159,9 +160,38 @@ from "add-ons changed".
   |---|---|
   | `library`, `configuration`, `addons` or `policy` | silent `RefreshHome` |
   | `library` while My List, History or Details (also behind the sources sheet) is visible | also reload that page in place |
+  | `addons` | also reload the add-on list (see below) |
   | `profiles` | `ReloadProfiles` |
   | `preferences` | reload preferences |
 
+- **Add-ons changed elsewhere.** A moved `addons` token (account add-ons
+  installed, removed, reordered, reconfigured, or their credentials changed)
+  reloads the add-on list with Home: Settings → Add-ons, the enabled set and
+  the browsing configuration. Only that token does this; a check where only
+  other tokens moved makes no add-on request. Rules:
+  - An add-on operation running on this device (install, enable, remove,
+    provider choice, add-on refresh) is never interrupted. The quiet lane
+    waits for it to finish, then rebuilds Home and reads the list it left
+    behind. If another one starts while the list is being read, the lane
+    waits for that one too and reads again, so it never overwrites a newer
+    list.
+  - A Browse page on display keeps its cards. Elsewhere the Browse state is
+    dropped so the next Browse entry loads controls for the new add-ons.
+  - A failed list read is silent and keeps the shown list. Opening Settings
+    reloads it anyway.
+  - Enabling or disabling an add-on for one profile moves `configuration`,
+    not `addons`. That rebuilds Home, but the add-on list waits for the next
+    Settings entry.
+- **Catalog cache lag.** The rebuilt Home has a row for every catalog of the
+  add-ons installed now, so a removed add-on's rows disappear and a new
+  add-on's rows appear on the same check. Row contents come from the
+  server's add-on response cache, which keeps each catalog response for
+  300 s. A server with a secret vault configured keys that cache by the
+  add-on revision, so a moved token bypasses it. Without one the cache is
+  keyed by address only, and a catalog address fetched in the last 300 s
+  (for example an add-on removed and installed again) can show contents up
+  to 300 s old. The next aged-Home rebuild (5 min, below) picks up the
+  current contents.
 - **No baseline.** A Home built without revisions cannot be proven current, so
   the first observation counts as a change and runs one silent `RefreshHome`,
   which sets the baseline.

@@ -58,11 +58,14 @@ class FreshnessTest {
         assertTrue(freshness.changed(base - "addons"), "A token that disappears is a change")
         assertTrue(freshness.libraryChanged(base + ("library" to "5")))
         assertFalse(freshness.libraryChanged(base + ("addons" to "a2")))
+        assertTrue(freshness.addonsChanged(base + ("addons" to "a2")))
+        assertFalse(freshness.addonsChanged(base + ("library" to "5")), "Only the add-on token reloads add-ons")
     }
 
     @Test fun withoutABaselineEveryObservationIsAChange() {
         assertTrue(freshness.changed(base), "A Home built without tokens cannot be proven current")
         assertTrue(freshness.libraryChanged(base))
+        assertTrue(freshness.addonsChanged(base))
         freshness.adopt(base)
         assertFalse(freshness.changed(base))
         assertTrue(freshness.changed(base + ("configuration" to "3")))
