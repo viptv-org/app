@@ -47,6 +47,20 @@ internal fun ApplicationController.freshnessTick() {
     else if (freshness.checkDue(polling = true)) requestQuiet(QuietWork.Check)
 }
 
+/**
+ * Phone and tablet pull-to-refresh: rebuild Home and the page on display now,
+ * with no revisions check and no coalescing. Quiet-lane rules apply: no busy
+ * cover, a failure keeps the shown data, an expired session goes to sign-in.
+ * Returns once the lane has nothing left to do, which ends the indicator.
+ */
+suspend fun ApplicationController.pullToRefresh() {
+    val state = mutable.value
+    if (state.screen == Screen.Player || state.selectedProfile == null) return
+    requestQuiet(QuietWork.Refresh, detail = state.screen in DETAIL_SCREENS)
+    // A check or refresh already running finishes first; the forced refresh follows it in the same job.
+    while (true) { val running = quietJob ?: return; running.join(); if (quietJob === running) return }
+}
+
 /** Progress changed: rebuild Home and the details Back returns to once the final save lands. */
 internal fun ApplicationController.afterPlayback(live: Boolean = false) {
     if (!live) requestQuiet(QuietWork.Refresh, detail = true)
