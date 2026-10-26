@@ -12,6 +12,7 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.*
 import org.viptv.app.features.settings.*
 import org.viptv.app.theme.*
+import kotlinx.coroutines.runBlocking
 import kotlin.test.*
 import java.io.File
 
@@ -22,9 +23,10 @@ class ProfileAdministrationUiTest {
         var renamed:Pair<String,String>?=null
         val name=ImageComposeScene(1920,1080,Density(1f)){ViptvTheme(true){TvProfileEditDialog(TvProfileEditAction.Name,parentLocked,false,{}, {a,b->renamed=a to b},{_,_->},{},pinAvailable=false)}}
         try{frames(name);assertFalse(nodes(name).any{text(it)=="Current PIN"});val field=nodes(name).single{it.config.contains(SemanticsActions.SetText)};field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("Renamed"));frames(name,20);click(name,"Save");assertEquals("Renamed" to "",renamed);capture(name,"remote-profile-name")}finally{name.close()}
-        var avatar:Pair<String,String>?=null
-        val picker=ImageComposeScene(800,800,Density(1f)){ViptvTheme{AvatarPicker(parentLocked,false,{}, {a,b->avatar=a to b},pinAvailable=false)}}
-        try{frames(picker);assertFalse(nodes(picker).any{text(it)=="Current PIN"});val choice=nodes(picker).first{it.config.contains(SemanticsActions.OnClick)&&it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().contains("Other")};assertFalse(choice.config.contains(SemanticsProperties.Disabled));choice.config[SemanticsActions.OnClick].action!!.invoke();assertEquals("",avatar?.second);assertNotNull(avatar)}finally{picker.close()}
+        var avatar:Pair<AvatarPick,String>?=null
+        runBlocking{loadAvatarCatalog()}
+        val picker=ImageComposeScene(800,800,Density(1f)){ViptvTheme{AvatarPicker(parentLocked,false,AvatarPickerLayout.Desktop,{}, {a,b->avatar=a to b},pinAvailable=false)}}
+        try{frames(picker);assertFalse(nodes(picker).any{text(it)=="Current PIN"});val choice=nodes(picker).first{it.config.contains(SemanticsActions.OnClick)&&it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().contains("Disney favorites 2")};assertFalse(choice.config.contains(SemanticsProperties.Disabled));choice.config[SemanticsActions.OnClick].action!!.invoke();assertEquals(AvatarPick("disney",2) to "",avatar)}finally{picker.close()}
     }
     @Test fun actualLocalPinRemainsRequiredAndRemotePolicyCannotBecomeLocalLock(){
         assertTrue(parentLocked.copy(lockKind=null).requiresLocalPin(true));assertFalse(parentLocked.requiresLocalPin(true));assertFalse(parentLocked.copy(lockKind=null).requiresLocalPin(false))

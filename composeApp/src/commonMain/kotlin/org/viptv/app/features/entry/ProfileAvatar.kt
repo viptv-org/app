@@ -31,21 +31,33 @@ internal fun profileColor(profile: Profile?): Color = when (profile?.avatarId) {
         .let { it[((profile?.id?.hashCode() ?: 0) and Int.MAX_VALUE) % it.size] }
 }
 
+/**
+ * A profile's avatar: its catalog pick from the bundled images first, then a legacy
+ * bundled id, then the server's `avatarUrl`, then the initial on [profileColor].
+ */
 @Composable
 internal fun ProfileAvatar(profile: Profile?, size: Dp, radius: Dp) {
+    val pick = profile?.avatarPick()
+    val catalog = if (pick != null) rememberAvatarCatalog() else null
+    val packaged = pick?.let { catalog?.avatarUri(it.style, it.choice) }
+    // Until the catalog has loaded, keep the image tile rather than flash an initial.
+    val waiting = pick != null && catalog == null
     val avatarId = profile?.avatarId
-    val color = profileColor(profile)
     val artwork = when (avatarId) {
         "vynxc" -> Res.drawable.avatar_vynxc
         "zayne" -> Res.drawable.avatar_zayne
         else -> null
     }
-    val background = if (artwork != null || profile?.avatar != null) Color(0xFF0E0E10) else color
-    Box(Modifier.size(size).clip(RoundedCornerShape(radius)).background(background), contentAlignment = Alignment.Center) {
+    val remote = profile?.avatarUrl ?: profile?.avatar
+    val image = packaged != null || waiting || artwork != null || remote != null
+    Box(Modifier.size(size).clip(RoundedCornerShape(radius)).background(if (image) Color(0xFF0E0E10) else profileColor(profile)),
+        contentAlignment = Alignment.Center) {
         when {
+            packaged != null -> AsyncImage(packaged, profile?.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            waiting -> Unit
             artwork != null -> androidx.compose.foundation.Image(painterResource(artwork), profile?.name,
                 Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            profile?.avatar != null -> AsyncImage(profile.avatar, profile.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            remote != null -> AsyncImage(remote, profile?.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             else -> Text(profile?.name?.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString().orEmpty(),
                 fontSize = if (size <= 40.dp) (size.value * 0.57f).sp else (size.value * 0.45f).sp, fontWeight = FontWeight.Bold)
         }
