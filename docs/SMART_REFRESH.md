@@ -177,14 +177,17 @@ from "add-ons changed".
     list.
   - A Browse page on display keeps its cards. Elsewhere the Browse state is
     dropped so the next Browse entry loads controls for the new add-ons.
-  - A failed list read is silent and keeps the shown list. Opening Settings
-    reloads it anyway.
+  - A failed list read is silent and keeps the shown list. It is not retried
+    until the token moves again; opening Settings (or its Add-ons section on
+    the web) reloads the list anyway.
+  - Restricted kids sessions see a constant `addons` token, so this never
+    runs for them.
   - Enabling or disabling an add-on for one profile moves `configuration`,
     not `addons`. That rebuilds Home, but the add-on list waits for the next
     Settings entry.
-- **Catalog cache lag.** The rebuilt Home has a row for every catalog of the
-  add-ons installed now, so a removed add-on's rows disappear and a new
-  add-on's rows appear on the same check. Row contents come from the
+- **Catalog cache lag.** The rebuilt Home builds its rows from the add-ons
+  installed now (the server caps Home at the first 10 catalogs), so a removed
+  add-on's rows disappear and a new add-on's rows appear on the same check. Row contents come from the
   server's add-on response cache, which keeps each catalog response for
   300 s. A server with a secret vault configured keys that cache by the
   add-on revision, so a moved token bypasses it. Without one the cache is

@@ -425,6 +425,7 @@ class QuietRefreshTest {
             try { removeAddonWhileReturning(removing, release, events) } finally { release.complete(Unit) }
         }
     }
+
     /** Removes add-on 2 on this device; a return happens while the removal is in flight. */
     private suspend fun ApplicationController.removeAddonWhileReturning(removing: CompletableDeferred<Unit>, release: CompletableDeferred<Unit>,
         events: List<String>) {
