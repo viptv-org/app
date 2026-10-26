@@ -2,13 +2,25 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+// Shipped ABIs: each has the Rust engine, the FFmpeg audio decoder and the torrent runtime.
+val shippedAbis = listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+// -Pviptv.abis=x86_64 (comma list) builds and packages only those ABIs, for fast emulator loops.
+// Without it every shipped ABI is built; release and distribution builds never pass it.
+val abis: List<String> = providers.gradleProperty("viptv.abis").orNull?.let { value ->
+    val requested = value.split(",").map(String::trim).filter(String::isNotEmpty)
+    val unknown = requested - shippedAbis
+    if (requested.isEmpty() || unknown.isNotEmpty()) {
+        throw GradleException("viptv.abis: unknown ABI ${unknown.joinToString().ifEmpty { "(empty)" }}; supported: ${shippedAbis.joinToString()}")
+    }
+    shippedAbis.filter { it in requested }
+} ?: shippedAbis
 android {
     namespace = "org.viptv.experiment"
     compileSdk = 37
     defaultConfig {
         applicationId = "org.viptv.experiment"; minSdk = 26; targetSdk = 36; versionCode = 1; versionName = "0.1.0-experiment"
         // Package only ABIs with both the Rust engine and FFmpeg audio decoder.
-        ndk { abiFilters += setOf("armeabi-v7a", "arm64-v8a", "x86_64") }
+        ndk { abiFilters += abis }
         // Optional prefilled sign-in server for dev builds: -Pviptv.defaultServer=https://host
         val defaultServer = providers.gradleProperty("viptv.defaultServer").orNull.orEmpty()
         require(defaultServer.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?").matches(defaultServer)) { "viptv.defaultServer must be an https origin" }
@@ -69,13 +81,16 @@ dependencies {
 
 val buildAndroidEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
-    commandLine("python3", "tools/build_engine.py", "android")
+    commandLine("python3", "tools/build_engine.py", "android", "--abis", abis.joinToString(","))
+    inputs.property("abis", abis)
     inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"))
     outputs.dir(layout.buildDirectory.dir("generated/rustJni"))
 }
 tasks.named("preBuild") { dependsOn(buildAndroidEngine) }
 
 // -Pviptv.torrentRuntime=false builds without it (no Go/playback-gateway); torrents then need a gateway.
+// The pinned upstream script always builds every shipped ABI (once per checkout, cached by revision);
+// viptv.abis only limits which of them abiFilters packages.
 val torrentRuntime = providers.gradleProperty("viptv.torrentRuntime").orNull != "false"
 val buildTorrentRuntime by tasks.registering(Exec::class) {
     onlyIf { torrentRuntime }
@@ -85,3 +100,13 @@ val buildTorrentRuntime by tasks.registering(Exec::class) {
     outputs.dir(layout.buildDirectory.dir("generated/torrentRuntime"))
 }
 tasks.named("preBuild") { dependsOn(buildTorrentRuntime) }
+
+// Guard: the debug APK packages exactly the selected ABIs (all shipped ABIs without viptv.abis).
+val checkDebugApkAbis by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Checks that the debug APK packages exactly the ABIs selected by viptv.abis."
+    dependsOn("assembleDebug")
+    workingDir(rootProject.projectDir)
+    val apk = layout.buildDirectory.file("outputs/apk/debug/androidApp-debug.apk")
+    commandLine("python3", "tools/check_apk_abis.py", apk.get().asFile.path, abis.joinToString(","))
+}
