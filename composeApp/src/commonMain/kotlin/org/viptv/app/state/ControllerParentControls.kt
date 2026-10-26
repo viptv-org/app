@@ -103,5 +103,5 @@ internal suspend fun ApplicationController.invalidatePolicyContent() {
     mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = current.selectedProfile,
         profiles = current.profiles, profileManagement = current.profileManagement,
         parentSettings = current.parentSettings, parentTitles = current.parentTitles,
-        parentSettingsSaved = current.parentSettingsSaved, busy = true, policyRefreshNeeded = true)
+        parentSettingsSaved = current.parentSettingsSaved, settingsPage = current.settingsPage, busy = true, policyRefreshNeeded = true)
 }
