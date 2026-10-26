@@ -19,7 +19,10 @@ fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Bool
     openSource(current, forceGateway, positionMillis = if (restart) 0L else null)
 }
 
-internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false): Unit = run {
+internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false) =
+    run { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen) }
+
+internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean) {
     progressJob?.join()
     val stopping = releaseRemotePlayback()
     mutable.value = mutable.value.copy(playback = null, presentation = null, findingSources = false)
@@ -30,8 +33,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
     if (mutable.value.preferences == null) loadPreferences()
     val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
     val lease = if (store == null) try {
-        requireNotNull(remote).openPlayback(source, profile, forceGateway = forceGateway, positionMillis = positionMillis,
-            stage = { text -> mutable.value = mutable.value.copy(openingStage = text) })
+        leaseOpener.open(requireNotNull(remote), source, profile, forceGateway, positionMillis) { text -> mutable.value = mutable.value.copy(openingStage = text) }
     } finally { mutable.value = mutable.value.copy(openingStage = null) } else null
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
     val card = requireNotNull(mutable.value.sourceTitle)
@@ -59,17 +61,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
         })
     } else null
     firstFrameSeen = false
-    if (lease != null) playbackRenewal = scope.launch {
-        try {
-            while (isActive) { delay(lease.renewSeconds.coerceIn(1, 30) * 1000); lease.renew() }
-        } catch (error: CancellationException) { throw error }
-        catch (_: Exception) {
-            if (remotePlayback === lease) {
-                mutable.value = mutable.value.copy(playback = null, error = "The server playback session ended. Choose the source again.", screen = Screen.Sources)
-                releaseRemotePlayback()
-            }
-        }
-    }
+    if (lease != null) keepPlaybackLease(lease, source, forceGateway, input)
     lastProgress=null
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
@@ -94,6 +86,7 @@ fun ApplicationController.retrySource(source: SourceCandidate) {
 
 fun ApplicationController.pausePlayback() {
     backgroundPlayback = null
+    resumeAfterRenewal = null
     val paused=!mutable.value.paused
     if (!paused) completionSeen = false
     mutable.value = mutable.value.copy(paused = paused)
@@ -112,8 +105,9 @@ fun ApplicationController.suspendPlayback() {
 fun ApplicationController.resumePlayback() {
     val input = backgroundPlayback ?: return
     backgroundPlayback = null
-    if (mutable.value.playback === input && !completionSeen)
-        mutable.value = mutable.value.copy(paused = false)
+    if (mutable.value.playback !== input || completionSeen) return
+    if (remotePlayback != null) resumeAfterLease(input)
+    else mutable.value = mutable.value.copy(paused = false)
 }
 
 fun ApplicationController.observePlaybackFor(input: PlaybackInput?, fact: PlayerFact) {

@@ -8,6 +8,7 @@ import kotlin.time.TimeSource
 internal fun ApplicationController.releaseRemotePlayback(): Job? {
     cancelNextEpisode()
     backgroundPlayback = null
+    resumeAfterRenewal = null
     val trackingStop = if (firstFrameSeen) tracking?.transition(PlaybackEvent.Stop, lastProgress, ended = completionSeen) else null
     tracking = null
     val acknowledgment = frameAcknowledgment
