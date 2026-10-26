@@ -60,6 +60,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var quietPending: QuietWork? = null
     internal var quietDetail = false
     internal var freshnessWatcher: Job? = null
+    /** The latest add-on operation on this device. The quiet lane waits for it instead of racing it. */
+    internal var addonOperation: Job? = null
 
     internal fun run(operation: suspend () -> Unit) {
         val prior = job
