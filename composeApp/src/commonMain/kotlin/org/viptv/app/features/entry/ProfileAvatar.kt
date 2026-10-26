@@ -23,15 +23,18 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.avatar_vynxc
 import org.viptv.app.resources.avatar_zayne
 
+/** The profile's identity colour: the fill of an initial avatar, stable for a profile id. */
+internal fun profileColor(profile: Profile?): Color = when (profile?.avatarId) {
+    "initial-pink" -> Color(0xFFC24E6B)
+    "initial-blue" -> Color(0xFF3E6B8A)
+    else -> listOf(Color(0xFFC24E6B), Color(0xFF3E6B8A), Color(0xFF675C8E), Color(0xFF40766B))
+        .let { it[((profile?.id?.hashCode() ?: 0) and Int.MAX_VALUE) % it.size] }
+}
+
 @Composable
 internal fun ProfileAvatar(profile: Profile?, size: Dp, radius: Dp) {
     val avatarId = profile?.avatarId
-    val color = when (avatarId) {
-        "initial-pink" -> Color(0xFFC24E6B)
-        "initial-blue" -> Color(0xFF3E6B8A)
-        else -> listOf(Color(0xFFC24E6B), Color(0xFF3E6B8A), Color(0xFF675C8E), Color(0xFF40766B))
-            .let { it[((profile?.id?.hashCode() ?: 0) and Int.MAX_VALUE) % it.size] }
-    }
+    val color = profileColor(profile)
     val artwork = when (avatarId) {
         "vynxc" -> Res.drawable.avatar_vynxc
         "zayne" -> Res.drawable.avatar_zayne
