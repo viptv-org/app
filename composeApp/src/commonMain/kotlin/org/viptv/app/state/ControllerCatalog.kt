@@ -167,34 +167,37 @@ internal fun org.viptv.engine.wire.DetailSnapshot.withCardArt(card: Card): org.v
     val merged = item.copy(landscape = item.landscape ?: card.landscape, poster = item.poster ?: card.poster, logo = item.logo ?: card.logo)
     return if (merged == item) this else copy(item = merged)
 }
+
 /**
  * Play from a row without opening the title page (Continue Watching, a Home hero).
  * The source selector opens on the tap in its finding-sources state; the title's
  * Details never hold up that screen change (app#11).
  *
- * An episode card already names its episode, so discovery starts right away and the
- * Details load beside it ([loadSourceDetail]). A movie or series card needs its
- * Details to pick the target (provider metadata, including the native identity
- * evidence cache), so discovery waits for them on the open selector.
+ * An episode card that carries its metadata scope already says exactly what to look
+ * for, so its discovery starts right away and the Details load beside it
+ * ([loadSourceDetail]). Any other card needs its Details to pick the target: a movie
+ * or series its title card, and an imported `library` episode the producer scope
+ * (and ids) that the host's source lookup uses from Details. Its discovery starts
+ * when the Details arrive, on the already open selector.
  */
 fun ApplicationController.playTitle(card: Card) {
-    if (card.identity.episode?.episode?.let { it <= 0L } == true) {
-        mutable.value = mutable.value.copy(error = "Choose a numbered episode from this title’s details.")
+    if (card.unnumberedEpisode()) {
+        mutable.value = mutable.value.copy(error = UNNUMBERED_EPISODE)
         return
     }
     val navigation = navigationGeneration
-    val previous = mutable.value
+    val before = mutable.value
     // Keep the page that sources should return to, so Back does not use an older
     // visit's return target.
-    val origin = previous.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
-        ?: previous.detailReturnScreen
+    val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
+        ?: before.detailReturnScreen
     // Details already loaded for this title stay behind the selector until the fresh
     // copy replaces them; another title's Details must not.
-    val shown = previous.detail?.takeIf { sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
+    val keptDetail = before.detail?.takeIf { sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
     releaseRemotePlayback()
-    mutable.value = mutable.value.copy(detail = shown, detailReturnScreen = origin)
-    openSources(card, returnTo = if (shown != null) Screen.Details else origin)
-    if (card.identity.episode != null) {
+    mutable.value = mutable.value.copy(detail = keptDetail, detailReturnScreen = origin)
+    openSources(card, returnTo = if (keptDetail != null) Screen.Details else origin)
+    if (card.identity.episode != null && card.metadata_origin != null) {
         loadSourceDetail(card, navigation)
         run { discoverSources(card) }
         return
@@ -205,27 +208,31 @@ fun ApplicationController.playTitle(card: Card) {
         try {
             val profile = requireNotNull(mutable.value.selectedProfile)
             val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-            target = sourceTarget(card, detail)
-            mutable.value = mutable.value.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target)
+            target = sourceTarget(card, detail).also { showSourceDetail(detail, card, it) }
         } finally {
-            // Without a target there is nothing to find.
+            // Without a target there is nothing to find (failed, retired or replaced).
             if (target == null && generation == operation) mutable.value = mutable.value.copy(findingSources = false)
         }
         discoverSources(requireNotNull(target))
     }
 }
 
+/** The title's Details arrived for [card]: Back from sources returns to them, and sources are for [target]. */
+private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire.DetailSnapshot, card: Card, target: Card) {
+    mutable.value = mutable.value.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target)
+}
+
 /**
- * The Details of an episode whose sources are already being found. They fill in
- * without blocking the selector. When they arrive, Back from sources returns to the
- * title's Details and the episode takes its title's scope ([sourceTarget]), so the
- * player gets the season and the next episode as it does from Details (app#10).
- * Discovery keeps running, unless the card's own metadata scope turned out stale.
- * A failed read changes nothing: sources do not need it, and the discovery request
- * itself reports an unreachable host or an expired session.
+ * The Details of a scoped episode whose sources are already being found. They fill
+ * in without blocking the selector. When they arrive, Back from sources returns to
+ * the title's Details, and the player gets the season and the next episode as it
+ * does from Details (app#10). Discovery keeps running unless the episode's own
+ * metadata scope turned out stale. A failed read changes nothing: sources do not
+ * need it, and the discovery request itself reports an unreachable host or an
+ * expired session.
  */
 private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long) {
-    sourceDetailJob?.cancel()
+    cancelSourceDetail()
     val profile = mutable.value.selectedProfile ?: return
     val remote = connection
     val device = local
@@ -234,28 +241,42 @@ private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long)
         connection === remote && local === device && mutable.value.screen in listOf(Screen.Sources, Screen.Player) &&
         mutable.value.sourceTitle?.let(::cardLookupKey) == selection
     sourceDetailJob = scope.launch {
-        val detail = try { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
-            catch (error: CancellationException) { throw error }
-            catch (_: Exception) { null } ?: return@launch
+        val detail = try {
+            withTimeoutOrNull(12_000) { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null } ?: return@launch
         if (!current()) return@launch
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
+            // On the player the host already accepted this episode's scope for its sources.
             if (mutable.value.screen == Screen.Sources) {
                 generation++; job?.cancel()
                 mutable.value = mutable.value.copy(error = error.message, findingSources = false, busy = false)
             }
             return@launch
         }
-        mutable.value = mutable.value.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target)
-        val stale = card.metadata_origin != null && card.metadata_origin != detail.item.metadata_origin
-        if (mutable.value.screen == Screen.Sources && stale) {
-            openSources(target, returnTo = Screen.Details)
-            // The controller's run, not the scope function on this coroutine.
-            this@loadSourceDetail.run { discoverSources(target) }
+        showSourceDetail(detail, card, target)
+        when (mutable.value.screen) {
+            // The episode's integration moved on: find its sources again in the title's scope.
+            Screen.Sources -> if (card.metadata_origin != detail.item.metadata_origin) {
+                openSources(target, returnTo = Screen.Details)
+                // The controller's run, not the scope function on this coroutine.
+                this@loadSourceDetail.run { discoverSources(target) }
+            }
+            // Playback that started first gets its season and next episode now.
+            Screen.Player -> { loadNextEpisode(); loadPlaybackSeason() }
+            else -> Unit
         }
-        // Playback that started first gets its season and next episode now.
-        if (mutable.value.screen == Screen.Player) { loadNextEpisode(); loadPlaybackSeason() }
     }
 }
+
+internal fun ApplicationController.cancelSourceDetail() {
+    sourceDetailJob?.cancel(); sourceDetailJob = null
+}
+
+private const val UNNUMBERED_EPISODE = "Choose a numbered episode from this title’s details."
+
+/** An episode card without a playable episode number. */
+private fun Card.unnumberedEpisode() = identity.episode?.episode?.let { it <= 0L } == true
 
 /** Start the next playback from position zero instead of resuming saved progress. */
 fun ApplicationController.playTitleFromStart(card: Card) {
@@ -275,8 +296,8 @@ fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
 }
 
 fun ApplicationController.chooseSource(card: Card) {
-    if (card.identity.episode?.episode?.let { it <= 0L } == true) {
-        mutable.value = mutable.value.copy(error = "Choose a numbered episode from this title’s details.")
+    if (card.unnumberedEpisode()) {
+        mutable.value = mutable.value.copy(error = UNNUMBERED_EPISODE)
         return
     }
     // Detail heroes pass the series card, whereas episode shelves pass a concrete
@@ -289,6 +310,7 @@ fun ApplicationController.chooseSource(card: Card) {
         }
         chooseSource(target); return
     }
+    cancelSourceDetail()
     releaseRemotePlayback()
     openSources(card, returnTo = if (mutable.value.detail != null) Screen.Details else mutable.value.screen)
     run { discoverSources(card) }
