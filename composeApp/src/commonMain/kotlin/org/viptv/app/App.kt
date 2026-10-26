@@ -88,10 +88,10 @@ fun App(
             val compact = maxWidth < 640.dp && !television
             val tablet = !compact && !television && !browser && !desktopChrome
             // Only the phone header and the tablet hero carry Home's Genres chip.
-            val genreChip = !television && !browser && !desktopChrome && state.screen == Screen.Home
-            LaunchedEffect(genreChip, state.selectedProfile) { if (genreChip) controller.loadHomeGenres() }
-            val homeGenres = remember(controller, state.homeGenres, genreChip, state.selectedProfile) {
-                state.homeGenres?.takeIf { genreChip && it.profile == state.selectedProfile }?.let { HomeGenrePicker(it.choices, controller::browseGenre) }
+            val showsGenreChip = !television && !browser && !desktopChrome && state.screen == Screen.Home
+            LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
+            val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
+                state.homeGenres?.takeIf { showsGenreChip && it.profile == state.selectedProfile }?.let { HomeGenrePicker(it.choices, controller::browseGenre) }
             }
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: defaultServer, state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,

@@ -43,7 +43,7 @@ class HomeGenresTest {
     @Test fun homeLoadsGenresOncePerProfileAndAGenreOpensFilteredBrowseThatBackLeaves() = runBlocking {
         val requests = mutableListOf<Url>()
         val client = HttpClient(MockEngine { request ->
-            requests += request.url
+            synchronized(requests) { requests += request.url }
             val body = when (request.url.encodedPath) {
                 "/api/discovery-controls" -> """{"provider_id":"stremio","media_types":["movie"],"controls":[],"catalogs":[{"id":"top","name":"Popular","type":"movie","connection_id":"addon:1","addon_id":1,
                     "controls":[{"id":"genre","label":"Genre","kind":"MultiChoice","required":false,"choices":[{"value":"Action","label":"Action"},{"value":"Comedy","label":"Comedy"}]}]}],
@@ -62,21 +62,28 @@ class HomeGenresTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store)
         controller.connection = remote
-        controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "qa")
+        fun home(revision: Long) = HomeSnapshot(Scope("server", "account", "qa", 1), revision, rows = emptyList(), complete = true)
+        fun controlRequests() = synchronized(requests) { requests.count { it.encodedPath == "/api/discovery-controls" } }
+        controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "qa", home = home(1))
         try {
             controller.loadHomeGenres()
             val genres = withTimeout(5_000) { controller.state.first { it.homeGenres != null } }.homeGenres!!
             assertEquals("qa", genres.profile)
             assertEquals(listOf("Action", "Comedy"), genres.choices.map { it.label })
-            assertEquals("movie", requests.single().parameters["type"])
+            assertEquals("movie", synchronized(requests) { requests.single() }.parameters["type"])
             controller.loadHomeGenres()
-            assertEquals(1, requests.count { it.encodedPath == "/api/discovery-controls" }, "Home asks once per profile")
+            assertEquals(1, controlRequests(), "Home asks once per profile and Home revision")
+            // An add-on or provider change gives Home a new revision, and with it fresh genres.
+            controller.mutable.value = controller.state.value.copy(home = home(2))
+            controller.loadHomeGenres()
+            withTimeout(5_000) { controller.state.first { it.homeGenres?.homeRevision == 2L } }
+            assertEquals(2, controlRequests())
 
             controller.browseGenre(genres.choices[1])
             val browsed = withTimeout(5_000) { controller.state.first { !it.busy && it.browseQuery.genre != null } }
             assertEquals(Screen.Discover, browsed.screen)
             assertEquals(BrowseQuery("movie", "top", "addon:1", genre = "Comedy"), browsed.browseQuery)
-            val discover = requests.filter { it.encodedPath == "/api/discover" }
+            val discover = synchronized(requests) { requests.filter { it.encodedPath == "/api/discover" } }
             assertTrue(discover.isNotEmpty() && discover.all { it.parameters["genre"] == "Comedy" }, "every Browse request carries the genre: $discover")
             assertEquals(listOf(Screen.Home), browsed.navBack)
 

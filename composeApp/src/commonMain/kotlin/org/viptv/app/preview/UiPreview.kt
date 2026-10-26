@@ -63,7 +63,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
     LaunchedEffect(tvDetailVariant) {
         if (tvDetailVariant == "LoadingThenReady") { kotlinx.coroutines.delay(3000); homeArrived = true }
     }
-    val genres = remember(go) { HomeGenrePicker(PreviewData.genres) { go(Screen.Discover) } }
+    val genres = HomeGenrePicker(PreviewData.genres) { go(Screen.Discover) }
     ViptvTheme(television) { CompositionLocalProvider(LocalHomeGenres provides genres) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             val phone = maxWidth < 640.dp && !television && !desktop && !browser
