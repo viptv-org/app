@@ -21,7 +21,7 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun PhonePlayerFailure(description: String, fallbackLabel: String?, retry: (() -> Unit)?, choose: (() -> Unit)?, close: () -> Unit,
-    title: Card? = null, insets: WindowInsets = WindowInsets.safeDrawing) {
+    title: Card?, insets: WindowInsets) {
     val initial = remember { FocusRequester() }
     // The scrim covers the cutout; the actions stay inside the safe insets.
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .8f)).windowInsetsPadding(insets)) {

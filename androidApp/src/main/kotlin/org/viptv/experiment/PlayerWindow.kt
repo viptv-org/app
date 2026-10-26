@@ -25,7 +25,7 @@ internal fun ComponentActivity.configurePlayerWindow(active: Boolean, television
         WindowCompat.setDecorFitsSystemWindows(window, !active)
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        val mode = playerCutoutMode(active, Build.VERSION.SDK_INT)
+        val mode = playerCutoutMode(active)
         if (window.attributes.layoutInDisplayCutoutMode != mode) {
             window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = mode }
         }
@@ -33,8 +33,8 @@ internal fun ComponentActivity.configurePlayerWindow(active: Boolean, television
 }
 
 /** Window cutout mode for a handheld: into the cutout only while the player is full screen. */
-internal fun playerCutoutMode(active: Boolean, sdk: Int): Int = when {
+private fun playerCutoutMode(active: Boolean): Int = when {
     !active -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
-    sdk >= Build.VERSION_CODES.R -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
     else -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
 }

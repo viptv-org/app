@@ -144,7 +144,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && !locked && !(phone && (showTracks || phonePanel != null || failed || error != null))) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
                 0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
-            Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
+            Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconButton(onClick = close) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
                 Column {
@@ -155,7 +155,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             if (phone) Box(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal))) {
                 PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
             }
-            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets).padding(horizontal = 24.dp, vertical = 12.dp)) {
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)).padding(horizontal = 24.dp, vertical = 12.dp)) {
                 if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
                     Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
@@ -200,3 +200,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
 }
 
 private enum class PhonePlaybackPanel { Episodes, Next }
+
+/** A side sheet's surface reaches the right screen edge; its content clears a cutout or bar there. */
+internal fun WindowInsets.endSheet(): WindowInsets = only(WindowInsetsSides.Vertical + WindowInsetsSides.End)

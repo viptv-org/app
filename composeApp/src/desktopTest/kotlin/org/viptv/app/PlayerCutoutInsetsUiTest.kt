@@ -26,7 +26,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerCutoutInsetsUiTest {
     private val width = 844; private val height = 390
-    private val cutout = 48; private val gestures = 16
+    private val cutout = 48; private val bottomBar = 16
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
@@ -39,11 +39,11 @@ class PlayerCutoutInsetsUiTest {
         Screen.entries.filter { it != Screen.Player }.forEach { assertFalse(playerDrawsEdgeToEdge(it, television = false), "$it keeps its insets") }
     }
 
-    @Test fun cameraOnTheLeftKeepsControlsOutOfTheCutoutWhileVideoFillsIt() = osd("left", WindowInsets(left = cutout.dp, bottom = gestures.dp))
+    @Test fun cameraOnTheLeftKeepsControlsOutOfTheCutoutWhileVideoFillsIt() = assertControlsClearTheCutout("left", WindowInsets(left = cutout.dp, bottom = bottomBar.dp))
 
-    @Test fun cameraOnTheRightKeepsControlsOutOfTheCutoutWhileVideoFillsIt() = osd("right", WindowInsets(right = cutout.dp, bottom = gestures.dp))
+    @Test fun cameraOnTheRightKeepsControlsOutOfTheCutoutWhileVideoFillsIt() = assertControlsClearTheCutout("right", WindowInsets(right = cutout.dp, bottom = bottomBar.dp))
 
-    private fun osd(side: String, insets: WindowInsets) {
+    private fun assertControlsClearTheCutout(side: String, insets: WindowInsets) {
         val scene = scene(insets) { PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = true,
             preview = PlayerFact.Progress(842_000, 3_132_000), tvExtras = TvPlaybackExtras(episodes = listOf(episode(24), episode(25)), nextEpisode = episode(25)),
             playEpisode = {}, controlInsets = insets) }
@@ -56,7 +56,7 @@ class PlayerCutoutInsetsUiTest {
     }
 
     @Test fun panelsReachTheEdgeButKeepTheirContentOutOfTheCutout() {
-        val insets = WindowInsets(right = cutout.dp, bottom = gestures.dp)
+        val insets = WindowInsets(right = cutout.dp, bottom = bottomBar.dp)
         val scene = scene(insets) { PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = true,
             preview = PlayerFact.Progress(842_000, 3_132_000), tvExtras = TvPlaybackExtras(episodes = listOf(episode(24), episode(25)), nextEpisode = episode(25)),
             playEpisode = {}, controlInsets = insets) }
@@ -71,7 +71,7 @@ class PlayerCutoutInsetsUiTest {
     }
 
     @Test fun failureActionsStayOutOfTheCutout() {
-        val insets = WindowInsets(left = cutout.dp, bottom = gestures.dp)
+        val insets = WindowInsets(left = cutout.dp, bottom = bottomBar.dp)
         val scene = scene(insets) { PlayerScreen(null, true, "The selected source did not respond.", {}, {}, {}, title = episode(2), phone = true,
             tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = {}, chooseSources = {}, controlInsets = insets) }
         try {
@@ -86,7 +86,7 @@ class PlayerCutoutInsetsUiTest {
     } }
 
     private fun assertControlsInside(scene: ImageComposeScene, side: String) {
-        val safe = Rect(if (side == "left") cutout.toFloat() else 0f, 0f, if (side == "right") (width - cutout).toFloat() else width.toFloat(), (height - gestures).toFloat())
+        val safe = Rect(if (side == "left") cutout.toFloat() else 0f, 0f, if (side == "right") (width - cutout).toFloat() else width.toFloat(), (height - bottomBar).toFloat())
         // The full-screen tap target (show/hide controls) and dismiss scrims are not controls.
         val controls = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) || it.config.contains(SemanticsActions.SetProgress) }
             .filter { it.boundsInWindow.width < width }

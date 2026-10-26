@@ -24,7 +24,7 @@ import org.viptv.engine.wire.Card
 
 /** An explicit choice, never a countdown or automatic playback transition. */
 @Composable
-internal fun PhoneNextEpisode(next: Card, play: () -> Unit, credits: () -> Unit, insets: WindowInsets = WindowInsets.safeDrawing) {
+internal fun PhoneNextEpisode(next: Card, play: () -> Unit, credits: () -> Unit, insets: WindowInsets) {
     val initial = remember { FocusRequester() }
     Popup(onDismissRequest = credits, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .35f)).windowInsetsPadding(insets)) {
