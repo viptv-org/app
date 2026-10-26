@@ -56,6 +56,11 @@ class QuietRefreshTest {
         controller.freshness.homeBuilt(base)
         return controller
     }
+    /** Android stop, a change made elsewhere, then start and resume of the same return. */
+    private suspend fun ApplicationController.returnAfter(elsewhere: () -> Unit) {
+        appForeground(false); elsewhere()
+        appForeground(true); freshen(); settle()
+    }
     private suspend fun ApplicationController.settle() { while (true) { val running = quietJob ?: return; running.join(); if (quietJob === running) return } }
 
     @Test fun unchangedRevisionsMakeOneRevisionsRequestAndNeverRebuildHome() = runBlocking<Unit> {
@@ -262,6 +267,69 @@ class QuietRefreshTest {
         controller.freshnessTick(); controller.freshen(); controller.settle()
         assertEquals(1, server.paths.size, "A background client makes no requests")
         controller.connection?.close()
+    }
+
+    @Test fun aQuickReturnShowsAContinueWatchingChangeMadeElsewhere() = runBlocking<Unit> {
+        val moved = base + ("library" to "5")
+        var revisions = base
+        val server = Server { path ->
+            when (path) {
+                "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                "/api/bootstrap" -> json(bootstrap(home(7, listOf(card("new", 0.4), card("old"))), moved))
+                else -> error("Unexpected $path")
+            }
+        }
+        val time = TestTimeSource()
+        val controller = controller(server, time)
+        controller.returnAfter {}
+        time += 3.seconds
+        controller.returnAfter { revisions = moved }
+        assertEquals(listOf("new", "old"), controller.state.value.home?.rows?.first()?.cards?.map { it.identity.id })
+        assertEquals(listOf("/api/profiles/12/revisions", "/api/profiles/12/revisions", "/api/bootstrap"), server.paths)
+        assertFalse(controller.state.value.busy); assertNull(controller.state.value.error)
+        controller.appForeground(false); controller.connection?.close()
+    }
+
+    @Test fun theStartAndResumeOfOneReturnMakeOneCheck() = runBlocking<Unit> {
+        val server = Server { path -> if (path == "/api/profiles/12/revisions") json(revisionsJson(base)) else error("Unexpected $path") }
+        val controller = controller(server)
+        controller.returnAfter {}
+        assertEquals(listOf("/api/profiles/12/revisions"), server.paths)
+        controller.appForeground(false); controller.connection?.close()
+    }
+
+    @Test fun aReturnWithAMovedLibraryTokenReloadsTheScreenOnDisplay() = runBlocking<Unit> {
+        val moved = base + ("library" to "5")
+        var revisions = base
+        val movie = card("m1")
+        val query = defaultLibraryQuery()
+        val list = LibrarySnapshot(Scope("server", "owner", "12", 4), 4, query, listOf(card("old")), complete = true,
+            availability = Availability.AVAILABLE)
+        for (screen in listOf(Screen.Library, Screen.History, Screen.Details)) {
+            revisions = base
+            val server = Server { path ->
+                when (path) {
+                    "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                    "/api/bootstrap" -> json(bootstrap(home(7, listOf(card("new", 0.4))), moved))
+                    "/api/profiles/12/library" -> json(Json.encodeToString(list.copy(cards = listOf(card("new"), card("old")))))
+                    "/api/profiles/12/history" -> json(Json.encodeToString(listOf(HistoryEntry(card("new", 0.4), 1L))))
+                    "/api/meta/movie/m1" -> json(Json.encodeToString(DetailSnapshot(movie.copy(progress = 0.4), episodes = emptyList())))
+                    else -> error("Unexpected $path")
+                }
+            }
+            val controller = controller(server, state = ApplicationState(screen = screen, selectedProfile = "12", home = shown,
+                libraryQuery = query, libraryPage = list, detail = DetailSnapshot(movie, episodes = emptyList())))
+            controller.returnAfter { revisions = moved }
+            val state = controller.state.value
+            assertEquals(screen, state.screen); assertFalse(state.busy); assertNull(state.error)
+            assertEquals(listOf("new"), state.home?.rows?.first()?.cards?.map { it.identity.id }, "Home behind $screen is current")
+            when (screen) {
+                Screen.Library -> assertEquals(listOf("new", "old"), state.libraryPage?.cards?.map { it.identity.id })
+                Screen.History -> assertEquals(listOf("new"), state.history.map { it.entry.card.identity.id })
+                else -> assertEquals(0.4, state.detail?.item?.progress, "Details on display shows the new progress")
+            }
+            controller.appForeground(false); controller.connection?.close()
+        }
     }
 
     @Test fun aRefreshKeepsTheTailOfARowTheViewerPaged() {

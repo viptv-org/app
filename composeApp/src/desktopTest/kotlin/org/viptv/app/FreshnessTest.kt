@@ -11,14 +11,14 @@ class FreshnessTest {
     private val freshness = Freshness(time)
     private val base = mapOf("library" to "4", "configuration" to "2", "addons" to "a1", "policy" to "0", "preferences" to "1", "profiles" to "7")
 
-    @Test fun eventChecksRunAtMostEveryTenSecondsAndCoalesce() {
+    @Test fun eventChecksCoalesceOnlyWithinTwoSecondsOfTheLastCheck() {
         assertTrue(freshness.checkDue(polling = false))
         freshness.checked()
-        assertFalse(freshness.checkDue(polling = false), "Repeated foreground callbacks coalesce")
-        time += 9.seconds
+        assertFalse(freshness.checkDue(polling = false), "The start and resume callbacks of one return coalesce")
+        time += 1.seconds
         assertFalse(freshness.checkDue(polling = false))
         time += 1.seconds
-        assertTrue(freshness.checkDue(polling = false))
+        assertTrue(freshness.checkDue(polling = false), "A return two seconds after the last check checks again")
     }
 
     @Test fun pollingChecksEveryFifteenSecondsOnlyWhileForeground() {
@@ -51,9 +51,11 @@ class FreshnessTest {
         assertFalse(freshness.libraryChanged(base + ("addons" to "a2")))
     }
 
-    @Test fun observationsWithoutABaselineAreAdoptedNotTreatedAsChanges() {
-        assertFalse(freshness.changed(base))
+    @Test fun withoutABaselineEveryObservationIsAChange() {
+        assertTrue(freshness.changed(base), "A Home built without tokens cannot be proven current")
+        assertTrue(freshness.libraryChanged(base))
         freshness.adopt(base)
+        assertFalse(freshness.changed(base))
         assertTrue(freshness.changed(base + ("configuration" to "3")))
     }
 
@@ -76,7 +78,7 @@ class FreshnessTest {
         time += 10.minutes
         freshness.reset()
         assertFalse(freshness.homeStale())
-        assertFalse(freshness.changed(base + ("library" to "9")))
+        assertTrue(freshness.changed(base), "The old session's baseline is forgotten")
         assertTrue(freshness.checkDue(polling = false))
     }
 }

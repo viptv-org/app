@@ -27,6 +27,7 @@ class Freshness(private val time: TimeSource = TimeSource.Monotonic) {
     fun input() { lastInput = time.markNow() }
     /** The server has no revisions endpoint, or this is a local connection. */
     fun unsupported() { supported = false }
+    /** A check was requested or has just finished; event checks within [EVENT_GAP] of either coalesce. */
     fun checked() { lastCheck = time.markNow() }
 
     /** A fresh Home is on screen. [revisions] were read before it was built. */
@@ -42,23 +43,27 @@ class Freshness(private val time: TimeSource = TimeSource.Monotonic) {
         lastInput = time.markNow()
     }
 
-    /** Foreground return and screen entry coalesce to one check per [EVENT_GAP]; Home polls every [POLL]. */
+    /**
+     * Every foreground return and screen entry checks, unless a check was
+     * requested or finished within [EVENT_GAP] (the start and resume callbacks
+     * of one return). Home polls every [POLL].
+     */
     fun checkDue(polling: Boolean): Boolean {
         if (!foreground || !supported) return false
         val since = lastCheck?.elapsedNow() ?: return true
         return since >= if (polling) POLL else EVENT_GAP
     }
 
-    /** Without a baseline an observation is adopted by the caller rather than treated as a change. */
-    fun changed(observed: Revisions): Boolean = baseline?.let { it != observed } ?: false
-    fun libraryChanged(observed: Revisions): Boolean = baseline?.let { it["library"] != observed["library"] } ?: false
+    /** Without a baseline the shown data cannot be proven current, so any observation is a change. */
+    fun changed(observed: Revisions): Boolean = baseline != observed
+    fun libraryChanged(observed: Revisions): Boolean = baseline?.let { it["library"] != observed["library"] } ?: true
 
     /** Catalog contents, trending and next-episode availability age even when no token moves. */
     fun homeStale(): Boolean = builtAt?.let { it.elapsedNow() >= HOME_MAX_AGE } ?: false
     fun idle(): Boolean = lastInput.elapsedNow() >= IDLE
 
     companion object {
-        val EVENT_GAP = 10.seconds
+        val EVENT_GAP = 2.seconds
         val POLL = 15.seconds
         /** The server caches add-on catalogs for 300 s, so an earlier rebuild cannot show new content. */
         val HOME_MAX_AGE = 5.minutes
