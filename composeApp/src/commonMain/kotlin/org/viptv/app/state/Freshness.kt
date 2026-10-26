@@ -17,17 +17,22 @@ typealias Revisions = Map<String, String>
 class Freshness(private val time: TimeSource = TimeSource.Monotonic) {
     private var foreground = true
     private var supported = true
-    private var lastCheck: TimeMark? = null
+    /** A check requested in this foreground spell that has not finished yet. */
+    private var requested: TimeMark? = null
+    private var finished: TimeMark? = null
     private var builtAt: TimeMark? = null
     private var lastInput = time.markNow()
     private var baseline: Revisions? = null
 
-    fun foreground(value: Boolean) { foreground = value }
+    /** Going behind forgets a requested check: it may read the tokens before a change made meanwhile. */
+    fun foreground(value: Boolean) { foreground = value; if (!value) requested = null }
     fun active() = foreground
     fun input() { lastInput = time.markNow() }
     /** The server has no revisions endpoint, or this is a local connection. */
     fun unsupported() { supported = false }
-    fun checked() { lastCheck = time.markNow() }
+    /** Marked when a check is asked for, so the resume right behind a start joins it. */
+    fun checkRequested() { requested = time.markNow() }
+    fun checkFinished() { finished = time.markNow(); requested = null }
 
     /** A fresh Home is on screen. [revisions] were read before it was built. */
     fun homeBuilt(revisions: Revisions?) {
@@ -38,27 +43,31 @@ class Freshness(private val time: TimeSource = TimeSource.Monotonic) {
 
     /** A new session or profile: nothing observed so far applies to it. */
     fun reset() {
-        supported = true; lastCheck = null; builtAt = null; baseline = null
+        supported = true; requested = null; finished = null; builtAt = null; baseline = null
         lastInput = time.markNow()
     }
 
-    /** Foreground return and screen entry coalesce to one check per [EVENT_GAP]; Home polls every [POLL]. */
+    /**
+     * Every foreground return and screen entry checks, unless a check
+     * finished, or was requested since the return, within [EVENT_GAP] (the
+     * start and resume callbacks of one return). Home polls every [POLL].
+     */
     fun checkDue(polling: Boolean): Boolean {
         if (!foreground || !supported) return false
-        val since = lastCheck?.elapsedNow() ?: return true
+        val since = listOfNotNull(requested, finished).minOfOrNull { it.elapsedNow() } ?: return true
         return since >= if (polling) POLL else EVENT_GAP
     }
 
-    /** Without a baseline an observation is adopted by the caller rather than treated as a change. */
-    fun changed(observed: Revisions): Boolean = baseline?.let { it != observed } ?: false
-    fun libraryChanged(observed: Revisions): Boolean = baseline?.let { it["library"] != observed["library"] } ?: false
+    /** Without a baseline the shown data cannot be proven current, so any observation is a change. */
+    fun changed(observed: Revisions): Boolean = baseline != observed
+    fun libraryChanged(observed: Revisions): Boolean = baseline?.let { it["library"] != observed["library"] } ?: true
 
     /** Catalog contents, trending and next-episode availability age even when no token moves. */
     fun homeStale(): Boolean = builtAt?.let { it.elapsedNow() >= HOME_MAX_AGE } ?: false
     fun idle(): Boolean = lastInput.elapsedNow() >= IDLE
 
     companion object {
-        val EVENT_GAP = 10.seconds
+        val EVENT_GAP = 2.seconds
         val POLL = 15.seconds
         /** The server caches add-on catalogs for 300 s, so an earlier rebuild cannot show new content. */
         val HOME_MAX_AGE = 5.minutes

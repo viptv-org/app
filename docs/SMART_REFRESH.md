@@ -1,6 +1,8 @@
 # Smart refresh — audit and proposed design (2026-10-20)
 
-Status: proposal awaiting owner approval. Nothing here is implemented yet.
+Status: first implemented in app `360e597` and backend `63b2ecd`. The foreground
+gap, the no-baseline rule and the visible-Details reload were revised for
+app#2 (2026-10-26); see the rules in section 2.
 
 ## Audit
 
@@ -144,8 +146,10 @@ from "add-ons changed".
 
 **Rules:**
 
-- **Foreground or entering Home/My List/History.** Run `CheckRevisions` at
-  most once every 10 s; repeated callbacks coalesce.
+- **Foreground or entering Home/My List/History.** Run `CheckRevisions` every
+  time. Skip it only when a check finished less than 2 s ago, or was
+  requested since this return less than 2 s ago, so the start and resume
+  callbacks of one return make one check.
 - **Home visible and in the foreground.** Run `CheckRevisions` every 15 s, as
   the spec requires. Each check is one tiny DB-only request. The timer stops
   on other screens and in the background.
@@ -154,9 +158,13 @@ from "add-ons changed".
   | Token | Action |
   |---|---|
   | `library`, `configuration`, `addons` or `policy` | silent `RefreshHome` |
-  | `library` while My List or History is visible | also reload that page in place |
+  | `library` while My List, History or Details (also behind the sources sheet) is visible | also reload that page in place |
   | `profiles` | `ReloadProfiles` |
   | `preferences` | reload preferences |
+
+- **No baseline.** A Home built without revisions cannot be proven current, so
+  the first observation counts as a change and runs one silent `RefreshHome`,
+  which sets the baseline.
 
 - **Player closed** (after the final progress save joins). Run `RefreshHome`
   straight away with no check, because we know progress changed. Also run

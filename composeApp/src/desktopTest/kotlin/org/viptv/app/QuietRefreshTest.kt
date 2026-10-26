@@ -56,6 +56,14 @@ class QuietRefreshTest {
         controller.freshness.homeBuilt(base)
         return controller
     }
+    /** Android stop, a change made elsewhere, then start and resume of the same return. */
+    private suspend fun ApplicationController.returnAfter(elsewhere: () -> Unit) {
+        appForeground(false); elsewhere()
+        appForeground(true); freshen(); settle()
+    }
+    /** The foreground watcher loops until stopped: stop it even when an assertion fails, or the test hangs. */
+    private suspend fun ApplicationController.whileForeground(body: suspend ApplicationController.() -> Unit) =
+        try { body() } finally { appForeground(false); connection?.close() }
     private suspend fun ApplicationController.settle() { while (true) { val running = quietJob ?: return; running.join(); if (quietJob === running) return } }
 
     @Test fun unchangedRevisionsMakeOneRevisionsRequestAndNeverRebuildHome() = runBlocking<Unit> {
@@ -262,6 +270,69 @@ class QuietRefreshTest {
         controller.freshnessTick(); controller.freshen(); controller.settle()
         assertEquals(1, server.paths.size, "A background client makes no requests")
         controller.connection?.close()
+    }
+
+    @Test fun aQuickReturnShowsAContinueWatchingChangeMadeElsewhere() = runBlocking<Unit> {
+        val moved = base + ("library" to "5")
+        var revisions = base
+        val server = Server { path ->
+            when (path) {
+                "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                "/api/bootstrap" -> json(bootstrap(home(7, listOf(card("new", 0.4), card("old"))), moved))
+                else -> error("Unexpected $path")
+            }
+        }
+        val time = TestTimeSource()
+        controller(server, time).whileForeground {
+            returnAfter {}
+            time += 3.seconds
+            returnAfter { revisions = moved }
+            assertEquals(listOf("new", "old"), state.value.home?.rows?.first()?.cards?.map { it.identity.id })
+            assertEquals(listOf("/api/profiles/12/revisions", "/api/profiles/12/revisions", "/api/bootstrap"), server.paths)
+            assertFalse(state.value.busy); assertNull(state.value.error)
+        }
+    }
+
+    @Test fun theStartAndResumeOfOneReturnMakeOneCheck() = runBlocking<Unit> {
+        val server = Server { path -> if (path == "/api/profiles/12/revisions") json(revisionsJson(base)) else error("Unexpected $path") }
+        controller(server).whileForeground {
+            returnAfter {}
+            assertEquals(listOf("/api/profiles/12/revisions"), server.paths)
+        }
+    }
+
+    @Test fun aReturnWithAMovedLibraryTokenReloadsTheScreenOnDisplay() = runBlocking<Unit> {
+        val moved = base + ("library" to "5")
+        var revisions = base
+        val movie = card("m1")
+        val query = defaultLibraryQuery()
+        val list = LibrarySnapshot(Scope("server", "owner", "12", 4), 4, query, listOf(card("old")), complete = true,
+            availability = Availability.AVAILABLE)
+        for (screen in listOf(Screen.Library, Screen.History, Screen.Details)) {
+            revisions = base
+            val server = Server { path ->
+                when (path) {
+                    "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                    "/api/bootstrap" -> json(bootstrap(home(7, listOf(card("new", 0.4))), moved))
+                    "/api/profiles/12/library" -> json(Json.encodeToString(list.copy(cards = listOf(card("new"), card("old")))))
+                    "/api/profiles/12/history" -> json(Json.encodeToString(listOf(HistoryEntry(card("new", 0.4), 1L))))
+                    "/api/meta/movie/m1" -> json(Json.encodeToString(DetailSnapshot(movie.copy(progress = 0.4), episodes = emptyList())))
+                    else -> error("Unexpected $path")
+                }
+            }
+            controller(server, state = ApplicationState(screen = screen, selectedProfile = "12", home = shown,
+                libraryQuery = query, libraryPage = list, detail = DetailSnapshot(movie, episodes = emptyList()))).whileForeground {
+                returnAfter { revisions = moved }
+                val now = state.value
+                assertEquals(screen, now.screen); assertFalse(now.busy); assertNull(now.error)
+                assertEquals(listOf("new"), now.home?.rows?.first()?.cards?.map { it.identity.id }, "Home behind $screen is current")
+                when (screen) {
+                    Screen.Library -> assertEquals(listOf("new", "old"), now.libraryPage?.cards?.map { it.identity.id })
+                    Screen.History -> assertEquals(listOf("new"), now.history.map { it.entry.card.identity.id })
+                    else -> assertEquals(0.4, now.detail?.item?.progress, "Details on display shows the new progress")
+                }
+            }
+        }
     }
 
     @Test fun aRefreshKeepsTheTailOfARowTheViewerPaged() {
