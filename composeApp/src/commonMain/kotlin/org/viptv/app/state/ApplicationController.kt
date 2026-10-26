@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlayerFact
 import kotlinx.coroutines.sync.Mutex
+import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore(),
@@ -39,6 +40,17 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null
+    /** How the controller opens a server playback lease; tests replace it. */
+    internal var leaseOpener: PlaybackLeaseOpener = PlaybackLeaseOpener.Server
+    internal var playbackTime: TimeSource = TimeSource.Monotonic
+    /** When the server last confirmed the open lease. */
+    internal var leaseConfirmedAt: TimeMark? = null
+    /** Playback held paused on return until its lease is confirmed or re-acquired. */
+    internal var resumeAfterRenewal: org.viptv.app.player.PlaybackInput? = null
+    /** False while the app is behind (Android stop, minimised window, hidden tab). */
+    internal val inFront = MutableStateFlow(true)
+    /** Counts returns to the front; a sleeping lease renewal wakes on the next one. */
+    internal val frontReturns = MutableStateFlow(0L)
     internal var subtitleDiscovery: Job? = null
     internal var nextEpisodeJob: Job? = null
     internal var nextEpisodeKey: NextEpisodeKey? = null

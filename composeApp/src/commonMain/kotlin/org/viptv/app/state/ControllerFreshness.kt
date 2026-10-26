@@ -21,6 +21,7 @@ internal fun Scope.owner() = copy(revision = 0)
  * watcher runs only while the app is in front.
  */
 fun ApplicationController.appForeground(foreground: Boolean) {
+    playbackInFront(foreground)
     freshness.foreground(foreground)
     freshnessWatcher?.cancel(); freshnessWatcher = null
     if (!foreground) return
