@@ -2,6 +2,7 @@
 
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -10,9 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.foundation.gestures.BringIntoViewSpec
-import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,10 +41,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
             // Down at the last visible row. Inside the list, its own focus
             // search moves through every row and scrolls each into view; the
             // ends are cancelled explicitly so focus never falls to the sidebar.
-            val density = LocalDensity.current
-            val scroll = remember(density, scale) { with(density) {
-                TvAddonListScroll((tvRingReach(scale) * 2).toPx(), (TvAddonListBottom * scale).toPx()) } }
-            CompositionLocalProvider(LocalTvColumnFocus provides null, LocalBringIntoViewSpec provides scroll) {
+            CompositionLocalProvider(LocalTvColumnFocus provides null) {
                 LazyColumn(Modifier.width(760.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false),
                     contentPadding = PaddingValues(top = tvRingReach(scale), bottom = TvAddonListBottom * scale),
                     verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
@@ -103,17 +98,3 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
 
 /** Room under the last row, so it can rise clear of the TV's overscan edge. */
 private val TvAddonListBottom = 72.dp
-
-/**
- * Scrolls only when the focused row is not already clear of the list's edges:
- * [top] keeps its ring inside the list, [bottom] keeps the row off the screen
- * edge with the next row peeking below it.
- */
-private class TvAddonListScroll(private val top: Float, private val bottom: Float) : BringIntoViewSpec {
-    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float = when {
-        size > containerSize - top - bottom -> offset - top
-        offset < top -> offset - top
-        offset + size > containerSize - bottom -> offset + size - (containerSize - bottom)
-        else -> 0f
-    }
-}

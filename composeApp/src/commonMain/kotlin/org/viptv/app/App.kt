@@ -117,9 +117,12 @@ fun App(
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
                             if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen else state.screen, controller::navigate)
                         when (state.screen) {
-                            Screen.Home -> HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
+                            Screen.Home -> {
+                                val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
-                                summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary)
+                                summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary) }
+                                if (television) routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent) else homeContent()
+                            }
                             // W3Browse: the browser renders the rail-and-content
                             // page; phone and desktop keep the shared inline chips.
                             Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->

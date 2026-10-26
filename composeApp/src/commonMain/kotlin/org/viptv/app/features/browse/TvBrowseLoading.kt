@@ -1,5 +1,6 @@
 package org.viptv.app.features.browse
 
+import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape

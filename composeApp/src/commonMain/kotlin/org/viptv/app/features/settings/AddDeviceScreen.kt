@@ -57,7 +57,7 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
         if (linkedCode != null) { code = linkedCode; device = null; error = null; step = AddDeviceStep.Code; linkConsumed(); lookup() }
     }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding()
+    org.viptv.app.components.TvFocusScroll(contentPadding = PaddingValues(vertical = if (compact) 16.dp else 32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding()
         .padding(horizontal = 24.dp, vertical = if (compact) 16.dp else 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         when (step) {
@@ -91,7 +91,7 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
                 DevicePrimaryButton("Add another device", true, false, ::startOver)
             }
         }
-    }
+    } }
     if (parentAction != null) ParentPinDialog("unlock", configured = true, busy = busy, failure = parentError,
         dismiss = { if (!busy) { parentAction = null; parentError = null } }, submit = { pin, _ ->
             busy = true; parentError = null

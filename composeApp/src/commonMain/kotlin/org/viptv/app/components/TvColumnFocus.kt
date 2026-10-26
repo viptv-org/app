@@ -40,7 +40,7 @@ internal fun TvFocusColumn(modifier: Modifier = Modifier, content: @Composable C
     CompositionLocalProvider(LocalTvColumnFocus provides state) {
         // Settings pages must scroll: a plain column lays rows out below the
         // window edge on wide ratios while they stay D-pad-focusable.
-        Column(modifier.verticalScroll(rememberScrollState())) { content() }
+        org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(modifier.verticalScroll(rememberScrollState())) { content() } }
     }
 }
 

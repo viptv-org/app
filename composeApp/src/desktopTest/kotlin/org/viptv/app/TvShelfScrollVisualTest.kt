@@ -60,7 +60,6 @@ class TvShelfScrollVisualTest {
                     row = HomeRow(id = "popular", title = "Popular", provider_id = "simkl", state = RowState.READY, cards = cards(14)),
                     scale = 1f, first = requester,
                     up = {}, focus = {}, open = {}, retry = {},
-                    viewport = 1920.dp,
                     modifier = Modifier.padding(top = 40.dp),
                 )
             }

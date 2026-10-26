@@ -30,7 +30,7 @@ internal fun CalendarControls(type: String, week: Int, television: Boolean, scal
         }
         return
     }
-    Row(modifier.then(if (television) Modifier else Modifier.horizontalScroll(rememberScrollState())),
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(modifier.then(if (television) Modifier else Modifier.horizontalScroll(rememberScrollState())),
         horizontalArrangement = Arrangement.spacedBy(if (television) 12.dp * scale else 4.dp), verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
         val categories=listOf("series" to "TV", "anime" to "Anime", "movie" to "Movies")
         categories.forEach { (id,label) ->
@@ -48,5 +48,5 @@ internal fun CalendarControls(type: String, week: Int, television: Boolean, scal
             else TextButton({shift(change)},enabled=when(change){-1->week> -52;1->week<52;else->true}){Text(label)}
         }
         range?.let{Text(it,Modifier.widthIn(max=500.dp*scale),color=Palette.secondary,fontSize=(18*scale).sp,maxLines=1,overflow=androidx.compose.ui.text.style.TextOverflow.Ellipsis)}
-    }
+    } }
 }

@@ -19,7 +19,7 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, busy: Boolean,
     var editing by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(saved) { pinMode = null; editing = null }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text("Parental controls", style = MaterialTheme.typography.headlineMedium)
         Text("The household PIN is required to leave a restricted profile or manage settings from it. Each profile has its own age limit.", color = Palette.secondary)
@@ -57,7 +57,7 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, busy: Boolean,
                 }
             }
         }
-    }
+    } }
     pinMode?.let { mode -> ParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, error,
         dismiss = { if (!busy) pinMode = null }, submit = { current, next -> if (mode == "unlock") unlock(current) else pin(current, next) }) }
     editing?.let { profile -> KidsPolicyDialog(profile, snapshot?.parent?.pin_configured == true, busy, error,

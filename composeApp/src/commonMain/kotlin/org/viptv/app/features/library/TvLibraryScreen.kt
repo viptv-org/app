@@ -1,5 +1,7 @@
 package org.viptv.app.features.library
 
+import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
+import org.viptv.app.components.tvGridItem
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.focusGroup
@@ -12,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.ServerMessages
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
@@ -23,6 +24,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     lastWatched: Map<String, Long> = emptyMap(), snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
     query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
     changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null) {
+    val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf(if (lastWatched.isEmpty()) "Date added" else "Last watched") }
     val first = remember { FocusRequester() }; val selectedFilter = remember { FocusRequester() }
@@ -52,19 +54,19 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                     fontSize = (24 * scale).sp, color = Palette.secondary)
                 TvAction(Modifier.height(64.dp * scale), scale, primary = true, activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
                     contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
-            } else TvFocusScroll {
+            } else
                 LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
                     horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
                     contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                     itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
-                        TvCatalogCard(card, scale, true, Modifier.then(if (index == 0) Modifier.focusRequester(first) else Modifier)
+                        TvCatalogCard(card, scale, true, Modifier.tvGridItem(index).then(if (index == 0) Modifier.focusRequester(first) else Modifier)
                             .focusProperties {
                                 if (index < 7) up = selectedFilter
-                                if (index % 7 == 6) right = FocusRequester.Cancel
+                                if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                             }, {}, open, focusedCaptions = true)
                     }
                 }
-            }
+
         }
     }
 }

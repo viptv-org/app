@@ -25,7 +25,7 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
     var subtitleScale by remember(snapshot) { mutableStateOf(preferences?.subtitle_font_scale ?: 1.0) }
     var subtitleColor by remember(snapshot) { mutableStateOf(preferences?.subtitle_text_color ?: "#FFFFFF") }
     var subtitleBackground by remember(snapshot) { mutableStateOf(preferences?.subtitle_background_color ?: "#00000000") }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(24.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Playback preferences", style = MaterialTheme.typography.headlineSmall)
         Text("These preferences apply to the current profile.", color = Palette.secondary)
         error?.let { Text(it, color = Palette.danger) }
@@ -36,34 +36,34 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
             OutlinedTextField(subtitle, { subtitle = it }, label = { Text("Preferred subtitle language") },
                 supportingText = { Text("Leave empty to use the media’s default subtitle track.") }, enabled = !busy, singleLine = true)
             Text("Subtitles")
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 subtitleModeChoices(audio.trim().takeIf(String::isNotEmpty)).forEach { (value, label) ->
                     FilterChip(mode == value, { mode = value }, label = { Text(label) }, enabled = !busy)
                 }
-            }
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            } }
+            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("ask" to "Always ask", "best" to "Best match").forEach { (value, label) ->
                     FilterChip(selection == value, { selection = value }, label = { Text(label) }, enabled = !busy)
                 }
-            }
+            } }
             Text("Preferred quality")
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(null, 720, 1080, 2160).forEach { height ->
                     FilterChip(quality == height, { quality = height }, label = { Text(qualityLabel(height, deviceHeight)) }, enabled = !busy)
                 }
-            }
+            } }
             Text("HDR and Dolby Vision")
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 hdrPreferenceChoices.forEach { (value, label) ->
                     FilterChip(hdr == value, { hdr = value }, label = { Text(label) }, enabled = !busy)
                 }
-            }
+            } }
             Text("Subtitle size")
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(.75 to "Small", 1.0 to "Medium", 1.25 to "Large", 1.5 to "Extra large").forEach { (value, label) ->
                     FilterChip(subtitleScale == value, { subtitleScale = value }, label = { Text(label) }, enabled = !busy)
                 }
-            }
+            } }
             OutlinedTextField(subtitleColor, { subtitleColor = it }, label = { Text("Subtitle text colour") },
                 supportingText = { Text("Hex colour, for example #FFFFFF.") }, enabled = !busy, singleLine = true)
             OutlinedTextField(subtitleBackground, { subtitleBackground = it }, label = { Text("Subtitle background colour") },
@@ -73,5 +73,5 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
                 subtitle_font_scale = subtitleScale, subtitle_text_color = subtitleColor.trim(), subtitle_background_color = subtitleBackground.trim())
                 .let { if (it.subtitleMode == mode) it else it.withSubtitleMode(mode) }) }, enabled = !busy) { Text("Save preferences") }
         }
-    }
+    } }
 }

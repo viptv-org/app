@@ -13,7 +13,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun LiveFilters(categories: List<String>, selected: String, choose: (String) -> Unit, scale: Float = 1f, labels: Map<String, String> = emptyMap(), favoritesSelected: Boolean = false, favorites: (() -> Unit)? = null) {
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         (listOf("All") + categories).distinct().forEach { category ->
             Surface(onClick = { choose(category) }, color = if (category == selected && !favoritesSelected) Palette.text else Palette.raised,
                 contentColor = if (category == selected && !favoritesSelected) Palette.background else Palette.text, shape = RoundedCornerShape(24.dp * scale)) {
@@ -25,5 +25,5 @@ internal fun LiveFilters(categories: List<String>, selected: String, choose: (St
             contentColor = if (favoritesSelected) Palette.background else Palette.text, shape = RoundedCornerShape(24.dp * scale)) {
             Text("Favourites", Modifier.padding(horizontal = 14.dp * scale, vertical = 7.dp * scale), fontSize = (14 * scale).sp, lineHeight = (18 * scale).sp)
         }
-    }
+    } }
 }

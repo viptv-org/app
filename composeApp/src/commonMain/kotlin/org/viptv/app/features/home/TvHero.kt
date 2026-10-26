@@ -33,7 +33,7 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val scale = maxWidth / 1920.dp
         Box(Modifier.fillMaxWidth().height(800.dp * scale)) {
-        org.viptv.app.components.FadeThrough(card, Modifier.width(1100.dp * scale).height(630.dp * scale)) {
+        org.viptv.app.components.FadeThrough(card, Modifier.width(1100.dp * scale).height(630.dp * scale), contentKey = { it.identity }) {
             SideEffect { presented = it }
             TvHeroSummary(it, scale)
         }

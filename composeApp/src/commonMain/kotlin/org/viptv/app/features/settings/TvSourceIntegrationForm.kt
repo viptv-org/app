@@ -79,7 +79,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
         Spacer(Modifier.height(24.dp * scale))
         Row(Modifier.fillMaxWidth()) {
             // Left column: fields, the keyboard for the active one, the QR hint.
-            Column(Modifier.width(820.dp * scale).verticalScroll(rememberScrollState())) {
+            org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.width(820.dp * scale).verticalScroll(rememberScrollState())) {
                 schema.credential_fields.forEach { field ->
                     val active = editingField == field.id
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
@@ -135,10 +135,10 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                         }
                     }
                 }
-            }
+            } }
             Spacer(Modifier.width(84.dp * scale))
             // Right column: providers, the actions and the write-only note.
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 if (schema.provider_choices.isNotEmpty()) {
                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                         Text("Providers", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
@@ -199,7 +199,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                 }
                 Spacer(Modifier.height(20.dp * scale))
                 Text("Saved values are never shown again. To change one, enter a new value.", color = Palette.tertiary, fontSize = (22 * scale).sp)
-            }
+            } }
         }
     }
 }

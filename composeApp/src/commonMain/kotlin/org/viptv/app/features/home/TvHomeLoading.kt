@@ -24,15 +24,15 @@ internal fun TvHomeLoading(scale: Float) {
         TvSkeleton(Modifier.offset(336.dp * scale, 648.dp * scale).size(72.dp * scale), 36f * scale, shimmer)
         TvSkeleton(Modifier.offset(428.dp * scale, 648.dp * scale).size(72.dp * scale), 36f * scale, shimmer)
         TvSkeleton(Modifier.offset(96.dp * scale, 828.dp * scale).size(300.dp * scale, 32.dp * scale), 6f * scale, shimmer)
-        Row(Modifier.offset(96.dp * scale, 876.dp * scale).horizontalScroll(rememberScrollState(), enabled = false), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
+        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.offset(96.dp * scale, 876.dp * scale).horizontalScroll(rememberScrollState(), enabled = false), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             repeat(5) { TvHomeSkeletonCard(scale, false, shimmer) }
-        }
+        } }
     }
 }
 
 @Composable
 internal fun TvHomeSkeletonCard(scale: Float, portrait: Boolean, shimmer: Modifier = rememberTvLoadingShimmer(scale)) {
-    TvSkeleton(Modifier.width((if (portrait) 232 else 384).dp * scale).aspectRatio(if (portrait) 2f / 3 else 16f / 9), 10f * scale, shimmer)
+    TvSkeleton(Modifier.width((if (portrait) 255.2f else 422.4f).dp * scale).aspectRatio(if (portrait) 2f / 3 else 16f / 9), 10f * scale, shimmer)
 }
 
 @Composable

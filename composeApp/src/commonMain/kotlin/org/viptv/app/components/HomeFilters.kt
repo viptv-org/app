@@ -16,7 +16,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, genres: () -> Unit) {
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series, "Anime" to Screen.Anime).forEach { (label, destination) ->
             Surface(onClick = { navigate(destination) }, shape = RoundedCornerShape(20.dp),
@@ -32,5 +32,5 @@ internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, genres: () 
                 Text("Genres", fontSize = 14.sp, lineHeight = 18.sp)
             }
         }
-    }
+    } }
 }

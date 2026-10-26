@@ -1,5 +1,6 @@
 package org.viptv.app.features.browse
 
+import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -197,7 +198,7 @@ private fun PhoneBrowseBar(catalog: DiscoveryCatalog?, count: Int, openCatalogs:
 private fun PhoneFilterChips(facets: List<Pair<QueryControl, List<String>>>, modifier: Modifier,
     remove: (QueryControl, String) -> Unit) {
     if (facets.isEmpty()) { Spacer(modifier); return }
-    Row(modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         facets.forEach { (control, values) -> values.forEach { value ->
             val label = control.choices.find { it.value == value }?.label ?: value
@@ -208,7 +209,7 @@ private fun PhoneFilterChips(facets: List<Pair<QueryControl, List<String>>>, mod
                 Icon(Lucide.X, "Remove $label", Modifier.size(14.dp))
             }
         } }
-    }
+    } }
 }
 
 /** `M3BrowseLoading`: the pill row before the discovery controls have arrived. */
@@ -306,7 +307,7 @@ private fun PhoneCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery,
                         Icon(Lucide.X, "Close", Modifier.size(16.dp))
                     }
                 }
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())
+                org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.weight(1f).verticalScroll(rememberScrollState())
                     .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 40.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     groups.forEach { (group, entries) ->
@@ -331,7 +332,7 @@ private fun PhoneCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery,
                             }
                         }
                     }
-                }
+                } }
             }
         }
     }

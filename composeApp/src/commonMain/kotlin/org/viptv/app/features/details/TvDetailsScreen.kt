@@ -1,8 +1,8 @@
 package org.viptv.app.features.details
 
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -15,10 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
-import androidx.compose.animation.core.tween
 import org.viptv.app.theme.Palette
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.TvFocusHandle
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
@@ -54,47 +51,35 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         var notice by remember { mutableStateOf<String?>(null) }
         var episodeMode by remember(card?.identity) { mutableStateOf(false) }
         var activeRow by remember(card?.identity) { mutableIntStateOf(0) }
-        var motion by remember(card?.identity) { mutableStateOf<Job?>(null) }
+        val sectionScroll = org.viptv.app.components.rememberTvSectionScroll(scroll)
         val density = LocalDensity.current
-        DisposableEffect(card?.identity) { onDispose { motion?.cancel() } }
         fun offset(index: Int): Float = with(density) {
             when (index) { 0 -> 0.dp; 1 -> 816.dp; else -> (816 + if (episodeMode) 656 else 461).dp }.toPx() * scale
         }
-        // Scroll to the item itself, not to an assumed pixel offset: the episode
-        // shelf changes height when it expands, so the hard-coded offsets landed
-        // the next row mid-content and clipped the compact title logo at the top.
-        suspend fun moveRow(index: Int) {
-            withFrameNanos { }
-            scroll.animateScrollToItem(index)
-        }
         fun focusRow(index: Int) {
-            if (activeRow == index) return
-            activeRow = index; motion?.cancel()
-            motion = scope.launch { moveRow(index) }
+            activeRow = index
+            sectionScroll.focus(index)
         }
         fun returnHero() {
-            activeRow = 0; episodeMode = false; motion?.cancel()
-            motion = scope.launch {
-                moveRow(0)
-                if (activeRow == 0) playFocus.requestFocus()
-            }
+            activeRow = 0; episodeMode = false
+            sectionScroll.focus(0, force = true) { if (activeRow == 0) playFocus.requestFocus() }
         }
         fun returnEpisodes() {
-            if (detail?.episodes.isNullOrEmpty()) { returnHero(); return }
-            activeRow = 1; episodeMode = true; motion?.cancel()
-            motion = scope.launch {
-                launch { moveRow(1) }
+            if (detail.episodes.isEmpty()) { returnHero(); return }
+            activeRow = 1; episodeMode = true
+            sectionScroll.focus(1, force = true)
+            scope.launch {
                 repeat(32) {
                     withFrameNanos { }
-                    if (episodesRestore.request?.invoke() == true) return@launch
+                    if (activeRow != 1 || episodesRestore.request?.invoke() == true) return@launch
                 }
             }
         }
         key(card?.identity) {
             TvDetailBackdrop(card, scale) { offset(scroll.firstVisibleItemIndex) + scroll.firstVisibleItemScrollOffset }
         }
-        TvFocusScroll(manual = true) {
-        LazyColumn(state = scroll, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
+
+        LazyColumn(state = scroll, sectionControlled = true, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
             if (detail != null) {
                 item(key = "hero") {
                     TvDetailHero(detail.item, extras, scale,
@@ -120,7 +105,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { item { Text(it, Modifier.padding(96.dp * scale), color = Palette.danger) } }
         }
-        }
+
         notice?.let { message -> AlertDialog(onDismissRequest = { notice = null },
             title = { Text("Title options") }, text = { Text(message) },
             confirmButton = { TextButton(onClick = { notice = null }) { Text("OK") } }) }

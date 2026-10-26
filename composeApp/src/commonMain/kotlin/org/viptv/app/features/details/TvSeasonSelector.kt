@@ -1,5 +1,6 @@
 package org.viptv.app.features.details
 
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,25 +18,25 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float, seasonFocus: FocusRequester,
     restoreEpisodes: () -> Boolean, select: (Long?) -> Unit, returnHero: () -> Unit,
-    entered: () -> Unit) {
-    TvFocusScroll {
-        LazyRow(contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+    entered: () -> Unit, cancelEntry: () -> Unit = {}, focusChanged: (Boolean) -> Unit = {}) {
+
+        LazyRow(modifier = Modifier.onFocusChanged { focusChanged(it.hasFocus) }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             items(seasons, key = { it?.toString() ?: "unknown" }) { season ->
                 var focused by remember { mutableStateOf(false) }
                 Box(Modifier.height(52.dp * scale)
                     .then(if (season == active) Modifier.focusRequester(seasonFocus) else Modifier)
                     .onFocusChanged { focused = it.isFocused; if (it.isFocused) entered() }
                     .onPreviewKeyEvent {
+                        if (it.type == KeyEventType.KeyDown && it.key != Key.DirectionDown) cancelEntry()
                         when {
                             it.type != KeyEventType.KeyDown -> false
                             it.key == Key.DirectionUp -> { returnHero(); true }
-                            it.key == Key.DirectionDown -> { restoreEpisodes(); true }
+                            it.key == Key.DirectionDown -> restoreEpisodes()
                             else -> false
                         }
                     }.clip(RoundedCornerShape(26.dp * scale))
@@ -49,5 +50,5 @@ internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float,
                 }
             }
         }
-    }
+
 }

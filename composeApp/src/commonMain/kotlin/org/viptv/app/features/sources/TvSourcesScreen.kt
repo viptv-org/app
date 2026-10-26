@@ -1,5 +1,6 @@
 package org.viptv.app.features.sources
 
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,7 +28,6 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.rememberTvDrawerMotion
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.features.details.TvDetailsScreen
@@ -128,7 +128,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     }
                 }
                 Spacer(Modifier.height(20.dp * scale))
-                TvFocusScroll {
+
                 // The status line under the list is drawn over it otherwise; the list
                 // needs its own trailing inset so the last source clears the footer.
                 LazyColumn(Modifier.weight(1f), state = listState,
@@ -147,7 +147,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         Text("No sources match these filters.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
                 }
-                }
+
                 if (!noSources && !torrentOnly) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                     if (loadingMore || busy) CircularProgressIndicator(Modifier.size(20.dp * scale), color = Palette.secondary, strokeWidth = 2.dp * scale)
                     Text(if (loadingMore || busy && sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else if (busy) openingStage ?: "Opening stream…" else "Play always starts the best match. Change how it’s chosen in Settings › Playback.",

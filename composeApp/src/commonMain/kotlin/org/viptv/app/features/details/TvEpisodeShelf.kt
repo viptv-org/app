@@ -1,5 +1,6 @@
 package org.viptv.app.features.details
 
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -36,14 +37,36 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     val episodeRows = key(parent.identity, activeSeason) { rememberLazyListState() }
     val seasonFocus = remember { FocusRequester() }
     val targets = remember(parent.identity, activeSeason) { mutableMapOf<String, FocusRequester>() }
-    fun restore(): Boolean = targets[lastFocused]?.requestPlacedFocus() == true ||
+    var selectorHasFocus by remember { mutableStateOf(false) }
+    var entrySequence by remember { mutableIntStateOf(0) }
+    var pendingEntry by remember(parent.identity) { mutableStateOf<Pair<Long?, Int>?>(null) }
+    fun focusEpisode(): Boolean = targets[lastFocused]?.requestPlacedFocus() == true ||
         targets[visible.find { it.identity.id == resumeId }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
-        targets.values.firstOrNull()?.requestPlacedFocus() == true || seasonFocus.requestPlacedFocus()
+        visible.firstNotNullOfOrNull { targets[episodeKey(it)] }?.requestPlacedFocus() == true
+    fun restore(): Boolean = focusEpisode() || seasonFocus.requestPlacedFocus()
+    fun enterEpisodes(): Boolean {
+        val wanted = selected.takeIf { it in seasons } ?: activeSeason
+        if (wanted == activeSeason && focusEpisode()) { pendingEntry = null; return true }
+        if (wanted == activeSeason && visible.isEmpty() && !busy && group?.nextOffset == null && nextCursor == null) return false
+        pendingEntry = wanted to ++entrySequence
+        return true
+    }
+    // A season selection can replace lazy children or fetch its first page. Keep
+    // the Down intent until those children are placed, without needing an Up/Down detour.
+    LaunchedEffect(pendingEntry, activeSeason, visible, selectorHasFocus) {
+        val pending = pendingEntry ?: return@LaunchedEffect
+        if (!selectorHasFocus || pending.first != activeSeason || visible.isEmpty()) return@LaunchedEffect
+        repeat(32) {
+            withFrameNanos { }
+            if (pendingEntry != pending || !selectorHasFocus) return@LaunchedEffect
+            if (focusEpisode()) { pendingEntry = null; return@LaunchedEffect }
+        }
+    }
     AutomaticEpisodes(group, nextCursor, busy, loadPage, scopeKey = parent.provider_id to parent.identity)
     SideEffect { restoreChanged(::restore) }
     DisposableEffect(parent.identity) { onDispose { restoreChanged(null) } }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val shelfScroll = rememberTvShelfScroll(episodeRows, 472.dp * scale, maxWidth, visible.size, 96.dp * scale)
+
         Column(Modifier.fillMaxWidth().heightIn(min = if (expanded) 656.dp * scale else 460.dp * scale)) {
             if (expanded) Box(Modifier.fillMaxWidth().height(154.dp * scale).padding(start = 96.dp * scale, top = 56.dp * scale)) {
                 if (parent.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(parent.logo), parent.title,
@@ -51,11 +74,12 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                     contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
                 else Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::restore,
-                select = { season -> selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },
-                returnHero = returnToHero, entered = focused)
+            TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::enterEpisodes,
+                select = { season -> pendingEntry = null; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },
+                returnHero = returnToHero, entered = focused,
+                cancelEntry = { pendingEntry = null }, focusChanged = { selectorHasFocus = it; if (!it) pendingEntry = null })
             Spacer(Modifier.height((if (expanded) 30 else 20).dp * scale))
-            TvFocusScroll(manual = true) {
+
                 LazyRow(state = episodeRows, modifier = Modifier.focusGroup(),
                     contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     itemsIndexed(visible, key = { _, episode -> episodeKey(episode) }) { index, episode ->
@@ -65,11 +89,11 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                             onDispose { targets.remove(episodeKey(episode)) }
                         }
                         TvEpisodeCard(episode, scale, play,
-                            { lastFocused = episodeKey(episode); shelfScroll(index); focused() },
+                            { lastFocused = episodeKey(episode); focused() },
                             requester, seasonFocus)
                     }
                 }
-            }
+
         }
     }
 }

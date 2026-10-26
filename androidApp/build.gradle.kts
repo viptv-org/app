@@ -19,6 +19,9 @@ android {
     }
     buildFeatures { compose = true; buildConfig = true }
     buildTypes {
+        getByName("debug") {
+            if (providers.gradleProperty("viptv.torrentQa").orNull == "true") applicationIdSuffix = ".torrentqa"
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -34,6 +37,11 @@ android {
         kotlin.srcDir("src/debug/kotlin")
         res.srcDir("src/debug/res")
         manifest.srcFile("src/debug/AndroidManifest.xml")
+    }
+    if (providers.gradleProperty("viptv.torrentQa").orNull == "true") {
+        sourceSets["debug"].kotlin.srcDir("src/torrentQa/kotlin")
+        sourceSets["debug"].res.srcDir("src/torrentQa/res")
+        sourceSets["debug"].manifest.srcFile("src/torrentQa/AndroidManifest.xml")
     }
     sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/rustJni").get().asFile)
     // Shared torrent runtime (TORRENT_RUNTIME_REF). Without it the app never advertises native torrents.

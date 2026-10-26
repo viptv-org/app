@@ -34,6 +34,9 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 
 fun main() {
+    if (System.getenv("VIPTV_MPV_SMOKE_TEST") != null) { org.viptv.app.player.mpv.verifyPackagedMpv(); return }
+    if (System.getenv("VIPTV_TORRENT_SMOKE_TEST") != null) { verifyPackagedTorrentRuntime(); return }
+    if (System.getenv("VIPTV_TORRENT_BENCH_INPUT") != null) { launchDesktopTorrentBenchmark(); return }
     if (System.getenv("VIPTV_ENGINE_SMOKE_TEST") == "1") { verifyPackagedLocalEngine(); return }
     if (System.getenv("VIPTV_DESKTOP_PLAYER_QA") == "1") { launchDesktopPlayerQa(); return }
     if (System.getenv("VIPTV_UI_PREVIEW") == "1") launchUiPreview() else launchApplication()
@@ -110,6 +113,7 @@ private fun launchApplication() = application {
                 windowState.placement = WindowPlacement.Maximized
             }
         }
+        org.viptv.app.player.mpv.MpvWindow(window) {
         ViptvTheme {
             // Native app framing: a rounded root surface with a hairline outline.
             // macOS already rounds and outlines its own windows, so it keeps the
@@ -162,6 +166,7 @@ private fun launchApplication() = application {
             }
             }
             }
+        }
         }
     }
 }

@@ -98,9 +98,9 @@ class ContinueWatchingActivationTest {
         val scene = ImageComposeScene(1920, 900, Density(1f)) { ViptvTheme(true) {
             Column(Modifier.fillMaxSize().background(Palette.background)) {
                 TvHomeShelf(home.rows[0], 1f, first, up = null, focus = {}, open = { opened += it }, retry = {},
-                    viewport = 1920.dp, play = { played += it })
+                    play = { played += it })
                 TvHomeShelf(home.rows[1], 1f, savedFirst, up = null, focus = {}, open = { opened += it }, retry = {},
-                    viewport = 1920.dp, play = { played += it })
+                    play = { played += it })
             }
         } }
         var frame = 0L

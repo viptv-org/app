@@ -52,9 +52,6 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
             input.diagnostics?.invoke("discontinuity_reason=$reason discontinuity_old_ms=${oldPosition.positionMs} discontinuity_new_ms=${newPosition.positionMs}")
         }
         override fun onTracksChanged(value: Tracks) { tracks.changed(); subtitles.autoSelect(input.providerSubtitles.value) }
-        override fun onRenderedFirstFrame() {
-            if (!presented) { presented = true; progress(); emit(PlayerFact.Presentation(PresentationProof.NativeRendererPresented, exact = false)) }
-        }
         override fun onPlayerError(error: PlaybackException) {
             reportNativePlaybackFailure("Media3 playback error: ${error.errorCodeName}")
             emit(PlayerFact.Failed)
@@ -74,6 +71,15 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         player.setHandleAudioBecomingNoisy(true)
         player.addListener(listener)
         player.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+            override fun onRenderedFirstFrame(eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+                output: Any, renderTimeMs: Long) {
+                if (!presented) {
+                    presented = true
+                    progress()
+                    emit(PlayerFact.Presentation(PresentationProof.NativeRendererPresented,
+                        atNanos = renderTimeMs * 1_000_000L, exact = false))
+                }
+            }
             override fun onAudioDecoderInitialized(eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
                 decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long) { audioDecoder = decoderName }
             override fun onVideoDecoderInitialized(eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,

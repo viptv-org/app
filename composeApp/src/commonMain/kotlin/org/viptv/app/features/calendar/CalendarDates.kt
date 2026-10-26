@@ -17,7 +17,7 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun CalendarDates(days: List<CalendarDay>, entries: List<CalendarEntry>, selected: String?, phone: Boolean,
     scale: Float, choose: (String) -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(if (phone) 8.dp else 20.dp * scale)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(if (phone) 8.dp else 20.dp * scale)) {
         days.forEach { day ->
             val active = selected == day.id
             if (phone) Column(Modifier.width(44.dp).background(if (active) Palette.text else androidx.compose.ui.graphics.Color.Transparent,
@@ -31,5 +31,5 @@ internal fun CalendarDates(days: List<CalendarDay>, entries: List<CalendarEntry>
                 .clickable { choose(day.id) }.padding(horizontal = 24.dp * scale, vertical = 16.dp * scale), fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp,
                 color = if (active) Palette.background else Palette.secondary)
         }
-    }
+    } }
 }

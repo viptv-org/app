@@ -1,11 +1,12 @@
 package org.viptv.app.features.browse
 
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -190,7 +191,7 @@ private fun TvCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery, sca
 @Composable
 private fun LazyColumnLike(modifier: Modifier, reach: androidx.compose.ui.unit.Dp, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
     // Room for the rows' outside ring, which the viewport would clip at the edges.
-    androidx.compose.foundation.lazy.LazyColumn(modifier.tvRingRoom(reach, horizontal = false), contentPadding = PaddingValues(vertical = reach),
+    LazyColumn(modifier.tvRingRoom(reach, horizontal = false), contentPadding = PaddingValues(vertical = reach),
         verticalArrangement = Arrangement.spacedBy(6.dp * 1f)) { content() }
 }
 
@@ -218,7 +219,7 @@ private fun TvFiltersPage(controls: DiscoveryControls, facets: List<QueryControl
                 Text(catalogLabel, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
                 Spacer(Modifier.height(28.dp * scale))
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(64.dp * scale)) {
-                    Column(Modifier.width(640.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false)
+                    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = tvRingReach(scale))) { Column(Modifier.width(640.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false)
                         .verticalScroll(rememberScrollState()).padding(vertical = tvRingReach(scale)),
                         verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                         facets.forEachIndexed { index, facet ->
@@ -245,7 +246,7 @@ private fun TvFiltersPage(controls: DiscoveryControls, facets: List<QueryControl
                                     modifier = Modifier.widthIn(max = 300.dp * scale))
                             }
                         }
-                    }
+                    } }
                     Column(Modifier.weight(1f)) {
                         if (activeControl == null) {
                             Text("No filters are available for this catalog.", color = Palette.secondary, fontSize = (24 * scale).sp)
@@ -306,7 +307,7 @@ private fun TvFacetChoices(control: QueryControl, draft: BrowseQuery, scale: Flo
     single: Boolean, change: (List<String>) -> Unit) {
     val selected = draft.selections(control.id)
     val cap = control.maximum_selections ?: Int.MAX_VALUE.toLong()
-    Column(Modifier.fillMaxWidth().tvRingRoom(tvRingReach(scale), horizontal = false)
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = tvRingReach(scale))) { Column(Modifier.fillMaxWidth().tvRingRoom(tvRingReach(scale), horizontal = false)
         .verticalScroll(rememberScrollState()).padding(vertical = tvRingReach(scale)),
         verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         control.choices.chunked(3).forEachIndexed { rowIndex, row ->
@@ -335,7 +336,7 @@ private fun TvFacetChoices(control: QueryControl, draft: BrowseQuery, scale: Flo
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable

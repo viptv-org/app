@@ -19,7 +19,7 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     var dialog by remember(section) { mutableStateOf<PhonePreferenceField?>(null) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+    org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(section, Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontSize = 17.sp, fontWeight = FontWeight.Bold)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -43,6 +43,6 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
             }
             Button({ save(value) }, enabled = !busy && value != snapshot?.preferences, modifier = Modifier.fillMaxWidth()) { Text("Save preferences") }
         }
-    }
+    } }
     dialog?.let { field -> draft?.let { value -> PhonePreferenceDialog(field, value, busy, { draft = it }, { dialog = null }) } }
 }

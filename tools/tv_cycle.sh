@@ -19,5 +19,7 @@ BURSTS=${2:-5}
 
 ./gradlew :androidApp:assembleRelease --max-workers=2 --no-daemon -q
 adb_t -s "$SERIAL" install -r androidApp/build/outputs/apk/release/androidApp-release.apk >/dev/null
+# An APK update resets ART compilation; qualify the same optimized state each time.
+SERIAL="$SERIAL" PKG="$PKG" ADB_TIMEOUT=90 bash tools/tv_aot.sh
 # tv_ab.sh launches the installed package itself and reports missed-vsync rate.
 SERIAL="$SERIAL" PKG="$PKG" tools/tv_ab.sh "$LABEL" "$BURSTS" 16

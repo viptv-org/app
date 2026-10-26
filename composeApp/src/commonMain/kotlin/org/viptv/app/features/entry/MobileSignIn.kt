@@ -31,7 +31,7 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
         backChanged(if (step == SignInStep.Choice) null else back)
         onDispose { backChanged(null) }
     }
-    Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
         SignInBackBar(back)
         when (step) {
             SignInStep.Choice -> {
@@ -58,7 +58,7 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
             else -> MobileSignInUnavailable(step, back, { step = SignInStep.Password })
         }
         Spacer(Modifier.height(24.dp))
-    }
+    } }
 }
 
 @Composable

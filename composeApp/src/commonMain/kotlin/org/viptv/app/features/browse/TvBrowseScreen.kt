@@ -1,5 +1,7 @@
 package org.viptv.app.features.browse
 
+import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
+import org.viptv.app.components.tvGridItem
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -16,7 +18,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.SearchX
 import com.composables.icons.lucide.TriangleAlert
 import org.viptv.app.components.TvAction
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.TvRequestedFocus
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
@@ -35,6 +36,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     controls: DiscoveryControls? = null, query: BrowseQuery = BrowseQuery("movie"),
     onQuery: (BrowseQuery) -> Unit = {}, more: (() -> Unit)? = null, error: String? = null,
     retry: (() -> Unit)? = null, initialCard: Int = 0) {
+    val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val selected = remember(cards) { cards.distinctBy(::cardLookupKey) }
     val targetIndex = initialCard.coerceIn(0, selected.lastIndex.coerceAtLeast(0))
     val first = remember { FocusRequester() }
@@ -76,23 +78,23 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                 } else {
                     if (error != null) Text(error, color = Palette.danger, fontSize = (22 * scale).sp,
                         modifier = Modifier.padding(bottom = 12.dp * scale))
-                    TvFocusScroll {
+
                         LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
                             horizontalArrangement = Arrangement.spacedBy(16.dp * scale),
                             verticalArrangement = Arrangement.spacedBy(36.dp * scale),
                             contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                             itemsIndexed(selected, key = { _, card -> cardLookupKey(card) }) { index, card ->
                                 TvCatalogCard(card, scale, true,
-                                    Modifier.then(if (index == targetIndex) Modifier.focusRequester(first) else Modifier)
+                                    Modifier.tvGridItem(index).then(if (index == targetIndex) Modifier.focusRequester(first) else Modifier)
                                         .focusProperties {
                                             if (index < 7) up = chromeFocus
-                                            // Row edge: RIGHT must dead-end, not jump to the avatar.
-                                            if (index % 7 == 6) right = FocusRequester.Cancel
+                                            // Stop at the trailing row edge instead of jumping to the avatar.
+                                            if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                                         },
                                     {}, open, focusedCaptions = true)
                             }
                         }
-                    }
+
                 }
             }
         }

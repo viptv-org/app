@@ -16,7 +16,7 @@ import org.viptv.app.theme.Palette
 internal fun SettingsInformation(section: String, local: Boolean, address: String?, profileName: String?,
     profiles: () -> Unit, changeConnection: () -> Unit) {
     var license by remember { mutableStateOf<String?>(null) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(if (section == "About") "About VIPTV" else section, style = MaterialTheme.typography.headlineMedium)
         when (section) {
             "General" -> {
@@ -53,7 +53,7 @@ internal fun SettingsInformation(section: String, local: Boolean, address: Strin
                 TextButton({ license = "bricolage-grotesque" }) { Text("Bricolage Grotesque font license") }
             }
         }
-    }
+    } }
     license?.let { key -> LicenseNotice(key) { license = null } }
 }
 

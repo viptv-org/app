@@ -54,7 +54,7 @@ class TvShelfRefreshFocusTest {
     private fun shelf(row: MutableState<HomeRow>, hero: FocusRequester) = ImageComposeScene(1920, 400, Density(1f)) { ViptvTheme(true) {
         Column(Modifier.fillMaxSize().background(Palette.background)) {
             Box(Modifier.height(40.dp).fillMaxWidth().focusRequester(hero).focusable()) { }
-            TvHomeShelf(row = row.value, scale = 1f, first = null, up = { hero.requestFocus() }, focus = {}, open = {}, retry = {}, viewport = 1920.dp)
+            TvHomeShelf(row = row.value, scale = 1f, first = null, up = { hero.requestFocus() }, focus = {}, open = {}, retry = {})
         }
     } }
 

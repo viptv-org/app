@@ -1,5 +1,8 @@
 package org.viptv.app.features.search
 
+import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
@@ -7,8 +10,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items as rowItems
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.*
@@ -45,7 +46,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!phone) Text(if (desktop && term.isNotBlank()) "Results for “$term”" else "Search",
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
         if (!desktop) SearchField(term, query)
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("All", "Movies", "Series", "Anime", "Channels").forEach { tab ->
                 // DUI-06: the chips are the desktop search page's only controls and
                 // had neither state. Board `Chip · hover` = white 6%; the ring is
@@ -63,7 +64,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     color = if (filter == tab) Palette.background else Palette.text,
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
-        }
+        } }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         error?.let { Text(it, color = Palette.danger) }
         if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)

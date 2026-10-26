@@ -25,9 +25,11 @@ fun ViptvTheme(television: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = ViptvColors,
         typography = viptvTypography(), content = {
-            CompositionLocalProvider(LocalContentColor provides Palette.text) {
-                if (television) CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(letterSpacing = 0.sp), content = content)
-                else content()
+            org.viptv.app.components.TvFocusEnvironment(television) {
+                CompositionLocalProvider(LocalContentColor provides Palette.text) {
+                    if (television) CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(letterSpacing = 0.sp), content = content)
+                    else content()
+                }
             }
         },
     )

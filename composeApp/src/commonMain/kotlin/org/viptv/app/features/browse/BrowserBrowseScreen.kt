@@ -1,11 +1,11 @@
 package org.viptv.app.features.browse
 
+import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
@@ -175,10 +175,10 @@ private fun BrowserFilterRail(facets: List<QueryControl>, query: BrowseQuery, ch
             Text("Filters", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Text("Clear all", Modifier.clickable(onClick = clearAll), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (facets.isEmpty()) Text("No browsing filters", fontSize = 13.sp, color = Palette.secondary)
             facets.forEach { control -> BrowserFacet(control, query, changed, multipleChanged) }
-        }
+        } }
     }
 }
 

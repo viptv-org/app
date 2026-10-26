@@ -28,7 +28,7 @@ internal fun DiscoveryFilters(controls: DiscoveryControls, query: BrowseQuery, s
         controls.controls.filter { it.id in listOf("type", "catalog") } + catalog.controls.filter { it.id !in listOf("type", "catalog") }
     val visible = fields.filter { (showType || it.id != "type") && (it.id != "search" || catalog != null) &&
         it.maximum_selections != 0L && !(catalogPill && it.id == "catalog") }
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         if (visible.isEmpty()) Text("No browsing filters", Modifier.then(if (first != null) Modifier.focusRequester(first) else Modifier).focusable())
         visible.forEachIndexed { index, supplied ->
             val peers = controls.catalogs.filter { it.type == query.type }
@@ -47,5 +47,5 @@ internal fun DiscoveryFilters(controls: DiscoveryControls, query: BrowseQuery, s
                     television, scale) { multipleChanged(control.id, it) }
             }
         }
-    }
+    } }
 }

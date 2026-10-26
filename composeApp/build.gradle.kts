@@ -42,6 +42,9 @@ kotlin {
         }
         androidMain {
             dependsOn(nativePlayerMain)
+            if (providers.gradleProperty("viptv.torrentQa").orNull == "true") {
+                kotlin.srcDir("src/androidTorrentQa/kotlin")
+            }
             dependencies {
                 implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
                 implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
@@ -53,16 +56,9 @@ kotlin {
         val desktopMain by getting {
             dependsOn(nativePlayerMain)
             resources.srcDir(layout.buildDirectory.dir("nativeResources"))
+            resources.srcDir(layout.buildDirectory.dir("torrentResources"))
+            resources.srcDir(layout.buildDirectory.dir("mpvResources"))
             dependencies {
-                implementation("io.github.yuroyami:kiteplayer-compose:0.3.0")
-                implementation("io.github.yuroyami:kiteplayer-core:0.3.0-viptv-presentation.4") { version { strictly("0.3.0-viptv-presentation.4") } }
-                implementation("io.github.yuroyami:kiteplayer-output:0.3.0-viptv-presentation.4") { version { strictly("0.3.0-viptv-presentation.4") } }
-                implementation("io.github.yuroyami:kiteplayer-compose-ui:0.3.0-viptv-presentation.4") {
-                    version { strictly("0.3.0-viptv-presentation.4") }
-                }
-                implementation("io.github.yuroyami:kiteplayer-compose-video:0.3.0-viptv-presentation.4") {
-                    version { strictly("0.3.0-viptv-presentation.4") }
-                }
                 implementation(compose.desktop.currentOs); implementation("net.java.dev.jna:jna:5.17.0")
             }
         }
@@ -90,15 +86,15 @@ kotlin {
     }
 }
 
-val prepareKitePlayer by tasks.registering(Exec::class) {
+val buildDesktopMpv by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
-    commandLine("python3", "tools/build_player.py")
-    inputs.files(rootProject.fileTree("native/kiteplayer"), rootProject.file("tools/build_player.py"))
-    outputs.dir(rootProject.layout.buildDirectory.dir("kiteplayer/maven"))
+    commandLine("python3", "tools/build_mpv.py")
+    inputs.files(rootProject.file("tools/build_mpv.py"), rootProject.fileTree("native/mpv"))
+    inputs.property("runtime", providers.environmentVariable("VIPTV_MPV_RUNTIME_DIR").orElse(""))
+    providers.environmentVariable("VIPTV_MPV_RUNTIME_DIR").orNull?.let { inputs.dir(it) }
+    outputs.dir(layout.buildDirectory.dir("mpvResources"))
 }
-tasks.matching {
-    it.name.startsWith("compile") && it.name.contains("Desktop")
-}.configureEach { dependsOn(prepareKitePlayer) }
+tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopMpv) }
 
 val buildDesktopEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
@@ -107,6 +103,17 @@ val buildDesktopEngine by tasks.registering(Exec::class) {
     outputs.dir(layout.buildDirectory.dir("nativeResources"))
 }
 tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopEngine) }
+val buildDesktopTorrent by tasks.registering(Exec::class) {
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/build_desktop_torrent.py")
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_desktop_torrent.py"))
+    inputs.property("candidate", providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orElse(""))
+    providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orNull?.let {
+        inputs.files(fileTree(it) { include("**/*.go", "go.mod", "go.sum") })
+    }
+    outputs.dir(layout.buildDirectory.dir("torrentResources"))
+}
+tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopTorrent) }
 // Same Java version can have different native dependencies across JDK vendors.
 // Compose's default runtime cache metadata does not distinguish those builds.
 tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJLinkTask>().configureEach {

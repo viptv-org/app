@@ -1,5 +1,6 @@
 package org.viptv.app.features.home
 
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -73,7 +74,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                     Box(Modifier.bringIntoViewRequester(bringIntoView)) {
                         MediaCard(card, width, portrait = portrait,
                             onFocus = {
-                                scope.launch { bringIntoView.bringIntoView() }
+                                if (!television) scope.launch { bringIntoView.bringIntoView() }
                                 focus(card)
                             },
                             open = open, select = select, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,

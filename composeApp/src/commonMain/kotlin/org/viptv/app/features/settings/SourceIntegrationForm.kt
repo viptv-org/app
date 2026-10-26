@@ -24,7 +24,7 @@ internal fun SourceIntegrationForm(schema: SourceIntegrationSchema, busy: Boolea
     AlertDialog(onDismissRequest = dismiss,
         modifier = Modifier.composed { windowInsetsPadding(keyboardInsets ?: WindowInsets.ime) },
         title = { Text(schema.name) }, text = {
-        Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             schema.credential_fields.forEach { field ->
                 OutlinedTextField(values[field.id].orEmpty(), { values[field.id] = it }, label = { Text(field.label) },
                     singleLine = true, enabled = !busy,
@@ -43,7 +43,7 @@ internal fun SourceIntegrationForm(schema: SourceIntegrationSchema, busy: Boolea
                 }
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        }
+        } }
     }, confirmButton = {
         TextButton({
             val configuration = buildJsonObject {

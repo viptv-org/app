@@ -25,6 +25,7 @@ internal fun launchUiPreview() = application {
     var screen by remember { mutableStateOf(runCatching { Screen.valueOf(System.getenv("VIPTV_UI_SCREEN") ?: "Home") }.getOrDefault(Screen.Home)) }
     var term by remember { mutableStateOf(if (screen == Screen.Search) "the w" else "") }
     Window(onCloseRequest = ::exitApplication, title = "VIPTV UI Preview", state = window, undecorated = true) {
+        org.viptv.app.player.mpv.MpvWindow(this.window) {
         ViptvTheme {
             Column {
                 if (!phone) WindowDraggableArea {
@@ -43,6 +44,7 @@ internal fun launchUiPreview() = application {
                     UiPreview(desktop = true, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
                 }
             }
+        }
         }
     }
 }

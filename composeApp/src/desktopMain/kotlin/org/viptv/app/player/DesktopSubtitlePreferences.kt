@@ -1,11 +1,12 @@
 package org.viptv.app.player
 
-import io.github.yuroyami.kiteplayer.SubtitleConfig
-import io.github.yuroyami.kiteplayer.subtitle.SubtitleStyleOverride
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.subtitleMode
 
 /** Keep authored styles for defaults; apply only explicit supported viewer overrides. */
+internal data class SubtitleStyleOverride(val primaryColor: Int?, val backgroundColor: Int?)
+internal data class SubtitleConfig(val preferredLanguages: List<String>, val autoSelect: Boolean, val autoSelectForced: Boolean, val fontScale: Float, val style: SubtitleStyleOverride?, val typesetting: Boolean)
+
 internal fun desktopSubtitleConfig(preferences: ProfilePreferences): SubtitleConfig {
     val foreground = desktopCaptionColor(preferences.subtitle_text_color)?.takeUnless { it == -1 }
     val background = desktopCaptionColor(preferences.subtitle_background_color)?.takeUnless { it ushr 24 == 0 }
@@ -19,8 +20,7 @@ internal fun desktopSubtitleConfig(preferences: ProfilePreferences): SubtitleCon
         autoSelectForced = enabled,
         fontScale = preferences.subtitle_font_scale.takeIf { it.isFinite() }?.coerceIn(.5, 2.0)?.toFloat() ?: 1f,
         style = style,
-        // Kite's libass tier ignores colour overrides. Its built-in text renderer
-        // honours them; retain authored typesetting when no colour is overridden.
+        // Explicit overrides use libass forced styles; defaults preserve authored ASS.
         typesetting = style == null,
     )
 }

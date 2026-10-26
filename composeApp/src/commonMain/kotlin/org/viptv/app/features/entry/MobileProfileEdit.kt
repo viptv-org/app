@@ -32,7 +32,7 @@ internal fun MobileProfileEdit(
     var editingName by remember(profile?.id) { mutableStateOf(false) }
     var editingPin by remember(profile?.id) { mutableStateOf(false) }
     var confirmingDelete by remember(profile?.id) { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
         Row(Modifier.fillMaxWidth().height(62.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = back) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(24.dp)) }
             Spacer(Modifier.weight(1f))
@@ -63,7 +63,7 @@ internal fun MobileProfileEdit(
                 EditSettingRow("Delete profile", "", danger = true, onClick = { confirmingDelete = true })
             }
         }
-    }
+    } }
     if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }, { avatarId, pin ->
         setAvatar(avatarId, pin); pickingAvatar = false
     }, pinAvailable = pinAvailable)

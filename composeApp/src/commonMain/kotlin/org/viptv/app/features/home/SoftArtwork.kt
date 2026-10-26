@@ -33,7 +33,9 @@ internal fun SoftArtwork(url: String?, modifier: Modifier, radius: Dp, opacity: 
             scaleX = 4f; scaleY = 4f
             transformOrigin = TransformOrigin(0f, 0f)
             alpha = opacity
-            compositingStrategy = CompositingStrategy.ModulateAlpha
+            // Apply opacity to the composed quarter-size dissolve, not each
+            // bitmap separately (which brightens overlapping images).
+            compositingStrategy = CompositingStrategy.Auto
         }
         if (preBlurred) BufferedArtwork(proxied, base)
         else BufferedArtwork(url, base.blur(radius / 4))

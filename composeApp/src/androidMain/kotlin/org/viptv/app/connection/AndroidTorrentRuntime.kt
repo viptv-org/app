@@ -136,6 +136,7 @@ internal class TorrentRuntimeWorker(private val context: Context, service: Class
     }
 
     override fun isAlive(): Boolean = !closed.get() && dead.count != 0L && binder?.isBinderAlive == true
+    internal fun actualWorkerAlive(): Boolean = binder?.isBinderAlive == true
 
     /** Only the PID returned by this private binding is ever killed. */
     override fun terminate() {

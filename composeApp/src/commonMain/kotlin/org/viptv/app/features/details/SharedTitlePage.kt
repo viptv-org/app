@@ -1,5 +1,7 @@
 package org.viptv.app.features.details
 
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape

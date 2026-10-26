@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ <application android:networkSecurityConfig="@xml/viptv_torrent_qa_network">
+  <profileable android:shell="true" />
+  <activity android:name="org.viptv.experiment.TorrentColdQaActivity" android:exported="true"
+   android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+ </application>
+</manifest>

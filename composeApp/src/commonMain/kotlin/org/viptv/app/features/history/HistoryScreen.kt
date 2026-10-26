@@ -1,8 +1,8 @@
 package org.viptv.app.features.history
 
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*

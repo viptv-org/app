@@ -69,7 +69,7 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
     // Apply IME padding inside this dialog's layout so the keyboard bounds that slot too.
     AlertDialog(onDismissRequest = { if (!busy) close() },
         modifier = Modifier.composed { windowInsetsPadding(keyboardInsets ?: WindowInsets.ime) }, title = { Text(title) },
-        text = { Column(Modifier.heightIn(max = 450.dp).verticalScroll(rememberScrollState()).selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        text = { org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.heightIn(max = 450.dp).verticalScroll(rememberScrollState()).selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             choices.forEach { (key, label) -> Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(current.equals(key, true),
                 enabled = !busy, role = Role.RadioButton, onClick = { apply(key) }), verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(current.equals(key, true), onClick = null, enabled = !busy); Spacer(Modifier.width(8.dp)); Text(label)
@@ -77,7 +77,7 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
             if (custom) OutlinedTextField(entry, { entry = it.take(if (language) 32 else 9) }, singleLine = true, enabled = !busy,
                 label = { Text(if (language) "Language tag" else title) }, supportingText = { Text(if (language) "For example en or pt-BR. Empty uses the default."
                     else if (field == PhonePreferenceField.BackgroundColour) "Use #RRGGBB or #AARRGGBB, including transparency." else "Use #RRGGBB.") })
-        } }, confirmButton = {
+        } } }, confirmButton = {
             if (custom) TextButton({ apply(entry) }, enabled = !busy && valid) { Text("Use value") }
         }, dismissButton = { TextButton(close, enabled = !busy) { Text("Cancel") } })
 }

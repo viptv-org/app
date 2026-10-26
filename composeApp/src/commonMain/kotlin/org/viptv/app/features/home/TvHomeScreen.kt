@@ -1,15 +1,18 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package org.viptv.app.features.home
 
+import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.state.owner
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.gestures.animateScrollBy
-import kotlinx.coroutines.Job
 import androidx.compose.foundation.lazy.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.focusGroup
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
@@ -17,10 +20,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -29,7 +33,6 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.connection.Profile
 import org.viptv.app.state.Screen
 import org.viptv.engine.wire.*
@@ -39,26 +42,31 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap(),
     enrichSummary: (Card) -> Unit = {}) {
-    var browsing by remember(home?.scope?.profile_id) { mutableStateOf(false) }
+    var browsing by rememberSaveable(home?.scope?.profile_id) { mutableStateOf(false) }
     // Timestamp of the last D-pad event: the billboard and prefetch wait for
     // navigation to go quiet instead of thrashing artwork while a key repeats.
     val lastNavigation = remember { mutableStateOf<TimeMark?>(null) }
+    val rapidNavigation = remember { mutableStateOf(false) }
     val quietForMillis = { lastNavigation.value?.elapsedNow()?.inWholeMilliseconds }
     val focused = remember(home?.scope?.profile_id) { mutableStateOf<Card?>(null) }
-    var activeRow by remember(home?.scope?.profile_id) { mutableIntStateOf(-1) }
-    var rowMotion by remember { mutableStateOf<Job?>(null) }
-    var lastRowHeight by remember(home?.scope?.profile_id, home?.rows?.lastOrNull()?.id) { mutableIntStateOf(0) }
+    var activeRow by rememberSaveable(home?.scope?.profile_id) { mutableIntStateOf(-1) }
     var heroFocusEpoch by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
     val firstCard = remember { FocusRequester() }; val playFocus = remember { FocusRequester() }
     // Down from the billboard resumes the shelf at the card the viewer left, not
     // at card 0 (which flashed the old card and then scrolled back to the start).
     val resumeShelf = remember { FocusRequester() }
+    val restoreBrowsing = remember(home?.scope?.profile_id) { browsing }
+    var measuredShelfHeight by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
+    var firstShelfHeight by remember(home?.scope?.profile_id, home?.rows?.firstOrNull()?.id) { mutableIntStateOf(0) }
     val navigationFocus = remember { FocusRequester() }
     var navigationFocusEpoch by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
     var initialShelfFocusClaimed by remember(home?.scope?.profile_id) { mutableStateOf(false) }
     var navigationAttached by remember { mutableStateOf(false) }
     val input = LocalInputModeManager.current
-    val rows = rememberLazyListState(); val scope = rememberCoroutineScope()
+    // Prepare adjacent shelves while keeping the painted viewport confined to one shelf.
+    val rows = rememberLazyListState(cacheWindow = androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow(aheadFraction = 1f, behindFraction = 1f))
+    val shelfStates = remember(home?.scope?.profile_id) { mutableMapOf<String, LazyListState>() }
+    val sectionScroll = org.viptv.app.components.rememberTvSectionScroll(rows)
     val visibleRows = remember(home?.rows) {
         home?.rows.orEmpty().filter { it.cards.isNotEmpty() || it.state == RowState.PENDING || it.state == RowState.FAILED }
     }
@@ -85,6 +93,18 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         while (!runCatching { requester.requestFocus() }.getOrDefault(false)) withFrameNanos { }
         true
     } ?: false
+    LaunchedEffect(restoreBrowsing) {
+        if (restoreBrowsing && visibleRows.isNotEmpty()) {
+            val target = activeRow.coerceIn(visibleRows.indices)
+            rows.scrollToItem(target)
+            focusWhenPlaced(resumeShelf) { rows.layoutInfo.visibleItemsInfo.any { it.index == target } }
+        }
+    }
+    fun enterRow(index: Int) {
+        browsing = true
+        activeRow = index
+        sectionScroll.focus(index)
+    }
     LaunchedEffect(home?.scope?.profile_id, visibleRows.getOrNull(firstReadyRow)?.id, featured.isEmpty(), error) {
         // The shelf claim is a fallback for a Home that has rows but no hero.
         // A still-loading snapshot (rows first, hero later) must not steal the
@@ -112,43 +132,27 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             focusWhenPlaced(navigationFocus) { navigationAttached }
         }
     }
-    val density = LocalDensity.current
-    var rowScale by remember { mutableFloatStateOf(1f) }
-    // Rows are measured, not assumed: the fixed 384/516 dp guesses placed the
-    // next shelf ~80 px too low, so its heading showed with no cards peeking.
-    val rowHeightsPx = remember(home?.scope?.profile_id) { mutableStateMapOf<String, Int>() }
-    fun rowOffset(index: Int, scale: Float): Float {
-        var px = 0f
-        for (i in 0 until index) {
-            val row = visibleRows.getOrNull(i) ?: break
-            px += rowHeightsPx[row.id]?.toFloat()
-                ?: with(density) { (if (row.id == "continue") 384 else 516).dp.toPx() * scale }
-            px += with(density) { (40.dp * scale).toPx() }
-        }
-        return px
-    }
     fun returnHero() {
         browsing = false; focused.value = null; activeRow = -1; heroFocusEpoch++
         if (featured.isNotEmpty()) playFocus.requestFocus() else navigationFocusEpoch++
-        rowMotion?.cancel()
-        rowMotion = scope.launch { rows.animateScrollBy(-rowOffset(rows.firstVisibleItemIndex, rowScale) - rows.firstVisibleItemScrollOffset, tween(450)) }
+        sectionScroll.focus(0, force = true)
     }
     DisposableEffect(browsing) { backChanged(if (browsing) ::returnHero else null); onDispose { backChanged(null) } }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val viewport = maxWidth
-        SideEffect { rowScale = scale }
         val easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-        // Browsing sits the focused shelf higher so the next shelf's heading
-        // *and* a real slice of its cards show, instead of a bare title peek.
-        val targetTop = (if (browsing) 464 else 824).dp * scale
-        // The rows are laid out at the browsing top and only translated: a list
-        // whose top padding jumped to the billboard position lost 312 dp of
-        // height in one frame and clipped the sliding rows.
-        val listTop = 512.dp * scale
-        val top = animateDpAsState(targetTop, tween(450, easing = easing), label = "Billboard to rows", finishedListener = {})
-        val measuredLastHeight = with(LocalDensity.current) { lastRowHeight.toDp() }
-        val bottomSpace = maxOf(96.dp * scale, maxHeight - listTop - measuredLastHeight)
+        // One complete shelf occupies the bottom slot. Short landscape shelves align
+        // within the same slot, so switching shape never exposes the next heading.
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val shelfSlot = maxOf((40 + 12 + 255.2f * 1.5f + 76).dp * scale, with(density) { measuredShelfHeight.toDp() })
+        val listTop = (maxHeight - 24.dp * scale - shelfSlot).coerceAtLeast(0.dp)
+        val firstShelf = visibleRows.firstOrNull()
+        val firstArtHeight = if (firstShelf?.id == "continue") 422.4f * 9f / 16f else 255.2f * 1.5f
+        val firstHeight = if (firstShelfHeight > 0) with(density) { firstShelfHeight.toDp() }
+            else (52f + if (firstShelf?.state == RowState.FAILED) 169f else firstArtHeight + if (firstShelf?.state == RowState.READY) 76f else 0f).dp * scale
+        val targetTop = if (browsing) listTop else 824.dp * scale - (shelfSlot - firstHeight)
+        val top = animateDpAsState(targetTop, tween(450, easing = easing), label = "Billboard to rows")
         var heroTimerEnabled by remember(home?.scope?.owner()) { mutableStateOf(true) }
         LaunchedEffect(browsing) {
             if (browsing) heroTimerEnabled = false
@@ -166,16 +170,12 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             build
         }
         val selection = rememberTvBillboardSelection(focused, { browsing }, portraitSelection, quietForMillis, softArtwork = softPlane,
-            motionBusy = { rows.isScrollInProgress })
+            motionBusy = { rows.isScrollInProgress || shelfStates.values.any { it.isScrollInProgress } },
+            resolve = { summaryCards[it.identity.id] ?: it }, enrich = enrichSummary,
+            settleMillis = { if (rapidNavigation.value) 350L else 120L })
         val settled = selection?.card
-        // A sparse row card (Continue Watching) gets its billboard fields from
-        // one detail fetch, cached in the controller's summaryCards.
-        LaunchedEffect(settled?.identity?.id) {
-            val c = settled ?: return@LaunchedEffect
-            if (c.logo == null || c.description.isNullOrBlank()) enrichSummary(c)
-        }
         val original = settled ?: carousel.card
-        val card = original?.let { summaryCards[it.identity.id] ?: it }
+        val card = original
         val arrival = rememberTvContentArrival(home != null)
         val empty = home?.complete == true && visibleRows.isEmpty() && featured.isEmpty()
         val catalogsFailed = home?.complete == true && featured.isEmpty() &&
@@ -187,56 +187,57 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                 Modifier.padding(start = 96.dp * scale, end = 96.dp * scale, top = 300.dp * scale), television = true, scale = scale)
         } else {
             Box(Modifier.fillMaxSize().then(arrival).onPreviewKeyEvent { event ->
-                if (event.key.isDirectional()) lastNavigation.value = TimeSource.Monotonic.markNow()
+                if (event.type == KeyEventType.KeyDown && event.key.isDirectional()) {
+                    rapidNavigation.value = lastNavigation.value?.elapsedNow()?.inWholeMilliseconds?.let { it < 400 } == true
+                    lastNavigation.value = TimeSource.Monotonic.markNow()
+                }
                 false
             }) {
                 TvHomeBackdrop(card, browsing, portrait = selection?.portrait ?: false, hero = carousel.card, heroReady = carousel.artworkReady)
                 if (card != null) {
-                    TvHomeVisibility(browsing && settled != null, scale, 24, 450, sequentialFade = true) {
-                        org.viptv.app.components.FadeThrough(card) {
+                    TvHomeVisibility(browsing && settled != null, scale, 0, 220) {
+                        org.viptv.app.components.FadeThrough(card, contentKey = { it.identity }) {
                             TvBrowseSummary(it, scale)
                         }
                     }
-                    TvHomeVisibility(!browsing, scale, -80, 450, retain = true, focusEnabled = { !browsing }, sequentialFade = true) {
+                    TvHomeVisibility(!browsing, scale, -12, 220, retain = true, focusEnabled = { !browsing }) {
                         carousel.card?.let { hero ->
                             TvHero(hero, { if (!browsing) open(it) }, { if (!browsing) play(it) }, playFocus, if (visibleRows.firstOrNull()?.cards?.isNotEmpty() == true) resumeShelf else null, carousel.count, selected = carousel.index, progress = carousel.progress, focusEpoch = heroFocusEpoch, requestFocus = !browsing && error == null, save = { if (!browsing) save(it) }, isSaved = saved)
                         }
                     }
                 }
-                TvFocusScroll(manual = true) {
-                    LazyColumn(Modifier.fillMaxSize().padding(top = listTop).graphicsLayer {
-                        translationY = (top.value - listTop).toPx()
-                    }, state = rows, verticalArrangement = Arrangement.spacedBy(40.dp * scale), contentPadding = PaddingValues(bottom = bottomSpace)) {
-                        itemsIndexed(visibleRows, key = { _, row -> row.id }, contentType = { _, _ -> "row" }) { index, row ->
-                            // A row first composed above the active one starts faded,
-                            // exactly like animateFloatAsState's initial value. Stable
-                            // instances only: a focus move must not re-hand every shelf
-                            // a fresh modifier chain (the fade reads in the draw phase).
-                            val alpha = rowAlphas.getOrPut(row.id) {
-                                androidx.compose.animation.core.Animatable(if (browsing && index < activeRow) 0f else 1f)
-                            }
+
+                LazyColumn(Modifier.fillMaxWidth().offset(y = listTop).height(shelfSlot).graphicsLayer {
+                    translationY = (top.value - listTop).toPx()
+                }, state = rows, sectionControlled = true, verticalArrangement = Arrangement.spacedBy(40.dp * scale)) {
+                    itemsIndexed(visibleRows, key = { _, row -> row.id }, contentType = { _, _ -> "row" }) { index, row ->
+                        val shelfState = rememberLazyListState()
+                        DisposableEffect(row.id, shelfState) {
+                            shelfStates[row.id] = shelfState
+                            onDispose { shelfStates.remove(row.id) }
+                        }
+                        // A row first composed above the active one starts faded,
+                        // exactly like animateFloatAsState's initial value. Stable
+                        // instances only: a focus move must not re-hand every shelf
+                        // a fresh modifier chain (the fade reads in the draw phase).
+                        val alpha = rowAlphas.getOrPut(row.id) {
+                            androidx.compose.animation.core.Animatable(if (browsing && index < activeRow) 0f else 1f)
+                        }
+                        Box(Modifier.fillMaxWidth().height(shelfSlot).onFocusChanged { if (it.hasFocus) enterRow(index) }.focusGroup(), contentAlignment = androidx.compose.ui.Alignment.BottomStart) {
                             TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
                                 // Only the first row returns to the billboard; Up from any
                                 // lower row moves to the row above.
                                 up = if (index == 0) ::returnHero else null,
-                                focus = { focused.value = it; browsing = true
-                                    if (activeRow != index) {
-                                        activeRow = index; rowMotion?.cancel()
-                                        rowMotion = scope.launch {
-                                            val current = rowOffset(rows.firstVisibleItemIndex, scale) + rows.firstVisibleItemScrollOffset
-                                            rows.animateScrollBy(rowOffset(index, scale) - current, tween(350, easing = easing))
-                                        }
-                                    }
-                                }, open, retry, viewport = viewport,
-                                more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
+                                focus = { focused.value = it; enterRow(index) }, open, retry, more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
                                 firstPlaced = { firstReadyAttached = true },
-                                resume = if (visibleRows.getOrNull(firstReadyRow)?.id == row.id) resumeShelf else null,
+                                resume = if (index == (if (browsing) activeRow else firstReadyRow)) resumeShelf else null,
                                 rowAlpha = alpha,
-                                onHeightChange = { height -> rowHeightsPx[row.id] = height; if (index == visibleRows.lastIndex) lastRowHeight = height },
-                                play = play)
+                                onHeightChange = { if (it > measuredShelfHeight) measuredShelfHeight = it; if (index == 0) firstShelfHeight = it },
+                                play = play, state = shelfState)
                         }
                     }
                 }
+
             }
         }
         if (error != null && home != null && !empty && !catalogsFailed) {

@@ -97,16 +97,28 @@ for _step in 1 2 3 4 5 6 7 8 9 10; do
     key 20 1.0
     continue
   fi
-  key 22 1.2
+  # Focus changing in a short shelf is not proof of scrolling. Walk far enough
+  # to page, then require the original card to move left or leave the viewport.
+  adb_t -s "$SERIAL" shell 'j=0; while [ $j -lt 8 ]; do input keyevent 22; sleep 0.08; j=$((j+1)); done' >/dev/null 2>&1
+  sleep 0.5
   probe=$(focused_node)
+  original=$(adb_t -s "$SERIAL" shell cat /sdcard/ab_home.xml 2>/dev/null | python3 "$FOCUS_HELPER" "$f_desc") || original=""
+  scrolled=0
+  if [ -z "$original" ]; then
+    scrolled=1
+  else
+    IFS=$'\t' read -r original_x _rest <<<"$original"
+    [ "${original_x:-0}" -lt "${f_x1:-0}" ] && scrolled=1
+  fi
   probe_desc=""
   [ -n "$probe" ] && IFS=$'\t' read -r _px _py _px2 _py2 probe_desc <<<"$probe"
-  key 21 1.0
-  if [ -n "$probe_desc" ] && [ "$probe_desc" != "$f_desc" ]; then
+  adb_t -s "$SERIAL" shell 'j=0; while [ $j -lt 8 ]; do input keyevent 21; sleep 0.08; j=$((j+1)); done' >/dev/null 2>&1
+  sleep 0.5
+  if [ "$scrolled" -eq 1 ] && [ -n "$probe_desc" ] && [ "$probe_desc" != "$f_desc" ]; then
     shelf_ok=1
     break
   fi
-  # Single-item row: nothing to page. Try the shelf below.
+  # A short row fits without scrolling. Try the shelf below.
   key 20 1.2
 done
 if [ "$shelf_ok" -ne 1 ]; then

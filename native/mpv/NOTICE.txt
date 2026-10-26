@@ -1,0 +1,16 @@
+VIPTV desktop uses libmpv through its public C client/render APIs.
+mpv upstream: https://github.com/mpv-player/mpv
+mpv source/release: https://github.com/mpv-player/mpv/releases/tag/v0.41.0
+FFmpeg upstream/source: https://ffmpeg.org/download.html
+
+The adjacent manifest records the exact runtime library versions and SHA-256
+identities of all packaged files. The library remains dynamically linked.
+LICENSE.GPL and LICENSE.LGPL are the unmodified license texts from mpv v0.41.0.
+Dependent libraries retain their upstream licenses. Source package recipes and
+source archives for the assembled distribution are available from its package
+provider (Arch Linux, Debian/Ubuntu, Homebrew or MSYS2, as recorded by the build).
+A release distributor must retain the corresponding source and dependency
+license notices for the precise native build it distributes.
+
+No mpv scripts, user configuration, executable shortcuts or input bindings are
+loaded by VIPTV. Hardware drivers and the OS C runtime are provided by the host.

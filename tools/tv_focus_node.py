@@ -2,7 +2,8 @@
 """Print the focused node of a `uiautomator dump` XML as TSV on stdin -> stdout.
 
 Output: x1<TAB>y1<TAB>x2<TAB>y2<TAB>content-desc   (numbers first, because
-titles contain spaces and commas). Nothing on stdout when no node is focused.
+titles contain spaces and commas). An optional first argument selects an exact content-desc instead of focus.
+Nothing on stdout when no matching node exists.
 
 Used by tools/tv_ab.sh to decide whether a measurement burst will actually
 scroll a shelf instead of walking the top bar.
@@ -18,12 +19,15 @@ DESC = re.compile(r'content-desc="([^"]*)"')
 def main() -> int:
     text = sys.stdin.read()
     for node in NODE.findall(text):
-        if 'focused="true"' not in node:
+        desc = DESC.search(node)
+        if len(sys.argv) > 1:
+            if not desc or desc.group(1) != sys.argv[1]:
+                continue
+        elif 'focused="true"' not in node:
             continue
         bounds = BOUNDS.search(node)
         if not bounds:
             continue
-        desc = DESC.search(node)
         x1, y1, x2, y2 = bounds.groups()
         sys.stdout.write("\t".join([x1, y1, x2, y2, desc.group(1) if desc else ""]))
         return 0

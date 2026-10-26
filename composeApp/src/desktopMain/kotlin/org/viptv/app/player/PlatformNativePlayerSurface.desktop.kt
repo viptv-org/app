@@ -6,4 +6,4 @@ import kotlinx.coroutines.flow.Flow
 
 @Composable
 internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) =
-    KitePlayerSurface(input, paused, modifier, observe, commands)
+    MpvPlayerSurface(input, paused, modifier, observe, commands)

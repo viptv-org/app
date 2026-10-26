@@ -1,7 +1,7 @@
 package org.viptv.app.features.search
 
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

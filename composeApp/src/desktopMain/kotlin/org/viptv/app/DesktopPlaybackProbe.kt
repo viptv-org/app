@@ -49,9 +49,20 @@ internal class DesktopPlaybackProbe(private val result: Path?) {
 
     suspend fun run(input: PlaybackInput, commands: MutableSharedFlow<PlayerCommand>, pause: (Boolean) -> Unit) {
         try {
+            if (System.getenv("VIPTV_DESKTOP_QA_PAUSED") == "1") {
+                withTimeout(25_000) { presented.filter { it }.first() }
+                withTimeout(5_000) { status.first { it == "Paused" } }
+                record("paused-first-frame")
+                pause(false)
+            }
             withTimeout(25_000) { presented.filter { it }.first(); progress.filterNotNull().first { it.positionMillis > input.positionMillis + 400 } }
             withTimeout(5_000) { properties.filterNotNull().first { abs(it.subtitleSize - input.preferences.subtitle_font_scale.toFloat()) < .01f } }
             withTimeout(5_000) { tracks.first { it.subtitles.any { t -> t.selected } } }
+            commands.emit(PlayerCommand.Volume(.42f))
+            withTimeout(5_000) { properties.filterNotNull().first { abs(it.volume - .42f) < .01f } }
+            commands.emit(PlayerCommand.Speed(1.25))
+            withTimeout(5_000) { properties.filterNotNull().first { abs(it.speed - 1.25) < .01 } }
+            commands.emit(PlayerCommand.Speed(1.0))
             record("playing")
             delay(1000)
             pause(true); withTimeout(5_000) { status.first { it.equals("Paused", true) } }

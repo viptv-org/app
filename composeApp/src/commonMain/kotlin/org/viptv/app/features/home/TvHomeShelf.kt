@@ -2,6 +2,7 @@
 
 package org.viptv.app.features.home
 
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,11 +10,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusRestorer
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TvAction
-import org.viptv.app.components.rememberTvShelfScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.graphicsLayer
@@ -21,11 +22,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.first
-import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 
@@ -52,25 +51,27 @@ private fun TvRowMessageCard(scale: Float, title: String, message: String?, retr
 @Composable
 internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, showFocus: Boolean = true, up: (() -> Unit)?,
     focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, modifier: Modifier = Modifier,
-    viewport: Dp, firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
+    firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
     rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
-    onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open) {
+    onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open, state: LazyListState = rememberLazyListState()) {
+    val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val portrait = row.id != "continue"
     // OK on a Continue Watching card goes straight to that episode's sources.
     val activate = if (row.id == CONTINUE_ROW) play else open
-    val state = rememberLazyListState()
     val arrival = rememberTvContentArrival(row.state == RowState.READY)
     val cards = remember(row.cards) { row.cards.distinctBy(::cardLookupKey) }
     // Dictionary §A2: with next_cursor, skeletons append as focus or scroll nears
     // the end. There is never a Load more button.
     val trailing = if (appendError == null && more != null && (row.next_cursor != null || appending)) HOME_ROW_TRAILING else 0
-    val scroll = rememberTvShelfScroll(state, (if (portrait) 248 else 404).dp * scale, viewport, cards.size + trailing, 96.dp * scale)
+
     // Remember the card the viewer last focused in this shelf. Coming back Down
     // from the billboard must resume *there*: focusing card 0 restored the scroll
     // to the start and flashed the previously focused card before snapping away.
-    var lastFocusedIndex by remember(row.id) { mutableIntStateOf(0) }
-    val resumeIndex = lastFocusedIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
+    var lastFocusedIndex by rememberSaveable(row.id) { mutableIntStateOf(0) }
+    var lastFocusedKey by rememberSaveable(row.id) { mutableStateOf<String?>(null) }
+    val resumeIndex = cards.indexOfFirst { cardLookupKey(it) == lastFocusedKey }.takeIf { it >= 0 }
+        ?: lastFocusedIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
     // A background refresh can remove the focused card (finished on another
     // device). Focus moves to the surviving card at the same position instead
     // of falling out of the shelf. Only a shelf that held focus does this.
@@ -100,40 +101,40 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
         .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         Text(row.title, Modifier.padding(start = 96.dp * scale).height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
             letterSpacing = (-0.3f * scale).sp, fontWeight = FontWeight.SemiBold)
-        TvFocusScroll(manual = true) {
-            // A cache window (cards precomposed past the edges) was measured on
-            // the ONN and *cost* frames instead of saving them, so the shelf
-            // relies on the built-in scroll prefetch only.
-            LazyRow(state = state, modifier = arrival.focusRestorer().focusGroup().onFocusChanged {
-                    // Focus moving elsewhere forgets the card; a removed card keeps it for recovery.
-                    if (!it.hasFocus && latestCards.value.any { card -> cardLookupKey(card) == focusedKey }) focusedKey = null
-                }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
-                when (row.state) {
-                    RowState.READY -> {
-                        itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->
-                            val entry = Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced() } else Modifier)
-                                .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
-                                .then(if (index == resumeIndex) Modifier.focusRequester(recover) else Modifier)
-                                // The leading card dead-ends Left: the geometric search
-                                // can otherwise wander to the profile avatar.
-                                .then(if (index == 0) Modifier.focusProperties { left = FocusRequester.Cancel } else Modifier)
-                            TvCatalogCard(card, scale, portrait, entry,
-                                { lastFocusedIndex = index; focusedKey = cardLookupKey(it); scroll(index); focus(it) }, activate, showFocus, focusedCaptions = portrait,
-                                onUp = if (index < 7) up else null)
-                        }
-                        if (appendError != null) item(key = "row-append", contentType = "failed") {
-                            TvRowMessageCard(scale, "Couldn’t load more titles", appendError, { loadPage.value?.invoke(row.id) })
-                        } else items(trailing, key = { "append-$it" }, contentType = { "skeleton" }) { TvHomeSkeletonCard(scale, portrait) }
+
+        // A cache window (cards precomposed past the edges) was measured on
+        // the ONN and *cost* frames instead of saving them, so the shelf
+        // relies on the built-in scroll prefetch only.
+        LazyRow(state = state, modifier = arrival.focusRestorer(if (lastFocusedKey != null) recover else FocusRequester.Default).focusGroup().onFocusChanged {
+                // Focus moving elsewhere forgets the card; a removed card keeps it for recovery.
+                if (!it.hasFocus && latestCards.value.any { card -> cardLookupKey(card) == focusedKey }) focusedKey = null
+            }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
+            when (row.state) {
+                RowState.READY -> {
+                    itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->
+                        val entry = Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced() } else Modifier)
+                            .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
+                            .then(if (index == resumeIndex) Modifier.focusRequester(recover) else Modifier)
+                            // The leading card stops at logical start: geometric search
+                            // can otherwise wander to the profile avatar.
+                            .then(if (index == 0) Modifier.focusProperties { if (rtl) right = FocusRequester.Cancel else left = FocusRequester.Cancel } else Modifier)
+                        TvCatalogCard(card, scale, portrait, entry,
+                            { lastFocusedIndex = index; lastFocusedKey = cardLookupKey(it); focusedKey = lastFocusedKey; focus(it) }, activate, showFocus, focusedCaptions = portrait,
+                            onUp = up, artworkWidth = (if (portrait) 255.2f else 422.4f).dp * scale)
                     }
-                    // The board shows one full row of six skeletons while a row loads.
-                    RowState.PENDING -> items(6, contentType = { "skeleton" }) { TvHomeSkeletonCard(scale, portrait) }
-                    RowState.EMPTY -> item(contentType = "empty") { Text("Nothing here yet.", color = Palette.secondary, fontSize = (24 * scale).sp) }
-                    RowState.FAILED -> item(contentType = "failed") {
-                        // Board Tv3RowStates: a message card, not a bare button.
-                        TvRowMessageCard(scale, "Couldn’t load this row", row.message, retry)
-                    }
+                    if (appendError != null) item(key = "row-append", contentType = "failed") {
+                        TvRowMessageCard(scale, "Couldn’t load more titles", appendError, { loadPage.value?.invoke(row.id) })
+                    } else items(trailing, key = { "append-$it" }, contentType = { "skeleton" }) { TvHomeSkeletonCard(scale, portrait) }
+                }
+                // The board shows one full row of six skeletons while a row loads.
+                RowState.PENDING -> items(6, contentType = { "skeleton" }) { TvHomeSkeletonCard(scale, portrait) }
+                RowState.EMPTY -> item(contentType = "empty") { Text("Nothing here yet.", color = Palette.secondary, fontSize = (24 * scale).sp) }
+                RowState.FAILED -> item(contentType = "failed") {
+                    // Board Tv3RowStates: a message card, not a bare button.
+                    TvRowMessageCard(scale, "Couldn’t load this row", row.message, retry)
                 }
             }
         }
+
     }
 }

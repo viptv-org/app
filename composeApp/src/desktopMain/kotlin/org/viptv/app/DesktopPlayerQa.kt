@@ -19,10 +19,12 @@ import java.nio.file.Path
 /** Explicit diagnostic independent of account, storage and tracking; accepts owned local fixtures. */
 internal fun launchDesktopPlayerQa() = application {
     val state = rememberWindowState(width = 1280.dp, height = 720.dp)
+    val controls = System.getenv("VIPTV_DESKTOP_QA_CONTROLS") == "1"
     val scripted = System.getenv("VIPTV_DESKTOP_QA_SCRIPTED") == "1"
+    check(!controls || !scripted) { "Interactive controls and scripted transport have separate owners" }
     val probe = remember { DesktopPlaybackProbe(System.getenv("VIPTV_DESKTOP_QA_RESULT")?.let(Path::of)) }
     val commands = remember { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 8) }
-    var paused by remember { mutableStateOf(false) }
+    var paused by remember { mutableStateOf(System.getenv("VIPTV_DESKTOP_QA_PAUSED") == "1") }
     val input = remember {
         val caption = System.getenv("VIPTV_DESKTOP_QA_SUBTITLE")?.let(Path::of)
         check(!scripted || caption != null) { "Scripted desktop QA requires an owned caption fixture" }
@@ -40,7 +42,11 @@ internal fun launchDesktopPlayerQa() = application {
             diagnostics = probe::diagnostic)
     }
     Window(onCloseRequest = ::exitApplication, title = "VIPTV Desktop Playback QA", state = state) {
-        PlayerSurface(input, paused, Modifier.fillMaxSize().background(Color.Black), observe = probe::observe, commands = commands)
+        org.viptv.app.player.mpv.MpvWindow(window) {
+        if (controls) org.viptv.app.theme.ViptvTheme {
+            org.viptv.app.features.player.PlayerScreen(input, paused, null, { paused = !paused }, probe::observe, ::exitApplication)
+        } else PlayerSurface(input, paused, Modifier.fillMaxSize().background(Color.Black), observe = probe::observe, commands = commands)
         LaunchedEffect(input) { if (scripted) { probe.run(input, commands) { paused = it }; exitApplication() } }
     }
+        }
 }

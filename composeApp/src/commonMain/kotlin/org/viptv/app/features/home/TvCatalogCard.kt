@@ -64,12 +64,12 @@ import org.viptv.engine.wire.Card
 @Composable
 internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier: Modifier = Modifier,
     focused: (Card) -> Unit, open: (Card) -> Unit, showFocus: Boolean = true, focusedCaptions: Boolean = false,
-    onUp: (() -> Unit)? = null) {
+    onUp: (() -> Unit)? = null, artworkWidth: androidx.compose.ui.unit.Dp? = null) {
     val focus = remember { mutableStateOf(false) }
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
     val states = remember(card) { TvCardStates.of(card) }
     val description = remember(card, states) { cardDescription(card, states) }
-    Column(modifier.width((if (portrait) 232 else 384).dp * scale)
+    Column(modifier.width(artworkWidth ?: (if (portrait) 232 else 384).dp * scale)
         // One accessibility node per card. A TV shelf has hundreds of cards and
         // the TV has an accessibility service bound, so every extra node is
         // walked again on each focus and scroll change. The focus state has to be

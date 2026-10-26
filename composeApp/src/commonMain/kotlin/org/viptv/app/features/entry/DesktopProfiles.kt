@@ -1,11 +1,11 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.FocusLazyRow as LazyRow
 import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme

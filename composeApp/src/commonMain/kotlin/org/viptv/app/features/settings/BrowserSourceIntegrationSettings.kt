@@ -46,7 +46,7 @@ internal fun BrowserSourceIntegrationSettings(snapshot: SourceIntegrationSnapsho
     retry: () -> Unit, profileName: String?, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit) {
     var editing by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     var deleting by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Source integrations", fontSize = 24.sp, lineHeight = 28.sp, letterSpacing = (-.48).sp, fontWeight = FontWeight.Bold)
         Text("Where movies, series and live channels come from.", fontSize = 14.sp, lineHeight = 20.sp, color = Palette.secondary)
         if (busy) Box(Modifier.fillMaxWidth().height(2.dp).background(Palette.accent.copy(alpha = .4f)))
@@ -59,7 +59,7 @@ internal fun BrowserSourceIntegrationSettings(snapshot: SourceIntegrationSnapsho
         }
         Text("Applies to ${profileName?.let { "$it\u2019s" } ?: "this"} profile only. Saved values are never shown again. To change one, enter a new value.",
             fontSize = 13.sp, lineHeight = 19.sp, color = Palette.tertiary)
-    }
+    } }
     editing?.let { schema ->
         SourceIntegrationForm(schema, busy, error, { editing = null }, save = { configuration ->
             configure(schema.plugin_id, configuration)

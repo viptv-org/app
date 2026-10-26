@@ -10,31 +10,10 @@ import org.viptv.engine.wire.Card
 
 internal data class TvBillboardSelection(val card: Card, val portrait: Boolean)
 
-/**
- * How long navigation must be quiet before the billboard follows the focus.
- *
- * Comfortably longer than a held D-pad's repeat interval (~100 ms) and than the
- * gap between quick taps, so a held button never starts a swap: an artwork swap
- * mid-scroll re-decodes and re-animates the backdrop on every press, which is
- * what made fast navigation stutter.
- */
+// Coalesce held-key input, but prepare images immediately while native scrolling runs.
 private const val SelectionSettleMillis = 220L
-
-/** Poll interval while waiting for the D-pad to go quiet. */
 private const val QuietPollMillis = 16L
 
-/**
- * Follows the focus in two stages so fast navigation stays smooth AND the
- * billboard actually keeps up:
- *
- * 1. The moment a card is focused, every artwork URL the billboard planes will
- *    need (sharp art, logo, and the pre-blurred soft-plane URL) is decoded into
- *    the image cache. Decoding is off the frame path, so a held key can warm
- *    several cards without touching a frame.
- * 2. Only once navigation has been quiet for [SelectionSettleMillis] does the
- *    visible swap happen. The planes fade in from warm cache entries together,
- *    instead of each popping in as its own fetch finishes.
- */
 @Composable
 internal fun rememberTvBillboardSelection(
     focused: State<Card?>,
@@ -50,9 +29,21 @@ internal fun rememberTvBillboardSelection(
      * land inside an animated frame — those are the 100 ms+ tail frames.
      */
     motionBusy: () -> Boolean = { false },
+    resolve: (Card) -> Card = { it },
+    enrich: (Card) -> Unit = {},
+    settleMillis: () -> Long = { SelectionSettleMillis },
 ): TvBillboardSelection? {
     val context = LocalPlatformContext.current
-    val card = focused.value
+    val raw = focused.value
+    val card = raw?.let(resolve)
+    LaunchedEffect(raw?.identity) {
+        if (raw != null && (raw.logo == null || raw.description.isNullOrBlank())) {
+            // Metadata requests for intermediate held-key selections otherwise
+            // publish many Home updates during the active scroll animation.
+            while (quietForMillis()?.let { it < settleMillis() } == true) delay(QuietPollMillis)
+            enrich(raw)
+        }
+    }
     // These reads stay inside this composable so a focus/row change never
     // recomposes the whole home screen.
     val browsingNow = browsing()
@@ -61,20 +52,7 @@ internal fun rememberTvBillboardSelection(
     LaunchedEffect(card, browsingNow, portraitNow) {
         if (!browsingNow) return@LaunchedEffect
         val card = card ?: return@LaunchedEffect
-        // Never swap artwork while the D-pad is held or clicked in quick
-        // succession: that is what made fast navigation feel like it froze.
-        // The swap happens once navigation goes quiet, like a key release.
-        while (true) {
-            val quiet = quietForMillis()
-            if ((quiet == null || quiet >= SelectionSettleMillis) && !motionBusy()) break
-            delay(QuietPollMillis)
-        }
-        // Warm every plane the swap will show *before* the swap: sharp art,
-        // logo, and the pre-blurred soft-plane URL, which is its own cache
-        // entry and otherwise pops in a beat after the rest. Awaiting the set
-        // here keeps the crossing frames free of decode work; the swap itself
-        // is then a single coordinated fade.
-        withTimeoutOrNull(1900) {
+        withTimeoutOrNull(1200) {
             coroutineScope {
                 listOfNotNull(
                     (if (portraitNow) card.poster else card.landscape ?: card.poster)?.let {
@@ -84,6 +62,11 @@ internal fun rememberTvBillboardSelection(
                     if (portraitNow) softArtwork(card)?.let { ImageRequest.Builder(context).data(it).size(480, 155).build() } else null,
                 ).map { request -> async { SingletonImageLoader.get(context).execute(request) } }.awaitAll()
             }
+        }
+        while (true) {
+            val quiet = quietForMillis()
+            if ((quiet == null || quiet >= settleMillis()) && !motionBusy()) break
+            delay(QuietPollMillis)
         }
         selected = TvBillboardSelection(card, portraitNow)
     }

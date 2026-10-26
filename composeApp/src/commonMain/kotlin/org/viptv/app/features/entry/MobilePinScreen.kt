@@ -38,7 +38,7 @@ internal fun MobilePinScreen(
     digit: (String) -> Unit, erase: () -> Unit, submit: () -> Unit, back: () -> Unit,
 ) {
     var forgot by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+    org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             androidx.compose.material3.IconButton(onClick = back) { androidx.compose.material3.Icon(Lucide.X, "Back", Modifier.size(24.dp)) }
         }
@@ -77,7 +77,7 @@ internal fun MobilePinScreen(
             Spacer(Modifier.height(16.dp))
         }
         TextButton(onClick = { forgot = true }) { Text("Forgot PIN?", fontSize = 15.sp) }
-    }
+    } }
     if (forgot) AlertDialog(onDismissRequest = { forgot = false }, title = { Text(if (profile?.lockKind == "parent") "Account parent PIN" else "Local profile PIN") },
         text = { Text(if (profile?.lockKind == "parent") "Manage the account parent PIN in the web dashboard." else "This device’s profile PIN cannot be recovered in the app. The device owner can clear app data, which also removes local profiles and settings.") },
         confirmButton = { TextButton(onClick = { forgot = false }) { Text("OK") } })
