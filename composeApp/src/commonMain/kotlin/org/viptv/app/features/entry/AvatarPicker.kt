@@ -59,13 +59,16 @@ internal fun AvatarPicker(profile: Profile?, busy: Boolean, layout: AvatarPicker
             Column(Modifier.then(if (layout == AvatarPickerLayout.Phone) Modifier.fillMaxSize() else Modifier.width(metrics.panel))
                 .clip(RoundedCornerShape(if (layout == AvatarPickerLayout.Phone) 0.dp else metrics.radius))
                 .background(Palette.surface).verticalScroll(rememberScrollState()).padding(metrics.padding)) {
-                val catalog = rememberAvatarCatalog()
+                val state = rememberAvatarCatalog()
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Choose an avatar", Modifier.weight(1f), fontSize = metrics.title, fontWeight = FontWeight.Bold)
                     PickerButton("Cancel", layout, metrics, enabled = true, activate = dismiss)
                 }
-                if (catalog == null) Text("Loading avatars…", Modifier.padding(top = metrics.gap), color = Palette.secondary, fontSize = metrics.body)
-                else AvatarCatalogPage(catalog, profile, busy, layout, metrics, choose, pinAvailable)
+                when (state) {
+                    is AvatarCatalogState.Ready -> AvatarCatalogPage(state.catalog, profile, busy, layout, metrics, choose, pinAvailable)
+                    else -> Text(if (state == AvatarCatalogState.Loading) "Loading avatars…" else "Avatars are unavailable on this device.",
+                        Modifier.padding(top = metrics.gap), color = Palette.secondary, fontSize = metrics.body)
+                }
             }
         }
     }
@@ -84,7 +87,12 @@ private fun ColumnScope.AvatarCatalogPage(catalog: AvatarCatalog, profile: Profi
     val needsPin = profile.requiresLocalPin(pinAvailable)
     val enabled = !busy && (!needsPin || pin.length in 4..8)
     val tiles = remember { List(layout.pageSize) { FocusRequester() } }
-    var focusTile by remember { mutableStateOf(if (layout == AvatarPickerLayout.Television) saved?.let { (it.choice - 1) % layout.pageSize } ?: 0 else null) }
+    val pinField = remember { FocusRequester() }
+    // On TV focus starts on the saved avatar, or on the PIN field while the tiles wait for it.
+    var focusTile by remember { mutableStateOf(if (layout == AvatarPickerLayout.Television && !needsPin) saved?.let { (it.choice - 1) % layout.pageSize } ?: 0 else null) }
+    if (layout == AvatarPickerLayout.Television && needsPin) LaunchedEffect(Unit) {
+        repeat(60) { if (runCatching { pinField.requestFocus() }.getOrDefault(false)) return@LaunchedEffect; withFrameNanos { } }
+    }
     LaunchedEffect(focusTile, page, style) {
         val index = focusTile ?: return@LaunchedEffect
         repeat(60) {
@@ -98,7 +106,7 @@ private fun ColumnScope.AvatarCatalogPage(catalog: AvatarCatalog, profile: Profi
     Text("${catalog.total} avatars. Pick a world, then pick your character.", Modifier.padding(top = metrics.gap / 2),
         color = Palette.secondary, fontSize = metrics.body)
     if (needsPin) OutlinedTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
-        Modifier.padding(top = metrics.gap), label = { Text("Current PIN") },
+        Modifier.padding(top = metrics.gap).focusRequester(pinField), label = { Text("Current PIN") },
         visualTransformation = PasswordVisualTransformation(), singleLine = true)
     WorldChips(catalog.worlds, world.style, layout, metrics) { style = it; page = 0 }
     val choices = paging.choices(page).toList()
@@ -202,4 +210,19 @@ private data class AvatarPickerMetrics(val scale: Float, val panel: Dp, val padd
             }
         }
     }
+}
+
+/** Picker layouts: three columns of 15 on phones, six columns of 18 on TV and desktop. */
+internal enum class AvatarPickerLayout(val columns: Int, val pageSize: Int) {
+    Phone(3, 15), Desktop(6, 18), Television(6, 18)
+}
+
+/** Paging over a world of [count] avatars, [size] per page, wrapping at both ends. */
+internal data class AvatarPaging(val count: Int, val size: Int) {
+    val pages = maxOf(1, (count + size - 1) / size)
+    fun next(page: Int) = (page + 1) % pages
+    fun previous(page: Int) = (page - 1 + pages) % pages
+    /** 1-based choices shown on [page]. */
+    fun choices(page: Int): IntRange = (page * size + 1)..minOf(count, (page + 1) * size)
+    fun pageOf(choice: Int) = ((choice - 1) / size).coerceIn(0, pages - 1)
 }

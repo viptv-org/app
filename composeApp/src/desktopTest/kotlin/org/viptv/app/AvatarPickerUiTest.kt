@@ -76,6 +76,15 @@ class AvatarPickerUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun televisionStartsOnThePinFieldWhileALocalLockDisablesTheGrid() {
+        val scene = picker(1920, 1080, saved.copy(locked = true), AvatarPickerLayout.Television)
+        try {
+            frames(scene)
+            assertTrue(tiles(scene).all { it.config.contains(SemanticsProperties.Disabled) })
+            assertTrue(nodes(scene).any { it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.contains(SemanticsActions.SetText) })
+        } finally { scene.close() }
+    }
+
     @Test fun profileWithoutAPickOpensOnTheFirstWorld() {
         val scene = picker(390, 844, Profile("new", "New", null, avatarStyle = "critters", avatarUrl = "https://avatars.example/seed.png"), AvatarPickerLayout.Phone)
         try {

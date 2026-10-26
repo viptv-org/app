@@ -38,10 +38,10 @@ internal fun profileColor(profile: Profile?): Color = when (profile?.avatarId) {
 @Composable
 internal fun ProfileAvatar(profile: Profile?, size: Dp, radius: Dp) {
     val pick = profile?.avatarPick()
-    val catalog = if (pick != null) rememberAvatarCatalog() else null
-    val packaged = pick?.let { catalog?.avatarUri(it.style, it.choice) }
+    val state = if (pick != null) rememberAvatarCatalog() else null
+    val packaged = pick?.let { (state as? AvatarCatalogState.Ready)?.catalog?.avatarUri(it.style, it.choice) }
     // Until the catalog has loaded, keep the image tile rather than flash an initial.
-    val waiting = pick != null && catalog == null
+    val waiting = state == AvatarCatalogState.Loading
     val avatarId = profile?.avatarId
     val artwork = when (avatarId) {
         "vynxc" -> Res.drawable.avatar_vynxc

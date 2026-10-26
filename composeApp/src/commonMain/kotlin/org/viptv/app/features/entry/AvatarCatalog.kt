@@ -55,7 +55,16 @@ internal fun parseAvatarCatalog(text: String): AvatarCatalog {
     })
 }
 
+/** Loading state of the bundled catalog. */
+internal sealed interface AvatarCatalogState {
+    data object Loading : AvatarCatalogState
+    data class Ready(val catalog: AvatarCatalog) : AvatarCatalogState
+    /** The bundled catalog could not be read; profiles fall back to their URL or initial. */
+    data object Unavailable : AvatarCatalogState
+}
+
 private val loaded = MutableStateFlow<AvatarCatalog?>(null)
+private val unavailable = MutableStateFlow(false)
 private val loading = Mutex()
 
 /** Parses the bundled catalog once per process. */
@@ -63,14 +72,16 @@ internal suspend fun loadAvatarCatalog(): AvatarCatalog = loaded.value ?: loadin
     loaded.value ?: parseAvatarCatalog(Res.readBytes("${AVATAR_FILES}avatar-catalog.json").decodeToString()).also { loaded.value = it }
 }
 
-/** The bundled catalog, or null until it has loaded (or when it cannot be read). */
+/** The bundled catalog's loading state; the first caller starts the load. */
 @Composable
-internal fun rememberAvatarCatalog(): AvatarCatalog? {
+internal fun rememberAvatarCatalog(): AvatarCatalogState {
     val catalog by loaded.collectAsState()
+    val failed by unavailable.collectAsState()
     LaunchedEffect(Unit) {
-        if (loaded.value == null) try { loadAvatarCatalog() } catch (error: CancellationException) { throw error } catch (_: Exception) { }
+        if (loaded.value == null && !unavailable.value) try { loadAvatarCatalog() }
+        catch (error: CancellationException) { throw error } catch (_: Exception) { unavailable.value = true }
     }
-    return catalog
+    return catalog?.let { AvatarCatalogState.Ready(it) } ?: if (failed) AvatarCatalogState.Unavailable else AvatarCatalogState.Loading
 }
 
 /**
@@ -83,19 +94,4 @@ internal fun Profile.avatarPick(): AvatarPick? = when {
     avatarChoice != null -> AvatarPick(avatarStyle ?: DEFAULT_AVATAR_STYLE, avatarChoice)
     avatarStyle != null && avatarId == null && avatarUrl == null && avatar == null -> AvatarPick(DEFAULT_AVATAR_STYLE, 1)
     else -> null
-}
-
-/** Picker layouts: three columns of 15 on phones, six columns of 18 on TV and desktop. */
-internal enum class AvatarPickerLayout(val columns: Int, val pageSize: Int) {
-    Phone(3, 15), Desktop(6, 18), Television(6, 18)
-}
-
-/** Paging over a world of [count] avatars, [size] per page, wrapping at both ends. */
-internal data class AvatarPaging(val count: Int, val size: Int) {
-    val pages = maxOf(1, (count + size - 1) / size)
-    fun next(page: Int) = (page + 1) % pages
-    fun previous(page: Int) = (page - 1 + pages) % pages
-    /** 1-based choices shown on [page]. */
-    fun choices(page: Int): IntRange = (page * size + 1)..minOf(count, (page + 1) * size)
-    fun pageOf(choice: Int) = ((choice - 1) / size).coerceIn(0, pages - 1)
 }
