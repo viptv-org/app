@@ -27,7 +27,9 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     /** Signs in another device from this signed-in app; without it, "Watch on TV" points at the server's web page. */
     addDevice: (@Composable (Boolean) -> Unit)? = null,
     /** Hoisted page state: the app's controller owns it so system Back can leave a sub-page. Without it the page is local. */
-    page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null) {
+    page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
+    /** Settings was opened from the player at [initialSection]: that section is not a sub-page, and its Back returns to the player (app#44). */
+    returnToPlayer: (() -> Unit)? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable)
         return
@@ -52,11 +54,21 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
         val webAccount = devices != null && !compact
         // A phone-width layout opens every section from the Settings list; wider layouts use a sidebar.
         // Report the laid-out page so global Back knows whether a sub-page is open.
-        val shown = current.laidOut(compact)
+        val root = initialSection.takeIf { returnToPlayer != null }
+        val shown = current.laidOut(compact, root)
         SideEffect { if (savedPage != shown) show(shown) }
-        val open: (String?) -> Unit = { show(SettingsPage(it).laidOut(compact)) }
+        val open: (String?) -> Unit = { show(SettingsPage(it).laidOut(compact, root)) }
         // The in-page arrow takes the same step as the app's global Back (navigateBack).
-        val back: () -> Unit = { show(shown.parent() ?: SettingsPage()) }
+        val back: () -> Unit = {
+            val parent = shown.parent()
+            when {
+                parent != null -> show(parent)
+                returnToPlayer != null && section == root -> returnToPlayer()
+                else -> show(SettingsPage())
+            }
+        }
+        // The player's own section shows its way back on every layout, not only at phone width.
+        val backLabel = if (returnToPlayer != null && section == root) "Back to player" else null
         Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = 57.dp, vertical = 32.dp) else Modifier)) {
             if (webAccount) { AccountSettingsSidebar(section ?: "Add-ons", profiles, stremioImport != null) { open(it) }; Spacer(Modifier.width(48.dp)) }
             else if (!compact) SettingsSidebar(section ?: "Add-ons", profile, profiles, stremioImport != null) { open(it) }
@@ -67,13 +79,13 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null, sourceIntegrations = phoneSourceIntegrations,
                         installWithCompletion = installWithCompletion)
-                    section == "Parental controls" && parental != null -> SettingsDetailContent(compact, parentalBack ?: back, parental)
-                    section == "Account" && account != null -> SettingsDetailContent(compact, back, account)
+                    section == "Parental controls" && parental != null -> SettingsDetailContent(compact, parentalBack ?: back, content = parental)
+                    section == "Account" && account != null -> SettingsDetailContent(compact, back, content = account)
                     section == "Devices" && devices != null -> devices(compact) { if (compact) back() else open("Account") }
                     section == stremioImportSection && stremioImport != null -> Box(if (!compact && !webAccount) Modifier.padding(32.dp) else Modifier) {
                         stremioImport(compact, { if (compact) back() else open("Account") }) { open("Add-ons") }
                     }
-                    section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, back) {
+                    section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, back, backLabel) {
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()
                     }
                     section == "Watch on TV" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) }
@@ -91,9 +103,9 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
 internal const val stremioImportSection = "Import from Stremio"
 
 @Composable
-private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, content: @Composable () -> Unit) {
+private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, backLabel: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        if (compact) androidx.compose.material3.TextButton(back) { androidx.compose.material3.Text("Back") }
+        if (compact || backLabel != null) androidx.compose.material3.TextButton(back) { androidx.compose.material3.Text(backLabel ?: "Back") }
         Box(Modifier.weight(1f)) { content() }
     }
 }

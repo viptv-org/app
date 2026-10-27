@@ -7,8 +7,11 @@ package org.viptv.app.state
  * sections from a sidebar; Back leaves Settings from any of them.
  */
 data class SettingsPage(val section: String? = null, val subpage: Boolean = false) {
-    /** This page as laid out: at phone width every section is a sub-page of the Settings list. */
-    fun laidOut(compact: Boolean) = copy(subpage = compact && section != null)
+    /**
+     * This page as laid out: at phone width every section is a sub-page of the Settings list,
+     * except a [root] section, where the visit began and which Back leaves Settings from (app#44).
+     */
+    fun laidOut(compact: Boolean, root: String? = null) = copy(subpage = compact && section != null && section != root)
 
     /** The page Back returns to, or null when Back leaves Settings. */
     fun parent(): SettingsPage? = if (subpage) SettingsPage() else null
