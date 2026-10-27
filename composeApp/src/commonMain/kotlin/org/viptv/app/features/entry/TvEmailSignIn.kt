@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvEmailSignIn(scale: Float, phone: () -> Unit, initialEmail: String = "", initialSuffix: Boolean = false,

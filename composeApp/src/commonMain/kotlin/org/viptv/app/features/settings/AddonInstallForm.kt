@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
 
 @Composable
 internal fun AddonInstallForm(address: TextFieldState, busy: Boolean, install: () -> Unit, compact: Boolean = false, dismiss: (() -> Unit)? = null) {

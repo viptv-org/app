@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.connection.DevicePairingDisplay
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 /** Opening a browser never authenticates the device; server approval does. */
 @Composable

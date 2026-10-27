@@ -1,7 +1,6 @@
 package org.viptv.app.features.settings
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -13,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 /** W3Account: browser account navigation, distinct from native device settings. */
 @Composable
@@ -26,7 +26,7 @@ internal fun AccountSettingsSidebar(selected: String, profiles: () -> Unit, stre
         entries.forEach { (label, icon) -> item(key = label) {
             Surface(color = if (selected == label) Palette.text.copy(alpha = .1f) else Palette.background,
                 shape = RoundedCornerShape(8.dp)) {
-                Row(Modifier.fillMaxWidth().heightIn(min = 40.dp).clickable {
+                Row(Modifier.fillMaxWidth().heightIn(min = 40.dp).pointerClickable(shape = RoundedCornerShape(8.dp)) {
                     if (label == "Profiles") profiles() else select(label)
                 }.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {

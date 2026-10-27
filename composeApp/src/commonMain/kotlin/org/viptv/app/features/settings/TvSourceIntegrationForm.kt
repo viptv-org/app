@@ -2,7 +2,6 @@ package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -47,6 +46,7 @@ import org.viptv.app.connection.SourceIntegrationSchema
 import org.viptv.app.connection.SourceIntegrationSnapshot
 import org.viptv.app.features.entry.TvEntryKeyboard
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 /**
  * TV source-integration configuration as a full-screen settings page (the same
@@ -95,7 +95,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                         .focusRequester(requester)
                         .focusable(enabled = !busy)
                         .onFocusChanged { if (it.isFocused) editingField = field.id }
-                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { editingField = field.id }
+                        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { editingField = field.id }
                         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
                         val raw = values[field.id].orEmpty()
                         val masked = field.secret && shown[field.id] != true
@@ -105,7 +105,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (field.secret && raw.isNotEmpty()) {
                             Text(if (shown[field.id] == true) "Hide" else "Show", color = Palette.secondary, fontSize = (22 * scale).sp,
-                                modifier = Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) {
+                                modifier = Modifier.pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) {
                                     shown[field.id] = shown[field.id] != true
                                 }.padding(start = 16.dp * scale))
                         }
@@ -159,7 +159,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                                     .tvFocusOutline(focused && !busy, 10.dp * scale, scale, width = 3.dp)
                                     .clip(RoundedCornerShape(10.dp * scale))
                                     .background(if (chosen) Color.White.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.06f))
-                                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) {
+                                    .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy, shape = RoundedCornerShape(10.dp * scale)) {
                                         selected = if (chosen) selected - provider.id
                                             else if (selected.size < schema.maximum_providers) selected + provider.id else selected
                                     }

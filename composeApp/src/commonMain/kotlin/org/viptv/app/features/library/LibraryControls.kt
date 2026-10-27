@@ -1,7 +1,6 @@
 package org.viptv.app.features.library
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -12,6 +11,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.DropdownMenuItem
+import org.viptv.app.components.Surface
 
 @Composable
 internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: String, setSort: (String) -> Unit) {
@@ -20,7 +22,7 @@ internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: 
         Row(Modifier.background(Palette.raised, RoundedCornerShape(20.dp)).padding(4.dp)) {
             listOf("All", "Movies", "Series").forEach { choice ->
                 Text(choice, Modifier.background(if (choice == filter) Palette.background else Palette.raised, RoundedCornerShape(18.dp))
-                    .clickable { setFilter(choice) }.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp)
+                    .pointerClickable(shape = RoundedCornerShape(18.dp)) { setFilter(choice) }.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp)
             }
         }
         Box {

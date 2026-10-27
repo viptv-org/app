@@ -22,6 +22,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.Button
 
 /** An explicit choice, never a countdown or automatic playback transition. */
 @Composable

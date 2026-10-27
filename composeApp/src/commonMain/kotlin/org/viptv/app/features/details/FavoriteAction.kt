@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.*
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.OutlinedButton
 
 @Composable
 internal fun FavoriteAction(card: Card, saved: Boolean, save: (Card) -> Unit) {

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.BrowsingConfiguration
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
+import org.viptv.app.components.FilterChip
 
 @Composable
 internal fun BrowsingProviderSettings(configuration: BrowsingConfiguration?, plugins: List<PluginDescriptor>, busy: Boolean,

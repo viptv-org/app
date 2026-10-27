@@ -4,7 +4,6 @@ import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerSelectable
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
+import org.viptv.app.components.DropdownMenuItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +72,7 @@ internal fun DetailSeasonPicker(seasons: List<DetailSeason>, selected: DetailSea
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 430.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
             items(seasons, key = { it.number?.toString() ?: "unknown" }) { season ->
                 val active = season.number == selected.number
-                Row(Modifier.fillMaxWidth().heightIn(min = 54.dp).selectable(active, role = Role.RadioButton,
+                Row(Modifier.fillMaxWidth().heightIn(min = 54.dp).pointerSelectable(active, role = Role.RadioButton,
                     onClick = { choose(season.number); open = false }).padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(season.label, Modifier.weight(1f), fontSize = 17.sp,

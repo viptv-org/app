@@ -1,7 +1,6 @@
 package org.viptv.app.features.entry
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?,
@@ -64,14 +64,14 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
 @Composable
 internal fun SignInBackBar(back: () -> Unit) {
     Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.CenterStart) {
-        Icon(Lucide.ChevronLeft, "All sign-in options", Modifier.size(24.dp).clickable(onClick = back), tint = Palette.text)
+        Icon(Lucide.ChevronLeft, "All sign-in options", Modifier.size(24.dp).pointerClickable(onClick = back), tint = Palette.text)
     }
 }
 
 @Composable
 private fun MobileSignInChoice(method: SignInMethod, title: String, subtitle: String? = null, activate: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(bottom = 8.dp).heightIn(min = 58.dp)
-        .clip(RoundedCornerShape(12.dp)).background(Color(0xFF191919)).clickable(onClick = activate)
+        .clip(RoundedCornerShape(12.dp)).background(Color(0xFF191919)).pointerClickable(onClick = activate, shape = RoundedCornerShape(12.dp))
         .padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         SignInMethodIcon(method, Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))

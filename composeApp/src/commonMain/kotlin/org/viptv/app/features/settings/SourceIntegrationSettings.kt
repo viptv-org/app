@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.serialization.json.JsonObject
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,

@@ -1,7 +1,6 @@
 package org.viptv.app.features.history
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -20,12 +19,16 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HistoryEntry
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.IconButton
+import org.viptv.app.components.DropdownMenuItem
+import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
 internal fun HistoryRow(entry: HistoryEntry, phone: Boolean, open: (Card) -> Unit) {
     var menu by remember { mutableStateOf(false) }
     val card = entry.card
-    Row(Modifier.fillMaxWidth().clickable { open(card) }.padding(vertical = 4.dp),
+    Row(Modifier.fillMaxWidth().pointerClickable(shape = RectangleShape) { open(card) }.padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(if (phone) 136.dp else 160.dp).aspectRatio(16f / 9)
             .clip(RoundedCornerShape(8.dp)).background(Palette.raised)) {

@@ -26,7 +26,7 @@ internal fun launchUiPreview() = application {
     var term by remember { mutableStateOf(if (screen == Screen.Search) "the w" else "") }
     Window(onCloseRequest = ::exitApplication, title = "VIPTV UI Preview", state = window, undecorated = true) {
         org.viptv.app.player.mpv.MpvWindow(this.window) {
-        ViptvTheme {
+        ViptvTheme(pointer = !phone) {
             Column {
                 if (!phone) WindowDraggableArea {
                     DesktopTitleBar(ApplicationState(screen = screen, searchTerm = term, profiles = listOf(PreviewData.profile), selectedProfile = PreviewData.profile.id), false, { screen = it },

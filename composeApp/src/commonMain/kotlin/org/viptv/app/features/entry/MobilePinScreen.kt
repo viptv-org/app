@@ -4,7 +4,6 @@ import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -12,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
 
 private val keyLabels = listOf(
     listOf("1" to "", "2" to "ABC", "3" to "DEF"),
@@ -40,7 +41,7 @@ internal fun MobilePinScreen(
     var forgot by remember { mutableStateOf(false) }
     org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            androidx.compose.material3.IconButton(onClick = back) { androidx.compose.material3.Icon(Lucide.X, "Back", Modifier.size(24.dp)) }
+            IconButton(onClick = back) { androidx.compose.material3.Icon(Lucide.X, "Back", Modifier.size(24.dp)) }
         }
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 72.dp, 16.dp)
@@ -63,7 +64,7 @@ internal fun MobilePinScreen(
                     val enabled = !busy && (value != "OK" || pin.length in 4..8)
                     Box(Modifier.size(78.dp).clip(CircleShape)
                         .background(if (value == "⌫" || value == "OK") Color.Transparent else Color(0xFF222224))
-                        .clickable(enabled = enabled) { when (value) { "⌫" -> erase(); "OK" -> submit(); else -> digit(value) } },
+                        .pointerClickable(enabled = enabled, shape = CircleShape) { when (value) { "⌫" -> erase(); "OK" -> submit(); else -> digit(value) } },
                         contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(value, fontSize = if (value == "OK") 17.sp else 30.sp,

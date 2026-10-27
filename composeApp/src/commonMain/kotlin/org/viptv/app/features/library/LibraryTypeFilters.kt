@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
+import org.viptv.app.components.FilterChip
 
 @Composable
 internal fun LibraryTypeFilters(snapshot: LibrarySnapshot?, query: LibraryQuery, change: (LibraryQuery) -> Unit,

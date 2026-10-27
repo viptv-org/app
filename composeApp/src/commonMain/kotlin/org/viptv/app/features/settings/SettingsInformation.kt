@@ -11,6 +11,9 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.openAccountAuthorization
 import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.OutlinedButton
+import org.viptv.app.components.TextButton
 import org.viptv.app.updates.*
 
 @Composable

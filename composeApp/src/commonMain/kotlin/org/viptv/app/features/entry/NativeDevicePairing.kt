@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.DevicePairingDisplay
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun NativeDevicePairing(server: String, display: DevicePairingDisplay?, busy: Boolean, error: String?,

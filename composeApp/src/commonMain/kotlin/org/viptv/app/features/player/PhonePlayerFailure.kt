@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.Button
+import org.viptv.app.components.IconButton
 
 @Composable
 internal fun PhonePlayerFailure(description: String, fallbackLabel: String?, retry: (() -> Unit)?, choose: (() -> Unit)?, close: () -> Unit,

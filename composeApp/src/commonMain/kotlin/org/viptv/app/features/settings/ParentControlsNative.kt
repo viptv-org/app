@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.openAccountAuthorization
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
 
 @Composable
 internal fun ParentControlsNative(local: Boolean, address: String?, profiles: () -> Unit,
