@@ -7,7 +7,8 @@ import kotlinx.coroutines.ensureActive
 import org.w3c.dom.*
 
 internal suspend fun selectBrowserSubtitle(input: PlaybackInput, video: HTMLVideoElement, id: Int?,
-    tracks: MutableMap<Int, HTMLTrackElement>, blobs: MutableList<String>, suppressEmbedded: () -> Unit = {}, failed: () -> Unit): String? {
+    tracks: MutableMap<Int, HTMLTrackElement>, blobs: MutableList<String>, cueLine: () -> Int, suppressEmbedded: () -> Unit = {},
+    failed: () -> Unit): String? {
     val candidate = input.providerSubtitle(id)
     if (id != null) requireNotNull(candidate)
     var chosen = id?.let(tracks::get)
@@ -17,7 +18,7 @@ internal suspend fun selectBrowserSubtitle(input: PlaybackInput, video: HTMLVide
         val uri = subtitleBlob(content.decodeToString()).also { blobs.add(it) }
         chosen = (document.createElement("track") as HTMLTrackElement).apply {
             kind = "subtitles"; label = candidate.label; srclang = candidate.language; src = uri
-            onload = { placeProviderCues(this, input.timelineOffsetMillis / 1000.0); null }
+            onload = { placeProviderCues(this, input.timelineOffsetMillis / 1000.0, cueLine()); null }
             onerror = { _, _, _, _, _ -> if (track.mode == TextTrackMode.SHOWING) failed(); null }
             video.appendChild(this)
         }

@@ -39,6 +39,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
     LaunchedEffect(captionStyle, captionScale, input.preferences) {
         val declarations = browserCaptionDeclarations(input.preferences, captionScale)
         captionStyle.textContent = if (declarations.isEmpty()) "" else "#$captionId::cue {$declarations}"
+        tracks.values.forEach { liftProviderCues(it, providerCueLine(captionScale)) }
         latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate, captionScale))
     }
     val candidates by input.providerSubtitles.collectAsState()
@@ -115,7 +116,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
         if (candidate == null && (!subtitleTouched || requestedSubtitle != null)) return@LaunchedEffect
         val id = candidate?.let { input.providerTrackId(it.id) }
         try {
-            selected = selectBrowserSubtitle(input, video, id, tracks, blobs, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { latestObserve(PlayerFact.ControlFailed) }
+            selected = selectBrowserSubtitle(input, video, id, tracks, blobs, { providerCueLine(captionScale) }, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { latestObserve(PlayerFact.ControlFailed) }
             latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }

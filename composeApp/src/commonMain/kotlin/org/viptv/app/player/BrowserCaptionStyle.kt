@@ -1,6 +1,7 @@
 package org.viptv.app.player
 
 import org.viptv.app.connection.ProfilePreferences
+import kotlin.math.roundToInt
 
 /** Only validated numeric/hex values enter the video-scoped ::cue rule. */
 internal fun browserCaptionDeclarations(preferences: ProfilePreferences, scale: Float): String = buildString {
@@ -14,6 +15,18 @@ internal fun browserCaptionDeclarations(preferences: ProfilePreferences, scale: 
     captionCssColor(preferences.subtitle_background_color)?.takeUnless { it.endsWith("00") }?.let {
         append("background-color:$it;")
     }
+}
+
+/**
+ * Snapped WebVTT line for provider cues that had an automatic position: the
+ * last line sits about four default-size lines above the bottom (where a
+ * one-line cue used to start, near 72 %) at every subtitle size, clear of the
+ * toolbar. Snapped lines let the browser stack simultaneous cues and wrap long
+ * ones; a percentage line turns both off (app#43).
+ */
+internal fun providerCueLine(scale: Float): Int {
+    val size = scale.takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f
+    return -1 - (4 / size).roundToInt()
 }
 
 /** Profile colors are #RRGGBB or Android #AARRGGBB; CSS eight-digit hex is #RRGGBBAA. */
