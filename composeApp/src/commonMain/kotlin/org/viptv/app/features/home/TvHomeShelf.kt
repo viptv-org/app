@@ -54,7 +54,9 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     firstPlaced: () -> Unit = {}, more: ((String) -> Unit)? = null,
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
     rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
-    onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open, state: LazyListState = rememberLazyListState()) {
+    onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open, state: LazyListState = rememberLazyListState(),
+    /** Continue Watching only: the shelf ends with "See all", which opens the full list (app#114). */
+    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
     // Home only composes rows with content; this guard keeps a direct caller
     // from drawing a heading or a retry card for a hidden row.
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
@@ -64,6 +66,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     val activate = if (row.id == CONTINUE_ROW) play else open
     val arrival = rememberTvContentArrival(row.state == RowState.READY)
     val cards = remember(row.cards) { row.cards.distinctBy(::cardLookupKey) }
+    val endCard = continueMore?.takeIf { row.id == CONTINUE_ROW }
     // Dictionary §A2: with next_cursor, skeletons append as focus or scroll nears
     // the end. There is never a Load more button.
     val trailing = if (appendError == null && more != null && (row.next_cursor != null || appending)) HOME_ROW_TRAILING else 0
@@ -75,15 +78,18 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     var lastFocusedKey by rememberSaveable(row.id) { mutableStateOf<String?>(null) }
     val resumeIndex = cards.indexOfFirst { cardLookupKey(it) == lastFocusedKey }.takeIf { it >= 0 }
         ?: lastFocusedIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
+    // Back from the full Continue Watching list resumes on the end card that opened it.
+    val resumeSeeAll = endCard != null && lastFocusedKey == SEE_ALL_KEY
     // A background refresh can remove the focused card (finished on another
     // device). Focus moves to the surviving card at the same position instead
     // of falling out of the shelf. Only a shelf that held focus does this.
     var focusedKey by remember(row.id) { mutableStateOf<Any?>(null) }
     val latestCards = rememberUpdatedState(cards)
+    val latestEndCard = rememberUpdatedState(endCard)
     val recover = remember { FocusRequester() }
-    LaunchedEffect(cards) {
+    LaunchedEffect(cards, endCard != null) {
         val lost = focusedKey ?: return@LaunchedEffect
-        if (cards.isEmpty() || cards.any { cardLookupKey(it) == lost }) return@LaunchedEffect
+        if (cards.isEmpty() || cards.any { cardLookupKey(it) == lost } || lost == SEE_ALL_KEY && endCard != null) return@LaunchedEffect
         focusedKey = null
         repeat(30) { withFrameNanos { }; if (runCatching { recover.requestFocus() }.getOrDefault(false)) return@LaunchedEffect }
     }
@@ -110,20 +116,28 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
         // relies on the built-in scroll prefetch only.
         LazyRow(state = state, modifier = arrival.focusRestorer(if (lastFocusedKey != null) recover else FocusRequester.Default).focusGroup().onFocusChanged {
                 // Focus moving elsewhere forgets the card; a removed card keeps it for recovery.
-                if (!it.hasFocus && latestCards.value.any { card -> cardLookupKey(card) == focusedKey }) focusedKey = null
+                if (!it.hasFocus && (latestCards.value.any { card -> cardLookupKey(card) == focusedKey } ||
+                        focusedKey == SEE_ALL_KEY && latestEndCard.value != null)) focusedKey = null
             }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
             when (row.state) {
                 RowState.READY -> {
                     itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->
                         val entry = Modifier.then(if (index == 0 && first != null) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced() } else Modifier)
-                            .then(if (resume != null && index == resumeIndex) Modifier.focusRequester(resume) else Modifier)
-                            .then(if (index == resumeIndex) Modifier.focusRequester(recover) else Modifier)
+                            .then(if (resume != null && index == resumeIndex && !resumeSeeAll) Modifier.focusRequester(resume) else Modifier)
+                            .then(if (index == resumeIndex && !resumeSeeAll) Modifier.focusRequester(recover) else Modifier)
                             // The leading card stops at logical start: geometric search
                             // can otherwise wander to the profile avatar.
                             .then(if (index == 0) Modifier.focusProperties { if (rtl) right = FocusRequester.Cancel else left = FocusRequester.Cancel } else Modifier)
                         TvCatalogCard(card, scale, portrait, entry,
                             { lastFocusedIndex = index; lastFocusedKey = cardLookupKey(it); focusedKey = lastFocusedKey; focus(it) }, activate, showFocus, focusedCaptions = portrait,
                             onUp = up, artworkWidth = (if (portrait) 255.2f else 422.4f).dp * scale)
+                    }
+                    if (endCard != null) item(key = SEE_ALL_KEY, contentType = "see-all") {
+                        TvSeeAllCard(endCard, scale, seeAll, Modifier
+                            .then(if (resume != null && resumeSeeAll) Modifier.focusRequester(resume) else Modifier)
+                            .then(if (resumeSeeAll) Modifier.focusRequester(recover) else Modifier),
+                            focused = { lastFocusedIndex = cards.size; lastFocusedKey = SEE_ALL_KEY; focusedKey = SEE_ALL_KEY },
+                            onUp = up)
                     }
                     if (appendError != null) item(key = "row-append", contentType = "failed") {
                         TvRowMessageCard(scale, "Couldn’t load more titles", appendError, { loadPage.value?.invoke(row.id) })

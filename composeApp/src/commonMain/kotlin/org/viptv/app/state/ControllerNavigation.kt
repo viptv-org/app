@@ -59,6 +59,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     if (screen == Screen.Live) run { loadLive(LiveQuery()) }
     if (screen == Screen.Settings && connection?.accountManagementEnabled != true) refreshAddons()
     if (screen == Screen.Library) run { loadLibraryPage() }
+    if (screen == Screen.ContinueWatching) loadContinueWatching(navigation)
     if (screen == Screen.Calendar && connection != null) run { loadCalendar() }
     if (screen == Screen.History) runPage {
         progressJob?.join()

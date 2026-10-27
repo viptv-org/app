@@ -35,6 +35,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveFavoriteScope = 0L
     internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
+    /** The Home revision whose full Continue Watching list was last read (app#114). */
+    internal var continueChecked: ContinueCheck? = null
     internal var libraryImportRefresh: Job? = null
     /** The quiet calendar re-read while the server is still looking up library series (app#46). */
     internal var calendarReread: Job? = null

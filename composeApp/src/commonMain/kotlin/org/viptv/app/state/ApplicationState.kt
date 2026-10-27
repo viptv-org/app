@@ -10,7 +10,9 @@ import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.connection.HistoryDisplay
 
-enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Anime, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings }
+enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Anime, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings,
+    /** Every title in progress, reached from the end of Home's Continue Watching row (app#114). */
+    ContinueWatching }
 data class ApplicationState(
     val starting: Boolean = false,
     val recoveryKit: RecoveryKit? = null,
@@ -47,6 +49,8 @@ data class ApplicationState(
     /** Home-row paging: a busy row appends skeletons, a failed row keeps the cards it shows. */
     val homeRowBusy: Set<String> = emptySet(),
     val homeRowErrors: Map<String, String> = emptyMap(),
+    /** The full Continue Watching list as far as it is loaded (app#114); Home's row shows only its start. */
+    val continueWatching: ContinueWatchingList? = null,
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),
     val library: List<Card> = emptyList(),
