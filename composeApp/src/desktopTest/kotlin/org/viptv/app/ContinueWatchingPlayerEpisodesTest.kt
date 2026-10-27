@@ -45,10 +45,21 @@ class ContinueWatchingPlayerEpisodesTest {
         """{"edition":null,"episode":{"episode":$episode,"order":"aired","season":$season},"id":"$show:$season:$episode","ids":[],"kind":"series"}"""
     private val all = seasons.flatMap { (season, count) -> (1L..count).map { season to it } }
 
+    /**
+     * The profile's Stremio-imported watch state as the host reports it on each
+     * episode: finished ones carry the `Watched` badge, part-watched ones `progress`.
+     * S1 E1-E2 sit on the first Details page; S2 E18-E19 only arrive with the
+     * player's own season read.
+     */
+    private val watched = setOf(1L to 1L, 2L to 18L)
+    private val partly = mapOf((1L to 2L) to 0.4, (2L to 19L) to 0.62)
+    private fun still(season: Long, episode: Long) = "https://episodes.metahub.space/$show/$season/$episode/w780.jpg"
+
     /** A Cinemeta episode card exactly as `/api/meta` returns it. */
-    private fun metaEpisode(season: Long, episode: Long) = """{"badges":[],"category":"series","description":null,
-        "identity":${episodeIdentity(season, episode)},"landscape":null,"logo":null,"metadata_origin":$origin,
-        "parent_identity":$parentIdentity,"poster":null,"progress":null,"provider_id":"addon:21","subtitle":null,
+    private fun metaEpisode(season: Long, episode: Long) = """{"badges":[${if (season to episode in watched) "\"Watched\"" else ""}],
+        "category":"series","description":null,
+        "identity":${episodeIdentity(season, episode)},"landscape":"${still(season, episode)}","logo":null,"metadata_origin":$origin,
+        "parent_identity":$parentIdentity,"poster":null,"progress":${partly[season to episode] ?: "null"},"provider_id":"addon:21","subtitle":null,
         "title":"Episode $season-$episode","view":{"badges":[],"compact_metadata_parts":[],"hero_badges":[],"hero_metadata_parts":[],
         "metadata_parts":["Series"],"progress":null,"saved":true,"tile_badge":null}}"""
 
@@ -182,6 +193,22 @@ class ContinueWatchingPlayerEpisodesTest {
         } finally { started.close() }
     }
 
+    @Test fun theEpisodesListKeepsArtworkProgressAndWatchedFromBothDetailsAndTheSeasonRead() = runBlocking<Unit> {
+        for ((resume, finished, partial) in listOf(Triple(2L to 20L, 2L to 18L, 2L to 19L), Triple(1L to 3L, 1L to 1L, 1L to 2L))) {
+            val started = playFromContinueWatching(resume)
+            try {
+                val state = started.state
+                val episodes = playerEpisodes(assertNotNull(state.sourceTitle), state.detail?.episodes.orEmpty() + state.playbackSeason)
+                fun at(coordinates: Pair<Long, Long>) = episodes.single { it.identity.id == "$show:${coordinates.first}:${coordinates.second}" }
+                assertEquals(listOf("Watched"), at(finished).badges, "S${finished.first} E${finished.second} stays watched")
+                assertEquals(partly[partial], at(partial).progress, "S${partial.first} E${partial.second} keeps its progress")
+                assertTrue(episodes.all { it.landscape == still(it.identity.episode!!.season!!, it.identity.episode!!.episode) },
+                    "every episode keeps its still")
+                assertTrue(episodes.filter { it !== at(finished) }.none { it.badges.isNotEmpty() }, "nothing else is watched")
+            } finally { started.close() }
+        }
+    }
+
     @Test fun anOffPageLibraryEpisodeTakesTheDetailsScopeOnlyForItsOwnParent() {
         val codec = Json { ignoreUnknownKeys = true }
         val detail = codec.decodeFromString<DetailSnapshot>(metaPage(0, 24))
@@ -230,7 +257,7 @@ class ContinueWatchingPlayerEpisodesTest {
                 java.io.File(path).mkdirs()
                 scene.render(3_000_000_000L).use { image -> image.encodeToData()!!.use { java.io.File(path, "$capture.png").writeBytes(it.bytes) } }
             }
-            click("Episodes"); click("${pick.identity.episode!!.episode}. ${pick.title} Play episode")
+            click("Episodes"); click("${pick.identity.episode!!.episode}. ${pick.title}")
             if (nextEnabled) click("Next episode")
             return played
         } finally { scene.close() }

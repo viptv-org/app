@@ -3,6 +3,7 @@ package org.viptv.app.features.player
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.connection.sameLookupIdentity
+import org.viptv.app.features.details.DetailEpisodeCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -47,20 +49,20 @@ internal fun PhoneEpisodePicker(current: Card?, episodes: List<Card>, choose: (C
                     Text("Episodes", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     IconButton(close) { Icon(Lucide.X, "Close episodes", Modifier.size(20.dp)) }
                 }
-                LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    itemsIndexed(episodes, key = { _, card -> cardLookupKey(card) }) { position, card ->
-                        val active = current != null && cardLookupKey(card) == cardLookupKey(current)
-                        TextButton(onClick = {
-                            // A queued click cannot dispatch an episode removed or remapped by a newer snapshot.
-                            latestEpisodes.find { cardLookupKey(it) == cardLookupKey(card) }?.let(latestChoose)
-                        }, modifier = Modifier.fillMaxWidth().then(if (position == index) Modifier.focusRequester(initial) else Modifier)
-                            .semantics { selected = active }, colors = ButtonDefaults.textButtonColors(
-                                containerColor = if (active) Palette.raised else Color.Transparent, contentColor = Palette.text)) {
-                            Column(Modifier.fillMaxWidth().padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(card.identity.episode?.let { "${it.episode}. ${card.title}" } ?: card.title,
-                                    fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                                Text(if (active) "Now playing" else card.subtitle ?: "Play episode", color = Palette.secondary, fontSize = 12.sp)
-                            }
+                // The Details episode cards, spaced as Details lists them: a row beside the still in a
+                // landscape sheet, stacked in a narrow one.
+                BoxWithConstraints(Modifier.weight(1f)) {
+                    val wide = maxWidth >= 360.dp
+                    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        itemsIndexed(episodes, key = { _, card -> cardLookupKey(card) }) { position, card ->
+                            val active = current != null && cardLookupKey(card) == cardLookupKey(current)
+                            DetailEpisodeCard(card, phone = wide, play = {
+                                // A queued click cannot dispatch an episode removed or remapped by a newer snapshot.
+                                latestEpisodes.find { cardLookupKey(it) == cardLookupKey(card) }?.let(latestChoose)
+                            }, modifier = Modifier.fillMaxWidth().then(if (position == index) Modifier.focusRequester(initial) else Modifier)
+                                // No outer padding: the whole highlighted card stays the tap target.
+                                .semantics { selected = active }.background(if (active) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp)),
+                                playing = active)
                         }
                     }
                 }
