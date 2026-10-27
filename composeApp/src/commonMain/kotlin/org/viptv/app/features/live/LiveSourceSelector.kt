@@ -8,6 +8,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.OutlinedButton
+import org.viptv.app.components.DropdownMenuItem
 
 /** The host supplies only authorized, public connection names and opaque IDs. */
 @Composable

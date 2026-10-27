@@ -1,6 +1,5 @@
 package org.viptv.app.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -48,7 +47,7 @@ internal fun ProfileMenuButton(
 ) {
     var open by remember { mutableStateOf(false) }
     Box {
-        Box(modifier.clip(shape).semantics { contentDescription = "Profile menu" }.clickable { open = true }, contentAlignment = Alignment.Center) {
+        Box(modifier.clip(shape).semantics { contentDescription = "Profile menu" }.pointerClickable(shape = shape) { open = true }, contentAlignment = Alignment.Center) {
             Box(Modifier.clearAndSetSemantics {}) { trigger(open) }
         }
         PopoverMenu(open, { open = false }, wash = profile?.let(::profileColor)) {

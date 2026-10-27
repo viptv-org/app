@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.AccountDevice
 import org.viptv.app.connection.AccountDevices
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, error: String?, load: () -> Unit,

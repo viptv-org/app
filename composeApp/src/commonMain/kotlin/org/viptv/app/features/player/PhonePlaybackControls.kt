@@ -12,6 +12,9 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
+import org.viptv.app.components.DropdownMenuItem
 
 @Composable
 internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, seekEnabled: Boolean = true) {

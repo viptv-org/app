@@ -4,7 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -68,6 +67,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
 
 /**
  * DUI-04: the desktop chrome publishes the card actions once, so the hover
@@ -119,7 +119,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     Column(modifier.width(width.dp).hoverable(hover)
         .cardContextClick(desktop) { previewOpen = false; menuAt = it }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             val density = androidx.compose.ui.platform.LocalDensity.current
             val slotW = with(density) { width.dp.toPx().toInt() }
@@ -296,8 +296,8 @@ private fun CardPreview(card: Card, saved: Boolean,
                     .onFocusChanged { previewPlayFocused = it.isFocused }
                     .tvFocusOutline(previewPlayFocused, 18.dp, darkGap = 2.dp, width = 2.dp)
                     .clip(CircleShape).background(if (previewPlayHovered) Color.White else Palette.text)
-                    .clickable(interactionSource = previewPlay, indication = null,
-                        onClickLabel = if (card.progress != null) "Resume" else "Play", onClick = onPlay)
+                    .pointerClickable(interactionSource = previewPlay, indication = null,
+                        onClickLabel = if (card.progress != null) "Resume" else "Play", onClick = onPlay, shape = CircleShape, hover = null)
                     .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(12.dp), tint = Palette.background)
@@ -331,8 +331,8 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
         .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
         .background(if (hovered) Color.White.copy(alpha = .18f) else Color.Transparent, CircleShape)
         .clip(CircleShape).border(1.dp, Color.White.copy(alpha = .14f), CircleShape)
-        .clickable(interactionSource = interaction, indication = null,
-            onClickLabel = label, onClick = action),
+        .pointerClickable(interactionSource = interaction, indication = null,
+            onClickLabel = label, onClick = action, shape = CircleShape, hover = null),
         contentAlignment = Alignment.Center) { glyph() }
 }
 
@@ -370,7 +370,7 @@ private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, acti
         .clip(RoundedCornerShape(6.dp))
         .background(if (hovered) Color.White.copy(alpha = .12f) else Color.Transparent)
         .hoverable(interaction)
-        .clickable(interactionSource = interaction, indication = null, onClickLabel = label) { dismiss(); action() }
+        .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, shape = RoundedCornerShape(6.dp), hover = null) { dismiss(); action() }
         .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(icon, null, Modifier.size(16.dp), tint = Palette.text)

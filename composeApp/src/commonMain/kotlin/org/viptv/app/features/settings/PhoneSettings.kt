@@ -1,7 +1,6 @@
 package org.viptv.app.features.settings
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -18,6 +17,9 @@ import com.composables.icons.lucide.*
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
 
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
@@ -36,7 +38,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
         }
         item {
             Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) {
-                Row(Modifier.fillMaxWidth().clickable(onClick = profiles).padding(14.dp), verticalAlignment = Alignment.CenterVertically,
+                Row(Modifier.fillMaxWidth().pointerClickable(onClick = profiles).padding(14.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     ProfileAvatar(profile, 56.dp, 12.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

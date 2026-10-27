@@ -17,6 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import org.viptv.app.components.Brand
 import org.viptv.app.connection.RecoveryKit
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.Checkbox
 
 @Composable
 internal fun RecoveryCodesScreen(kit: RecoveryKit?, busy: Boolean, error: String?, proceed: () -> Unit, signIn: () -> Unit,

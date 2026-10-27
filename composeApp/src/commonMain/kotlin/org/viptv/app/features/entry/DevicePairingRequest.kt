@@ -3,6 +3,7 @@ package org.viptv.app.features.entry
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import org.viptv.app.connection.validatedRemoteOrigin
+import org.viptv.app.components.TextButton
 
 /** One challenge lifecycle across native layouts; changing routes cancels polling. */
 @Composable

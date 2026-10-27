@@ -2,7 +2,6 @@ package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.CircleShape
@@ -25,12 +24,13 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Unit, modifier: Modifier = Modifier, tablet: Boolean = false,
     /** The player's Episodes list marks the episode on screen; Details never sets it. */
     playing: Boolean = false) {
-    Column(modifier.clip(RoundedCornerShape(8.dp)).clickable { play(episode) }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.clip(RoundedCornerShape(8.dp)).pointerClickable (shape = RoundedCornerShape(8.dp)) { play(episode) }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (phone) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             EpisodeArtwork(episode, Modifier.width(if (tablet) 176.dp else 136.dp).aspectRatio(16f / 9))
             EpisodeCaption(episode, Modifier.weight(1f), true, playing)

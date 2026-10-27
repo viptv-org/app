@@ -19,6 +19,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.TvFocusHandle
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.app.components.TextButton
 
 internal data class TvDetailExtras(
     val cast: String? = null,

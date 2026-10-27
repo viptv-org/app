@@ -3,7 +3,6 @@ package org.viptv.app.features.browse
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +43,9 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.QueryControl
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.DropdownMenuItem
+import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
 fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, loadedCards: List<Card>? = null, controls: org.viptv.app.connection.DiscoveryControls? = null,
@@ -135,7 +137,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
 private fun SortMenu(sort: String, menu: Boolean, select: (String) -> Unit, toggle: () -> Unit) {
     Box {
         Row(Modifier.background(Color(0xFF222224), RoundedCornerShape(8.dp))
-            .clickable { toggle() }.padding(horizontal = 12.dp, vertical = 8.dp),
+            .pointerClickable (shape = RoundedCornerShape(8.dp)) { toggle() }.padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(Lucide.SlidersHorizontal, null, Modifier.size(16.dp))
             Text(sort, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -169,7 +171,7 @@ private fun clearedFilters(query: BrowseQuery): BrowseQuery =
 private fun PhoneBrowseBar(catalog: DiscoveryCatalog?, count: Int, openCatalogs: () -> Unit, toggleFilters: () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.weight(1f, fill = false).height(36.dp).clip(RoundedCornerShape(18.dp))
-            .background(Color.White.copy(alpha = .12f)).clickable(enabled = catalog != null, onClick = openCatalogs)
+            .background(Color.White.copy(alpha = .12f)).pointerClickable(enabled = catalog != null, onClick = openCatalogs, shape = RoundedCornerShape(18.dp))
             .padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(catalog?.name ?: "Catalog", fontSize = 14.sp, fontWeight = FontWeight.Bold,
@@ -181,7 +183,7 @@ private fun PhoneBrowseBar(catalog: DiscoveryCatalog?, count: Int, openCatalogs:
             Icon(Lucide.ChevronDown, null, Modifier.size(16.dp))
         }
         Row(Modifier.height(36.dp).clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .12f))
-            .clickable(onClick = toggleFilters).padding(horizontal = 12.dp),
+            .pointerClickable(onClick = toggleFilters, shape = RoundedCornerShape(18.dp)).padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(Lucide.SlidersHorizontal, null, Modifier.size(16.dp))
             Text("Filters", fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -203,7 +205,7 @@ private fun PhoneFilterChips(facets: List<Pair<QueryControl, List<String>>>, mod
         facets.forEach { (control, values) -> values.forEach { value ->
             val label = control.choices.find { it.value == value }?.label ?: value
             Row(Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(Color.White.copy(alpha = .10f))
-                .clickable { remove(control, value) }.padding(start = 11.dp, end = 6.dp),
+                .pointerClickable (shape = RoundedCornerShape(15.dp)) { remove(control, value) }.padding(start = 11.dp, end = 6.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Icon(Lucide.X, "Remove $label", Modifier.size(14.dp))
@@ -273,7 +275,7 @@ private fun BrowseErrorState(catalog: DiscoveryCatalog?, error: String, modifier
 @Composable
 private fun BoardAction(label: String, primary: Boolean, run: () -> Unit, icon: ImageVector? = null) {
     Row(Modifier.height(44.dp).clip(RoundedCornerShape(12.dp))
-        .background(if (primary) Palette.text else Color.White.copy(alpha = .12f)).clickable(onClick = run)
+        .background(if (primary) Palette.text else Color.White.copy(alpha = .12f)).pointerClickable(onClick = run, shape = RoundedCornerShape(12.dp))
         .padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         icon?.let { Icon(it, null, Modifier.size(18.dp), tint = if (primary) Palette.background else Palette.text) }
@@ -292,7 +294,7 @@ private fun PhoneCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery,
     Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
         Box(Modifier.fillMaxSize()) {
             Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .5f))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(560.dp)
                 .shadow(24.dp, shape).clip(shape).background(Color(0xFF1A1A1D))) {
                 Box(Modifier.padding(top = 8.dp, bottom = 4.dp).align(Alignment.CenterHorizontally)
@@ -303,7 +305,7 @@ private fun PhoneCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery,
                     Text("Catalog", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.weight(1f))
                     Box(Modifier.size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = .14f))
-                        .clickable(onClick = dismiss), contentAlignment = Alignment.Center) {
+                        .pointerClickable(onClick = dismiss, shape = CircleShape), contentAlignment = Alignment.Center) {
                         Icon(Lucide.X, "Close", Modifier.size(16.dp))
                     }
                 }
@@ -318,8 +320,8 @@ private fun PhoneCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery,
                                 .background(Color.White.copy(alpha = .06f))) {
                                 entries.forEachIndexed { index, entry ->
                                     Row(Modifier.fillMaxWidth().heightIn(min = 50.dp)
-                                        .clickable(interactionSource = remember { MutableInteractionSource() },
-                                            indication = null) { select(entry) }
+                                        .pointerClickable(interactionSource = remember { MutableInteractionSource() },
+                                            indication = null, shape = RectangleShape) { select(entry) }
                                         .padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                                         Text(entry.displayName(peers), Modifier.weight(1f), fontSize = 16.sp,
                                             fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)

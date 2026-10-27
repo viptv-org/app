@@ -62,9 +62,10 @@ fun Modifier.handCursor(): Modifier = pointerHoverIcon(PointerIcon.Hand)
  * the cursor, for controls that are square on purpose.
  */
 fun Modifier.pointerClickable(enabled: Boolean = true, onClickLabel: String? = null, role: Role? = null,
-    shape: Shape? = null, hover: Color? = HoverFill.wash, onClick: () -> Unit): Modifier =
-    if (shape == null) cursorIf(enabled).clickable(enabled = enabled, onClickLabel = onClickLabel, role = role, onClick = onClick)
-    else cursorIf(enabled).clickable(null, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, onClickLabel, role, onClick)
+    interactionSource: MutableInteractionSource? = null, shape: Shape? = null, hover: Color? = HoverFill.wash,
+    onClick: () -> Unit): Modifier =
+    if (shape == null) cursorIf(enabled).clickable(enabled, onClickLabel, role, interactionSource, onClick)
+    else cursorIf(enabled).clickable(interactionSource, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, onClickLabel, role, onClick)
 
 /** [clickable] with the hand cursor; see the other overload for [shape] and [hover]. */
 fun Modifier.pointerClickable(interactionSource: MutableInteractionSource?, indication: Indication?,

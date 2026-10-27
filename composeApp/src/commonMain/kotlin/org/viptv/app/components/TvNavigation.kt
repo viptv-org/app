@@ -2,7 +2,6 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,7 +74,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                     // board draws the ring on whatever the remote is on.
                     .background(if (focused) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp * scale))
                     .tvFocusOutline(focused, 8.dp * scale, scale, width = 3.dp)
-                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { navigate(destination.screen) }
+                    .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = RoundedCornerShape(8.dp * scale)) { navigate(destination.screen) }
                     .padding(horizontal = 18.dp * scale), contentAlignment = Alignment.Center) {
                     Text(destination.label, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp,
                         color = if (selected == destination.screen || focused) Palette.text else Palette.body,

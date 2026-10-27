@@ -1,6 +1,5 @@
 package org.viptv.app.features.entry
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -14,6 +13,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, back: () -> Unit,
@@ -23,7 +25,7 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     var password by remember { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
     var editServer by remember { mutableStateOf(origin.isBlank()) }
-    Row(Modifier.height(28.dp).clickable(onClick = back), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.height(28.dp).pointerClickable(onClick = back), verticalAlignment = Alignment.CenterVertically) {
         Icon(Lucide.ChevronLeft, null, Modifier.size(16.dp), tint = Palette.secondary)
         Spacer(Modifier.width(5.dp))
         Text("All sign-in options", color = Palette.secondary, fontSize = 14.sp)
@@ -40,7 +42,7 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     SignInInput(password, { password = it }, "Password", height = 48.dp, secret = true,
         transformation = if (visible) VisualTransformation.None else PasswordVisualTransformation()) {
         Icon(if (visible) Lucide.EyeOff else Lucide.Eye, if (visible) "Hide password" else "Show password",
-            Modifier.size(20.dp).clickable { visible = !visible }, tint = Palette.secondary)
+            Modifier.size(20.dp).pointerClickable { visible = !visible }, tint = Palette.secondary)
     }
     error?.let { Text(it, Modifier.padding(top = 12.dp), color = Palette.danger, fontSize = 13.sp) }
     Spacer(Modifier.height(16.dp))

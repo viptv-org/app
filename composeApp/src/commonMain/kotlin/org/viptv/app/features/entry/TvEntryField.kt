@@ -2,7 +2,6 @@ package org.viptv.app.features.entry
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvEntryField(label: String, value: String, hint: String, scale: Float, active: Boolean,
@@ -27,7 +27,7 @@ internal fun TvEntryField(label: String, value: String, hint: String, scale: Flo
     Row(Modifier.fillMaxWidth().height(84.dp * scale).background(Color.White.copy(alpha = .08f), shape)
         .border((if (active) 2 else 1).dp * scale, if (active) Palette.text else Color.White.copy(alpha = .14f), shape)
         .onFocusChanged { if (it.isFocused) select() }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = select)
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = select)
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
         Text(value.ifEmpty { hint }, Modifier.widthIn(max = 1064.dp * scale), fontSize = (34 * scale).sp, lineHeight = (41 * scale).sp,
             letterSpacing = (if (masked && value.isNotEmpty()) 6.8f * scale else 0f).sp,

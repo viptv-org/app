@@ -2,7 +2,6 @@ package org.viptv.app.features.live
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, television: Boolean, scale: Float,
@@ -61,7 +61,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                             if (channel == channels.firstOrNull()) up else null, { select(channel, channel.current(now)) }, { watch(channel) })
                         else
                         Row(Modifier.width(channelWidth).height(rowHeight).clip(RoundedCornerShape(8.dp * scale))
-                            .background(Palette.surface).clickable { watch(channel) }.padding(horizontal = (if (television) 18 else 12).dp * scale),
+                            .background(Palette.surface).pointerClickable (shape = RoundedCornerShape(8.dp * scale)) { watch(channel) }.padding(horizontal = (if (television) 18 else 12).dp * scale),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                             channel.number?.let { Text(it, fontSize = (if (television) 20 * scale else 12f).sp, color = Palette.secondary) }
                             Text(channel.card.title, fontSize = (if (television) 26 * scale else 14f).sp, fontWeight = FontWeight.Bold)

@@ -7,6 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.SimklLinkStatus
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.OutlinedButton
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun LinkedAccounts(local: Boolean, browser: Boolean, status: SimklLinkStatus?, busy: Boolean,

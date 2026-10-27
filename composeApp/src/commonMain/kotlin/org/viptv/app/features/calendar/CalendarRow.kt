@@ -1,7 +1,6 @@
 package org.viptv.app.features.calendar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -20,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boolean, scale: Float,
@@ -28,7 +28,7 @@ internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boole
     val color = if ((focused || selected) && television) Palette.background else Palette.text
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (phone) 16.dp else 18.dp * scale))
         .background(if ((focused || selected) && television) Palette.text else Palette.surface)
-        .onFocusChanged { focused = it.isFocused; if (focused) focus() }.clickable(onClick = open)
+        .onFocusChanged { focused = it.isFocused; if (focused) focus() }.pointerClickable(onClick = open, shape = RoundedCornerShape(if (phone) 16.dp else 18.dp * scale))
         .heightIn(min = if (phone) 100.dp else 0.dp).padding(horizontal = if (phone) 12.dp else 28.dp * scale, vertical = if (phone) 10.dp else 12.dp * scale),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 28.dp * scale)) {
         Text(entry.time, Modifier.width(if (phone) 62.dp else 120.dp * scale), fontSize = (if (phone) 12f else 26 * scale).sp,

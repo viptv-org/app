@@ -1,7 +1,6 @@
 package org.viptv.app.features.player
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -28,6 +27,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.IconButton
 
 @Composable
 fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
@@ -162,7 +163,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             else -> if (!visible && !locked) { visible = true; interaction++; true } else false
         }
     }) {
-        Box(Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
+        Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
         if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
             modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
             Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))

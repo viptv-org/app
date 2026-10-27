@@ -3,7 +3,6 @@ package org.viptv.app.features.browse
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
@@ -15,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
@@ -61,6 +59,9 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.Choice
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.DropdownMenuItem
+import androidx.compose.foundation.shape.CircleShape
 
 /**
  * W3Browse entry point: the browser gets the board's rail-and-content page
@@ -113,7 +114,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
                 Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
                 if (peers.isNotEmpty()) Box {
                     Row(Modifier.height(34.dp).clip(RoundedCornerShape(17.dp)).background(Color.White.copy(alpha = .12f))
-                        .clickable { catalogMenu = true }.padding(horizontal = 12.dp),
+                        .pointerClickable (shape = RoundedCornerShape(17.dp)) { catalogMenu = true }.padding(horizontal = 12.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(catalog?.displayName(peers) ?: "Catalog", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         catalog?.connection_name?.takeIf(String::isNotBlank)?.let {
@@ -173,7 +174,7 @@ private fun BrowserFilterRail(facets: List<QueryControl>, query: BrowseQuery, ch
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Filters", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text("Clear all", Modifier.clickable(onClick = clearAll), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
+            Text("Clear all", Modifier.pointerClickable(onClick = clearAll), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
         }
         org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (facets.isEmpty()) Text("No browsing filters", fontSize = 13.sp, color = Palette.secondary)
@@ -228,7 +229,7 @@ private fun BrowserSegments(control: QueryControl, selected: String, select: (St
             val active = choice.value == selected
             Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(12.dp))
                 .then(if (active) Modifier.background(Palette.background).border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(12.dp)) else Modifier)
-                .clickable { select(choice.value) }, contentAlignment = Alignment.Center) {
+                .pointerClickable (shape = RoundedCornerShape(12.dp)) { select(choice.value) }, contentAlignment = Alignment.Center) {
                 Text(choice.label, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     color = if (active) Palette.text else Palette.secondary)
             }
@@ -241,7 +242,7 @@ private fun BrowserChip(label: String, selected: Boolean, enabled: Boolean, onCl
     Row(Modifier.height(28.dp).clip(RoundedCornerShape(14.dp))
         .background(if (selected) Palette.text else Color.White.copy(alpha = if (enabled) .08f else .04f))
         .then(if (selected) Modifier else Modifier.border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(14.dp)))
-        .clickable(enabled = enabled, onClick = onClick).padding(horizontal = 11.dp),
+        .pointerClickable(enabled = enabled, onClick = onClick, shape = RoundedCornerShape(14.dp)).padding(horizontal = 11.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         if (selected) Icon(Lucide.Check, "Selected", Modifier.size(14.dp), tint = Palette.background)
         Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
@@ -251,7 +252,7 @@ private fun BrowserChip(label: String, selected: Boolean, enabled: Boolean, onCl
 
 @Composable
 private fun BrowserToggle(label: String, on: Boolean, toggle: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable { toggle(!on) }, verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().pointerClickable { toggle(!on) }, verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f), fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Box(Modifier.width(38.dp).height(22.dp).clip(RoundedCornerShape(11.dp))
             .background(if (on) Palette.accent else Color.White.copy(alpha = .16f)),
@@ -281,7 +282,7 @@ private fun BrowserFacetField(control: QueryControl, value: String, apply: (Stri
                     inner()
                 })
         }
-        if (draft.trim() != value) Text("Apply", Modifier.clickable { commit() }, fontSize = 12.sp,
+        if (draft.trim() != value) Text("Apply", Modifier.pointerClickable { commit() }, fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold, color = Palette.body)
         control.maximum?.let { Text("max ${it.toLong()}", fontSize = 11.sp, color = Palette.tertiary) }
     }
@@ -297,12 +298,12 @@ private fun BrowserAppliedRow(applied: List<BrowserAppliedChip>, clearAll: () ->
                 .padding(start = 11.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(chip.label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Icon(Lucide.X, "Remove ${chip.label}", Modifier.size(14.dp).clickable {
+                Icon(Lucide.X, "Remove ${chip.label}", Modifier.size(14.dp).pointerClickable(shape = CircleShape) {
                     if (chip.multiple) multipleChanged(chip.id, query.selections(chip.id) - chip.value) else changed(chip.id, "")
                 })
             }
         }
-        Text("Clear all", Modifier.clickable(onClick = clearAll).padding(horizontal = 6.dp), fontSize = 12.sp,
+        Text("Clear all", Modifier.pointerClickable(onClick = clearAll).padding(horizontal = 6.dp), fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold, color = Palette.secondary)
     }
 }
@@ -348,7 +349,7 @@ private fun BrowserStateAction(label: String, primary: Boolean, onClick: () -> U
     Row(Modifier.height(38.dp).clip(RoundedCornerShape(12.dp))
         .background(if (primary) Palette.text else Color.Transparent)
         .then(if (primary) Modifier else Modifier.border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(12.dp)))
-        .clickable(onClick = onClick).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        .pointerClickable(onClick = onClick, shape = RoundedCornerShape(12.dp)).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (primary) Palette.background else Palette.text)
     }
 }

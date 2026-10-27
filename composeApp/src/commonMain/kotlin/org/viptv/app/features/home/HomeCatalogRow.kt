@@ -3,7 +3,6 @@ package org.viptv.app.features.home
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -22,6 +21,7 @@ import com.composables.icons.lucide.*
 import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
+import org.viptv.app.components.pointerClickable
 
 /** Home's Continue Watching row id. */
 internal const val CONTINUE_ROW = "continue"
@@ -99,7 +99,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
 @Composable
 private fun CarouselArrow(forward: Boolean, enabled: Boolean, move: () -> Unit) {
     Box(Modifier.size(28.dp).clip(CircleShape).border(1.dp, Palette.raised, CircleShape)
-        .clickable(enabled = enabled, onClick = move), contentAlignment = Alignment.Center) {
+        .pointerClickable(enabled = enabled, onClick = move, shape = CircleShape), contentAlignment = Alignment.Center) {
         Icon(if (forward) Lucide.ChevronRight else Lucide.ChevronLeft,
             if (forward) "Next items" else "Previous items", Modifier.size(16.dp),
             tint = Palette.text.copy(alpha = if (enabled) 1f else 0.4f))

@@ -4,7 +4,6 @@ import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -31,6 +30,8 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
 
 /**
  * TV History. The board export has no History screen, so this follows the TV
@@ -107,8 +108,8 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
     if (confirm) androidx.compose.material3.AlertDialog(onDismissRequest = { confirm = false },
         title = { Text("Clear history?") },
         text = { Text("This removes viewing history for this profile.") },
-        confirmButton = { androidx.compose.material3.TextButton(onClick = { clear(); confirm = false }) { Text("Clear") } },
-        dismissButton = { androidx.compose.material3.TextButton(onClick = { confirm = false }) { Text("Cancel") } })
+        confirmButton = { TextButton(onClick = { clear(); confirm = false }) { Text("Clear") } },
+        dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } })
 }
 
 @Composable
@@ -125,7 +126,7 @@ private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, requester: FocusRe
         .graphicsLayer { this.shape = shape; shadowElevation = if (focused) 24.dp.toPx() * scale else 0f; clip = false }
         .background(if (focused) Palette.text else Color.White.copy(alpha = .06f), shape)
         .tvFocusOutline(focused, 16.dp * scale, scale)
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = shape) { open(card) }
         .padding(12.dp * scale), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
         Box(Modifier.width(232.dp * scale).height(124.dp * scale).clip(RoundedCornerShape(10.dp * scale)).background(Palette.surface)) {

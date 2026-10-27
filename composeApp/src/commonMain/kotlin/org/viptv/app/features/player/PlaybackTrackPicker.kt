@@ -4,7 +4,6 @@ import org.viptv.app.components.FocusLazyColumn as LazyColumn
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,13 +19,15 @@ import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.player.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.IconButton
 
 @Composable
 internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.SelectTrack) -> Unit,
     close: () -> Unit, phone: Boolean, size: Float, setSize: (Float) -> Unit, insets: WindowInsets) {
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().clickable(onClick = close))
+        Box(Modifier.fillMaxSize().pointerClickable(onClick = close))
         val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.56f)
             else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = 76.dp).widthIn(max = 560.dp).fillMaxWidth().heightIn(max = 300.dp)
         Column(panel.clip(RoundedCornerShape(if (phone) 0.dp else 12.dp)).background(Palette.surface)
