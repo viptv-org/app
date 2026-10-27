@@ -36,6 +36,7 @@ internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             entry.subtitle?.let { Text(it, color = secondary, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp,
                 maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            if (entry.library) CalendarYourShow(20 * scale, if (color == Palette.background) color else Palette.accent)
         }
         entry.status?.let { Text(it, Modifier.padding(start = 16.dp * scale).widthIn(max = 220.dp * scale),
             color = if (entry.aired) secondary else Palette.accent, maxLines = 2, overflow = TextOverflow.Ellipsis,

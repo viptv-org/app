@@ -36,6 +36,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
     internal var libraryImportRefresh: Job? = null
+    /** The quiet calendar re-read while the server is still looking up library series (app#46). */
+    internal var calendarReread: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null

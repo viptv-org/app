@@ -97,6 +97,7 @@ private suspend fun ApplicationController.parentRequest(notice: String? = null, 
 internal suspend fun ApplicationController.invalidatePolicyContent() {
     libraryHydration?.cancelAndJoin(); libraryHydration = null
     libraryImportRefresh?.cancelAndJoin(); libraryImportRefresh = null
+    calendarReread?.cancelAndJoin(); calendarReread = null
     liveGuideJob?.cancelAndJoin(); liveGuideJob = null
     cancelDetailPaging()
     val current = mutable.value
