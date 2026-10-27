@@ -34,7 +34,7 @@ fun main() {
             window.location.hash == "#playback-qa" -> PlaybackQa(canvasColor = Color.Transparent)
             preview -> UiPreview(initialScreen = screen, browser = true, tvDetailVariant = variant)
             window.location.pathname.trimEnd('/').endsWith("/device") -> DeviceApprovalRoute()
-            else -> App(browser = true)
+            else -> BrowserApp()
         }
     }
 }
