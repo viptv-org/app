@@ -46,7 +46,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice,
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
-        state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television,
+        state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         installWithCompletion = controller::installAddon,

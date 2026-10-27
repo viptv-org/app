@@ -99,9 +99,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             else -> latestClose() }
     }
     val latestPhoneBack by rememberUpdatedState(phoneBack)
+    // Desktop and browser Back (mouse button, browser history): the Audio & subtitles menu or an open panel
+    // closes first, as Escape does; the player has no lock off a phone.
+    val keyboardBack = {
+        when { showTracks -> { showTracks = false; visible = true }
+            phonePanel != null -> dismissPanel()
+            else -> latestClose() }
+    }
+    val latestKeyboardBack by rememberUpdatedState(keyboardBack)
     DisposableEffect(phone, playbackKey) {
-        if (phone) backChanged { latestPhoneBack() }
-        onDispose { if (phone) backChanged(null) }
+        backChanged { if (phone) latestPhoneBack() else latestKeyboardBack() }
+        onDispose { backChanged(null) }
     }
     LaunchedEffect(restorePanel, phonePanel) {
         val restoring = restorePanel
