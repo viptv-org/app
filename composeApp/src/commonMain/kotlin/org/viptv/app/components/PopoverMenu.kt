@@ -36,6 +36,9 @@ import org.viptv.app.theme.Palette
 
 internal const val PopoverMenuItemIconTag = "PopoverMenuItem.icon"
 
+/** The popover card's width; content that cannot report an intrinsic width (a lazy list) sizes to it. */
+internal val PopoverMenuWidth = 260.dp
+
 /** Design token `line.hairline`: white at 0.07. */
 private val Hairline = Color.White.copy(alpha = .07f)
 
@@ -56,7 +59,7 @@ internal fun PopoverMenu(
 ) {
     DropdownMenu(
         expanded, onDismissRequest,
-        modifier = modifier.width(260.dp).then(if (wash == null) Modifier else Modifier.drawBehind {
+        modifier = modifier.width(PopoverMenuWidth).then(if (wash == null) Modifier else Modifier.drawBehind {
             drawRect(Brush.verticalGradient(listOf(wash.copy(alpha = .24f), Color.Transparent), endY = 88.dp.toPx()))
         }),
         offset = DpOffset(0.dp, 6.dp),
