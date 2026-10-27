@@ -20,6 +20,7 @@ import kotlin.test.*
  * only while library lookups are still running.
  */
 class MergedCalendarTest {
+    @get:org.junit.Rule val clock = MergedCalendarWire.fixedClock()
     @Test fun anOldServerResponseIsPublicAndOffersNoFilter() = runBlocking {
         val read = read(page(listOf(MergedCalendarWire.public("public-1", "Public show"))))
         val entry = read.entries.single()
@@ -239,7 +240,7 @@ class MergedCalendarTest {
         MergedCalendarWire.page(entries, sources, refreshAfter)
 }
 
-/** Calendar responses in the documented wire shape, dated inside this week's window. */
+/** Calendar responses in the documented wire shape, dated inside this week's window on a fixed clock. */
 internal object MergedCalendarWire {
     fun seriesId(title: String) = "imdb:tt${title.hashCode().toUInt() % 10_000_000u}"
     fun episodeId(title: String, season: Int, episode: Int) = "${seriesId(title)}:$season:$episode"
@@ -279,8 +280,26 @@ internal object MergedCalendarWire {
         refreshAfter?.let { put("refresh_after_millis", it) }
     }.toString()
 
-    private fun at(daysFromToday: Long, hour: Int) = java.time.LocalDate.now().plusDays(daysFromToday).atTime(hour, 0)
-        .atZone(java.time.ZoneId.systemDefault()).toInstant().toString()
+    /**
+     * The calendar's "now" in these tests: a fixed day, at 20:40 in the default zone, when the
+     * fixtures' releases are partly aired (app#106). VIPTV_CALENDAR_TEST_NOW=HH:mm runs them at
+     * another time of day.
+     */
+    private val now = java.time.LocalDate.of(2026, 10, 14)
+        .atTime(System.getenv("VIPTV_CALENDAR_TEST_NOW")?.let(java.time.LocalTime::parse) ?: java.time.LocalTime.of(20, 40))
+        .atZone(java.time.ZoneId.systemDefault())
+
+    /** Puts the calendar on the fixed [now] for each test, then the previous clock back. */
+    fun fixedClock() = org.junit.rules.TestRule { base, _ -> object : org.junit.runners.model.Statement() {
+        override fun evaluate() {
+            val previous = calendarClock
+            calendarClock = java.time.Clock.fixed(now.toInstant(), now.zone)
+            try { base.evaluate() } finally { calendarClock = previous }
+        }
+    } }
+
+    private fun at(daysFromToday: Long, hour: Int) = now.toLocalDate().plusDays(daysFromToday).atTime(hour, 0)
+        .atZone(now.zone).toInstant().toString()
     fun today(hour: Int = 20) = at(0, hour)
     fun yesterday() = at(-1, 20)
 
