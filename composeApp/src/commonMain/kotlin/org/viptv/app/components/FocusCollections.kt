@@ -17,7 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/** Native collections with one TV-only positioning policy. Non-TV layouts inherit Foundation defaults. */
+/**
+ * Native collections with one TV-only positioning policy. Non-TV layouts inherit Foundation defaults,
+ * plus mouse wheel and drag scrolling for rows on pointer layouts ([pointerRowScroll]).
+ */
 @Composable
 internal fun FocusLazyRow(
     modifier: Modifier = Modifier,
@@ -34,7 +37,9 @@ internal fun FocusLazyRow(
         val anchored = modifier.tvCollectionUpdates(state, horizontal = true) {
             state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
         }
-        FoundationLazyRow(anchored, state, contentPadding, reverseLayout, horizontalArrangement,
+        // Desktop and web: mouse wheel and click-drag scrolling (app#59). TV and touch keep Foundation's.
+        val pointer = if (LocalPointerHover.current && userScrollEnabled) Modifier.pointerRowScroll(state, reverseLayout) else Modifier
+        FoundationLazyRow(anchored.then(pointer), state, contentPadding, reverseLayout, horizontalArrangement,
             verticalAlignment, flingBehavior, userScrollEnabled, content = content)
     }
 }
@@ -56,8 +61,10 @@ internal fun FocusLazyColumn(
         val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
             state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
         }
-        FoundationLazyColumn(anchored, state, contentPadding, reverseLayout, verticalArrangement,
-            horizontalAlignment, flingBehavior, userScrollEnabled, content = content)
+        CompositionLocalProvider(LocalVerticalPage provides true) {
+            FoundationLazyColumn(anchored, state, contentPadding, reverseLayout, verticalArrangement,
+                horizontalAlignment, flingBehavior, userScrollEnabled, content = content)
+        }
     }
 }
 
@@ -78,7 +85,7 @@ internal fun FocusLazyVerticalGrid(
     val focus = if (LocalTvFocusAnchoring.current) remember(state, scope) { TvGridFocus(state, scope) } else null
     DisposableEffect(focus) { onDispose { focus?.cancel() } }
     TvFocusScroll(contentPadding = contentPadding, reverseLayout = reverseLayout) {
-        CompositionLocalProvider(LocalTvGridFocus provides focus) {
+        CompositionLocalProvider(LocalTvGridFocus provides focus, LocalVerticalPage provides true) {
             val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
                 state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
             }

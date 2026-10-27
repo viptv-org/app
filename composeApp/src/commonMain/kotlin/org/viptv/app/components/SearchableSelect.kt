@@ -60,14 +60,16 @@ internal const val InlineChoiceBudget = 30
 
 /**
  * The single "segments or chips vs. dropdown" rule (app#57), shared by every caller
- * so it lives in one place: more than [InlineChoiceLimit] options, or labels too long
- * to share a 220 dp track ([InlineChoiceBudget] characters across equal segments),
- * use a [SearchableSelect]. Pass the options exactly as the inline control would show
- * them, including an added "Any".
+ * so it lives in one place: more than [limit] options ([InlineChoiceLimit] by default),
+ * or labels too long to share a 220 dp track ([budget] characters across equal
+ * segments), use a [SearchableSelect]. Pass the options exactly as the inline control
+ * would show them, including an added "Any". A caller whose inline control is a
+ * scrolling chip row rather than equal segments passes its own [limit] and no
+ * [budget] (the source picker, app#59).
  */
-internal fun useSelect(options: List<SelectOption>): Boolean {
+internal fun useSelect(options: List<SelectOption>, limit: Int = InlineChoiceLimit, budget: Int? = InlineChoiceBudget): Boolean {
     val longest = options.maxOfOrNull { it.label.length + (it.trailing?.let { t -> t.length + 1 } ?: 0) } ?: 0
-    return options.size > InlineChoiceLimit || options.size * longest > InlineChoiceBudget
+    return options.size > limit || budget != null && options.size * longest > budget
 }
 
 /**
