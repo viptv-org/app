@@ -2,7 +2,6 @@ package org.viptv.app.features.sources
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -25,6 +24,7 @@ import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.app.components.pointerClickable
 
 /**
  * A phone, tablet or desktop source row. [header] is the group label this row opens
@@ -40,7 +40,7 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
     // The fill is the row's focus treatment; Material's focus layer would double it.
     OwnFocusTreatment { Column(Modifier.fillMaxWidth()
         .onFocusChanged { if (focused != it.isFocused) { focused = it.isFocused; focusChanged(it.isFocused) } }
-        .clickable(interaction, indication = null, enabled = enabled) { choose(source) }) {
+        .pointerClickable(interaction, indication = null, enabled = enabled) { choose(source) }) {
         header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp), measured = headerMeasured) }
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
         .background(if (focused) Palette.text else if (television || selected) Palette.raised else Palette.surface)

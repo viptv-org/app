@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
 import org.viptv.app.state.SettingsPage
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
@@ -107,7 +108,7 @@ internal const val stremioImportSection = "Import from Stremio"
 @Composable
 private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, backLabel: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        if (compact || backLabel != null) androidx.compose.material3.TextButton(back) { androidx.compose.material3.Text(backLabel ?: "Back") }
+        if (compact || backLabel != null) TextButton(back) { androidx.compose.material3.Text(backLabel ?: "Back") }
         Box(Modifier.weight(1f)) { content() }
     }
 }

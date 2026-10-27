@@ -4,7 +4,6 @@ import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -23,6 +22,8 @@ import org.jetbrains.compose.resources.Font
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
 
 internal enum class SignInStep { Choice, Password, Browser, Email, Device }
 
@@ -73,7 +74,7 @@ internal fun DesktopSignIn(
                         { server = it }, startPairing, cancelPairing, back)
                     else SignInPanel(480.dp) {
                         Text("Device sign-in requires a server connection.", color = Palette.secondary)
-                        androidx.compose.material3.TextButton(back) { Text("All sign-in options") }
+                        TextButton(back) { Text("All sign-in options") }
                     }
                 SignInStep.Email -> DesktopEmailPanel(back)
             }
@@ -103,7 +104,7 @@ private fun SignInBrand() {
 @Composable
 private fun SignInChoice(icon: SignInMethod, title: String, subtitle: String? = null, last: Boolean = false, activate: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(bottom = if (last) 0.dp else 8.dp).height(52.dp)
-        .clip(RoundedCornerShape(12.dp)).background(Color(0xFF222224)).clickable(onClick = activate)
+        .clip(RoundedCornerShape(12.dp)).background(Color(0xFF222224)).pointerClickable(onClick = activate, shape = RoundedCornerShape(12.dp))
         .padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
         SignInMethodIcon(icon, Modifier.width(30.dp).height(18.dp))
         Column(Modifier.weight(1f)) {

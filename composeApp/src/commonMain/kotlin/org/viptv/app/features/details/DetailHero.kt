@@ -23,6 +23,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.Button
+import org.viptv.app.components.OutlinedButton
 
 @Composable
 internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,

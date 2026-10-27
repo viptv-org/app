@@ -4,7 +4,6 @@ import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,6 +26,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.connection.SearchResultRow
+import org.viptv.app.components.pointerClickable
 
 @Composable
 fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean,
@@ -59,7 +59,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
                     .background(if (hovered) (if (filter == tab) Color.White else Color(0xFF2A2A2E))
                         else (if (filter == tab) Palette.text else Color(0xFF202022)), RoundedCornerShape(18.dp))
-                    .clickable(interactionSource = interactions, indication = null, onClickLabel = tab) { filter = tab }
+                    .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = tab, shape = RoundedCornerShape(18.dp), hover = null) { filter = tab }
                     .padding(horizontal = 14.dp, vertical = 7.dp),
                     color = if (filter == tab) Palette.background else Palette.text,
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)

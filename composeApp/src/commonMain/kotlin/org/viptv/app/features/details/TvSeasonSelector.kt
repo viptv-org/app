@@ -2,7 +2,6 @@ package org.viptv.app.features.details
 
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -19,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float, seasonFocus: FocusRequester,
@@ -41,7 +41,7 @@ internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float,
                         }
                     }.clip(RoundedCornerShape(26.dp * scale))
                     .background(if (focused) Palette.text else if (active == season) Palette.text.copy(alpha = .16f) else Color.Transparent)
-                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { select(season) }
+                    .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = RoundedCornerShape(26.dp * scale)) { select(season) }
                     .padding(horizontal = 22.dp * scale), contentAlignment = Alignment.Center) {
                     Text(season?.let { "Season $it" } ?: "Episodes",
                         color = if (focused) Palette.background else if (active == season) Palette.text else Palette.secondary,

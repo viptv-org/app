@@ -1,7 +1,6 @@
 package org.viptv.app
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -45,6 +44,7 @@ import org.viptv.app.components.DesktopBreakpoints
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun DesktopTitleBar(
@@ -179,7 +179,7 @@ private fun ChromeButton(icon: ChromeIcon, label: String, color: Color, onClick:
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 8.dp)
         .background(if (focused || hovered) Color.White.copy(alpha = if (focused) .16f else .08f) else Color.Transparent, RoundedCornerShape(8.dp))
-        .clickable(interactionSource = interaction, enabled = onClick != null, onClickLabel = label) { onClick?.invoke() },
+        .pointerClickable(interactionSource = interaction, enabled = onClick != null, onClickLabel = label, shape = RoundedCornerShape(8.dp), hover = null) { onClick?.invoke() },
         contentAlignment = Alignment.Center) {
         DesktopChromeIcon(icon, if (onClick == null) color.copy(alpha = color.alpha * .38f) else color, Modifier.size(17.dp))
     }
@@ -199,6 +199,6 @@ private fun TitleBarHit(label: String, onClick: () -> Unit, modifier: Modifier =
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, radius, darkGap = 2.dp, width = 2.dp)
         .background(if (hovered) hover else Color.Transparent, RoundedCornerShape(radius))
-        .clickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = onClick),
+        .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = onClick, shape = RoundedCornerShape(radius), hover = null),
         contentAlignment = Alignment.Center) { content() }
 }

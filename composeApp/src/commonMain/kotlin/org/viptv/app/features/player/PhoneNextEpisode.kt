@@ -22,6 +22,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.Button
 
 /** The end panel. With [autoplay] the Next action counts down and plays at 0; any viewer action stops it (app#65). */
 @Composable

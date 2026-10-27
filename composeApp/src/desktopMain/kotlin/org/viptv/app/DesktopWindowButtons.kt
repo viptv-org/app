@@ -2,7 +2,6 @@ package org.viptv.app
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -24,6 +23,7 @@ import org.viptv.app.theme.Palette
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.*
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun DesktopWindowButtons(
@@ -64,7 +64,7 @@ private fun TrafficLight(color: Color, label: String, action: () -> Unit) {
         .tvFocusOutline(focused, 6.dp, darkGap = 2.dp, width = 2.dp)
         .background(if (hovered) color.copy(alpha = .85f) else color, CircleShape)
         .hoverable(interaction)
-        .clickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action))
+        .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action, shape = CircleShape, hover = null))
 }
 
 @Composable
@@ -77,7 +77,7 @@ private fun WindowButton(icon: DrawableResource?, label: String, action: () -> U
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 4.dp, darkGap = 2.dp, width = 2.dp)
         .background(background).hoverable(interaction)
-        .clickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action),
+        .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action),
         contentAlignment = Alignment.Center) {
         if (icon != null) Icon(painterResource(icon), label, Modifier.size(10.dp), tint = Palette.text)
         else RestoreGlyph(Modifier.size(10.dp))
