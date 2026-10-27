@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.Lucide
@@ -49,7 +50,7 @@ import org.viptv.app.theme.Palette
  * [trailing] text such as a count ("5"), and whether it can be picked.
  */
 @Immutable
-data class SelectOption(val id: String, val label: String, val trailing: String? = null, val enabled: Boolean = true)
+internal data class SelectOption(val id: String, val label: String, val trailing: String? = null, val enabled: Boolean = true)
 
 /** More options than this never fit a segmented control or a chip row. */
 internal const val InlineChoiceLimit = 5
@@ -64,7 +65,7 @@ internal const val InlineChoiceBudget = 30
  * use a [SearchableSelect]. Pass the options exactly as the inline control would show
  * them, including an added "Any".
  */
-fun useSelect(options: List<SelectOption>): Boolean {
+internal fun useSelect(options: List<SelectOption>): Boolean {
     val longest = options.maxOfOrNull { it.label.length + (it.trailing?.let { t -> t.length + 1 } ?: 0) } ?: 0
     return options.size > InlineChoiceLimit || options.size * longest > InlineChoiceBudget
 }
@@ -74,7 +75,7 @@ fun useSelect(options: List<SelectOption>): Boolean {
  * "Genre: Comedy, Drama", then "Genre: 3 selected". An id the options no longer list
  * shows as itself so a stale value is never hidden.
  */
-fun selectTriggerLabel(title: String, options: List<SelectOption>, selected: List<String>, placeholder: String): String =
+internal fun selectTriggerLabel(title: String, options: List<SelectOption>, selected: List<String>, placeholder: String): String =
     "$title: ${selectTriggerValue(options, selected, placeholder)}"
 
 private fun selectTriggerValue(options: List<SelectOption>, selected: List<String>, placeholder: String): String {
@@ -88,9 +89,9 @@ private fun selectTriggerValue(options: List<SelectOption>, selected: List<Strin
 }
 
 /** Options whose label contains [query], ignoring case and accents ("cafe" finds "Café"). */
-fun filterOptions(options: List<SelectOption>, query: String): List<SelectOption> {
+internal fun filterOptions(options: List<SelectOption>, query: String): List<SelectOption> {
     val needle = foldForSearch(query.trim())
-    return if (needle.isEmpty()) options else options.filter { foldForSearch(it.label).contains(needle) }
+    return options.filter { foldForSearch(it.label).contains(needle) }
 }
 
 private val accentFolds: Map<Char, String> = buildMap {
@@ -110,7 +111,6 @@ internal fun foldForSearch(text: String): String = buildString(text.length) {
 
 /** Design `surface-3`: the selected chip fill. */
 private val Surface3 = Color(0xFF2A2A2E)
-private val Hairline = Color.White.copy(alpha = .07f)
 private val RowShape = RoundedCornerShape(10.dp)
 private val RowHeight = 40.dp
 private val ListMaxHeight = 320.dp
@@ -126,9 +126,12 @@ private val ListMaxHeight = 320.dp
  * open and respects [maximumSelections]. [anyLabel] adds a first row that clears
  * the value; pass `null` when the control is required. Arrow keys move, Enter
  * picks, Escape and a click outside close. Decide whether to use it with [useSelect].
+ * It is built for pointer and keyboard screens (desktop, web): the search field
+ * takes focus on open, so TV keeps its own pickers. Options with a repeated id
+ * are shown once.
  */
 @Composable
-fun SearchableSelect(
+internal fun SearchableSelect(
     title: String,
     options: List<SelectOption>,
     selected: List<String>,
@@ -141,11 +144,12 @@ fun SearchableSelect(
     searchPlaceholder: String = "Search ${title.lowercase()}",
 ) {
     var open by remember { mutableStateOf(false) }
+    val distinct = remember(options) { options.distinctBy { it.id } }
     Box(modifier) {
-        SelectTrigger(title, selectTriggerValue(options, selected, placeholder),
+        SelectTrigger(title, selectTriggerValue(distinct, selected, placeholder),
             set = selected.isNotEmpty(), Modifier.fillMaxWidth()) { open = true }
         PopoverMenu(open, { open = false }) {
-            SelectPanel(options, selected, multiple, maximumSelections, anyLabel, searchPlaceholder, onChange) { open = false }
+            SelectPanel(distinct, selected, multiple, maximumSelections, anyLabel, searchPlaceholder, onChange) { open = false }
         }
     }
 }
@@ -180,7 +184,10 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
         }
     }
     var active by remember { mutableIntStateOf(rows.indexOfFirst { it != null && it.id in selected }.coerceAtLeast(0)) }
+    // Bumped by the arrow keys only: hovering a row moves the highlight but never scrolls the list under the mouse.
+    var keyboardMoves by remember { mutableIntStateOf(0) }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = (active - 3).coerceAtLeast(0))
+    val scope = rememberCoroutineScope()
     val search = remember { FocusRequester() }
     val rowPx = with(LocalDensity.current) { RowHeight.toPx() }
 
@@ -195,12 +202,18 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
             else -> selected + row.id
         })
     }
+    /** The next row in [step]'s direction that can be picked; unavailable and over-cap rows are skipped. */
+    fun move(step: Int) {
+        var index = active + step
+        while (index in rows.indices && !enabled(rows[index])) index += step
+        if (index in rows.indices) { active = index; keyboardMoves++ }
+    }
 
     LaunchedEffect(Unit) { search.requestFocus() }
     // Keep the keyboard row in view: scroll by the overflow, or jump when it is off screen.
-    LaunchedEffect(active, rows) {
+    LaunchedEffect(keyboardMoves) {
         val info = list.layoutInfo
-        if (active !in rows.indices || info.visibleItemsInfo.isEmpty()) return@LaunchedEffect
+        if (keyboardMoves == 0 || active !in rows.indices || info.visibleItemsInfo.isEmpty()) return@LaunchedEffect
         val item = info.visibleItemsInfo.firstOrNull { it.index == active }
         when {
             item == null && active < list.firstVisibleItemIndex -> list.scrollToItem(active)
@@ -213,14 +226,17 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     Column(Modifier.width(PopoverMenuWidth).onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent event.key in listOf(Key.DirectionUp, Key.DirectionDown, Key.Enter, Key.NumPadEnter)
         when (event.key) {
-            Key.DirectionDown -> { active = (active + 1).coerceAtMost(rows.lastIndex.coerceAtLeast(0)); true }
-            Key.DirectionUp -> { active = (active - 1).coerceAtLeast(0); true }
+            Key.DirectionDown -> { move(1); true }
+            Key.DirectionUp -> { move(-1); true }
             Key.Enter, Key.NumPadEnter -> { if (active in rows.indices) pick(rows[active]); true }
             Key.Escape -> { close(); true }
             else -> false
         }
     }) {
-        SelectSearchField(query, searchPlaceholder, Modifier.focusRequester(search)) { query = it; active = 0 }
+        SelectSearchField(query, searchPlaceholder, Modifier.focusRequester(search)) {
+            query = it; active = 0
+            scope.launch { list.scrollToItem(0) }
+        }
         if (rows.isEmpty()) Text("No matches for “${query.trim()}”", Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             fontSize = 13.sp, color = Palette.secondary)
         // A fixed width: the popover measures its column's intrinsic width, which a lazy list cannot answer.
@@ -228,24 +244,25 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
             contentPadding = PaddingValues(top = 4.dp)) {
             itemsIndexed(rows) { index, row ->
                 val checked = if (row == null) selected.isEmpty() else row.id in selected
-                SelectRow(row?.label ?: anyLabel.orEmpty(), trailing = buildList {
-                    row?.trailing?.let(::add)
-                    if (row != null && !row.enabled) add("unavailable")
-                    if (!multiple && checked) add("Current")
-                }.joinToString(" · ").ifEmpty { null }, checked, multiple, enabled(row), active = index == active,
-                    hovered = { active = index }) { pick(row) }
+                SelectRow(row?.label ?: anyLabel.orEmpty(), unavailable = row != null && !row.enabled,
+                    trailing = listOfNotNull(row?.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
+                    checked, multiple, enabled(row), active = index == active, hovered = { active = index }) { pick(row) }
             }
         }
     }
 }
 
-/** Design text field, popover size: a background-filled hairline box; focus raises the border to 0.22. */
+/**
+ * The design's D text field (radius 12, hairline border, focus raises it to 1.5 px at 0.22,
+ * accent caret), 40 tall to fit the 260 wide popover. It is filled with the page background
+ * because a surface-1 field would vanish into the surface-1 popover.
+ */
 @Composable
 private fun SelectSearchField(query: String, placeholder: String, modifier: Modifier, change: (String) -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
-    val shape = RoundedCornerShape(10.dp)
-    Row(Modifier.padding(horizontal = 8.dp).padding(bottom = 4.dp).fillMaxWidth().height(38.dp).clip(shape)
+    val shape = RoundedCornerShape(12.dp)
+    Row(Modifier.padding(horizontal = 8.dp).padding(bottom = 4.dp).fillMaxWidth().height(40.dp).clip(shape)
         .background(Palette.background).border(if (focused) 1.5.dp else 1.dp, if (focused) Color.White.copy(alpha = .22f) else Hairline, shape)
         .padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(Lucide.Search, null, Modifier.size(15.dp), tint = Palette.tertiary)
@@ -263,12 +280,12 @@ private fun SelectSearchField(query: String, placeholder: String, modifier: Modi
 }
 
 /**
- * A choice row, 40 tall: a check (single) or checkbox (multiple), the label and
- * tertiary trailing text. Mouse hover and the keyboard share one highlight, the
+ * A choice row, 40 tall: a check (single) or checkbox (multiple), the label (with
+ * "· unavailable" when it cannot be picked) and tertiary trailing text. Mouse hover and the keyboard share one highlight, the
  * popover row's surface-2 fill.
  */
 @Composable
-private fun SelectRow(label: String, trailing: String?, checked: Boolean, multiple: Boolean, enabled: Boolean,
+private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, checked: Boolean, multiple: Boolean, enabled: Boolean,
     active: Boolean, hovered: () -> Unit, pick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val pointer = interaction.pointerHovered()
@@ -286,7 +303,10 @@ private fun SelectRow(label: String, trailing: String?, checked: Boolean, multip
                 if (checked) Icon(Lucide.Check, null, Modifier.size(12.dp), tint = Palette.background)
             } else if (checked) Icon(Lucide.Check, null, Modifier.size(16.dp), tint = Palette.accent)
         }
-        Text(label, Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+        Text(buildAnnotatedString {
+            append(label)
+            if (unavailable) withStyle(SpanStyle(color = Palette.tertiary, fontWeight = FontWeight.Normal)) { append(" · unavailable") }
+        }, Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
             color = if (enabled) Palette.text else Palette.tertiary)
         trailing?.let { Text(it, fontSize = 12.sp, color = Palette.tertiary, maxLines = 1) }
     }

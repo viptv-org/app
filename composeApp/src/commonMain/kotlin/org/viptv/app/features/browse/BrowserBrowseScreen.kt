@@ -194,6 +194,14 @@ private fun BrowserFacet(control: QueryControl, query: BrowseQuery, changed: (St
     multipleChanged: (String, List<String>) -> Unit) {
     val selected = query.selections(control.id).filter(String::isNotBlank)
     val cap = control.maximum_selections
+    val inline = remember(control) { when (control.kind) {
+        ControlKind.SINGLECHOICE -> segmentChoices(control)
+        ControlKind.MULTICHOICE -> control.choices
+        else -> emptyList()
+    } }
+    val dropdown = remember(inline) { useSelect(inline.map { SelectOption(it.value, it.label) }) }
+    // The dropdown chip already reads "Genre: Any", so it has no heading above it.
+    if (dropdown) { BrowserSelect(control, selected, changed, multipleChanged); return }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
             Text(control.label, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -203,51 +211,52 @@ private fun BrowserFacet(control: QueryControl, query: BrowseQuery, changed: (St
             }
         }
         when (control.kind) {
-            ControlKind.SINGLECHOICE -> {
-                val segments = segmentChoices(control)
-                if (useSelect(segments.map { SelectOption(it.value, it.label) })) BrowserSelect(control, selected.take(1), multiple = false) {
-                    changed(control.id, it.firstOrNull().orEmpty())
-                } else BrowserSegments(segments, selected.firstOrNull().orEmpty()) { changed(control.id, it) }
-            }
-            ControlKind.MULTICHOICE ->
-                if (useSelect(control.choices.map { SelectOption(it.value, it.label) })) BrowserSelect(control, selected, multiple = true) {
-                    multipleChanged(control.id, it)
-                } else BrowserWrap(horizontalGap = 6.dp, verticalGap = 6.dp) {
-                    control.choices.forEach { choice ->
-                        val chosen = choice.value in selected
-                        BrowserChip(choice.label, chosen, chosen || cap == null || selected.size < cap) {
-                            multipleChanged(control.id, if (chosen) selected - choice.value else selected + choice.value)
-                        }
+            ControlKind.SINGLECHOICE -> BrowserSegments(inline, selected.firstOrNull().orEmpty()) { changed(control.id, it) }
+            ControlKind.MULTICHOICE -> BrowserWrap(horizontalGap = 6.dp, verticalGap = 6.dp) {
+                inline.forEach { choice ->
+                    val chosen = choice.value in selected
+                    BrowserChip(choice.label, chosen, chosen || cap == null || selected.size < cap) {
+                        multipleChanged(control.id, if (chosen) selected - choice.value else selected + choice.value)
                     }
                 }
+            }
             ControlKind.TOGGLE -> BrowserToggle(control.label, selected.lastOrNull() == "true") { changed(control.id, it.toString()) }
             else -> BrowserFacetField(control, selected.firstOrNull().orEmpty()) { changed(control.id, it) }
         }
     }
 }
 
-/** An optional single choice gains "Any" unless the provider already lists an empty or "Any" choice. */
+/** A choice the provider itself offers as "Any": an empty value, or the label "Any". */
+private fun Choice.isAny() = value.isEmpty() || label.equals("Any", true)
+
+/** An optional single choice gains "Any" unless the provider already lists one. */
 private fun segmentChoices(control: QueryControl): List<Choice> = buildList {
-    if (!control.required && control.choices.none { it.value.isEmpty() || it.label.equals("Any", true) }) add(Choice("", "Any"))
+    if (!control.required && control.choices.none { it.isAny() }) add(Choice("", "Any"))
     addAll(control.choices)
 }
 
 /**
  * A choice set over the [useSelect] threshold (Genre) is the shared searchable
- * dropdown (app#57). A provider's empty-valued choice becomes its "Any" row; a
- * required control has none.
+ * dropdown (app#57). A provider's empty-valued choice becomes the "Any" row; one
+ * labelled "Any" with a value stays an ordinary row. An unset required control
+ * reads "Genre: Required".
  */
 @Composable
-private fun BrowserSelect(control: QueryControl, selected: List<String>, multiple: Boolean, change: (List<String>) -> Unit) {
+private fun BrowserSelect(control: QueryControl, selected: List<String>, changed: (String, String) -> Unit,
+    multipleChanged: (String, List<String>) -> Unit) {
+    val multiple = control.kind == ControlKind.MULTICHOICE
     val options = remember(control) { control.choices.filter { it.value.isNotEmpty() }.map { SelectOption(it.value, it.label) } }
+    val providerAny = control.choices.firstOrNull { it.isAny() }
     val anyLabel = when {
         control.required -> null
-        multiple -> "Any"
-        control.choices.any { it.value.isNotEmpty() && it.label.equals("Any", true) } -> null
-        else -> control.choices.firstOrNull { it.value.isEmpty() }?.label ?: "Any"
+        providerAny == null -> "Any"
+        providerAny.value.isEmpty() -> providerAny.label
+        else -> null
     }
-    SearchableSelect(control.label, options, selected, change, Modifier.fillMaxWidth(), multiple = multiple,
-        maximumSelections = control.maximum_selections?.toInt(), anyLabel = anyLabel, placeholder = anyLabel ?: "Choose")
+    SearchableSelect(control.label, options, if (multiple) selected else selected.take(1),
+        { if (multiple) multipleChanged(control.id, it) else changed(control.id, it.firstOrNull().orEmpty()) },
+        Modifier.fillMaxWidth(), multiple = multiple, maximumSelections = control.maximum_selections?.toInt(),
+        anyLabel = anyLabel, placeholder = if (control.required) "Required" else providerAny?.label ?: "Any")
 }
 
 /** The board renders a small single choice (a required Sort, Rating) as a segmented track. */

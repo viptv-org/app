@@ -102,6 +102,18 @@ class SearchableSelectTest {
         }
     }
 
+    @Test fun arrowsSkipUnavailableRowsWhichReadUnavailable() {
+        val options = genres.map { if (it.id == "action") it.copy(enabled = false) else it }
+        val picked = mutableListOf<List<String>>()
+        Ui(800, 700) { SearchableSelect("Genre", options, emptyList(), { picked += it }, Modifier.width(240.dp)) }.use {
+            it.open("Genre: Any")
+            assertEquals("Action · unavailable", it.row("Action").config[SemanticsProperties.Text].first().text)
+            assertTrue(it.row("Action").config.contains(SemanticsProperties.Disabled))
+            it.key(Key.DirectionDown); it.key(Key.Enter)
+            assertEquals(listOf(listOf("adventure")), picked, "Down from Any skips the unavailable Action")
+        }
+    }
+
     @Test fun multipleModeTogglesWithCheckboxesAndRespectsTheCap() {
         var value by mutableStateOf(listOf("comedy"))
         Ui(800, 700) { SearchableSelect("Genre", genres, value, { value = it }, Modifier.width(240.dp), multiple = true, maximumSelections = 2) }.use {
@@ -196,8 +208,9 @@ class SearchableSelectTest {
         private fun options() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) }
             .sortedBy { it.boundsInRoot.top }
         /** The labels of the composed option rows, top to bottom (each row's first text is its label). */
-        fun rows(): List<String> = options().map { it.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text }
-        fun row(label: String) = options().single { it.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text == label }
+        private fun label(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text.removeSuffix(" · unavailable")
+        fun rows(): List<String> = options().map(::label)
+        fun row(label: String) = options().single { label(it) == label }
         fun panelOpen() = nodes().any { it.config.contains(SemanticsActions.SetText) }
         fun searchFocused() = nodes().single { it.config.contains(SemanticsActions.SetText) }.config.getOrNull(SemanticsProperties.Focused) == true
         fun clickable(label: String) = nodes().any { text(it) == label && it.config.contains(SemanticsActions.OnClick) }

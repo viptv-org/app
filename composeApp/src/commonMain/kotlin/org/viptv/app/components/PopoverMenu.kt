@@ -40,7 +40,7 @@ internal const val PopoverMenuItemIconTag = "PopoverMenuItem.icon"
 internal val PopoverMenuWidth = 260.dp
 
 /** Design token `line.hairline`: white at 0.07. */
-private val Hairline = Color.White.copy(alpha = .07f)
+internal val Hairline = Color.White.copy(alpha = .07f)
 
 /**
  * The design system's anchored popover (components.md section 8): a surface-1 card with a
