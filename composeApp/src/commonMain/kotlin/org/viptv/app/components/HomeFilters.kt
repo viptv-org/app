@@ -5,17 +5,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.connection.GenreChoice
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 
+/** The genres the Home Genres chip offers and what choosing one does. */
+internal class HomeGenrePicker(val choices: List<GenreChoice>, val choose: (GenreChoice) -> Unit)
+
+/**
+ * Provided once by the app shell, so every Home header (phone header, tablet hero) offers the
+ * same genres. Without a picker, or with no genres, the Genres chip is not shown.
+ */
+internal val LocalHomeGenres = compositionLocalOf<HomeGenrePicker?> { null }
+
 @Composable
-internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, genres: () -> Unit) {
+internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit) {
+    val genres = LocalHomeGenres.current?.takeIf { it.choices.isNotEmpty() }
     org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series, "Anime" to Screen.Anime).forEach { (label, destination) ->
@@ -25,12 +37,24 @@ internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, genres: () 
                 Text(label, Modifier.padding(horizontal = 14.dp, vertical = 7.dp), fontSize = 14.sp, lineHeight = 18.sp)
             }
         }
-        Surface(onClick = genres, shape = RoundedCornerShape(20.dp), color = Palette.raised.copy(alpha = 0.8f)) {
+        if (genres != null) GenresChip(genres)
+    } }
+}
+
+/** "Genres ⌄" opens an anchored popover of genres (components.md section 8); choosing one closes it. */
+@Composable
+private fun GenresChip(genres: HomeGenrePicker) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        Surface(onClick = { open = true }, shape = RoundedCornerShape(20.dp), color = Palette.raised.copy(alpha = 0.8f)) {
             Row(Modifier.padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(Lucide.ChevronDown, null, Modifier.size(14.dp))
+                Icon(Lucide.ChevronDown, null, Modifier.size(14.dp).rotate(if (open) 180f else 0f))
                 Text("Genres", fontSize = 14.sp, lineHeight = 18.sp)
             }
         }
-    } }
+        PopoverMenu(open, { open = false }, Modifier.heightIn(max = 396.dp)) {
+            genres.choices.forEach { choice -> PopoverMenuItem(choice.label) { open = false; genres.choose(choice) } }
+        }
+    }
 }
