@@ -42,13 +42,13 @@ class LibraryCollapsingHeaderUiTest {
         override suspend fun save(session: SavedRemoteSession) = Unit
         override suspend fun clear() = Unit
     }
-    private fun card(id: String, title: String) =
-        Card(identity = MediaIdentity(id, if (id.hashCode() % 2 == 0) "movie" else "series", emptyList()), provider_id = "simkl", title = title, badges = emptyList())
+    private fun card(index: Int) = Card(identity = MediaIdentity("l$index", if (index % 2 == 0) "movie" else "series", emptyList()),
+        provider_id = "simkl", title = "Saved title $index", badges = emptyList())
     private val types = QueryControl("type", "Type", ControlKind.SINGLECHOICE, true,
         listOf(Choice("all", "All"), Choice("movie", "Movies"), Choice("series", "Series"), Choice("anime", "Anime")))
     private val genres = QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false, listOf(Choice("Action", "Action")))
     private fun list(count: Int) = LibrarySnapshot(Scope("server", "owner", "12", 4), 4, defaultLibraryQuery(),
-        (1..count).map { card("l$it", "Saved title $it") }, complete = true, controls = listOf(types, genres), availability = Availability.AVAILABLE)
+        (1..count).map(::card), complete = true, controls = listOf(types, genres), availability = Availability.AVAILABLE)
 
     private inner class Fixture(scope: CoroutineScope, width: Int, private val height: Int, density: Float,
         television: Boolean = false, browser: Boolean = false, cards: Int = 80, error: String? = null) {
@@ -95,6 +95,13 @@ class LibraryCollapsingHeaderUiTest {
             scene.sendPointerEvent(PointerEventType.Release, at, type = PointerType.Touch, timeMillis = time.get() / 1_000_000)
             frames(60)
         }
+        /** A finger tap with no movement. */
+        suspend fun tap(x: Float, y: Float) {
+            scene.sendPointerEvent(PointerEventType.Press, Offset(x, y), type = PointerType.Touch, timeMillis = time.get() / 1_000_000)
+            frames(2)
+            scene.sendPointerEvent(PointerEventType.Release, Offset(x, y), type = PointerType.Touch, timeMillis = time.get() / 1_000_000)
+            frames(10)
+        }
         /** Mouse-wheel notches over the grid; positive scrolls the list down. */
         suspend fun wheel(notches: Int) {
             val at = Offset(center, height * 0.7f)
@@ -122,7 +129,7 @@ class LibraryCollapsingHeaderUiTest {
         /** The History card counts as shown only while some of it is below the pinned controls. */
         fun historyShown(): Boolean {
             val history = nodes().firstOrNull { text(it).contains("Everything you've played") } ?: return false
-            val filters = node("Filters") ?: return true
+            val filters = node("Filters") ?: return false
             val controlsBottom = nodes().filter { it.config.contains(SemanticsProperties.Selected) }.maxOfOrNull { it.boundsInRoot.bottom } ?: filters.boundsInRoot.bottom
             return history.boundsInRoot.bottom > controlsBottom + 1f && history.boundsInRoot.top < height
         }
@@ -147,6 +154,10 @@ class LibraryCollapsingHeaderUiTest {
             assertEquals(chips, phone.chipTop("Movies"), "type chips stay pinned")
             assertEquals(message, phone.top("Couldn't refresh My List"), "the error stays with the pinned controls")
             phone.capture("phone-scrolled")
+            // Empty space in the pinned controls covers scrolled cards; a tap there must not open one.
+            val row = assertNotNull(phone.node("Filters")).boundsInRoot
+            phone.tap(row.left / 3f, row.center.y)
+            assertEquals(Screen.Library, phone.controller.state.value.screen, "a tap on the pinned controls stays on My List")
             phone.drag(-900f)
             assertEquals(filters, phone.top("Filters"), "Filters stays pinned while the grid keeps scrolling")
             // Pulling down while the list is scrolled scrolls it back; only the very top refreshes.
@@ -178,7 +189,7 @@ class LibraryCollapsingHeaderUiTest {
             assertNotEquals(cards, tablet.cardTops(), "the grid scrolled under the controls")
             // Back at the very top the title returns too, so the controls sit where they started.
             repeat(6) { if (tablet.top("Filters") != filters) tablet.drag(300f) }
-            assertTrue(tablet.historyShown(), "History returns")
+            tablet.await("History returns") { tablet.historyShown() }
             assertEquals(filters, tablet.top("Filters"))
         } finally { tablet.close() }
     }
