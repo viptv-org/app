@@ -10,6 +10,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.viptv.app.components.Brand
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 // Dedicated phone/TV/desktop layouts precede the wide connection fallback.
 @Composable

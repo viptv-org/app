@@ -3,7 +3,6 @@ package org.viptv.app.features.entry
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import com.composables.icons.lucide.*
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +16,8 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
 
 @Composable
 fun ProfilesScreen(
@@ -35,7 +36,7 @@ fun ProfilesScreen(
         Spacer(Modifier.height(44.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(28.dp), contentPadding = PaddingValues(24.dp)) {
             items(profiles, key = { it.id }) { profile ->
-                Column(Modifier.clickable(enabled = !busy) { if (managing) edit(profile.id) else select(profile.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.pointerClickable(enabled = !busy) { if (managing) edit(profile.id) else select(profile.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
                     Surface(Modifier.size(112.dp).clip(RoundedCornerShape(16.dp)), color = Palette.raised) {
                         Box(contentAlignment = Alignment.Center) {
                             if (profile.avatar != null) AsyncImage(profile.avatar, profile.name, Modifier.fillMaxSize())
@@ -47,7 +48,7 @@ fun ProfilesScreen(
                 }
             }
             if (local && profiles.size < 12) item {
-                Column(Modifier.clickable(enabled = !busy) { adding = true }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.pointerClickable(enabled = !busy) { adding = true }, horizontalAlignment = Alignment.CenterHorizontally) {
                     Surface(Modifier.size(112.dp).clip(RoundedCornerShape(16.dp)), color = Palette.raised) {
                         Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp)) }
                     }

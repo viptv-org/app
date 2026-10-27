@@ -1,7 +1,6 @@
 package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -26,6 +25,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFocus: () -> Unit, requester: FocusRequester?, up: FocusRequester,
@@ -34,7 +34,7 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
     var focused by remember { mutableStateOf(false) }
     Column(Modifier.width(448.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier).focusProperties { this.up = up }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { play(card) }) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { play(card) }) {
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
             // A missing or failed episode still shows the episode identity tile,

@@ -9,6 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.OutlinedButton
+import org.viptv.app.components.TextButton
 
 /** Household PIN policy is distinct from native local profile PINs. */
 @Composable

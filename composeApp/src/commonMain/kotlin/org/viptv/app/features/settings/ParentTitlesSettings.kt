@@ -10,6 +10,9 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.OutlinedButton
+import org.viptv.app.components.TextButton
 
 private data class ApprovalChoice(val kind: String, val id: String, val title: String, val row: String? = null, val saved: ApprovedTitle? = null, val candidate: org.viptv.engine.wire.Card? = null)
 

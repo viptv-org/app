@@ -116,7 +116,7 @@ private fun launchApplication() = application {
             }
         }
         org.viptv.app.player.mpv.MpvWindow(window) {
-        ViptvTheme {
+        ViptvTheme(pointer = true) {
             // Native app framing: a rounded root surface with a hairline outline.
             // macOS already rounds and outlines its own windows, so it keeps the
             // plain surface.

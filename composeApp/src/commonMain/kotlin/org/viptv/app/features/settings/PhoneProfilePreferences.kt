@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,

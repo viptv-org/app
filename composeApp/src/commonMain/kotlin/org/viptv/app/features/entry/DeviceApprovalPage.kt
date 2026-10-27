@@ -2,7 +2,6 @@ package org.viptv.app.features.entry
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,6 +27,9 @@ import org.viptv.app.connection.ParentAuthorizationRequired
 import org.viptv.app.features.settings.ParentPinDialog
 import org.viptv.app.state.DeviceApprovalController
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 private enum class DeviceApprovalStep { Restore, SignIn, Code, Confirm, Done, Denied }
 
@@ -225,7 +227,7 @@ private fun DeviceSessionFootnote(username: String, notYou: () -> Unit) {
     Row {
         Text("Signed in as $username - ", color = Palette.tertiary, fontSize = 13.sp)
         Text("Not you?", color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.clickable(onClick = notYou))
+            modifier = Modifier.pointerClickable(onClick = notYou))
     }
 }
 

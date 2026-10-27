@@ -12,6 +12,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
+import org.viptv.app.components.OutlinedButton
 
 @Composable
 internal fun LibraryHeader(snapshot: LibrarySnapshot?, query: LibraryQuery, change: (LibraryQuery) -> Unit,

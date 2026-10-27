@@ -2,7 +2,6 @@ package org.viptv.app.features.settings
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +24,7 @@ import com.composables.icons.lucide.X
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 import androidx.compose.foundation.text.selection.SelectionContainer
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabled: Set<String>, busy: Boolean, error: String?,

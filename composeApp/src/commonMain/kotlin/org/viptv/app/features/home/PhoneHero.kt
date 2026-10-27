@@ -25,6 +25,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.Button
 
 @Composable
 internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {

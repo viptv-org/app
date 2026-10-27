@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scale: Float,

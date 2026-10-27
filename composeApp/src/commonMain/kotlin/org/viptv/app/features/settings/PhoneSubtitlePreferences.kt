@@ -3,7 +3,6 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +22,8 @@ import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.subtitleMode
 import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerSelectable
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun PhoneSubtitlePreferences(value: ProfilePreferences, busy: Boolean, update: ((ProfilePreferences) -> ProfilePreferences) -> Unit,
@@ -60,7 +61,7 @@ internal fun PhoneSubtitlePreferences(value: ProfilePreferences, busy: Boolean, 
                 val selected = value.subtitle_text_color.equals(hex, true)
                 Box(Modifier.size(48.dp).semantics { contentDescription = "Text colour $label" }
                     .border(if (selected) 2.dp else 0.dp, if (selected) Palette.text else Color.Transparent, CircleShape)
-                    .selectable(selected, enabled = !busy, role = Role.RadioButton, onClick = { update { it.copy(subtitle_text_color = hex) } })
+                    .pointerSelectable(selected, enabled = !busy, role = Role.RadioButton, onClick = { update { it.copy(subtitle_text_color = hex) } }, shape = CircleShape)
                     .padding(4.dp).clip(CircleShape).background(phonePreferenceColor(hex)))
             }
         }

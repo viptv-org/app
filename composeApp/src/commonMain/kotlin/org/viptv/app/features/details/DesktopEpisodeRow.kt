@@ -1,7 +1,6 @@
 package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boolean = false, modifier: Modifier = Modifier) {
@@ -28,7 +28,7 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
     val number = episode.identity.episode?.episode?.toString().orEmpty()
     val watched = (episode.progress ?: 0.0) >= 1.0 || episode.badges.contains("Watched")
     Row(modifier.fillMaxWidth().clip(RoundedCornerShape(if (browser) 10.dp else 12.dp))
-        .clickable { play(episode) }
+        .pointerClickable(shape = RoundedCornerShape(if (browser) 10.dp else 12.dp)) { play(episode) }
         .background(if (browser) Color.Transparent else Color.Unspecified)
         .padding(horizontal = if (browser) 12.dp else 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(if (browser) 16.dp else 18.dp)) {

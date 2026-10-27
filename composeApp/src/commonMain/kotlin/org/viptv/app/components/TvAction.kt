@@ -3,7 +3,6 @@ package org.viptv.app.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
@@ -53,6 +52,6 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
         .then(if (ring) Modifier.tvFocusOutline(light, cornerRadius, scale) else Modifier)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
-        .clickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = activate).padding(contentPadding),
+        .pointerClickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = activate, shape = shape).padding(contentPadding),
         horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) { content(ink) }
 }

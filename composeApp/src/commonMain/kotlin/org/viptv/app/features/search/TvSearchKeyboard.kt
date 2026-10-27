@@ -1,7 +1,6 @@
 package org.viptv.app.features.search
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvSearchKeyboard(edit: ((String) -> String) -> Unit, scale: Float, requestInitialFocus: Boolean = true, first: FocusRequester? = null) {
@@ -45,7 +45,7 @@ private fun TvKeyboardKey(modifier: Modifier, scale: Float, label: String, activ
     var focus by remember { mutableStateOf(false) }
     Box(modifier.height(68.dp * scale).onFocusChanged { focus = it.isFocused }
         .clip(RoundedCornerShape(12.dp * scale)).background(if (focus) Palette.text else Palette.raised)
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClickLabel = label, onClick = activate), contentAlignment = Alignment.Center) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClickLabel = label, onClick = activate, shape = RoundedCornerShape(12.dp * scale)), contentAlignment = Alignment.Center) {
         content(if (focus) Palette.background else Palette.text)
     }
 }

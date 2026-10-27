@@ -4,7 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -29,6 +28,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,7 +54,9 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtWatchedBadge
+import org.viptv.app.components.HoverFill
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.cardChip
 import org.viptv.app.components.newEpisodesDescription
@@ -65,6 +67,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
 
 /**
  * DUI-04: the desktop chrome publishes the card actions once, so the hover
@@ -95,6 +98,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     val desktop = actions != null
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
+    // app#56: the card's hover state (dim, play disc, ring) is for every pointer
+    // platform, desktop and web alike; the 450 ms preview stays desktop-only.
+    val pointerHovered = hover.pointerHovered()
     val gap = with(LocalDensity.current) { 12.dp.roundToPx() }
     var previewOpen by remember { mutableStateOf(false) }
     var previewHovered by remember { mutableStateOf(false) }
@@ -113,7 +119,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     Column(modifier.width(width.dp).hoverable(hover)
         .cardContextClick(desktop) { previewOpen = false; menuAt = it }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             val density = androidx.compose.ui.platform.LocalDensity.current
             val slotW = with(density) { width.dp.toPx().toInt() }
@@ -129,6 +135,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 if (watchedBadgeSize != null) WatchedBadge(watchedBadgeSize, Modifier.align(Alignment.TopEnd))
                 else ArtWatchedBadge(Modifier.matchParentSize())
             }
+            if (pointerHovered) CardHoverScrim(Modifier.matchParentSize())
             card.progress?.let { progress ->
                 // Thin continue-watching bar at the artwork's bottom edge,
                 // full width of the card — matching the supplied reference
@@ -141,9 +148,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                     if (p > 0f) drawRoundRect(Palette.accent, cornerRadius = CornerRadius(bar / 2), size = Size(size.width * p, bar))
                 })
             }
-            // D3HomeHover hover state is its own ring (`0 0 0 2px rgba(255,255,255,.9)`),
-            // never a second focus ring: the focused card shows only the focus outline.
-            HoverOutline(desktop && hovered && !focused, cornerRadius, Modifier.matchParentSize())
+            // The hover ring is never a second ring: a focused card that draws its
+            // focus outline shows only that one.
+            if (pointerHovered && !(focused && showFocusOutline)) CardHoverRing(cornerRadius, Modifier.matchParentSize())
             if (showFocusOutline) org.viptv.app.components.FocusOutline(focused, cornerRadius, focusWidth, Modifier.matchParentSize())
         }
         if (showLabels) {
@@ -179,17 +186,40 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     }
 }
 
-/** D3HomeHover: `0 0 0 2px rgba(255,255,255,.9)` on the artwork, outside the focus style. */
+/** Test tags on a hovered card's dim + play disc and on its hover ring (app#56). */
+internal const val MEDIA_CARD_HOVER_TAG = "media-card-hover"
+internal const val MEDIA_CARD_HOVER_RING_TAG = "media-card-hover-ring"
+
+/**
+ * components.md §6 "Hover (D)": the art dims (`scrim-card-hover`, black 0.38)
+ * and a 48 dp accent play disc appears in its centre (`tile-hover-play-disc`).
+ */
 @Composable
-private fun HoverOutline(visible: Boolean, radius: Dp, modifier: Modifier) {
-    if (!visible) return
-    Canvas(modifier) {
-        val stroke = 2.dp.toPx()
-        drawRoundRect(Color.White.copy(alpha = .9f), Offset(stroke / 2, stroke / 2),
-            Size((size.width - stroke).coerceAtLeast(0f), (size.height - stroke).coerceAtLeast(0f)),
-            CornerRadius(radius.toPx()), style = Stroke(stroke))
+private fun CardHoverScrim(modifier: Modifier) {
+    Box(modifier.testTag(MEDIA_CARD_HOVER_TAG).background(HoverFill.cardScrim), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(48.dp).background(Palette.accent, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(20.dp), tint = OnAccent)
+        }
     }
 }
+
+/**
+ * The hover ring: `inset 0 0 0 2px #F4F2EE` (`focus-desktop-hover-card`). It is
+ * drawn inside the art, so the card's clip never cuts it, and its outer edge
+ * follows the card's corner radius.
+ */
+@Composable
+private fun CardHoverRing(radius: Dp, modifier: Modifier) {
+    Canvas(modifier.testTag(MEDIA_CARD_HOVER_RING_TAG)) {
+        val stroke = 2.dp.toPx()
+        drawRoundRect(Palette.text, Offset(stroke / 2, stroke / 2),
+            Size((size.width - stroke).coerceAtLeast(0f), (size.height - stroke).coerceAtLeast(0f)),
+            CornerRadius((radius.toPx() - stroke / 2).coerceAtLeast(0f)), style = Stroke(stroke))
+    }
+}
+
+/** `on-accent`: the play glyph on the accent disc. */
+private val OnAccent = Color(0xFF15130F)
 
 /**
  * Board D3Context: the right-click that opens a card's menu. Compose reports the
@@ -267,8 +297,8 @@ private fun CardPreview(card: Card, saved: Boolean,
                     .onFocusChanged { previewPlayFocused = it.isFocused }
                     .tvFocusOutline(previewPlayFocused, 18.dp, darkGap = 2.dp, width = 2.dp)
                     .clip(CircleShape).background(if (previewPlayHovered) Color.White else Palette.text)
-                    .clickable(interactionSource = previewPlay, indication = null,
-                        onClickLabel = if (card.progress != null) "Resume" else "Play", onClick = onPlay)
+                    .pointerClickable(interactionSource = previewPlay, indication = null,
+                        onClickLabel = if (card.progress != null) "Resume" else "Play", onClick = onPlay, shape = CircleShape, hover = null)
                     .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(12.dp), tint = Palette.background)
@@ -302,8 +332,8 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
         .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
         .background(if (hovered) Color.White.copy(alpha = .18f) else Color.Transparent, CircleShape)
         .clip(CircleShape).border(1.dp, Color.White.copy(alpha = .14f), CircleShape)
-        .clickable(interactionSource = interaction, indication = null,
-            onClickLabel = label, onClick = action),
+        .pointerClickable(interactionSource = interaction, indication = null,
+            onClickLabel = label, onClick = action, shape = CircleShape, hover = null),
         contentAlignment = Alignment.Center) { glyph() }
 }
 
@@ -341,7 +371,7 @@ private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, acti
         .clip(RoundedCornerShape(6.dp))
         .background(if (hovered) Color.White.copy(alpha = .12f) else Color.Transparent)
         .hoverable(interaction)
-        .clickable(interactionSource = interaction, indication = null, onClickLabel = label) { dismiss(); action() }
+        .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, shape = RoundedCornerShape(6.dp), hover = null) { dismiss(); action() }
         .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(icon, null, Modifier.size(16.dp), tint = Palette.text)

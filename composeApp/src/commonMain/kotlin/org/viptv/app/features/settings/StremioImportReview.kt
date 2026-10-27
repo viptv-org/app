@@ -2,7 +2,6 @@ package org.viptv.app.features.settings
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -22,6 +21,11 @@ import com.composables.icons.lucide.*
 import org.viptv.app.connection.StremioAddon
 import org.viptv.app.connection.StremioReviewItem
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerToggleable
+import org.viptv.app.components.OutlinedButton
+import org.viptv.app.components.IconButton
+import org.viptv.app.components.Checkbox
+import org.viptv.app.components.FilterChip
 
 internal val stremioPreviewLabels = listOf("source_items" to "Source library records", "favorites_to_add" to "My List additions",
     "progress_to_add" to "New history/resume entries", "progress_to_update" to "Older history to update",
@@ -86,7 +90,7 @@ internal fun StremioSummary(counts: Map<String, Int>, labels: List<Pair<String, 
 @Composable
 internal fun StremioCheckRow(label: String, checked: Boolean, enabled: Boolean, description: String? = null,
     supporting: String? = null, change: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().toggleable(checked, enabled = enabled, role = Role.Checkbox, onValueChange = change)
+    Row(Modifier.fillMaxWidth().pointerToggleable(checked, enabled = enabled, role = Role.Checkbox, onValueChange = change)
         .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier)
         .padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked, null, enabled = enabled)
@@ -102,7 +106,7 @@ private fun ReviewCard(icon: ImageVector, checked: Boolean?, enabled: Boolean, d
     alert: Boolean = false, modifier: Modifier = Modifier, change: (Boolean) -> Unit = {}, content: @Composable ColumnScope.() -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Row(modifier.fillMaxWidth().border(if (alert) 2.dp else 1.dp, if (alert) Palette.danger else Palette.text.copy(alpha = .14f), shape)
-        .then(if (checked != null) Modifier.toggleable(checked, enabled = enabled, role = Role.Checkbox, onValueChange = change)
+        .then(if (checked != null) Modifier.pointerToggleable(checked, enabled = enabled, role = Role.Checkbox, onValueChange = change, shape = shape)
             .semantics { contentDescription = description } else Modifier)
         .padding(14.dp).alpha(if (dimmed) .6f else 1f),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {

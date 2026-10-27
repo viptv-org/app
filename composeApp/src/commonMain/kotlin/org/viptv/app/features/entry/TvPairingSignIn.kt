@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 internal data class TvPairingSession(val qrUrl: String, val browserAddress: String, val code: String, val expiryLabel: String)
 

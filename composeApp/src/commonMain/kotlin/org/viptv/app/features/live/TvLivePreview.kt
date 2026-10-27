@@ -2,7 +2,6 @@ package org.viptv.app.features.live
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +22,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvMediaBadge
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, favorite: (() -> Unit)? = null, watch: () -> Unit) {
@@ -56,7 +56,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
     val shape = RoundedCornerShape(12.dp * scale)
     Box(Modifier.offset(1184.dp * scale, (-12).dp * scale).size(640.dp * scale, 360.dp * scale).clip(shape)
         .background(Color(0xFF212124)).onFocusChanged { focused = it.isFocused }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = watch)) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = watch)) {
         AsyncImage(program?.artwork ?: channel.card.landscape ?: channel.card.poster, channel.card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(90.dp * scale)
             .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .65f)))))
