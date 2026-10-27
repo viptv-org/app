@@ -8,7 +8,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -74,6 +77,7 @@ class PlayerEpisodePickerUiTest {
             assertEquals(true, now.config.getOrNull(SemanticsProperties.Selected))
             assertEquals(true, now.config.getOrNull(SemanticsProperties.Focused), "the picker opens focused on the playing episode")
             assertEquals(0.12f, ui.progress(now)!!, 0.001f)
+            ui.capture("phone-player-episodes-open")
             ui.scrollTo(0)
             for (number in 1L..2L) {
                 val row = ui.row(number)
@@ -115,11 +119,14 @@ class PlayerEpisodePickerUiTest {
 
     @Test fun tvPickerUsesTheDetailsEpisodeCardsOpensOnThePlayingEpisodeAndKeepsDpadFocus() = withFakeArtwork { requested ->
         var chosen: Card? = null
+        var focusManager: FocusManager? = null
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(television = true) {
+            focusManager = LocalFocusManager.current
             Box(Modifier.fillMaxSize().background(Color(0xFF2E7DB8)))
             TvPlayerEpisodePicker(episodes, 1f, current, { chosen = it }, {})
         } }
         val ui = Ui(scene)
+        ui.focusManager = focusManager
         try {
             ui.frames(); ui.frames()
             val now = ui.row(4)
@@ -153,8 +160,8 @@ class PlayerEpisodePickerUiTest {
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
         fun clickable() = nodes().filter { it.config.contains(SemanticsActions.OnClick) }
-        /** The episode's card: the clickable whose text starts with "N. Episode N". */
-        fun row(number: Long) = clickable().single { text(it).startsWith("$number. Episode $number") }
+        /** The episode's card: the clickable captioned "N. Episode N" (an art-less TV tile names it first). */
+        fun row(number: Long) = clickable().single { Regex("""(^| )$number\. Episode $number( |$)""").containsMatchIn(text(it)) }
         fun click(label: String) {
             assertTrue(clickable().single { text(it) == label }.config[SemanticsActions.OnClick].action!!.invoke(), label); frames()
         }
@@ -164,8 +171,12 @@ class PlayerEpisodePickerUiTest {
             val list = nodes().single { it.config.contains(SemanticsActions.ScrollToIndex) }
             assertTrue(list.config[SemanticsActions.ScrollToIndex].action!!.invoke(index)); frames()
         }
+        var focusManager: FocusManager? = null
+        /** A D-pad press; desktop doesn't map arrows to focus moves, so an unconsumed one moves focus like Android TV does. */
         fun key(key: Key) {
-            scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)); frames()
+            val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown))
+            if (!consumed) focusManager!!.moveFocus(if (key == Key.DirectionLeft) FocusDirection.Left else FocusDirection.Right)
+            scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)); frames()
         }
         /** The card's top-left corner shows the episode image the fake loader painted for [url]. */
         fun assertArtwork(card: SemanticsNode, url: String) {
@@ -175,7 +186,7 @@ class PlayerEpisodePickerUiTest {
             assertEquals(Integer.toHexString(artColor(url)), Integer.toHexString(color), "artwork at ($x, $y) of ${text(card)}")
         }
         fun assertRowsInside(right: Int, bottom: Int) {
-            val rows = clickable().filter { Regex("""^\d+\. Episode""").containsMatchIn(text(it)) }
+            val rows = clickable().filter { Regex("""(^| )\d+\. Episode""").containsMatchIn(text(it)) }
             assertTrue(rows.isNotEmpty())
             rows.forEach { row ->
                 val b = row.boundsInWindow
