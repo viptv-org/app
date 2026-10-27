@@ -19,7 +19,7 @@ import org.viptv.app.connection.*
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.resources.Res
 import org.viptv.app.state.*
-import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.engine.wire.*
 import java.io.File
 import kotlin.test.*
 
@@ -49,6 +49,22 @@ class MergedCalendarAppUiTest {
 
     private fun art(name: String) = Res.getUri("files/ui-preview/$name")
 
+    private val metaOffsets = mutableListOf<Int>()
+    private val slowHorses get() = MergedCalendarWire.seriesCard("Slow Horses").copy(poster = art("poster3.jpg"),
+        landscape = art("landscape.jpg"), description = "Slow Horses, a scheduled series.")
+    /** Five seasons of six episodes, paged like the host: the first page ends before season 5. */
+    private val allEpisodes = (1L..5L).flatMap { season -> (1L..6L).map { season to it } }
+    private fun detailPage(offset: Int, limit: Int): String {
+        val series = slowHorses
+        val window = allEpisodes.drop(offset).take(limit).map { (season, number) ->
+            series.copy(identity = MediaIdentity(MergedCalendarWire.episodeId("Slow Horses", season.toInt(), number.toInt()), "series", emptyList(),
+                EpisodeCoordinates("aired", season, number)), parent_identity = series.identity, title = "Episode $season-$number", poster = null, description = null)
+        }
+        val next = (offset + window.size).takeIf { it < allEpisodes.size }?.toString()
+        return Json.encodeToString(DetailSnapshot(series, episodes = window, next_cursor = next,
+            seasons = (1L..5L).map { EpisodeSeason(it, 6, (it - 1) * 6) }))
+    }
+
     private val mergedPage get() = MergedCalendarWire.page(listOf(
         MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, date = MergedCalendarWire.today(3), poster = art("poster3.jpg")),
         MergedCalendarWire.public("public-1", "Public premiere", source = "public", date = MergedCalendarWire.today(18), poster = art("poster5.jpg")),
@@ -76,8 +92,11 @@ class MergedCalendarAppUiTest {
         s.until("Details") { s.controller.state.value.screen == Screen.Details && s.controller.state.value.detail != null }
         assertEquals(MergedCalendarWire.episodeId("Slow Horses", 5, 3), s.controller.state.value.calendarEpisode?.identity?.id)
         assertEquals(MergedCalendarWire.seriesId("Slow Horses"), s.controller.state.value.detail?.item?.identity?.id)
-        // Let Details lay out before the scene closes.
-        s.frames(30)
+        // Details (app#40) land on the episode's season, past the first page, and load it.
+        s.until("season 5's episodes") { s.nodes().any { text(it).contains("Episode 5-3") } }
+        assertTrue(s.nodes().any { text(it).contains("Season 5") }, "Season 5 is selected")
+        assertTrue(24 in synchronized(metaOffsets) { metaOffsets.toList() }, "Season 5 loads through Details paging: $metaOffsets")
+        s.save("$name-details-from-calendar")
     }
 
     private fun single(page: String, name: String, check: (List<SemanticsNode>) -> Unit) = scene(page, false, 390, 844) { s ->
@@ -111,8 +130,11 @@ class MergedCalendarAppUiTest {
             val path = request.url.encodedPath
             val response = when {
                 path == "/api/calendar" -> page
-                path.startsWith("/api/meta/series/") -> Json.encodeToString(DetailSnapshot(MergedCalendarWire.seriesCard("Slow Horses").copy(
-                    poster = art("poster3.jpg"), landscape = art("landscape.jpg"), description = "Slow Horses, a scheduled series."), episodes = emptyList()))
+                path.startsWith("/api/meta/series/") -> {
+                    val offset = request.url.parameters["offset"]?.toInt() ?: 0
+                    synchronized(metaOffsets) { metaOffsets += offset }
+                    detailPage(offset, request.url.parameters["limit"]?.toInt() ?: 24)
+                }
                 else -> return@MockEngine respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
             }
             respond(response, headers = headersOf(HttpHeaders.ContentType, "application/json"))

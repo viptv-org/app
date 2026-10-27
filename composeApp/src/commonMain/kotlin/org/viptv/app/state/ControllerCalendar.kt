@@ -96,7 +96,12 @@ fun ApplicationController.openCalendarEntry(entry: CalendarEntry) {
 /** Schedule coordinates select only an actual host-returned episode, never a fabricated ID. */
 fun ApplicationController.watchCalendar(entry: CalendarEntry) {
     // A library row already carries the playable episode: find its sources directly.
-    entry.episodeCard?.takeIf { entry.library }?.let { episode -> playTitle(episode); return }
+    // Back from them lands on the episode's season in Details, as opening the row does.
+    entry.episodeCard?.takeIf { entry.library }?.let { episode ->
+        playTitle(episode)
+        mutable.value = mutable.value.copy(calendarEpisode = episode)
+        return
+    }
     beginDetails()
     run {
         val remote = requireNotNull(connection)

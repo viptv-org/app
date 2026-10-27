@@ -158,6 +158,7 @@ class MergedCalendarTest {
             withTimeout(3_000) { while (requested == null) delay(10) }
             assertEquals(MergedCalendarWire.episodeId("Your series", 2, 3), requested)
             assertEquals(entry.episodeCard, controller.state.value.sourceTitle)
+            assertEquals(entry.episodeCard, controller.state.value.calendarEpisode, "Back from sources lands on the episode's season")
         } finally { controller.job?.cancelAndJoin(); controller.sourceDetailJob?.cancelAndJoin(); remote.close() }
     }
 
