@@ -4,9 +4,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import coil3.ImageLoader
@@ -69,6 +72,7 @@ class TvDetailsFocusReturnTest {
         private var appLoader: ImageLoader? = null
         val scene: ImageComposeScene
         private var frame = 0L
+        private var focusManager: FocusManager? = null
 
         init {
             controller.connection = remote
@@ -78,6 +82,7 @@ class TvDetailsFocusReturnTest {
                 val context = LocalPlatformContext.current
                 remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
                 App(television = true, providedController = controller, manageControllerLifecycle = false)
+                focusManager = LocalFocusManager.current
                 appLoader = SingletonImageLoader.get(context)
             }
         }
@@ -90,8 +95,16 @@ class TvDetailsFocusReturnTest {
             val deadline = System.nanoTime() + 10_000_000_000L
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what (focus: ${focused()})" }; frames(2) }
         }
+        /** A remote key. Desktop has no D-pad focus search, so an unconsumed arrow moves focus as Android TV would. */
         fun press(key: Key, times: Int = 1) = repeat(times) {
-            scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)); frames(6)
+            val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
+            val direction = when (key) {
+                Key.DirectionUp -> FocusDirection.Up; Key.DirectionDown -> FocusDirection.Down
+                Key.DirectionLeft -> FocusDirection.Left; Key.DirectionRight -> FocusDirection.Right
+                else -> null
+            }
+            if (!consumed && direction != null) requireNotNull(focusManager).moveFocus(direction)
+            frames(6)
         }
         fun assertFocus(text: String, why: String) {
             frames(30)
@@ -102,7 +115,7 @@ class TvDetailsFocusReturnTest {
         /** Home → the title's Details, with focus on the hero's Play. */
         fun openDetails() {
             controller.open(series)
-            until("Details") { state.screen == Screen.Details && state.detail != null && nodes().any { text(it).contains(label(1)) } }
+            until("Details") { state.screen == Screen.Details && state.detail != null && nodes().any { text(it).contains(". Episode ") } }
             until("the hero's Play") { focused().any { it.contains("Play") } }
         }
         /** Down into the shelf, then Right to episode [number]. */
