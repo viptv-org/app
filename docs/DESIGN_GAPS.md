@@ -481,7 +481,7 @@ core#12 supply it, the app uses the interim rule in `connection/SourceRanking.kt
 app#64 adds automatic updates on Android (docs/APP_UPDATES.md) without a
 design board. The provisional surfaces are in `updates/AppUpdatePrompt.kt`: a
 bottom banner on phone and tablet (title, one line, Later · Install) and a
-small bottom-right TV dialog in the About-panel shell (Install focused after
+small top-right TV card in the About-panel colours, without a dimmed page (Install focused after
 700 ms, Back is Later), plus the "Allow updates" permission step with the Fire
 TV variant. Settings › About shows the version, one update row (TV: "Check
 for updates", turning into "Install update", with the state as subtitle and

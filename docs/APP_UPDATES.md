@@ -172,7 +172,7 @@ the app with `-Pviptv.updateFeed` pointing at `latest/download/update.json`.
 
 - **Phone and tablet:** a banner at the bottom, **Install** · **Later**. It
   does not block the page.
-- **TV:** a small D-pad dialog, **Install** (focused after a short delay, so a
+- **TV:** a small D-pad card in the top-right corner, **Install** (focused after a short delay, so a
   press meant for the page cannot start the install) · **Later**. Back is
   Later.
 - Never over the player or the sign-in screens. **Later** hides the prompt

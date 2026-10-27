@@ -128,22 +128,20 @@ private fun TvUpdatePrompt(title: String, body: String, primary: String, act: ()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val first = remember { FocusRequester() }
-        Popup(onDismissRequest = later, properties = PopupProperties(focusable = true)) {
-            TvFocusColumn(Modifier.fillMaxSize()) {
-                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)).padding(96.dp * scale),
-                    contentAlignment = Alignment.BottomEnd) {
-                    Column(Modifier.width(760.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Color(0xFF202023))
-                        .padding(horizontal = 44.dp * scale, vertical = 40.dp * scale).testTag("app-update-prompt"),
-                        verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                        Text(title, color = Palette.text, fontSize = (40 * scale).sp, lineHeight = (48 * scale).sp, fontWeight = FontWeight.Bold)
-                        Text(body, color = Palette.body, fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp)
-                        Row(Modifier.padding(top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                            TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, requester = first, activate = act) {
-                                Text(primary, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
-                            }
-                            TvAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale, activate = later) {
-                                Text("Later", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
-                            }
+        // A card in the top-right corner, under the profile button; the page stays visible around it.
+        Popup(alignment = Alignment.TopEnd, onDismissRequest = later, properties = PopupProperties(focusable = true)) {
+            TvFocusColumn(Modifier.padding(top = 96.dp * scale, end = 96.dp * scale)) {
+                Column(Modifier.width(760.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Color(0xFF202023))
+                    .padding(horizontal = 44.dp * scale, vertical = 40.dp * scale).testTag("app-update-prompt"),
+                    verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                    Text(title, color = Palette.text, fontSize = (40 * scale).sp, lineHeight = (48 * scale).sp, fontWeight = FontWeight.Bold)
+                    Text(body, color = Palette.body, fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp)
+                    Row(Modifier.padding(top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                        TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, requester = first, activate = act) {
+                            Text(primary, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                        }
+                        TvAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale, activate = later) {
+                            Text("Later", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
