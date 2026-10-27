@@ -144,6 +144,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                             Screen.Movies, Screen.Series, Screen.Anime, Screen.Discover -> if (television) TvBrowseScreen(
                                 if (tvDetailVariant in listOf("Loading", "Empty")) emptyList() else PreviewTvHome.movies,
                                 tvDetailVariant == "Loading", { go(Screen.Details) })
+                                else if (browser && tvDetailVariant == "Filters") PreviewBrowserFilters(current) { go(Screen.Details) }
                                 else BrowseScreen(current, PreviewData.home, television, open = { go(Screen.Details) })
                             else -> if (television) TvHomeScreen(if (tvDetailVariant == "Loading" || !homeArrived) null else PreviewTvHome.home, { go(Screen.Details) }, { go(Screen.Sources) }, {}, go,
                                 PreviewData.profile, PreviewTvHome.summaries, listOf(PreviewData.hero) + PreviewData.posters.take(4))
