@@ -5,6 +5,7 @@ import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.serialization.json.*
@@ -99,7 +100,11 @@ class SourceDiscoveryControllerTest {
                     assertEquals(1L, query.getValue("episode").jsonPrimitive.long)
                     """{"id":"job"}"""
                 }
-                request.url.encodedPath.endsWith("/source-ranking") -> """{"streams":[{"id":"early"},{"id":"late"}]}"""
+                // Ranks exactly the rows it was sent, latest arrival first.
+                request.url.encodedPath.endsWith("/source-ranking") -> buildJsonObject {
+                    val ids = Json.parseToJsonElement((request.body as TextContent).text).jsonObject.getValue("ids").jsonArray
+                    put("streams", JsonArray(ids.reversed().map { id -> buildJsonObject { put("id", id) } }))
+                }.toString()
                 request.url.parameters["after"] == "0" -> """{"events":[{"source":"addon:early","streams":[{"id":"early","name":"First source"}]}],"done":false}"""
                 else -> { pending.complete(Unit); finish.await(); """{"events":[{"source":"addon:late","streams":[{"id":"late","name":"Second source"}]}],"done":true}""" }
             }
@@ -114,11 +119,13 @@ class SourceDiscoveryControllerTest {
             controller.chooseSource(title)
             pending.await()
             assertEquals(first, controller.state.value.sourceTitle)
+            // Rows show once ranked (SRC-BEST-MATCH-001), still before discovery finishes.
+            withTimeout(5000) { controller.state.first { it.sources.isNotEmpty() } }
             assertEquals(listOf("early"), controller.state.value.sources.map { it.id })
             assertTrue(controller.state.value.findingSources)
             assertEquals(Screen.Sources, controller.state.value.screen)
             finish.complete(Unit); controller.job!!.join()
-            assertEquals(listOf("early", "late"), controller.state.value.sources.map { it.id })
+            assertEquals(listOf("late", "early"), controller.state.value.sources.map { it.id }, "The final rows are in ranked order")
             assertFalse(controller.state.value.findingSources)
         } finally { finish.complete(Unit); controller.job?.cancelAndJoin(); remote.close() }
     }

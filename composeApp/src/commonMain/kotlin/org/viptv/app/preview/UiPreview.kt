@@ -102,8 +102,10 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 when (tvDetailVariant) { "Loading" -> PreviewTvSources.sources.take(2); "LoadingEmpty", "Empty" -> emptyList(); else -> PreviewTvSources.sources },
                                 tvDetailVariant == "LoadingEmpty", null, { go(Screen.Player) }, { go(Screen.Details) },
                                 info = PreviewTvSources.info, detail = PreviewTvDetails.movie,
-                                loadingMore = tvDetailVariant in listOf("Loading", "LoadingEmpty"))
-                                else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail, tablet = tablet)
+                                loadingMore = tvDetailVariant in listOf("Loading", "LoadingEmpty"),
+                                groups = org.viptv.app.connection.interimSourceGroups(PreviewTvSources.sources))
+                                else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail, tablet = tablet,
+                                    groups = org.viptv.app.connection.interimSourceGroups(PreviewData.sources))
                             Screen.Calendar -> if (television) TvCalendarScreen(PreviewTvCalendar.days, PreviewTvCalendar.entries,
                                 { go(Screen.Details) }, { go(Screen.Settings) }, PreviewTvCalendar.actions, { go(Screen.Sources) })
                                 else CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, false, { go(Screen.Details) }, { go(Screen.Settings) })
