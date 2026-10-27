@@ -27,6 +27,7 @@ import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.node.invalidateDraw
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.semantics.Role
@@ -216,6 +217,20 @@ object HoverFill {
 
     /** Rows and nav items: `surface-2` (README: hover / pressed rows). */
     val row = Palette.raised
+
+    /**
+     * The hover fill for a control resting on [rest], by the button kind that
+     * fill means: transparent (outline / quiet) takes the wash, the accent
+     * brightens, an off-white (light) fill goes white, a translucent fill gains
+     * the wash and an opaque dark fill (secondary / destructive) goes to surface-4.
+     */
+    fun container(rest: Color): Color = when {
+        rest.alpha == 0f -> wash
+        rest == Palette.accent -> primary(rest)
+        rest.alpha < 1f -> rest.copy(alpha = (rest.alpha + wash.alpha).coerceAtMost(1f))
+        rest.luminance() > .5f -> light
+        else -> secondary
+    }
 
     /** Outline / quiet: the resting fill with the 0.06 white wash over it. */
     fun quiet(rest: Color = Color.Transparent): Color = if (rest.alpha == 0f) wash else lerp(rest, Color.White, .06f)

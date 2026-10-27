@@ -62,6 +62,9 @@ import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.DropdownMenuItem
 import androidx.compose.foundation.shape.CircleShape
+import org.viptv.app.components.HoverFill
+import org.viptv.app.components.pointerHovered
+import androidx.compose.foundation.interaction.MutableInteractionSource
 
 /**
  * W3Browse entry point: the browser gets the board's rail-and-content page
@@ -346,10 +349,12 @@ private fun BrowserBrowseFailure(error: String, catalog: DiscoveryCatalog?, open
 
 @Composable
 private fun BrowserStateAction(label: String, primary: Boolean, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val rest = if (primary) Palette.text else Color.Transparent
     Row(Modifier.height(38.dp).clip(RoundedCornerShape(12.dp))
-        .background(if (primary) Palette.text else Color.Transparent)
+        .background(if (interaction.pointerHovered()) HoverFill.container(rest) else rest)
         .then(if (primary) Modifier else Modifier.border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(12.dp)))
-        .pointerClickable(onClick = onClick, shape = RoundedCornerShape(12.dp)).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        .pointerClickable(interactionSource = interaction, onClick = onClick, shape = RoundedCornerShape(12.dp), hover = null).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (primary) Palette.background else Palette.text)
     }
 }

@@ -46,6 +46,8 @@ import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.DropdownMenuItem
 import androidx.compose.ui.graphics.RectangleShape
+import org.viptv.app.components.HoverFill
+import org.viptv.app.components.pointerHovered
 
 @Composable
 fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, loadedCards: List<Card>? = null, controls: org.viptv.app.connection.DiscoveryControls? = null,
@@ -274,8 +276,11 @@ private fun BrowseErrorState(catalog: DiscoveryCatalog?, error: String, modifier
 /** Board button geometry: 44dp tall, 12dp radius, 18dp side padding (`M3BrowseEmpty`/`M3BrowseError`). */
 @Composable
 private fun BoardAction(label: String, primary: Boolean, run: () -> Unit, icon: ImageVector? = null) {
+    val interaction = remember { MutableInteractionSource() }
+    val rest = if (primary) Palette.text else Color.White.copy(alpha = .12f)
     Row(Modifier.height(44.dp).clip(RoundedCornerShape(12.dp))
-        .background(if (primary) Palette.text else Color.White.copy(alpha = .12f)).pointerClickable(onClick = run, shape = RoundedCornerShape(12.dp))
+        .background(if (interaction.pointerHovered()) HoverFill.container(rest) else rest)
+        .pointerClickable(interactionSource = interaction, onClick = run, shape = RoundedCornerShape(12.dp), hover = null)
         .padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         icon?.let { Icon(it, null, Modifier.size(18.dp), tint = if (primary) Palette.background else Palette.text) }

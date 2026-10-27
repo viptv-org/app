@@ -21,7 +21,12 @@ import androidx.compose.material3.SelectableChipElevation
 import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.contentColorFor
+import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -36,7 +41,8 @@ import androidx.compose.ui.unit.dp
  * [handCursor] to the modifier when the control is enabled. A file opts in by
  * importing the wrapper by name (`import org.viptv.app.components.TextButton`):
  * an explicit import outranks the `androidx.compose.material3.*` star import, so
- * the call sites stay unchanged. `PointerAffordanceSourceTest` fails when a file
+ * the call sites stay unchanged. On desktop and web the buttons also take the
+ * design's hover fill (components.md §1). `PointerAffordanceSourceTest` fails when a file
  * calls one of these components without that import.
  */
 
@@ -45,30 +51,49 @@ fun Button(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean 
     shape: Shape = ButtonDefaults.shape, colors: ButtonColors = ButtonDefaults.buttonColors(),
     elevation: ButtonElevation? = ButtonDefaults.buttonElevation(), border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding, interactionSource: MutableInteractionSource? = null,
-    content: @Composable RowScope.() -> Unit) = androidx.compose.material3.Button(onClick, modifier.cursor(enabled), enabled,
-    shape, colors, elevation, border, contentPadding, interactionSource, content)
+    content: @Composable RowScope.() -> Unit) {
+    val source = interactionSource ?: remember { MutableInteractionSource() }
+    val hovered = enabled && source.pointerHovered()
+    DesignHoverOnly { androidx.compose.material3.Button(onClick, modifier.cursor(enabled), enabled, shape,
+        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
+        elevation, border, contentPadding, source, content) }
+}
 
 @Composable
 fun OutlinedButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
     shape: Shape = ButtonDefaults.outlinedShape, colors: ButtonColors = ButtonDefaults.outlinedButtonColors(),
     elevation: ButtonElevation? = null, border: BorderStroke? = ButtonDefaults.outlinedButtonBorder(enabled),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding, interactionSource: MutableInteractionSource? = null,
-    content: @Composable RowScope.() -> Unit) = androidx.compose.material3.OutlinedButton(onClick, modifier.cursor(enabled), enabled,
-    shape, colors, elevation, border, contentPadding, interactionSource, content)
+    content: @Composable RowScope.() -> Unit) {
+    val source = interactionSource ?: remember { MutableInteractionSource() }
+    val hovered = enabled && source.pointerHovered()
+    DesignHoverOnly { androidx.compose.material3.OutlinedButton(onClick, modifier.cursor(enabled), enabled, shape,
+        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
+        elevation, border, contentPadding, source, content) }
+}
 
 @Composable
 fun TextButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
     shape: Shape = ButtonDefaults.textShape, colors: ButtonColors = ButtonDefaults.textButtonColors(),
     elevation: ButtonElevation? = null, border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.TextButtonContentPadding, interactionSource: MutableInteractionSource? = null,
-    content: @Composable RowScope.() -> Unit) = androidx.compose.material3.TextButton(onClick, modifier.cursor(enabled), enabled,
-    shape, colors, elevation, border, contentPadding, interactionSource, content)
+    content: @Composable RowScope.() -> Unit) {
+    val source = interactionSource ?: remember { MutableInteractionSource() }
+    val hovered = enabled && source.pointerHovered()
+    DesignHoverOnly { androidx.compose.material3.TextButton(onClick, modifier.cursor(enabled), enabled, shape,
+        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
+        elevation, border, contentPadding, source, content) }
+}
 
 @Composable
 fun IconButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
     colors: IconButtonColors = IconButtonDefaults.iconButtonColors(), interactionSource: MutableInteractionSource? = null,
-    shape: Shape = IconButtonDefaults.standardShape, content: @Composable () -> Unit) =
-    androidx.compose.material3.IconButton(onClick, modifier.cursor(enabled), enabled, colors, interactionSource, shape, content)
+    shape: Shape = IconButtonDefaults.standardShape, content: @Composable () -> Unit) {
+    val source = interactionSource ?: remember { MutableInteractionSource() }
+    val hovered = enabled && source.pointerHovered()
+    DesignHoverOnly { androidx.compose.material3.IconButton(onClick, modifier.cursor(enabled), enabled,
+        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors, source, shape, content) }
+}
 
 @Composable
 fun Checkbox(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifier: Modifier = Modifier,
@@ -116,3 +141,18 @@ fun Tab(selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, e
         selectedContentColor, unselectedContentColor, interactionSource)
 
 private fun Modifier.cursor(enabled: Boolean): Modifier = if (enabled) handCursor() else this
+
+/**
+ * On desktop and web the buttons above draw the design's hover fill themselves
+ * ([HoverFill.container]), so Material's own hover state layer is switched off
+ * there; press, focus and drag layers keep the surrounding configuration.
+ */
+@Composable
+private fun DesignHoverOnly(content: @Composable () -> Unit) {
+    if (!LocalPointerHover.current) return content()
+    val current = LocalRippleConfiguration.current ?: return content()
+    val alpha = current.rippleAlpha
+    CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration(current.color, RippleAlpha(
+        draggedAlpha = alpha?.draggedAlpha ?: .16f, focusedAlpha = alpha?.focusedAlpha ?: .1f,
+        hoveredAlpha = 0f, pressedAlpha = alpha?.pressedAlpha ?: .1f)), content = content)
+}
