@@ -56,9 +56,9 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f),
                         .3f to Color.Transparent, .7f to Palette.background.copy(alpha = .95f))))
                     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom,
-                        contentPadding = PaddingValues(start = 32.dp, end = 32.dp, top = 72.dp, bottom = 36.dp)) {
+                        contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp)) {
                         item {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.padding(horizontal = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(300.dp).height(92.dp),
                                     alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
                                 else Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
@@ -72,7 +72,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                 FavoriteAction(card, saved, save)
                             }
                         }
-                        if (detail.recommendations.isNotEmpty()) item(key = "related") { RelatedTitles(detail.recommendations, open) }
+                        if (detail.recommendations.isNotEmpty()) item(key = "related") { RelatedTitles(detail.recommendations, open, gutter = 32.dp) }
                     }
                 }
                 IconButton(onClick = back, modifier = Modifier.padding(start = 24.dp, top = 36.dp).size(44.dp)

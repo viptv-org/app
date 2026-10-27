@@ -49,6 +49,11 @@ for three seconds, then supplies the fixture snapshot to the same screen instanc
 This exercises the real loading-to-content transition without account, provider,
 or persistence operations. `Loading` remains the static loading-scene entry point.
 
+Phone, tablet, desktop and browser `Details` variant `Related` (desktop
+`VIPTV_UI_VARIANT=Related`, browser `#ui-preview/Details/Related`) adds an
+eight-title "More like this" row to the movie fixture, wide enough to review
+rows running edge to edge (app#63).
+
 Phone, tablet, desktop and browser `Library` variant `Long` (desktop
 `VIPTV_UI_VARIANT=Long`, browser `#ui-preview/Library/Long`) renders 48 saved
 titles with type chips and Filters, long enough to review the collapsing title

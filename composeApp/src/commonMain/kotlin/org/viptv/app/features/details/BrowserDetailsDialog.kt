@@ -84,7 +84,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                 else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                             }
                         }
-                        if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(gutter)) }
+                        if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(vertical = gutter), gutter = gutter) }
                     }
                     IconButton(onClick = back, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)
                         .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }
