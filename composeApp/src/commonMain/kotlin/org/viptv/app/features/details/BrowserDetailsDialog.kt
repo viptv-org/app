@@ -56,7 +56,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
             val compact = maxWidth < 640.dp
             val gutter = if (compact) 20.dp else 44.dp
             Surface(Modifier.widthIn(max = 800.dp).fillMaxWidth().fillMaxHeight().onPreviewKeyEvent { event ->
-                    if (event.key == Key.Escape && event.type == KeyEventType.KeyUp) { back(); true } else false
+                    // One step per press: the key-down goes back, and neither half reaches the page's Back as well.
+                    if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) back(); true } else false
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
                 color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
                 Box {
