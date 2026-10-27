@@ -176,8 +176,9 @@ class LibraryCollapsingHeaderUiTest {
             tablet.drag(-300f)
             assertEquals(pinned, tablet.top("Filters"), "Filters stays pinned while the grid scrolls")
             assertNotEquals(cards, tablet.cardTops(), "the grid scrolled under the controls")
-            repeat(4) { if (!tablet.historyShown()) tablet.drag(400f) }
-            tablet.await("History returns") { tablet.historyShown() }
+            // Back at the very top the title returns too, so the controls sit where they started.
+            repeat(6) { if (tablet.top("Filters") != filters) tablet.drag(300f) }
+            assertTrue(tablet.historyShown(), "History returns")
             assertEquals(filters, tablet.top("Filters"))
         } finally { tablet.close() }
     }
