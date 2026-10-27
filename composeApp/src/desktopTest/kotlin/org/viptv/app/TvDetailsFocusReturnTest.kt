@@ -130,8 +130,10 @@ class TvDetailsFocusReturnTest {
             press(Key.Enter)
             until("the source selector") { state.screen == Screen.Sources }
             assertEquals(episode(number).identity, state.sourceTitle?.identity, "the selector is for episode $number")
-            frames(20)
+            selectorTakesFocus()
         }
+        /** Discovery finds nothing, so the selector's empty panel takes focus away from Details. */
+        fun selectorTakesFocus() = until("the selector's focus") { focused().any { it.contains("Check again") } }
         /** The selector plays a source; the player's Back closes onto the selector, whose Back returns to Details. */
         fun playThenBack() {
             controller.mutable.value = state.copy(screen = Screen.Player)
@@ -139,6 +141,7 @@ class TvDetailsFocusReturnTest {
             controller.closePlayer()
             frames(20)
             assertEquals(Screen.Sources, state.screen)
+            selectorTakesFocus()
             controller.backSources()
             frames()
             assertEquals(Screen.Details, state.screen)
@@ -187,7 +190,7 @@ class TvDetailsFocusReturnTest {
             app.openDetails()
             app.press(Key.Enter)
             app.until("the source selector") { app.state.screen == Screen.Sources }
-            app.frames(20)
+            app.selectorTakesFocus()
             app.controller.backSources()
             app.assertFocus("Play", "Back to Details the viewer left from the hero")
         }
