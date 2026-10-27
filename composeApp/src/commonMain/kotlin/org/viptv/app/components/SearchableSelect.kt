@@ -60,14 +60,16 @@ internal const val InlineChoiceBudget = 30
 
 /**
  * The single "segments or chips vs. dropdown" rule (app#57), shared by every caller
- * so it lives in one place: more than [InlineChoiceLimit] options, or labels too long
- * to share a 220 dp track ([InlineChoiceBudget] characters across equal segments),
- * use a [SearchableSelect]. Pass the options exactly as the inline control would show
- * them, including an added "Any".
+ * so it lives in one place: more than [limit] options ([InlineChoiceLimit] by default),
+ * or labels too long to share a 220 dp track ([budget] characters across equal
+ * segments), use a [SearchableSelect]. Pass the options exactly as the inline control
+ * would show them, including an added "Any". A caller whose inline control is a
+ * scrolling chip row rather than equal segments passes its own [limit] and no
+ * [budget] (the source picker, app#59).
  */
-internal fun useSelect(options: List<SelectOption>): Boolean {
+internal fun useSelect(options: List<SelectOption>, limit: Int = InlineChoiceLimit, budget: Int? = InlineChoiceBudget): Boolean {
     val longest = options.maxOfOrNull { it.label.length + (it.trailing?.let { t -> t.length + 1 } ?: 0) } ?: 0
-    return options.size > InlineChoiceLimit || options.size * longest > InlineChoiceBudget
+    return options.size > limit || budget != null && options.size * longest > budget
 }
 
 /**
@@ -140,6 +142,8 @@ internal fun SearchableSelect(
     multiple: Boolean = false,
     maximumSelections: Int? = null,
     anyLabel: String? = "Any",
+    /** Trailing text on the [anyLabel] row, such as the total count. */
+    anyTrailing: String? = null,
     placeholder: String = anyLabel ?: "Choose",
     searchPlaceholder: String = "Search ${title.lowercase()}",
 ) {
@@ -149,7 +153,7 @@ internal fun SearchableSelect(
         SelectTrigger(title, selectTriggerValue(distinct, selected, placeholder),
             set = selected.isNotEmpty(), Modifier.fillMaxWidth()) { open = true }
         PopoverMenu(open, { open = false }) {
-            SelectPanel(distinct, selected, multiple, maximumSelections, anyLabel, searchPlaceholder, onChange) { open = false }
+            SelectPanel(distinct, selected, multiple, maximumSelections, anyLabel, anyTrailing, searchPlaceholder, onChange) { open = false }
         }
     }
 }
@@ -172,7 +176,7 @@ private fun SelectTrigger(title: String, value: String, set: Boolean, modifier: 
 
 @Composable
 private fun SelectPanel(options: List<SelectOption>, selected: List<String>, multiple: Boolean, cap: Int?,
-    anyLabel: String?, searchPlaceholder: String, onChange: (List<String>) -> Unit, close: () -> Unit) {
+    anyLabel: String?, anyTrailing: String?, searchPlaceholder: String, onChange: (List<String>) -> Unit, close: () -> Unit) {
     var query by remember { mutableStateOf("") }
     val folded = remember(options) { options.map { foldForSearch(it.label) } }
     // A null row is the "Any" row; it is only offered before a search narrows the list.
@@ -245,7 +249,7 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
             itemsIndexed(rows) { index, row ->
                 val checked = if (row == null) selected.isEmpty() else row.id in selected
                 SelectRow(row?.label ?: anyLabel.orEmpty(), unavailable = row != null && !row.enabled,
-                    trailing = listOfNotNull(row?.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
+                    trailing = listOfNotNull(if (row == null) anyTrailing else row.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
                     checked, multiple, enabled(row), active = index == active, hovered = { active = index }) { pick(row) }
             }
         }

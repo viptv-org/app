@@ -41,6 +41,21 @@ internal object PreviewData {
     val detail = DetailSnapshot(item = hero.copy(subtitle = "Movie · " + hero.subtitle), episodes = emptyList())
     val sources = listOf(SourceCandidate("source-1", "preview", "LordStreams", "WEB-DL · HEVC · 5.1 · 18.4 GB"),
         SourceCandidate("source-2", "preview", "Provider 2", "BluRay · HEVC · 5.1 · 22.1 GB"))
+    /** Five qualities from four add-ons: the web picker's Quality and Source dropdowns (app#59). */
+    val filterSources = listOf(2160L to "Torrentio", 1080L to "Torrentio", 1080L to "Comet", 720L to "MediaFusion", 2160L to "Comet",
+        1080L to "Orion", 480L to "Torrentio", 1080L to "MediaFusion", 2160L to "Torrentio", 720L to "Comet", 360L to "Orion", 1080L to "Torrentio")
+        .mapIndexed { index, (height, addon) ->
+            SourceCandidate("filter-${index + 1}", "addon:${addon.lowercase()}", "$addon ${if (height == 2160L) "4K" else "${height}p"} #${index + 1}",
+                "Oak.Street.2026.${height}p.WEB-DL.DDP5.1.H.265 · ${(4 + index * 1.7).toInt()} GB", quality_height = height,
+                presentation = SourcePresentation(provider_name = addon, source_id = addon.lowercase()))
+        }
+    /** Three options per filter with long add-on names: chip rows that overflow a narrow window (app#59). */
+    val chipSources = listOf(1080L to "Torrentio 4K RD+ | ElfHosted", 720L to "MediaFusion | ElfHosted Debrid", 1080L to "MediaFusion | ElfHosted Debrid")
+        .mapIndexed { index, (height, addon) ->
+            SourceCandidate("chip-${index + 1}", "addon:${addon.substringBefore(" ").lowercase()}", "${addon.substringBefore(" ")} ${height}p #${index + 1}",
+                "Oak.Street.2026.${height}p.WEB-DL.DDP5.1.H.265", quality_height = height,
+                presentation = SourcePresentation(provider_name = addon, source_id = addon.substringBefore(" ").lowercase()))
+        }
     val history = watching.mapIndexed { index, card ->
         HistoryDisplay(HistoryEntry(card, 1, if (index == 1) 1 else null), if (index < 2) "Today" else "Yesterday")
     }

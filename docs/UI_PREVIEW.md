@@ -59,6 +59,12 @@ Phone, tablet, desktop and browser `Library` variant `Long` (desktop
 titles with type chips and Filters, long enough to review the collapsing title
 and History card (app#58). Preview state only; nothing is saved.
 
+Phone, tablet, desktop and browser `Sources` variant `Filters` (desktop
+`VIPTV_UI_VARIANT=Filters`, browser `#ui-preview/Sources/Filters`) lists twelve
+sources in five qualities from four add-ons, so the web and desktop picker shows
+its Quality and Source dropdowns (app#59). Variant `Chips` has three options per
+filter with long add-on names, so the chip rows stay and overflow a narrow window.
+
 TV `Library` renders the supplied My List artwork with fixture watched ordering.
 Variants `Empty` and `Unavailable` render the corresponding provisional states.
 Filters and sort choices change preview state only; no saved-list database or
