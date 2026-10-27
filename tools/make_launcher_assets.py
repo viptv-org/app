@@ -7,7 +7,7 @@ assets/brand/tools/make_app_icon.py at design commit 85179a8; owner decision
 0.625 x the mark size and centred on its ink box, on #000000. The TV banner is
 the white "VIPTV" wordmark on #000000. See androidApp/src/main/LAUNCHER_ASSETS.md.
 
-Requires Pillow and fontTools:
+Requires Python 3.13.5, Pillow and fontTools (pinned so the PNG bytes reproduce):
   python3 -m venv /tmp/viptv-icons && /tmp/viptv-icons/bin/pip install pillow==13.0.0 fonttools==4.67.0
   /tmp/viptv-icons/bin/python tools/make_launcher_assets.py
 """
