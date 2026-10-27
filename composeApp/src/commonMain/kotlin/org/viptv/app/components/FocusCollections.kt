@@ -31,6 +31,12 @@ internal fun FocusLazyRow(
     verticalAlignment: Alignment.Vertical = Alignment.Top,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
+    /**
+     * Whether a plain vertical mouse wheel scrolls the row sideways on desktop and web.
+     * Off by default inside a vertical page ([LocalVerticalPage]), where a poster rail
+     * leaves the wheel to the page; chip and tab rows pass `true` (app#59).
+     */
+    wheelScrollsRow: Boolean = !LocalVerticalPage.current,
     content: LazyListScope.() -> Unit,
 ) {
     TvFocusScroll(horizontal = true, contentPadding = contentPadding, reverseLayout = reverseLayout) {
@@ -38,7 +44,7 @@ internal fun FocusLazyRow(
             state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
         }
         // Desktop and web: mouse wheel and click-drag scrolling (app#59). TV and touch keep Foundation's.
-        val pointer = if (LocalPointerHover.current && userScrollEnabled) Modifier.pointerRowScroll(state, reverseLayout) else Modifier
+        val pointer = if (LocalPointerHover.current && userScrollEnabled) Modifier.pointerRowScroll(state, reverseLayout, wheelScrollsRow) else Modifier
         FoundationLazyRow(anchored.then(pointer), state, contentPadding, reverseLayout, horizontalArrangement,
             verticalAlignment, flingBehavior, userScrollEnabled, content = content)
     }

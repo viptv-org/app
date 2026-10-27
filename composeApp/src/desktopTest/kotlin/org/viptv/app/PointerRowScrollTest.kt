@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
 import org.viptv.app.components.FocusLazyColumn
 import org.viptv.app.components.FocusLazyRow
+import org.viptv.app.components.LocalVerticalPage
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -78,9 +79,9 @@ class PointerRowScrollTest {
     }
 
     /** Thirty 80 dp chips in a 400 dp row at the top of the window. */
-    @Composable private fun Chips(state: LazyListState, clicked: ((Int) -> Unit)?) =
+    @Composable private fun Chips(state: LazyListState, wheel: Boolean? = null, clicked: ((Int) -> Unit)?) =
         FocusLazyRow(Modifier.fillMaxWidth().height(40.dp), state = state, contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            horizontalArrangement = Arrangement.spacedBy(6.dp), wheelScrollsRow = wheel ?: !LocalVerticalPage.current) {
             items((1..30).toList()) { n ->
                 Box(Modifier.size(80.dp, 40.dp).then(if (clicked == null) Modifier else Modifier.pointerClickable { clicked(n) })) { Text("Chip $n") }
             }
@@ -116,7 +117,7 @@ class PointerRowScrollTest {
         val tv = LazyListState()
         // The TV theme turns the pointer layout off even when one is asked for. The chips take
         // no clicks: on TV a press focuses a chip and focus anchoring scrolls it to the edge.
-        Scene(pointer = true, television = true) { Chips(tv, null) }.use { s ->
+        Scene(pointer = true, television = true) { Chips(tv, clicked = null) }.use { s ->
             s.frames()
             s.wheel(Offset(200f, 20f))
             s.drag(Offset(300f, 20f), -200f)
@@ -133,6 +134,7 @@ class PointerRowScrollTest {
         }
     }
 
+    /** A poster rail in a vertical page leaves the wheel to the page; a chip row there opts in and takes it. */
     @Test fun aRailInAVerticalPageLeavesTheWheelToThePage() = ui {
         val page = LazyListState()
         val rail = LazyListState()
@@ -146,6 +148,22 @@ class PointerRowScrollTest {
             s.wheel(Offset(200f, 20f))
             assertEquals(0, rail.scrolled(), "the rail stays put")
             assertTrue(page.firstVisibleItemIndex > 0 || page.firstVisibleItemScrollOffset > 0, "the page scrolls")
+        }
+    }
+
+    @Test fun aChipRowInAVerticalPageThatOptsInTakesTheWheel() = ui {
+        val page = LazyListState()
+        val chips = LazyListState()
+        Scene(pointer = true) {
+            FocusLazyColumn(Modifier.fillMaxSize(), state = page) {
+                item { Chips(chips, wheel = true) {} }
+                items((1..30).toList()) { Text("Row $it", Modifier.height(60.dp)) }
+            }
+        }.use { s ->
+            s.frames()
+            s.wheel(Offset(200f, 20f))
+            assertTrue(chips.scrolled() > 40, "the chip row scrolls sideways: ${chips.scrolled()} px, page ${page.firstVisibleItemIndex}/${page.firstVisibleItemScrollOffset}")
+            assertEquals(0, page.firstVisibleItemIndex + page.firstVisibleItemScrollOffset, "the page stays put while the row can scroll")
         }
     }
 }

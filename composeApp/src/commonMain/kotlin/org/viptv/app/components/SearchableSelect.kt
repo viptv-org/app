@@ -142,6 +142,8 @@ internal fun SearchableSelect(
     multiple: Boolean = false,
     maximumSelections: Int? = null,
     anyLabel: String? = "Any",
+    /** Trailing text on the [anyLabel] row, such as the total count. */
+    anyTrailing: String? = null,
     placeholder: String = anyLabel ?: "Choose",
     searchPlaceholder: String = "Search ${title.lowercase()}",
 ) {
@@ -151,7 +153,7 @@ internal fun SearchableSelect(
         SelectTrigger(title, selectTriggerValue(distinct, selected, placeholder),
             set = selected.isNotEmpty(), Modifier.fillMaxWidth()) { open = true }
         PopoverMenu(open, { open = false }) {
-            SelectPanel(distinct, selected, multiple, maximumSelections, anyLabel, searchPlaceholder, onChange) { open = false }
+            SelectPanel(distinct, selected, multiple, maximumSelections, anyLabel, anyTrailing, searchPlaceholder, onChange) { open = false }
         }
     }
 }
@@ -174,7 +176,7 @@ private fun SelectTrigger(title: String, value: String, set: Boolean, modifier: 
 
 @Composable
 private fun SelectPanel(options: List<SelectOption>, selected: List<String>, multiple: Boolean, cap: Int?,
-    anyLabel: String?, searchPlaceholder: String, onChange: (List<String>) -> Unit, close: () -> Unit) {
+    anyLabel: String?, anyTrailing: String?, searchPlaceholder: String, onChange: (List<String>) -> Unit, close: () -> Unit) {
     var query by remember { mutableStateOf("") }
     val folded = remember(options) { options.map { foldForSearch(it.label) } }
     // A null row is the "Any" row; it is only offered before a search narrows the list.
@@ -247,7 +249,7 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
             itemsIndexed(rows) { index, row ->
                 val checked = if (row == null) selected.isEmpty() else row.id in selected
                 SelectRow(row?.label ?: anyLabel.orEmpty(), unavailable = row != null && !row.enabled,
-                    trailing = listOfNotNull(row?.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
+                    trailing = listOfNotNull(if (row == null) anyTrailing else row.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
                     checked, multiple, enabled(row), active = index == active, hovered = { active = index }) { pick(row) }
             }
         }

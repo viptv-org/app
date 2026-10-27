@@ -56,9 +56,9 @@ internal fun SourceFilters(sources: List<SourceCandidate>, quality: String?, pro
         }
     }
     @Composable fun QualitySelect(modifier: Modifier) = SearchableSelect("Quality", qualities, listOfNotNull(quality),
-        { qualityChanged(it.firstOrNull()) }, modifier, anyLabel = "All")
+        { qualityChanged(it.firstOrNull()) }, modifier, anyLabel = "All", anyTrailing = sources.size.toString())
     @Composable fun ProviderSelect(modifier: Modifier) = SearchableSelect("Source", providers, listOfNotNull(provider),
-        { providerChanged(it.firstOrNull()) }, modifier, anyLabel = "All sources")
+        { providerChanged(it.firstOrNull()) }, modifier, anyLabel = "All sources", anyTrailing = sources.size.toString())
     /** Dropdowns share a line; a single one keeps half of it so it reads as the same control. */
     @Composable fun Selects(content: @Composable RowScope.() -> Unit) =
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), content = content)

@@ -28,7 +28,9 @@ internal fun LibraryTypeFilters(snapshot: LibrarySnapshot?, query: LibraryQuery,
             activate = { change(query.copy(type = type.value, offset = 0)) },
             background = if (query.type == type.value) Palette.background else Color.Transparent,
             cornerRadius = 26.dp * scale) { Text(type.label, color = it, fontSize = (24 * scale).sp) } }
-    } else LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    } else LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        // A chip row pinned in the Library grid: the wheel over it scrolls it sideways (app#59).
+        wheelScrollsRow = true) {
         items(types, key = { it.value }) { type -> FilterChip(selected = type.value == query.type,
             onClick = { change(query.copy(type = type.value, offset = 0)) }, label = { Text(type.label, maxLines = 1) }) }
     }

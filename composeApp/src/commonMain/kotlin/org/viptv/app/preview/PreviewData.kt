@@ -52,7 +52,7 @@ internal object PreviewData {
     /** Three options per filter with long add-on names: chip rows that overflow a narrow window (app#59). */
     val chipSources = listOf(1080L to "Torrentio 4K RD+ | ElfHosted", 720L to "MediaFusion | ElfHosted Debrid", 1080L to "MediaFusion | ElfHosted Debrid")
         .mapIndexed { index, (height, addon) ->
-            SourceCandidate("chip-${index + 1}", "addon:chip${addon.length}", "${addon.substringBefore(" ")} ${height}p #${index + 1}",
+            SourceCandidate("chip-${index + 1}", "addon:${addon.substringBefore(" ").lowercase()}", "${addon.substringBefore(" ")} ${height}p #${index + 1}",
                 "Oak.Street.2026.${height}p.WEB-DL.DDP5.1.H.265", quality_height = height,
                 presentation = SourcePresentation(provider_name = addon, source_id = addon.substringBefore(" ").lowercase()))
         }

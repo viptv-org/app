@@ -74,6 +74,7 @@ class SourceFilterSelectTest {
             assertTrue(it.clickable("All sources"))
             it.open("Quality: All")
             assertEquals(listOf("All", "4K", "1080p", "720p", "480p"), it.options())
+            assertTrue(it.texts().contains("7 · Current"), "All shows the total like its chip: ${it.texts()}")
             it.type("1080")
             assertEquals(listOf("1080p"), it.options())
             assertTrue(it.texts().contains("3"), "the option shows its count")
