@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.openAccountAuthorization
 import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
+import org.viptv.app.updates.*
 
 @Composable
 internal fun SettingsInformation(section: String, local: Boolean, address: String?, profileName: String?,
@@ -46,6 +47,7 @@ internal fun SettingsInformation(section: String, local: Boolean, address: Strin
             "About" -> {
                 Text("VIPTV", style = MaterialTheme.typography.titleLarge)
                 Text("Experimental build", color = Palette.secondary)
+                LocalAppUpdater.current?.let { updater -> AppUpdateSettings(updater) }
                 Text("Native clients can use local providers or connect to a server. Browsers use a server account.", color = Palette.secondary)
                 Text("Application and font notices", style = MaterialTheme.typography.titleMedium)
                 OutlinedButton({ license = "application" }) { Text("Application license") }
@@ -55,6 +57,22 @@ internal fun SettingsInformation(section: String, local: Boolean, address: Strin
         }
     } }
     license?.let { key -> LicenseNotice(key) { license = null } }
+}
+
+/** Settings › About on phones and tablets: version, update state, last check and the update action. */
+@Composable
+private fun AppUpdateSettings(updater: AppUpdater) {
+    val updates by updater.state.collectAsState()
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Version ${updates.versionName}", style = MaterialTheme.typography.titleMedium)
+        Text(updateStatusLabel(updates.status), color = Palette.secondary)
+        Text(lastCheckLabel(updates.lastCheckMillis, updater.nowMillis()), color = Palette.tertiary)
+        val status = updates.status
+        val label = updateActionLabel(status)
+        val enabled = status != UpdateStatus.Checking && status !is UpdateStatus.Installing
+        if (status is UpdateStatus.Ready || status is UpdateStatus.NeedsPermission) Button(updater::settingsAction, enabled = enabled) { Text(label) }
+        else OutlinedButton(updater::settingsAction, enabled = enabled) { Text(label) }
+    }
 }
 
 @Composable

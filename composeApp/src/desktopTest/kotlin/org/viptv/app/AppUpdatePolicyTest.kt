@@ -1,0 +1,63 @@
+package org.viptv.app
+
+import org.viptv.app.updates.*
+import kotlin.test.*
+
+class AppUpdatePolicyTest {
+    private val feed = UpdateFeed(1301, "0.1.301+abc1234", "https://viptv.example/viptv.apk", "ab".repeat(32), 1000)
+    private val hour = UPDATE_CHECK_INTERVAL_MILLIS
+
+    @Test fun onlyAHigherVersionCodeIsAnUpdate() {
+        assertEquals(UpdateDecision.Available(feed, required = false), decideUpdate(feed, 1300))
+        assertEquals(UpdateDecision.UpToDate, decideUpdate(feed, 1301), "Same version")
+        assertEquals(UpdateDecision.UpToDate, decideUpdate(feed, 1400), "Never offers a lower version")
+    }
+
+    @Test fun aBuildBelowTheMinimumSupportedVersionMustUpdate() {
+        val minimum = feed.copy(minSupportedVersionCode = 1250)
+        assertEquals(UpdateDecision.Available(minimum, required = true), decideUpdate(minimum, 1249))
+        assertEquals(UpdateDecision.Available(minimum, required = false), decideUpdate(minimum, 1250))
+        assertEquals(UpdateDecision.UpToDate, decideUpdate(minimum, 1301))
+    }
+
+    @Test fun backgroundChecksRunAtMostOnceAnHour() {
+        assertTrue(updateCheckDue(null, 10 * hour, playing = false), "First launch")
+        assertFalse(updateCheckDue(10 * hour, 10 * hour + hour - 1, playing = false))
+        assertTrue(updateCheckDue(10 * hour, 11 * hour, playing = false))
+        assertTrue(updateCheckDue(10 * hour, 9 * hour, playing = false), "A clock that went backwards")
+        assertTrue(updateCheckDue(10 * hour, 10 * hour + 1, playing = false, manual = true), "Check for updates")
+    }
+
+    @Test fun noCheckRunsWhilePlaying() {
+        assertFalse(updateCheckDue(null, 10 * hour, playing = true))
+        assertFalse(updateCheckDue(null, 10 * hour, playing = true, manual = true))
+    }
+
+    @Test fun aDownloadMustMatchBothSizeAndChecksum() {
+        assertTrue(downloadMatches(feed, 1000, "AB".repeat(32)))
+        assertFalse(downloadMatches(feed, 1000, "cd".repeat(32)), "Checksum mismatch")
+        assertFalse(downloadMatches(feed, 999, feed.sha256), "Size mismatch")
+    }
+
+    @Test fun downloadRetriesBackOffThenStop() {
+        assertEquals(listOf(15_000L, 60_000L, 300_000L, null), (1..4).map(::downloadRetryDelayMillis))
+    }
+
+    @Test fun thePromptShowsAReadyUpdateOutsideThePlayerUntilLater() {
+        val ready = UpdateStatus.Ready(feed)
+        assertTrue(showUpdatePrompt(ready, playing = false, snoozedVersionCodes = emptySet()))
+        assertTrue(showUpdatePrompt(UpdateStatus.NeedsPermission(feed, true), playing = false, snoozedVersionCodes = emptySet()))
+        assertFalse(showUpdatePrompt(ready, playing = true, snoozedVersionCodes = emptySet()), "Never over the player")
+        assertFalse(showUpdatePrompt(ready, playing = false, snoozedVersionCodes = setOf(1301)), "Later")
+        assertTrue(showUpdatePrompt(ready, playing = false, snoozedVersionCodes = setOf(1300)), "A newer build asks again")
+        assertFalse(showUpdatePrompt(UpdateStatus.Downloading(feed, 10), playing = false, snoozedVersionCodes = emptySet()))
+    }
+
+    @Test fun lastCheckLabels() {
+        assertEquals("Not checked yet", lastCheckLabel(null, 0))
+        assertEquals("Checked just now", lastCheckLabel(0, 59_000))
+        assertEquals("Checked 5 min ago", lastCheckLabel(0, 5 * 60_000))
+        assertEquals("Checked 3 h ago", lastCheckLabel(0, 3 * hour))
+        assertEquals("Checked 2 days ago", lastCheckLabel(0, 48 * hour))
+    }
+}

@@ -10,6 +10,10 @@ import androidx.compose.runtime.*
 import org.viptv.app.state.*
 import org.viptv.app.state.Screen
 import org.viptv.app.App
+import org.viptv.app.updates.AppUpdatePrompt
+import org.viptv.app.updates.LocalAppUpdater
+import org.viptv.app.updates.updatePromptAllowed
+import org.viptv.app.updates.updateServerOrigin
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.connection.AndroidSecrets
 import org.viptv.app.connection.AndroidAccountAuthorization
@@ -43,7 +47,7 @@ open class MainActivity : ComponentActivity() {
         }
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
-        model.start(filesDir.resolve("local.sqlite").absolutePath)
+        model.start(filesDir.resolve("local.sqlite").absolutePath, applicationContext)
         // A recreated activity gets the launching intent again; only the first creation may act on it.
         if (savedInstanceState == null) offerDeviceCode(intent)
         setContent {
@@ -61,8 +65,19 @@ open class MainActivity : ComponentActivity() {
                 }
             }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
-            App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
-                manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
+            val updater = model.updater
+            // App updates (docs/APP_UPDATES.md): checks follow the connection, and a download waits while the player is open.
+            if (updater != null) {
+                LaunchedEffect(state.screen == Screen.Player) { updater.playingChanged(state.screen == Screen.Player) }
+                LaunchedEffect(state.starting, state.localMode, controller.updateServerOrigin()) { updater.connectionChanged() }
+            }
+            CompositionLocalProvider(LocalAppUpdater provides updater) {
+                androidx.compose.foundation.layout.Box {
+                    App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
+                        manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
+                    if (updater != null) AppUpdatePrompt(updater, tv, allowed = controller.updatePromptAllowed())
+                }
+            }
         }
     }
     override fun onNewIntent(intent: Intent) {
@@ -99,5 +114,6 @@ open class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         applicationModel?.controller?.resumePlayback()
+        applicationModel?.let { model -> model.updater?.foreground(playing = model.controller.state.value.screen == Screen.Player) }
     }
 }
