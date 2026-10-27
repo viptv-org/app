@@ -203,6 +203,32 @@ class DetailsResumeSeasonTest {
         }
     }
 
+    @Test fun theHerosResumeOpensSourcesForTheContinuedEpisodeInTheDetailsScope() {
+        // The issue's repro (app#49): Continue Watching, Back to Details, then the hero's Resume.
+        PhoneApp(2L to 20L).use { app ->
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.continueThenBack()
+            app.until("season 2's episodes") { app.node("20. Episode 2-20") != null }
+            app.frames(20)
+            // The list landed on S2 E20; scroll back up to the hero.
+            fun hero() = app.nodes().firstOrNull { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("Resume") }
+            app.until("the hero") {
+                hero() != null || run { app.scene.sendPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Scroll,
+                    androidx.compose.ui.geometry.Offset(195f * app.density, 400f * app.density),
+                    scrollDelta = androidx.compose.ui.geometry.Offset(0f, -10f)); false }
+            }
+            val button = assertNotNull(hero())
+            assertTrue(text(button).startsWith("Resume S2 E20"), "the hero names S2 E20: ${text(button)}")
+            assertTrue(button.config[SemanticsActions.OnClick].action!!.invoke())
+            app.until("Sources for the hero's episode") { app.controller.state.value.let { it.screen == Screen.Sources && it.sourceTitle != null } }
+            val state = app.controller.state.value
+            val playing = assertNotNull(state.sourceTitle)
+            assertEquals("$show:2:20", playing.identity.id, "sources are for S2 E20, not S1 E1")
+            assertEquals(state.detail?.item?.metadata_origin, playing.metadata_origin, "in the Details' metadata scope")
+            assertEquals(state.detail?.item?.provider_id, playing.provider_id)
+        }
+    }
+
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
 }

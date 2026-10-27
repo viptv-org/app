@@ -29,7 +29,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     /** False while the page is composed behind the source selector; it pages again once it is shown. */
     paging: Boolean = true) {
     if (television) {
-        TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
+        TvDetailsScreen(detail, busy, error, sources, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
             continuing = continuing, shown = paging)
         return
     }
@@ -43,6 +43,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
+    // The hero plays the episode the list lands on (app#49).
+    val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail)
     var section by remember(detail?.item?.identity) { mutableStateOf(
         when { detail?.episodes?.isNotEmpty() == true -> DetailSection.Episodes
@@ -75,10 +77,10 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 // Desktop chrome renders its own back/forward in the title bar;
                 // phone/tablet keep the in-content affordances.
                 item {
-                    if (phone) PhoneDetailHero(value.item, sources, save, saved, seriesResumeEpisode(value))
+                    if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode)
                     else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
                         DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
-                            sourceLabel = defaultSourceLabel, resumeEpisode = seriesResumeEpisode(value))
+                            sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
                     } else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved, playFromStart) }
                 }
                 if (!desktop) item(key = "sections") {
@@ -145,18 +147,15 @@ internal fun remainingMinutesLabel(card: Card): String? {
     return if (remaining > 0) "${remaining}m left" else "Almost done"
 }
 
-/** Real resume state for the TV details hero: the episode being watched, its label and time left. */
-internal fun detailExtras(detail: DetailSnapshot?): TvDetailExtras {
+/**
+ * Real resume state for the TV details hero: the episode it plays (the one the shelf lands
+ * on, app#49), its label and time left. [continuing] is Home's Continue Watching cards.
+ */
+internal fun detailExtras(detail: DetailSnapshot?, continuing: List<Card> = emptyList()): TvDetailExtras {
     if (detail == null) return TvDetailExtras()
-    val resume = seriesResumeEpisode(detail)
-        ?: detail.item.takeIf { it.progress != null && it.progress > 0.0 && it.progress < 1.0 }
-    val label = when {
-        resume?.identity?.episode != null -> "Resume S${resume.identity.episode?.season ?: 1L} E${resume.identity.episode?.episode}"
-        resume != null -> "Resume"
-        else -> null
-    }
-    return TvDetailExtras(resume = resume, resumeLabel = label, remaining = resume?.let(::remainingMinutesLabel),
-        recommendations = detail.recommendations)
+    val resume = detailResume(detail, continuing).heroEpisode(detail) ?: detail.item.takeIf(::resuming)
+    return TvDetailExtras(resume = resume, resumeLabel = resume?.let(::heroPlayLabel),
+        remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel), recommendations = detail.recommendations)
 }
 
 

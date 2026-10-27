@@ -113,10 +113,10 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
     playFromStart: ((Card) -> Unit)?, chooseSource: (Card) -> Unit, sourceLabel: String?) {
     // Resume mirrors the reference pill: the partially watched episode's
     // coordinates, remaining minutes and a progress underline inside the button.
-    val resumeCard = resumeEpisode ?: card.takeIf { it.progress != null && it.progress > 0.0 && it.progress < 1.0 }
+    // An episode the viewer continues without progress (a Calendar row's) plays by name.
+    val resumeCard = resumeEpisode ?: card.takeIf(::resuming)
     val progress = resumeCard?.progress
-    val resuming = progress != null && progress > 0.0 && progress < 1.0
-    val resumeLabel = resumeEpisode?.identity?.episode?.let { "S${it.season ?: 1L} E${it.episode}" }
+    val resuming = resuming(resumeCard)
     val remaining = if (resuming) remainingMinutes(resumeCard ?: card) else null
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -126,7 +126,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Color(0xFF111113))) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Lucide.Play, null, Modifier.size(15.dp))
-                        Text(if (resuming) listOfNotNull("Resume", resumeLabel).joinToString(" ") else "Play",
+                        Text(heroPlayLabel(resumeCard),
                             fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (remaining != null) {
                             Spacer(Modifier.weight(1f))
@@ -155,9 +155,9 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 }
             }
         }
-        // Source row: the current default-source behaviour; opens the source sheet.
+        // Source row: the current default-source behaviour; opens the source sheet for what Play plays.
         Row(Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
-            .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(card) }.padding(horizontal = 12.dp),
+            .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(resumeCard ?: card) }.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(sourceLabel ?: "Best match", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.text)
             Icon(Lucide.ChevronDown, "Choose source", Modifier.size(16.dp), tint = Palette.secondary)
