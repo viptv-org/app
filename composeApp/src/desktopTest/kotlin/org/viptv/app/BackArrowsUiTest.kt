@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import coil3.ImageLoader
@@ -15,6 +14,7 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.state.*
+import org.junit.Rule
 import kotlin.test.*
 
 /**

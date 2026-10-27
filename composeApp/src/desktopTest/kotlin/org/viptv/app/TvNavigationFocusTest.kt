@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
@@ -21,6 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.viptv.app.components.TvNavigation
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import kotlin.test.*
 
 /** The profile menu is the only remote path to Settings, so Right from the last tab must reach it. */

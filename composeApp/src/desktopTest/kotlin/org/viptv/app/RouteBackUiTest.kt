@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
@@ -12,6 +11,7 @@ import org.viptv.app.player.PlaybackTrack
 import org.viptv.app.player.PlaybackTracks
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import kotlin.test.*
 
 /**

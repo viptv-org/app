@@ -2,7 +2,6 @@
 
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -20,6 +19,7 @@ import org.viptv.app.features.sources.TvSourcesScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
+import org.junit.Rule
 import kotlin.test.*
 
 /** SRC-BEST-MATCH-001 Progressive ranking: a re-rank keeps focus and the scroll anchor on the same source. */

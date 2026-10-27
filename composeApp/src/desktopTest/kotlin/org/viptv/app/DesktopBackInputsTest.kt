@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +24,7 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.state.*
+import org.junit.Rule
 import kotlin.test.*
 
 /** app#45: the desktop window's Escape and mouse Back/Forward take the app's one Back. */

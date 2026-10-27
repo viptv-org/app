@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -20,6 +19,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /**

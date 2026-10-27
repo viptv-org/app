@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -12,6 +11,7 @@ import org.viptv.app.features.browse.DiscoveryFilters
 import org.viptv.app.features.browse.DiscoveryMultiChoiceSheet
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
+import org.junit.Rule
 import kotlin.test.*
 
 /** Actual Compose input/focus checks; no host or provider request is involved. */

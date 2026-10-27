@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -13,6 +12,7 @@ import org.viptv.app.features.settings.SettingsRoute
 import org.viptv.app.features.settings.stremioImportSection
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import kotlin.test.*
 
 private object NoSavedSession : RemoteSessionStore {

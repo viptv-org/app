@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -19,6 +18,7 @@ import org.viptv.app.state.Screen
 import org.viptv.app.theme.*
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
+import org.junit.Rule
 import kotlin.test.*
 
 /** Phone and tablet chrome shows only controls that work: no placeholder dialogs (app#15). */

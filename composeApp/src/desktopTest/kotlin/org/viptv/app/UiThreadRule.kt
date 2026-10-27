@@ -1,7 +1,6 @@
 package org.viptv.app
 
 import java.awt.EventQueue
-import java.lang.reflect.InvocationTargetException
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -16,19 +15,20 @@ import org.junit.runners.model.Statement
  * scene. The two threads then corrupt the scene's `RectList` ("LayoutNode N
  * not found in RectList"), which fails the test, or escapes through the
  * Recomposer's job and fails a later `runTest` with
- * `UncaughtExceptionsBeforeTest` (app#16, app#27). On the event thread the
- * callback can only run between test steps. Every desktop test class that
- * builds an `ImageComposeScene` must use this rule or run its body on the
- * event thread itself; `UiThreadConfinementTest` enforces that.
+ * `UncaughtExceptionsBeforeTest` (app#16, app#27).
+ *
+ * While the test holds the event thread, a posted callback waits: `render`
+ * dispatches the same callbacks on the test thread, and `close` cancels the
+ * pending one. Every desktop test class that builds an `ImageComposeScene`
+ * declares `@get:Rule val uiThread = UiThreadRule()`; `UiThreadConfinementTest`
+ * enforces that.
  */
 class UiThreadRule : TestRule {
     override fun apply(base: Statement, description: Description) = object : Statement() {
         override fun evaluate() {
             if (EventQueue.isDispatchThread()) return base.evaluate()
             var failure: Throwable? = null
-            try {
-                EventQueue.invokeAndWait { try { base.evaluate() } catch (t: Throwable) { failure = t } }
-            } catch (e: InvocationTargetException) { throw e.cause ?: e }
+            EventQueue.invokeAndWait { try { base.evaluate() } catch (t: Throwable) { failure = t } }
             failure?.let { throw it }
         }
     }

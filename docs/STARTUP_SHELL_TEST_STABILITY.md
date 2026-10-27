@@ -8,3 +8,7 @@ Current Context7 Compose and kotlinx.coroutines docs were fetched; the pinned so
 
 
 The final shared desktop phase, including the profile administration additions, then passed **236 tests with zero failures, errors or skips**. The startup test still executes all five complete recreation/cleanup cycles. [Final suite summary](evidence/profile-administration-2026-10-15/full-desktop-summary.json). The test-only source remains frozen for the separately recorded production Wasm/release build.
+
+## 2026-10-27 update: the cause was a thread race (app#27)
+
+The explicit scheduler above did not stop the flake. Compose's `RectManager` posts its layout callbacks to `MainUIDispatcher`, the Swing event thread, 16 ms after a layout change. A scene driven from the JUnit worker thread races that callback, which corrupts the scene's `RectList`. The exception either fails the UI test (app#16) or escapes through the Recomposer's job into kotlinx-coroutines-test, failing the next `runTest` with `UncaughtExceptionsBeforeTest` (app#27). Every desktop scene test now runs on the event thread through `UiThreadRule`, and `UiThreadConfinementTest` covers both the race and the convention.

@@ -2,7 +2,6 @@
 
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
@@ -23,6 +22,7 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.*
 import org.viptv.app.components.*
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import kotlin.test.*
 import kotlinx.coroutines.*
 

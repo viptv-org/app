@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +14,7 @@ import org.viptv.app.features.settings.SettingsInformation
 import org.viptv.app.features.settings.TvAboutSettings
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.app.updates.*
+import org.junit.Rule
 import kotlin.test.*
 
 /** app#64: "Update ready" outside the player, and the update rows in Settings › About. */

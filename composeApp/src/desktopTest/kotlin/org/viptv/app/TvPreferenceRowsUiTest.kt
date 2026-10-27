@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -23,6 +22,7 @@ import org.viptv.engine.wire.SourceCandidate
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
+import org.junit.Rule
 import kotlin.test.*
 
 /** D-pad geometry of the TV preference pages and the release-fact badges in source rows. */

@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -31,6 +30,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Choice
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
+import org.junit.Rule
 import kotlin.test.*
 
 /**

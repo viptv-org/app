@@ -1,6 +1,5 @@
 package org.viptv.app
 
-import org.junit.Rule
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -23,6 +22,7 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Capability
 import org.viptv.engine.wire.IntegrationConnection
+import org.junit.Rule
 import kotlin.test.*
 
 /**
