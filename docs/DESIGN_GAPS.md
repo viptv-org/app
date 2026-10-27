@@ -12,7 +12,7 @@
 | GAP-008 | Local profile creation dialog | Current profile picker shows Add profile, but no local creation form | Provisional dialog in `features/entry/ProfilesScreen.kt`; capture `docs/evidence/android-profiles.png` |
 | GAP-009 | Confirming a 5–8 digit local PIN | The supplied phone PIN keypad has four indicators and no confirmation key | Provisional OK key in `features/entry/MobilePinScreen.kt`; capture `docs/evidence/android-profile-pin.png` |
 | GAP-010 | Local forgotten-PIN explanation | The supplied PIN board has Forgot PIN? without a local recovery state | Provisional explanation in `features/entry/MobilePinScreen.kt`; no credential recovery or reset flow |
-| GAP-011 | Local avatar picker | The current edit board has Change avatar but no selection sheet | Provisional selection sheet in `features/entry/AvatarPicker.kt`; capture `docs/evidence/android-avatar-picker.png` |
+| GAP-011 | Avatar picker | The current edit board has Change avatar but no selection sheet | Resolved (app#8): `features/entry/AvatarPicker.kt` follows design ADM-004 with the bundled 624-avatar catalog (`AvatarCatalog.kt`, design pin in `AVATAR_CATALOG_REF`): world chips, 15 per page on phones and 18 on TV/desktop, wrapping Previous/Next, check badge on the saved pick. Captures `docs/evidence/2026-10-26-avatar-picker/` (phone, desktop, TV) |
 | GAP-012 | Secure-storage warning for remote sessions | The current Settings boards do not show a failed OS-vault state | Provisional warning in `features/settings/SettingsScreen.kt` when a native device session can only live in memory |
 | GAP-013 | Linux desktop window controls | The current desktop ZIP shows Windows and macOS chrome, with no Linux board | Provisional Linux variant follows the Windows control placement in `desktopMain/DesktopTitleBar.kt`; capture `docs/evidence/desktop-titlebar-linux.png` |
 | GAP-019 | Unavailable channel favourites and calendar filters | Normal connections currently lack the save/filter operations | Provisional notices in `features/live/LiveScreen.kt`; the phone header's calendar filter button was removed until filtering exists (app#15); preview guide/calendar captures cover the surrounding layouts |
@@ -89,8 +89,8 @@ progress; its design is present.
 
 The supplied Edit profile board has Name, Change avatar, Profile lock, rating,
 language and Delete entry controls, but no corresponding TV input/picker/delete
-confirmation boards. `TvProfileEditDialog` and the reused `AvatarPicker` provide
-provisional dialogs. Rating/language also expose missing engine preference states.
+confirmation boards. `TvProfileEditDialog` provides provisional dialogs; the
+avatar picker follows design ADM-004 (GAP-011). Rating/language also expose missing engine preference states.
 The editor board itself is supplied and remains in progress; these additional
 dialog surfaces need design review.
 

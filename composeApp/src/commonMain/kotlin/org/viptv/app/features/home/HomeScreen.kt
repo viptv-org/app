@@ -47,13 +47,19 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 }
             }
             if (home != null) {
-                if (home.complete && home.rows.isEmpty() && home.hero == null && home.featured.isEmpty() && error == null) item(key = "empty") {
+                // A shelf with nothing to show is not part of Home at all: no
+                // heading, no gap, no per-row retry. The quiet lane rebuilds the
+                // snapshot and a recovered row appears here once it has cards.
+                val visibleRows = home.rows.filter {
+                    it.state == RowState.PENDING || (it.state == RowState.READY && it.cards.isNotEmpty())
+                }
+                if (home.complete && visibleRows.isEmpty() && home.hero == null && home.featured.isEmpty() && error == null) item(key = "empty") {
                     HomeStatus(home, null, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
                 }
-                items(home.rows, key = { it.id }) { row ->
+                items(visibleRows, key = { it.id }) { row ->
                     HomeCatalogRow(row, compact, television,
                         Modifier.padding(horizontal = gutter),
-                        { focused = it }, open, retry, scale, tablet, browser, play)
+                        { focused = it }, open, scale, tablet, browser, play)
                 }
             }
         }

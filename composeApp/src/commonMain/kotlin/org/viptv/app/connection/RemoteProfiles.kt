@@ -12,11 +12,13 @@ data class ProfileCapabilities(val create: FeatureAvailability, val rename: Feat
 data class ParentAccess(val pin_configured: Boolean, val unlocked: Boolean, val restricted: Boolean)
 @Serializable
 data class ServerProfile(val id: String, val name: String, val avatar_id: String? = null,
+    val avatar_style: String? = null, val avatar_choice: Int? = null, val avatar_url: String? = null,
     val locked: Boolean = false, val is_primary: Boolean = false, val can_delete: Boolean = true, val lock_kind: String? = null, val kids: Boolean = false, val max_age: Int? = null)
 @Serializable
 data class ProfileManagement(val profiles: List<ServerProfile>, val capabilities: ProfileCapabilities,
     val parent: ParentAccess, val avatar_ids: List<String> = emptyList()) {
-    fun cards() = profiles.map { Profile(it.id, it.name, null, it.locked, it.avatar_id, it.can_delete, it.lock_kind) }
+    fun cards() = profiles.map { Profile(it.id, it.name, null, it.locked, it.avatar_id, it.can_delete, it.lock_kind,
+        it.avatar_style, it.avatar_choice, it.avatar_url) }
     val canManage get() = listOf(capabilities.create, capabilities.rename, capabilities.delete, capabilities.avatar)
         .any { it.availability == "Available" }
 }
@@ -29,8 +31,9 @@ internal suspend fun RemoteConnection.createProfile(name: String) {
 internal suspend fun RemoteConnection.renameProfile(id: String, name: String) {
     call("/api/profiles/${id.encodeURLPathPart()}", HttpMethod.Patch, buildJsonObject { put("name", name.trim()) })
 }
-internal suspend fun RemoteConnection.setProfileAvatar(id: String, avatar: String) {
-    call("/api/profiles/${id.encodeURLPathPart()}", HttpMethod.Patch, buildJsonObject { put("avatar_id", avatar) })
+/** Saves a catalog pick; the server retires any legacy `avatar_id` and rejects a write naming both. */
+internal suspend fun RemoteConnection.setProfileAvatar(id: String, style: String, choice: Int) {
+    call("/api/profiles/${id.encodeURLPathPart()}", HttpMethod.Patch, buildJsonObject { put("avatar_style", style); put("avatar_choice", choice) })
 }
 internal suspend fun RemoteConnection.deleteProfile(id: String) {
     call("/api/profiles/${id.encodeURLPathPart()}", HttpMethod.Delete)
