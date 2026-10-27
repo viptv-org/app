@@ -25,9 +25,21 @@ the platform.
 
 ## Matrix
 
-`main` column: what `main` did. ✓ right, ✗ wrong (what happened). The last
-column is the result on this branch; every row now passes or is a
-decision for the owner (D1 to D5, listed below).
+The `main` columns show what `main` did: ✓ right, ✗ wrong (what happened).
+The Branch column is the result on this branch: every row passes or is a
+decision for the owner (D1 to D5, listed below). Phone and tablet share
+one column: both use `MainActivity`'s Back and the same routes; they
+differ only in which in-page arrows they show, and the arrows now call
+`navigateBack`.
+
+Tests: `BackMatrixTest` (every screen, Android/TV Back and `navigateBack`),
+`BackArrowsUiTest` (phone arrows = Android Back = `navigateBack`),
+`DesktopBackInputsTest` (Escape, focused controls and dialogs keep theirs,
+mouse buttons, route step first), `BrowserBackHistoryTest` (browser
+Back/Forward over a fake session history), `RouteBackUiTest` (player menu
+closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
+`PlayerSettingsLinkUiTest`, `DetailNavigationTest`,
+`ContinueWatchingSourcesOpenTest`, `NextEpisodeEndPanelUiTest`.
 
 | Screen / state | Expected | Phone, tablet (`main`) | TV (`main`) | Desktop (`main`) | Browser (`main`) | Branch |
 |---|---|---|---|---|---|---|
@@ -46,7 +58,7 @@ decision for the owner (D1 to D5, listed below).
 | Details (all layouts), related-title chain | Previous Details, then the origin page | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
 | Sources (app#11 rule) | Details if open, else origin | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
 | Player | Sources (app#13 lease rules) | ✓ | ✓ | ✓ Escape; ✗ mouse Back | ✗ leaves the site | ✓ |
-| Player panel open (Episodes, Audio & subtitles, Next episode app#41, lock) | Close the panel first | ✓ | ✓ | ✓ Escape | ✗ browser Back closed the player under the panel | ✓ |
+| Player panel open (Episodes, Audio & subtitles, Next episode app#41, lock) | Close the panel first | ✓ | ✓ | ✓ Escape; ✗ mouse Back closed the player | ✗ browser Back closed the player under the panel | ✓ |
 | Settings opened from the player (app#44) | The paused player | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
 | My List | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | History | Previous screen, else Home | ✗ always Home; arrow went Home and recorded History | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
