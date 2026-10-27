@@ -1,6 +1,10 @@
 package org.viptv.app
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -12,56 +16,16 @@ import kotlin.test.*
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppUpdaterTest {
     private val hour = UPDATE_CHECK_INTERVAL_MILLIS
-    private val sha = "ab".repeat(32)
-    private fun feedJson(code: Long, minimum: Long? = null) = """{"version_code":$code,"version_name":"0.1.$code","url":"viptv-$code.apk",""" +
-        """"sha256":"$sha","size":100${minimum?.let { ",\"min_supported_version_code\":$it" } ?: ""}}"""
 
-    private class FakePlatform(var feed: String) : AppUpdatePlatform {
-        override val installedVersionCode = 1300L
-        override val installedVersionName = "0.1.300+aaaaaaa"
-        var now = 100 * 3_600_000L
-        override fun nowMillis() = now
-        override var lastCheckMillis: Long? = null
-        val fetched = mutableListOf<String>()
-        var fetchFails = false
-        /** Each download call takes the next outcome; null succeeds. */
-        val downloadOutcomes = ArrayDeque<Exception?>()
-        var downloadGate: CompletableDeferred<Unit>? = null
-        var downloads = 0
-        val verified = mutableSetOf<Long>()
-        val kept = mutableListOf<UpdateFeed?>()
-        var installAllowed = true
-        var permissionScreen = true
-        var permissionOpened = 0
-        val installs = mutableListOf<UpdateFeed>()
-        var installResult: ((InstallResult) -> Unit)? = null
-
-        override suspend fun fetchFeed(url: String): String {
-            fetched += url
-            if (fetchFails) throw IllegalStateException("offline")
-            return feed
-        }
-        override suspend fun download(feed: UpdateFeed, progress: (Long) -> Unit) {
-            downloads++
-            progress(50)
-            downloadGate?.await()
-            downloadOutcomes.removeFirstOrNull()?.let { throw it }
-            verified += feed.versionCode
-            progress(feed.size)
-        }
-        override suspend fun hasVerifiedDownload(feed: UpdateFeed) = feed.versionCode in verified
-        override fun deleteDownloads(keep: UpdateFeed?) { kept += keep; verified.retainAll(setOfNotNull(keep?.versionCode)) }
-        override fun canInstall() = installAllowed
-        override fun hasInstallPermissionScreen() = permissionScreen
-        override fun openInstallPermissionScreen(): Boolean { permissionOpened++; return permissionScreen }
-        override suspend fun install(feed: UpdateFeed, result: (InstallResult) -> Unit) { installs += feed; installResult = result }
+    // Not backgroundScope: advanceUntilIdle does not run background work once the test body is idle.
+    private fun TestScope.updater(platform: FakeUpdatePlatform, origin: String? = "https://viptv.example"): AppUpdater {
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
+        backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { scope.cancel() }
+        return AppUpdater(platform, scope) { updateFeedUrl(origin, null) }
     }
 
-    private fun TestScope.updater(platform: FakePlatform, origin: String? = "https://viptv.example") =
-        AppUpdater(platform, backgroundScope) { updateFeedUrl(origin, null) }
-
     @Test fun launchChecksTheServerDownloadsQuietlyThenOffersTheUpdate() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)
         updater.foreground(playing = false)
         advanceUntilIdle()
@@ -74,7 +38,7 @@ class AppUpdaterTest {
 
     @Test fun anOlderOrSameBuildIsUpToDateAndStaleDownloadsAreDeleted() = runTest {
         for (code in listOf(1300L, 1299L)) {
-            val platform = FakePlatform(feedJson(code))
+            val platform = FakeUpdatePlatform(feedJson(code))
             val updater = updater(platform)
             updater.foreground(playing = false); advanceUntilIdle()
             assertEquals(UpdateStatus.UpToDate, updater.state.value.status)
@@ -84,7 +48,7 @@ class AppUpdaterTest {
     }
 
     @Test fun returningWithinTheHourDoesNotCheckAgainButCheckForUpdatesDoes() = runTest {
-        val platform = FakePlatform(feedJson(1300))
+        val platform = FakeUpdatePlatform(feedJson(1300))
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
         platform.now += hour - 1
@@ -98,7 +62,7 @@ class AppUpdaterTest {
     }
 
     @Test fun noCheckRunsWhilePlayingAndADueCheckRunsWhenThePlayerCloses() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)
         updater.foreground(playing = true); advanceUntilIdle()
         assertTrue(platform.fetched.isEmpty())
@@ -108,7 +72,7 @@ class AppUpdaterTest {
     }
 
     @Test fun theDownloadPausesWhileThePlayerIsOpenAndResumesAfter() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         platform.downloadGate = CompletableDeferred()
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
@@ -123,7 +87,7 @@ class AppUpdaterTest {
     }
 
     @Test fun aChecksumMismatchIsNeverOffered() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         platform.downloadOutcomes += UpdateVerificationException("sha256 mismatch")
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
@@ -134,7 +98,7 @@ class AppUpdaterTest {
     }
 
     @Test fun aFailedDownloadRetriesWithBackoff() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         repeat(2) { platform.downloadOutcomes += IllegalStateException("connection reset") }
         val updater = updater(platform)
         updater.foreground(false)
@@ -146,7 +110,7 @@ class AppUpdaterTest {
     }
 
     @Test fun downloadsGiveUpAfterTheLastRetry() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         repeat(4) { platform.downloadOutcomes += IllegalStateException("offline") }
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
@@ -155,7 +119,7 @@ class AppUpdaterTest {
     }
 
     @Test fun laterHidesThePromptForThisVersionOnly() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
         updater.later()
@@ -166,7 +130,7 @@ class AppUpdaterTest {
     }
 
     @Test fun aRequiredUpdateAsksAgainOnEveryReturn() = runTest {
-        val platform = FakePlatform(feedJson(1301, minimum = 1301))
+        val platform = FakeUpdatePlatform(feedJson(1301, minimum = 1301))
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
         assertTrue(updater.state.value.required)
@@ -177,7 +141,7 @@ class AppUpdaterTest {
     }
 
     @Test fun installHandsTheVerifiedBuildToAndroid() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
         updater.install(); advanceUntilIdle()
@@ -191,7 +155,7 @@ class AppUpdaterTest {
     }
 
     @Test fun withoutTheInstallPermissionTheAppExplainsAndContinuesAfterTheViewerAllowsIt() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         platform.installAllowed = false
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
@@ -207,7 +171,7 @@ class AppUpdaterTest {
     }
 
     @Test fun aFailedQuietCheckKeepsAReadyDownload() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
         platform.fetchFails = true
@@ -216,7 +180,7 @@ class AppUpdaterTest {
     }
 
     @Test fun aFailedCheckIsReported() = runTest {
-        val platform = FakePlatform("{}")
+        val platform = FakeUpdatePlatform("{}")
         val updater = updater(platform)
         updater.checkNow(); advanceUntilIdle()
         assertEquals("The server's update information is invalid.", assertIs<UpdateStatus.Failed>(updater.state.value.status).message)
@@ -226,7 +190,7 @@ class AppUpdaterTest {
     }
 
     @Test fun localModeHasNoFeed() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform, origin = null)
         updater.foreground(false); advanceUntilIdle()
         assertEquals(UpdateStatus.NoServer, updater.state.value.status)
@@ -234,7 +198,7 @@ class AppUpdaterTest {
     }
 
     @Test fun anAlreadyVerifiedDownloadIsReused() = runTest {
-        val platform = FakePlatform(feedJson(1301))
+        val platform = FakeUpdatePlatform(feedJson(1301))
         platform.verified += 1301
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
