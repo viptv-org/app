@@ -6,14 +6,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,
-    retry: () -> Unit, save: (ProfilePreferences) -> Unit) {
+    retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null) {
     val preferences = snapshot?.preferences
     var audio by remember(snapshot) { mutableStateOf(preferences?.preferred_audio_language.orEmpty()) }
     var subtitle by remember(snapshot) { mutableStateOf(preferences?.preferred_subtitle_language.orEmpty()) }
@@ -30,6 +33,17 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
         Text("These preferences apply to the current profile.", color = Palette.secondary)
         error?.let { Text(it, color = Palette.danger) }
         TextButton(retry, enabled = !busy) { Text("Refresh") }
+        // Stored on this device and applied at once, unlike the profile's preferences below.
+        devicePlayback?.let { device ->
+            Row(Modifier.toggleable(device.value.autoplayNext, role = Role.Switch) { device.change(device.value.copy(autoplayNext = it)) },
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.weight(1f, fill = false)) {
+                    Text(autoplayNextRow)
+                    Text(autoplayNextDescription, color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(device.value.autoplayNext, null)
+            }
+        }
         if (preferences != null) {
             OutlinedTextField(audio, { audio = it }, label = { Text("Preferred audio language") },
                 supportingText = { Text("Language tag, for example en or pt-BR. Leave empty for the original language.") }, enabled = !busy, singleLine = true)

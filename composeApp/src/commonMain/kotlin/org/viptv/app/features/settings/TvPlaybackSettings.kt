@@ -16,18 +16,22 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences?, scale: Float, initial: FocusRequester,
     sidebar: FocusRequester, change: (TvSettingsPreferences) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit,
-    unavailable: () -> Unit, actualPreferencesOnly: Boolean = false) {
+    unavailable: () -> Unit, actualPreferencesOnly: Boolean = false, devicePlayback: DevicePlaybackState? = null) {
     // Only rows the server stores are shown on a real connection; the placeholder
     // toggles stay in UI previews. Focus starts on the first visible row.
-    val rows = tvPlaybackRows(actualPreferencesOnly)
+    val rows = tvPlaybackRows(actualPreferencesOnly, deviceRows = devicePlayback != null)
     val deviceHeight = remember { deviceMaxVideoHeight() }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         TvSettingsHeading("Playback", scale, if (prefs != null) "These apply to ${name ?: "this profile"}’s profile." else "Playback preferences are not available on this connection yet.")
         rows.forEachIndexed { index, row ->
             val requester = if (index == 0) initial else null
             when (row) {
-                "Next episode button" -> TvSettingsRow(row, "Shows during the credits. Nothing ever plays on its own.", scale, checked = prefs?.nextEpisode,
+                "Next episode button" -> TvSettingsRow(row, "Shows during the credits", scale, checked = prefs?.nextEpisode,
                     requester = requester, left = sidebar) { if (prefs != null) change(prefs.copy(nextEpisode = !prefs.nextEpisode)) else unavailable() }
+                autoplayNextRow -> devicePlayback?.let { device ->
+                    TvSettingsRow(row, autoplayNextDescription, scale, checked = device.value.autoplayNext, requester = requester, left = sidebar) {
+                        device.change(device.value.copy(autoplayNext = !device.value.autoplayNext)) }
+                }
                 "Skip intros and recaps" -> TvSettingsRow(row, "Skips them when the show marks where they are", scale, checked = prefs?.skipIntros,
                     requester = requester, left = sidebar) { if (prefs != null) change(prefs.copy(skipIntros = !prefs.skipIntros)) else unavailable() }
                 "Default source" -> TvSettingsRow(row, scale = scale, value = prefs?.source ?: "Unavailable",

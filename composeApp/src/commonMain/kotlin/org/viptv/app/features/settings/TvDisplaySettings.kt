@@ -36,7 +36,7 @@ private val TvAccentChoices = listOf(
  * power cut cannot lose a choice.
  */
 @Stable
-internal class TvDisplayState(initial: TvDisplayPreferences, private val store: TvDisplayStore) {
+internal class TvDisplayState(initial: TvDisplayPreferences, private val store: DeviceRecordStore) {
     var value by mutableStateOf(initial)
         private set
 
@@ -49,8 +49,18 @@ internal class TvDisplayState(initial: TvDisplayPreferences, private val store: 
 @Composable
 internal fun rememberTvDisplayState(): TvDisplayState {
     val context = LocalPlatformContext.current
-    val store = remember(context) { tvDisplayStore(context) }
+    val store = remember(context) { deviceRecordStore(context, DeviceRecord.Display) }
     return remember(store) { TvDisplayState(decodeTvDisplay(runCatching { store.read() }.getOrNull()), store) }
+}
+
+/** The Display setting's Reduce motion, resolved against the device's own setting. */
+@Composable
+internal fun rememberReducedMotion(): Boolean {
+    val context = LocalPlatformContext.current
+    return remember(context) {
+        val display = decodeTvDisplay(runCatching { deviceRecordStore(context, DeviceRecord.Display).read() }.getOrNull())
+        reducedMotion(display, systemReducedMotion(context))
+    }
 }
 
 @Composable

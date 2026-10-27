@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,19 @@ internal fun PhonePreferenceRow(label: String, value: String, enabled: Boolean, 
         Text(label, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Text(value, Modifier.widthIn(max = 190.dp), color = Palette.secondary, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Icon(Lucide.ChevronRight, null, Modifier.size(17.dp), tint = Palette.tertiary)
+    }
+}
+
+/** A whole-row switch: the row is the touch target, the board switch shows the state. */
+@Composable
+internal fun PhonePreferenceSwitchRow(label: String, description: String, checked: Boolean, change: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).toggleable(checked, role = Role.Switch, onValueChange = change).padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(description, color = Palette.secondary, fontSize = 13.sp)
+        }
+        PhoneSwitch(checked, enabled = true, change = null)
     }
 }
 

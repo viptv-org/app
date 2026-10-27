@@ -23,13 +23,16 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
-/** An explicit choice, never a countdown or automatic playback transition. */
+/** The end panel. With [autoplay] the Next action counts down and plays at 0; any viewer action stops it (app#65). */
 @Composable
-internal fun PhoneNextEpisode(next: Card, play: () -> Unit, credits: () -> Unit, insets: WindowInsets) {
+internal fun PhoneNextEpisode(next: Card, play: () -> Unit, credits: () -> Unit, insets: WindowInsets,
+    autoplay: Boolean = false, reduceMotion: Boolean = false) {
     val initial = remember { FocusRequester() }
+    val countdown = rememberNextEpisodeCountdown(autoplay, play)
     Popup(onDismissRequest = credits, properties = PopupProperties(focusable = true)) {
         // Escape on desktop/web dismisses it like Back, rather than leaving the player underneath.
-        BoxWithConstraints(Modifier.fillMaxSize().onPreviewKeyEvent { it.key == Key.Escape && it.type == KeyEventType.KeyDown && run { credits(); true } }
+        BoxWithConstraints(Modifier.fillMaxSize().cancelsCountdown(countdown)
+            .onPreviewKeyEvent { it.key == Key.Escape && it.type == KeyEventType.KeyDown && run { credits(); true } }
             .background(Color.Black.copy(alpha = .35f)).windowInsetsPadding(insets)) {
             val compact = maxWidth < 640.dp
             val padding = if (maxWidth >= 800.dp) 56.dp else 24.dp
@@ -54,8 +57,11 @@ internal fun PhoneNextEpisode(next: Card, play: () -> Unit, credits: () -> Unit,
                     Button(play, Modifier.height(44.dp), shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background),
                         contentPadding = PaddingValues(horizontal = 16.dp)) {
-                        Icon(Lucide.SkipForward, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
-                        Text("Next episode", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        NextEpisodeCountdownRing(countdown, Palette.background, 26.dp, 2.5.dp, reduceMotion) {
+                            Icon(Lucide.SkipForward, null, Modifier.size(if (countdown.running && !reduceMotion) 12.dp else 18.dp))
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Text(if (countdown.running) "Next episode in ${countdown.secondsLeft}" else "Next episode", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

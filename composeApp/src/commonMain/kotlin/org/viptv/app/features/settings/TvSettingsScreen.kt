@@ -36,7 +36,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
     dashboardAddress: String? = null, preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
-    maturity: String? = null, pinAvailable: Boolean = true) {
+    maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -96,7 +96,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
                 else when (section) {
                     TvSettingsSection.Playback -> TvPlaybackSettings(profile?.name, prefs, scale, first, sidebar, { change?.invoke(it) },
-                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Playback preferences" }, actualPreferencesOnly)
+                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Playback preferences" }, actualPreferencesOnly, devicePlayback)
                     TvSettingsSection.Subtitles -> TvSubtitleSettings(prefs, scale, first, sidebar, { change?.invoke(it) },
                         { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Subtitle preferences" }, actualPreferencesOnly)
                     TvSettingsSection.Addons -> { } // handled above: the add-on list scrolls itself

@@ -32,7 +32,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
     playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
     /** What shows where the video does not draw, as on the other players; black on every TV build. */
-    canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null) {
+    canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
@@ -114,7 +114,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                 scale, retry, chooseSources, close)
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
-                { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) }, state::keepWatching, extras.creditsLabel)
+                { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) }, state::keepWatching, extras.creditsLabel,
+                nextEpisodeAutoplays(autoplayNext, title, state.live) && state.ended, reduceMotion)
             else -> {
                 TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes) {
                     TvPlayerControls(state, title, extras, scale, timeline, audio,

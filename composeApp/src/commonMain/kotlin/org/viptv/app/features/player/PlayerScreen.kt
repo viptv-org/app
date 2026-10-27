@@ -40,11 +40,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     /** Facts from a preview or test harness rather than a mounted surface; never forwarded to [observe]. */
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     /** Opens the full Subtitles & audio settings from the Audio & subtitles menu (app#44). */
-    openSettings: (() -> Unit)? = null) {
+    openSettings: (() -> Unit)? = null,
+    /** Settings › Playback › Autoplay next episode: the end panel counts down and plays the next episode (app#65). */
+    autoplayNext: Boolean = true, reduceMotion: Boolean = false) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
-            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings)
+            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -217,7 +219,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 latestNext?.let(::cardLookupKey) == cardLookupKey(candidate)) {
                 endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
             }
-        }, ::dismissPanel, controlInsets) }
+        }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
         if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
             "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
         else {
