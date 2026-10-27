@@ -26,7 +26,10 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         job?.cancel()
         mutable.value = mutable.value.copy(findingSources = false, busy = false)
     }
-    if (screen != Screen.Player && mutable.value.playback != null) {
+    // A player visit to Settings (app#44) keeps playback behind it; anywhere else ends it.
+    val playerVisit = screen == Screen.Settings && mutable.value.settingsReturnsToPlayer &&
+        previousScreen in listOf(Screen.Player, Screen.Settings)
+    if (screen != Screen.Player && !playerVisit && mutable.value.playback != null) {
         val live = mutable.value.playback?.live == true
         if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releaseRemotePlayback(); mutable.value = mutable.value.copy(playback = null)
         afterPlayback(live)
@@ -44,6 +47,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         mutable.value.copy(navBack = (mutable.value.navBack + recorded).takeLast(32), navForward = emptyList())
     else mutable.value
     mutable.value = history.copy(screen = screen, error = null, settingsEntrySection = if (screen == Screen.Settings) mutable.value.settingsEntrySection else null,
+        settingsReturnsToPlayer = playerVisit,
         // A page belongs to one visit: arriving from elsewhere starts at settingsEntrySection.
         settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) mutable.value.settingsPage else null)
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
@@ -83,6 +87,8 @@ fun ApplicationController.backSources() {
 fun ApplicationController.navigateBack() {
     if (backWithinSettings()) return
     val state = mutable.value
+    // app#44: Settings opened from the player's Audio & subtitles menu goes back to the paused player.
+    if (state.inPlayerSettings()) { returnToPlayer(); return }
     when (state.screen) {
         Screen.Sources -> backSources()
         Screen.Player -> closePlayer()
