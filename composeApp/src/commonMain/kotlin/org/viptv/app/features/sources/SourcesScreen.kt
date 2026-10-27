@@ -57,6 +57,8 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
             television -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.5f)
+            // The wider drawer is for web and desktop (app#60); the tablet keeps the design's 460.
+            tablet -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().widthIn(max = 461.dp).fillMaxWidth()
             else -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(sourceDrawerWidth(maxWidth))
         }
         Column(panel.clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
@@ -96,7 +98,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
 }
 
 /**
- * The web/desktop and tablet drawer's width in a [window] that wide: room for source
+ * The web/desktop drawer's width in a [window] that wide: room for source
  * titles, badges and release lines (owner, app#60), never narrower than the 460 the
  * design specified, and the whole window when that is narrower still.
  */

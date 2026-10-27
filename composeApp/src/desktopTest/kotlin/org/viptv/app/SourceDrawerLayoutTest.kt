@@ -29,11 +29,11 @@ class SourceDrawerLayoutTest {
         SourceCandidate("s$n", "addon:torrentio", "Torrentio 4K RD+ $n", detail = "$release #$n", quality_height = 2160, release_type = "web_dl", delivery = "direct")
     }
 
-    private fun render(width: Int, height: Int, television: Boolean = false, busy: Boolean = false, loadingMore: Boolean = false,
+    private fun render(width: Int, height: Int, television: Boolean = false, busy: Boolean = false, loadingMore: Boolean = false, tablet: Boolean = false,
         check: (List<SemanticsNode>) -> Unit) {
         val scene = ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(television) { Box(Modifier.fillMaxSize().background(Palette.background)) {
-                SourcesScreen(title, sources, busy, null, {}, {}, television = television, loadingMore = loadingMore)
+                SourcesScreen(title, sources, busy, null, {}, {}, television = television, tablet = tablet, loadingMore = loadingMore)
             } }
         }
         try {
@@ -71,6 +71,13 @@ class SourceDrawerLayoutTest {
         assertEquals(1100.dp * 0.55f, sourceDrawerWidth(1100.dp))
         assertEquals(460.dp, sourceDrawerWidth(800.dp), "never narrower than the old drawer")
         assertEquals(400.dp, sourceDrawerWidth(400.dp), "a window narrower than that gets a full-width drawer")
+    }
+
+    @Test fun theTabletKeepsTheDesignsDrawer() {
+        render(1280, 800, tablet = true) { nodes ->
+            assertEquals(461f, drawerWidth(nodes))
+            assertTrue(texts(nodes).none { it.contains("Play always starts") })
+        }
     }
 
     @Test fun aLongReleaseLineWrapsLessInTheWiderDrawer() {

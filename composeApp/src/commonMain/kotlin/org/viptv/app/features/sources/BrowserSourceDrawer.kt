@@ -19,11 +19,13 @@ import androidx.compose.ui.window.DialogProperties
  * to stay visible; the dialog underneath stays composed with its season and scroll.
  * The layer takes the pointer (the drawer's scrim closes it) and keyboard focus, which
  * starts in the drawer. Escape closes only the drawer: it acts on key up like the
- * dialog's own Escape, and the key down is kept from the layers underneath.
+ * dialog's own Escape, and the key down is kept from the layers underneath. The layer's
+ * own back handling stays off, since it would close the drawer on key down and leave
+ * the key up to the Details dialog, closing that too.
  */
 @Composable
 internal fun BrowserSourceDrawer(back: () -> Unit, drawer: @Composable () -> Unit) {
-    Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false, scrimColor = Color.Transparent)) {
+    Dialog(onDismissRequest = back, properties = DialogProperties(dismissOnBackPress = false, usePlatformDefaultWidth = false, scrimColor = Color.Transparent)) {
         var focused by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
             if (event.key != Key.Escape) false else { if (event.type == KeyEventType.KeyUp) back(); true }
