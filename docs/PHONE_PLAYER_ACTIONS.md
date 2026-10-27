@@ -15,12 +15,16 @@ The sheet is provisional because no exact phone player episode-picker board was
 supplied; it does not imply that every episode has been loaded.
 
 Next uses the controller's authoritative result, including a title beyond the
-loaded episode page. Opening the board-shaped Up next prompt never starts media.
-Watch credits and Back dismiss it; only the explicit Next episode button calls
-the existing playback action. The prompt pins the opened candidate and dismisses
-if its identity/assertions or playback owner changes. Pending/unavailable results
-disable the action and show an honest status. Movies do not show episode actions.
-There is no countdown, autoplay, inferred credit boundary or invented metadata.
+loaded episode page. The Next episode toolbar button plays that episode straight
+away (app#41). The board-shaped Up next prompt opens by itself when the player
+reports the end of the episode, drawn over its last frame, on phone and on the
+desktop/web player. Watch credits and Back dismiss it until the episode ends
+again; only its Next episode button starts media. The prompt pins the opened
+candidate and dismisses if its identity/assertions or playback owner changes. A
+next episode that resolves after the end (the controller asks again then) still
+opens it. Pending/unavailable results disable the action, show an honest status
+and never open the prompt. Movies do not show episode actions. There is no
+countdown, autoplay, inferred credit boundary or invented metadata.
 
 On a phone source failure, the retained title/subtitle, source error and existing
 recovery actions use the supplied error-board arrangement. Retry and Choose a

@@ -56,7 +56,8 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
                     Text("Keep watching credits", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
                 }
             }
-            Text("Nothing plays on its own — the credits keep running until you choose.", Modifier.padding(top = 6.dp * scale), color = Color(0xFF8F8D89),
+            // The panel opens when the episode has ended, so no credits keep running behind it.
+            Text("Nothing plays on its own.", Modifier.padding(top = 6.dp * scale), color = Color(0xFF8F8D89),
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
         }
     }

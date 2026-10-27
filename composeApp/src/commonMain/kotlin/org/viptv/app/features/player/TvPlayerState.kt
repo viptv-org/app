@@ -23,6 +23,9 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var showTracks by mutableStateOf(scene == TvPlayerScene.Tracks)
     var showNext by mutableStateOf(scene == TvPlayerScene.Next)
     var showEpisodes by mutableStateOf(false)
+    /** The player reports the end of the media; the next-episode panel opens once per end. */
+    var ended by mutableStateOf(false)
+    var endHandled by mutableStateOf(false)
     var scrub by mutableStateOf<Long?>(if (scene == TvPlayerScene.Scrub) 1300000 else null)
     var timelineFocused by mutableStateOf(false)
     var rootFocused by mutableStateOf(false)
@@ -64,10 +67,23 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             }
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
-            is PlayerFact.Status -> buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
+            is PlayerFact.Status -> {
+                buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
+                ended = fact.name == "Ended"
+                if (!ended) endHandled = false
+            }
             is PlayerFact.Presentation -> { hasPresented = true; buffering = false; undecodable = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
+        }
+    }
+    /** Close the next-episode panel; at the end it stays closed until the media ends again. */
+    fun keepWatching() { showNext = false; visible = false; endHandled = true }
+    /** At the end of a series episode with a known next one, offer it once; a withdrawn next closes it. */
+    fun offerNext(available: Boolean) {
+        if (showNext && !available) showNext = false
+        else if (ended && !endHandled && available && !failed && !showNext) {
+            showTracks = false; showEpisodes = false; scrub = null; showNext = true
         }
     }
     fun reveal(audio: Boolean = false) { focusAudio = audio; visible = true; interaction++ }
@@ -93,7 +109,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
         when {
             showTracks -> dismissTracks?.invoke() ?: run { showTracks = false }
             showEpisodes -> showEpisodes = false
-            showNext -> { showNext = false; visible = false }
+            showNext -> keepWatching()
             scrub != null -> { scrub = null; reveal() }
             visible && !failed -> visible = false
             else -> { close(); return false }
