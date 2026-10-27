@@ -319,31 +319,49 @@ fun ApplicationController.chooseSource(card: Card) {
 /** Show the source selector for [card] in its finding-sources state. */
 private fun ApplicationController.openSources(card: Card, returnTo: Screen) {
     mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
-        sources = emptyList(), torrentOnlySources = 0, findingSources = true, navForward = emptyList())
+        sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList())
 }
 
-/** Find, publish and rank [card]'s sources inside the current [run] operation. */
+/**
+ * Find [card]'s sources inside the current [run] operation, ranking and grouping them
+ * as providers answer ([ProgressiveSourceRanking]). Best match autoplay plays the first
+ * Best matches row once discovery finishes; a failed ranking leaves the picker as on
+ * Always ask.
+ */
 private suspend fun ApplicationController.discoverSources(card: Card) {
     val operation = generation
     try {
         if (mutable.value.preferences == null) loadPreferences()
-        val publish: (List<org.viptv.engine.wire.SourceCandidate>) -> Unit = { partial ->
-            if (generation == operation) mutable.value = mutable.value.copy(sources = partial)
-        }
-        val outcome = local?.sources(requireNotNull(mutable.value.selectedProfile), card, publish)
-            ?: SourcesOutcome(requireNotNull(connection).sources(card, publish))
-        val sources = outcome.candidates
         val profile = requireNotNull(mutable.value.selectedProfile)
+        val device = local
+        val remote = connection
         val deviceHeight = org.viptv.app.connection.deviceMaxVideoHeight()
-        val ranked = local?.rankSources(profile, sources, deviceHeight) ?: requireNotNull(connection).rankSources(profile, sources, deviceHeight)
-        mutable.value = mutable.value.copy(sources = ranked, torrentOnlySources = outcome.torrentOnlyProviders)
-        if (mutable.value.preferences?.preferences?.source_selection == "best" && ranked.isNotEmpty()) playSource(ranked.first())
+        coroutineScope {
+            val ranking = ProgressiveSourceRanking(this,
+                rank = { rows -> device?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
+                show = { ranked -> if (generation == operation) mutable.value = mutable.value.copy(sources = ranked.rows, sourceGroups = ranked.groups) })
+            val outcome = try {
+                device?.sources(profile, card, ranking::arrived) ?: SourcesOutcome(requireNotNull(remote).sources(card, ranking::arrived))
+            } catch (deadline: TimeoutCancellationException) {
+                // Rows found before the provider ceiling still take their ranked places.
+                ranking.finish(); throw deadline
+            }
+            ranking.arrived(outcome.candidates)
+            val ranked = ranking.finish()
+            if (generation != operation) return@coroutineScope
+            mutable.value = mutable.value.copy(torrentOnlySources = outcome.torrentOnlyProviders)
+            if (mutable.value.preferences?.preferences?.source_selection == "best") ranked?.autoplayTarget()?.let { playSource(it) }
+        }
     } catch (_: TimeoutCancellationException) {
         throw LocalFailure(if (mutable.value.sources.isNotEmpty())
             "Some providers did not finish within a minute. Available sources are ready to play."
         else "Providers did not respond within a minute. Try again.")
     } finally { if (generation == operation) mutable.value = mutable.value.copy(findingSources = false) }
 }
+
+/** Best match autoplay plays the first Best matches row, or the top row when the ranking formed no group. */
+internal fun RankedSources.autoplayTarget(): org.viptv.engine.wire.SourceCandidate? =
+    groups.bestMatches.firstOrNull()?.let { id -> rows.firstOrNull { it.id == id } } ?: rows.firstOrNull()
 
 internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapshot): Card {
     val delegated = card.metadata_origin != null && card.metadata_origin != detail.item.metadata_origin

@@ -461,3 +461,17 @@ the loaded-episode side panel is provisional. Pending/unavailable Next status,
 portrait wrapping and failure states without retry/source capabilities are also
 additional truthful states. No autoplay, intro boundaries or cast service is
 invented. Physical phone rendering and exact full-board parity remain open.
+
+### GAP-063 — Source group headers (Best matches / All sources)
+
+SRC-BEST-MATCH-001 (design `22901a2`, pinned in `DESIGN_REF`) groups the source
+picker as **Best matches** and **All sources** on every surface (app#12). The
+spec gives the copy and the behaviour, but no board yet: header type size,
+colour, height and spacing are open on TV, phone, tablet and desktop. The
+provisional headers in `features/sources/SourceGroupRows.kt` are uppercase bold
+labels in the tertiary text colour (11 sp on phone/desktop, 22 px at the TV
+1920 design width), drawn inside the list item of the row that opens the group
+so focus brings them into view. The Best match marker on phone/desktop is an
+accent label after the title badges; TV keeps its existing pill. Group
+membership comes from the ranking (`best_match_ids`); until backend#21 and
+core#12 supply it, the app uses the interim rule in `connection/SourceRanking.kt`.
