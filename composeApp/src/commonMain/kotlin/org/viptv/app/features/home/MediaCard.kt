@@ -124,8 +124,14 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             val density = androidx.compose.ui.platform.LocalDensity.current
             val slotW = with(density) { width.dp.toPx().toInt() }
             val slotH = with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() }
-            val art = org.viptv.app.images.sizedArtwork(if (portrait) card.poster else card.landscape, slotW, slotH)
-            AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            // app#62: a 16:9 card without a still centres its poster over a soft fill.
+            when (val art = if (portrait) null else card.landscapeArt()) {
+                is LandscapeArt.Poster -> PosterInLandscape(
+                    org.viptv.app.images.sizedArtwork(art.url, slotH * 2 / 3, slotH) ?: art.url, card.title)
+                else -> AsyncImage(org.viptv.app.images.sizedArtwork(
+                    if (portrait) card.poster else (art as? LandscapeArt.Still)?.url, slotW, slotH),
+                    card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            }
             // New episodes win the text label; Watched is the corner check below.
             card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
                 val spoken = newEpisodesDescription(chip)
@@ -279,7 +285,11 @@ private fun CardPreview(card: Card, saved: Boolean,
         .clip(RoundedCornerShape(12.dp)).background(Color(0xFF1C1C1F))
         .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(12.dp))) {
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).background(Palette.raised)) {
-            AsyncImage(card.landscape ?: card.poster, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            when (val art = card.landscapeArt()) {
+                is LandscapeArt.Still -> AsyncImage(art.url, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                is LandscapeArt.Poster -> PosterInLandscape(art.url, card.title)
+                LandscapeArt.None -> Unit
+            }
             card.progress?.let { progress ->
                 Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(3.dp).background(Color.White.copy(alpha = .2f))) {
                     Box(Modifier.fillMaxWidth(progress.toFloat().coerceIn(0f, 1f)).fillMaxHeight().background(Palette.accent))

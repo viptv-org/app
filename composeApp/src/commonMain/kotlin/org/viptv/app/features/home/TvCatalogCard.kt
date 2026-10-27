@@ -97,14 +97,23 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             // moved gpu p50 from 13.5 ms to 15.0-15.5 ms and missed vsyncs from
             // 8.4 % to 11.2-12.0 %, so TV keeps the proxied WebP without custom
             // sizing (see docs/TV_FRAME_BUDGET.md).
-            val art = if (portrait) card.poster else card.landscape
+            // app#62: a landscape card without a still shows its poster centred
+            // over a soft fill; only a card with no image takes the title tile.
+            val landscapeArt = if (portrait) null else card.landscapeArt()
+            val still = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (landscapeArt as? LandscapeArt.Still)?.url
             // The initials fallback covers load *failures* too, not only blank URLs:
             // a 404 from the art host used to leave a bare dark tile (the "no
             // poster" Naruto card — the URL existed but the image never arrived).
-            var artFailed by remember { mutableStateOf(false) }
-            if (art.isNullOrBlank() || artFailed) CardNoArtFallback(card, scale, portrait, shape)
-            else AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                onError = { artFailed = true })
+            // Keyed on the art, so a reused card slot never keeps a stale failure.
+            var artFailed by remember(card.poster, card.landscape) { mutableStateOf(false) }
+            when {
+                artFailed -> CardNoArtFallback(card, scale, portrait, shape)
+                still != null -> AsyncImage(still, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                    onError = { artFailed = true })
+                landscapeArt is LandscapeArt.Poster -> PosterInLandscape(landscapeArt.url, card.title,
+                    onError = { artFailed = true })
+                else -> CardNoArtFallback(card, scale, portrait, shape)
+            }
             states.artLabel?.let { label ->
                 Text(label, Modifier.align(Alignment.TopStart).padding(10.dp * scale)
                     .background(states.artLabelFill, RoundedCornerShape(6.dp * scale))
