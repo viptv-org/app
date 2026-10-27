@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +28,9 @@ import org.viptv.engine.wire.Card
 internal fun PhoneNextEpisode(next: Card, play: () -> Unit, credits: () -> Unit, insets: WindowInsets) {
     val initial = remember { FocusRequester() }
     Popup(onDismissRequest = credits, properties = PopupProperties(focusable = true)) {
-        BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .35f)).windowInsetsPadding(insets)) {
+        // Escape on desktop/web dismisses it like Back, rather than leaving the player underneath.
+        BoxWithConstraints(Modifier.fillMaxSize().onPreviewKeyEvent { it.key == Key.Escape && it.type == KeyEventType.KeyDown && run { credits(); true } }
+            .background(Color.Black.copy(alpha = .35f)).windowInsetsPadding(insets)) {
             val compact = maxWidth < 640.dp
             val padding = if (maxWidth >= 800.dp) 56.dp else 24.dp
             val information: @Composable () -> Unit = {

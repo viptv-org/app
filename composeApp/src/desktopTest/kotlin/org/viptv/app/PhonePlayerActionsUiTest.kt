@@ -6,6 +6,7 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import org.viptv.app.features.player.*
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
@@ -20,25 +21,29 @@ class PhonePlayerActionsUiTest {
         metadata = CardMetadata(runtime_minutes = 52), provider_id = "addon:7", title = "Episode $number", badges = emptyList(),
         parent_identity = parent, metadata_origin = origin)
 
-    @Test fun authoritativeNextBeyondLoadedEpisodesRequiresExplicitConfirmationAndCreditsNeverDispatches() {
+    @Test fun authoritativeNextBeyondLoadedEpisodesPlaysDirectlyWhileTheEndPanelNeedsExplicitConfirmation() {
         var played: Card? = null
         var back: (() -> Unit)? = null
         val current = episode(24); val next = episode(25)
+        val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
             PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true,
                 preview = PlayerFact.Progress(842_000, 3_132_000), tvExtras = TvPlaybackExtras(episodes = listOf(current), nextEpisode = next),
-                playEpisode = { played = it }, backChanged = { back = it }, playbackKey = "current")
+                playEpisode = { played = it }, backChanged = { back = it }, playbackKey = "current", externalFacts = facts)
         } }
         try {
             frames(scene); capture(scene, "phone-player-controls")
             assertNull(played)
-            click(scene, "Next episode"); frames(scene, 20)
+            assertTrue(facts.tryEmit(PlayerFact.Status("Ended"))); frames(scene, 20)
             assertNull(played); assertTrue(nodes(scene).any { text(it) == "25. Episode 25" })
             capture(scene, "phone-player-next")
             click(scene, "Watch credits"); frames(scene, 40); assertNull(played)
             assertTrue(action(scene, "Next episode").config.getOrNull(SemanticsProperties.Focused) == true)
-            click(scene, "Next episode"); frames(scene, 60); back!!(); frames(scene, 80); assertNull(played)
-            click(scene, "Next episode"); frames(scene, 100); click(scene, "Next episode")
+            assertFalse(nodes(scene).any { text(it) == "Up next" })
+            assertTrue(facts.tryEmit(PlayerFact.Status("Playing"))); assertTrue(facts.tryEmit(PlayerFact.Status("Ended")))
+            frames(scene, 60); assertTrue(nodes(scene).any { text(it) == "Up next" })
+            back!!(); frames(scene, 80); assertNull(played); assertFalse(nodes(scene).any { text(it) == "Up next" })
+            click(scene, "Next episode")
             assertEquals(next, played)
         } finally { scene.close() }
     }
@@ -116,16 +121,18 @@ class PhonePlayerActionsUiTest {
         var next by mutableStateOf(episode(3))
         var episodes by mutableStateOf(listOf(episode(2), episode(3)))
         var played = 0
+        val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
             PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true, playbackKey = key,
-                tvExtras = TvPlaybackExtras(episodes = episodes, nextEpisode = next), playEpisode = { played++ })
+                tvExtras = TvPlaybackExtras(episodes = episodes, nextEpisode = next), playEpisode = { played++ }, externalFacts = facts)
         } }
         try {
-            frames(scene); click(scene, "Next episode"); frames(scene, 20)
+            frames(scene); assertTrue(facts.tryEmit(PlayerFact.Status("Ended"))); frames(scene, 20)
             assertTrue(nodes(scene).any { text(it) == "3. Episode 3" })
+            // A replaced next closes the pinned choice without dispatch; the end then offers the new one.
             next = episode(4); frames(scene, 40); assertEquals(0, played)
-            assertFalse(nodes(scene).any { text(it) == "Up next" })
-            click(scene, "Next episode"); frames(scene, 50)
+            assertFalse(nodes(scene).any { text(it) == "3. Episode 3" })
+            frames(scene, 50)
             assertTrue(nodes(scene).any { text(it) == "4. Episode 4" })
             // Replacing the playback owner closes its pending choice without dispatch.
             key = "new"; current = episode(40); next = episode(41); episodes = listOf(episode(40), episode(41)); frames(scene, 60)

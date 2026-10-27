@@ -94,6 +94,8 @@ data class ApplicationState(
     val sourceTitle: Card? = null,
     val sourceReturnScreen: Screen = Screen.Home,
     val sources: List<SourceCandidate> = emptyList(),
+    /** Best matches membership and the Best match row of [sources] (SRC-BEST-MATCH-001). */
+    val sourceGroups: org.viptv.app.connection.SourceGroups = org.viptv.app.connection.SourceGroups(),
     val torrentOnlySources: Int = 0,
     val findingSources: Boolean = false,
     val playingSource: SourceCandidate? = null,

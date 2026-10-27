@@ -105,7 +105,7 @@ class TvPreferenceRowsUiTest {
             } finally { withBadges.close(); without.close() }
         }
         val tv = ImageComposeScene(1920, 300, Density(1f)) { ViptvTheme(true) { Column(Modifier.width(1200.dp)) {
-            TvSourceRow(source, TvSourceInfo("4K", "MKV", "[Add-on]", bestMatch = true), 1f, null, true, {}) } } }
+            TvSourceRow(source, TvSourceInfo("4K", "MKV", "[Add-on]"), 1f, null, true, {}, bestMatch = true) } } }
         try {
             frames(tv)
             assertEquals(listOf("WEB-DL", "DV", "Dual audio", "3D"), unmerged(tv).filter { it.layoutInfo.isPlaced && text(it) in listOf("WEB-DL", "DV", "Dual audio", "3D") }.map(::text))

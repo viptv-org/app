@@ -4,7 +4,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
-import kotlinx.serialization.json.Json
+import io.ktor.http.content.TextContent
+import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
@@ -135,6 +136,35 @@ class NextEpisodeControllerTest {
             assertEquals(2, requests); assertEquals("episode-2", controller.state.value.nextEpisode?.identity?.id)
             assertSame(playing, controller.state.value.playback); assertTrue(controller.state.value.paused); assertEquals(Screen.Player, controller.state.value.screen)
         } finally { controller.cancelNextEpisode(); remote.close() }
+    }
+
+    /** app#41: the end panel's Next and the Next button both leave through closePlayer; the ended episode stays watched. */
+    @Test fun theEndRecordsTheEpisodeWatchedAndMovingOnDoesNotOverwriteIt() = runBlocking<Unit> {
+        val saved = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
+        val json = headersOf(HttpHeaders.ContentType, "application/json")
+        val client = HttpClient(MockEngine { request ->
+            when {
+                request.url.encodedPath == "/api/profiles/owner/progress" -> {
+                    saved += Json.parseToJsonElement((request.body as TextContent).text).jsonObject; respond("{\"ok\":true}", headers = json)
+                }
+                request.url.encodedPath == "/api/profiles/owner/continue/next" ->
+                    respond(Json.encodeToString(NextEpisodeResult(ContinuationStatus.NEXT, episode(25))), headers = json)
+                else -> respond("{}", HttpStatusCode.NotFound, json)
+            }
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val lane = CoroutineScope(coroutineContext + SupervisorJob())
+        val controller = ApplicationController(lane, store); controller.connection = remote
+        val playing = input(); controller.prepare(playing, episode(24))
+        try {
+            controller.observePlaybackFor(playing, PlayerFact.Progress(1_795_000, 1_800_000))
+            controller.observePlaybackFor(playing, PlayerFact.Status("Ended"))
+            val watched = controller.progressJob!!
+            controller.closePlayer(); watched.join(); controller.progressJob?.join()
+            assertEquals(1, saved.size, "Only the end of the episode is recorded")
+            assertTrue(saved.single().getValue("ended").jsonPrimitive.boolean)
+            assertEquals(1_800_000L, saved.single().getValue("record").jsonObject.getValue("position_millis").jsonPrimitive.long)
+        } finally { controller.cancelNextEpisode(); lane.cancel(); remote.close() }
     }
 
 }
