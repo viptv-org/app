@@ -47,6 +47,14 @@ open class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
         model.start(filesDir.resolve("local.sqlite").absolutePath, applicationContext)
+        // The app's foreground hook (app#75): start/stop are appForeground (freshness check, Home watcher,
+        // lease renewal), resume is freshen. App.kt does not install it here: ApplicationModel owns the
+        // controller. Its ON_START runs after onStart's resumePlayback, and ON_STOP after onPause's suspend.
+        // A return to the front also checks for an app update (docs/APP_UPDATES.md).
+        lifecycle.addObserver(model.controller.foregroundObserver(returned = {
+            val current = model.controller.state.value
+            if (!current.starting) model.updater?.foreground(playing = current.screen == Screen.Player)
+        }))
         // A recreated activity gets the launching intent again; only the first creation may act on it.
         if (savedInstanceState == null) offerDeviceCode(intent)
         setContent {
@@ -106,11 +114,5 @@ open class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         applicationModel?.controller?.resumePlayback()
-        // Return-to-app update check. App.kt's foreground hook (appForeground) is not installed on Android
-        // while ApplicationModel owns the controller (app#75), so the activity drives it directly.
-        applicationModel?.let { model ->
-            val current = model.controller.state.value
-            if (!current.starting) model.updater?.foreground(playing = current.screen == Screen.Player)
-        }
     }
 }

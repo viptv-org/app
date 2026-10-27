@@ -151,10 +151,10 @@ the app with `-Pviptv.updateFeed` pointing at `latest/download/update.json`.
   limit holds across restarts.
 - A quiet check that fails keeps an update that is already downloaded or
   downloading.
-- The return-to-app check runs from `MainActivity.onStart`. App.kt's
-  foreground hook (`ApplicationController.appForeground`) would be the shared
-  place, but it is not installed on Android while `ApplicationModel` owns the
-  controller (app#75).
+- The return-to-app check runs from the app's shared foreground hook
+  (`ApplicationController.foregroundObserver`), which `MainActivity` installs
+  on its own lifecycle: on each activity start, right after
+  `appForeground(true)` (app#75).
 
 ## Download
 
