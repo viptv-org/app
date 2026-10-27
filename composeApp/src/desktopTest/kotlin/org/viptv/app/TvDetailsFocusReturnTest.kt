@@ -52,20 +52,32 @@ class TvDetailsFocusReturnTest {
         parent_identity = series.identity, title = "Episode $number", progress = progress)
     private fun label(number: Long) = "$number. Episode $number"
     private val detail = DetailSnapshot(series, episodes = (1L..10L).map { episode(it) })
+    /** The same season served in two pages: episodes 11-16 come from `offset=10`. */
+    private val pagedDetail = detail.copy(next_cursor = "10", seasons = listOf(EpisodeSeason(1, 16, 0)))
+    private val secondPage = DetailSnapshot(series, episodes = (11L..16L).map { episode(it) })
+    private val related = series.copy(identity = MediaIdentity("tt3032476", "series", emptyList()), title = "Better Call Saul",
+        parent_identity = null)
 
     private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
-    private fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
-        "/api/meta/series/$show" -> json(Json.encodeToString(detail))
-        // No stream add-ons: the selector opens and finishes with nothing.
-        "/api/streams" -> json("""{"id":"job-1"}""")
-        "/api/streams/job-1" -> json("""{"done":true,"events":[]}""")
-        else -> if (request.url.encodedPath.endsWith("/source-ranking")) json("""{"streams":[]}""")
-            else respond("{\"error\":\"not in this fixture\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
-    }
 
-    private inner class TvApp : AutoCloseable {
+    /** The real TV App shell over a fake host serving [fixture]; a later Details page waits for [releasePage]. */
+    private inner class TvApp(val fixture: DetailSnapshot = detail) : AutoCloseable {
+        val releasePage = CompletableDeferred<Unit>()
+        val pageOffsets = java.util.concurrent.CopyOnWriteArrayList<String>()
+        private fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
+            "/api/meta/series/$show" -> request.url.parameters["offset"]?.takeIf { it != "0" }.let { offset ->
+                if (offset == null) json(Json.encodeToString(fixture)) else { pageOffsets += offset; null }
+            }
+            // No stream add-ons: the selector opens and finishes with nothing.
+            "/api/streams" -> json("""{"id":"job-1"}""")
+            "/api/streams/job-1" -> json("""{"done":true,"events":[]}""")
+            else -> if (request.url.encodedPath.endsWith("/source-ranking")) json("""{"streams":[]}""")
+                else respond("{\"error\":\"not in this fixture\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        private val client = HttpClient(MockEngine { request -> host(request) }) { configureTransport() }
+        private val client = HttpClient(MockEngine { request ->
+            host(request) ?: run { releasePage.await(); json(Json.encodeToString(secondPage)) }
+        }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store)
         private var previousLoader: ImageLoader? = null
@@ -90,7 +102,8 @@ class TvDetailsFocusReturnTest {
         val state get() = controller.state.value
         fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
         fun nodes() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
-        fun focused() = nodes().filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.map(::text)
+        fun focused() = nodes().filter { it.config.getOrNull(SemanticsProperties.Focused) == true }
+            .map { text(it) + " " + it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString(" ") }
         fun until(what: String, condition: () -> Boolean) {
             val deadline = System.nanoTime() + 10_000_000_000L
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what (focus: ${focused()})" }; frames(2) }
@@ -238,16 +251,35 @@ class TvDetailsFocusReturnTest {
     }
 
     @Test fun episodesPagingInAfterTheReturnDoNotMoveFocus() {
-        TvApp().use { app ->
+        TvApp(pagedDetail).use { app ->
             app.frames()
             app.openDetails()
             app.focusEpisode(7)
             app.openSources(7)
             app.controller.backSources()
             app.assertFocus(label(7), "Back from Sources")
-            app.controller.mutable.value = app.state.copy(detail = detail.copy(episodes = (1L..16L).map { episode(it) }))
+            // Opening the selector cancelled the held page; shown again, Details page on and it arrives.
+            app.until("the next Details page is requested") { app.pageOffsets.contains("10") }
+            app.releasePage.complete(Unit)
+            app.until("episodes 11-16") { app.state.detail!!.episodes.size == 16 }
             app.assertFocus(label(7), "a later page arrived")
             assertEquals(1, app.focused().size, "one focused node: ${app.focused()}")
+        }
+    }
+
+    @Test fun leavingFromAnotherRowReturnsToTheHero() {
+        TvApp(detail.copy(recommendations = listOf(related))).use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(1)
+            app.press(Key.DirectionDown)
+            app.assertFocus("Better Call Saul", "the viewer moved to More Like This")
+            // Only an episode or the hero opens the selector today; any other row still returns to the hero.
+            app.controller.mutable.value = app.state.copy(screen = Screen.Sources, sourceReturnScreen = Screen.Details,
+                sourceTitle = episode(1), findingSources = false)
+            app.selectorTakesFocus()
+            app.controller.backSources()
+            app.assertFocus("Play", "Back to Details left from More Like This")
         }
     }
 

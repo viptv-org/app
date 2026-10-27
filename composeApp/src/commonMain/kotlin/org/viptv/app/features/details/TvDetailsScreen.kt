@@ -16,10 +16,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
-import org.viptv.app.components.TvFocusHandle
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.TextButton
+
+/** The rows of the TV Details page, top to bottom. */
+internal enum class TvDetailRow { Hero, Episodes, Recommendations }
+
+/** How this composition of the TV Details page began, and whether it was on screen at the last check (app#66). */
+private class TvDetailVisit(val firstEntry: Boolean) { var shown = firstEntry }
 
 internal data class TvDetailExtras(
     val cast: String? = null,
@@ -53,66 +58,63 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         val scroll = key(card?.identity) { rememberSaveable(saver = LazyListState.Saver) { LazyListState() } }
         val scope = rememberCoroutineScope()
         val playFocus = remember { FocusRequester() }
-        val episodesRestore = remember(card?.identity) { TvFocusHandle() }
-        val episodesReturn = remember(card?.identity) { ShelfReturnHandle() }
+        val shelfFocus = remember(card?.identity) { ShelfFocusHandle() }
         var notice by remember { mutableStateOf<String?>(null) }
         // Return rule (app#66). Details composed while shown is a first entry: focus starts on
         // the hero. While the source selector covers Details (opened from an episode or the
         // hero, or reopened as the player closes), the page keeps the row the viewer left from,
         // per title and across the player, where it leaves composition. Shown again, focus goes
         // back to that row: the last focused episode, else the continued episode (app#40),
-        // else the hero.
-        var leftFrom by rememberSaveable(card?.identity) { mutableStateOf<Int?>(null) }
-        val firstEntry = remember(card?.identity) { shown }
-        var activeRow by remember(card?.identity) { mutableIntStateOf(if (shown) 0 else leftFrom ?: 0) }
-        var episodeMode by remember(card?.identity) { mutableStateOf(activeRow == 1) }
-        var wasShown by remember(card?.identity) { mutableStateOf(shown) }
+        // else the hero. Any other row returns to the hero.
+        // Keyed by title, not by position: one saved-state slot serves every title's Details.
+        var leftFrom by rememberSaveable(card?.provider_id, card?.identity,
+            key = card?.let { "tv-detail-left-from:${it.provider_id}:${it.identity.kind}:${it.identity.id}" }) { mutableStateOf<TvDetailRow?>(null) }
+        val visit = remember(card?.identity) { TvDetailVisit(firstEntry = shown) }
+        var activeRow by remember(card?.identity) { mutableStateOf(if (shown) TvDetailRow.Hero else leftFrom ?: TvDetailRow.Hero) }
+        var episodeMode by remember(card?.identity) { mutableStateOf(activeRow == TvDetailRow.Episodes) }
         val sectionScroll = org.viptv.app.components.rememberTvSectionScroll(scroll)
         val density = LocalDensity.current
         fun offset(index: Int): Float = with(density) {
             when (index) { 0 -> 0.dp; 1 -> 816.dp; else -> (816 + if (episodeMode) 656 else 461).dp }.toPx() * scale
         }
-        fun focusRow(index: Int) {
-            activeRow = index
-            sectionScroll.focus(index)
+        /** The row's item in the page's list: recommendations move up when there are no episodes. */
+        fun index(row: TvDetailRow): Int = when (row) {
+            TvDetailRow.Hero -> 0
+            TvDetailRow.Episodes -> 1
+            TvDetailRow.Recommendations -> if (detail.episodes.isEmpty()) 1 else 2
+        }
+        fun focusRow(row: TvDetailRow) {
+            activeRow = row
+            sectionScroll.focus(index(row))
         }
         fun returnHero() {
-            activeRow = 0; episodeMode = false
-            sectionScroll.focus(0, force = true) { if (activeRow == 0) playFocus.requestFocus() }
+            activeRow = TvDetailRow.Hero; episodeMode = false
+            sectionScroll.focus(0, force = true) { if (activeRow == TvDetailRow.Hero) playFocus.requestFocus() }
         }
-        fun returnEpisodes() {
+        /** Into the episode shelf; a [returning] viewer (app#66) gets their episode or the hero, never another episode. */
+        fun focusEpisodes(returning: Boolean = false) {
             if (detail.episodes.isEmpty()) { returnHero(); return }
-            activeRow = 1; episodeMode = true
-            sectionScroll.focus(1, force = true)
+            activeRow = TvDetailRow.Episodes; episodeMode = true
+            sectionScroll.focus(index(TvDetailRow.Episodes), force = true)
             scope.launch {
-                repeat(32) {
+                repeat(TV_FOCUS_RETRY_FRAMES) {
                     withFrameNanos { }
-                    if (activeRow != 1 || episodesRestore.request?.invoke() == true) return@launch
-                }
-            }
-        }
-        fun returnToEpisode() {
-            activeRow = 1; episodeMode = true
-            sectionScroll.focus(1, force = true)
-            scope.launch {
-                repeat(32) {
-                    withFrameNanos { }
-                    if (activeRow != 1) return@launch
-                    when (episodesReturn.request?.invoke()) {
-                        ShelfReturn.Focused -> return@launch
-                        ShelfReturn.Missing -> { returnHero(); return@launch }
-                        ShelfReturn.Pending, null -> Unit
+                    if (activeRow != TvDetailRow.Episodes) return@launch
+                    when (shelfFocus.request?.invoke(returning)) {
+                        ShelfFocus.Focused -> return@launch
+                        ShelfFocus.Missing -> { returnHero(); return@launch }
+                        ShelfFocus.Pending, null -> Unit
                     }
                 }
-                if (activeRow == 1) returnHero()
+                if (returning && activeRow == TvDetailRow.Episodes) returnHero()
             }
         }
         LaunchedEffect(card?.identity, shown) {
-            if (!shown) { leftFrom = activeRow; wasShown = false; return@LaunchedEffect }
+            if (!shown) { leftFrom = activeRow; visit.shown = false; return@LaunchedEffect }
             leftFrom = null
-            if (wasShown) return@LaunchedEffect
-            wasShown = true
-            if (activeRow == 1 && detail.episodes.isNotEmpty()) returnToEpisode() else returnHero()
+            if (visit.shown) return@LaunchedEffect
+            visit.shown = true
+            if (activeRow == TvDetailRow.Episodes) focusEpisodes(returning = true) else returnHero()
         }
         key(card?.identity) {
             TvDetailBackdrop(card, scale) { offset(scroll.firstVisibleItemIndex) + scroll.firstVisibleItemScrollOffset }
@@ -126,20 +128,19 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                         save = { save(detail.item) }, saved = saved,
                         trailer = { notice = "No trailer is available for this title." },
                         restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
-                        down = null, requestInitialFocus = requestInitialFocus && firstEntry && activeRow == 0,
-                        downAction = if (detail.episodes.isEmpty()) null else ::returnEpisodes)
+                        down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
+                        downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }))
                 }
                 if (detail.episodes.isNotEmpty()) item(key = "episodes") {
                     TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
-                        focused = { episodeMode = true; focusRow(1) }, expanded = episodeMode,
+                        focused = { episodeMode = true; focusRow(TvDetailRow.Episodes) }, expanded = episodeMode,
                         resume = remember(detail, continuing) { detailResume(detail, continuing) },
                         returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
-                        busy = busy, loadPage = loadPage, restoreChanged = { episodesRestore.request = it }, paging = shown,
-                        returnChanged = { episodesReturn.request = it })
+                        busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown)
                 }
                 if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
                     TvRecommendationShelf(extras.recommendations, scale, open,
-                        focused = { focusRow(if (detail.episodes.isEmpty()) 1 else 2) }, up = ::returnEpisodes)
+                        focused = { focusRow(TvDetailRow.Recommendations) }, up = { focusEpisodes() })
                 }
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
