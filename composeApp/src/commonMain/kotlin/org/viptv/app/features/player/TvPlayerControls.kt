@@ -40,7 +40,7 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
         TvPlayerPill("Audio & subtitles", Lucide.Captions, scale, belowTimeline, audio) { state.showTracks = true; state.interaction++ }
         if (chooseSources != null) TvPlayerPill("Source" + (extras.sourceQuality?.let { " · $it" } ?: ""), Lucide.SlidersHorizontal, scale, belowTimeline, activate = chooseSources)
         Spacer(Modifier.weight(1f))
-        // Next during playback goes straight to the next episode; the panel belongs to the end.
+        // Plays straight away; the next-episode panel opens only at the end.
         extras.nextEpisode?.let { next -> if (playEpisode != null) TvPlayerPill("Next episode", Lucide.SkipForward, scale, belowTimeline) { playEpisode(next) } }
     }
     TvPlaybackTimeline(state, extras, scale, timeline, audio, previewCommand, state.live || title?.identity?.kind in listOf("channel", "tv") && state.duration == null)

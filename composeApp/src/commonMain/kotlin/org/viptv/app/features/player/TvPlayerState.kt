@@ -82,7 +82,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     /** At the end of a series episode with a known next one, offer it once; a withdrawn next closes it. */
     fun offerNext(available: Boolean) {
         if (showNext && !available) showNext = false
-        else if (ended && !endHandled && available && !failed && !showNext) {
+        else if (ended && !endHandled && available && !live && !failed && !undecodable && !showNext) {
             showTracks = false; showEpisodes = false; scrub = null; showNext = true
         }
     }

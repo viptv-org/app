@@ -75,17 +75,18 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val next = tvExtras.nextEpisode.takeIf { input?.live != true }
     val seriesEpisode = input?.live != true && title?.identity?.episode != null
     val episodeTitle = phone && seriesEpisode
+    // Next during playback goes straight to the next episode; the panel belongs to the end.
+    val playNext = { next?.let { playEpisode?.invoke(it) }; Unit }
+    val nextEnabled = next != null && playEpisode != null
     val latestEpisodes by rememberUpdatedState(episodes)
     val latestNext by rememberUpdatedState(next)
     val latestPlayEpisode by rememberUpdatedState(playEpisode)
     val latestPlaybackKey by rememberUpdatedState(playbackKey)
     val latestTitle by rememberUpdatedState(title)
     val latestClose by rememberUpdatedState(close)
-    /** [chosen]: the viewer closed it, so an end panel stays closed until the media ends again. */
-    fun dismissPanel(chosen: Boolean = true) {
-        if (chosen && phonePanel == PhonePlaybackPanel.Next) endHandled = true
-        restorePanel = phonePanel; phonePanel = null; visible = true; interaction++
-    }
+    fun closePanel() { restorePanel = phonePanel; phonePanel = null; visible = true; interaction++ }
+    /** The viewer closed the panel: an end panel stays closed until the media ends again. */
+    fun dismissPanel() { if (phonePanel == PhonePlaybackPanel.Next) endHandled = true; closePanel() }
     val phoneBack = {
         when { showTracks -> { showTracks = false; visible = true }
             phonePanel != null -> dismissPanel()
@@ -109,7 +110,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(phonePanel, next, playEpisode, episodes.isEmpty()) {
         if (phonePanel != null && (playEpisode == null ||
                 phonePanel == PhonePlaybackPanel.Next && (next == null || nextChoice?.let(::cardLookupKey) != cardLookupKey(next)) ||
-                phonePanel == PhonePlaybackPanel.Episodes && episodes.isEmpty())) dismissPanel(chosen = false)
+                phonePanel == PhonePlaybackPanel.Episodes && episodes.isEmpty())) closePanel()
     }
     LaunchedEffect(ended, endHandled, next, playEpisode != null, phonePanel, failed, error) {
         if (ended && !endHandled && seriesEpisode && next != null && playEpisode != null && phonePanel == null && !failed && error == null) {
@@ -127,7 +128,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         seekTarget = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
         send(PlayerCommand.Seek(target))
     } }
-    fun show(fact: PlayerFact) {
+    /** Mirror a player fact into this screen's state. */
+    fun applyFact(fact: PlayerFact) {
         when (fact) {
             is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
             is PlayerFact.Tracks -> tracks = fact.options
@@ -147,15 +149,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             PlayerFact.Failed -> { buffering = false; failed = true }
         }
     }
-    LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::show) }
+    LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), { fact ->
-            if (input === rendering) { show(fact); observe(fact) }
+            if (input === rendering) { applyFact(fact); observe(fact) }
         }, commands)
         PlayerOverlayHost(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown) false else when (event.key) {
-            Key.Escape -> { if (phone) latestPhoneBack() else close(); true }
+            Key.Escape -> { if (phone) latestPhoneBack() else if (phonePanel != null) dismissPanel() else close(); true }
             Key.Spacebar, Key.MediaPlayPause -> { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true }
             else -> if (!visible && !locked) { visible = true; interaction++; true } else false
         }
@@ -189,14 +191,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
                         episodes = if (episodeTitle) ({ phonePanel = PhonePlaybackPanel.Episodes; interaction++ }) else null,
                         episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
-                        // Next during playback goes straight to the next episode; the panel belongs to the end.
-                        next = if (episodeTitle) ({ next?.let { playEpisode?.invoke(it) } }) else null,
-                        nextEnabled = next != null && playEpisode != null, episodesFocus = episodesFocus, nextFocus = nextFocus)
+                        next = if (episodeTitle) playNext else null,
+                        nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
                 }
                 else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
                     { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
                     streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
-                    next = if (seriesEpisode) ({ next?.let { playEpisode?.invoke(it) } }) else null, nextEnabled = next != null && playEpisode != null)
+                    next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled)
             }
         }
         if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
