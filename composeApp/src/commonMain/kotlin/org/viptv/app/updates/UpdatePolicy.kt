@@ -30,17 +30,12 @@ fun downloadMatches(feed: UpdateFeed, size: Long, sha256: String): Boolean =
 fun downloadRetryDelayMillis(retry: Int): Long? = listOf(15_000L, 60_000L, 5 * 60_000L).getOrNull(retry - 1)
 
 /**
- * The "Update ready" prompt shows outside the player, for a verified download (or one waiting for
- * the install permission) the viewer has not put off with Later this session.
+ * The "Update ready" prompt shows where [allowed] (never over the player or sign-in), for a verified
+ * download (or one waiting for the install permission) the viewer has not put off with Later this session.
  */
-fun showUpdatePrompt(status: UpdateStatus, playing: Boolean, snoozedVersionCodes: Set<Long>): Boolean {
-    if (playing) return false
-    val feed = when (status) {
-        is UpdateStatus.Ready -> status.feed
-        is UpdateStatus.NeedsPermission -> status.feed
-        else -> return false
-    }
-    return feed.versionCode !in snoozedVersionCodes
+fun showUpdatePrompt(status: UpdateStatus, allowed: Boolean, snoozedVersionCodes: Set<Long>): Boolean {
+    val feed = status.offeredFeed ?: return false
+    return allowed && feed.versionCode !in snoozedVersionCodes
 }
 
 /** "Checked just now", "Checked 5 min ago", ... for Settings › About. */

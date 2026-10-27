@@ -45,12 +45,12 @@ class AppUpdatePolicyTest {
 
     @Test fun thePromptShowsAReadyUpdateOutsideThePlayerUntilLater() {
         val ready = UpdateStatus.Ready(feed)
-        assertTrue(showUpdatePrompt(ready, playing = false, snoozedVersionCodes = emptySet()))
-        assertTrue(showUpdatePrompt(UpdateStatus.NeedsPermission(feed, true), playing = false, snoozedVersionCodes = emptySet()))
-        assertFalse(showUpdatePrompt(ready, playing = true, snoozedVersionCodes = emptySet()), "Never over the player")
-        assertFalse(showUpdatePrompt(ready, playing = false, snoozedVersionCodes = setOf(1301)), "Later")
-        assertTrue(showUpdatePrompt(ready, playing = false, snoozedVersionCodes = setOf(1300)), "A newer build asks again")
-        assertFalse(showUpdatePrompt(UpdateStatus.Downloading(feed, 10), playing = false, snoozedVersionCodes = emptySet()))
+        assertTrue(showUpdatePrompt(ready, allowed = true, snoozedVersionCodes = emptySet()))
+        assertTrue(showUpdatePrompt(UpdateStatus.NeedsPermission(feed, true), allowed = true, snoozedVersionCodes = emptySet()))
+        assertFalse(showUpdatePrompt(ready, allowed = false, snoozedVersionCodes = emptySet()), "Never over the player")
+        assertFalse(showUpdatePrompt(ready, allowed = true, snoozedVersionCodes = setOf(1301)), "Later")
+        assertTrue(showUpdatePrompt(ready, allowed = true, snoozedVersionCodes = setOf(1300)), "A newer build asks again")
+        assertFalse(showUpdatePrompt(UpdateStatus.Downloading(feed, 10), allowed = true, snoozedVersionCodes = emptySet()))
     }
 
     @Test fun lastCheckLabels() {

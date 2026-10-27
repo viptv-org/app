@@ -69,7 +69,8 @@ open class MainActivity : ComponentActivity() {
             // App updates (docs/APP_UPDATES.md): checks follow the connection, and a download waits while the player is open.
             if (updater != null) {
                 LaunchedEffect(state.screen == Screen.Player) { updater.playingChanged(state.screen == Screen.Player) }
-                LaunchedEffect(state.starting, state.localMode, controller.updateServerOrigin()) { updater.connectionChanged() }
+                // Not while starting: the restored session is not known yet, and About would flash "Sign in to a server".
+                LaunchedEffect(state.starting, state.localMode, controller.updateServerOrigin()) { if (!state.starting) updater.connectionChanged() }
             }
             CompositionLocalProvider(LocalAppUpdater provides updater) {
                 androidx.compose.foundation.layout.Box {
@@ -114,6 +115,11 @@ open class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         applicationModel?.controller?.resumePlayback()
-        applicationModel?.let { model -> model.updater?.foreground(playing = model.controller.state.value.screen == Screen.Player) }
+        // Return-to-app update check. App.kt's foreground hook (appForeground) is not installed on Android
+        // while ApplicationModel owns the controller (app#75), so the activity drives it directly.
+        applicationModel?.let { model ->
+            val current = model.controller.state.value
+            if (!current.starting) model.updater?.foreground(playing = current.screen == Screen.Player)
+        }
     }
 }

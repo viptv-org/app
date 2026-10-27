@@ -49,6 +49,9 @@ class AppUpdateFeedTest {
         assertFailsWith<UpdateFeedException>("plain HTTP off loopback") {
             parseUpdateFeed(with("url", "http://viptv.example/viptv.apk"), feedUrl) }
         assertFailsWith<UpdateFeedException> { parseUpdateFeed(with("url", "file:///sdcard/viptv.apk"), feedUrl) }
+        assertFailsWith<UpdateFeedException>("userinfo cannot pose as loopback") {
+            parseUpdateFeed(with("url", "http://localhost:1@evil.example/x.apk"), feedUrl) }
+        assertFailsWith<UpdateFeedException> { parseUpdateFeed(with("url", "http://127.0.0.1.evil.example/x.apk"), feedUrl) }
     }
 
     @Test fun theChecksumIsNormalisedToLowercase() {

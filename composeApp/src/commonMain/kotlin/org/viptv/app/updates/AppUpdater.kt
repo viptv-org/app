@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.concurrent.Volatile
 
 /** Where the updater is; Settings › About shows it and the prompt reads it. */
 sealed interface UpdateStatus {
@@ -88,10 +89,12 @@ class AppUpdater(
         lastCheckMillis = platform.lastCheckMillis))
     val state: StateFlow<AppUpdateState> = mutable.asStateFlow()
 
+    /** The one record of whether the player is open; changed only through [applyPlaying]. */
     private var playing = false
     private var check: Job? = null
     private var download: Job? = null
-    private var downloadGeneration = 0
+    /** Read by progress callbacks on the download thread. */
+    @Volatile private var downloadGeneration = 0
     private var awaitingPermission = false
 
     private var status: UpdateStatus
@@ -102,9 +105,11 @@ class AppUpdater(
 
     /** The app came to the front (and on launch). */
     fun foreground(playing: Boolean) {
-        this.playing = playing
+        applyPlaying(playing)
         // A required update asks again on every return, even after Later.
         if (mutable.value.required) mutable.update { it.copy(snoozed = emptySet()) }
+        // Back from Android's confirmation without an answer (Home, or the task switcher): Install works again.
+        (status as? UpdateStatus.Installing)?.let { status = UpdateStatus.Ready(it.feed) }
         if (awaitingPermission && status is UpdateStatus.NeedsPermission) {
             if (platform.canInstall()) { awaitingPermission = false; install() }
         }
@@ -116,18 +121,19 @@ class AppUpdater(
 
     /** The player opened or closed: a download waits while it is open, and a due check runs after. */
     fun playingChanged(playing: Boolean) {
-        if (this.playing == playing) return
+        applyPlaying(playing)
+        if (!playing) maybeCheck(manual = false)
+    }
+
+    /** Pauses a running download when the player opens, and continues a paused one whenever it is closed. */
+    private fun applyPlaying(playing: Boolean) {
         this.playing = playing
         val current = status
-        if (playing) {
-            if (current is UpdateStatus.Downloading && download != null) {
-                cancelDownload()
-                status = current.copy(paused = true)
-            }
-            return
-        }
-        if (current is UpdateStatus.Downloading && current.paused) startDownload(current.feed)
-        maybeCheck(manual = false)
+        if (current !is UpdateStatus.Downloading) return
+        if (playing && download != null) {
+            cancelDownload()
+            status = current.copy(paused = true)
+        } else if (!playing && current.paused) startDownload(current.feed)
     }
 
     /** Settings › About › Check for updates. */
@@ -135,11 +141,7 @@ class AppUpdater(
 
     /** "Install" on the prompt or in Settings. */
     fun install() {
-        val feed = when (val current = status) {
-            is UpdateStatus.Ready -> current.feed
-            is UpdateStatus.NeedsPermission -> current.feed
-            else -> return
-        }
+        val feed = status.offeredFeed ?: return
         mutable.update { it.copy(snoozed = it.snoozed - feed.versionCode) }
         if (!platform.canInstall()) {
             status = UpdateStatus.NeedsPermission(feed, platform.hasInstallPermissionScreen())
@@ -177,11 +179,8 @@ class AppUpdater(
 
     /** "Later": hides the prompt for this version until the app restarts. */
     fun later() {
-        val feed = when (val current = status) {
-            is UpdateStatus.Ready -> current.feed
-            is UpdateStatus.NeedsPermission -> { status = UpdateStatus.Ready(current.feed); current.feed }
-            else -> return
-        }
+        val feed = status.offeredFeed ?: return
+        status = UpdateStatus.Ready(feed)
         awaitingPermission = false
         mutable.update { it.copy(snoozed = it.snoozed + feed.versionCode) }
     }
@@ -193,10 +192,7 @@ class AppUpdater(
             if (!status.holdsDownload()) status = UpdateStatus.NoServer
             return
         }
-        val now = platform.nowMillis()
-        if (!updateCheckDue(mutable.value.lastCheckMillis, now, playing, manual)) return
-        platform.lastCheckMillis = now
-        mutable.update { it.copy(lastCheckMillis = now) }
+        if (!updateCheckDue(mutable.value.lastCheckMillis, platform.nowMillis(), playing, manual)) return
         val previous = status
         if (!previous.holdsDownload()) status = UpdateStatus.Checking
         check = scope.launch {
@@ -205,10 +201,14 @@ class AppUpdater(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                // A failed quiet check keeps a download it already has.
+                // A failed quiet check keeps a download it already has, and does not start the hourly limit.
                 if (!previous.holdsDownload()) status = UpdateStatus.Failed(checkFailure(error))
                 return@launch
             }
+            // Only a check that reached the feed starts the hourly limit.
+            val checked = platform.nowMillis()
+            platform.lastCheckMillis = checked
+            mutable.update { it.copy(lastCheckMillis = checked) }
             when (decision) {
                 UpdateDecision.UpToDate -> {
                     cancelDownload()
@@ -277,6 +277,14 @@ class AppUpdater(
         else -> "Couldn't check for updates. Check your connection and try again."
     }
 }
+
+/** The verified build the prompt offers: ready, or waiting for the install permission. */
+val UpdateStatus.offeredFeed: UpdateFeed?
+    get() = when (this) {
+        is UpdateStatus.Ready -> feed
+        is UpdateStatus.NeedsPermission -> feed
+        else -> null
+    }
 
 private fun UpdateStatus.holdsDownload() = this is UpdateStatus.Downloading || this is UpdateStatus.Ready ||
     this is UpdateStatus.NeedsPermission || this is UpdateStatus.Installing

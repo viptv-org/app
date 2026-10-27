@@ -1,5 +1,6 @@
 package org.viptv.app.updates
 
+import io.ktor.http.Url
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -63,13 +64,19 @@ fun parseUpdateFeed(text: String, feedUrl: String): UpdateFeed {
     return feed.copy(url = absolute, sha256 = feed.sha256.lowercase())
 }
 
-/** HTTPS only; plain HTTP is allowed for loopback, the local test feed behind `adb reverse`. */
+/**
+ * HTTPS only; plain HTTP is allowed for loopback, the local test feed behind `adb reverse`. The
+ * host comes from a URL parser, so userinfo (`http://localhost@evil.example/`) cannot fake it.
+ */
 internal fun isAllowedUpdateUrl(url: String): Boolean {
-    val lower = url.lowercase()
-    if (lower.startsWith("https://")) return lower.length > "https://".length
-    if (!lower.startsWith("http://")) return false
-    val host = lower.removePrefix("http://").substringBefore('/').substringBeforeLast(':')
-    return host == "127.0.0.1" || host == "localhost" || host == "[::1]"
+    val parsed = try { Url(url) } catch (_: Exception) { return false }
+    // Ktor fills in defaults for strings that are not URLs; require the scheme to be really there.
+    if (!url.lowercase().startsWith(parsed.protocol.name + "://") || parsed.host.isEmpty()) return false
+    return when (parsed.protocol.name) {
+        "https" -> true
+        "http" -> parsed.host == "127.0.0.1" || parsed.host.equals("localhost", ignoreCase = true)
+        else -> false
+    }
 }
 
 internal fun resolveUpdateUrl(base: String, reference: String): String {

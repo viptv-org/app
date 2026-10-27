@@ -37,7 +37,7 @@ GET <server origin>/updates/android/update.json
 {
   "version_code": 1312,
   "version_name": "0.1.312+a1b2c3d",
-  "url": "viptv-1312.apk",
+  "url": "https://server.example/updates/android/viptv-1312.apk",
   "sha256": "<64 hex characters>",
   "size": 104857600,
   "notes": "optional, shown in the prompt",
@@ -47,15 +47,17 @@ GET <server origin>/updates/android/update.json
 
 - `version_code`, `version_name`, `url`, `sha256` and `size` are required.
   Unknown fields are ignored.
-- `url` is absolute, or relative to `update.json` (`viptv-1312.apk` resolves
-  to `<origin>/updates/android/viptv-1312.apk`). It must be `https`; plain
-  `http` is accepted only on `127.0.0.1`/`localhost`, for the local test feed.
+- `url` is the absolute address of the APK. It must be `https`; plain `http`
+  is accepted only on `127.0.0.1`/`localhost`, for the local test feed. The
+  host is checked with a URL parser, so userinfo cannot fake loopback. (A
+  relative `url` is tolerated and resolves against `update.json`, but the
+  publishing tool always writes an absolute one.)
 - `min_supported_version_code` (optional): an installed build below it treats
   the update as required. The prompt says the version is no longer supported,
   and **Later** only hides it until the next return to the app.
-- The origin is the server the app is signed in to (`viptv-kmp.embedez.com`
-  for the dev instance), so a future production server works unchanged. In
-  local mode there is no feed.
+- The origin is the server the app is signed in to (`<server origin>`; for
+  now the KMP dev instance), so a future production server works unchanged.
+  In local mode there is no feed.
 - `-Pviptv.updateFeed=<url>` replaces the address at build time, e.g. a GitHub
   Releases `latest/download/update.json` if the repository goes public, or a
   loopback test feed. It must be `https`, or `http` on `127.0.0.1`/`localhost`.
@@ -69,13 +71,14 @@ Two static files under `/updates/android/`:
 
 | Path | Content |
 |---|---|
-| `/updates/android/update.json` | the feed above |
-| `/updates/android/viptv-<versionCode>.apk` | the release APK it names |
+| `<server origin>/updates/android/update.json` | the feed above, `url` = `<server origin>/updates/android/viptv-<versionCode>.apk` |
+| `<server origin>/updates/android/viptv-<versionCode>.apk` | the release APK it names |
 
 `tools/publish_android_update.py` writes both from an APK:
 
 ```sh
-python3 tools/publish_android_update.py androidApp/build/outputs/apk/release/androidApp-release.apk <feed-dir>
+python3 tools/publish_android_update.py androidApp/build/outputs/apk/release/androidApp-release.apk \
+    <web root>/updates/android --base-url <server origin>/updates/android
 ```
 
 It reads the version with `aapt2 dump badging` and refuses an APK for another
@@ -110,14 +113,48 @@ on the dev VPS, so:
 - A future CI or GitHub Releases feed needs this keystore moved into a CI
   secret first.
 
+## Moving to GitHub Releases
+
+The feed format and `-Pviptv.updateFeed` already allow a GitHub Releases feed
+(`https://github.com/viptv-org/app/releases/latest/download/update.json`, whose
+`url` is the release asset's absolute download address). Three things block it
+today:
+
+1. **Signing key.** Release APKs are signed with the dev host's debug
+   keystore. CI must sign with that same key, so the keystore and its
+   passwords have to move into a CI secret first (and the build read them from
+   there). A CI build signed with any other key cannot update existing
+   installs.
+2. **Private build dependency.** Every Android build compiles the torrent
+   runtime from `viptv-org/playback-gateway` (`TORRENT_RUNTIME_REF`,
+   `tools/build_torrent_runtime.py`), which is private. CI needs read access
+   to it (a deploy key or token secret) or a published prebuilt runtime. The
+   alternative, `-Pviptv.torrentRuntime=false`, ships a build without native
+   torrents.
+3. **Private repositories.** While `viptv-org/app` is private, release assets
+   need authentication to download, which the app cannot provide, and Actions
+   minutes are capped. The repository has to be public (or the assets hosted
+   elsewhere) before devices can use such a feed.
+
+Once these are solved: build the multi-ABI release in CI, run
+`tools/publish_android_update.py` with `--base-url` set to the release's
+download address, attach the APK and `update.json` to the release, and build
+the app with `-Pviptv.updateFeed` pointing at `latest/download/update.json`.
+
 ## When the app checks
 
 - On launch, on every return to the app and when the player closes, at most
   once an hour, never while the player is open. **Check for updates** in
   Settings skips the hourly limit.
-- The last check time is stored, so the hourly limit holds across restarts.
+- Only a check that reached the feed starts the hourly limit; a failed or
+  offline check is retried on the next return. The time is stored, so the
+  limit holds across restarts.
 - A quiet check that fails keeps an update that is already downloaded or
   downloading.
+- The return-to-app check runs from `MainActivity.onStart`. App.kt's
+  foreground hook (`ApplicationController.appForeground`) would be the shared
+  place, but it is not installed on Android while `ApplicationModel` owns the
+  controller (app#75).
 
 ## Download
 
@@ -146,7 +183,9 @@ on the dev VPS, so:
   the screen does not exist (some Fire TV models), the prompt gives the Fire TV
   path and **Try again**.
 - The APK goes to a `PackageInstaller` session and Android shows its
-  confirmation. Backing out of it acts as Later. Android itself refuses a
+  confirmation. Backing out of it acts as Later. Leaving it without an
+  answer (Home) makes the update ready again on the next return, and a new
+  Install starts a fresh session. Android itself refuses a
   lower `versionCode` and a different signing key. The app never offers the
   same or a lower `version_code`.
 
@@ -158,7 +197,7 @@ On the TV emulator, without the real server:
    `-Pviptv.updateFeed=http://127.0.0.1:8765/updates/android/update.json`,
    then `adb -s <serial> install -r <apk>`.
 2. Make a later commit and build N+1 the same way. Publish it into a scratch
-   directory: `python3 tools/publish_android_update.py <apk N+1> <dir>/updates/android`.
+   directory: `python3 tools/publish_android_update.py <apk N+1> <dir>/updates/android --base-url http://127.0.0.1:8765/updates/android`.
 3. Serve the scratch directory: `python3 -m http.server 8765 --bind 127.0.0.1 --directory <dir>`.
    Then `adb -s <serial> reverse tcp:8765 tcp:8765`.
 4. Open the app (or return to it). "Update ready" appears once the download is

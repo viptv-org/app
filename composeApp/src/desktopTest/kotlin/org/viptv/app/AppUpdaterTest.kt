@@ -33,7 +33,7 @@ class AppUpdaterTest {
         val status = assertIs<UpdateStatus.Ready>(updater.state.value.status)
         assertEquals("https://viptv.example/updates/android/viptv-1301.apk", status.feed.url)
         assertEquals(platform.now, platform.lastCheckMillis, "The hourly limit survives restarts")
-        assertTrue(showUpdatePrompt(updater.state.value.status, false, updater.state.value.snoozed))
+        assertTrue(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
     }
 
     @Test fun anOlderOrSameBuildIsUpToDateAndStaleDownloadsAreDeleted() = runTest {
@@ -86,13 +86,40 @@ class AppUpdaterTest {
         assertIs<UpdateStatus.Ready>(updater.state.value.status)
     }
 
+    @Test fun aDownloadPausedInThePlayerResumesWhenTheAppReturnsOutsideIt() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        platform.downloadGate = CompletableDeferred()
+        val updater = updater(platform)
+        updater.foreground(false); advanceUntilIdle()
+        updater.playingChanged(true); advanceUntilIdle()
+        platform.downloadGate = null
+        // The viewer left the app from the player and came back to Home: the return reports it first.
+        updater.foreground(playing = false); advanceUntilIdle()
+        updater.playingChanged(false); advanceUntilIdle()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+        assertEquals(2, platform.downloads)
+    }
+
+    @Test fun leavingAndroidsConfirmationWithoutAnAnswerLetsInstallRunAgain() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        val updater = updater(platform)
+        updater.foreground(false); advanceUntilIdle()
+        updater.install(); advanceUntilIdle()
+        assertIs<UpdateStatus.Installing>(updater.state.value.status)
+        updater.foreground(false); advanceUntilIdle()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+        assertTrue(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
+        updater.install(); advanceUntilIdle()
+        assertEquals(2, platform.installs.size)
+    }
+
     @Test fun aChecksumMismatchIsNeverOffered() = runTest {
         val platform = FakeUpdatePlatform(feedJson(1301))
         platform.downloadOutcomes += UpdateVerificationException("sha256 mismatch")
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
         assertIs<UpdateStatus.Failed>(updater.state.value.status)
-        assertFalse(showUpdatePrompt(updater.state.value.status, false, emptySet()))
+        assertFalse(showUpdatePrompt(updater.state.value.status, true, emptySet()))
         updater.install(); advanceUntilIdle()
         assertTrue(platform.installs.isEmpty())
     }
@@ -123,10 +150,10 @@ class AppUpdaterTest {
         val updater = updater(platform)
         updater.foreground(false); advanceUntilIdle()
         updater.later()
-        assertFalse(showUpdatePrompt(updater.state.value.status, false, updater.state.value.snoozed))
+        assertFalse(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
         platform.feed = feedJson(1302); platform.now += hour
         updater.foreground(false); advanceUntilIdle()
-        assertTrue(showUpdatePrompt(updater.state.value.status, false, updater.state.value.snoozed), "A newer build asks again")
+        assertTrue(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed), "A newer build asks again")
     }
 
     @Test fun aRequiredUpdateAsksAgainOnEveryReturn() = runTest {
@@ -135,9 +162,9 @@ class AppUpdaterTest {
         updater.foreground(false); advanceUntilIdle()
         assertTrue(updater.state.value.required)
         updater.later()
-        assertFalse(showUpdatePrompt(updater.state.value.status, false, updater.state.value.snoozed))
+        assertFalse(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
         updater.foreground(false)
-        assertTrue(showUpdatePrompt(updater.state.value.status, false, updater.state.value.snoozed))
+        assertTrue(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
     }
 
     @Test fun installHandsTheVerifiedBuildToAndroid() = runTest {
@@ -149,7 +176,7 @@ class AppUpdaterTest {
         assertIs<UpdateStatus.Installing>(updater.state.value.status)
         platform.installResult!!(InstallResult.Cancelled)
         assertIs<UpdateStatus.Ready>(updater.state.value.status)
-        assertFalse(showUpdatePrompt(updater.state.value.status, false, updater.state.value.snoozed), "Backing out acts as Later")
+        assertFalse(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed), "Backing out acts as Later")
         updater.install(); advanceUntilIdle(); platform.installResult!!(InstallResult.Failed)
         assertIs<UpdateStatus.Failed>(updater.state.value.status)
     }
@@ -177,6 +204,19 @@ class AppUpdaterTest {
         platform.fetchFails = true
         updater.checkNow(); advanceUntilIdle()
         assertIs<UpdateStatus.Ready>(updater.state.value.status)
+    }
+
+    @Test fun aFailedCheckDoesNotStartTheHourlyLimit() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        platform.fetchFails = true
+        val updater = updater(platform)
+        updater.foreground(false); advanceUntilIdle()
+        assertNull(platform.lastCheckMillis)
+        platform.fetchFails = false; platform.now += 60_000
+        updater.foreground(false); advanceUntilIdle()
+        assertEquals(2, platform.fetched.size, "Back online a minute later: checks again")
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+        assertEquals(platform.now, platform.lastCheckMillis)
     }
 
     @Test fun aFailedCheckIsReported() = runTest {

@@ -70,7 +70,7 @@ private fun AppUpdateSettings(updater: AppUpdater) {
         val status = updates.status
         val label = updateActionLabel(status)
         val enabled = status != UpdateStatus.Checking && status !is UpdateStatus.Installing
-        if (status is UpdateStatus.Ready || status is UpdateStatus.NeedsPermission) Button(updater::settingsAction, enabled = enabled) { Text(label) }
+        if (status.offeredFeed != null) Button(updater::settingsAction, enabled = enabled) { Text(label) }
         else OutlinedButton(updater::settingsAction, enabled = enabled) { Text(label) }
     }
 }

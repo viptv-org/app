@@ -31,7 +31,8 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
     private val preferences = application.getSharedPreferences("viptv.updates", Context.MODE_PRIVATE)
     internal val directory = File(application.filesDir, "updates")
     private val installAction = application.packageName + ".UPDATE_INSTALL_STATUS"
-    private var pendingResult: ((InstallResult) -> Unit)? = null
+    /** Set where the install starts, read by the status receiver on the main thread. */
+    @Volatile private var pendingResult: ((InstallResult) -> Unit)? = null
     private var receiverRegistered = false
 
     private val packageInfo get() = application.packageManager.getPackageInfo(application.packageName, 0)
@@ -132,6 +133,8 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
         pendingResult = result
         withContext(Dispatchers.IO) {
             val installer = application.packageManager.packageInstaller
+            // A confirmation the viewer walked away from leaves its session open; start clean.
+            installer.mySessions.forEach { runCatching { installer.abandonSession(it.sessionId) } }
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
                 setAppPackageName(application.packageName)
                 setSize(apk.length())

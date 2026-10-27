@@ -40,15 +40,13 @@ fun updateStatusLabel(status: UpdateStatus): String = when (status) {
 }
 
 /** Settings' update action: Install once a build is ready, Check for updates otherwise. */
-fun updateActionLabel(status: UpdateStatus): String = when (status) {
-    is UpdateStatus.Ready, is UpdateStatus.NeedsPermission -> "Install update"
-    else -> "Check for updates"
-}
+fun updateActionLabel(status: UpdateStatus): String = if (status.offeredFeed != null) "Install update" else "Check for updates"
 
 fun AppUpdater.settingsAction() {
-    when (state.value.status) {
-        is UpdateStatus.Ready, is UpdateStatus.NeedsPermission -> install()
-        UpdateStatus.Checking, is UpdateStatus.Installing -> Unit
+    val status = state.value.status
+    when {
+        status.offeredFeed != null -> install()
+        status == UpdateStatus.Checking || status is UpdateStatus.Installing -> Unit
         else -> checkNow()
     }
 }
@@ -65,9 +63,9 @@ private const val PERMISSION_STEP = "Allow VIPTV to install apps in the screen t
 @Composable
 fun AppUpdatePrompt(updater: AppUpdater, television: Boolean, allowed: Boolean) {
     val state by updater.state.collectAsState()
-    if (!showUpdatePrompt(state.status, playing = !allowed, snoozedVersionCodes = state.snoozed)) return
+    if (!showUpdatePrompt(state.status, allowed, state.snoozed)) return
     val status = state.status
-    val feed = when (status) { is UpdateStatus.Ready -> status.feed; is UpdateStatus.NeedsPermission -> status.feed; else -> return }
+    val feed = status.offeredFeed ?: return
     val permission = status as? UpdateStatus.NeedsPermission
     val title = if (permission != null) "Allow updates" else if (state.required) "Update required" else "Update ready"
     val body = when {
