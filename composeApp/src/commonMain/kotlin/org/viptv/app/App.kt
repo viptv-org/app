@@ -73,7 +73,8 @@ fun App(
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
             .pointerInput(controller) { awaitPointerEventScope { while (true) { awaitPointerEvent(PointerEventPass.Initial); controller.userActivity() } } }
-            .background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
+            .background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background)
+            .then(if (playerDrawsEdgeToEdge(state.screen, television)) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
             if (state.starting) {
                 if (television) {
                     DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
@@ -182,6 +183,13 @@ fun App(
         }
     }
 }
+
+/**
+ * The full-screen player draws its video and black canvas under the display cutout and system bars, so the
+ * root must not pad it with the app background; the player keeps its own controls inside the safe-drawing
+ * insets. TV keeps the root padding unchanged.
+ */
+internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
 
 /** Pages the quiet lane reloads in place. The sources sheet over Details does not refresh. */
 private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.Library, Screen.History, Screen.Details)
