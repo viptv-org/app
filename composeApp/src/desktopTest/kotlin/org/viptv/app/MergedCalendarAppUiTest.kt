@@ -136,8 +136,9 @@ class MergedCalendarAppUiTest {
         fun showToday() {
             until("the calendar rows") { controller.state.value.calendarEntries.isNotEmpty() && !controller.state.value.busy }
             val today = controller.state.value.calendarDays.single { it.label == "Today" }
-            until("today's date") { nodes().any { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("${today.weekday} ${today.number} ") } }
-            val date = nodes().first { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("${today.weekday} ${today.number} ") }
+            fun date() = nodes().firstOrNull { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("${today.weekday} ${today.number} ") }
+            until("today's date") { date() != null }
+            val date = requireNotNull(date())
             assertTrue(date.config[SemanticsActions.OnClick].action!!.invoke()); frames(40)
         }
         fun click(label: String) {
