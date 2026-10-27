@@ -32,6 +32,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class MergedCalendarAppUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val clock = MergedCalendarWire.fixedClock()
     @Test fun phoneShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 390, height = 844, name = "phone")
     @Test fun tvShowsYourShowsMergedAndFiltersThem() = merged(television = true, width = 1920, height = 1080, name = "tv")
     @Test fun tabletShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1024, height = 768, name = "tablet", details = false)
@@ -78,6 +79,8 @@ class MergedCalendarAppUiTest {
 
     private fun merged(television: Boolean, width: Int, height: Int, name: String, details: Boolean = true,
         desktopChrome: Boolean = false, browser: Boolean = false) = scene(mergedPage, television, width, height, desktopChrome, browser) { s ->
+        val phone = !television && width < 640
+        if (phone) s.showToday()
         s.until("the merged rows") { s.nodes().any { text(it).contains("Public premiere") } && s.nodes().any { text(it).contains("Slow Horses") } }
         // TV's preview of the focused library row carries the mark too; count the rows themselves.
         assertEquals(2, s.nodes().count { marked(it) && text(it).contains("Chapter") }, "Both library rows are marked")
@@ -94,6 +97,7 @@ class MergedCalendarAppUiTest {
         else {
             // Leaving the Calendar forgets the choice: it comes back on All.
             s.controller.navigate(Screen.Library); s.frames(10); s.controller.navigate(Screen.Calendar)
+            if (phone) s.showToday()
         }
         s.until("All again") { s.nodes().any { text(it).contains("Public premiere") } }
         if (!details) return@scene
@@ -124,6 +128,17 @@ class MergedCalendarAppUiTest {
         fun until(what: String, condition: () -> Boolean) {
             val deadline = System.nanoTime() + 10_000_000_000L
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
+        }
+        /**
+         * A phone shows the week as one list from its first day, so today's rows can sit below
+         * the fold at 390x844. Choose today's date, as a viewer would, to bring them into view.
+         */
+        fun showToday() {
+            until("the calendar rows") { controller.state.value.calendarEntries.isNotEmpty() && !controller.state.value.busy }
+            val today = controller.state.value.calendarDays.single { it.label == "Today" }
+            until("today's date") { nodes().any { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("${today.weekday} ${today.number} ") } }
+            val date = nodes().first { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("${today.weekday} ${today.number} ") }
+            assertTrue(date.config[SemanticsActions.OnClick].action!!.invoke()); frames(40)
         }
         fun click(label: String) {
             val node = nodes().first { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
