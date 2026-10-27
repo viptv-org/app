@@ -23,7 +23,7 @@ internal enum class TvProfileEditAction { Name, Pin, Delete, Maturity, Language 
 @Composable
 internal fun TvProfileEditScreen(profile: Profile?, count: Int, busy: Boolean, error: String?,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
-    setAvatar: (String, String) -> Unit, delete: (String) -> Unit,
+    setAvatar: (String, Int, String) -> Unit, delete: (String) -> Unit,
     maturity: String? = null, language: String? = null, backChanged: ((() -> Unit)?) -> Unit = {}, pinAvailable: Boolean = true, editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null) {
     var action by remember(profile?.id) { mutableStateOf<TvProfileEditAction?>(null) }
     var avatar by remember { mutableStateOf(false) }
@@ -80,7 +80,7 @@ internal fun TvProfileEditScreen(profile: Profile?, count: Int, busy: Boolean, e
         action?.let { selected -> TvProfileEditDialog(selected, profile, busy,
             { restore = targets.getValue(selected); action = null }, rename, setPin, delete, pinAvailable, editingCurrent, openSettings, scale) }
     }
-    if (avatar) AvatarPicker(profile, busy, { restore = avatarFocus; avatar = false }, { id, pin ->
-        setAvatar(id, pin); restore = avatarFocus; avatar = false
+    if (avatar) AvatarPicker(profile, busy, AvatarPickerLayout.Television, { restore = avatarFocus; avatar = false }, { pick, pin ->
+        setAvatar(pick.style, pick.choice, pin); restore = avatarFocus; avatar = false
     }, pinAvailable = pinAvailable)
 }

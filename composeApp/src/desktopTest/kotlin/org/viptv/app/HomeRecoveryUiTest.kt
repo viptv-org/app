@@ -165,6 +165,115 @@ class HomeRecoveryUiTest {
         }
     }
 
+    @Test fun phoneHomeDropsEmptyAndFailedRowsAndShowsARecoveredRow() = onEdt {
+        val ready = row.copy(id = "ready", title = "Saved row")
+        val empty = row.copy(id = "empty", title = "Empty row", state = RowState.EMPTY, cards = emptyList())
+        val failed = row.copy(id = "failed", title = "Failed row", state = RowState.FAILED, cards = emptyList())
+        val pending = row.copy(id = "loading", title = "Loading row", state = RowState.PENDING, cards = emptyList())
+        var snapshot by mutableStateOf(home(listOf(empty, ready, failed, pending)))
+        val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
+            HomeScreen(snapshot, false, {}, {}, busy = false)
+        } }
+        try {
+            frames(scene, 24)
+            assertTrue(labels(scene).contains("Saved row"))
+            assertTrue(labels(scene).contains("Loading row"), "pending rows keep their skeleton heading")
+            assertFalse(labels(scene).contains("Empty row"), "an empty row must not draw a heading")
+            assertFalse(labels(scene).contains("Failed row"), "a failed row must not draw a heading")
+            assertFalse(labels(scene).contains("Try again"), "a failed row must not draw a retry")
+            capture(scene, "phone-home-hidden-empty-failed")
+            // The quiet lane rebuilds Home; a recovered row appears, a row that
+            // resolved to failed disappears, and a pending row keeps its skeleton.
+            snapshot = home(listOf(ready, failed.copy(state = RowState.READY, cards = listOf(card.copy(title = "Recovered title"))), pending))
+            frames(scene, 24)
+            assertTrue(labels(scene).contains("Failed row"), "a row that loads appears on the next snapshot")
+            assertTrue(labels(scene).contains("Recovered title"))
+            snapshot = home(listOf(ready, failed.copy(state = RowState.READY, cards = listOf(card.copy(title = "Recovered title"))), pending.copy(state = RowState.FAILED, cards = emptyList())))
+            frames(scene, 24)
+            assertFalse(labels(scene).contains("Loading row"), "a pending row that fails disappears")
+        } finally { scene.close() }
+    }
+
+    @Test fun homeWithOnlyHiddenRowsShowsItsExistingEmptyOrErrorState() = onEdt {
+        for (tv in listOf(false, true)) {
+            var retried = 0
+            val hidden = listOf(
+                row.copy(id = "empty", title = "Empty row", state = RowState.EMPTY, cards = emptyList()),
+                row.copy(id = "failed", title = "Failed row", state = RowState.FAILED, cards = emptyList()),
+            )
+            val scene = ImageComposeScene(if (tv) 1920 else 390, if (tv) 1080 else 844, Density(1f)) { ViptvTheme(tv) {
+                HomeScreen(home(hidden), tv, {}, { retried++ }, busy = false)
+            } }
+            try {
+                frames(scene, 24)
+                assertFalse(labels(scene).contains("Empty row")); assertFalse(labels(scene).contains("Failed row"))
+                assertTrue(labels(scene).any { it == "Nothing to show yet" || it == "Could not load Home" }, "TV=$tv: ${labels(scene)}")
+                click(scene, "Retry Home"); assertEquals(1, retried)
+                capture(scene, if (tv) "tv-home-hidden-rows" else "phone-home-hidden-rows")
+            } finally { scene.close() }
+        }
+    }
+
+    @Test fun tvHomeMovesFocusOffARowThatDisappears() = onEdt {
+        val firstCard = card.copy(identity = MediaIdentity("tt-a", "movie", emptyList()), title = "First card")
+        val secondCard = card.copy(identity = MediaIdentity("tt-b", "movie", emptyList()), title = "Second card")
+        val firstRow = row.copy(id = "first", title = "First row", cards = listOf(firstCard))
+        val secondRow = row.copy(id = "second", title = "Second row", cards = listOf(secondCard))
+        var snapshot by mutableStateOf(home(listOf(firstRow, secondRow)))
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
+            focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+            HomeScreen(snapshot, true, {}, {}, busy = false)
+        } }
+        try {
+            var frame = awaitState(scene, "first row focus", 0) { focusedLabel(scene)?.contains("First card") == true }
+            press(scene, Key.DirectionDown); frames(scene, 12)
+            frame = awaitState(scene, "second row focus", frame) { focusedLabel(scene)?.contains("Second card") == true }
+            snapshot = home(listOf(firstRow, secondRow.copy(state = RowState.FAILED, cards = emptyList())))
+            frame = awaitState(scene, "focus returns to the surviving row", frame) { focusedLabel(scene)?.contains("First card") == true }
+            assertFalse(labels(scene).contains("Second row")); assertFalse(labels(scene).contains("Try again"))
+            frames(scene, 24)
+            capture(scene, "tv-home-focused-row-removed")
+        } finally { scene.close() }
+    }
+
+    @Test fun tvHomeKeepsFocusOnASurvivingRowWhenARowAboveDisappears() = onEdt {
+        val firstCard = card.copy(identity = MediaIdentity("tt-a", "movie", emptyList()), title = "First card")
+        val secondCard = card.copy(identity = MediaIdentity("tt-b", "movie", emptyList()), title = "Second card")
+        val firstRow = row.copy(id = "first", title = "First row", cards = listOf(firstCard))
+        val secondRow = row.copy(id = "second", title = "Second row", cards = listOf(secondCard))
+        var snapshot by mutableStateOf(home(listOf(firstRow, secondRow)))
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
+            focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+            HomeScreen(snapshot, true, {}, {}, busy = false)
+        } }
+        try {
+            var frame = awaitState(scene, "first row focus", 0) { focusedLabel(scene)?.contains("First card") == true }
+            press(scene, Key.DirectionDown); frames(scene, 12)
+            frame = awaitState(scene, "second row focus", frame) { focusedLabel(scene)?.contains("Second card") == true }
+            snapshot = home(listOf(firstRow.copy(state = RowState.EMPTY, cards = emptyList()), secondRow))
+            frames(scene, 24)
+            assertTrue(focusedLabel(scene)?.contains("Second card") == true, "focus left the surviving shelf: ${focusedLabel(scene)}")
+            assertFalse(labels(scene).contains("First row"))
+            frames(scene, 24)
+            capture(scene, "tv-home-row-above-removed")
+        } finally { scene.close() }
+    }
+
+    private fun labels(scene: ImageComposeScene) = nodes(scene).map(::text).filter { it.isNotBlank() }
+    private fun focusedLabel(scene: ImageComposeScene): String? =
+        nodes(scene).firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::text)?.takeIf { it.isNotBlank() }
+    private var focusManager: androidx.compose.ui.focus.FocusManager? = null
+    /** Like Android: key handlers see the press first; an unconsumed D-pad press moves focus. */
+    private fun press(scene: ImageComposeScene, key: Key) {
+        val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
+        if (!consumed) requireNotNull(focusManager).moveFocus(when (key) {
+            Key.DirectionUp -> androidx.compose.ui.focus.FocusDirection.Up
+            Key.DirectionDown -> androidx.compose.ui.focus.FocusDirection.Down
+            Key.DirectionLeft -> androidx.compose.ui.focus.FocusDirection.Left
+            else -> androidx.compose.ui.focus.FocusDirection.Right
+        })
+    }
+
     private suspend fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) {
         check(EventQueue.isDispatchThread())
         scene.render((start + it) * 16_666_667L).close(); delay(4)

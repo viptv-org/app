@@ -87,7 +87,9 @@ fun App(
                 return@BoxWithConstraints
             }
             val compact = maxWidth < 640.dp && !television
-            val tablet = !compact && !television && !browser && !desktopChrome
+            // Native phone and tablet layouts; fixed for the life of the app.
+            val touch = !television && !browser && !desktopChrome
+            val tablet = !compact && touch
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: defaultServer, state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
@@ -117,6 +119,9 @@ fun App(
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
                             if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen else state.screen, controller::navigate)
+                        // Phone and tablet only: TV, desktop and browser compose the page directly.
+                        PullRefresh(touch, enabled = state.screen in PULL_REFRESH_SCREENS,
+                            refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         when (state.screen) {
                             Screen.Home -> {
                                 val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
@@ -161,6 +166,7 @@ fun App(
                                 entryBackChanged = entryBackChanged)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
                         }
+                        }
                     }
                   }
                   if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
@@ -178,3 +184,6 @@ fun App(
  * insets. TV keeps the root padding unchanged.
  */
 internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
+
+/** Pages the quiet lane reloads in place. The sources sheet over Details does not refresh. */
+private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.Library, Screen.History, Screen.Details)

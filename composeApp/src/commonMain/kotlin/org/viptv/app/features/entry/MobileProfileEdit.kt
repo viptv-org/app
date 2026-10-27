@@ -25,7 +25,7 @@ import org.viptv.app.theme.Palette
 internal fun MobileProfileEdit(
     profile: Profile?, count: Int, busy: Boolean, error: String?,
     back: () -> Unit, rename: (String, String) -> Unit, setPin: (String, String) -> Unit,
-    setAvatar: (String, String) -> Unit, delete: (String) -> Unit, pinAvailable: Boolean = true, editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null,
+    setAvatar: (String, Int, String) -> Unit, delete: (String) -> Unit, pinAvailable: Boolean = true, editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null,
 ) {
     var guidance by remember(profile?.id) { mutableStateOf<Boolean?>(null) }
     var pickingAvatar by remember(profile?.id) { mutableStateOf(false) }
@@ -64,8 +64,8 @@ internal fun MobileProfileEdit(
             }
         }
     } }
-    if (pickingAvatar) AvatarPicker(profile, busy, { pickingAvatar = false }, { avatarId, pin ->
-        setAvatar(avatarId, pin); pickingAvatar = false
+    if (pickingAvatar) AvatarPicker(profile, busy, AvatarPickerLayout.Phone, { pickingAvatar = false }, { pick, pin ->
+        setAvatar(pick.style, pick.choice, pin); pickingAvatar = false
     }, pinAvailable = pinAvailable)
     if (editingName) NameDialog(profile, busy, pinAvailable, { editingName = false }) { name, pin ->
         rename(name, pin); editingName = false

@@ -28,8 +28,11 @@ internal const val CONTINUE_ROW = "continue"
 
 @Composable
 internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean, modifier: Modifier,
-    focus: (Card) -> Unit, open: (Card) -> Unit, retry: () -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false,
+    focus: (Card) -> Unit, open: (Card) -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false,
     play: (Card) -> Unit = open) {
+    // Home only composes rows with content; this guard keeps a direct caller
+    // from drawing a heading with no shelf under it.
+    if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val portrait = row.id != "continue"
@@ -60,8 +63,8 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
             }
         }
         when (row.state) {
-            // Board Tv3RowStates: an EMPTY row is not drawn at all.
-            RowState.EMPTY -> Unit
+            // Hidden rows never reach this composable; keep the switch exhaustive.
+            RowState.EMPTY, RowState.FAILED -> Unit
             RowState.READY -> LazyRow(state = list,
                 contentPadding = PaddingValues(end = if (compact) 24.dp else 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
@@ -85,7 +88,6 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                     }
                 }
             }
-            RowState.FAILED -> TextButton(onClick = retry) { Text("Try again") }
             RowState.PENDING -> LazyRow(horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(4) { Box(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
                     .clip(RoundedCornerShape(9.dp)).background(Palette.surface)) }
