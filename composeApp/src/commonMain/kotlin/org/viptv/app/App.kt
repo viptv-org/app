@@ -68,7 +68,7 @@ fun App(
         if (manageControllerLifecycle) lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }
-    ViptvTheme(television) {
+    ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }

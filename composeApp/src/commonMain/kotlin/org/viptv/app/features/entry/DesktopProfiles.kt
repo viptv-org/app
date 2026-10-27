@@ -4,12 +4,10 @@ import org.viptv.app.components.FocusLazyRow as LazyRow
 import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +22,8 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.OutlinedButton
 
 @Composable
 internal fun DesktopProfiles(
@@ -70,7 +70,7 @@ private fun DesktopProfileTile(profile: Profile, busy: Boolean, initialFocus: Bo
     // would paint a second, rectangular one around the whole column, and a
     // separate focusable() made the tile two focus stops.
     OwnFocusTreatment { Column(Modifier.width(148.dp).focusRequester(focusRequester).onFocusChanged { focused = it.isFocused }
-        .clickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
+        .pointerClickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(148.dp).border(2.dp, if (focused) Palette.text else Color.Transparent,
             RoundedCornerShape(26.dp)), contentAlignment = Alignment.Center) {
             ProfileAvatar(profile, 140.dp, 22.dp)
@@ -85,7 +85,7 @@ private fun DesktopProfileTile(profile: Profile, busy: Boolean, initialFocus: Bo
 
 @Composable
 private fun DesktopAddProfileTile(busy: Boolean, add: () -> Unit) {
-    Column(Modifier.width(148.dp).clickable(enabled = !busy, onClick = add),
+    Column(Modifier.width(148.dp).pointerClickable(enabled = !busy, onClick = add),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(148.dp).padding(4.dp).border(2.dp, Color.White.copy(alpha = .14f),
             RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {

@@ -1,7 +1,6 @@
 package org.viptv.app.features.sources
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.app.components.pointerClickable
 
 /**
  * A TV source row. [header] is the group label this row opens (SRC-BEST-MATCH-001): it
@@ -33,7 +33,7 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
     Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
         .focusProperties { if (up != null) this.up = up }
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }
-        .clickable(enabled = enabled, interactionSource = remember { MutableInteractionSource() }, indication = null) { choose(source) }) {
+        .pointerClickable(enabled = enabled, interactionSource = remember { MutableInteractionSource() }, indication = null) { choose(source) }) {
     header?.let { SourceGroupHeader(it, (22 * scale).sp, Modifier.padding(start = 4.dp * scale, top = 14.dp * scale, bottom = 12.dp * scale), measured = headerMeasured) }
     Row(Modifier.fillMaxWidth().heightIn(min = 104.dp * scale).clip(RoundedCornerShape(14.dp * scale))
         .background(if (focused) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))

@@ -2,7 +2,6 @@ package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +23,7 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 /**
  * TV Settings → Parental controls, to `Tv3SetParental`.
@@ -48,7 +48,7 @@ internal fun TvParentalSettings(profile: Profile?, maturity: String?, pinAvailab
                     .focusProperties { left = sidebar }
                     .onFocusChanged { focused = it.isFocused }
                     .background(if (focused) Palette.text else Color.White.copy(alpha = .12f), RoundedCornerShape(36.dp * scale))
-                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = profiles)
+                    .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = profiles, shape = RoundedCornerShape(36.dp * scale))
                     .padding(horizontal = 22.dp * scale).padding(start = 10.dp * scale),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     org.viptv.app.features.entry.ProfileAvatar(item, 52.dp * scale, 12.dp * scale)
@@ -96,7 +96,7 @@ private fun RatingRow(label: String, ratings: List<String>, maturity: String?, p
                     // Selected wears the accent, focused wears white: the two states
                     // stay distinct without a ring.
                     .background(if (focused) Palette.text else if (selected) Palette.accent else Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp * scale))
-                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = profiles)
+                    .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = profiles, shape = RoundedCornerShape(32.dp * scale))
                     .padding(horizontal = 20.dp * scale), verticalAlignment = Alignment.CenterVertically) {
                     Text(rating, color = if (focused || selected) Palette.background else Palette.text,
                         fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
@@ -113,7 +113,7 @@ private fun PolicyRow(title: String, subtitle: String?, value: String?, scale: F
         .onFocusChanged { focused = it.isFocused }
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))
         .focusProperties { left = sidebar }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = action)
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = action)
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
             Text(title, color = if (focused) Palette.background else Palette.text, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)

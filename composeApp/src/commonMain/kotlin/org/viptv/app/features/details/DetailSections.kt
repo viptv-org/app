@@ -10,6 +10,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Tab
 
 internal enum class DetailSection(val label: String) {
     Episodes("Episodes"), Related("More like this"), Information("Details")

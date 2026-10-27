@@ -1,6 +1,5 @@
 package org.viptv.app.features.entry
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -15,6 +14,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalWindowInfo
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: String?,
@@ -57,7 +58,7 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
         Text("Forgot PIN?", Modifier.align(Alignment.TopCenter).padding(top = 920.dp * scale)
             .focusRequester(recovery)
             .onFocusChanged { forgotFocused = it.isFocused }
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { forgot = true },
+            .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { forgot = true },
             fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold,
             color = if (forgotFocused) Palette.text else Palette.secondary)
         error?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 980.dp * scale), color = Palette.danger,

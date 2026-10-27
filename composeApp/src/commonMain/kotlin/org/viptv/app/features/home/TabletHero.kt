@@ -23,6 +23,7 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.Button
 
 @Composable
 internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {

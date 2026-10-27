@@ -1,7 +1,6 @@
 package org.viptv.app.features.live
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -17,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun LiveProgramCell(program: LiveProgram, now: Int?, start: Int, television: Boolean, scale: Float,
@@ -26,7 +26,7 @@ internal fun LiveProgramCell(program: LiveProgram, now: Int?, start: Int, televi
     // The fill is the cell's focus treatment; Material's focus layer would double it.
     OwnFocusTreatment { Box(modifier.clip(RoundedCornerShape((if (television) 10 else 8).dp * scale))
         .background(if (focused) Palette.text else if (television) Color.White.copy(alpha = .09f) else Palette.raised)
-        .onFocusChanged { focused = it.isFocused; if (it.isFocused) focus() }.clickable(onClick = activate)) {
+        .onFocusChanged { focused = it.isFocused; if (it.isFocused) focus() }.pointerClickable(onClick = activate, shape = RoundedCornerShape((if (television) 10 else 8).dp * scale))) {
         if (television && now != null && now in program.start until program.end) Box(Modifier.fillMaxHeight()
             .fillMaxWidth(liveProgress(program, now)).background(if (focused) Color(0xFF111113).copy(alpha = .08f) else Color.White.copy(alpha = .05f)))
         Column(Modifier.fillMaxSize().padding(horizontal = (if (television) 18 else 12).dp * scale, vertical = 12.dp * scale),

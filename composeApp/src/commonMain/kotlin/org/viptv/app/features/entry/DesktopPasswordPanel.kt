@@ -1,6 +1,5 @@
 package org.viptv.app.features.entry
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -13,6 +12,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import com.composables.icons.lucide.*
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 internal fun DesktopPasswordPanel(
@@ -30,7 +32,7 @@ internal fun DesktopPasswordPanel(
     var showPassword by remember { mutableStateOf(false) }
     var changeServer by remember { mutableStateOf(initialOrigin.isBlank()) }
     SignInPanel(440.dp, verticalPadding = 24.dp) {
-        Text("‹  All sign-in options", Modifier.height(20.dp).clickable(onClick = back),
+        Text("‹  All sign-in options", Modifier.height(20.dp).pointerClickable(onClick = back),
             color = Palette.text, fontSize = 13.sp)
         Spacer(Modifier.height(8.dp))
         Text("Sign in with a password", color = Palette.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -45,7 +47,7 @@ internal fun DesktopPasswordPanel(
             transformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation()) {
             Icon(if (showPassword) Lucide.EyeOff else Lucide.Eye,
                 if (showPassword) "Hide password" else "Show password",
-                Modifier.size(18.dp).clickable { showPassword = !showPassword }, tint = Palette.secondary)
+                Modifier.size(18.dp).pointerClickable(shape = CircleShape) { showPassword = !showPassword }, tint = Palette.secondary)
         }
         error?.let { Text(it, Modifier.padding(top = 9.dp), color = Palette.danger, fontSize = 12.sp) }
         Spacer(Modifier.height(12.dp))
@@ -57,11 +59,11 @@ internal fun DesktopPasswordPanel(
         }
         Spacer(Modifier.height(4.dp))
         Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            Text("Forgot password?", Modifier.clickable(onClick = forgot), color = Palette.text, fontSize = 13.sp)
+            Text("Forgot password?", Modifier.pointerClickable(onClick = forgot), color = Palette.text, fontSize = 13.sp)
         }
         Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
             Text(if (changeServer) "Hide server address" else "Use another server",
-                Modifier.clickable { changeServer = !changeServer }, color = Palette.secondary, fontSize = 11.sp)
+                Modifier.pointerClickable { changeServer = !changeServer }, color = Palette.secondary, fontSize = 11.sp)
         }
         if (changeServer) OutlinedTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
             label = { Text("Server address") }, singleLine = true, shape = RoundedCornerShape(10.dp))

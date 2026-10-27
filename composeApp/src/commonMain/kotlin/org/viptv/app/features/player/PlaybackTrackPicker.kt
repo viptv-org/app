@@ -4,7 +4,6 @@ import org.viptv.app.components.FocusLazyColumn as LazyColumn
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +23,8 @@ import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.player.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.IconButton
 
 @Composable
 internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.SelectTrack) -> Unit,
@@ -32,7 +33,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
     openSettings: (() -> Unit)? = null) {
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().clickable(onClick = close))
+        Box(Modifier.fillMaxSize().pointerClickable(onClick = close))
         val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.56f)
             else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = 76.dp).widthIn(max = 560.dp).fillMaxWidth().heightIn(max = 300.dp)
         Column(panel.clip(RoundedCornerShape(if (phone) 0.dp else 12.dp)).background(Palette.surface)
@@ -71,7 +72,7 @@ private fun PlaybackSettingsLink(open: () -> Unit) {
     HorizontalDivider(color = Palette.raised)
     Row(Modifier.fillMaxWidth().height(40.dp).onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 8.dp, width = 2.dp).clip(RoundedCornerShape(8.dp))
-        .clickable(role = Role.Button, onClick = open).padding(horizontal = 12.dp),
+        .pointerClickable(role = Role.Button, onClick = open, shape = RoundedCornerShape(8.dp)).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(Lucide.Settings, null, Modifier.size(16.dp))
         Text(PLAYER_SETTINGS_LINK, Modifier.weight(1f), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium)

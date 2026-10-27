@@ -2,7 +2,6 @@ package org.viptv.app.features.entry
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -22,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 /**
  * The W3Device eight-slot code input: digits grouped in blocks of four
@@ -48,7 +48,7 @@ internal fun DeviceCodeInput(
     Row(
         horizontalArrangement = Arrangement.spacedBy(gap),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable(interactionSource = interaction, indication = null) { focus.requestFocus() },
+        modifier = Modifier.pointerClickable(interactionSource = interaction, indication = null) { focus.requestFocus() },
     ) {
         listOf(0, 4).forEach { group ->
             if (group == 4) Text("-", color = Palette.tertiary, fontSize = 22.sp, fontWeight = FontWeight.Bold)

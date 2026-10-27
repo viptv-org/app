@@ -1,6 +1,5 @@
 package org.viptv.app.features.entry
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
@@ -21,13 +20,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvProfileItem(name: String, locked: Boolean, size: Dp, scale: Float,
     modifier: Modifier, enabled: Boolean, choose: () -> Unit, artwork: @Composable () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     Column(modifier.width(size).onFocusChanged { focused = it.isFocused }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = enabled, onClick = choose),
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = enabled, onClick = choose),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.tvProfileTileRing(focused, 28.dp, scale)) { artwork() }
         Row(Modifier.padding(top = 20.dp * scale), verticalAlignment = Alignment.CenterVertically,

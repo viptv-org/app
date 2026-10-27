@@ -2,7 +2,6 @@ package org.viptv.app.features.browse
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -22,6 +21,10 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.QueryControl
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.Checkbox
 
 /** Draft selections are applied together so a checkbox press never issues a catalog request. */
 @Composable
@@ -41,7 +44,7 @@ internal fun DiscoveryMultiChoiceSheet(control: QueryControl, selected: List<Str
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val phone = maxWidth < 640.dp && !television
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }
-                .background(Color.Black.copy(alpha = .55f)).clickable(
+                .background(Color.Black.copy(alpha = .55f)).pointerClickable(
                     interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
             val panel = if (phone) Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(.9f)
                 else Modifier.align(Alignment.CenterEnd).width(if (television) 800.dp * scale else 480.dp).fillMaxHeight()
@@ -63,7 +66,7 @@ internal fun DiscoveryMultiChoiceSheet(control: QueryControl, selected: List<Str
                                 requester = if (index == initialTarget) first else null, enabled = checked || draft.size < maximum, activate = toggle) {
                                 Icon(if (checked) Lucide.SquareCheck else Lucide.Square, null, Modifier.size(24.dp * scale), tint = it)
                                 Spacer(Modifier.width(12.dp * scale)); Text(choice.label, color = it, fontSize = (24 * scale).sp)
-                            } else Row(Modifier.fillMaxWidth().clickable(enabled = checked || draft.size < maximum, onClick = toggle).padding(vertical = 4.dp),
+                            } else Row(Modifier.fillMaxWidth().pointerClickable(enabled = checked || draft.size < maximum, onClick = toggle).padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(checked, { toggle() }, enabled = checked || draft.size < maximum)
                                 Text(choice.label, Modifier.weight(1f))

@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
@@ -29,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvPinKey(label: String, scale: Float, enabled: Boolean, requester: FocusRequester?, width: Int = 136,
@@ -54,7 +54,7 @@ internal fun TvPinKey(label: String, scale: Float, enabled: Boolean, requester: 
         .tvFocusOutline(light && ring, 10.dp * scale, scale)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light && ring) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
-        .clickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = action),
+        .pointerClickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = action, shape = shape),
         contentAlignment = Alignment.Center) {
         if (label == "Erase") Icon(Lucide.Delete, "Erase digit", Modifier.size(28.dp * scale), ink)
         else Text(label, color = ink.copy(alpha = if (enabled) 1f else .4f), fontSize = (if (label == "OK") 22 * scale else numberSize * scale).sp,

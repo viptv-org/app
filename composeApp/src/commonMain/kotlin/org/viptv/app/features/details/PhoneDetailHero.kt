@@ -1,7 +1,6 @@
 package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +29,8 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
 
 /** M3Title: full-width artwork, overlapping logo, then a full-width playback action. */
 @Composable
@@ -86,7 +87,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 }
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.width(76.dp).clickable { save(card) }, horizontalAlignment = Alignment.CenterHorizontally,
+                Column(Modifier.width(76.dp).pointerClickable { save(card) }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
                         Icon(if (saved) Lucide.Check else Lucide.Plus,

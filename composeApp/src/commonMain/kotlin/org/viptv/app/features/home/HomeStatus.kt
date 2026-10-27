@@ -16,6 +16,7 @@ import org.viptv.app.components.TvRequestedFocus
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.HomeSnapshot
+import org.viptv.app.components.Button
 
 /** Home failures keep cached shelves available and provide an actual recovery action. */
 @Composable
