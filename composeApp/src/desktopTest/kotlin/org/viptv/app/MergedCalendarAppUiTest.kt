@@ -1,0 +1,156 @@
+package org.viptv.app
+
+import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.semantics.*
+import androidx.compose.ui.unit.Density
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
+import coil3.compose.LocalPlatformContext
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.*
+import io.ktor.http.*
+import kotlinx.coroutines.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import org.viptv.app.connection.*
+import org.viptv.app.preview.PreviewData
+import org.viptv.app.resources.Res
+import org.viptv.app.state.*
+import org.viptv.engine.wire.DetailSnapshot
+import java.io.File
+import kotlin.test.*
+
+/**
+ * The merged Calendar in the real App shell, phone and TV, against fake `/api/calendar`
+ * responses in the documented wire shape (backend PR #25). With VIPTV_CALENDAR_CAPTURE_DIR
+ * set it writes the PR renders.
+ */
+@OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
+class MergedCalendarAppUiTest {
+    @Test fun phoneShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 390, height = 844, name = "phone")
+    @Test fun tvShowsYourShowsMergedAndFiltersThem() = merged(television = true, width = 1920, height = 1080, name = "tv")
+
+    @Test fun phoneLibraryOnlyProfileHasNoFilter() = single(MergedCalendarWire.page(listOf(
+        MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, poster = art("poster3.jpg")),
+        MergedCalendarWire.library("lib-2", "The Pitt", 2, 7, date = MergedCalendarWire.today(22), poster = art("poster4.jpg"))),
+        listOf("library"), null), "phone-library-only") { nodes ->
+        assertEquals(2, nodes.count(::marked))
+        assertFalse(nodes.any { text(it) == "Your shows" }, "One source needs no filter")
+    }
+
+    @Test fun phoneOldServerShowsThePublicScheduleUnmarked() = single(MergedCalendarWire.page(listOf(
+        MergedCalendarWire.public("public-1", "Public show", poster = art("poster5.jpg"))), null, null), "phone-old-server") { nodes ->
+        assertTrue(nodes.any { text(it).contains("Public show") })
+        assertFalse(nodes.any { marked(it) || text(it) == "Your shows" })
+    }
+
+    private fun art(name: String) = Res.getUri("files/ui-preview/$name")
+
+    private val mergedPage get() = MergedCalendarWire.page(listOf(
+        MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, date = MergedCalendarWire.today(3), poster = art("poster3.jpg")),
+        MergedCalendarWire.public("public-1", "Public premiere", source = "public", date = MergedCalendarWire.today(18), poster = art("poster5.jpg")),
+        MergedCalendarWire.library("lib-2", "The Pitt", 2, 7, date = MergedCalendarWire.today(21), poster = art("poster4.jpg"))),
+        listOf("library", "public"), null)
+
+    private fun merged(television: Boolean, width: Int, height: Int, name: String) = scene(mergedPage, television, width, height) { s ->
+        s.until("the merged rows") { s.nodes().any { text(it).contains("Public premiere") } && s.nodes().any { text(it).contains("Slow Horses") } }
+        // TV's preview of the focused library row carries the mark too; count the rows themselves.
+        assertEquals(2, s.nodes().count { marked(it) && text(it).contains("Chapter") }, "Both library rows are marked")
+        assertFalse(s.nodes().any { marked(it) && text(it).contains("Public premiere") }, "Public rows are not")
+        assertTrue(s.nodes().any { text(it) == "All" } && s.nodes().any { text(it) == "Your shows" })
+        s.save("$name-calendar-all")
+        if (television) assertTrue(listOf("All", "Your shows").all { label -> s.nodes().any { text(it) == label &&
+            it.config.contains(SemanticsActions.RequestFocus) } }, "The remote reaches the filter")
+        s.click("Your shows")
+        s.until("the Your shows filter") { s.nodes().none { text(it).contains("Public premiere") } }
+        assertTrue(s.nodes().any { text(it).contains("Slow Horses") })
+        s.save("$name-calendar-your-shows")
+        s.click("All")
+        s.until("All again") { s.nodes().any { text(it).contains("Public premiere") } }
+        // Choosing a library row opens its series' Details, through its episode.
+        val row = s.nodes().first { text(it).contains("Slow Horses") && it.config.contains(SemanticsActions.OnClick) }
+        row.config[SemanticsActions.OnClick].action!!.invoke()
+        s.until("Details") { s.controller.state.value.screen == Screen.Details && s.controller.state.value.detail != null }
+        assertEquals(MergedCalendarWire.episodeId("Slow Horses", 5, 3), s.controller.state.value.calendarEpisode?.identity?.id)
+        assertEquals(MergedCalendarWire.seriesId("Slow Horses"), s.controller.state.value.detail?.item?.identity?.id)
+        // Let Details lay out before the scene closes.
+        s.frames(30)
+    }
+
+    private fun single(page: String, name: String, check: (List<SemanticsNode>) -> Unit) = scene(page, false, 390, 844) { s ->
+        s.until("the rows") { s.controller.state.value.calendarEntries.isNotEmpty() && !s.controller.state.value.busy }
+        s.frames(20)
+        check(s.nodes())
+        s.save(name)
+    }
+
+    private class Scene(val scene: ImageComposeScene, val controller: ApplicationController, val capture: File?) {
+        var frame = 0L
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
+        fun until(what: String, condition: () -> Boolean) {
+            val deadline = System.nanoTime() + 10_000_000_000L
+            while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
+        }
+        fun click(label: String) {
+            val node = nodes().first { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); frames(10)
+        }
+        fun save(variant: String) {
+            val dir = capture ?: return
+            frames(60); dir.mkdirs()
+            scene.render(frame++ * 16_666_667L).use { image -> image.encodeToData()!!.use { File(dir, "$variant.png").writeBytes(it.bytes) } }
+        }
+    }
+
+    private fun scene(page: String, television: Boolean, width: Int, height: Int, body: (Scene) -> Unit) = runBlocking {
+        val client = HttpClient(MockEngine { request ->
+            val path = request.url.encodedPath
+            val response = when {
+                path == "/api/calendar" -> page
+                path.startsWith("/api/meta/series/") -> Json.encodeToString(DetailSnapshot(MergedCalendarWire.seriesCard("Slow Horses").copy(
+                    poster = art("poster3.jpg"), landscape = art("landscape.jpg"), description = "Slow Horses, a scheduled series."), episodes = emptyList()))
+                else -> return@MockEngine respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+            respond(response, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val store = object : RemoteSessionStore {
+            override suspend fun read(): SavedRemoteSession? = null
+            override suspend fun save(session: SavedRemoteSession) = Unit
+            override suspend fun clear() = Unit
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val controller = ApplicationController(scope, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Library, selectedProfile = PreviewData.profile.id,
+            profiles = PreviewData.profiles, home = PreviewData.home, preferences = PreferencesSnapshot())
+        val capture = System.getenv("VIPTV_CALENDAR_CAPTURE_DIR")?.let(::File)
+        val density = if (capture != null && !television) 2f else 1f
+        var previousLoader: ImageLoader? = null
+        var appLoader: ImageLoader? = null
+        val scene = ImageComposeScene((width * density).toInt(), (height * density).toInt(), Density(density)) {
+            val context = LocalPlatformContext.current
+            remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
+            App(television = television, providedController = controller, manageControllerLifecycle = false)
+            appLoader = SingletonImageLoader.get(context)
+        }
+        try {
+            controller.navigate(Screen.Calendar)
+            body(Scene(scene, controller, capture))
+        } finally {
+            scene.close(); scope.cancel(); remote.close()
+            appLoader?.shutdown(); previousLoader?.let { SingletonImageLoader.setUnsafe(it) }
+        }
+    }
+
+    private companion object {
+        fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
+        fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
+        /** A row carrying the Your show mark (rows merge their texts; the filter button says "Your shows"). */
+        fun marked(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "Your show" }
+    }
+}

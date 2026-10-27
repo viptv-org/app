@@ -47,7 +47,7 @@ class RemoteCalendarTest {
             withTimeout(2_000) { second.await() }
             assertEquals(listOf("first"), snapshots.single().map { it.id })
             release.complete(Unit)
-            assertEquals(listOf("first", "second"), pending.await().map { it.id })
+            assertEquals(listOf("first", "second"), pending.await().entries.map { it.id })
         } finally { remote.close() }
     }
 

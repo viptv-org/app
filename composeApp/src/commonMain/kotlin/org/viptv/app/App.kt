@@ -162,7 +162,8 @@ fun App(
                                 }
                             }
                             Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
-                                type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar)
+                                type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
+                                sources = state.calendarSources, openEntry = controller::openCalendarEntry)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
                             Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
                             Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,

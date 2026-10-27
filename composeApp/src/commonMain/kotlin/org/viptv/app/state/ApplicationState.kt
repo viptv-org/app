@@ -74,6 +74,10 @@ data class ApplicationState(
     val calendarAvailable: Boolean = true,
     val calendarDays: List<org.viptv.app.features.calendar.CalendarDay> = emptyList(),
     val calendarEntries: List<org.viptv.app.features.calendar.CalendarEntry> = emptyList(),
+    /** The sources the calendar window was answered from ("library", "public"); null from older servers. */
+    val calendarSources: List<String>? = null,
+    /** The library episode a Calendar row opened Details for; Details lands on its season (with app#40). */
+    val calendarEpisode: Card? = null,
     val searchTerm: String = "",
     val detailReturnScreen: Screen = Screen.Home,
     val detail: DetailSnapshot? = null,

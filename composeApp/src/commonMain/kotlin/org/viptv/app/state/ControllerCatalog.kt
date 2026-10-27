@@ -452,5 +452,5 @@ internal fun ApplicationController.beginDetails() {
         else (previous.navBack + previous.screen).takeLast(32)
     mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
         navBack = navBack, navForward = emptyList(),
-        screen = Screen.Details, detail = null)
+        screen = Screen.Details, detail = null, calendarEpisode = null)
 }

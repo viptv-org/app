@@ -13,15 +13,26 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
-/** A compact extension of the date rail; category and time remain separate choices. */
+/** The All / Your shows choice: false shows every row, true only the profile's own series. */
+private val calendarFilters = listOf(false to "All", true to "Your shows")
+
+/**
+ * A compact extension of the date rail; category and time remain separate choices.
+ * [mine] is the All / Your shows filter, shown only when it is not null.
+ */
 @Composable
 internal fun CalendarControls(type: String, week: Int, television: Boolean, scale: Float,
     category: (String) -> Unit, shift: (Int) -> Unit, modifier: Modifier = Modifier,
-    requester: FocusRequester? = null, down: FocusRequester? = null, range: String? = null) {
+    requester: FocusRequester? = null, down: FocusRequester? = null, range: String? = null,
+    mine: Boolean? = null, mineChanged: (Boolean) -> Unit = {}) {
     if(!television){
         Column(modifier,verticalArrangement=Arrangement.spacedBy(2.dp)) {
-            Row(horizontalArrangement=Arrangement.spacedBy(4.dp)){
+            Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(4.dp),verticalAlignment=androidx.compose.ui.Alignment.CenterVertically){
                 listOf("series" to "TV","anime" to "Anime","movie" to "Movies").forEach{(id,label)->TextButton({category(id)}){Text(label,color=if(type==id)Palette.text else Palette.secondary)}}
+                if(mine!=null){
+                    Text("·",color=Palette.secondary)
+                    calendarFilters.forEach{(value,label)->TextButton({mineChanged(value)}){Text(label,color=if(mine==value)Palette.text else Palette.secondary)}}
+                }
             }
             Row(horizontalArrangement=Arrangement.spacedBy(2.dp)){
                 listOf(-1 to "Previous week",0 to "This week",1 to "Next week").forEach{(change,label)->TextButton({shift(change)},enabled=when(change){-1->week> -52;1->week<52;else->true}){Text(label)}}
@@ -39,6 +50,16 @@ internal fun CalendarControls(type: String, week: Int, television: Boolean, scal
                 background=if(type==id)Palette.raised else androidx.compose.ui.graphics.Color.Transparent,
                 contentPadding=PaddingValues(horizontal=24.dp*scale)) { Text(label,color=if(type==id)it else Palette.secondary,fontSize=(24*scale).sp) }
             else TextButton({category(id)}) { Text(label,color=if(type==id)Palette.text else Palette.secondary) }
+        }
+        if (mine != null) {
+            Spacer(Modifier.width(if(television)12.dp*scale else 8.dp))
+            calendarFilters.forEach { (value,label) ->
+                if (television) TvAction(Modifier.height(58.dp*scale).focusProperties { if(down!=null)this.down=down },scale,
+                    activate={mineChanged(value)},
+                    background=if(mine==value)Palette.raised else androidx.compose.ui.graphics.Color.Transparent,
+                    contentPadding=PaddingValues(horizontal=24.dp*scale)) { Text(label,color=if(mine==value)it else Palette.secondary,fontSize=(24*scale).sp) }
+                else TextButton({mineChanged(value)}) { Text(label,color=if(mine==value)Palette.text else Palette.secondary) }
+            }
         }
         Spacer(Modifier.width(if(television)24.dp*scale else 8.dp))
         listOf(-1 to "Previous week",0 to "This week",1 to "Next week").forEach { (change,label)->

@@ -24,7 +24,9 @@ internal data class TvCalendarAction(val label: String, val target: Card, val pr
 internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, open: (Card) -> Unit,
     manage: () -> Unit, actions: Map<String, TvCalendarAction> = emptyMap(), watch: (Card) -> Unit = open, available: Boolean = true, busy: Boolean = false, error: String? = null,
     type: String = "series", week: Int = 0, controls: Boolean = false,
-    categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null) {
+    categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
+    mine: Boolean? = null, mineChanged: (Boolean) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null) {
+    val choose: (CalendarEntry) -> Unit = { entry -> openEntry?.invoke(entry) ?: open(entry.card) }
     var selected by remember { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val activeDay = selected?.takeIf { id -> days.any { it.id == id } }
         ?: days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id
@@ -46,7 +48,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     BoxWithConstraints(Modifier.fillMaxSize().focusProperties { onEnter = { if (days.isNotEmpty()) date.requestFocus() } }.focusGroup()) {
         val scale = maxWidth / 1920.dp
         if(controls)CalendarControls(type,week,true,scale,categoryChanged,weekChanged,
-            Modifier.offset(96.dp*scale,8.dp*scale),categories,date,days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"})
+            Modifier.offset(96.dp*scale,8.dp*scale),categories,date,days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
+            mine,mineChanged)
         val railY=if(controls)90.dp*scale else 8.dp*scale
         val contentY=if(controls)200.dp*scale else 118.dp*scale
         Row(Modifier.offset(96.dp * scale, railY).focusProperties { onEnter = { date.requestFocus() } }.focusGroup(),
@@ -66,13 +69,13 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
             itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                 TvCalendarRow(entry, scale, focused?.id == entry.id, rowFocus.getOrPut(entry.id) { FocusRequester() },
-                    if (index == 0) date else null, preview, { focusedId = entry.id }, { open(entry.card) })
+                    if (index == 0) date else null, preview, { focusedId = entry.id }, { choose(entry) })
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { message -> item { Text(message, color = Palette.danger) } }
             if (visible.isEmpty() && !busy && error == null) item {
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                    Text(if (!available) "Release schedules are not available for this profile." else "No releases for this day.",
+                    Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(mine == true),
                         color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
                     if (!available) TvAction(Modifier.height(64.dp * scale), scale, activate = manage,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text("Manage integrations", color = it, fontSize = (24 * scale).sp) }
@@ -80,8 +83,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             }
         }
         focused?.let { entry ->
-            val releaseAction=if(watchRelease!=null)entry.actionLabel()?.let{TvCalendarAction(it,entry.card,"Data from Simkl")}else null
-            TvCalendarPreview(entry, actions[entry.id] ?: releaseAction, scale, preview, selectedRow, date, open,
+            val releaseAction=if(watchRelease!=null)entry.actionLabel()?.let{TvCalendarAction(it,entry.card,if(entry.library)null else "Data from Simkl")}else null
+            TvCalendarPreview(entry, actions[entry.id] ?: releaseAction, scale, preview, selectedRow, date, { choose(entry) },
                 if(releaseAction!=null&&watchRelease!=null){{ _: Card -> watchRelease(entry) }}else watch,contentY)
         }
     }
