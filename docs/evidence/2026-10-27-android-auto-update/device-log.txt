@@ -1,0 +1,22 @@
+TV emulator emulator-5580 (API 36, user build), 2026-10-27, flock /tmp/viptv-emulator.lock.
+App signed in to the KMP dev instance before and after; no uninstall, no data clear.
+
+before:  versionCode=1 versionName=0.1.0-experiment   (owner's previous main build)
+install permission before: REQUEST_INSTALL_PACKAGES default (not allowed)
+adb install -r N.apk -> Success
+build N: versionCode=1326 versionName=0.1.326+c557378
+local feed: python3 -m http.server 8765 on 127.0.0.1 + adb reverse tcp:8765 tcp:8765,
+            written by tools/publish_android_update.py (N+1, --base-url http://127.0.0.1:8765/updates/android)
+feed server log:
+  GET /updates/android/update.json 200
+  GET /updates/android/viptv-1336.apk 200
+01 "Update ready" card on Home (Install focused)            -> OK (DPAD_CENTER)
+02a "Allow updates" (Install unknown apps not allowed yet)   -> Open settings
+02b system "Install unknown apps" screen for VIPTV Experiment; allowed via
+    `appops set org.viptv.experiment REQUEST_INSTALL_PACKAGES allow`, then Back
+    -> back in the app, the install continued on its own
+03  Android's "Do you want to update this app?" (PackageInstallerActivity) -> Update
+after:   versionCode=1336 versionName=0.1.336+197fa00
+         lastUpdateTime=2026-10-27 10:36:06, firstInstallTime=2026-10-18 01:27:14 (same install, data kept)
+         installerPackageName=org.viptv.experiment
+04 reopened: still signed in, same profile and Home, no prompt (feed == installed)

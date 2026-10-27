@@ -1,0 +1,6 @@
+# Build N: commit c557378 (count 326), x86_64 release, -Pviptv.updateFeed=http://127.0.0.1:8765/updates/android/update.json
+package: name='org.viptv.experiment' versionCode='1326' versionName='0.1.326+c557378' platformBuildVersionName='17' platformBuildVersionCode='37' compileSdkVersion='37' compileSdkVersionCodename='17'
+
+# Build N+1: commit 197fa00 (count 336), same flags
+package: name='org.viptv.experiment' versionCode='1336' versionName='0.1.336+197fa00' platformBuildVersionName='17' platformBuildVersionCode='37' compileSdkVersion='37' compileSdkVersionCodename='17'
+uses-permission: name='android.permission.REQUEST_INSTALL_PACKAGES'

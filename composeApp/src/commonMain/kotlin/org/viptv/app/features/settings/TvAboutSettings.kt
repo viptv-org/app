@@ -21,6 +21,7 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusColumn
 import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
+import org.viptv.app.updates.*
 
 /**
  * TVUI-07: the board's About page. Every row opens content that exists in this
@@ -48,9 +49,16 @@ internal fun TvAboutSettings(local: Boolean, address: String?, profileName: Stri
     error: String?, notice: String?, scale: Float, initial: FocusRequester, sidebar: FocusRequester,
     openDashboard: (() -> Unit)? = null) {
     var panel by remember { mutableStateOf<TvAboutPanel?>(null) }
+    val updater = LocalAppUpdater.current
+    val updates = updater?.state?.collectAsState()?.value
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         TvSettingsHeading("About", scale)
-        TvSettingsRow("Version", VIPTV_VERSION, scale, requester = initial, left = sidebar) { panel = TvAboutPanel.Build }
+        TvSettingsRow("Version", updates?.versionName ?: VIPTV_VERSION, scale, requester = initial, left = sidebar) { panel = TvAboutPanel.Build }
+        if (updater != null && updates != null) {
+            // One row whose label turns into "Install update", so TV focus stays put when a build is found.
+            TvSettingsRow(updateActionLabel(updates.status), subtitle = updateStatusLabel(updates.status), scale = scale,
+                value = lastCheckLabel(updates.lastCheckMillis, updater.nowMillis()), left = sidebar, rowHeight = 112) { updater.settingsAction() }
+        }
         TvSettingsRow("Connected to", scale = scale, value = if (local) "Local mode" else address ?: "Not connected", left = sidebar) {
             panel = TvAboutPanel.Connection }
         TvSettingsRow("Send diagnostics", scale = scale, left = sidebar) {
@@ -75,8 +83,10 @@ private fun TvAboutPanelContent(panel: TvAboutPanel, local: Boolean, address: St
     openDashboard: (() -> Unit)?, dismiss: () -> Unit) {
     when (panel) {
         TvAboutPanel.Build -> AboutDialogFrame("Build", scale, dismiss) {
-            AboutParagraph("VIPTV $VIPTV_VERSION", scale)
-            AboutParagraph("Experimental native build. There is no update check in this build: updates are installed with a new build.",
+            val updates = LocalAppUpdater.current?.state?.collectAsState()?.value
+            AboutParagraph("VIPTV ${updates?.versionName ?: VIPTV_VERSION}", scale)
+            AboutParagraph(if (updates != null) "Updates come from the server you are signed in to. VIPTV checks at most once an hour, never while you watch, downloads a new build quietly and asks before installing it."
+                else "Experimental native build. There is no update check in this build: updates are installed with a new build.",
                 scale, Palette.secondary)
             AboutParagraph("The application is licensed under the GNU General Public License v2. The bundled notices are listed under Open-source licences.",
                 scale, Palette.secondary)
@@ -102,7 +112,7 @@ private fun TvAboutPanelContent(panel: TvAboutPanel, local: Boolean, address: St
             }
         }
         TvAboutPanel.Diagnostics -> AboutDialogFrame("Diagnostics report", scale, dismiss) {
-            AboutDetail("App version", VIPTV_VERSION, scale)
+            AboutDetail("App version", LocalAppUpdater.current?.state?.collectAsState()?.value?.versionName ?: VIPTV_VERSION, scale)
             AboutDetail("Connection", if (local) "Local mode" else address ?: "Not connected", scale)
             AboutDetail("Profile", profileName ?: "No profile selected", scale)
             AboutDetail("Add-ons", "$enabledCount of $addonCount enabled", scale)
