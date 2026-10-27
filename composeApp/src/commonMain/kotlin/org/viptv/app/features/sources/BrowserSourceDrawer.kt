@@ -7,11 +7,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+
+/**
+ * The drawer layer's properties: no back handling and full width. Desktop and web also
+ * clear the layer's own scrim, since the drawer draws its own; Android's
+ * DialogProperties has no scrim colour (app#88).
+ */
+internal expect fun browserSourceDrawerProperties(): DialogProperties
 
 /**
  * The web source drawer over the browser Details dialog (app#60). That dialog is a
@@ -25,7 +31,7 @@ import androidx.compose.ui.window.DialogProperties
  */
 @Composable
 internal fun BrowserSourceDrawer(back: () -> Unit, drawer: @Composable () -> Unit) {
-    Dialog(onDismissRequest = back, properties = DialogProperties(dismissOnBackPress = false, usePlatformDefaultWidth = false, scrimColor = Color.Transparent)) {
+    Dialog(onDismissRequest = back, properties = browserSourceDrawerProperties()) {
         var focused by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
             if (event.key != Key.Escape) false else { if (event.type == KeyEventType.KeyUp) back(); true }
