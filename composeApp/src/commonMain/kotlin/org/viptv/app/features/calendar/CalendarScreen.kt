@@ -22,7 +22,8 @@ import org.viptv.engine.wire.Card
 internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
 
 /** The empty-day line; with Your shows chosen it says that none of the viewer's shows air. */
-internal fun calendarEmptyDay(mine: Boolean) = if (mine) "None of your shows air this day." else "No releases for this day."
+internal fun calendarEmptyDay(filter: CalendarFilter?) =
+    if (filter == CalendarFilter.YourShows) "None of your shows air this day." else "No releases for this day."
 
 /**
  * The merged schedule: the profile's own series ([CalendarEntry.library]) and the public
@@ -35,40 +36,41 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
     type: String = "series", week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
-    sources: List<String>? = null, openEntry: ((CalendarEntry) -> Unit)? = null) {
-    var mine by remember { mutableStateOf(false) }
+    sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null) {
+    // A fresh visit starts on All; so does a window where the choice is not offered.
+    var chosen by remember { mutableStateOf(CalendarFilter.All) }
     val offered = calendarFilterOffered(entries, sources)
-    val filter = mine.takeIf { offered }
-    if (television) { TvCalendarScreen(days, entries.shown(mine, offered), open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        mine = filter, mineChanged = { mine = it }, openEntry = openEntry); return }
-    val choose: (CalendarEntry) -> Unit = { entry -> openEntry?.invoke(entry) ?: open(entry.card) }
-    val all = entries
-    @Suppress("NAME_SHADOWING") val entries = all.shown(mine, offered)
+    LaunchedEffect(offered) { if (!offered) chosen = CalendarFilter.All }
+    val filter = chosen.takeIf { offered }
+    val shown = entries.shown(chosen, offered)
+    if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
+        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry); return }
+    val choose = calendarOpener(open, openEntry)
     var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    var focused by remember(entries) { mutableStateOf(entries.firstOrNull()) }
+    var focused by remember(shown) { mutableStateOf(shown.firstOrNull()) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else if (phone) 1f else 0.65f
-        val visible = if (phone) entries else entries.filter { it.day == selected }
+        val visible = if (phone) shown else shown.filter { it.day == selected }
         Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else if (television) 96.dp * scale else 40.dp,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
             if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
-                mine = filter, mineChanged = { mine = it })
-            if (days.isNotEmpty()) CalendarDates(days, entries, selected, phone, scale) { day ->
-                selected = day; focused = entries.firstOrNull { it.day == day }
+                filter = filter, filterChanged = { chosen = it })
+            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale) { day ->
+                selected = day; focused = shown.firstOrNull { it.day == day }
                 if (phone) scope.launch {
                     val index = days.takeWhile { it.id != day }.sumOf { preceding ->
-                        entries.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 2 }
+                        shown.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 2 }
                     }
                     list.animateScrollToItem(index)
                 }
             }
             error?.let { Text(it, color = Palette.danger) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            if (all.isEmpty() && !busy && error == null) {
+            if (entries.isEmpty() && !busy && error == null) {
                 Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
                 TextButton(manage) { Text("Manage integrations") }
             } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
@@ -83,13 +85,13 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                                     Text(day.fullDate, fontSize = 12.sp, color = Palette.secondary)
                                 }
                             }
-                            if(releases.isEmpty())item(key="empty:${day.id}"){Text(calendarEmptyDay(filter == true),color=Palette.secondary,fontSize=13.sp)}
+                            if(releases.isEmpty())item(key="empty:${day.id}"){Text(calendarEmptyDay(filter),color=Palette.secondary,fontSize=13.sp)}
                             items(releases, key = { it.id }) { CalendarReleaseRow(it,true,scale,watch,{focused=it},{choose(it)}) }
                         }
                     } else items(visible, key = { it.id }) {
                         CalendarReleaseRow(it,false,scale,watch,{focused=it},{choose(it)})
                     }
-                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(filter == true),color=Palette.secondary)}
+                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(filter),color=Palette.secondary)}
                 }
                 if (television && focused != null) Column(Modifier.width(584.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     val entry = requireNotNull(focused)

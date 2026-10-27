@@ -11,7 +11,12 @@ data class CalendarDay(val id: String, val weekday: String, val number: String, 
  */
 enum class CalendarSource(val wire: String) {
     Library("library"), Public("public");
-    companion object { fun of(value: String?): CalendarSource = if (value == Library.wire) Library else Public }
+    companion object {
+        /** An entry's source; a missing or unknown value is public. */
+        fun of(value: String?): CalendarSource = if (value == Library.wire) Library else Public
+        /** A source the page says answered; unknown names are ignored. */
+        fun named(value: String): CalendarSource? = entries.firstOrNull { it.wire == value }
+    }
 }
 
 /** [episodeCard] is the playable episode the server sends with a [CalendarSource.Library] row. */
@@ -23,23 +28,32 @@ data class CalendarEntry(val id: String, val day: String, val time: String, val 
 }
 
 /** Library rows carry their own episode, so any aired one can be found directly; public rows need Simkl coordinates. */
-internal fun CalendarEntry.actionLabel(): String? = when {
-    !aired -> null
-    library -> if (episodeCard != null && season != null && season >= 0 && episode != null && episode > 0) "Find S$season E$episode" else null
-    card.metadata_origin?.provider_id != "simkl" -> null
-    card.identity.kind == "movie" -> "Find sources"
-    card.identity.kind == "series" && season != null && season >= 0 && episode != null && episode > 0 -> "Find S$season E$episode"
-    else -> null
+internal fun CalendarEntry.actionLabel(): String? {
+    if (!aired) return null
+    val numbered = season != null && season >= 0 && episode != null && episode > 0
+    return when {
+        library -> "Find S$season E$episode".takeIf { episodeCard != null && numbered }
+        card.metadata_origin?.provider_id != "simkl" -> null
+        card.identity.kind == "movie" -> "Find sources"
+        card.identity.kind == "series" && numbered -> "Find S$season E$episode"
+        else -> null
+    }
 }
+
+/** The All / Your shows choice. All is the default. */
+enum class CalendarFilter(val label: String) { All("All"), YourShows("Your shows") }
 
 /**
  * The All / Your shows choice is offered only when a page can hold both kinds of rows:
  * the server answered from both sources, or (an older or partial answer) rows of both kinds arrived.
  */
-internal fun calendarFilterOffered(entries: List<CalendarEntry>, sources: List<String>?): Boolean =
-    sources?.let { CalendarSource.Library.wire in it && CalendarSource.Public.wire in it } == true ||
-        (entries.any { it.library } && entries.any { !it.library })
+internal fun calendarFilterOffered(entries: List<CalendarEntry>, sources: Set<CalendarSource>?): Boolean =
+    sources?.containsAll(CalendarSource.entries) == true || (entries.any { it.library } && entries.any { !it.library })
 
-/** The rows a filter shows. "Your shows" applies only while the choice is offered, so a hidden filter never hides rows. */
-internal fun List<CalendarEntry>.shown(mine: Boolean, offered: Boolean): List<CalendarEntry> =
-    if (mine && offered) filter { it.library } else this
+/** The rows a filter shows. Your shows applies only while the choice is offered, so a hidden filter never hides rows. */
+internal fun List<CalendarEntry>.shown(filter: CalendarFilter, offered: Boolean): List<CalendarEntry> =
+    if (filter == CalendarFilter.YourShows && offered) filter { it.library } else this
+
+/** Opening a chosen row: [openEntry] when the screen has one, else the row's title card. */
+internal fun calendarOpener(open: (Card) -> Unit, openEntry: ((CalendarEntry) -> Unit)?): (CalendarEntry) -> Unit =
+    { entry -> openEntry?.invoke(entry) ?: open(entry.card) }

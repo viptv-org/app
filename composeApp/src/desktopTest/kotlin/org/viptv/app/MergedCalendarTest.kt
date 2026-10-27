@@ -29,7 +29,7 @@ class MergedCalendarTest {
         assertNull(read.sources)
         assertNull(read.refreshAfterMillis)
         assertFalse(calendarFilterOffered(read.entries, read.sources))
-        assertEquals(read.entries, read.entries.shown(mine = true, offered = false), "A hidden filter never hides rows")
+        assertEquals(read.entries, read.entries.shown(CalendarFilter.YourShows, offered = false), "A hidden filter never hides rows")
     }
 
     @Test fun aMergedPageKeepsSourcesLibraryEpisodesAndFiltersToYourShows() = runBlocking {
@@ -42,10 +42,10 @@ class MergedCalendarTest {
         assertEquals("S2 E3 · Chapter 3", library.subtitle)
         assertEquals(CalendarSource.Public, public.source)
         assertNull(public.episodeCard)
-        assertEquals(listOf("library", "public"), read.sources)
+        assertEquals(setOf(CalendarSource.Library, CalendarSource.Public), read.sources)
         assertTrue(calendarFilterOffered(read.entries, read.sources))
-        assertEquals(listOf("lib-1"), read.entries.shown(mine = true, offered = true).map { it.id })
-        assertEquals(listOf("lib-1", "public-1"), read.entries.shown(mine = false, offered = true).map { it.id })
+        assertEquals(listOf("lib-1"), read.entries.shown(CalendarFilter.YourShows, offered = true).map { it.id })
+        assertEquals(listOf("lib-1", "public-1"), read.entries.shown(CalendarFilter.All, offered = true).map { it.id })
     }
 
     @Test fun aLibraryOnlyProfileGetsItsEpisodesAndNoFilter() = runBlocking {
@@ -61,6 +61,56 @@ class MergedCalendarTest {
         assertTrue(entry.library)
         assertNull(entry.episodeCard)
         assertNull(entry.actionLabel(), "Without its episode a library row offers no direct Find")
+    }
+
+    @Test fun anEpisodeWhoseParentSharesAnExternalIdOfTheSeriesIsKept() = runBlocking {
+        val entry = MergedCalendarWire.library("lib-1", "Your series", 1, 2).let { json ->
+            // The row's series card is a Simkl title that lists the IMDb id the episode's parent uses.
+            val card = buildJsonObject {
+                json.getValue("card").jsonObject.forEach { (key, value) -> put(key, value) }
+                put("identity", buildJsonObject { put("id", "simkl:tv:20"); put("kind", "series")
+                    put("ids", buildJsonArray { add(buildJsonObject { put("namespace", "imdb"); put("value", MergedCalendarWire.seriesId("Your series").removePrefix("imdb:")) }) }) })
+            }
+            JsonObject(json + ("card" to card))
+        }
+        val read = read(page(listOf(entry), sources = listOf("library")))
+        assertEquals(MergedCalendarWire.episodeId("Your series", 1, 2), read.entries.single().episodeCard?.identity?.id)
+    }
+
+    @Test fun aRefreshHintStopsPagingOnUnstableCursors() = runBlocking {
+        val skips = mutableListOf<String?>()
+        val remote = RemoteConnection("https://fixture.example", client = client { request ->
+            skips += request.url.parameters["skip"]
+            buildJsonObject {
+                put("entries", JsonArray(listOf(MergedCalendarWire.library("lib-1", "Your series", 1, 2)))); put("complete", false)
+                put("next_cursor", "100"); put("sources", buildJsonArray { add("library") }); put("refresh_after_millis", 15_000)
+            }.toString()
+        }, browserMode = false)
+        try {
+            val read = remote.calendar(MergedCalendarWire.window())
+            assertEquals(listOf<String?>("0"), skips, "No read past the first page while the list can still grow")
+            assertEquals(15_000, read.refreshAfterMillis)
+            assertEquals(listOf("lib-1"), read.entries.map { it.id })
+        } finally { remote.close() }
+    }
+
+    @Test fun rereadsContinueWhileTheServerKeepsAskingAndStopWhenTheCalendarCloses() = runBlocking {
+        var reads = 0
+        val client = client { request ->
+            if (!request.url.encodedPath.startsWith("/api/calendar")) return@client null
+            reads++
+            page(listOf(MergedCalendarWire.library("lib-1", "Your series", 1, 2)), sources = listOf("library"), refreshAfter = 1_000)
+        }
+        val (controller, remote) = controller(client, this)
+        try {
+            controller.navigate(Screen.Calendar)
+            controller.job?.join()
+            withTimeout(9_000) { while (reads < 6) delay(50) }
+            controller.navigate(Screen.Library)
+            val seen = reads
+            delay(1_500)
+            assertTrue(reads <= seen + 1, "Closing the Calendar ends the re-reads: $seen then $reads")
+        } finally { controller.calendarReread?.cancel(); controller.job?.cancelAndJoin(); remote.close() }
     }
 
     @Test fun refreshAfterRereadsTheWindowFromTheFirstPageQuietly() = runBlocking {
@@ -158,7 +208,12 @@ class MergedCalendarTest {
             withTimeout(3_000) { while (requested == null) delay(10) }
             assertEquals(MergedCalendarWire.episodeId("Your series", 2, 3), requested)
             assertEquals(entry.episodeCard, controller.state.value.sourceTitle)
-            assertEquals(entry.episodeCard, controller.state.value.calendarEpisode, "Back from sources lands on the episode's season")
+            assertEquals(entry.episodeCard, controller.state.value.calendarEpisode, "Details know the episode to land on")
+            withTimeout(3_000) { while (controller.state.value.sourceReturnScreen != Screen.Details || controller.state.value.detail == null) delay(10) }
+            controller.backSources()
+            assertEquals(Screen.Details, controller.state.value.screen, "Back from sources lands on the series' Details")
+            assertEquals(MergedCalendarWire.seriesId("Your series"), controller.state.value.detail?.item?.identity?.id)
+            assertEquals(entry.episodeCard, controller.state.value.calendarEpisode, "... on the episode's season")
         } finally { controller.job?.cancelAndJoin(); controller.sourceDetailJob?.cancelAndJoin(); remote.close() }
     }
 

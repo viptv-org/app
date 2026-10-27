@@ -32,6 +32,9 @@ import kotlin.test.*
 class MergedCalendarAppUiTest {
     @Test fun phoneShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 390, height = 844, name = "phone")
     @Test fun tvShowsYourShowsMergedAndFiltersThem() = merged(television = true, width = 1920, height = 1080, name = "tv")
+    @Test fun tabletShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1024, height = 768, name = "tablet", details = false)
+    @Test fun desktopShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1280, height = 800, name = "desktop", details = false, desktopChrome = true)
+    @Test fun webShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1280, height = 800, name = "web", details = false, browser = true)
 
     @Test fun phoneLibraryOnlyProfileHasNoFilter() = single(MergedCalendarWire.page(listOf(
         MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, poster = art("poster3.jpg")),
@@ -71,7 +74,8 @@ class MergedCalendarAppUiTest {
         MergedCalendarWire.library("lib-2", "The Pitt", 2, 7, date = MergedCalendarWire.today(21), poster = art("poster4.jpg"))),
         listOf("library", "public"), null)
 
-    private fun merged(television: Boolean, width: Int, height: Int, name: String) = scene(mergedPage, television, width, height) { s ->
+    private fun merged(television: Boolean, width: Int, height: Int, name: String, details: Boolean = true,
+        desktopChrome: Boolean = false, browser: Boolean = false) = scene(mergedPage, television, width, height, desktopChrome, browser) { s ->
         s.until("the merged rows") { s.nodes().any { text(it).contains("Public premiere") } && s.nodes().any { text(it).contains("Slow Horses") } }
         // TV's preview of the focused library row carries the mark too; count the rows themselves.
         assertEquals(2, s.nodes().count { marked(it) && text(it).contains("Chapter") }, "Both library rows are marked")
@@ -84,8 +88,13 @@ class MergedCalendarAppUiTest {
         s.until("the Your shows filter") { s.nodes().none { text(it).contains("Public premiere") } }
         assertTrue(s.nodes().any { text(it).contains("Slow Horses") })
         s.save("$name-calendar-your-shows")
-        s.click("All")
+        if (television) s.click("All")
+        else {
+            // Leaving the Calendar forgets the choice: it comes back on All.
+            s.controller.navigate(Screen.Library); s.frames(10); s.controller.navigate(Screen.Calendar)
+        }
         s.until("All again") { s.nodes().any { text(it).contains("Public premiere") } }
+        if (!details) return@scene
         // Choosing a library row opens its series' Details, through its episode.
         val row = s.nodes().first { text(it).contains("Slow Horses") && it.config.contains(SemanticsActions.OnClick) }
         row.config[SemanticsActions.OnClick].action!!.invoke()
@@ -125,7 +134,8 @@ class MergedCalendarAppUiTest {
         }
     }
 
-    private fun scene(page: String, television: Boolean, width: Int, height: Int, body: (Scene) -> Unit) = runBlocking {
+    private fun scene(page: String, television: Boolean, width: Int, height: Int, desktopChrome: Boolean = false, browser: Boolean = false,
+        body: (Scene) -> Unit) = runBlocking {
         val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
             val response = when {
@@ -157,7 +167,7 @@ class MergedCalendarAppUiTest {
         val scene = ImageComposeScene((width * density).toInt(), (height * density).toInt(), Density(density)) {
             val context = LocalPlatformContext.current
             remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
-            App(television = television, providedController = controller, manageControllerLifecycle = false)
+            App(television = television, browser = browser, desktopChrome = desktopChrome, providedController = controller, manageControllerLifecycle = false)
             appLoader = SingletonImageLoader.get(context)
         }
         try {

@@ -49,14 +49,18 @@ internal suspend fun ApplicationController.loadCalendar() {
 /** The window a calendar read belongs to: a re-read publishes only while the viewer still looks at it. */
 private data class CalendarRequest(val remote: RemoteConnection, val profile: String?, val type: String, val week: Int, val window: CalendarWindow)
 
-/** Re-reads per window while the server still reports unfinished library lookups. */
-internal const val CALENDAR_REREADS = 4
+/**
+ * How long one visit to a window keeps re-reading while the server still reports
+ * unfinished library lookups (its cold fetch stops at 12 s, an unfinished list is kept 15 s).
+ */
+internal const val CALENDAR_REREAD_LIMIT_MILLIS = 120_000L
 
 /**
  * The server is still looking up library series, so the window can grow. Read it again
  * from the first page after [delayMillis], on the side: no busy cover, the shown rows stay
  * until the whole window has arrived, and a failure keeps them (an expired session still
- * goes to sign-in). Another load, week, type, profile or screen ends it.
+ * goes to sign-in). It repeats while the server keeps sending the hint, for at most
+ * [CALENDAR_REREAD_LIMIT_MILLIS]; another load, week, type, profile, screen or session ends it.
  */
 private fun ApplicationController.rereadCalendar(request: CalendarRequest, delayMillis: Long) {
     fun current() = connection === request.remote && mutable.value.let { state ->
@@ -65,9 +69,12 @@ private fun ApplicationController.rereadCalendar(request: CalendarRequest, delay
     }
     calendarReread?.cancel()
     calendarReread = scope.launch {
+        val started = kotlin.time.TimeSource.Monotonic.markNow()
         var wait = delayMillis
-        repeat(CALENDAR_REREADS) {
-            delay(wait.coerceIn(1_000, 30_000))
+        while (true) {
+            val pause = wait.coerceIn(1_000, 30_000)
+            if (started.elapsedNow().inWholeMilliseconds + pause > CALENDAR_REREAD_LIMIT_MILLIS) return@launch
+            delay(pause)
             if (!current() || job?.isActive == true) return@launch
             val read = try { request.remote.calendar(request.window, request.type) }
                 catch (error: CancellationException) { throw error }
