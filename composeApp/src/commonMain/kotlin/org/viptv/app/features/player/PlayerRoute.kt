@@ -31,7 +31,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         chooseSources = controller::closePlayer, playEpisode = { controller.closePlayer(); controller.chooseSource(it) },
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
-        trackChosen = controller::rememberTrackChoice)
+        trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings)
 }
 
 /** The player's Episodes list on every platform: the playing episode's season, in its exact metadata scope. */

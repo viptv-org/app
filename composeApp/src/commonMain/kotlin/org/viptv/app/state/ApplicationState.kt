@@ -21,6 +21,8 @@ data class ApplicationState(
     val settingsEntrySection: String? = null,
     /** The page Settings shows while it is open, so global Back can leave a sub-page first; null until Settings reports one. */
     val settingsPage: SettingsPage? = null,
+    /** Settings was opened from the player's Audio & subtitles menu: playback waits behind it, paused, and Back returns to it (app#44). */
+    val settingsReturnsToPlayer: Boolean = false,
     val busy: Boolean = false,
     val error: String? = null,
     val profiles: List<Profile> = emptyList(),
@@ -74,6 +76,10 @@ data class ApplicationState(
     val calendarAvailable: Boolean = true,
     val calendarDays: List<org.viptv.app.features.calendar.CalendarDay> = emptyList(),
     val calendarEntries: List<org.viptv.app.features.calendar.CalendarEntry> = emptyList(),
+    /** The sources the calendar window was answered from; null from older servers. */
+    val calendarSources: Set<org.viptv.app.features.calendar.CalendarSource>? = null,
+    /** The library episode a Calendar row opened Details for; Details lands on its season (with app#40). */
+    val calendarEpisode: Card? = null,
     val searchTerm: String = "",
     val detailReturnScreen: Screen = Screen.Home,
     val detail: DetailSnapshot? = null,

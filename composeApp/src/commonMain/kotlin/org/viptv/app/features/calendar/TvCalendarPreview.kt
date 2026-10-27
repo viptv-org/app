@@ -27,6 +27,7 @@ internal fun TvCalendarPreview(entry: CalendarEntry, action: TvCalendarAction?, 
             .clip(RoundedCornerShape(16.dp * scale)), contentScale = ContentScale.Crop)
         Text(entry.card.title, fontSize = (34 * scale).sp, lineHeight = (41 * scale).sp, fontWeight = FontWeight.Bold,
             maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (entry.library) CalendarYourShow(22 * scale, Palette.accent)
         entry.description?.let { Text(it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.body,
             maxLines = 4, overflow = TextOverflow.Ellipsis) }
         TvAction(Modifier.width(300.dp * scale).height(72.dp * scale)
