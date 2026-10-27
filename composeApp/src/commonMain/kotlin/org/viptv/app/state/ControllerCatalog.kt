@@ -195,7 +195,7 @@ fun ApplicationController.playTitle(card: Card) {
     // copy replaces them; another title's Details must not.
     val keptDetail = before.detail?.takeIf { sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
     releaseRemotePlayback()
-    mutable.value = mutable.value.copy(detail = keptDetail, detailReturnScreen = origin)
+    mutable.value = mutable.value.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null)
     openSources(card, returnTo = if (keptDetail != null) Screen.Details else origin)
     if (card.identity.episode != null && card.metadata_origin != null) {
         loadSourceDetail(card, navigation)
@@ -452,5 +452,5 @@ internal fun ApplicationController.beginDetails() {
         else (previous.navBack + previous.screen).takeLast(32)
     mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
         navBack = navBack, navForward = emptyList(),
-        screen = Screen.Details, detail = null)
+        screen = Screen.Details, detail = null, calendarEpisode = null)
 }

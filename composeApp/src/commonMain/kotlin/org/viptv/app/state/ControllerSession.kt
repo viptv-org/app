@@ -65,6 +65,7 @@ fun ApplicationController.connect(origin: String, username: String, password: St
     discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
+    calendarReread?.cancel(); calendarReread = null
     val finishing = if (completionSeen) progressJob else saveProgress(false, final = true)
     val stopping = releaseRemotePlayback()
     val priorRemote = connection
@@ -132,6 +133,7 @@ fun ApplicationController.disconnect() {
     discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
+    calendarReread?.cancel(); calendarReread = null
     libraryHydration?.cancel(); resetLiveRequests()
     quietJob?.cancel(); quietJob = null; freshness.reset()
     cancelDetailPaging()
@@ -154,6 +156,7 @@ fun ApplicationController.disconnect() {
 fun ApplicationController.signOut() = run {
     discardStremioImport()
     libraryImportRefresh?.cancel()
+    calendarReread?.cancel(); calendarReread = null
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
     val remote = connection
@@ -182,6 +185,7 @@ internal fun ApplicationController.expireSession(remote: RemoteConnection?, devi
 
 internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = null, busy: Boolean = false) {
     libraryHydration?.cancel()
+    calendarReread?.cancel(); calendarReread = null
     resetLiveRequests()
     freshness.reset()
     if (local != null) freshness.unsupported()
