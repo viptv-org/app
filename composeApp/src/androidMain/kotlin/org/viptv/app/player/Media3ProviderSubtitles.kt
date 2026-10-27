@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.media3.common.*
 import androidx.media3.common.text.Cue
+import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.extractor.text.DefaultSubtitleParserFactory
@@ -28,26 +29,40 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     private var timeline: SidecarCueTimeline<Cue>? = null
     private var view: PlayerView? = null
     private var overlay: SubtitleView? = null
+    /** Embedded and stream text, drawn in place of PlayerView's own subtitle view so its cues stack too (app#43). */
+    private var embeddedLayer: SubtitleView? = null
+    private val embeddedCues = object : Player.Listener {
+        override fun onCues(cueGroup: CueGroup) { embeddedLayer?.setStackedCues(cueGroup.cues) }
+    }
     private var shown: List<Cue>? = null
     private var scale = input.preferences.subtitle_font_scale.toFloat().coerceIn(.5f, 2f)
     private val ticker = scope.launch { while (isActive) { delay(25); render() } }
+    init { player.addListener(embeddedCues) }
 
     fun bind(value: PlayerView?) {
         if (view === value) return
         view?.subtitleView?.visibility = View.VISIBLE
-        overlay?.let { (it.parent as? ViewGroup)?.removeView(it) }
+        layers().forEach { (it.parent as? ViewGroup)?.removeView(it) }
         view = value
-        overlay = value?.let { owner -> SubtitleView(owner.context).also { layer ->
-            layer.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            layer.profileStyle(input.preferences, scale)
-            requireNotNull(owner.overlayFrameLayout).addView(layer,
-                ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        overlay = value?.let { owner -> subtitleLayer(owner, requireNotNull(owner.overlayFrameLayout)) }
+        // Same parent as PlayerView's own view: the video's frame, where positioned and bitmap cues belong.
+        embeddedLayer = value?.let { owner -> owner.subtitleView?.let { builtIn ->
+            builtIn.visibility = View.INVISIBLE
+            subtitleLayer(owner, builtIn.parent as ViewGroup).also { it.setStackedCues(player.currentCues.cues) }
         } }
         shown = null
         render()
     }
 
-    fun size(value: Float) { scale = value; overlay?.profileStyle(input.preferences, scale) }
+    private fun subtitleLayer(owner: PlayerView, parent: ViewGroup) = SubtitleView(owner.context).also { layer ->
+        layer.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        layer.profileStyle(input.preferences, scale)
+        parent.addView(layer, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+    }
+
+    private fun layers() = listOfNotNull(overlay, embeddedLayer)
+
+    fun size(value: Float) { scale = value; layers().forEach { it.profileStyle(input.preferences, scale) } }
 
     suspend fun select(id: Int?) {
         touched = true
@@ -142,16 +157,16 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     private fun clear() { timeline = null; desired = null; shown = null; tracks.providerSelected(null); render() }
     private fun render() {
         if (closed) return
-        view?.subtitleView?.visibility = if (timeline == null) View.VISIBLE else View.INVISIBLE
+        embeddedLayer?.visibility = if (timeline == null) View.VISIBLE else View.INVISIBLE
         val cues = timeline?.cuesAt(positionMillis().coerceAtLeast(0) * 1000) ?: emptyList()
         if (cues !== shown) {
-            overlay?.setCues(cues); shown = cues
+            overlay?.setStackedCues(cues); shown = cues
             input.diagnostics?.invoke("sidecar_active=${timeline != null} sidecar_cues=${cues.size} sidecar_position_ms=${positionMillis()}")
         }
     }
     fun close() {
         if (closed) return
-        generation++; closed = true; job?.cancel(); ticker.cancel(); timeline = null; bind(null)
+        generation++; closed = true; job?.cancel(); ticker.cancel(); timeline = null; player.removeListener(embeddedCues); bind(null)
     }
 }
 

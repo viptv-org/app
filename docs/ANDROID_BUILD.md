@@ -51,6 +51,18 @@ ABIs.
 python3 tools/check_apk_abis.py <apk> x86_64                                 # any APK
 ```
 
+## Android host tests
+
+`composeApp/src/androidHostTest` runs on the JVM with Robolectric (native
+graphics), so tests can use Media3's real subtitle parsers and draw a real
+`SubtitleView` into a bitmap. It needs no emulator and no Rust build. The first
+run downloads Robolectric's Android runtime from Maven Central. CI runs it in the
+Android job.
+
+```sh
+./gradlew --max-workers=1 :composeApp:testAndroidHostTest
+```
+
 ## Timings on the dev VPS
 
 Measured 2026-10-26 with `--no-daemon --max-workers=1` in a fresh worktree
