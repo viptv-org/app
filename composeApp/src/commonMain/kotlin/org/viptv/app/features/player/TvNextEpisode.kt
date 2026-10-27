@@ -24,9 +24,14 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () -> Unit, keepWatching: () -> Unit,
-    creditsLabel: String? = null) {
+    creditsLabel: String? = null, autoplay: Boolean = false, reduceMotion: Boolean = false,
+    /** The player's key-press count: keys it handles itself (play/pause) never reach the panel but still cancel. */
+    interactions: Int = 0) {
     val initial = remember { FocusRequester() }
-    val arrival = remember { Animatable(0f) }
+    val countdown = rememberNextEpisodeCountdown(autoplay, play)
+    val opened = remember { interactions }
+    LaunchedEffect(interactions) { if (interactions != opened) countdown.cancel() }
+    val arrival = remember { Animatable(if (reduceMotion) 1f else 0f) }
     LaunchedEffect(Unit) { arrival.animateTo(1f, tween(450, delayMillis = 350, easing = CubicBezierEasing(.2f, 0f, 0f, 1f))) }
     LaunchedEffect(Unit) { initial.requestFocus() }
     val motion = Modifier.graphicsLayer { alpha = arrival.value; translationY = 16.dp.toPx() * scale * (1f - arrival.value) }
@@ -34,7 +39,7 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
         LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None, LineHeightStyle.Mode.Fixed))
     val heading = next.identity.episode?.let { "${it.episode}. ${next.title}" } ?: next.title
     var headingLines by remember(heading) { mutableIntStateOf(1) }
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().cancelsCountdown(countdown)) {
         Text(creditsLabel ?: listOfNotNull(current?.title, "Credits").joinToString(" · "), Modifier.offset(96.dp * scale, 616.dp * scale).then(motion),
             fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary)
         Column(Modifier.offset(1040.dp * scale, 120.dp * scale).width(784.dp * scale).then(motion), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
@@ -49,15 +54,19 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                 TvAction(Modifier.height(72.dp * scale), scale, primary = true, requester = initial, activate = play,
                     contentPadding = PaddingValues(horizontal = 28.dp * scale)) {
-                    Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(14.dp * scale))
-                    Text("Play next episode", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
+                    val ink = it
+                    NextEpisodeCountdownRing(countdown, ink, 40.dp * scale, 3.dp * scale, reduceMotion) {
+                        Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size((if (countdown.running && !reduceMotion) 18 else 24).dp * scale), ink)
+                    }
+                    Spacer(Modifier.width(14.dp * scale))
+                    Text(if (countdown.running) "Next episode in ${countdown.secondsLeft}" else "Play next episode", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
                 }
                 TvGlassAction(Modifier.width(340.dp * scale).height(72.dp * scale), scale, activate = keepWatching) {
                     Text("Keep watching credits", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
                 }
             }
             // The panel opens when the episode has ended, so no credits keep running behind it.
-            Text("Nothing plays on its own.", Modifier.padding(top = 6.dp * scale), color = Color(0xFF8F8D89),
+            Text(if (countdown.running) "Starts automatically. Press any button to cancel." else "Nothing plays on its own.", Modifier.padding(top = 6.dp * scale), color = Color(0xFF8F8D89),
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
         }
     }

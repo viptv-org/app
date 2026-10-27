@@ -53,15 +53,10 @@ open class MainActivity : ComponentActivity() {
             val controller = model.controller
             val state by controller.state.collectAsState()
             var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
-            BackHandler(enabled = entryBack != null || state.screen !in listOf(Screen.Connect, Screen.Profiles)) {
-                if (entryBack != null) { entryBack?.invoke(); return@BackHandler }
-                when (state.screen) {
-                    Screen.Player -> controller.closePlayer()
-                    Screen.ProfilePin, Screen.ProfileEdit, Screen.Home -> controller.navigate(Screen.Profiles)
-                    Screen.Details -> controller.backDetails()
-                    Screen.Sources -> controller.backSources()
-                    else -> controller.navigate(Screen.Home)
-                }
+            // The open route's own step first (a panel, a sign-in step, a Settings sub-page), else the
+            // app's one Back (docs/BACK_MATRIX.md). Disabled on a root page, so the activity leaves the app.
+            BackHandler(enabled = entryBack != null || state.systemBackStaysInApp()) {
+                entryBack?.invoke() ?: controller.navigateBack()
             }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
             val updater = model.updater

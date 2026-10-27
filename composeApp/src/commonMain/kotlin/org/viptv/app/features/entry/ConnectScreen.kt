@@ -33,7 +33,13 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
         return
     }
     var accountMode by remember { mutableStateOf<String?>(null) }
-    if (browser && accountMode != null && register != null && recover != null) {
+    // Browser Back and Escape leave the create-account and recovery forms for sign-in, as their own Back does.
+    val formOpen = browser && accountMode != null && register != null && recover != null
+    DisposableEffect(formOpen) {
+        backChanged(if (formOpen) ({ accountMode = null }) else null)
+        onDispose { backChanged(null) }
+    }
+    if (formOpen) {
         BrowserAccountForm(accountMode == "recover", busy, error, { accountMode = null }, register, recover)
         return
     }
