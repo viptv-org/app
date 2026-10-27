@@ -32,7 +32,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
     playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
     /** What shows where the video does not draw, as on the other players; black on every TV build. */
-    canvasColor: Color = Color.Black) {
+    canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
@@ -134,7 +134,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                         .firstOrNull { it.id == pick.id }?.language)
                 }
             }, { state.showTracks = false; state.reveal() }, trackFocus,
-            dismissChanged = { state.dismissTracks = it })
+            dismissChanged = { state.dismissTracks = it }, openSettings = openSettings)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
     }
 }

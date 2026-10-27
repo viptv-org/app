@@ -38,11 +38,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     /** The video and its scrims draw edge to edge, under a display cutout; tappable controls stay inside these insets. */
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     /** Facts from a preview or test harness rather than a mounted surface; never forwarded to [observe]. */
-    externalFacts: Flow<PlayerFact> = emptyFlow()) {
+    externalFacts: Flow<PlayerFact> = emptyFlow(),
+    /** Opens the full Subtitles & audio settings from the Audio & subtitles menu (app#44). */
+    openSettings: (() -> Unit)? = null) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
-            trackChosen = trackChosen, canvasColor = canvasColor)
+            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -204,7 +206,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             send(choice)
             trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
                 .firstOrNull { it.id == choice.id }?.language)
-        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets)
+        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets, openSettings)
         if (phone && phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
             if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }

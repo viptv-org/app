@@ -3,6 +3,12 @@ package org.viptv.app.features.settings
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import org.viptv.app.state.*
 import org.viptv.app.connection.ProfilePreferences
@@ -11,9 +17,11 @@ import org.viptv.app.connection.addonLogo
 @Composable
 internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
     desktop: Boolean = false, entryBackChanged: ((() -> Unit)?) -> Unit = {}) {
-    // Android's system Back: while a sub-page is open it takes the same step as the in-page arrow;
-    // on the Settings list the activity keeps its own behaviour.
-    val backStaysInSettings = state.parentTitles != null || state.settingsPage?.subpage == true
+    // Android's system Back (and the TV remote's): while a sub-page is open it takes the same step as
+    // the in-page arrow; on the Settings list the activity keeps its own behaviour. A visit from the
+    // player always routes Back here, so it returns to the player (app#44).
+    val fromPlayer = state.settingsReturnsToPlayer
+    val backStaysInSettings = state.parentTitles != null || state.settingsPage?.subpage == true || fromPlayer
     DisposableEffect(backStaysInSettings) {
         entryBackChanged(if (backStaysInSettings) controller::navigateBack else null)
         onDispose { entryBackChanged(null) }
@@ -23,6 +31,13 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     val remote = controller.connection.takeUnless { state.localMode }
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
+    // On a keyboard (desktop, browser) Escape is Back while the player waits, as Escape leaves the player.
+    val escapeReturns = fromPlayer && (desktop || browser) && !television
+    val keyboard = remember { FocusRequester() }
+    if (escapeReturns) LaunchedEffect(Unit) { keyboard.requestFocus() }
+    Box(if (escapeReturns) Modifier.focusRequester(keyboard).focusable().onKeyEvent { event ->
+        if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) { controller.navigateBack(); true } else false
+    } else Modifier) {
     SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice,
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
@@ -75,7 +90,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         tvParentalMaturity = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.let {
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
-        tvParentalPinAvailable = state.localMode)
+        tvParentalPinAvailable = state.localMode,
+        returnToPlayer = if (fromPlayer) controller::navigateBack else null)
+    }
     }
 }
 

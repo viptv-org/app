@@ -65,7 +65,9 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     lastProgress=null
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
-    mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = Screen.Player, error = null, navForward = emptyList())
+    // A lease re-acquired during a player visit to Settings waits behind it (app#44).
+    val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
+    mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList())
     loadNextEpisode()
     subtitleDiscovery = scope.launch {
         try {

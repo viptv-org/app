@@ -29,7 +29,9 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: Float, send: (PlayerCommand) -> Unit,
-    close: () -> Unit, initialSubtitle: Int? = null, dismissChanged: ((() -> Unit)?) -> Unit) {
+    close: () -> Unit, initialSubtitle: Int? = null, dismissChanged: ((() -> Unit)?) -> Unit,
+    /** The full Subtitles & audio settings; the drawer ends with a row that opens them (app#44). */
+    openSettings: (() -> Unit)? = null) {
     val initial = remember { FocusRequester() }
     val subtitleFocus = tracks.subtitles.find { it.id == initialSubtitle } ?: tracks.subtitles.find { it.selected }
     val preferAudio = tracks.subtitles.isEmpty() && tracks.audio.isNotEmpty()
@@ -38,26 +40,36 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
     DisposableEffect(motion.dismiss) { dismissChanged(motion.dismiss); onDispose { dismissChanged(null) } }
         Box(Modifier.fillMaxSize().focusProperties { onExit = { cancelFocusChange() } }.focusGroup()
             .semantics { paneTitle = "Audio and subtitles" }) {
-            Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(540.dp * scale)
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(540.dp * scale)
                 .graphicsLayer { translationY = this.size.height * (1f - motion.progress.value) }
                 .clip(RoundedCornerShape(topStart = 24.dp * scale, topEnd = 24.dp * scale))
                 .tvBackdropBlur(30.dp * scale).background(Color(0xFF161618).copy(alpha = .9f))
-                .padding(start = 76.dp * scale, top = 48.dp * scale), horizontalArrangement = Arrangement.spacedBy(80.dp * scale)) {
-                TvTrackColumn("Audio", Modifier.width(520.dp * scale), scale) {
-                    if (tracks.audio.isEmpty()) item { Text("No audio tracks available", color = Palette.secondary, fontSize = (24 * scale).sp) }
-                    items(tracks.audio, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
-                        if (preferAudio && track.id == audioFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
-                }
-                TvTrackColumn("Subtitles", Modifier.width(520.dp * scale), scale) {
-                    item { TvTrackRow("Off", tracks.subtitles.none { it.selected }, scale,
-                        if (!preferAudio && subtitleFocus == null) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) } }
-                    items(tracks.subtitles, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
-                        if (!preferAudio && track.id == subtitleFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
-                }
-                TvTrackColumn("Subtitle size", Modifier.width(520.dp * scale), scale) {
-                    items(listOf("Small" to 0.8f, "Medium" to 1f, "Large" to 1.25f, "Extra large" to 1.5f)) { (label, value) ->
-                        TvTrackRow(label, size == value, scale, null) { send(PlayerCommand.SubtitleSize(value)) }
+                .padding(start = 76.dp * scale, top = 48.dp * scale, bottom = if (openSettings != null) 28.dp * scale else 0.dp)) {
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(80.dp * scale)) {
+                    TvTrackColumn("Audio", Modifier.width(520.dp * scale), scale) {
+                        if (tracks.audio.isEmpty()) item { Text("No audio tracks available", color = Palette.secondary, fontSize = (24 * scale).sp) }
+                        items(tracks.audio, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
+                            if (preferAudio && track.id == audioFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
                     }
+                    TvTrackColumn("Subtitles", Modifier.width(520.dp * scale), scale) {
+                        item { TvTrackRow("Off", tracks.subtitles.none { it.selected }, scale,
+                            if (!preferAudio && subtitleFocus == null) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) } }
+                        items(tracks.subtitles, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
+                            if (!preferAudio && track.id == subtitleFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
+                    }
+                    TvTrackColumn("Subtitle size", Modifier.width(520.dp * scale), scale) {
+                        items(listOf("Small" to 0.8f, "Medium" to 1f, "Large" to 1.25f, "Extra large" to 1.5f)) { (label, value) ->
+                            TvTrackRow(label, size == value, scale, null) { send(PlayerCommand.SubtitleSize(value)) }
+                        }
+                    }
+                }
+                // Down from any column's last row reaches it.
+                if (openSettings != null) TvAction(Modifier.width(520.dp * scale).height(64.dp * scale), scale, activate = openSettings,
+                    background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
+                    Box(Modifier.width(40.dp * scale)) { Icon(Lucide.Settings, null, Modifier.size(24.dp * scale), tint) }
+                    Text(PLAYER_SETTINGS_LINK, Modifier.weight(1f), color = if (tint == Palette.text) Color(0xFFDAD8D3) else tint,
+                        fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.Medium)
+                    Icon(Lucide.ChevronRight, null, Modifier.size(24.dp * scale), tint)
                 }
             }
         }

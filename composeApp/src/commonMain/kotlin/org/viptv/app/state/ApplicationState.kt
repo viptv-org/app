@@ -21,6 +21,8 @@ data class ApplicationState(
     val settingsEntrySection: String? = null,
     /** The page Settings shows while it is open, so global Back can leave a sub-page first; null until Settings reports one. */
     val settingsPage: SettingsPage? = null,
+    /** Settings was opened from the player's Audio & subtitles menu: playback waits behind it, paused, and Back returns to it (app#44). */
+    val settingsReturnsToPlayer: Boolean = false,
     val busy: Boolean = false,
     val error: String? = null,
     val profiles: List<Profile> = emptyList(),
