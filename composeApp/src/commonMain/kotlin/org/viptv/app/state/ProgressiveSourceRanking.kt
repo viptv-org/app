@@ -48,7 +48,10 @@ internal class ProgressiveSourceRanking(
         show(shown)
     }
 
-    /** Every row found so far, in arrival order. */
+    /**
+     * Every row found so far, in arrival order. Callers publish one batch at a time
+     * (the remote poll loop, the native merge under its mutex, then the final list).
+     */
     fun arrived(rows: List<SourceCandidate>) {
         val ids = rows.map { it.id }
         if (ids == submitted) return

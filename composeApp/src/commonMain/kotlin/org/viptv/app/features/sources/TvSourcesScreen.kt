@@ -17,6 +17,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -38,7 +39,7 @@ import org.viptv.engine.wire.*
 import kotlinx.coroutines.launch
 
 @androidx.compose.runtime.Immutable
-internal data class TvSourceInfo(val quality: String? = null, val format: String? = null, val addon: String? = null, val bestMatch: Boolean = false)
+internal data class TvSourceInfo(val quality: String? = null, val format: String? = null, val addon: String? = null)
 
 @Composable
 internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
@@ -53,6 +54,9 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val scale = maxWidth / 1920.dp
             val rowFocus = remember { mutableMapOf<String, FocusRequester>() }
             var focusedSource by remember { mutableStateOf<String?>(null) }
+            // Any D-pad press or filter change in the drawer (SRC-BEST-MATCH-001 step 3).
+            var navigated by remember { mutableStateOf(false) }
+            val headerHeight = remember { SourceHeaderHeight() }
             val listState = androidx.compose.foundation.lazy.rememberLazyListState()
             val filterFocus = remember { FocusRequester() }
             val providerFocus = remember { FocusRequester() }
@@ -70,12 +74,12 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val torrentOnly = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders > 0
             val noSources = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders == 0
             val stateFocus = remember { FocusRequester() }
-            // Re-anchor to the top row when a better row ranks first, unless the
-            // viewer already navigated to another row (SRC-BEST-MATCH-001 step 3).
+            // Re-anchor to the top row (or the selected row) when a better row ranks
+            // first, until the viewer navigates (SRC-BEST-MATCH-001 step 3).
             var autoFocused by remember { mutableStateOf<String?>(null) }
             LaunchedEffect(rows.firstOrNull()?.source?.id, error) {
                 if (rows.isEmpty()) return@LaunchedEffect
-                if (focusedSource != null && focusedSource != autoFocused) return@LaunchedEffect
+                if (navigated) return@LaunchedEffect
                 val target = rows.find { it.source.id == selectedSource }?.source ?: rows.firstOrNull()?.source
                 if (target == null) { filterFocus.requestFocus(); return@LaunchedEffect }
                 autoFocused = target.id
@@ -99,6 +103,10 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }.background(Color.Black.copy(alpha = 0.55f))
                 .focusProperties { canFocus = false }.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(960.dp * scale).fillMaxHeight()
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key in DIRECTION_KEYS) navigated = true
+                    false
+                }
                 .graphicsLayer { translationX = size.width * (1f - motion.progress.value) }.background(Color(0xFF161618))
                 .padding(start = 64.dp * scale, end = 96.dp * scale, top = 72.dp * scale, bottom = 56.dp * scale)) {
                 Text("Choose a source", fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp, letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
@@ -121,7 +129,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     if (torrentOnly) TvSourcesTorrentPanel(torrentOnlyProviders, scale, debridHelp, motion.dismiss, stateFocus)
                     else TvSourcesEmptyPanel(sourceHeading(title, detail), checkedAddons, checkedProviders, scale,
                         checkAgain, manageAddons, stateFocus)
-                } else TvSourcesFilters(sources, info, scale, quality, provider, { quality = it }, { provider = it }, filterFocus, providerFocus,
+                } else TvSourcesFilters(sources, info, scale, quality, provider, { quality = it; navigated = true }, { provider = it; navigated = true }, filterFocus, providerFocus,
                     focusedProvider = lastProviderFocus, providerFocused = { lastProviderFocus = it }) {
                     if (entryJob?.isActive != true && rows.isNotEmpty()) entryJob = scope.launch {
                         listState.scrollToItem(if (error != null) 1 else 0)
@@ -133,7 +141,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
 
                 // The status line under the list is drawn over it otherwise; the list
                 // needs its own trailing inset so the last source clears the footer.
-                KeepSourceListPosition(listState, rows.map { it.source.id }, focusedSource?.takeIf { it != autoFocused }, leading = if (error != null) 1 else 0)
+                KeepSourceListPosition(listState, rows, focusedSource.takeIf { navigated }, headerHeight, leading = if (error != null) 1 else 0)
                 LazyColumn(Modifier.weight(1f), state = listState,
                     verticalArrangement = Arrangement.spacedBy(10.dp * scale),
                     contentPadding = PaddingValues(bottom = 24.dp * scale)) {
@@ -141,7 +149,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     itemsIndexed(rows, key = { _, row -> row.source.id }) { index, row ->
                         TvSourceRow(row.source, info[row.source.id], scale, rowFocus.getOrPut(row.source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
                             up = if (index == 0) providerFocus else null, focusedSource = { focusedSource = it },
-                            header = row.header, bestMatch = row.bestMatch)
+                            header = row.header, bestMatch = row.bestMatch, headerMeasured = { headerHeight.pixels = it })
                     }
                     if (finding) items(3) {
                         Box(Modifier.fillMaxWidth().height(104.dp * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
@@ -161,6 +169,8 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
         }
     }
 }
+
+private val DIRECTION_KEYS = setOf(Key.DirectionUp, Key.DirectionDown, Key.DirectionLeft, Key.DirectionRight)
 
 private fun Int.counted(one: String, many: String): String = "$this ${if (this == 1) one else many}"
 

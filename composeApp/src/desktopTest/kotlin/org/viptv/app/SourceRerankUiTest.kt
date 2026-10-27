@@ -46,6 +46,11 @@ class SourceRerankUiTest {
         fun focused() = nodes().single { it.config.getOrNull(SemanticsProperties.Focused) == true }
         fun header(label: String) = nodes().singleOrNull { it.config.contains(SemanticsProperties.Heading) && text(it) == label }
         fun focus(id: String) = assertTrue(row(id).config[SemanticsActions.RequestFocus].action!!.invoke())
+        /** A D-pad press: on desktop it only reaches key handlers, it does not move focus. */
+        fun press(key: androidx.compose.ui.input.key.Key) {
+            scene.sendKeyEvent(androidx.compose.ui.input.key.KeyEvent(key, androidx.compose.ui.input.key.KeyEventType.KeyDown))
+            scene.sendKeyEvent(androidx.compose.ui.input.key.KeyEvent(key, androidx.compose.ui.input.key.KeyEventType.KeyUp))
+        }
         override fun close() = scene.close()
     }
 
@@ -61,7 +66,7 @@ class SourceRerankUiTest {
         }.use { s ->
             s.settle()
             assertTrue(s.text(s.focused()).contains("Source r1"), "Initial focus is on the first row")
-            s.focus("r5"); s.settle()
+            s.press(androidx.compose.ui.input.key.Key.DirectionDown); s.focus("r5"); s.settle()
             val before = s.row("r5").boundsInRoot.top
             list = ranked(listOf("x1", "x2") + (1..8).map { "r$it" })
             s.settle()
@@ -95,6 +100,23 @@ class SourceRerankUiTest {
         }
     }
 
+    @Test fun tvFocusStaysOnTheFirstRowOnceTheViewerHasPressedTheDpad() = ui {
+        // Step 4: after Down and Up back to the first row, a better arrival does not take focus.
+        var list by mutableStateOf(ranked(listOf("a", "b", "c")))
+        val info = listOf("x", "a", "b", "c").associateWith { TvSourceInfo(quality = "1080p") }
+        Scene(1920, 1080, television = true) {
+            TvSourcesScreen(null, list.first, false, null, {}, {}, info = info, loadingMore = true, groups = list.second)
+        }.use { s ->
+            s.settle()
+            s.press(androidx.compose.ui.input.key.Key.DirectionUp); s.settle(4)
+            s.focus("a"); s.settle()
+            list = ranked(listOf("x", "a", "b", "c"))
+            s.settle()
+            assertTrue(s.text(s.focused()).contains("Source a"), "Focus stays on the source the viewer is on")
+            assertTrue(s.text(s.row("x")).contains("Best match"), "The marker still moves to the better row")
+        }
+    }
+
     @Test fun tvSelectedRowKeepsInitialFocusWhileBetterRowsArrive() = ui {
         var list by mutableStateOf(ranked(listOf("a", "b", "c")))
         val info = listOf("x", "a", "b", "c").associateWith { TvSourceInfo(quality = "1080p") }
@@ -123,15 +145,15 @@ class SourceRerankUiTest {
             assertTrue(s.text(s.focused()).contains("Source d"), "Down crosses the All sources header to its first row")
             assertTrue(focusManager!!.moveFocus(androidx.compose.ui.focus.FocusDirection.Up)); s.settle()
             assertTrue(s.text(s.focused()).contains("Source c"), "Up crosses back to the last Best matches row")
-            val before = s.row("c").boundsInRoot.top
+            val before = s.row("c").boundsInRoot.bottom
             // Enough later rows that the list can scroll to hold c in place.
-            list = ranked(listOf("x1", "x2", "a", "b", "c", "d", "e") + (1..12).map { "z" + ('a' + it) }, best = 3)
+            list = ranked(listOf("x1", "x2", "a", "b", "c", "d", "e") + (1..12).map { "z" + ('a' + it) }, best = 4)
             s.settle()
-            assertTrue(s.text(s.focused()).contains("Source c"), "Focus stays on c, now the second All sources row")
-            near(before, s.row("c").boundsInRoot.top, "The focused row keeps its on-screen position")
+            assertTrue(s.text(s.focused()).contains("Source c"), "Focus stays on c, which now opens All sources")
             val header = assertNotNull(s.header("ALL SOURCES")).boundsInRoot
-            val b = s.row("b").boundsInRoot
-            assertTrue(header.top >= b.top - 1 && header.bottom <= b.bottom + 1, "b now opens All sources, with c below it")
+            val c = s.row("c").boundsInRoot
+            assertTrue(header.top >= c.top - 1 && header.bottom <= c.bottom + 1, "c now opens All sources")
+            near(before, c.bottom, "The row itself, below its new header, keeps its on-screen position")
         }
     }
 

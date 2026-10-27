@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +20,8 @@ import org.viptv.engine.wire.SourceCandidate
 /** Copy from `viptv-design-system/copy.md` (Source groups). */
 internal const val BEST_MATCHES_HEADER = "Best matches"
 internal const val ALL_SOURCES_HEADER = "All sources"
+/** The row marker on the first Best matches row. */
+internal const val BEST_MATCH_MARKER = "Best match"
 
 /**
  * One visible source row of the grouped picker. [header] labels the group this row
@@ -47,11 +50,13 @@ internal fun sourceListRows(visible: List<SourceCandidate>, groups: SourceGroups
 /**
  * A group label: uppercase, exposed as a heading, never focusable and never
  * activating the row it sits above (its presses are consumed here). Geometry is
- * provisional until the design board exists.
+ * provisional until the design board exists. [measured] receives its height with
+ * [modifier]'s padding, which [KeepSourceListPosition] needs.
  */
 @Composable
-internal fun SourceGroupHeader(label: String, fontSize: TextUnit, modifier: Modifier = Modifier, color: Color = Palette.tertiary) {
-    Text(label.uppercase(), modifier
+internal fun SourceGroupHeader(label: String, fontSize: TextUnit, modifier: Modifier = Modifier, color: Color = Palette.tertiary,
+    measured: (Int) -> Unit = {}) {
+    Text(label.uppercase(), Modifier.onSizeChanged { measured(it.height) }.then(modifier)
         .semantics(mergeDescendants = true) { heading() }
         .pointerInput(Unit) {
             awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } }
@@ -59,10 +64,13 @@ internal fun SourceGroupHeader(label: String, fontSize: TextUnit, modifier: Modi
         color = color, fontSize = fontSize, letterSpacing = (fontSize.value * .08f).sp, fontWeight = FontWeight.Bold)
 }
 
+/** The measured height of this picker's group headers; plain storage, read only while re-ranking. */
+internal class SourceHeaderHeight { var pixels = 0 }
+
 /**
  * Keeps the list where the viewer left it while rows re-rank (SRC-BEST-MATCH-001,
- * Progressive ranking 3-5). Call it in composition, before the list, with the row
- * keys in list order.
+ * Progressive ranking 3-5). Call it in composition, before the list, with the rows
+ * in list order.
  *
  * - [navigated] is the row the viewer moved TV or keyboard focus to: it keeps its
  *   on-screen offset while rows move around it, even when it changes group.
@@ -70,19 +78,22 @@ internal fun SourceGroupHeader(label: String, fontSize: TextUnit, modifier: Modi
  *   is seen; a scrolled list keeps its first fully visible row in place.
  * - A touch scroll in progress is left alone.
  *
- * [leading] counts the list items before the first row (an error line).
+ * A row that gains or loses its group header keeps the row itself in place, not
+ * its list item. [leading] counts the list items before the first row (an error line).
  */
 @Composable
-internal fun KeepSourceListPosition(state: LazyListState, keys: List<String>, navigated: String?, leading: Int = 0) {
-    val previous = remember(state) { arrayOfNulls<List<String>>(1) }
+internal fun KeepSourceListPosition(state: LazyListState, rows: List<SourceListRow>, navigated: String?,
+    header: SourceHeaderHeight, leading: Int = 0) {
+    val previous = remember(state) { arrayOfNulls<List<SourceListRow>>(1) }
     val before = previous[0]
-    previous[0] = keys
-    if (before == null || before == keys) return
+    // Recorded once this composition applies, so a discarded one changes nothing.
+    SideEffect { previous[0] = rows }
+    if (before == null || before.map { it.source.id } == rows.map { it.source.id }) return
     // The layout still describes the previous rows while this composition runs.
     Snapshot.withoutReadObservation {
         if (state.isScrollInProgress) return@withoutReadObservation
         val layout = state.layoutInfo
-        fun index(key: Any) = (key as? String)?.let(keys::indexOf) ?: -1
+        fun index(key: Any) = rows.indexOfFirst { it.source.id == key }
         val focusedItem = layout.visibleItemsInfo.firstOrNull { navigated != null && it.key == navigated && index(it.key) >= 0 }
         if (focusedItem == null && state.firstVisibleItemIndex == 0 && state.firstVisibleItemScrollOffset == 0) {
             state.requestScrollToItem(0)
@@ -91,7 +102,10 @@ internal fun KeepSourceListPosition(state: LazyListState, keys: List<String>, na
         val anchor = focusedItem
             ?: layout.visibleItemsInfo.firstOrNull { it.offset >= layout.viewportStartOffset && index(it.key) >= 0 }
             ?: return@withoutReadObservation
+        val target = index(anchor.key)
+        fun headed(list: List<SourceListRow>) = list.firstOrNull { it.source.id == anchor.key }?.header != null
+        val shift = (if (headed(rows)) header.pixels else 0) - (if (headed(before)) header.pixels else 0)
         // Item offsets count from the end of the leading content padding.
-        state.requestScrollToItem(index(anchor.key) + leading, -anchor.offset)
+        state.requestScrollToItem(target + leading, shift - anchor.offset)
     }
 }

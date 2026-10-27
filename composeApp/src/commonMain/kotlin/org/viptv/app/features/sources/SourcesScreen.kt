@@ -44,6 +44,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val rows = remember(visible, groups) { sourceListRows(visible, groups) }
     val listState = rememberLazyListState()
     var focusedSource by remember { mutableStateOf<String?>(null) }
+    val headerHeight = remember { SourceHeaderHeight() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         // The real details page stays composed behind this overlay.
@@ -69,7 +70,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             }
             SourceFilters(sources, quality, provider, { quality = it }, { provider = it })
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            KeepSourceListPosition(listState, rows.map { it.source.id }, focusedSource, leading = if (error != null) 1 else 0)
+            KeepSourceListPosition(listState, rows, focusedSource, headerHeight, leading = if (error != null) 1 else 0)
             LazyColumn(Modifier.weight(1f), state = listState, contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp)) {
                 error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
@@ -81,9 +82,8 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 }
                 items(rows, key = { it.source.id }) { row ->
                     SourceRow(row.source, television, choose, enabled = !busy, selected = row.source.id == selectedSource,
-                        header = row.header, bestMatch = row.bestMatch) { has ->
-                        if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null
-                    }
+                        header = row.header, bestMatch = row.bestMatch, headerMeasured = { headerHeight.pixels = it },
+                        focusChanged = { has -> if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null })
                 }
             }
             HorizontalDivider(color = Palette.secondary.copy(alpha = .12f))
