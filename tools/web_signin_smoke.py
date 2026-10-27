@@ -35,6 +35,8 @@ Exits 0 when every check passes and writes screenshots to --out.
 import argparse
 import json
 import mimetypes
+import re
+import shutil
 import ssl
 import subprocess
 import sys
@@ -45,6 +47,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+SCENARIOS = ("enter", "keyboard", "button")
 USERNAME = "smoke-visitor"
 PASSWORD = "smoke-password-55"
 
@@ -61,23 +64,43 @@ CANVAS_COUNT = """() => {
 }"""
 
 
-def chromium_binary():
-    """The newest Chromium in the Playwright cache, for when the Python package's pinned build is absent."""
-    cache = Path.home() / ".cache" / "ms-playwright"
-    found = sorted(cache.glob("chromium-*/chrome-linux*/chrome"), key=lambda c: int(c.parts[-3].split("-")[1]))
-    return str(found[-1]) if found else None
+def launch(p, args):
+    """Playwright's own Chromium, else the newest numbered build in its cache (the Python package may pin an absent one)."""
+    options = {"headless": not args.headed, "args": args.browser_arg}
+    if args.chromium:
+        return p.chromium.launch(executable_path=args.chromium, **options)
+    try:
+        return p.chromium.launch(**options)
+    except Exception:
+        cache = Path.home() / ".cache" / "ms-playwright"
+        builds = [c for c in cache.glob("chromium-*/chrome-linux*/chrome") if re.fullmatch(r"chromium-\d+", c.parts[-3])]
+        if not builds:
+            raise
+        newest = max(builds, key=lambda c: int(c.parts[-3].split("-")[1]))
+        return p.chromium.launch(executable_path=str(newest), **options)
 
 
-def fake_backend(dist: Path, log: list):
-    lock = threading.Lock()
+def login_then_bootstrap(log):
+    """The /api/auth/login posts, and whether a /api/bootstrap followed the first one."""
+    with LOG_LOCK:
+        entries = list(log)
+    logins = [e for e in entries if e["method"] == "POST" and e["path"] == "/api/auth/login"]
+    followed = bool(logins) and any(e["path"] == "/api/bootstrap" for e in entries[entries.index(logins[0]):])
+    return logins, followed
+
+
+LOG_LOCK = threading.Lock()
+
+
+def fake_backend(dist: Path, log: list, keys: Path):
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
 
         def record(self, body=None):
-            with lock:
-                log.append({"method": self.command, "path": self.path, "body": body})
+            with LOG_LOCK:
+                log.append({"method": self.command, "path": self.path.split("?", 1)[0], "body": body})
 
         def reply_json(self, status, value):
             data = json.dumps(value).encode()
@@ -94,8 +117,7 @@ def fake_backend(dist: Path, log: list):
                 if path == "/api/auth/status":
                     return self.reply_json(200, {"authenticated": False})
                 if path == "/api/bootstrap":
-                    signed_in = any(e["path"] == "/api/auth/login" for e in log)
-                    if not signed_in:
+                    if not login_then_bootstrap(log)[0]:
                         return self.reply_json(401, {"error": "Sign in first"})
                     return self.reply_json(200, {"identity": {"csrf_token": "smoke-csrf", "profiles": [
                         {"id": "smoke-profile", "name": "Smoke QA"}]}})
@@ -119,12 +141,11 @@ def fake_backend(dist: Path, log: list):
             except ValueError:
                 body = raw
             self.record(body)
-            if self.path == "/api/auth/login":
+            if self.path.split("?", 1)[0] == "/api/auth/login":
                 return self.reply_json(200, {"csrf_token": "smoke-csrf"})
             return self.reply_json(404, {"error": "Not in the smoke fake"})
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    keys = Path(tempfile.mkdtemp(prefix="web-signin-smoke-"))
     subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1", "-subj", "/CN=127.0.0.1",
                     "-keyout", str(keys / "key.pem"), "-out", str(keys / "cert.pem")], check=True, capture_output=True)
     tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -155,39 +176,43 @@ def visit(browser, origin, scenario, args, log, check):
     def click(role, name):
         # Compose mirrors its semantics into an accessibility DOM inside its shadow root; the pointer
         # goes to the canvas at that node's position, exactly where the visitor sees the control.
-        box = page.get_by_role(role, name=name).bounding_box()
-        assert box, f"No {role} '{name}' on the page"
+        target = page.get_by_role(role, name=name)
+        box = target.bounding_box() if target.count() == 1 else None
+        if not check(box is not None, f"[{scenario}] the {role} '{name}' is on the page"):
+            return False
         page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(args.settle)
+        return True
 
-    click("textbox", "Username")
-    page.keyboard.type(USERNAME, delay=20)
+    if not click("textbox", "Username"):
+        return context.close()
+    page.keyboard.type(USERNAME, delay=args.type_delay)
     if scenario == "keyboard":
         page.keyboard.press("Enter")  # Enter in Username moves to Password
-        page.wait_for_timeout(300)
-    else:
-        click("textbox", "Password")
-    page.keyboard.type(PASSWORD, delay=20)
+        page.wait_for_timeout(args.settle)
+    elif not click("textbox", "Password"):
+        return context.close()
+    page.keyboard.type(PASSWORD, delay=args.type_delay)
     page.wait_for_timeout(400)
     shot("02-form-filled")
     if scenario in ("enter", "keyboard"):
         page.keyboard.press("Enter")  # app#96: Enter in Password submits the form
-    else:
-        click("button", "Sign in")
-    logins = []
+    elif not click("button", "Sign in"):
+        return context.close()
     for _ in range(40):
-        logins = [e for e in log if e["method"] == "POST" and e["path"] == "/api/auth/login"]
-        if logins and any(e["path"] == "/api/bootstrap" for e in log[log.index(logins[0]):]):
+        if login_then_bootstrap(log)[1]:
             break
         page.wait_for_timeout(250)
-    page.wait_for_timeout(1500)
+    page.wait_for_timeout(1500)  # long enough for a second, duplicate post to show up
     shot("03-after-sign-in")
+    logins, followed = login_then_bootstrap(log)
     body = logins[0]["body"] if logins else None
     check(len(logins) == 1, f"[{scenario}] signing in posted /api/auth/login once ({len(logins)})")
     check(isinstance(body, dict) and body.get("username") == USERNAME and body.get("password") == PASSWORD,
           f"[{scenario}] the login carried the typed username and password (fake values; got {body})")
-    check(bool(logins) and any(e["path"] == "/api/bootstrap" for e in log[log.index(logins[0]):]),
-          f"[{scenario}] the signed-in bootstrap followed (profile picker)")
+    check(followed, f"[{scenario}] the signed-in bootstrap followed the login")
+    check(page.get_by_text("Who’s watching?").count() > 0 and page.get_by_text("Smoke QA").count() > 0,
+          f"[{scenario}] the profile picker shows the fake profile")
     check(not errors, f"[{scenario}] no page errors {errors}")
     print(f"     [{scenario}] requests: " + json.dumps([f'{e["method"]} {e["path"]}' for e in log]))
     context.close()
@@ -201,6 +226,9 @@ def main():
     parser.add_argument("--browser-arg", action="append", default=[], help="Extra Chromium flag, repeatable. Headed under "
                         "Xvfb without a GPU needs --browser-arg=--use-angle=swiftshader --browser-arg=--enable-unsafe-swiftshader")
     parser.add_argument("--chromium", help="Chromium executable; default: Playwright's own, else the newest in ~/.cache/ms-playwright")
+    parser.add_argument("--scenario", action="append", choices=SCENARIOS, help="Run only these; default: all")
+    parser.add_argument("--type-delay", type=int, default=20, help="Milliseconds between typed keys")
+    parser.add_argument("--settle", type=int, default=300, help="Milliseconds to wait after focusing a field before typing")
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     args = parser.parse_args()
@@ -209,7 +237,8 @@ def main():
         sys.exit(f"No web build at {dist}; run ./gradlew :composeApp:wasmJsBrowserDistribution")
     args.out.mkdir(parents=True, exist_ok=True)
     log: list = []
-    server = fake_backend(dist, log)
+    keys = Path(tempfile.mkdtemp(prefix="web-signin-smoke-"))
+    server = fake_backend(dist, log, keys)
     origin = f"https://127.0.0.1:{server.server_port}"
     failures = []
 
@@ -217,15 +246,19 @@ def main():
         print(("PASS " if ok else "FAIL ") + message)
         if not ok:
             failures.append(message)
+        return ok
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=not args.headed, executable_path=args.chromium or chromium_binary(),
-                                    args=args.browser_arg)
-        for scenario in ("enter", "keyboard", "button"):
-            log.clear()
-            visit(browser, origin, scenario, args, log, check)
-        browser.close()
-    server.shutdown()
+    try:
+        with sync_playwright() as p:
+            browser = launch(p, args)
+            for scenario in args.scenario or SCENARIOS:
+                with LOG_LOCK:
+                    log.clear()
+                visit(browser, origin, scenario, args, log, check)
+            browser.close()
+    finally:
+        server.shutdown()
+        shutil.rmtree(keys, ignore_errors=True)
     print(f"screenshots in {args.out}")
     sys.exit(1 if failures else 0)
 

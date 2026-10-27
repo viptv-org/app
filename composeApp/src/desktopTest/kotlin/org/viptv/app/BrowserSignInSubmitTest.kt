@@ -67,10 +67,18 @@ class BrowserSignInSubmitTest {
         assertEquals(listOf(Triple(origin, "visitor", "secret")), logins, "Enter in Password signs in with what was typed")
     }
 
-    @Test fun enterDoesNotSignInWhileAFieldIsEmpty() {
+    @Test fun enterInThePasswordDoesNotSignInWithoutAUsername() {
         frames()
         type("Password", "secret")
         enter()
         assertTrue(logins.isEmpty(), "no username yet: Enter must not post a login")
+    }
+
+    @Test fun enterInThePasswordDoesNotSignInWithoutAPassword() {
+        frames()
+        type("Username", "visitor")
+        type("Password", "")
+        enter()
+        assertTrue(logins.isEmpty(), "no password yet: Enter must not post a login")
     }
 }
