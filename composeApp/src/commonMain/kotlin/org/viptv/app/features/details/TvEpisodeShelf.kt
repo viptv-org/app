@@ -40,12 +40,13 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     val visible = group?.episodes.orEmpty()
     var lastFocused by rememberSaveable(parent.provider_id, parent.identity.id, activeSeason) { mutableStateOf<String?>(null) }
     val episodeRows = key(parent.identity, activeSeason) { rememberLazyListState() }
-    // Place the continued episode at the start of the row once, so focus can land on it.
+    // Place the episode the viewer last focused, else the continued one, at the start of the
+    // row so focus can land on it. Once per composition: the row's position isn't saved.
     var landed by remember(parent.identity) { mutableStateOf(false) }
-    val resumeIndex = resume?.let { target -> visible.indexOfFirst(target::matches).takeIf { it >= 0 } }
-    LaunchedEffect(episodeRows, resumeIndex) {
-        if (resumeIndex == null || landed) return@LaunchedEffect
-        episodeRows.scrollToItem(resumeIndex)
+    val landingIndex = visible.indexOfFirst { episodeKey(it) == lastFocused }.takeIf { it >= 0 } ?: resume.indexIn(visible)
+    LaunchedEffect(episodeRows, landingIndex) {
+        if (landingIndex == null || landed) return@LaunchedEffect
+        episodeRows.scrollToItem(landingIndex)
         landed = true; kept = true; selected = activeSeason
     }
     val seasonFocus = remember { FocusRequester() }
@@ -88,7 +89,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                 else Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
             }
             TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::enterEpisodes,
-                select = { season -> pendingEntry = null; kept = true; landed = true; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },
+                select = { season -> pendingEntry = null; kept = true; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },
                 returnHero = returnToHero, entered = focused,
                 cancelEntry = { pendingEntry = null }, focusChanged = { selectorHasFocus = it; if (!it) pendingEntry = null })
             Spacer(Modifier.height((if (expanded) 30 else 20).dp * scale))
@@ -101,11 +102,11 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                             targets[episodeKey(episode)] = requester
                             onDispose { targets.remove(episodeKey(episode)) }
                         }
-                        TvEpisodeCard(resume?.mark(episode) ?: episode, scale, { play(episode) },
+                        TvEpisodeCard(resume.shown(episode), scale, { play(episode) },
                             {
                                 lastFocused = episodeKey(episode)
                                 // The viewer is in the shelf: their season stays put.
-                                if (!kept) { kept = true; landed = true; selected = activeSeason }
+                                if (!kept) { kept = true; selected = activeSeason }
                                 focused()
                             },
                             requester, seasonFocus)

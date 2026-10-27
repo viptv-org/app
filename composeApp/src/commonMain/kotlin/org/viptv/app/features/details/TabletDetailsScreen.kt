@@ -43,8 +43,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
         val episodesList = rememberLazyListState()
         // The episode pane lists the season picker, then the season's episodes.
-        LandOnResume(seasonChoice, episodesList, resume?.let { target ->
-            selected?.episodes?.indexOfFirst(target::matches)?.takeIf { it >= 0 }?.plus(1) }, selected)
+        LandOnResume(seasonChoice, episodesList, resume.indexIn(selected?.episodes)?.plus(1), selected)
         val paneWidth = maxWidth
         Row(Modifier.fillMaxSize()) {
             // T3Title: fixed 560 px info pane at board width, proportional when narrower.
@@ -87,7 +86,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
                     } }
                     items(season.episodes, key = ::episodeKey) { episode ->
-                        DetailEpisodeCard(resume?.mark(episode) ?: episode, true, { play(episode) }, Modifier.fillMaxWidth(), tablet = true)
+                        DetailEpisodeCard(resume.shown(episode), true, { play(episode) }, Modifier.fillMaxWidth(), tablet = true)
                     }
                 }
             }

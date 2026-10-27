@@ -58,8 +58,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         // The continued episode's place in the list below: progress, error, hero,
         // section tabs (not on desktop), season picker, then the season's episodes.
         val episodesShown = detail != null && (!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())
-        val resumeIndex = resume?.takeIf { episodesShown }?.let { target ->
-            selected?.episodes?.indexOfFirst(target::matches)?.takeIf { it >= 0 } }?.let { episode ->
+        val resumeIndex = resume.takeIf { episodesShown }.indexIn(selected?.episodes)?.let { episode ->
             (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 + (if (desktop) 0 else 1) + 1 + episode }
         // The phone's back bar floats over the list's top edge.
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
@@ -100,9 +99,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                         }
                     }
                     if (phone) items(season.episodes, key = ::episodeKey) { episode ->
-                        DetailEpisodeCard(resume?.mark(episode) ?: episode, true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter))
+                        DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter))
                     } else items(season.episodes, key = ::episodeKey) { episode ->
-                        DesktopEpisodeRow(resume?.mark(episode) ?: episode, { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)))
+                        DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)))
                     }
                 }
                 if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {

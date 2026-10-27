@@ -47,8 +47,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
     val list = rememberLazyListState()
     // The continued episode's place in the list: progress, error, hero and summary, season picker, episodes.
-    LandOnResume(seasonChoice, list, resume?.takeIf { detail != null }?.let { target ->
-        selected?.episodes?.indexOfFirst(target::matches)?.takeIf { it >= 0 } }?.let { episode ->
+    LandOnResume(seasonChoice, list, resume.takeIf { detail != null }.indexIn(selected?.episodes)?.let { episode ->
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
@@ -77,7 +76,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                 }
                             } }
                             items(season.episodes, key = ::episodeKey) { episode ->
-                                val shown = resume?.mark(episode) ?: episode
+                                val shown = resume.shown(episode)
                                 if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp))
                                 else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                             }

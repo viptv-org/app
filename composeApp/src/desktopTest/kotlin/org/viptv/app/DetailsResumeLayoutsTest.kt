@@ -166,9 +166,12 @@ class DetailsResumeLayoutsTest {
     }
 
     @Test fun tvShelfOpensOnTheContinuedSeasonAndFocusLandsOnTheEpisode() = onEdt {
-        Details(1920, 1080, withSeason(firstPage, 3, 16), television = true).use { page ->
+        Details(1920, 1080, firstPage, television = true).use { page ->
             page.settle()
-            assertNotNull(page.node("Season 3"))
+            assertNotNull(page.node("Season 3"), "the shelf selects season 3 before its episodes arrive")
+            assertEquals(listOf(49L), page.pages, "season 3 loads through Details paging")
+            page.detail = withSeason(firstPage, 3, 16)
+            page.settle()
             assertNotNull(page.node(label(3, 5)), "S3 E5 is placed in the shelf")
             // Down from the hero enters the shelf on the continued episode.
             page.scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))

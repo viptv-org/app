@@ -172,6 +172,35 @@ class DetailsResumeSeasonTest {
         }
     }
 
+    @Test fun backFromThePlayerKeepsDetailsOnTheContinuedEpisode() {
+        PhoneApp(2L to 8L).use { app ->
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.continueThenBack()
+            app.until("season 2's episodes") { app.node("8. Episode 2-8") != null }
+            app.frames(20)
+            // Sources -> player -> Back -> Back: Details leave composition while the player shows.
+            app.controller.mutable.value = app.controller.state.value.copy(screen = Screen.Player)
+            app.frames()
+            app.controller.mutable.value = app.controller.state.value.copy(screen = Screen.Sources)
+            app.frames()
+            app.controller.backSources()
+            app.frames(20)
+            assertEquals(Screen.Details, app.controller.state.value.screen)
+            app.assertEpisodeAtTop("8. Episode 2-8")
+        }
+    }
+
+    @Test fun detailsOpenedStraightFromAContinueWatchingCardLandOnTheEpisode() {
+        PhoneApp(2L to 8L).use { app ->
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            // Desktop's preview Info opens Details for the Continue Watching card itself.
+            app.controller.open(app.continueCard)
+            app.until("season 2's episodes") { app.node("8. Episode 2-8") != null }
+            app.frames(20)
+            app.assertEpisodeAtTop("8. Episode 2-8")
+        }
+    }
+
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
 }

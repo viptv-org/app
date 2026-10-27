@@ -2,6 +2,8 @@ package org.viptv.app.features.details
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -18,6 +20,13 @@ internal data class DetailResume(val season: Long?, val episode: Long, val progr
         return if (matches(card) && (card.progress ?: 0.0) <= 0.0) card.copy(progress = value) else card
     }
 }
+
+/** [card] as an episode list shows it, marked when it is the continued episode. */
+internal fun DetailResume?.shown(card: Card): Card = this?.mark(card) ?: card
+
+/** The continued episode's position among [episodes], when they hold it. */
+internal fun DetailResume?.indexIn(episodes: List<Card>?): Int? =
+    this?.let { target -> episodes?.indexOfFirst(target::matches)?.takeIf { it >= 0 } }
 
 /**
  * The episode the viewer is continuing in [detail]'s series. A Continue Watching card
@@ -46,9 +55,10 @@ private fun continues(card: Card, item: Card): Boolean {
  * that season, else the first numbered season.
  */
 @Stable
-internal class SeasonChoice {
+internal class SeasonChoice(settled: Boolean = false, number: Long? = null) {
+    /** The season kept by the viewer or by landing; null until then. A one-field holder, as a season number can be null. */
     private class Kept(val number: Long?)
-    private var kept by mutableStateOf<Kept?>(null)
+    private var kept by mutableStateOf(if (settled) Kept(number) else null)
 
     /** The list has reached the continued episode, or the viewer acted first: nothing moves it any more. */
     val settled: Boolean get() = kept != null
@@ -62,11 +72,21 @@ internal class SeasonChoice {
     fun pick(number: Long?) { kept = Kept(number) }
 
     /** Keep showing [season] from now on (the list reached the episode, or the viewer moved it). */
-    fun keep(season: DetailSeason?) { if (kept == null) kept = Kept(season?.number) }
+    fun keep(season: DetailSeason?) { if (kept == null && season != null) kept = Kept(season.number) }
+
+    companion object {
+        val Saver = listSaver<SeasonChoice, Any?>(save = { listOf(it.settled, it.kept?.number) },
+            restore = { SeasonChoice(it[0] as Boolean, it[1] as Long?) })
+    }
 }
 
+/**
+ * Saveable, so a page that leaves composition (the browser dialog while Sources show, any
+ * layout during playback) comes back on the season it showed instead of landing again.
+ */
 @Composable
-internal fun rememberSeasonChoice(detail: DetailSnapshot?): SeasonChoice = remember(detail?.item?.identity) { SeasonChoice() }
+internal fun rememberSeasonChoice(detail: DetailSnapshot?): SeasonChoice =
+    rememberSaveable(detail?.item?.identity, saver = SeasonChoice.Saver) { SeasonChoice() }
 
 /**
  * Bring [list] to the continued episode once, at item [index], with [clearance] left
