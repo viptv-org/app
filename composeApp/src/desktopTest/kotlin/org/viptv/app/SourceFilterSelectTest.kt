@@ -18,6 +18,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.engine.wire.SourcePresentation
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -26,6 +27,7 @@ import kotlin.test.*
  * three or fewer stay chips. Picking through the dropdown filters exactly like the chip.
  */
 class SourceFilterSelectTest {
+    @get:Rule val uiThread = UiThreadRule()
     private fun source(id: String, height: Long, provider: String) = SourceCandidate(id, "addon:$provider", "Stream $id",
         detail = "Release $id", quality_height = height, presentation = SourcePresentation(provider_name = provider, source_id = provider))
 
