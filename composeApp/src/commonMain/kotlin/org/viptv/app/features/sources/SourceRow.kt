@@ -1,7 +1,10 @@
 package org.viptv.app.features.sources
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -23,14 +26,25 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
+/**
+ * A phone, tablet or desktop source row. [header] is the group label this row opens
+ * (SRC-BEST-MATCH-001): it sits inside the row's focus target so keyboard focus brings
+ * it into view, but presses on it never choose the source.
+ */
 @Composable
-internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false) {
+internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false,
+    header: String? = null, bestMatch: Boolean = false, focusChanged: (Boolean) -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val foreground = if (focused) Palette.background else Palette.text
+    val interaction = remember { MutableInteractionSource() }
     // The fill is the row's focus treatment; Material's focus layer would double it.
-    OwnFocusTreatment { Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
+    OwnFocusTreatment { Column(Modifier.fillMaxWidth()
+        .onFocusChanged { if (focused != it.isFocused) { focused = it.isFocused; focusChanged(it.isFocused) } }
+        .clickable(interaction, indication = null, enabled = enabled) { choose(source) }) {
+        header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp)) }
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
         .background(if (focused) Palette.text else if (television || selected) Palette.raised else Palette.surface)
-        .onFocusChanged { focused = it.isFocused }.clickable(enabled = enabled) { choose(source) }
+        .indication(interaction, LocalIndication.current)
         .padding(horizontal = if (television) 28.dp else 20.dp, vertical = if (television) 24.dp else 18.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.widthIn(min = 56.dp)) {
@@ -41,11 +55,14 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             SourceTitleLine(source.label, TextStyle(fontSize = if (television) 24.sp else 14.sp, fontWeight = FontWeight.SemiBold), foreground,
                 source.factBadges(), if (television) SourceBadgeStyle(16.sp, 20.sp, 8.dp, 8.dp, 2.dp, 8.dp) else SourceBadgeStyle(10.sp, 13.sp, 4.dp, 5.dp, 2.dp, 6.dp),
-                Modifier.fillMaxWidth())
+                Modifier.fillMaxWidth(), trailing = if (bestMatch) ({
+                    Text("Best match", color = if (focused) Palette.background else Palette.accent, fontSize = if (television) 16.sp else 11.sp,
+                        lineHeight = if (television) 20.sp else 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                }) else null)
             source.releaseDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp, color = foreground) }
             source.technicalDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp,
                 color = foreground.copy(alpha = 0.7f)) }
         }
         Icon(if (selected) Lucide.Check else Lucide.ChevronRight, if (selected) "Selected source" else null, Modifier.size(if (television) 24.dp else 18.dp), tint = foreground)
-    } }
+    } } }
 }

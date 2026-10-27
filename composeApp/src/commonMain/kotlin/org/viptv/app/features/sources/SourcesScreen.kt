@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
+import org.viptv.app.connection.SourceGroups
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -27,17 +29,21 @@ import org.viptv.engine.wire.SourceCandidate
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
-    openingStage: String? = null) {
+    openingStage: String? = null, groups: SourceGroups = SourceGroups()) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
             detail = detail,
-            loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders, openingStage = openingStage)
+            loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders, openingStage = openingStage,
+            groups = groups)
         return
     }
     var quality by remember { mutableStateOf<String?>(null) }
     var provider by remember { mutableStateOf<String?>(null) }
     val visible = sources.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
+    val rows = remember(visible, groups) { sourceListRows(visible, groups) }
+    val listState = rememberLazyListState()
+    var focusedSource by remember { mutableStateOf<String?>(null) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         // The real details page stays composed behind this overlay.
@@ -63,7 +69,8 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             }
             SourceFilters(sources, quality, provider, { quality = it }, { provider = it })
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
+            KeepSourceListPosition(listState, rows.map { it.source.id }, focusedSource, leading = if (error != null) 1 else 0)
+            LazyColumn(Modifier.weight(1f), state = listState, contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp)) {
                 error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
                 if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
@@ -72,7 +79,12 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                     else "No streams found. Enable a provider that supplies sources."
                     Text(empty, Modifier.padding(20.dp), color = Palette.secondary)
                 }
-                items(visible, key = { it.id }) { SourceRow(it, television, choose, enabled = !busy, selected = it.id == selectedSource) }
+                items(rows, key = { it.source.id }) { row ->
+                    SourceRow(row.source, television, choose, enabled = !busy, selected = row.source.id == selectedSource,
+                        header = row.header, bestMatch = row.bestMatch) { has ->
+                        if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null
+                    }
+                }
             }
             HorizontalDivider(color = Palette.secondary.copy(alpha = .12f))
             Text("Play always starts the best match. Change this in Settings › Playback.", Modifier.padding(horizontal = 20.dp, vertical = 16.dp), color = Palette.secondary, fontSize = 12.sp)

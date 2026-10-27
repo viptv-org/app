@@ -28,6 +28,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
+import org.viptv.app.connection.SourceGroups
 import org.viptv.app.components.rememberTvDrawerMotion
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.features.details.TvDetailsScreen
@@ -44,7 +45,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     choose: (SourceCandidate) -> Unit, back: () -> Unit, info: Map<String, TvSourceInfo> = emptyMap(),
     detail: DetailSnapshot? = null, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     checkedAddons: Int = 0, checkedProviders: Int = 0, checkAgain: () -> Unit = {}, manageAddons: () -> Unit = {},
-    debridHelp: () -> Unit = {}, openingStage: String? = null) {
+    debridHelp: () -> Unit = {}, openingStage: String? = null, groups: SourceGroups = SourceGroups()) {
     // The real details page stays composed behind this drawer.
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
@@ -61,6 +62,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             var provider by remember { mutableStateOf<String?>(null) }
             var lastProviderFocus by remember { mutableStateOf<String?>(null) }
             val visible = remember(sources, info, quality, provider) { sources.filter { (quality == null || info[it.id]?.quality == quality) && (provider == null || it.sourceFilterId() == provider) } }
+            val rows = remember(visible, groups) { sourceListRows(visible, groups) }
             val finding = loadingMore || busy && sources.isEmpty()
             val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
             // TVUI-03: nothing playable — the boards replace the chip rows and the
@@ -68,16 +70,16 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val torrentOnly = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders > 0
             val noSources = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders == 0
             val stateFocus = remember { FocusRequester() }
-            // Re-anchor to the top row when the head changes (arrival or final
-            // ranking) unless the user already navigated to another row.
+            // Re-anchor to the top row when a better row ranks first, unless the
+            // viewer already navigated to another row (SRC-BEST-MATCH-001 step 3).
             var autoFocused by remember { mutableStateOf<String?>(null) }
-            LaunchedEffect(visible.firstOrNull()?.id, error) {
-                if (visible.isEmpty()) return@LaunchedEffect
+            LaunchedEffect(rows.firstOrNull()?.source?.id, error) {
+                if (rows.isEmpty()) return@LaunchedEffect
                 if (focusedSource != null && focusedSource != autoFocused) return@LaunchedEffect
-                val target = visible.find { it.id == selectedSource } ?: visible.firstOrNull()
+                val target = rows.find { it.source.id == selectedSource }?.source ?: rows.firstOrNull()?.source
                 if (target == null) { filterFocus.requestFocus(); return@LaunchedEffect }
                 autoFocused = target.id
-                val index = visible.indexOf(target) + if (error != null) 1 else 0
+                val index = rows.indexOfFirst { it.source.id == target.id } + if (error != null) 1 else 0
                 val shown = listState.layoutInfo.visibleItemsInfo.any {
                     it.key == target.id && it.offset >= listState.layoutInfo.viewportStartOffset &&
                         it.offset + it.size <= listState.layoutInfo.viewportEndOffset
@@ -121,23 +123,25 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         checkAgain, manageAddons, stateFocus)
                 } else TvSourcesFilters(sources, info, scale, quality, provider, { quality = it }, { provider = it }, filterFocus, providerFocus,
                     focusedProvider = lastProviderFocus, providerFocused = { lastProviderFocus = it }) {
-                    if (entryJob?.isActive != true && visible.isNotEmpty()) entryJob = scope.launch {
+                    if (entryJob?.isActive != true && rows.isNotEmpty()) entryJob = scope.launch {
                         listState.scrollToItem(if (error != null) 1 else 0)
                         withFrameNanos { }
-                        rowFocus[visible.first().id]?.requestFocus()
+                        rowFocus[rows.first().source.id]?.requestFocus()
                     }
                 }
                 Spacer(Modifier.height(20.dp * scale))
 
                 // The status line under the list is drawn over it otherwise; the list
                 // needs its own trailing inset so the last source clears the footer.
+                KeepSourceListPosition(listState, rows.map { it.source.id }, focusedSource?.takeIf { it != autoFocused }, leading = if (error != null) 1 else 0)
                 LazyColumn(Modifier.weight(1f), state = listState,
                     verticalArrangement = Arrangement.spacedBy(10.dp * scale),
                     contentPadding = PaddingValues(bottom = 24.dp * scale)) {
                     error?.let { item { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) } }
-                    itemsIndexed(visible, key = { _, source -> source.id }) { index, source ->
-                        TvSourceRow(source, info[source.id], scale, rowFocus.getOrPut(source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
-                            up = if (index == 0) providerFocus else null, focusedSource = { focusedSource = it })
+                    itemsIndexed(rows, key = { _, row -> row.source.id }) { index, row ->
+                        TvSourceRow(row.source, info[row.source.id], scale, rowFocus.getOrPut(row.source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
+                            up = if (index == 0) providerFocus else null, focusedSource = { focusedSource = it },
+                            header = row.header, bestMatch = row.bestMatch)
                     }
                     if (finding) items(3) {
                         Box(Modifier.fillMaxWidth().height(104.dp * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)

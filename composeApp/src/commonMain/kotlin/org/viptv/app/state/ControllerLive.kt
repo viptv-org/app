@@ -114,7 +114,7 @@ fun ApplicationController.playLive(channel: String) = run {
     liveGuideJob?.cancel()
     val card = mutable.value.livePage?.channels?.find { it.id == channel }?.card ?: throw LocalFailure("Choose an available channel first.")
     val profile = requireNotNull(mutable.value.selectedProfile)
-    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = Screen.Live, detail = null, sourceTitle = card, sources = emptyList(), findingSources = true, liveGuideLoading = false)
+    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = Screen.Live, detail = null, sourceTitle = card, sources = emptyList(), sourceGroups = org.viptv.app.connection.SourceGroups(), findingSources = true, liveGuideLoading = false)
     try {
         val sources = local?.liveSources(profile, channel) ?: requireNotNull(connection).liveSources(profile, channel)
         mutable.value = mutable.value.copy(sources = sources)
