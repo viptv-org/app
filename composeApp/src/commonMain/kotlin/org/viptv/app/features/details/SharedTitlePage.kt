@@ -20,6 +20,7 @@ import org.viptv.app.components.Brand
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.app.components.Button
 
 /** W3TitlePage presentation. Routing requires a real public metadata contract. */
 @Composable

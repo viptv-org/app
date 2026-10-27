@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 /** Shown when the server has no calendar for this profile (HTTP 422). */
 internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
@@ -54,12 +56,13 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
         val phone = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else if (phone) 1f else 0.65f
         val visible = if (phone) shown else shown.filter { it.day == selected }
-        Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else if (television) 96.dp * scale else 40.dp,
+        val gutter = if (phone) 16.dp else if (television) 96.dp * scale else 40.dp
+        Column(Modifier.fillMaxSize().padding(horizontal = gutter,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
             if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
                 filter = filter, filterChanged = { chosen = it })
-            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale) { day ->
+            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale, gutter) { day ->
                 selected = day; focused = shown.firstOrNull { it.day == day }
                 if (phone) scope.launch {
                     val index = days.takeWhile { it.id != day }.sumOf { preceding ->

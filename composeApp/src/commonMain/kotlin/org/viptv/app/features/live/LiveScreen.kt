@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 @Composable
 fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, now: Int?, watch: (LiveChannel) -> Unit, manage: () -> Unit, groupLabels: Map<String, String> = emptyMap(),
@@ -50,11 +51,12 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                     noticeRetry?.let { retry -> TextButton(retry, enabled = !busy) { Text("Retry") } }
                 }
             }
-            if (phone && (categories.isNotEmpty() || favoritesFilter != null)) LiveFilters(categories, category, chooseGroup, labels = groupLabels, favoritesSelected = favoritesOnly, favorites = favoritesFilter)
+            if (phone && (categories.isNotEmpty() || favoritesFilter != null)) LiveFilters(categories, category, chooseGroup, labels = groupLabels, favoritesSelected = favoritesOnly, favorites = favoritesFilter, gutter = gutter)
             if (!fullGuide) selected?.let { LivePreview(it, selectedProgram ?: it.current(now), now, phone, television, scale,
                 { watch(it) }, { favoriteChanged?.invoke(it) ?: run { notice = true } }, if (!phone && start != null) ({ fullGuide = true }) else null) }
             if (fullGuide) TextButton(onClick = { fullGuide = false }) { Text("Show preview") }
-            if (!phone && (categories.isNotEmpty() || favoritesFilter != null)) LiveFilters(categories, category, chooseGroup, if (television) scale * 1.5f else 1f, groupLabels, favoritesOnly, favoritesFilter)
+            if (!phone && (categories.isNotEmpty() || favoritesFilter != null)) LiveFilters(categories, category, chooseGroup, if (television) scale * 1.5f else 1f, groupLabels, favoritesOnly, favoritesFilter,
+                gutter = if (television) 0.dp else gutter)
             if (visible.isEmpty()) {
                 Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else emptyReason ?: "No channels are available for this profile.", color = Palette.secondary)
                 if (favoritesOnly) TextButton({ chooseGroup("All") }) { Text("All channels") }

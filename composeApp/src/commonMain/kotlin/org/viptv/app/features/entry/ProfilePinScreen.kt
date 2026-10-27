@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: String?, submit: (String) -> Unit, back: () -> Unit, television: Boolean = false) {

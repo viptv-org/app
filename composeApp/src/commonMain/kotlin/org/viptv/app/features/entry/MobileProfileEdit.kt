@@ -3,7 +3,6 @@ package org.viptv.app.features.entry
 import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
 
 @Composable
 internal fun MobileProfileEdit(
@@ -41,7 +43,7 @@ internal fun MobileProfileEdit(
             TextButton(onClick = back) { Text("Done", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
         }
         Spacer(Modifier.height(12.dp))
-        Column(Modifier.fillMaxWidth().clickable(enabled = !busy) { pickingAvatar = true },
+        Column(Modifier.fillMaxWidth().pointerClickable(enabled = !busy) { pickingAvatar = true },
             horizontalAlignment = Alignment.CenterHorizontally) {
             ProfileAvatar(profile, 104.dp, 22.dp)
             Spacer(Modifier.height(12.dp))
@@ -82,7 +84,7 @@ internal fun MobileProfileEdit(
 @Composable
 private fun EditSettingRow(title: String, value: String, subtitle: String? = null, danger: Boolean = false, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(if (subtitle == null) 52.dp else 58.dp)
-        .clickable(onClick = onClick).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        .pointerClickable(onClick = onClick).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Column {
             Text(title, color = if (danger) Palette.danger else Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             subtitle?.let { Text(it, color = Palette.secondary, fontSize = 13.sp) }

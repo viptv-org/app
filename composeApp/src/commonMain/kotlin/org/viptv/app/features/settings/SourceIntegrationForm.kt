@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.SourceIntegrationSchema
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.Checkbox
 
 @Composable
 internal fun SourceIntegrationForm(schema: SourceIntegrationSchema, busy: Boolean, error: String?, dismiss: () -> Unit,

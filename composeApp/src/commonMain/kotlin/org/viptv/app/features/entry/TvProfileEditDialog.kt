@@ -19,6 +19,7 @@ import androidx.compose.ui.window.PopupProperties
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?, busy: Boolean, dismiss: () -> Unit,

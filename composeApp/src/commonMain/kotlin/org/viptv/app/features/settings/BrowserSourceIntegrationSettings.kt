@@ -2,7 +2,6 @@ package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,7 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +33,8 @@ import kotlinx.serialization.json.JsonObject
 import org.viptv.app.connection.SourceIntegrationSchema
 import org.viptv.app.connection.SourceIntegrationSnapshot
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
 
 /**
  * W3SetSources: "Where movies, series and live channels come from." One card per
@@ -135,7 +135,7 @@ private fun BrowserSourceAction(label: String, primary: Boolean, enabled: Boolea
     val content = when { primary -> Palette.background; destructive -> Palette.danger; else -> Palette.text }
     Row(Modifier.height(32.dp).clip(RoundedCornerShape(10.dp))
         .background(if (enabled) background else background.copy(alpha = .05f))
-        .clickable(enabled = enabled, onClick = onClick).padding(horizontal = 14.dp),
+        .pointerClickable(enabled = enabled, onClick = onClick, shape = RoundedCornerShape(10.dp)).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         icon?.let { Icon(it, null, Modifier.size(14.dp), tint = content) }
         Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = content)

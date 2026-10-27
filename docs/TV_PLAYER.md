@@ -108,7 +108,12 @@ series episode with a known next episode, and the Next episode pill plays that
 episode directly. The ended video keeps its last frame full screen behind the
 panel under a dark scrim; it no longer shrinks into the ZIP's 880×495 frame, and
 no app background shows. Keep watching and Back dismiss it until the episode
-ends again. The information and credits caption fade up 16 pixels over
+ends again. With Autoplay next episode on (app#65, Settings › Playback, stored
+on the device) the primary action reads "Next episode in 9" inside a ring that
+empties over 10 s, the footnote says it starts automatically, and at 0 the next
+episode plays as if pressed. Any remote key, Back or a seek away from the end
+cancels it for that end, and the footnote returns to "Nothing plays on its own."
+Reduced motion draws no ring and skips the fade-up; the number still counts. The information and credits caption fade up 16 pixels over
 450 ms after a 350 ms delay. Optional credits-label facts are supplied explicitly;
 normal connections fall back to the actual title, and the fixture supplies the
 ZIP's short label.

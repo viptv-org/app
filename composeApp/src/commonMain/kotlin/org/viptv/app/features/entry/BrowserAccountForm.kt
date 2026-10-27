@@ -15,6 +15,8 @@ import org.viptv.app.components.Brand
 import org.viptv.app.connection.validAccountUsername
 import org.viptv.app.connection.validNewPassword
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun BrowserAccountForm(recovering: Boolean, busy: Boolean, error: String?, back: () -> Unit,

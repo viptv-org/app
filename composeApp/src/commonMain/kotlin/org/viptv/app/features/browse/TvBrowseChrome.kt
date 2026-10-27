@@ -3,7 +3,6 @@ package org.viptv.app.features.browse
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -42,6 +41,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 import org.viptv.engine.wire.QueryValue
+import org.viptv.app.components.pointerClickable
 
 /**
  * The TV browse chrome from `Tv3Movies` / `Tv3MoviesCatalogs` / `Tv3MoviesFilters`:
@@ -145,7 +145,7 @@ private fun TvCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery, sca
         BoxWithConstraints(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .6f))
                 .focusProperties { canFocus = false }
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(720.dp * scale).fillMaxHeight()
                 .background(Color(0xFF161618)).padding(start = 64.dp * scale, end = 96.dp * scale, top = 72.dp * scale, bottom = 54.dp * scale),
                 verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
@@ -170,7 +170,7 @@ private fun TvCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery, sca
                                 .tvFocusOutline(focused, 14.dp * scale, scale)
                                 .background(if (focused) Palette.text else if (selected) Color.White.copy(alpha = .1f) else Color.White.copy(alpha = .04f),
                                     RoundedCornerShape(14.dp * scale))
-                                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { select(entry) }
+                                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = RoundedCornerShape(14.dp * scale)) { select(entry) }
                                 .padding(horizontal = 26.dp * scale), verticalAlignment = Alignment.CenterVertically) {
                                 Text(entry.displayName(peers), Modifier.weight(1f),
                                     color = if (focused) Palette.background else Palette.text,
@@ -231,7 +231,7 @@ private fun TvFiltersPage(controls: DiscoveryControls, facets: List<QueryControl
                                 .tvFocusOutline(focused, 14.dp * scale, scale)
                                 .background(if (focused) Palette.text else if (facet.id == active) Color.White.copy(alpha = .16f) else Color.White.copy(alpha = .04f),
                                     RoundedCornerShape(14.dp * scale))
-                                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { active = facet.id }
+                                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = RoundedCornerShape(14.dp * scale)) { active = facet.id }
                                 .padding(horizontal = 26.dp * scale), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
@@ -324,7 +324,7 @@ private fun TvFacetChoices(control: QueryControl, draft: BrowseQuery, scale: Flo
                         .onFocusChanged { focused = it.isFocused }
                         .tvFocusOutline(focused, 32.dp * scale, scale)
                         .background(if (focused) Palette.text else if (checked) Palette.text else Color.White.copy(alpha = if (enabled) .08f else .04f), shape)
-                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = enabled) {
+                        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = enabled, shape = shape) {
                             change(if (single) listOf(choice.value) else if (checked) selected - choice.value else selected + choice.value)
                         }
                         .padding(horizontal = 24.dp * scale), verticalAlignment = Alignment.CenterVertically,

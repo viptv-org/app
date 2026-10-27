@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
 import org.viptv.app.state.SettingsPage
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
@@ -29,9 +30,11 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     /** Hoisted page state: the app's controller owns it so system Back can leave a sub-page. Without it the page is local. */
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
     /** Settings was opened from the player at [initialSection]: that section is not a sub-page, and its Back returns to the player (app#44). */
-    returnToPlayer: (() -> Unit)? = null) {
+    returnToPlayer: (() -> Unit)? = null,
+    /** This device's Playback record (Autoplay next episode, app#65); the phone and desktop pages get it through [sectionPreferences]. */
+    tvDevicePlayback: DevicePlaybackState? = null) {
     if (television) {
-        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable)
+        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
@@ -105,7 +108,7 @@ internal const val stremioImportSection = "Import from Stremio"
 @Composable
 private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, backLabel: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        if (compact || backLabel != null) androidx.compose.material3.TextButton(back) { androidx.compose.material3.Text(backLabel ?: "Back") }
+        if (compact || backLabel != null) TextButton(back) { androidx.compose.material3.Text(backLabel ?: "Back") }
         Box(Modifier.weight(1f)) { content() }
     }
 }

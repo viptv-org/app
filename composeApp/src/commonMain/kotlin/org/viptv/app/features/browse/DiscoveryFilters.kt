@@ -12,6 +12,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.*
+import org.viptv.app.components.FilterChip
 
 /** Provider and per-catalog capabilities determine the controls; search never selects a provider.
  *

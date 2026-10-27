@@ -3,6 +3,7 @@ package org.viptv.app.features.entry
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import org.viptv.app.connection.Profile
+import org.viptv.app.components.TextButton
 
 internal fun Profile?.requiresLocalPin(pinAvailable: Boolean) = pinAvailable && this?.locked == true && lockKind != "parent"
 

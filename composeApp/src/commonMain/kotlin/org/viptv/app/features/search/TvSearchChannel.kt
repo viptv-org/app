@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +28,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}, last: Boolean = false) {
@@ -38,7 +38,7 @@ internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onF
     Column(Modifier.width(356.dp * scale)
         .focusProperties { if (last) right = androidx.compose.ui.focus.FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
         Box(Modifier.fillMaxWidth().height(200.dp * scale).clip(shape)
             .background(Brush.linearGradient(listOf(Color(0xFF1D2230), Color(0xFF121318)))), contentAlignment = Alignment.Center) {
             if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.size(140.dp * scale), contentScale = ContentScale.Fit)

@@ -2,7 +2,6 @@ package org.viptv.app.features.settings
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -16,6 +15,8 @@ import com.composables.icons.lucide.*
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -> Unit, stremioImport: Boolean = false, select: (String) -> Unit) {
@@ -23,7 +24,7 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("Settings", Modifier.padding(vertical = 12.dp), fontSize = 24.sp, fontWeight = FontWeight.Bold) }
         item {
-            Row(Modifier.fillMaxWidth().clickable(onClick = profiles).padding(vertical = 12.dp),
+            Row(Modifier.fillMaxWidth().pointerClickable(onClick = profiles, shape = RoundedCornerShape(10.dp)).padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 ProfileAvatar(profile, 40.dp, 10.dp)
                 Column { Text(profile?.name ?: "Profile", fontWeight = FontWeight.SemiBold); Text("Switch profile", fontSize = 12.sp, color = Palette.secondary) }
@@ -35,7 +36,7 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -
             (stremioImportSection to Lucide.Import).takeIf { stremioImport }, "Help" to Lucide.Info, "About" to Lucide.Info)
         entries.forEach { (label, icon) -> item {
             Surface(color = if (selected == label) Palette.raised else Palette.surface, shape = RoundedCornerShape(10.dp)) {
-                Row(Modifier.fillMaxWidth().clickable { select(label) }.padding(horizontal = 12.dp, vertical = 14.dp),
+                Row(Modifier.fillMaxWidth().pointerClickable(shape = RoundedCornerShape(10.dp)) { select(label) }.padding(horizontal = 12.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(icon, null, Modifier.size(20.dp))
                     Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)

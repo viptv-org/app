@@ -2,7 +2,6 @@ package org.viptv.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -29,6 +28,7 @@ import com.composables.icons.lucide.WifiOff
 import com.composables.icons.lucide.X
 import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 /**
  * The controller reports an unreachable server with this exact message
@@ -62,14 +62,14 @@ internal fun DesktopOfflineBar(retry: () -> Unit, dismiss: () -> Unit, modifier:
             maxLines = 1, overflow = TextOverflow.Ellipsis)
         Box(Modifier.height(30.dp).clip(RoundedCornerShape(10.dp))
             .border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(10.dp))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
-                onClickLabel = "Retry", onClick = retry)
+            .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+                onClickLabel = "Retry", onClick = retry, shape = RoundedCornerShape(10.dp))
             .padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
             Text("Retry", fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, color = Palette.text)
         }
         Box(Modifier.size(28.dp).clip(CircleShape)
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
-                onClickLabel = "Dismiss", onClick = dismiss),
+            .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+                onClickLabel = "Dismiss", onClick = dismiss, shape = CircleShape),
             contentAlignment = Alignment.Center) {
             Icon(Lucide.X, null, Modifier.size(14.dp), tint = Palette.text)
         }

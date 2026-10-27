@@ -21,12 +21,15 @@ object Palette {
 }
 
 @Composable
-fun ViptvTheme(television: Boolean = false, content: @Composable () -> Unit) {
+fun ViptvTheme(television: Boolean = false,
+    /** Desktop and web: hover visuals follow the mouse (see `LocalPointerHover`). Never on TV. */
+    pointer: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = ViptvColors,
         typography = viptvTypography(), content = {
             org.viptv.app.components.TvFocusEnvironment(television) {
-                CompositionLocalProvider(LocalContentColor provides Palette.text) {
+                CompositionLocalProvider(LocalContentColor provides Palette.text,
+                    org.viptv.app.components.LocalPointerHover provides (pointer && !television)) {
                     if (television) CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(letterSpacing = 0.sp), content = content)
                     else content()
                 }

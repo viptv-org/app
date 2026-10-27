@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.Switch
 
 @Composable
 internal fun AddonSettingsRow(addon: IntegrationConnection, enabled: Boolean, busy: Boolean, manageable: Boolean,

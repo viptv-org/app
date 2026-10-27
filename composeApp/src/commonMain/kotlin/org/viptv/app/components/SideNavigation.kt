@@ -1,7 +1,6 @@
 package org.viptv.app.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -42,7 +41,7 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
                 .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
                 .background(if (hovered) Color.White.copy(alpha = .04f)
                     else if (destination.screen == selected) Color(0xFF2A2A2D) else Color.Transparent, RoundedCornerShape(10.dp))
-                .clickable(interactionSource = interactions, indication = null, onClickLabel = destination.label) { navigate(destination.screen) },
+                .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = destination.label, shape = RoundedCornerShape(10.dp), hover = null) { navigate(destination.screen) },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center) {
                 val tint = if (destination.screen == selected) Palette.text else Palette.secondary
@@ -70,7 +69,7 @@ private fun RailAction(icon: ImageVector, label: String, action: () -> Unit) {
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
         .background(if (hovered) Color.White.copy(alpha = .04f) else Color.Transparent, RoundedCornerShape(10.dp))
-        .clickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = action),
+        .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = action, shape = RoundedCornerShape(10.dp), hover = null),
         contentAlignment = Alignment.Center) { Icon(icon, label, Modifier.size(20.dp), tint = Palette.secondary) }
 }
 
