@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import org.viptv.app.features.home.MediaCard
+import org.viptv.app.features.details.TvEpisodeCard
 import org.viptv.engine.wire.Card
 
 @Composable
@@ -29,17 +29,14 @@ internal fun TvPlayerEpisodePicker(episodes: List<Card>, scale: Float, current: 
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(540.dp * scale).background(Color(0xFF191818)).padding(top = 48.dp * scale),
                 verticalArrangement = Arrangement.spacedBy(30.dp * scale)) {
                 Text("Episodes", Modifier.padding(start = 96.dp * scale), fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
-
-                    LazyRow(state = list, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                        itemsIndexed(episodes, key = { _, card -> card.provider_id + ":" + card.identity.id }) { index, card ->
-                            val playing = index == currentIndex
-                            val titled = card.copy(title = (card.identity.episode?.let { "${it.episode}. " } ?: "") + card.title)
-                            MediaCard(if (playing) titled.copy(title = "\u25B6 " + titled.title) else titled,
-                                (448 * scale).toInt(), labelScale = scale * 24 / 14, cornerRadius = 12.dp * scale, open = { choose(card) },
-                                modifier = if (index == currentIndex.coerceAtLeast(0)) Modifier.focusRequester(initial) else Modifier)
-                        }
+                LazyRow(state = list, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                    itemsIndexed(episodes, key = { _, card -> card.provider_id + ":" + card.identity.id }) { index, card ->
+                        // The Details episode card: still, Watched pill, progress bar, plus the Now playing marker.
+                        TvEpisodeCard(card, scale, play = { choose(card) }, onFocus = {},
+                            requester = if (index == currentIndex.coerceAtLeast(0)) initial else null,
+                            up = FocusRequester.Default, playing = index == currentIndex)
                     }
-
+                }
             }
         }
         LaunchedEffect(Unit) {
