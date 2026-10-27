@@ -3,7 +3,6 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +18,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerSelectable
+import org.viptv.app.components.pointerToggleable
 
 @Composable
 internal fun PhonePreferenceGroup(content: @Composable ColumnScope.() -> Unit) {
@@ -35,10 +35,10 @@ internal fun PhonePreferenceRow(label: String, value: String, enabled: Boolean, 
     }
 }
 
-/** A whole-row switch: the row is the touch target, the board switch shows the state. */
+/** A whole-row switch: the row is the touch target, the board switch shows the state. Its highlight follows the group's corners. */
 @Composable
 internal fun PhonePreferenceSwitchRow(label: String, description: String, checked: Boolean, change: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).toggleable(checked, role = Role.Switch, onValueChange = change).padding(horizontal = 16.dp, vertical = 10.dp),
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).pointerToggleable(checked, role = Role.Switch, shape = RoundedCornerShape(14.dp), onValueChange = change).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)

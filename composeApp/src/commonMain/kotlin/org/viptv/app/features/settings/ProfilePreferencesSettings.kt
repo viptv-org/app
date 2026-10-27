@@ -2,7 +2,7 @@ package org.viptv.app.features.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.*
@@ -16,6 +16,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.FilterChip
+import org.viptv.app.components.Switch
+import org.viptv.app.components.pointerToggleable
 
 @Composable
 internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,
@@ -38,7 +40,7 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
         TextButton(retry, enabled = !busy) { Text("Refresh") }
         // Stored on this device and applied at once, unlike the profile's preferences below.
         devicePlayback?.let { device ->
-            Row(Modifier.toggleable(device.value.autoplayNext, role = Role.Switch, onValueChange = device::setAutoplayNext),
+            Row(Modifier.pointerToggleable(device.value.autoplayNext, role = Role.Switch, shape = RoundedCornerShape(8.dp), onValueChange = device::setAutoplayNext),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(Modifier.weight(1f, fill = false)) {
                     Text(autoplayNextRow)
