@@ -123,6 +123,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             // app#115: a grid card passes width = 0 and fills its cell, so its art is
             // sized from the laid-out slot instead of a 0 px (clamped to 64 px) guess.
+            // Fixed-width cards (Home and TV rows) keep the plain path: BoxWithConstraints
+            // is a subcomposition per card, which those long scrolling rows don't need.
             if (width > 0) {
                 val density = LocalDensity.current
                 CardArtwork(card, portrait, with(density) { width.dp.toPx().toInt() },
@@ -190,14 +192,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     }
 }
 
-/** Test tags on a hovered card's dim + play disc and on its hover ring (app#56). */
-internal const val MEDIA_CARD_HOVER_TAG = "media-card-hover"
-internal const val MEDIA_CARD_HOVER_RING_TAG = "media-card-hover-ring"
-
-/**
- * components.md §6 "Hover (D)": the art dims (`scrim-card-hover`, black 0.38)
- * and a 48 dp accent play disc appears in its centre (`tile-hover-play-disc`).
- */
 /** The card's art, asked of the image service at the [slotW] x [slotH] px it is drawn into. */
 @Composable
 private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int) {
@@ -211,6 +205,14 @@ private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int) {
     }
 }
 
+/** Test tags on a hovered card's dim + play disc and on its hover ring (app#56). */
+internal const val MEDIA_CARD_HOVER_TAG = "media-card-hover"
+internal const val MEDIA_CARD_HOVER_RING_TAG = "media-card-hover-ring"
+
+/**
+ * components.md §6 "Hover (D)": the art dims (`scrim-card-hover`, black 0.38)
+ * and a 48 dp accent play disc appears in its centre (`tile-hover-play-disc`).
+ */
 @Composable
 private fun CardHoverScrim(modifier: Modifier) {
     Box(modifier.testTag(MEDIA_CARD_HOVER_TAG).background(HoverFill.cardScrim), contentAlignment = Alignment.Center) {

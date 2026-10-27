@@ -39,6 +39,33 @@ class PublicArtworkTest {
         assertEquals(inner, encoded.parameters["url"])
     }
 
+    // The server's own service choices survive the re-size; only the size becomes the slot's.
+    @Test fun resizingServerProxiedArtKeepsTheServersParameters() {
+        val inner = "https://image.tmdb.org/t/p/original/a.jpg"
+        val sized = Url(assertNotNull(sizedArtwork("https://wsrv.nl/?url=$inner&w=200&h=300&dpr=2&blur=8&fit=contain&bg=black&output=png", 341, 512)))
+        assertEquals(inner, sized.parameters["url"])
+        assertEquals("341", sized.parameters["w"]); assertEquals("512", sized.parameters["h"])
+        assertEquals("8", sized.parameters["blur"], "a server-blurred backdrop stays blurred")
+        assertEquals("contain", sized.parameters["fit"]); assertEquals("black", sized.parameters["bg"])
+        assertEquals("png", sized.parameters["output"])
+        assertNull(sized.parameters["dpr"], "the slot size is already in device pixels")
+        assertEquals(listOf("341"), sized.parameters.getAll("w"))
+        // A requested blur replaces the server's.
+        assertEquals(listOf("12"), Url(assertNotNull(blurredArtwork("https://wsrv.nl/?url=$inner&blur=8", 1280, 720, 12)))
+            .parameters.getAll("blur"))
+    }
+
+    // An unencoded source with its own query string is not cut at its first `&`.
+    @Test fun unencodedSourceQueryStringsStayWithTheSource() {
+        val inner = "https://art.example/a.jpg?k=1&j=2"
+        val sized = Url(assertNotNull(sizedArtwork("https://wsrv.nl/?url=$inner&blur=4&q=90", 341, 512)))
+        assertEquals(inner, sized.parameters["url"])
+        assertEquals("4", sized.parameters["blur"]); assertEquals("90", sized.parameters["q"])
+        assertNull(sized.parameters["j"])
+        val encoded = Url(assertNotNull(sizedArtwork("https://wsrv.nl/?url=${inner.encodeURLParameter()}&blur=4", 341, 512)))
+        assertEquals(inner, encoded.parameters["url"])
+    }
+
     // app#115: Simkl's 600 px `_w` fanart (and its other small sizes) become its 1920 px `medium`.
     @Test fun smallSimklSourcesAskForTheLargestSizeOfTheirShape() {
         fun inner(url: String) = Url(assertNotNull(sizedArtwork(url, 1280, 720))).parameters["url"]
