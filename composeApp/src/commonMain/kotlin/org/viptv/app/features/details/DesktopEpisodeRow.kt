@@ -3,6 +3,7 @@ package org.viptv.app.features.details
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +38,8 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             AsyncImage(episode.landscape ?: episode.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             episode.progress?.takeIf { it.isFinite() && it > 0.0 && it < 1.0 }?.let { progress ->
                 Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 10.dp).height(3.dp)
-                    .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = .25f))) {
+                    .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = .25f))
+                    .progressSemantics(progress.toFloat().coerceIn(0f, 1f))) {
                     Box(Modifier.fillMaxWidth(progress.toFloat().coerceIn(0f, 1f)).fillMaxHeight()
                         .clip(RoundedCornerShape(2.dp)).background(Palette.accent))
                 }

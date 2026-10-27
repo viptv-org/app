@@ -25,6 +25,17 @@ class SidecarCueTimelineTest {
         assertEquals(emptyList(), timeline.cuesAt(500))
         assertEquals(listOf("top", "bottom"), timeline.cuesAt(250))
     }
+    /** app#43: Android stacks simultaneous cues newest on top, so the timeline must keep every line, oldest first. */
+    @Test fun multiLineAndOverlappingCuesKeepEveryLineOldestFirst() {
+        val twoLines = "Where are you going this late?\nHome, before it rains."
+        val timeline = SidecarCueTimeline(listOf(SidecarCueGroup(6_000_000, 8_000_000, listOf("- Home.")),
+            SidecarCueGroup(1_000_000, 4_000_000, listOf(twoLines)),
+            SidecarCueGroup(5_000_000, 8_000_000, listOf("- Where are you going?"))))
+        assertEquals(listOf(twoLines), timeline.cuesAt(2_000_000))
+        assertEquals(listOf("- Where are you going?"), timeline.cuesAt(5_500_000))
+        assertEquals(listOf("- Where are you going?", "- Home."), timeline.cuesAt(7_000_000))
+        assertEquals(emptyList(), timeline.cuesAt(8_000_000))
+    }
     @Test fun replacementCuesDoNotResurrectAnEarlierOpenEndedGroup() {
         val timeline = SidecarCueTimeline(listOf(SidecarCueGroup(0, null, listOf("earlier")),
             SidecarCueGroup(100, 200, listOf("replacement"))), replace = true)

@@ -3,6 +3,7 @@ package org.viptv.app
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.player.browserCaptionDeclarations
 import org.viptv.app.player.matchingProviderSubtitle
+import org.viptv.app.player.providerCueLine
 import org.viptv.engine.wire.SubtitleCandidate
 import kotlin.test.*
 
@@ -23,6 +24,15 @@ class BrowserCaptionStyleTest {
         val preferences = ProfilePreferences(subtitle_text_color = "red;}body{display:none", subtitle_background_color = "url(https://invalid)")
         assertEquals("font-size:10.0vh;", browserCaptionDeclarations(preferences, 99f))
         assertEquals("font-size:2.5vh;", browserCaptionDeclarations(preferences, -1f))
+    }
+    /** app#43: snapped lines (stacking and wrapping) whose lift stays about four default lines at every size. */
+    @Test fun providerCuesSitOnSnappedLinesLiftedTheSameDistanceAtEverySize() {
+        assertEquals(-5, providerCueLine(1f))
+        assertEquals(-3, providerCueLine(2f))
+        assertEquals(-9, providerCueLine(.5f))
+        assertEquals(-4, providerCueLine(1.5f))
+        assertEquals(-5, providerCueLine(Float.NaN))
+        assertEquals(-3, providerCueLine(99f))
     }
     @Test fun retainedChoiceMatchesNewLeaseIdsOnlyWithinTheSameUnambiguousProviderTrack() {
         val old = SubtitleCandidate("old", "addon:1", "en", "English")
