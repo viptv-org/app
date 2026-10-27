@@ -38,7 +38,7 @@ class SubtitleRenderingTest {
         preferences: ProfilePreferences = ProfilePreferences(), scale: Float = 1f, capture: String? = null, stack: Boolean = true): GlyphRows {
         val view = SubtitleView(RuntimeEnvironment.getApplication())
         view.profileStyle(preferences, scale)
-        if (stack) view.showCues(cues) else view.setCues(cues)
+        if (stack) view.setStackedCues(cues) else view.setCues(cues)
         view.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
         view.layout(0, 0, width, height)
@@ -108,9 +108,16 @@ class SubtitleRenderingTest {
         assertEquals(listOf("- Home.\n- Where are you going?"), stacked.map { it.text.toString() })
     }
 
+    @Test fun aRepeatedIdenticalCueDrawsOnce() {
+        val cue = Cue.Builder().setText("Same cue from two segments").build()
+        assertEquals(listOf("Same cue from two segments"), stackedCues(listOf(cue, cue.buildUpon().build())).map { it.text.toString() })
+    }
+
     @Test fun positionedCuesKeepTheirOwnPlace() {
         val top = Cue.Builder().setText("Sign on the wall").setLine(.1f, Cue.LINE_TYPE_FRACTION).build()
         val bottom = Cue.Builder().setText("Dialogue").build()
         assertEquals(listOf(top, bottom), stackedCues(listOf(top, bottom)))
+        val authored = Cue.Builder().setText("Authored WebVTT line:-4").setLine(-4f, Cue.LINE_TYPE_NUMBER).build()
+        assertEquals(listOf(authored), stackedCues(listOf(authored)))
     }
 }

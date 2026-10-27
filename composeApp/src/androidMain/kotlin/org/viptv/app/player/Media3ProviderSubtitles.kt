@@ -30,9 +30,9 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     private var view: PlayerView? = null
     private var overlay: SubtitleView? = null
     /** Embedded and stream text, drawn in place of PlayerView's own subtitle view so its cues stack too (app#43). */
-    private var embedded: SubtitleView? = null
+    private var embeddedLayer: SubtitleView? = null
     private val embeddedCues = object : Player.Listener {
-        override fun onCues(cueGroup: CueGroup) { embedded?.showCues(cueGroup.cues) }
+        override fun onCues(cueGroup: CueGroup) { embeddedLayer?.setStackedCues(cueGroup.cues) }
     }
     private var shown: List<Cue>? = null
     private var scale = input.preferences.subtitle_font_scale.toFloat().coerceIn(.5f, 2f)
@@ -42,13 +42,13 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     fun bind(value: PlayerView?) {
         if (view === value) return
         view?.subtitleView?.visibility = View.VISIBLE
-        listOfNotNull(overlay, embedded).forEach { (it.parent as? ViewGroup)?.removeView(it) }
+        layers().forEach { (it.parent as? ViewGroup)?.removeView(it) }
         view = value
         overlay = value?.let { owner -> subtitleLayer(owner, requireNotNull(owner.overlayFrameLayout)) }
         // Same parent as PlayerView's own view: the video's frame, where positioned and bitmap cues belong.
-        embedded = value?.let { owner -> owner.subtitleView?.let { builtIn ->
+        embeddedLayer = value?.let { owner -> owner.subtitleView?.let { builtIn ->
             builtIn.visibility = View.INVISIBLE
-            subtitleLayer(owner, builtIn.parent as ViewGroup).also { it.showCues(player.currentCues.cues) }
+            subtitleLayer(owner, builtIn.parent as ViewGroup).also { it.setStackedCues(player.currentCues.cues) }
         } }
         shown = null
         render()
@@ -60,7 +60,9 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         parent.addView(layer, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     }
 
-    fun size(value: Float) { scale = value; listOfNotNull(overlay, embedded).forEach { it.profileStyle(input.preferences, scale) } }
+    private fun layers() = listOfNotNull(overlay, embeddedLayer)
+
+    fun size(value: Float) { scale = value; layers().forEach { it.profileStyle(input.preferences, scale) } }
 
     suspend fun select(id: Int?) {
         touched = true
@@ -155,10 +157,10 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     private fun clear() { timeline = null; desired = null; shown = null; tracks.providerSelected(null); render() }
     private fun render() {
         if (closed) return
-        embedded?.visibility = if (timeline == null) View.VISIBLE else View.INVISIBLE
+        embeddedLayer?.visibility = if (timeline == null) View.VISIBLE else View.INVISIBLE
         val cues = timeline?.cuesAt(positionMillis().coerceAtLeast(0) * 1000) ?: emptyList()
         if (cues !== shown) {
-            overlay?.showCues(cues); shown = cues
+            overlay?.setStackedCues(cues); shown = cues
             input.diagnostics?.invoke("sidecar_active=${timeline != null} sidecar_cues=${cues.size} sidecar_position_ms=${positionMillis()}")
         }
     }

@@ -96,8 +96,8 @@ kotlin {
 }
 
 // Robolectric's native graphics reach raw FileDescriptor internals on JDK 17+.
-tasks.matching { it.name == "testAndroidHostTest" }.configureEach {
-    (this as Test).jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED")
+tasks.withType<Test>().matching { it.name == "testAndroidHostTest" }.configureEach {
+    jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED")
 }
 
 val buildDesktopMpv by tasks.registering(Exec::class) {
