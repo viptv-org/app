@@ -3,6 +3,7 @@ package org.viptv.app.components
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.IndicationNodeFactory
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.clickable
@@ -26,7 +27,6 @@ import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.node.invalidateDraw
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -43,7 +43,7 @@ import org.viptv.app.theme.Palette
  * exactly as they are, so they read [pointerHovered], which is only true where
  * [LocalPointerHover] says the screen is driven by a mouse.
  *
- * `PointerAffordanceSourceTest` fails the build if a raw `clickable`,
+ * `PointerAffordanceTest.everyClickableInTheAppGoesThroughThePointerAffordances` fails the build if a raw `clickable`,
  * `selectable` or `toggleable` is added anywhere else, so new UI gets the hand
  * cursor by default.
  */
@@ -106,8 +106,10 @@ private fun shaped(indication: Indication?, shape: Shape?, hover: Color?): Indic
  *
  * Desktop and web ([LocalPointerHover]): hover fills the shape with [hover]
  * (`fill-wash`) and a press with `fill-wash-pressed`, both drawn as the shape's
- * outline, never as the bounding rectangle. Phone, tablet and TV keep exactly the
- * indication the call site asked for, so touch and D-pad feedback do not change.
+ * outline, never as the bounding rectangle. A control that asked for an
+ * indication keeps keyboard-focus feedback, as a shaped layer like Material's.
+ * Phone, tablet and TV keep exactly the indication the call site asked for, so
+ * touch and D-pad feedback do not change.
  */
 private class ShapedHighlight(
     private val shape: Shape,
@@ -130,19 +132,24 @@ private class ShapedHighlightNode(
     private val useLocalIndication: Boolean,
 ) : DelegatingNode(), DrawModifierNode, CompositionLocalConsumerModifierNode {
     private var pointer = false
+    private var focusLayer = false
     private var hovered = false
     private var pressed = false
+    private var focused = false
+    private var touchNode: DelegatableNode? = null
 
     override fun onAttach() {
         pointer = currentValueOf(LocalPointerHover)
+        val asked = if (useLocalIndication) currentValueOf(LocalIndication) else fallback
         if (!pointer) {
-            val touch = if (useLocalIndication) currentValueOf(LocalIndication) else fallback
-            if (touch is IndicationNodeFactory) delegate(touch.create(source))
+            if (asked is IndicationNodeFactory) touchNode = delegate(asked.create(source))
             return
         }
+        focusLayer = asked != null && hover != null
         coroutineScope.launch {
             val hovers = mutableListOf<HoverInteraction.Enter>()
             val presses = mutableListOf<PressInteraction.Press>()
+            val focuses = mutableListOf<FocusInteraction.Focus>()
             source.interactions.collect { interaction ->
                 when (interaction) {
                     is HoverInteraction.Enter -> hovers += interaction
@@ -150,14 +157,23 @@ private class ShapedHighlightNode(
                     is PressInteraction.Press -> presses += interaction
                     is PressInteraction.Release -> presses -= interaction.press
                     is PressInteraction.Cancel -> presses -= interaction.press
+                    is FocusInteraction.Focus -> focuses += interaction
+                    is FocusInteraction.Unfocus -> focuses -= interaction.focus
                 }
-                val nowHovered = hovers.isNotEmpty(); val nowPressed = presses.isNotEmpty()
-                if (nowHovered != hovered || nowPressed != pressed) {
-                    hovered = nowHovered; pressed = nowPressed
+                val nowHovered = hovers.isNotEmpty(); val nowPressed = presses.isNotEmpty(); val nowFocused = focuses.isNotEmpty()
+                if (nowHovered != hovered || nowPressed != pressed || nowFocused != focused) {
+                    hovered = nowHovered; pressed = nowPressed; focused = nowFocused
                     invalidateDraw()
                 }
             }
         }
+    }
+
+    /** A recycled list item attaches again; it must not stack a second touch indication. */
+    override fun onDetach() {
+        touchNode?.let { undelegate(it) }
+        touchNode = null
+        hovered = false; pressed = false; focused = false
     }
 
     override fun ContentDrawScope.draw() {
@@ -166,14 +182,16 @@ private class ShapedHighlightNode(
         val fill = when {
             pressed -> HoverFill.washPressed
             hovered -> hover
-            else -> return
+            else -> null
         }
-        drawOutline(shape.createOutline(size, layoutDirection, this), fill)
+        val outline = shape.createOutline(size, layoutDirection, this)
+        if (fill != null) drawOutline(outline, fill)
+        if (focused && focusLayer) drawOutline(outline, HoverFill.focusLayer)
     }
 }
 
 /** A disabled control keeps the default arrow: the hand promises a click that will not happen. */
-private fun Modifier.cursorIf(enabled: Boolean): Modifier = if (enabled) handCursor() else this
+internal fun Modifier.cursorIf(enabled: Boolean): Modifier = if (enabled) handCursor() else this
 
 /**
  * True while a mouse rests on the control, and only on desktop and web. Pass the
@@ -186,21 +204,16 @@ fun InteractionSource.pointerHovered(): Boolean {
     return hovered && LocalPointerHover.current
 }
 
-/**
- * The design's desktop hover tokens (components.md §1, README colour table).
- * Each function takes the control's resting fill and returns its hover fill.
- */
+/** The design's desktop hover tokens (components.md §1 and §6, README colour table, tokens.css). */
 object HoverFill {
-    /** `surface-3`: secondary and destructive buttons, the selected chip. */
-    val surface3 = Color(0xFF2A2A2E)
     /** `surface-4`: secondary / destructive button hover (desktop). */
     val surface4 = Color(0xFF34343A)
     /** `fill-wash`: the outline / quiet hover wash. */
     val wash = Color.White.copy(alpha = .06f)
     /** `fill-wash-pressed`: the outline / quiet pressed wash. */
     val washPressed = Color.White.copy(alpha = .04f)
-    /** `player-control-hover`: transparent player buttons. */
-    val playerControl = Color.White.copy(alpha = .12f)
+    /** Keyboard focus on a shaped control that asked for an indication: Material's 0.1 focus layer, kept in shape. */
+    internal val focusLayer = Color.White.copy(alpha = .1f)
     /** `scrim-card-hover`: the dim laid over a hovered card's art. */
     val cardScrim = Color.Black.copy(alpha = .38f)
 
@@ -208,15 +221,6 @@ object HoverFill {
     fun primary(rest: Color = Palette.accent): Color = Color(
         (rest.red * 1.08f).coerceAtMost(1f), (rest.green * 1.08f).coerceAtMost(1f),
         (rest.blue * 1.08f).coerceAtMost(1f), rest.alpha)
-
-    /** Light (off-white fill): goes to pure white. */
-    val light = Color.White
-
-    /** Secondary / destructive (surface-3 fill): surface-4. */
-    val secondary = surface4
-
-    /** Rows and nav items: `surface-2` (README: hover / pressed rows). */
-    val row = Palette.raised
 
     /**
      * The hover fill for a control resting on [rest], by the button kind that
@@ -228,10 +232,7 @@ object HoverFill {
         rest.alpha == 0f -> wash
         rest == Palette.accent -> primary(rest)
         rest.alpha < 1f -> rest.copy(alpha = (rest.alpha + wash.alpha).coerceAtMost(1f))
-        rest.luminance() > .5f -> light
-        else -> secondary
+        rest.luminance() > .5f -> Color.White
+        else -> surface4
     }
-
-    /** Outline / quiet: the resting fill with the 0.06 white wash over it. */
-    fun quiet(rest: Color = Color.Transparent): Color = if (rest.alpha == 0f) wash else lerp(rest, Color.White, .06f)
 }

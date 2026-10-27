@@ -186,8 +186,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     }
 }
 
-/** Test tag on a hovered card's dim + play disc (app#56). */
+/** Test tags on a hovered card's dim + play disc and on its hover ring (app#56). */
 internal const val MEDIA_CARD_HOVER_TAG = "media-card-hover"
+internal const val MEDIA_CARD_HOVER_RING_TAG = "media-card-hover-ring"
 
 /**
  * components.md §6 "Hover (D)": the art dims (`scrim-card-hover`, black 0.38)
@@ -209,7 +210,7 @@ private fun CardHoverScrim(modifier: Modifier) {
  */
 @Composable
 private fun CardHoverRing(radius: Dp, modifier: Modifier) {
-    Canvas(modifier) {
+    Canvas(modifier.testTag(MEDIA_CARD_HOVER_RING_TAG)) {
         val stroke = 2.dp.toPx()
         drawRoundRect(Palette.text, Offset(stroke / 2, stroke / 2),
             Size((size.width - stroke).coerceAtLeast(0f), (size.height - stroke).coerceAtLeast(0f)),

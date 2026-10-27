@@ -13,10 +13,14 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.features.home.MEDIA_CARD_HOVER_RING_TAG
 import org.viptv.app.features.home.MEDIA_CARD_HOVER_TAG
+import org.viptv.app.features.home.MediaCard
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -57,8 +61,8 @@ class PointerHoverUiTest {
     private fun card(scene: ImageComposeScene, title: String) = nodes(scene).first {
         it.config.contains(SemanticsActions.OnClick) && label(it).contains(title)
     }
-    private fun hoverTags(scene: ImageComposeScene) = nodes(scene, merged = false)
-        .filter { it.config.getOrNull(SemanticsProperties.TestTag) == MEDIA_CARD_HOVER_TAG }
+    private fun hoverTags(scene: ImageComposeScene, tag: String = MEDIA_CARD_HOVER_TAG) = nodes(scene, merged = false)
+        .filter { it.config.getOrNull(SemanticsProperties.TestTag) == tag }
 
     private fun scene(pointer: Boolean, browser: Boolean) = ImageComposeScene(1280, 900, Density(1f)) {
         ViptvTheme(pointer = pointer) {
@@ -84,12 +88,35 @@ class PointerHoverUiTest {
                     val shown = hoverTags(scene)
                     assertEquals(1, shown.size, "$where: hovering $title shows exactly one hover state")
                     assertTrue(bounds.contains(shown.single().boundsInRoot.center), "$where: the hover state is on $title")
+                    assertEquals(1, hoverTags(scene, MEDIA_CARD_HOVER_RING_TAG).size, "$where: hovering $title draws the inset ring")
                     // Leaving the card clears the dim, disc and ring.
                     scene.sendPointerEvent(PointerEventType.Move, Offset(1270f, 890f)); render()
                     assertTrue(hoverTags(scene).isEmpty(), "$where: the hover state clears when the mouse leaves $title")
+                    assertTrue(hoverTags(scene, MEDIA_CARD_HOVER_RING_TAG).isEmpty(), "$where: the ring clears too")
                 }
             } finally { scene.close() }
         }
+    }
+
+    @Test fun aFocusedHoveredCardShowsOnlyTheFocusRing() = onEdt {
+        val focus = androidx.compose.ui.focus.FocusRequester()
+        val scene = ImageComposeScene(600, 600, Density(1f)) {
+            ViptvTheme(pointer = true) {
+                Box(Modifier.fillMaxSize().background(Palette.background).padding(40.dp)) {
+                    MediaCard(saved, width = 240, open = {}, modifier = Modifier.focusRequester(focus))
+                }
+            }
+        }
+        var frame = 0L
+        fun render() = repeat(4) { scene.render(frame++ * 16_666_667L).close() }
+        try {
+            render()
+            scene.sendPointerEvent(PointerEventType.Move, card(scene, "Saved Show").boundsInRoot.center); render()
+            assertEquals(1, hoverTags(scene, MEDIA_CARD_HOVER_RING_TAG).size, "an unfocused hovered card draws the hover ring")
+            focus.requestFocus(); render()
+            assertEquals(1, hoverTags(scene).size, "the focused card keeps its dim and play disc while hovered")
+            assertTrue(hoverTags(scene, MEDIA_CARD_HOVER_RING_TAG).isEmpty(), "a focused card shows its focus ring only, not a second hover ring")
+        } finally { scene.close() }
     }
 
     @Test fun touchLayoutsKeepNoHoverVisuals() = onEdt {

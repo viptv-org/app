@@ -42,8 +42,9 @@ import androidx.compose.ui.unit.dp
  * importing the wrapper by name (`import org.viptv.app.components.TextButton`):
  * an explicit import outranks the `androidx.compose.material3.*` star import, so
  * the call sites stay unchanged. On desktop and web the buttons also take the
- * design's hover fill (components.md §1). `PointerAffordanceSourceTest` fails when a file
- * calls one of these components without that import.
+ * design's hover fill (components.md §1). The source test fails when a file
+ * calls one of these components without that import
+ * (`PointerAffordanceTest.everyClickableInTheAppGoesThroughThePointerAffordances`).
  */
 
 @Composable
@@ -54,7 +55,7 @@ fun Button(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean 
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.Button(onClick, modifier.cursor(enabled), enabled, shape,
+    DesignHoverOnly { androidx.compose.material3.Button(onClick, modifier.cursorIf(enabled), enabled, shape,
         if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
         elevation, border, contentPadding, source, content) }
 }
@@ -67,7 +68,7 @@ fun OutlinedButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: 
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.OutlinedButton(onClick, modifier.cursor(enabled), enabled, shape,
+    DesignHoverOnly { androidx.compose.material3.OutlinedButton(onClick, modifier.cursorIf(enabled), enabled, shape,
         if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
         elevation, border, contentPadding, source, content) }
 }
@@ -80,7 +81,7 @@ fun TextButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Bool
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.TextButton(onClick, modifier.cursor(enabled), enabled, shape,
+    DesignHoverOnly { androidx.compose.material3.TextButton(onClick, modifier.cursorIf(enabled), enabled, shape,
         if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
         elevation, border, contentPadding, source, content) }
 }
@@ -91,20 +92,20 @@ fun IconButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Bool
     shape: Shape = IconButtonDefaults.standardShape, content: @Composable () -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.IconButton(onClick, modifier.cursor(enabled), enabled,
+    DesignHoverOnly { androidx.compose.material3.IconButton(onClick, modifier.cursorIf(enabled), enabled,
         if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors, source, shape, content) }
 }
 
 @Composable
 fun Checkbox(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifier: Modifier = Modifier,
     enabled: Boolean = true, colors: CheckboxColors = CheckboxDefaults.colors(), interactionSource: MutableInteractionSource? = null) =
-    androidx.compose.material3.Checkbox(checked, onCheckedChange, modifier.cursor(enabled && onCheckedChange != null), enabled, colors, interactionSource)
+    androidx.compose.material3.Checkbox(checked, onCheckedChange, modifier.cursorIf(enabled && onCheckedChange != null), enabled, colors, interactionSource)
 
 @Composable
 fun Switch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifier: Modifier = Modifier,
     thumbContent: (@Composable () -> Unit)? = null, enabled: Boolean = true, colors: SwitchColors = SwitchDefaults.colors(),
     interactionSource: MutableInteractionSource? = null) =
-    androidx.compose.material3.Switch(checked, onCheckedChange, modifier.cursor(enabled && onCheckedChange != null), thumbContent, enabled, colors, interactionSource)
+    androidx.compose.material3.Switch(checked, onCheckedChange, modifier.cursorIf(enabled && onCheckedChange != null), thumbContent, enabled, colors, interactionSource)
 
 @Composable
 fun FilterChip(selected: Boolean, onClick: () -> Unit, label: @Composable () -> Unit, modifier: Modifier = Modifier,
@@ -112,7 +113,7 @@ fun FilterChip(selected: Boolean, onClick: () -> Unit, label: @Composable () -> 
     shape: Shape = FilterChipDefaults.shape, colors: SelectableChipColors = FilterChipDefaults.filterChipColors(),
     elevation: SelectableChipElevation? = FilterChipDefaults.filterChipElevation(),
     border: BorderStroke? = FilterChipDefaults.filterChipBorder(enabled, selected), interactionSource: MutableInteractionSource? = null) =
-    androidx.compose.material3.FilterChip(selected, onClick, label, modifier.cursor(enabled), enabled, leadingIcon, trailingIcon,
+    androidx.compose.material3.FilterChip(selected, onClick, label, modifier.cursorIf(enabled), enabled, leadingIcon, trailingIcon,
         shape, colors, elevation, border, interactionSource)
 
 @Composable
@@ -120,7 +121,7 @@ fun DropdownMenuItem(text: @Composable () -> Unit, onClick: () -> Unit, modifier
     leadingIcon: @Composable (() -> Unit)? = null, trailingIcon: @Composable (() -> Unit)? = null, enabled: Boolean = true,
     colors: MenuItemColors = MenuDefaults.itemColors(), contentPadding: PaddingValues = MenuDefaults.DropdownMenuItemContentPadding,
     interactionSource: MutableInteractionSource? = null) =
-    androidx.compose.material3.DropdownMenuItem(text, onClick, modifier.cursor(enabled), leadingIcon, trailingIcon, enabled,
+    androidx.compose.material3.DropdownMenuItem(text, onClick, modifier.cursorIf(enabled), leadingIcon, trailingIcon, enabled,
         colors, contentPadding, interactionSource)
 
 /** The clickable `Surface(onClick = …)` overload. The plain Surface stays Material's. */
@@ -129,7 +130,7 @@ fun Surface(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean
     color: Color = MaterialTheme.colorScheme.surface, contentColor: Color = contentColorFor(color),
     tonalElevation: Dp = 0.dp, shadowElevation: Dp = 0.dp, border: BorderStroke? = null,
     interactionSource: MutableInteractionSource? = null, content: @Composable () -> Unit) =
-    androidx.compose.material3.Surface(onClick, modifier.cursor(enabled), enabled, shape, color, contentColor,
+    androidx.compose.material3.Surface(onClick, modifier.cursorIf(enabled), enabled, shape, color, contentColor,
         tonalElevation, shadowElevation, border, interactionSource, content)
 
 @Composable
@@ -137,10 +138,9 @@ fun Tab(selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, e
     text: @Composable (() -> Unit)? = null, icon: @Composable (() -> Unit)? = null,
     selectedContentColor: Color = LocalContentColor.current, unselectedContentColor: Color = selectedContentColor,
     interactionSource: MutableInteractionSource? = null) =
-    androidx.compose.material3.Tab(selected, onClick, modifier.cursor(enabled), enabled, text, icon,
+    androidx.compose.material3.Tab(selected, onClick, modifier.cursorIf(enabled), enabled, text, icon,
         selectedContentColor, unselectedContentColor, interactionSource)
 
-private fun Modifier.cursor(enabled: Boolean): Modifier = if (enabled) handCursor() else this
 
 /**
  * On desktop and web the buttons above draw the design's hover fill themselves
