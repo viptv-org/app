@@ -83,23 +83,70 @@ fun ApplicationController.backSources() {
         busy = false, findingSources = false, error = null)
 }
 
-/** Chrome and other global Back controls use the same route-specific return state. */
+/**
+ * The app's one Back step (docs/BACK_MATRIX.md). Every Back input ends here: the in-page arrows,
+ * Android and TV system Back, the desktop chevron, Escape and mouse button, and browser history.
+ * Nested levels go up one at a time, overlays return to their own origin, and other pages pop the
+ * screen history ([ApplicationState.navBack]) or, without history, go to their parent.
+ */
 fun ApplicationController.navigateBack() {
     if (backWithinSettings()) return
     val state = mutable.value
     // app#44: Settings opened from the player's Audio & subtitles menu goes back to the paused player.
     if (state.inPlayerSettings()) { returnToPlayer(); return }
-    when (state.screen) {
-        Screen.Sources -> backSources()
-        Screen.Player -> closePlayer()
-        Screen.Details -> backDetails()
-        else -> if (state.navBack.isNotEmpty()) popHistory() else when (state.screen) {
-            Screen.ProfilePin, Screen.ProfileEdit -> navigate(Screen.Profiles)
-            Screen.Connect, Screen.RecoveryCodes, Screen.Profiles, Screen.Home -> Unit
-            else -> navigate(Screen.Home)
-        }
+    when (state.backStep()) {
+        BackStep.Root -> Unit
+        BackStep.Sources -> backSources()
+        BackStep.Player -> closePlayer()
+        BackStep.Details -> backDetails()
+        BackStep.Profiles -> navigate(Screen.Profiles, record = false)
+        BackStep.ManageProfiles -> stopManagingProfiles()
+        BackStep.History -> popHistory()
+        BackStep.Home -> navigate(Screen.Home, record = false)
     }
 }
+
+/** Whether [navigateBack] has a step to take here; false on a root page, where Back belongs to the platform. */
+fun ApplicationState.canNavigateBack(): Boolean =
+    settingsLevelOpen() || inPlayerSettings() || backStep() != BackStep.Root
+
+/**
+ * Android system Back and the TV remote's Back, once no route took it: true when the app takes the
+ * step ([navigateBack]), false when the activity leaves the app. Home is the root on Android and TV
+ * (design: "Back from Home exits the app"); desktop and browser still pop Home's history.
+ * The recovery codes are shown once, so Back there stays on the page.
+ */
+fun ApplicationState.systemBackStaysInApp(): Boolean = when (screen) {
+    Screen.RecoveryCodes -> true
+    Screen.Home -> false
+    else -> canNavigateBack()
+}
+
+private enum class BackStep { Root, Sources, Player, Details, Profiles, ManageProfiles, History, Home }
+
+private fun ApplicationState.backStep(): BackStep = when (screen) {
+    Screen.Sources -> BackStep.Sources
+    Screen.Player -> BackStep.Player
+    Screen.Details -> BackStep.Details
+    Screen.Connect, Screen.RecoveryCodes -> BackStep.Root
+    // The PIN pad and the profile editor belong to Profiles, whatever was open before them.
+    Screen.ProfilePin, Screen.ProfileEdit -> BackStep.Profiles
+    Screen.Profiles -> when {
+        managingProfiles -> BackStep.ManageProfiles
+        // The first choice after sign-in has nowhere to go back to.
+        selectedProfile == null -> BackStep.Root
+        navBack.isNotEmpty() -> BackStep.History
+        else -> BackStep.Home
+    }
+    else -> when {
+        navBack.isNotEmpty() -> BackStep.History
+        screen == Screen.Home -> BackStep.Root
+        else -> BackStep.Home
+    }
+}
+
+private fun ApplicationState.settingsLevelOpen() =
+    screen == Screen.Settings && (parentTitles != null || settingsPage?.parent() != null)
 
 /** Settings reports the page it shows, so global Back can leave a sub-page before leaving Settings. */
 fun ApplicationController.showSettingsPage(page: SettingsPage) {
