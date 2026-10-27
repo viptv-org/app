@@ -19,12 +19,18 @@ loaded episode page. The Next episode toolbar button plays that episode straight
 away (app#41). The board-shaped Up next prompt opens by itself when the player
 reports the end of the episode, drawn over its last frame, on phone and on the
 desktop/web player. Watch credits and Back dismiss it until the episode ends
-again; only its Next episode button starts media. The prompt pins the opened
-candidate and dismisses if its identity/assertions or playback owner changes. A
-next episode that resolves after the end (the controller asks again then) still
-opens it. Pending/unavailable results disable the action, show an honest status
-and never open the prompt. Movies do not show episode actions. There is no
-countdown, autoplay, inferred credit boundary or invented metadata.
+again. With Settings › Playback › Autoplay next episode on (the default, stored
+on the device), its Next episode button counts down 10 s ("Next episode in 9",
+with a ring that empties; reduced motion keeps only the number) and then plays
+through the same path as the button (app#65). Watch credits, Back/Escape, a
+seek away from the end, any key press or a tap on the prompt stop the countdown
+for that end; the prompt stays until dismissed. With the setting off only the
+button starts media. Movies, live media and finales never count down. The prompt
+pins the opened candidate and dismisses if its identity/assertions or playback
+owner changes. A next episode that resolves after the end (the controller asks
+again then) still opens it. Pending/unavailable results disable the action, show
+an honest status and never open the prompt. Movies do not show episode actions.
+There is no inferred credit boundary or invented metadata.
 
 On a phone source failure, the retained title/subtitle, source error and existing
 recovery actions use the supplied error-board arrangement. Retry and Choose a

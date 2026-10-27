@@ -56,7 +56,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
             val compact = maxWidth < 640.dp
             val gutter = if (compact) 20.dp else 44.dp
             Surface(Modifier.widthIn(max = 800.dp).fillMaxWidth().fillMaxHeight().onPreviewKeyEvent { event ->
-                    if (event.key == Key.Escape && event.type == KeyEventType.KeyUp) { back(); true } else false
+                    // One step per press: the key-down goes back, and neither half reaches the page's Back as well.
+                    if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) back(); true } else false
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
                 color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
                 Box {
@@ -83,7 +84,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                 else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                             }
                         }
-                        if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(gutter)) }
+                        if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(vertical = gutter), gutter = gutter) }
                     }
                     IconButton(onClick = back, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)
                         .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }

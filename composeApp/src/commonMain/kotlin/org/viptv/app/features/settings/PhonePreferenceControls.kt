@@ -18,6 +18,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerSelectable
+import org.viptv.app.components.pointerToggleable
 
 @Composable
 internal fun PhonePreferenceGroup(content: @Composable ColumnScope.() -> Unit) {
@@ -31,6 +32,19 @@ internal fun PhonePreferenceRow(label: String, value: String, enabled: Boolean, 
         Text(label, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Text(value, Modifier.widthIn(max = 190.dp), color = Palette.secondary, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Icon(Lucide.ChevronRight, null, Modifier.size(17.dp), tint = Palette.tertiary)
+    }
+}
+
+/** A whole-row switch: the row is the touch target, the board switch shows the state. Its highlight follows the group's corners. */
+@Composable
+internal fun PhonePreferenceSwitchRow(label: String, description: String, checked: Boolean, change: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).pointerToggleable(checked, role = Role.Switch, shape = RoundedCornerShape(14.dp), onValueChange = change).padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(description, color = Palette.secondary, fontSize = 13.sp)
+        }
+        PhoneSwitch(checked, enabled = true, change = null)
     }
 }
 

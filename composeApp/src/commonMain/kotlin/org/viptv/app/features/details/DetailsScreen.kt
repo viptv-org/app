@@ -30,7 +30,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     paging: Boolean = true) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
-            continuing = continuing, paging = paging)
+            continuing = continuing, shown = paging)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
@@ -107,10 +107,10 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     }
                 }
                 if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {
-                    Column(Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp, bottom = 24.dp) else PaddingValues(horizontal = gutter)),
+                    Column(Modifier.padding(bottom = if (desktop) 24.dp else 0.dp),
                         verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        if (desktop) Text("More like this", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        RelatedTitles(value.recommendations, open, Modifier.fillMaxWidth(), showHeading = !desktop)
+                        if (desktop) Text("More like this", Modifier.padding(horizontal = gutter), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        RelatedTitles(value.recommendations, open, Modifier.fillMaxWidth(), showHeading = !desktop, gutter = gutter)
                     }
                 }
             }

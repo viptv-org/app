@@ -3,6 +3,8 @@ package org.viptv.app.features.player
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
+import org.viptv.app.features.settings.rememberDevicePlaybackState
+import org.viptv.app.features.settings.rememberReducedMotion
 import org.viptv.app.state.*
 import org.viptv.app.state.ApplicationState
 import org.viptv.engine.wire.Card
@@ -31,7 +33,9 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         chooseSources = controller::closePlayer, playEpisode = { controller.closePlayer(); controller.chooseSource(it) },
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
-        trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings)
+        trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
+        // Read when the player opens: Settings replaces the player, so a change there is seen on return.
+        autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion())
 }
 
 /** The player's Episodes list on every platform: the playing episode's season, in its exact metadata scope. */

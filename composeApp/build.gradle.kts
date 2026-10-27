@@ -64,6 +64,8 @@ kotlin {
             resources.srcDir(layout.buildDirectory.dir("mpvResources"))
             dependencies {
                 implementation(compose.desktop.currentOs); implementation("net.java.dev.jna:jna:5.17.0")
+                // Escape as Back (app#45): the window's Back input, after focused content and dialogs.
+                implementation("org.jetbrains.androidx.navigationevent:navigationevent-compose:1.1.0")
             }
         }
         // The manual nativePlayerMain dependsOn edges disable the default
@@ -81,11 +83,17 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-browser:0.5.0")
             implementation("io.ktor:ktor-client-core:3.4.0")
             implementation("io.ktor:ktor-client-js:3.4.0")
+            // Escape as Back (app#45): the page's Back input, after focused content and dialogs.
+            implementation("org.jetbrains.androidx.navigationevent:navigationevent-compose:1.1.0")
         }
         getByName("androidHostTest").dependencies {
             implementation(kotlin("test-junit"))
             implementation("junit:junit:4.13.2")
             implementation("org.robolectric:robolectric:4.17")
+            // AndroidForegroundTest: a real activity lifecycle against a fake server.
+            implementation("androidx.activity:activity:1.10.1")
+            implementation("io.ktor:ktor-client-mock:3.4.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

@@ -10,6 +10,9 @@ import androidx.compose.runtime.*
 import org.viptv.app.state.*
 import org.viptv.app.state.Screen
 import org.viptv.app.App
+import org.viptv.app.updates.AppWithUpdates
+import org.viptv.app.updates.updatePromptAllowed
+import org.viptv.app.updates.updateServerOrigin
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.connection.AndroidSecrets
 import org.viptv.app.connection.AndroidAccountAuthorization
@@ -43,26 +46,33 @@ open class MainActivity : ComponentActivity() {
         }
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
-        model.start(filesDir.resolve("local.sqlite").absolutePath)
+        model.start(filesDir.resolve("local.sqlite").absolutePath, applicationContext)
+        // The foreground hook (app#75); App.kt skips it because ApplicationModel owns the controller.
+        // ON_START dispatches after onStart's resumePlayback, ON_STOP after onPause's suspendPlayback.
+        lifecycle.addObserver(model.controller.foregroundObserver(onReturn = model::foregroundReturned))
         // A recreated activity gets the launching intent again; only the first creation may act on it.
         if (savedInstanceState == null) offerDeviceCode(intent)
         setContent {
             val controller = model.controller
             val state by controller.state.collectAsState()
             var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
-            BackHandler(enabled = entryBack != null || state.screen !in listOf(Screen.Connect, Screen.Profiles)) {
-                if (entryBack != null) { entryBack?.invoke(); return@BackHandler }
-                when (state.screen) {
-                    Screen.Player -> controller.closePlayer()
-                    Screen.ProfilePin, Screen.ProfileEdit, Screen.Home -> controller.navigate(Screen.Profiles)
-                    Screen.Details -> controller.backDetails()
-                    Screen.Sources -> controller.backSources()
-                    else -> controller.navigate(Screen.Home)
-                }
+            // The open route's own step first (a panel, a sign-in step, a Settings sub-page), else the
+            // app's one Back (docs/BACK_MATRIX.md). Disabled on a root page, so the activity leaves the app.
+            BackHandler(enabled = entryBack != null || state.systemBackStaysInApp()) {
+                entryBack?.invoke() ?: controller.navigateBack()
             }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
-            App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
-                manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
+            val updater = model.updater
+            // App updates (docs/APP_UPDATES.md): checks follow the connection, and a download waits while the player is open.
+            if (updater != null) {
+                LaunchedEffect(state.screen == Screen.Player) { updater.playingChanged(state.screen == Screen.Player) }
+                // Not while starting: the restored session is not known yet, and About would flash "Sign in to a server".
+                LaunchedEffect(state.starting, state.localMode, controller.updateServerOrigin()) { if (!state.starting) updater.connectionChanged() }
+            }
+            AppWithUpdates(updater, tv, promptAllowed = controller.updatePromptAllowed()) {
+                App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
+                    manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
+            }
         }
     }
     override fun onNewIntent(intent: Intent) {

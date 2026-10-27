@@ -261,7 +261,9 @@ Add an app-root `LifecycleEventEffect` (`org.jetbrains.androidx.lifecycle`,
 which Compose Multiplatform maps per platform) that sends
 `Foreground`/`Background`:
 
-- Android: activity start and stop.
+- Android: activity start and stop. `MainActivity` installs the hook
+  (`foregroundObserver`) on its own lifecycle, because `ApplicationModel`,
+  not App.kt, owns the controller there (app#75).
 - Desktop: window focus and minimise.
 - Browser: `visibilitychange` and focus.
 

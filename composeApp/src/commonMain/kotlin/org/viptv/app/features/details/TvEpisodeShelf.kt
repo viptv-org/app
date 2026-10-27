@@ -18,12 +18,32 @@ import coil3.compose.AsyncImage
 import org.viptv.app.components.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import kotlinx.coroutines.launch
+
+/** One attempt to put focus in the episode shelf; the Details page retries a [Pending] one each frame. */
+internal enum class ShelfFocus {
+    Focused,
+    /** The target is in the list but not placed yet. */
+    Pending,
+    /** A return (app#66) has no target: neither the last focused nor the continued episode is in the list. */
+    Missing,
+}
+
+/**
+ * The shelf's focus request, published to the Details page that hosts it. Entering the
+ * shelf takes any episode, else the season selector. Returning to Details (app#66) takes
+ * the last focused episode, else the continued one, and never another.
+ */
+internal class ShelfFocusHandle { var request: ((returning: Boolean) -> ShelfFocus)? = null }
+
+/** How many frames a TV focus request waits for lazy children to be placed. */
+internal const val TV_FOCUS_RETRY_FRAMES = 32
 
 @Composable
 internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, play: (Card) -> Unit,
     focused: () -> Unit, expanded: Boolean, resume: DetailResume?, returnToHero: () -> Unit,
     seasonIndex: List<org.viptv.engine.wire.EpisodeSeason> = emptyList(), nextCursor: String? = null,
-    busy: Boolean = false, loadPage: (Long) -> Unit = {}, restoreChanged: ((() -> Boolean)?) -> Unit = {},
+    busy: Boolean = false, loadPage: (Long) -> Unit = {}, focus: ShelfFocusHandle = remember { ShelfFocusHandle() },
     paging: Boolean = true) {
     val groups = remember(episodes, seasonIndex) { detailSeasons(episodes, seasonIndex) }
     val seasons = groups.map { it.number }
@@ -57,7 +77,15 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     fun focusEpisode(): Boolean = targets[lastFocused]?.requestPlacedFocus() == true ||
         targets[visible.find { resume?.matches(it) == true }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
         visible.firstNotNullOfOrNull { targets[episodeKey(it)] }?.requestPlacedFocus() == true
-    fun restore(): Boolean = focusEpisode() || seasonFocus.requestPlacedFocus()
+    val scope = rememberCoroutineScope()
+    fun requestFocus(returning: Boolean): ShelfFocus {
+        if (!returning) return if (focusEpisode() || seasonFocus.requestPlacedFocus()) ShelfFocus.Focused else ShelfFocus.Pending
+        // The landing target: an unplaced one is brought into the row first.
+        val index = landingIndex ?: return ShelfFocus.Missing
+        if (targets[episodeKey(visible[index])]?.requestPlacedFocus() == true) return ShelfFocus.Focused
+        if (episodeRows.layoutInfo.visibleItemsInfo.none { it.index == index }) scope.launch { episodeRows.scrollToItem(index) }
+        return ShelfFocus.Pending
+    }
     fun enterEpisodes(): Boolean {
         val wanted = selected.takeIf { it in seasons } ?: activeSeason
         if (wanted == activeSeason && focusEpisode()) { pendingEntry = null; return true }
@@ -70,15 +98,15 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     LaunchedEffect(pendingEntry, activeSeason, visible, selectorHasFocus) {
         val pending = pendingEntry ?: return@LaunchedEffect
         if (!selectorHasFocus || pending.first != activeSeason || visible.isEmpty()) return@LaunchedEffect
-        repeat(32) {
+        repeat(TV_FOCUS_RETRY_FRAMES) {
             withFrameNanos { }
             if (pendingEntry != pending || !selectorHasFocus) return@LaunchedEffect
             if (focusEpisode()) { pendingEntry = null; return@LaunchedEffect }
         }
     }
     AutomaticEpisodes(group, nextCursor, busy, loadPage, enabled = paging, scopeKey = parent.provider_id to parent.identity)
-    SideEffect { restoreChanged(::restore) }
-    DisposableEffect(parent.identity) { onDispose { restoreChanged(null) } }
+    SideEffect { focus.request = ::requestFocus }
+    DisposableEffect(parent.identity, focus) { onDispose { focus.request = null } }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
 
         Column(Modifier.fillMaxWidth().heightIn(min = if (expanded) 656.dp * scale else 460.dp * scale)) {

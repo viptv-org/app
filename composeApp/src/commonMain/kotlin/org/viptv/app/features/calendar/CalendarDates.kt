@@ -1,7 +1,6 @@
 package org.viptv.app.features.calendar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,15 +8,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.edgeToEdgeScroll
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun CalendarDates(days: List<CalendarDay>, entries: List<CalendarEntry>, selected: String?, phone: Boolean,
-    scale: Float, choose: (String) -> Unit) {
-    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(if (phone) 8.dp else 20.dp * scale)) {
+    scale: Float, gutter: Dp = 0.dp, choose: (String) -> Unit) {
+    // The strip runs under the page gutter to the screen edges (app#63).
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(if (phone) 8.dp else 20.dp * scale)) {
         days.forEach { day ->
             val active = selected == day.id
             if (phone) Column(Modifier.width(44.dp).background(if (active) Palette.text else androidx.compose.ui.graphics.Color.Transparent,

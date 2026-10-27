@@ -54,17 +54,10 @@ fun App(
     // A device sign-in link opens Add a device only once signed in with a profile chosen.
     LaunchedEffect(deviceLink, state.screen, state.starting) { controller.deliverDeviceCode() }
     DisposableEffect(controller, manageControllerLifecycle) { onDispose { if (manageControllerLifecycle) controller.disconnect() } }
-    // Android start/stop, desktop minimise/restore and window focus, browser tab visibility.
+    // Desktop minimise/restore and window focus, browser tab visibility. Android's MainActivity installs this hook itself.
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     DisposableEffect(controller, lifecycle, manageControllerLifecycle) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            when (event) {
-                androidx.lifecycle.Lifecycle.Event.ON_START -> controller.appForeground(true)
-                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> controller.freshen()
-                androidx.lifecycle.Lifecycle.Event.ON_STOP -> controller.appForeground(false)
-                else -> Unit
-            }
-        }
+        val observer = controller.foregroundObserver()
         if (manageControllerLifecycle) lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }
@@ -105,12 +98,12 @@ fun App(
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television,
-                        back = if (state.selectedProfile != null) ({ controller.navigate(Screen.Home) }) else null)
+                        back = if (state.selectedProfile != null) controller::navigateBack else null)
                 }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
-                    state.busy, state.error, controller::submitProfilePin, { controller.navigate(Screen.Profiles) }, television)
+                    state.busy, state.error, controller::submitProfilePin, controller::navigateBack, television)
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
-                    state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
+                    state.busy, state.error, compact, controller::navigateBack, controller::renameProfile,
                     controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile, television, entryBackChanged, pinAvailable = state.localMode,
                     editingCurrent = state.profileToEdit == state.selectedProfile, openSettings = controller::profileSettings,
                     language = state.preferences?.takeIf { state.profileToEdit == state.selectedProfile }?.preferences?.let { it.preferred_audio_language ?: "Original audio" },
@@ -171,7 +164,7 @@ fun App(
                             Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
                             Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
                                 controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                            else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
+                            else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }

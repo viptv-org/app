@@ -28,6 +28,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         onDispose { entryBackChanged(null) }
     }
     val deviceLink by controller.deviceLink.collectAsState()
+    val devicePlayback = rememberDevicePlaybackState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
@@ -45,7 +46,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice,
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
-        state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television,
+        state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         installWithCompletion = controller::installAddon,
@@ -60,13 +61,14 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
             profileName = state.profiles.find { it.id == state.selectedProfile }?.name,
             origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar) } },
-        preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences) },
+        preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences,
+            devicePlayback) },
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->
             if (compact && !browser) PhoneProfilePreferences(section, state.preferences, state.busy, state.preferencesError ?: state.error,
-                controller::refreshPreferences, controller::updatePreferences)
+                controller::refreshPreferences, controller::updatePreferences, devicePlayback)
             else ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error,
-                controller::refreshPreferences, controller::updatePreferences)
+                controller::refreshPreferences, controller::updatePreferences, devicePlayback)
         },
         devices = if (browser && !state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null) }) else null,
@@ -95,7 +97,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
         tvParentalPinAvailable = state.localMode,
-        returnToPlayer = if (returnsToPlayer) controller::navigateBack else null)
+        returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback)
     }
     }
 }
