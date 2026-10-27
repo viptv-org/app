@@ -96,9 +96,12 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             else -> latestClose() }
     }
     val latestPhoneBack by rememberUpdatedState(phoneBack)
+    // Desktop and browser Back (mouse button, browser history) take Escape's step: an open panel closes first.
+    val keyboardBack = { if (phonePanel != null) dismissPanel() else latestClose() }
+    val latestKeyboardBack by rememberUpdatedState(keyboardBack)
     DisposableEffect(phone, playbackKey) {
-        if (phone) backChanged { latestPhoneBack() }
-        onDispose { if (phone) backChanged(null) }
+        backChanged { if (phone) latestPhoneBack() else latestKeyboardBack() }
+        onDispose { backChanged(null) }
     }
     LaunchedEffect(restorePanel, phonePanel) {
         val restoring = restorePanel
