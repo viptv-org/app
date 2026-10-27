@@ -54,7 +54,7 @@ class PlayerEpisodePickerUiTest {
         episode(1, listOf("Watched"), poster = poster(1)),
         episode(2, listOf("Watched"), landscape = null, poster = poster(2)),
         episode(3, progress = 0.45),
-        episode(4, progress = 0.12),
+        episode(4, progress = 0.12).copy(subtitle = "Aired 12 Oct 2026 · 52m"),
         episode(5, landscape = null),
         episode(6))
     private val current = episodes[3]
@@ -127,6 +127,7 @@ class PlayerEpisodePickerUiTest {
             assertEquals(true, now.config.getOrNull(SemanticsProperties.Focused), "the picker opens focused on the playing episode")
             assertEquals(0.12f, ui.progress(now)!!, 0.001f)
             ui.assertArtwork(now, still(4))
+            assertTrue(now.boundsInWindow.top + now.size.height <= 1080, "the playing card with every line fits on screen")
             ui.key(Key.DirectionRight)
             assertEquals(true, ui.row(5).config.getOrNull(SemanticsProperties.Focused), "D-pad right moves to the next episode")
             ui.key(Key.DirectionLeft)

@@ -3,13 +3,12 @@ package org.viptv.app.features.player
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.*
@@ -60,8 +59,9 @@ internal fun PhoneEpisodePicker(current: Card?, episodes: List<Card>, choose: (C
                                 // A queued click cannot dispatch an episode removed or remapped by a newer snapshot.
                                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(card) }?.let(latestChoose)
                             }, modifier = Modifier.fillMaxWidth().then(if (position == index) Modifier.focusRequester(initial) else Modifier)
-                                .semantics { selected = active }.clip(RoundedCornerShape(10.dp))
-                                .background(if (active) Palette.raised else Color.Transparent).padding(8.dp), playing = active)
+                                // No outer padding: the whole highlighted card stays the tap target.
+                                .semantics { selected = active }.background(if (active) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp)),
+                                playing = active)
                         }
                     }
                 }

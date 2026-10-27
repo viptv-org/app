@@ -26,7 +26,9 @@ internal fun TvPlayerEpisodePicker(episodes: List<Card>, scale: Float, current: 
     val list = rememberLazyListState()
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
         Box(Modifier.fillMaxSize()) {
-            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(540.dp * scale).background(Color(0xFF191818)).padding(top = 48.dp * scale),
+            // The board's 540 px sheet, taller only when a playing card's extra line needs it.
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(min = 540.dp * scale).background(Color(0xFF191818))
+                .padding(top = 48.dp * scale, bottom = 40.dp * scale),
                 verticalArrangement = Arrangement.spacedBy(30.dp * scale)) {
                 Text("Episodes", Modifier.padding(start = 96.dp * scale), fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
                 LazyRow(state = list, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
