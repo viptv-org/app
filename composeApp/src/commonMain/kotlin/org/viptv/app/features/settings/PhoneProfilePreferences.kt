@@ -30,9 +30,7 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
         if (section == "Playback" && devicePlayback != null) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Next episode", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             PhonePreferenceGroup {
-                PhonePreferenceSwitchRow(autoplayNextRow, autoplayNextDescription, devicePlayback.value.autoplayNext) {
-                    devicePlayback.change(devicePlayback.value.copy(autoplayNext = it))
-                }
+                PhonePreferenceSwitchRow(autoplayNextRow, autoplayNextDescription, devicePlayback.value.autoplayNext, devicePlayback::setAutoplayNext)
             }
         }
         if (value != null) {

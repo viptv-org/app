@@ -30,7 +30,7 @@ internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences?, sc
                     requester = requester, left = sidebar) { if (prefs != null) change(prefs.copy(nextEpisode = !prefs.nextEpisode)) else unavailable() }
                 autoplayNextRow -> devicePlayback?.let { device ->
                     TvSettingsRow(row, autoplayNextDescription, scale, checked = device.value.autoplayNext, requester = requester, left = sidebar) {
-                        device.change(device.value.copy(autoplayNext = !device.value.autoplayNext)) }
+                        device.setAutoplayNext(!device.value.autoplayNext) }
                 }
                 "Skip intros and recaps" -> TvSettingsRow(row, "Skips them when the show marks where they are", scale, checked = prefs?.skipIntros,
                     requester = requester, left = sidebar) { if (prefs != null) change(prefs.copy(skipIntros = !prefs.skipIntros)) else unavailable() }

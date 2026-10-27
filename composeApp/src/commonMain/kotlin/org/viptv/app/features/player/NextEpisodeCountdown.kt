@@ -29,14 +29,17 @@ import org.viptv.engine.wire.Card
  */
 @Stable
 internal class NextEpisodeCountdown(private val totalMillis: Long = 10_000) {
+    private val totalSeconds = ceil(totalMillis / 1000.0).toInt()
     /** Whole seconds left: "Next episode in 9". */
-    var secondsLeft by mutableIntStateOf(ceil(totalMillis / 1000.0).toInt())
+    var secondsLeft by mutableIntStateOf(totalSeconds)
         private set
     /** 0 when it starts, 1 at expiry. Read it while drawing, so a tick redraws without recomposing. */
     var progress by mutableFloatStateOf(0f)
         private set
     var running by mutableStateOf(false)
         private set
+    /** The share of whole seconds gone, for assistive technology: it changes once a second, not every frame. */
+    val elapsedShare: Float get() = 1f - secondsLeft.toFloat() / totalSeconds
     private var stopped = false
 
     /** Any viewer action: the panel stays, autoplay doesn't come back for this end. */
@@ -86,8 +89,10 @@ internal fun Modifier.cancelsCountdown(countdown: NextEpisodeCountdown): Modifie
 internal fun NextEpisodeCountdownRing(countdown: NextEpisodeCountdown, color: Color, size: Dp, stroke: Dp, reduceMotion: Boolean,
     content: @Composable () -> Unit) {
     if (!countdown.running || reduceMotion) { content(); return }
+    // Read here so the semantics follow each second; the ring itself redraws every frame from [NextEpisodeCountdown.progress].
+    val announced = countdown.elapsedShare
     Box(Modifier.size(size).semantics {
-        progressBarRangeInfo = ProgressBarRangeInfo(countdown.progress, 0f..1f)
+        progressBarRangeInfo = ProgressBarRangeInfo(announced, 0f..1f)
     }.drawBehind {
         val width = stroke.toPx()
         val inset = width / 2

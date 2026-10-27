@@ -207,9 +207,10 @@ class NextEpisodeEndPanelUiTest {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
             assertTrue(player.hasText("Next episode in 10")); assertFalse(player.hasText("Nothing plays on its own."))
             assertTrue(player.hasText("Starts automatically. Press any button to cancel."))
-            player.seconds(3.0); assertTrue(player.hasText("Next episode in 7")); assertTrue(player.hasRing())
+            player.seconds(3.0); assertTrue(player.hasText("Next episode in 7")); assertEquals(.3f, player.ring()!!, .001f)
             player.capture("tv-end-panel-countdown")
-            player.seconds(7.0)
+            player.seconds(3.0); assertTrue(player.hasText("Next episode in 4")); assertEquals(.6f, player.ring()!!, .001f, "The ring reports each second")
+            player.seconds(4.0)
             assertEquals(listOf(episode(25)), played)
         } finally { player.close() }
     }
@@ -271,6 +272,25 @@ class NextEpisodeEndPanelUiTest {
         } finally { player.close() }
     }
 
+    @Test fun tvKeepWatchingSeekingAndPointerEachStopTheCountdown() {
+        val played = mutableListOf<Card>()
+        val player = Player(1920, 1080, television = true, next = episode(25), autoplay = true) { played += it }
+        try {
+            player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
+            player.click("Keep watching credits"); player.seconds(12.0)
+            assertFalse(player.hasText("Play next episode")); assertTrue(played.isEmpty(), "Keep watching credits cancels")
+            // Seeking leaves the end: the panel stays without its countdown.
+            player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.seconds(1.0)
+            player.facts(PlayerFact.Status("Playing")); player.seconds(12.0)
+            assertTrue(played.isEmpty(), "Seeking cancels")
+            player.back(); player.frames()
+            player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
+            assertTrue(player.hasText("Next episode in 10"))
+            player.press(400, 300); player.seconds(12.0)
+            assertTrue(played.isEmpty(), "A pointer press cancels"); assertTrue(player.hasText("Play next episode"))
+        } finally { player.close() }
+    }
+
     @Test fun withTheSettingOffThePanelOpensWithoutACountdown() {
         val played = mutableListOf<Card>()
         val phone = Player(844, 390, phone = true, next = episode(25), autoplay = false) { played += it }
@@ -309,7 +329,7 @@ class NextEpisodeEndPanelUiTest {
         val player = Player(1920, 1080, television = true, next = episode(25), autoplay = true, reduceMotion = true) { played += it }
         try {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
-            player.seconds(3.0); assertTrue(player.hasText("Next episode in 7")); assertFalse(player.hasRing(), "No ring animation")
+            player.seconds(3.0); assertTrue(player.hasText("Next episode in 7")); assertNull(player.ring(), "No ring animation")
             player.seconds(7.0); assertEquals(listOf(episode(25)), played)
         } finally { player.close() }
     }
@@ -355,8 +375,9 @@ class NextEpisodeEndPanelUiTest {
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
         fun label(node: SemanticsNode) = text(node).ifEmpty { node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString().orEmpty() }
         fun hasText(value: String) = nodes().any { text(it) == value }
-        /** The countdown ring reports its progress; reduced motion draws none. */
-        fun hasRing() = nodes().any { it.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.range == 0f..1f }
+        /** The countdown ring's reported share of time gone; null when no ring is drawn (reduced motion). */
+        fun ring() = nodes().firstNotNullOfOrNull { node ->
+            node.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.takeIf { it.range == 0f..1f }?.current }
         fun action(value: String) = nodes().single { label(it) == value && it.config.contains(SemanticsActions.OnClick) }
         fun click(value: String) { assertTrue(action(value).config[SemanticsActions.OnClick].action!!.invoke()); frames() }
         /** The rendered player over the video layer showing [still], or the stand-in colour. */

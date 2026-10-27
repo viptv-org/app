@@ -30,6 +30,8 @@ internal class DevicePlaybackState(private val store: DeviceRecordStore) {
     var value by mutableStateOf(decodeDevicePlayback(runCatching { store.read() }.getOrNull()))
         private set
 
+    fun setAutoplayNext(enabled: Boolean) = change(value.copy(autoplayNext = enabled))
+
     fun change(next: DevicePlaybackPreferences) {
         value = next
         runCatching { store.write(playbackJson.encodeToString(DevicePlaybackPreferences.serializer(), next)) }
