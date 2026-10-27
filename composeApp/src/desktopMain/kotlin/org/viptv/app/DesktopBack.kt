@@ -3,6 +3,7 @@ package org.viptv.app
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.*
 import androidx.navigationevent.NavigationEventInfo
@@ -15,6 +16,7 @@ import org.viptv.app.state.ApplicationState
  * focused took (a text field, the player, an open dialog or menu all keep theirs), and the mouse's
  * Back and Forward buttons.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun DesktopBackInputs(back: GlobalBack, state: ApplicationState, content: @Composable () -> Unit) {
     // Compose sends Escape here only after the focused content and any open dialog or popup let it pass.
