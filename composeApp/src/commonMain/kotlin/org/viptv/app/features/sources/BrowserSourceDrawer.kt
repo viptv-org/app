@@ -3,13 +3,10 @@ package org.viptv.app.features.sources
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalFocusManager
@@ -26,13 +23,20 @@ import androidx.compose.ui.window.DialogProperties
  */
 @Composable
 internal fun BrowserSourceDrawer(back: () -> Unit, drawer: @Composable () -> Unit) {
-    val focus = remember { FocusRequester() }
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false, scrimColor = Color.Transparent)) {
+        var focused by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
             if (event.key != Key.Escape) false else { if (event.type == KeyEventType.KeyUp) back(); true }
-        }.focusRequester(focus).focusGroup()) { drawer() }
+        }.onFocusChanged { focused = it.hasFocus }.focusGroup()) { drawer() }
         val focusManager = LocalFocusManager.current
-        // The first focusable in the drawer (its Close button: the scrim takes no focus).
-        LaunchedEffect(Unit) { if (!focus.requestFocus(FocusDirection.Enter)) focusManager.moveFocus(FocusDirection.Next) }
+        // Focus starts on the drawer's first focusable, its Close button (the scrim takes
+        // none). The layer can still be settling for a few frames after it opens.
+        LaunchedEffect(Unit) {
+            repeat(30) {
+                withFrameNanos { }
+                if (focused) return@LaunchedEffect
+                focusManager.moveFocus(FocusDirection.Next)
+            }
+        }
     }
 }

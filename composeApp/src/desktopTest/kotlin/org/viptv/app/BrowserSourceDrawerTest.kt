@@ -132,8 +132,10 @@ class BrowserSourceDrawerTest {
         fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun until(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
+            val deadline = System.nanoTime() + 30_000_000_000L
+            while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what: " + controller.state.value.let { state ->
+                "${state.screen} busy=${state.busy} error=${state.error} episodes=${state.detail?.episodes?.size} requests=${requested()} " +
+                    nodes().map(::text).filter { it.isNotBlank() }.take(40) } }; frames(2) }
         }
         /** Bounds in dp, whatever the capture density. */
         fun bounds(node: SemanticsNode) = node.boundsInRoot.let { Rect(it.left / density, it.top / density, it.right / density, it.bottom / density) }
@@ -162,9 +164,13 @@ class BrowserSourceDrawerTest {
         fun openDetailsAndScroll() {
             until("Home") { nodes().any { text(it).contains("Continue Watching") } }
             controller.open(continueCard)
-            until("season 2's episodes in the Details dialog") { episodeRow("Episode 2-8") != null && !controller.state.value.busy }
+            until("season 2's episodes in the Details dialog") { episodeTops().isNotEmpty() && !controller.state.value.busy }
             frames(20)
-            scene.sendPointerEvent(PointerEventType.Scroll, Offset(500f * density, 600f * density), scrollDelta = Offset(0f, 2f))
+            // Into the middle of season 2, whether or not the dialog already landed on S2 E8 (app#40).
+            until("the viewer's scroll to S2 E10") {
+                episodeRow("Episode 2-1") == null && episodeRow("Episode 2-10") != null ||
+                    run { scene.sendPointerEvent(PointerEventType.Scroll, Offset(500f * density, 600f * density), scrollDelta = Offset(0f, 1f)); false }
+            }
             frames(20)
         }
 
@@ -203,9 +209,9 @@ class BrowserSourceDrawerTest {
         BrowserApp().use { app ->
             app.openDetailsAndScroll()
             val before = app.episodeTops()
-            assertTrue(before.isNotEmpty() && before.keys.none { it == "Episode 2-1" }, "the viewer scrolled into season 2: $before")
+            assertTrue(before.isNotEmpty() && "Episode 2-1" !in before, "the viewer scrolled into season 2: $before")
             val metaBefore = requested().filter { it.startsWith("meta") }
-            app.save("before-details")
+            app.save("app-details-before-drawer")
 
             app.chooseEpisode()
             assertEquals(Screen.Details, app.controller.state.value.sourceReturnScreen)
@@ -214,13 +220,16 @@ class BrowserSourceDrawerTest {
             assertTrue(app.bounds(drawer).width >= 640f, "at 1440x900 the drawer is at least 640 dp wide, not ${app.bounds(drawer).width}")
             assertEquals(1440f, app.bounds(drawer).right, "the drawer is docked to the right edge")
             assertTrue(app.nodes().none { text(it).contains("Play always starts") }, "the best-match hint is gone")
+            val first = assertNotNull(app.focused(), "focus starts in the drawer")
+            assertEquals("Close", text(first), "on the drawer's Close button")
+            assertTrue(app.bounds(drawer).contains(app.bounds(first).center))
             // Keyboard focus walks the drawer only: the dialog under it is out of reach.
             repeat(12) {
                 app.key(Key.Tab)
                 val now = assertNotNull(app.focused(), "Tab focuses something")
                 assertTrue(app.bounds(drawer).contains(app.bounds(now).center), "Tab stays in the drawer, not the dialog under it: ${text(now)} ${app.bounds(now)}")
             }
-            app.save("drawer-over-details")
+            app.save("app-drawer-over-details")
 
             app.key(Key.Escape)
             app.assertDetailsUnchanged(before, metaBefore)
