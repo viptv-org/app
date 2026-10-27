@@ -1,3 +1,5 @@
+# aapt2 dump badging, release APK (commit 3e7a07b; launcher resources unchanged since)
+# sha256 62e43ca7d731503e2b3ba4ec6f87767546c01ae182a8eb9b2ca8f6a2550c9945  androidApp/build/outputs/apk/release/androidApp-release.apk
 package: name='org.viptv.experiment' versionCode='1' versionName='0.1.0-experiment' platformBuildVersionName='17' platformBuildVersionCode='37' compileSdkVersion='37' compileSdkVersionCodename='17'
 minSdkVersion:'26'
 targetSdkVersion:'36'
