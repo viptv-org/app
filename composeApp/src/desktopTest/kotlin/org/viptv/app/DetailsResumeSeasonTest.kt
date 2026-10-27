@@ -161,11 +161,13 @@ class DetailsResumeSeasonTest {
             app.continueThenBack()
             app.until("season 2's episodes") { app.node("8. Episode 2-8") != null }
             app.frames(20)
-            assertNotNull(app.node("Season 2"), "the season picker shows season 2, not the first season")
-            assertNull(app.node("Season 1"))
+            assertEquals(1, app.controller.state.value.detail!!.episodes.count { it.identity.episode?.season == 2L && it.identity.episode?.episode == 8L },
+                "S2 E8 came in through the Details pages")
+            assertTrue(app.nodes().none { text(it).startsWith("Episode 1-") || text(it).contains(". Episode 1-") },
+                "no season 1 episode is on screen: the list shows season 2")
             app.assertEpisodeAtTop("8. Episode 2-8")
-            assertTrue(synchronized(metaOffsets) { metaOffsets.toList() }.any { it in 28..51 },
-                "season 2 came through Details paging: $metaOffsets")
+            assertTrue(synchronized(metaOffsets) { metaOffsets.toList() }.contains(27),
+                "season 2 (offset 27: 4 specials + 23 episodes) came through Details paging: $metaOffsets")
             app.save("phone-details-resume-season")
         }
     }

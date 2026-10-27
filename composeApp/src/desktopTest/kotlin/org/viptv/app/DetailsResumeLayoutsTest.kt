@@ -70,7 +70,9 @@ class DetailsResumeLayoutsTest {
         private var frame = 0L
         suspend fun frames(count: Int = 12) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); yield() }
         fun nodes() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
-        fun node(text: String) = nodes().firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == text } }
+        /** The node showing [text]; the desktop row shows an episode's number and title as separate texts. */
+        fun node(text: String) = nodes().firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any {
+            it.text == text || it.text == text.substringAfter(". ") && text.matches(Regex("[0-9]+\\. .*")) } }
         fun click(text: String) = assertTrue(nodes().first { node -> node.config.contains(SemanticsActions.OnClick) &&
             node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == text } }.config[SemanticsActions.OnClick].action!!.invoke())
         fun top(text: String) = assertNotNull(node(text), "$text is composed (${width}x$height): " + nodes().mapNotNull { node ->
@@ -104,7 +106,7 @@ class DetailsResumeLayoutsTest {
             assertEquals(listOf(25L), page.pages, "the legacy cursor keeps paging")
             page.detail = withSeason(withSeason(legacy, 2, 24), 3, 16).copy(next_cursor = null)
             page.settle()
-            assertNotNull(page.node("Season 3"), "season 3 is selected once it lands")
+            // The picker has scrolled away above the episode; only season 3 holds "Episode 3-5".
             assertBelowBackBar(label(3, 5), page.top(label(3, 5)))
         }
     }
