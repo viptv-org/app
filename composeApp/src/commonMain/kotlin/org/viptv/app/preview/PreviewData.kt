@@ -30,6 +30,13 @@ internal object PreviewData {
             HomeRow(id = "new", title = "New this week", provider_id = "preview", state = RowState.READY, cards = posters)), complete = true)
     val genres = listOf("Action", "Comedy", "Drama", "Horror", "Science Fiction", "Thriller")
         .map { GenreChoice(it, BrowseQuery("movie", genre = it)) }
+    /** Server-shaped My List long enough to scroll: the `Library/Long` preview of the collapsing header (app#58). */
+    val longLibrary = LibrarySnapshot(Scope("preview", "preview", "preview", 1), 1, org.viptv.app.connection.defaultLibraryQuery(),
+        (0 until 48).map { index -> posters[index % posters.size].let { it.copy(identity = it.identity.copy(id = "saved-$index")) } }, complete = true,
+        controls = listOf(QueryControl("type", "Type", ControlKind.SINGLECHOICE, true,
+            listOf(Choice("all", "All"), Choice("movie", "Movies"), Choice("series", "Series"), Choice("anime", "Anime"))),
+            QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false, genres.map { Choice(it.label, it.label) })),
+        availability = Availability.AVAILABLE)
     val playerTitle = watching.first().copy(subtitle = "S1 E2 · Please Don’t Go")
     val detail = DetailSnapshot(item = hero.copy(subtitle = "Movie · " + hero.subtitle), episodes = emptyList())
     val sources = listOf(SourceCandidate("source-1", "preview", "LordStreams", "WEB-DL · HEVC · 5.1 · 18.4 GB"),
