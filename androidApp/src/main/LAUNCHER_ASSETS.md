@@ -5,37 +5,48 @@ Change the generator and rerun it instead.
 
 | Resource | What it is |
 |---|---|
-| `res/mipmap-anydpi-v26/ic_launcher.xml`, `ic_launcher_round.xml` | Adaptive icon: amber background, "V" foreground, the same "V" as the monochrome (themed icon) layer |
-| `res/drawable/ic_launcher_foreground.xml` | The "V" as a 108dp vector, sized for the 72dp visible area |
-| `res/values/ic_launcher_background.xml` | `Palette.accent` (`#F5C542`) |
-| `res/mipmap-*dpi/ic_launcher*.png` | Legacy 48dp PNGs (rounded square and disc), mdpi to xxxhdpi |
-| `res/drawable-xhdpi/tv_banner.png` | 320×180 `android:banner` for the Android TV and Fire TV launchers |
+| `res/mipmap-anydpi-v26/ic_launcher.xml`, `ic_launcher_round.xml` | Adaptive icon: black background, white "V" foreground, the same "V" as the monochrome (themed icon) layer |
+| `res/drawable/ic_launcher_foreground.xml` | The white "V" as a 108dp vector, sized for the 72dp visible area |
+| `res/values/ic_launcher_background.xml` | `#000000` |
+| `res/mipmap-*dpi/ic_launcher*.png` | Legacy 48dp PNGs (black rounded square and disc, white "V"), mdpi to xxxhdpi |
+| `res/drawable-xhdpi/tv_banner.png` | 320×180 `android:banner` for the Android TV and Fire TV launchers: white "VIPTV" on black |
 
 ## Provenance
 
-Design has no square app-icon master. These assets reproduce the in-app
-`BrandMark` (`composeApp/.../components/Brand.kt`), which matches the lockup in
-design's `assets/roku/roku/tools/make_remote_branding.py` and its output
-`assets/roku/roku/images/design/remote-channel-poster-hd.jpg`:
+The master is design's black and white V app icon and TV banner, chosen by the
+owner on 2026-10-27 (viptv-org/design#21). It is merged in design as commit
+`85179a8` (viptv-org/design#25):
 
-- an amber `#F5C542` square with corner radius 0.28 × size,
-- a Bricolage Grotesque ExtraBold "V" in `#0B0B0C`, set at 0.625 × size and centred on its ink box,
-- for the banner, the "VIPTV" wordmark in `#F4F2EE` at letter spacing −0.04 em on `#0B0B0C`, with mark, text and gap at the channel poster's 60/72/18 ratio scaled to 180 px high.
+- `assets/ASSET_MANIFEST.md`, section "App icon and TV banner master": geometry, colours, pins and hashes;
+- `assets/brand/tools/make_app_icon.py`: the master generator;
+- `assets/brand/app-icon/app-icon-foreground.svg`, `app-icon-monochrome.svg`, `app-icon-square.svg`, `app-icon-square-1024.png`, `tv-banner-320x180.png`.
 
-The "V" outline comes from `composeResources/font/bricolage.ttf`, the font the
-app renders `BrandMark` with. Its "V" glyph is identical to the one in design's
-`assets/fonts/remote_bricolage_800.ttf`.
+What this generator reproduces from it:
 
-Design's `docs/branding.md` names `viptv-wordmark.png` as the master V. That V
-is the older geometric white mark used by the Roku `channel-poster-hd.jpg`. The
-icon uses the amber `BrandMark` V instead, because that is what the KMP app
-shows on every screen. Design is asked to record a square icon master, and to
-confirm or replace this choice, in viptv-org/design#21.
+- **V:** the Bricolage Grotesque ExtraBold "V", set at 0.625 × the mark size
+  and centred on its ink box. The outline comes from
+  `composeResources/font/bricolage.ttf`, whose "V" is point-for-point identical
+  to design's `assets/fonts/remote_bricolage_800.ttf`.
+- **Colours:** `#000000` (`color.bg-oled`) and `#FFFFFF` (`color.fill.white`). No accent.
+- **Adaptive icon:** a `#000000` background and the white V on a 108dp canvas,
+  sized for the 72dp visible area. The foreground `pathData` equals the path in
+  design's `app-icon-foreground.svg`. The monochrome layer reuses the
+  foreground drawable, because launchers use only its alpha.
+- **Legacy PNGs:** a rounded square (corner radius 0.28 × mark) and a disc, each
+  inset 2/48, filled `#000000` and holding the white V.
+- **Banner:** "VIPTV" in `#FFFFFF` on `#000000`, centred, at the channel-poster
+  wordmark size (72 px at 210 px high) scaled to 180 px high and −0.04 em
+  tracking. It has no square mark. The generator instances the variable
+  `bricolage.ttf` at its default axes before drawing, so with the pins below
+  `tv_banner.png` is byte-identical to design's `tv-banner-320x180.png`
+  (SHA-256 `1f6ebc6f1fd49e93f4e13832c4189ef8c61e1cc93597cb142a54056620718c27`).
 
-The colours and ratios are copied into the script by hand. If `Palette` or
-`BrandMark` changes, update the script and regenerate.
+The colours and ratios are copied into the script by hand. If design's master
+changes, update the script, regenerate, and repoint this section at the new
+design commit.
 
-Regenerate:
+Regenerate with Python 3.13.5, Pillow 13.0.0 and fontTools 4.67.0 (other Pillow
+versions may change the PNG bytes):
 
 ```sh
 python3 -m venv /tmp/viptv-icons
