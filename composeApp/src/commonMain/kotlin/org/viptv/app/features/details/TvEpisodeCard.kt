@@ -28,7 +28,9 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFocus: () -> Unit, requester: FocusRequester?, up: FocusRequester) {
+internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFocus: () -> Unit, requester: FocusRequester?, up: FocusRequester,
+    /** The player's Episodes list marks the episode on screen; Details never sets it. */
+    playing: Boolean = false) {
     var focused by remember { mutableStateOf(false) }
     Column(Modifier.width(448.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier).focusProperties { this.up = up }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
@@ -65,6 +67,8 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
                 fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (card.watchedEpisode()) EpisodeWatchedPill(television = true, scale = scale)
         }
+        if (playing) Text(NOW_PLAYING, Modifier.padding(top = 4.dp * scale), color = Palette.accent, fontSize = (20 * scale).sp,
+            lineHeight = (26 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary) }
         card.description?.let { Text(it, Modifier.padding(top = 8.dp * scale), fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp,
             color = Palette.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis) }

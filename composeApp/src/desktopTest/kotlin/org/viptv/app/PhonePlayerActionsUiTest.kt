@@ -66,7 +66,7 @@ class PhonePlayerActionsUiTest {
             capture(scene, "phone-player-episodes-current")
             back!!(); frames(scene, 40); assertEquals(0, closed); assertNull(played)
             assertEquals(true, action(scene, "Episodes").config.getOrNull(SemanticsProperties.Focused))
-            click(scene, "Episodes"); frames(scene, 60); click(scene, "81. Episode 81 Play episode")
+            click(scene, "Episodes"); frames(scene, 60); click(scene, "81. Episode 81")
             assertEquals(episode(81), played)
         } finally { scene.close() }
     }
@@ -138,9 +138,9 @@ class PhonePlayerActionsUiTest {
             key = "new"; current = episode(40); next = episode(41); episodes = listOf(episode(40), episode(41)); frames(scene, 60)
             assertEquals(0, played); assertFalse(nodes(scene).any { text(it) == "Up next" })
             click(scene, "Episodes"); frames(scene, 80)
-            assertTrue(nodes(scene).any { text(it) == "41. Episode 41 Play episode" })
+            assertTrue(nodes(scene).any { text(it) == "41. Episode 41" })
             episodes = listOf(episode(40)); frames(scene, 100); assertEquals(0, played)
-            assertFalse(nodes(scene).any { text(it) == "41. Episode 41 Play episode" })
+            assertFalse(nodes(scene).any { text(it) == "41. Episode 41" })
             click(scene, "40. Episode 40 Now playing"); assertEquals(1, played)
         } finally { scene.close() }
     }
