@@ -28,17 +28,23 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
-internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {}) {
+internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
+    continuing: List<Card> = emptyList(), paging: Boolean = true) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
-    var selectedKey by remember(detail?.item?.identity) { mutableStateOf<String?>(null) }
-    val selected = seasons.find { (it.number?.toString() ?: "unknown") == selectedKey }
-        ?: seasons.firstOrNull { (it.number ?: 0) > 0 } ?: seasons.firstOrNull()
+    val resume = remember(detail, continuing) { detailResume(detail, continuing) }
+    val seasonChoice = rememberSeasonChoice(detail)
+    val selected = seasonChoice.selected(seasons, resume)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth < 800.dp) {
-            DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage)
+            DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage,
+                continuing = continuing, paging = paging)
             return@BoxWithConstraints
         }
-        AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, scopeKey = detail?.item?.let { it.provider_id to it.identity })
+        AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
+        val episodesList = rememberLazyListState()
+        // The episode pane lists the season picker, then the season's episodes.
+        LandOnResume(seasonChoice, episodesList, resume?.let { target ->
+            selected?.episodes?.indexOfFirst(target::matches)?.takeIf { it >= 0 }?.plus(1) }, selected)
         val paneWidth = maxWidth
         Row(Modifier.fillMaxSize()) {
             // T3Title: fixed 560 px info pane at board width, proportional when narrower.
@@ -74,13 +80,15 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                 error?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 72.dp, start = 32.dp, end = 32.dp), color = Palette.danger) }
             }
             selected?.let { season ->
-                LazyColumn(Modifier.weight(1f).fillMaxHeight(), contentPadding = PaddingValues(horizontal = 28.dp, vertical = 40.dp),
+                LazyColumn(Modifier.weight(1f).fillMaxHeight(), state = episodesList, contentPadding = PaddingValues(horizontal = 28.dp, vertical = 40.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     item { DetailSeasonPicker(seasons, season, false) {
-                        selectedKey = it?.toString() ?: "unknown"
+                        seasonChoice.pick(it)
                         seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
                     } }
-                    items(season.episodes, key = ::episodeKey) { episode -> DetailEpisodeCard(episode, true, play, Modifier.fillMaxWidth(), tablet = true) }
+                    items(season.episodes, key = ::episodeKey) { episode ->
+                        DetailEpisodeCard(resume?.mark(episode) ?: episode, true, { play(episode) }, Modifier.fillMaxWidth(), tablet = true)
+                    }
                 }
             }
         }

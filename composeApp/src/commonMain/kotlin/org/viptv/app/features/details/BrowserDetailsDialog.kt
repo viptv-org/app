@@ -35,15 +35,21 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
-internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {}) {
+internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
+    continuing: List<Card> = emptyList(), paging: Boolean = true) {
     InitialBrowserEscape(back)
     val closeFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { closeFocus.requestFocus() }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
-    var selectedKey by remember(detail?.item?.identity) { mutableStateOf<String?>(null) }
-    val selected = seasons.find { (it.number?.toString() ?: "unknown") == selectedKey }
-        ?: seasons.firstOrNull { (it.number ?: 0) > 0 } ?: seasons.firstOrNull()
-    AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, scopeKey = detail?.item?.let { it.provider_id to it.identity })
+    val resume = remember(detail, continuing) { detailResume(detail, continuing) }
+    val seasonChoice = rememberSeasonChoice(detail)
+    val selected = seasonChoice.selected(seasons, resume)
+    AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
+    val list = rememberLazyListState()
+    // The continued episode's place in the list: progress, error, hero and summary, season picker, episodes.
+    LandOnResume(seasonChoice, list, resume?.takeIf { detail != null }?.let { target ->
+        selected?.episodes?.indexOfFirst(target::matches)?.takeIf { it >= 0 } }?.let { episode ->
+        (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
             val compact = maxWidth < 640.dp
@@ -53,7 +59,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
                 color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
                 Box {
-                    LazyColumn(contentPadding = PaddingValues(bottom = 30.dp)) {
+                    LazyColumn(state = list, contentPadding = PaddingValues(bottom = 30.dp)) {
                         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
                         error?.let { item { Text(it, Modifier.padding(gutter), color = Palette.danger) } }
                         detail?.item?.let { card ->
@@ -66,13 +72,14 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                         selected?.let { season ->
                             item { Box(Modifier.padding(horizontal = gutter, vertical = 10.dp)) {
                                 DetailSeasonPicker(seasons, season, compact) {
-                                    selectedKey = it?.toString() ?: "unknown"
+                                    seasonChoice.pick(it)
                                     seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
                                 }
                             } }
                             items(season.episodes, key = ::episodeKey) { episode ->
-                                if (compact) DetailEpisodeCard(episode, true, play, Modifier.padding(horizontal = gutter, vertical = 12.dp))
-                                else DesktopEpisodeRow(episode, play, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
+                                val shown = resume?.mark(episode) ?: episode
+                                if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp))
+                                else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                             }
                         }
                         if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(gutter)) }

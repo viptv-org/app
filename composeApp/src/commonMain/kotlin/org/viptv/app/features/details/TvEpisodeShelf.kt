@@ -21,27 +21,40 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, play: (Card) -> Unit,
-    focused: () -> Unit, expanded: Boolean, resumeId: String?, returnToHero: () -> Unit,
+    focused: () -> Unit, expanded: Boolean, resume: DetailResume?, returnToHero: () -> Unit,
     seasonIndex: List<org.viptv.engine.wire.EpisodeSeason> = emptyList(), nextCursor: String? = null,
-    busy: Boolean = false, loadPage: (Long) -> Unit = {}, restoreChanged: ((() -> Boolean)?) -> Unit = {}) {
+    busy: Boolean = false, loadPage: (Long) -> Unit = {}, restoreChanged: ((() -> Boolean)?) -> Unit = {},
+    paging: Boolean = true) {
     val groups = remember(episodes, seasonIndex) { detailSeasons(episodes, seasonIndex) }
     val seasons = groups.map { it.number }
-    val resumeSeason = episodes.find { it.identity.id == resumeId }?.identity?.episode?.season
-    var selected by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) {
-        mutableStateOf(resumeSeason ?: seasons.firstOrNull { (it ?: 0L) > 0L } ?: seasons.firstOrNull())
+    // The viewer's season once they pick one or move into the shelf; until then the
+    // continued episode's season as soon as Details know it (app#40), else the first numbered one.
+    var kept by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf(false) }
+    var selected by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf<Long?>(null) }
+    val activeSeason = when {
+        kept && selected in seasons -> selected
+        resume != null && resume.season in seasons -> resume.season
+        else -> seasons.firstOrNull { (it ?: 0L) > 0L } ?: seasons.firstOrNull()
     }
-    val activeSeason = if (selected in seasons) selected else resumeSeason ?: seasons.firstOrNull { (it ?: 0L) > 0L } ?: seasons.firstOrNull()
     val group = groups.find { it.number == activeSeason }
     val visible = group?.episodes.orEmpty()
     var lastFocused by rememberSaveable(parent.provider_id, parent.identity.id, activeSeason) { mutableStateOf<String?>(null) }
     val episodeRows = key(parent.identity, activeSeason) { rememberLazyListState() }
+    // Place the continued episode at the start of the row once, so focus can land on it.
+    var landed by remember(parent.identity) { mutableStateOf(false) }
+    val resumeIndex = resume?.let { target -> visible.indexOfFirst(target::matches).takeIf { it >= 0 } }
+    LaunchedEffect(episodeRows, resumeIndex) {
+        if (resumeIndex == null || landed) return@LaunchedEffect
+        episodeRows.scrollToItem(resumeIndex)
+        landed = true; kept = true; selected = activeSeason
+    }
     val seasonFocus = remember { FocusRequester() }
     val targets = remember(parent.identity, activeSeason) { mutableMapOf<String, FocusRequester>() }
     var selectorHasFocus by remember { mutableStateOf(false) }
     var entrySequence by remember { mutableIntStateOf(0) }
     var pendingEntry by remember(parent.identity) { mutableStateOf<Pair<Long?, Int>?>(null) }
     fun focusEpisode(): Boolean = targets[lastFocused]?.requestPlacedFocus() == true ||
-        targets[visible.find { it.identity.id == resumeId }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
+        targets[visible.find { resume?.matches(it) == true }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
         visible.firstNotNullOfOrNull { targets[episodeKey(it)] }?.requestPlacedFocus() == true
     fun restore(): Boolean = focusEpisode() || seasonFocus.requestPlacedFocus()
     fun enterEpisodes(): Boolean {
@@ -62,7 +75,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
             if (focusEpisode()) { pendingEntry = null; return@LaunchedEffect }
         }
     }
-    AutomaticEpisodes(group, nextCursor, busy, loadPage, scopeKey = parent.provider_id to parent.identity)
+    AutomaticEpisodes(group, nextCursor, busy, loadPage, enabled = paging, scopeKey = parent.provider_id to parent.identity)
     SideEffect { restoreChanged(::restore) }
     DisposableEffect(parent.identity) { onDispose { restoreChanged(null) } }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -75,7 +88,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                 else Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
             }
             TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::enterEpisodes,
-                select = { season -> pendingEntry = null; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },
+                select = { season -> pendingEntry = null; kept = true; landed = true; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },
                 returnHero = returnToHero, entered = focused,
                 cancelEntry = { pendingEntry = null }, focusChanged = { selectorHasFocus = it; if (!it) pendingEntry = null })
             Spacer(Modifier.height((if (expanded) 30 else 20).dp * scale))
@@ -88,8 +101,13 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                             targets[episodeKey(episode)] = requester
                             onDispose { targets.remove(episodeKey(episode)) }
                         }
-                        TvEpisodeCard(episode, scale, play,
-                            { lastFocused = episodeKey(episode); focused() },
+                        TvEpisodeCard(resume?.mark(episode) ?: episode, scale, { play(episode) },
+                            {
+                                lastFocused = episodeKey(episode)
+                                // The viewer is in the shelf: their season stays put.
+                                if (!kept) { kept = true; landed = true; selected = activeSeason }
+                                focused()
+                            },
                             requester, seasonFocus)
                     }
                 }
