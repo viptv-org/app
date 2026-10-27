@@ -72,6 +72,11 @@ class DetailsHeroResumeTest {
         assertNull(detailResume(unwatched, emptyList()).heroEpisode(unwatched), "nothing to continue: the hero plays the title")
     }
 
+    @Test fun aContinueWatchingEpisodeFromAnotherIntegrationNeverSearchesInItsStaleScope() {
+        val stale = resume.copy(provider_id = "addon:9", metadata_origin = MetadataOrigin("other", "addon:9", "f".repeat(32)))
+        assertNull(detailResume(firstPage, listOf(stale)).heroEpisode(firstPage), "the hero plays the title instead")
+    }
+
     @Test fun tvHeroExtrasResumeTheContinueWatchingEpisode() {
         val extras = detailExtras(firstPage, listOf(resume))
         assertScopedResume(extras.resume, "tv")

@@ -3,6 +3,8 @@ package org.viptv.app
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import coil3.ImageLoader
@@ -213,9 +215,8 @@ class DetailsResumeSeasonTest {
             // The list landed on S2 E20; scroll back up to the hero.
             fun hero() = app.nodes().firstOrNull { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("Resume") }
             app.until("the hero") {
-                hero() != null || run { app.scene.sendPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Scroll,
-                    androidx.compose.ui.geometry.Offset(195f * app.density, 400f * app.density),
-                    scrollDelta = androidx.compose.ui.geometry.Offset(0f, -10f)); false }
+                hero() != null || run { app.scene.sendPointerEvent(PointerEventType.Scroll,
+                    Offset(195f * app.density, 400f * app.density), scrollDelta = Offset(0f, -10f)); false }
             }
             val button = assertNotNull(hero())
             assertTrue(text(button).startsWith("Resume S2 E20"), "the hero names S2 E20: ${text(button)}")

@@ -55,8 +55,9 @@ internal fun detailResume(detail: DetailSnapshot?, continuing: List<Card>): Deta
 internal fun DetailResume?.heroEpisode(detail: DetailSnapshot): Card? {
     val resume = this ?: return null
     detail.episodes.firstOrNull(resume::matches)?.let { return resume.mark(it) }
-    // A card this title's Details cannot scope plays as it is, as an episode always did.
-    return try { sourceTarget(resume.card, detail) } catch (_: LocalFailure) { resume.card }
+    // A card from another integration that these Details cannot scope never searches in
+    // its stale scope: the hero plays the title instead, as it did before.
+    return try { sourceTarget(resume.card, detail) } catch (_: LocalFailure) { null }
 }
 
 /** [card]'s progress is partway through: the hero resumes it. */

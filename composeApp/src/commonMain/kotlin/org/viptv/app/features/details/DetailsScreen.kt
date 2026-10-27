@@ -135,8 +135,7 @@ internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
     if (detail.item.identity.kind != "series") return null
     return detail.episodes.firstOrNull {
         val coordinates = it.identity.episode
-        coordinates != null && (coordinates.season ?: 1L) > 0L && coordinates.episode > 0L &&
-            it.progress != null && it.progress > 0.0 && it.progress < 1.0
+        coordinates != null && (coordinates.season ?: 1L) > 0L && coordinates.episode > 0L && resuming(it)
     }
 }
 
@@ -151,7 +150,7 @@ internal fun remainingMinutesLabel(card: Card): String? {
  * Real resume state for the TV details hero: the episode it plays (the one the shelf lands
  * on, app#49), its label and time left. [continuing] is Home's Continue Watching cards.
  */
-internal fun detailExtras(detail: DetailSnapshot?, continuing: List<Card> = emptyList()): TvDetailExtras {
+internal fun detailExtras(detail: DetailSnapshot?, continuing: List<Card>): TvDetailExtras {
     if (detail == null) return TvDetailExtras()
     val resume = detailResume(detail, continuing).heroEpisode(detail) ?: detail.item.takeIf(::resuming)
     return TvDetailExtras(resume = resume, resumeLabel = resume?.let(::heroPlayLabel),

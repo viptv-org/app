@@ -116,8 +116,8 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
     // An episode the viewer continues without progress (a Calendar row's) plays by name.
     val resumeCard = resumeEpisode ?: card.takeIf(::resuming)
     val progress = resumeCard?.progress
-    val resuming = resuming(resumeCard)
-    val remaining = if (resuming) remainingMinutes(resumeCard ?: card) else null
+    val partway = resuming(resumeCard)
+    val remaining = if (partway) remainingMinutes(resumeCard ?: card) else null
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Box {
@@ -136,7 +136,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                     }
                 }
                 // Progress underline: filled portion of the remaining time.
-                if (resuming) {
+                if (partway) {
                     val fraction = progress!!.toFloat().coerceIn(0.02f, 0.98f)
                     Box(Modifier.width(250.dp).padding(horizontal = 15.dp).align(Alignment.BottomStart)
                         .height(3.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x2E111113))) {
@@ -149,7 +149,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 Icon(if (saved) Lucide.Check else Lucide.Plus,
                     if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp), tint = Palette.text)
             }
-            if (resuming && playFromStart != null) {
+            if (partway && playFromStart != null) {
                 TextButton(onClick = { playFromStart(resumeCard ?: card) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
                     Text("Play from the beginning", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
