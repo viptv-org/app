@@ -158,7 +158,8 @@ class PlayerEpisodePickerUiTest {
         fun click(label: String) {
             assertTrue(clickable().single { text(it) == label }.config[SemanticsActions.OnClick].action!!.invoke(), label); frames()
         }
-        fun progress(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.current
+        /** The card's bar; Material's indicator is its own merged node inside the card. */
+        fun progress(node: SemanticsNode) = flatten(node).firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.current }
         fun scrollTo(index: Int) {
             val list = nodes().single { it.config.contains(SemanticsActions.ScrollToIndex) }
             assertTrue(list.config[SemanticsActions.ScrollToIndex].action!!.invoke(index)); frames()
