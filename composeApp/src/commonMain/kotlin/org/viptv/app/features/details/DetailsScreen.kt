@@ -109,9 +109,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {
                     Column(Modifier.padding(bottom = if (desktop) 24.dp else 0.dp),
                         verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        if (desktop) Text("More like this", Modifier.padding(horizontal = 40.dp), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        RelatedTitles(value.recommendations, open, Modifier.fillMaxWidth(), showHeading = !desktop,
-                            gutter = if (desktop) 40.dp else gutter)
+                        if (desktop) Text("More like this", Modifier.padding(horizontal = gutter), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        RelatedTitles(value.recommendations, open, Modifier.fillMaxWidth(), showHeading = !desktop, gutter = gutter)
                     }
                 }
             }

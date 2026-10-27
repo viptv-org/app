@@ -1,6 +1,5 @@
 package org.viptv.app.components
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,8 +28,7 @@ internal val LocalHomeGenres = compositionLocalOf<HomeGenrePicker?> { null }
 @Composable
 internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, gutter: Dp = 0.dp) {
     val genres = LocalHomeGenres.current?.takeIf { it.choices.isNotEmpty() }
-    // With a gutter the chips scroll out to the screen edges (app#63).
-    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.bleedHorizontally(gutter).horizontalScroll(rememberScrollState()).padding(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(8.dp),
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series, "Anime" to Screen.Anime).forEach { (label, destination) ->
             Surface(onClick = { navigate(destination) }, shape = RoundedCornerShape(20.dp),

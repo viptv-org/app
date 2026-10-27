@@ -1,12 +1,12 @@
 package org.viptv.app.features.search
 
 import org.viptv.app.components.bleedHorizontally
+import org.viptv.app.components.edgeToEdgeScroll
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
@@ -48,7 +48,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!phone) Text(if (desktop && term.isNotBlank()) "Results for “$term”" else "Search",
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
         if (!desktop) SearchField(term, query)
-        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().bleedHorizontally(gutter).horizontalScroll(rememberScrollState()).padding(horizontal = gutter),
+        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("All", "Movies", "Series", "Anime", "Channels").forEach { tab ->
                 // DUI-06: the chips are the desktop search page's only controls and

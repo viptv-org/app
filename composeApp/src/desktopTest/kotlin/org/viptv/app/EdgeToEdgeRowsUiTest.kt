@@ -1,6 +1,8 @@
 package org.viptv.app
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -8,9 +10,11 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.SearchResultRow
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.features.live.LiveFilters
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -96,6 +100,30 @@ class EdgeToEdgeRowsUiTest {
             repeat(6) { if (!disabled(arrow(nodes(scene), "Previous items"))) press(scene, "Previous items") }
             assertTrue(disabled(arrow(nodes(scene), "Previous items")), "back stops at the start")
             assertNear(gutter.toFloat(), card(nodes(scene), "Page title 1")!!.positionInRoot.x, "the first card returns to the gutter")
+        } finally { scene.close() }
+    }
+
+    @Test fun chipStripsScrollOutOfThePagePaddingToTheScreenEdge() {
+        val width = 390; val gutter = 16
+        val categories = (1..12).map { "Category $it" }
+        val scene = scene(width, 400) {
+            // LiveScreen's phone page: a Column padded by the gutter holding the chips.
+            Column(Modifier.fillMaxSize().padding(horizontal = gutter.dp)) {
+                LiveFilters(categories, "All", {}, gutter = gutter.dp)
+            }
+        }
+        try {
+            frames(scene)
+            val nodes = nodes(scene)
+            val first = nodes.first { it.config.contains(SemanticsActions.OnClick) && "All" in texts(it) }
+            val strip = nodes.filter { it.config.contains(SemanticsProperties.HorizontalScrollAxisRange) }
+                .single { strip -> flatten(strip).any { it.id == first.id } }
+            assertNear(0f, strip.boundsInRoot.left, "the chip strip starts at the screen edge")
+            assertNear(width.toFloat(), strip.boundsInRoot.right, "the chip strip ends at the screen edge")
+            assertNear(gutter.toFloat(), first.positionInRoot.x, "the first chip rests on the gutter")
+            val edge = nodes.filter { it.config.contains(SemanticsActions.OnClick) && texts(it).any { text -> text in categories } }
+                .firstOrNull { it.positionInRoot.x < width && it.positionInRoot.x + it.size.width > width } ?: fail("no chip runs under the edge")
+            assertNear(width.toFloat(), edge.boundsInRoot.right, "the edge chip is cut by the screen, not the gutter")
         } finally { scene.close() }
     }
 
