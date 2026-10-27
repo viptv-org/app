@@ -19,6 +19,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import kotlinx.coroutines.*
 import org.junit.Rule
+import java.io.File
 import kotlin.test.*
 
 /**
@@ -101,6 +102,12 @@ class DetailsHeroResumeTest {
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
         }
         suspend fun settle() { frames(); delay(200); frames() }
+        /** `VIPTV_DETAILS_HERO_CAPTURE_DIR` saves what the hero shows. */
+        fun save(name: String) {
+            val dir = System.getenv("VIPTV_DETAILS_HERO_CAPTURE_DIR")?.let(::File) ?: return
+            dir.mkdirs()
+            scene.render(frame++ * 16_666_667L).use { image -> image.encodeToData()!!.use { File(dir, "$name.png").writeBytes(it.bytes) } }
+        }
         override fun close() = scene.close()
     }
 
@@ -117,6 +124,7 @@ class DetailsHeroResumeTest {
             page.settle()
             // Season 3 is not loaded: the older S1 E3 on the first page must not take over.
             assertNull(page.clickable("Resume S1 E3"), "${layout.name}: the hero does not resume S1 E3")
+            page.save("hero-resume-${layout.name}")
             page.click("Resume S3 E5")
             page.settle()
             assertEquals(1, page.played.size, "${layout.name}: one play")
@@ -142,6 +150,7 @@ class DetailsHeroResumeTest {
             assertNull(page.clickable("Resume S3 E5"), "${layout.name}: nothing to resume")
             assertNull(page.clickable("Play from the beginning"), "${layout.name}: no restart")
             assertNull(page.clickable("Restart"), "${layout.name}: no restart")
+            page.save("hero-named-${layout.name}")
             page.click("Play S3 E5")
             page.settle()
             assertEquals(resume.identity, page.played.single().identity, "${layout.name}: the hero plays S3 E5")
