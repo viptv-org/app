@@ -6,11 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
@@ -41,36 +39,33 @@ internal fun Card.landscapeArt(): LandscapeArt =
  * soft, darkened fill of itself (components.md §6: "Never stretch a small image
  * to fill").
  *
- * The fill is soft in one of two ways, so a TV shelf never pays a runtime blur per
- * card (docs/TV_FRAME_BUDGET.md):
- * - [runtimeBlur] set: [backdrop] is drawn through a blur pass. Callers pass null
- *   when the image service already returned a blurred bitmap.
- * - [runtimeBlur] null and [tinyBackdrop]: the poster is decoded at a few pixels
- *   wide and upscaled with bilinear filtering, which reads as a blur for the cost
- *   of a tiny bitmap.
+ * The fill is the same poster decoded a few pixels wide and upscaled with
+ * bilinear filtering, which reads as a blur. That costs one tiny bitmap and no
+ * blur pass, so it is safe on a TV shelf (docs/TV_FRAME_BUDGET.md), looks the
+ * same on Android below 12 (where `Modifier.blur` does nothing), and shares the
+ * poster's download.
  */
 @Composable
 internal fun PosterInLandscape(
     poster: String,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    backdrop: String = poster,
-    runtimeBlur: Dp? = null,
-    tinyBackdrop: Boolean = false,
-    onError: (() -> Unit)? = null,
+    onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
 ) {
     Box(modifier.fillMaxSize().clipToBounds()) {
         val context = LocalPlatformContext.current
-        val fill: Any = if (tinyBackdrop && runtimeBlur == null)
-            remember(backdrop) { ImageRequest.Builder(context).data(backdrop).size(16, 24).build() }
-            else backdrop
-        AsyncImage(fill, null, Modifier.matchParentSize().then(runtimeBlur?.let { Modifier.blur(it) } ?: Modifier),
-            contentScale = ContentScale.Crop)
-        Box(Modifier.matchParentSize().background(PosterFillScrim))
+        val softFill = remember(context, poster) {
+            ImageRequest.Builder(context).data(poster).size(SoftFillWidth, SoftFillWidth * 3 / 2).build()
+        }
+        AsyncImage(softFill, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+        Box(Modifier.matchParentSize().background(SoftFillScrim))
         AsyncImage(poster, contentDescription, Modifier.fillMaxHeight().aspectRatio(2f / 3).align(Alignment.Center),
-            contentScale = ContentScale.Crop, onError = onError?.let { handler -> { _: AsyncImagePainter.State.Error -> handler() } })
+            contentScale = ContentScale.Crop, onError = onError)
     }
 }
 
+/** Decode width of the soft fill; small enough that upscaling it is the blur. */
+private const val SoftFillWidth = 16
+
 /** Darkens the fill so the centred poster reads as the subject. */
-private val PosterFillScrim = Color.Black.copy(alpha = .45f)
+private val SoftFillScrim = Color.Black.copy(alpha = .45f)

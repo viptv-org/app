@@ -99,17 +99,18 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             // sizing (see docs/TV_FRAME_BUDGET.md).
             // app#62: a landscape card without a still shows its poster centred
             // over a soft fill; only a card with no image takes the title tile.
-            val wide = if (portrait) null else card.landscapeArt()
-            val art = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (wide as? LandscapeArt.Still)?.url
+            val landscapeArt = if (portrait) null else card.landscapeArt()
+            val still = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (landscapeArt as? LandscapeArt.Still)?.url
             // The initials fallback covers load *failures* too, not only blank URLs:
             // a 404 from the art host used to leave a bare dark tile (the "no
             // poster" Naruto card — the URL existed but the image never arrived).
-            var artFailed by remember { mutableStateOf(false) }
+            // Keyed on the art, so a reused card slot never keeps a stale failure.
+            var artFailed by remember(card.poster, card.landscape) { mutableStateOf(false) }
             when {
                 artFailed -> CardNoArtFallback(card, scale, portrait, shape)
-                art != null -> AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                still != null -> AsyncImage(still, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
                     onError = { artFailed = true })
-                wide is LandscapeArt.Poster -> PosterInLandscape(wide.url, card.title, tinyBackdrop = true,
+                landscapeArt is LandscapeArt.Poster -> PosterInLandscape(landscapeArt.url, card.title,
                     onError = { artFailed = true })
                 else -> CardNoArtFallback(card, scale, portrait, shape)
             }

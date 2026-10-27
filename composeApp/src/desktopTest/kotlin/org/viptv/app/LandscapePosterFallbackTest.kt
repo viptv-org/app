@@ -72,7 +72,7 @@ class LandscapePosterFallbackTest {
 
     @Test fun phoneLandscapeCardWithOnlyAPosterShowsThePoster() = onEdt {
         withFakeArtwork { requested ->
-            val pixel = renderCenter(320, 220) { MediaCard(imported, width = 240, open = {}) }
+            val pixel = renderCenter(PHONE_ART) { MediaCard(imported, width = PHONE_ART, open = {}) }
             assertTrue(requested.any { it.contains("poster") }, "the poster is requested: $requested")
             assertEquals(artColor(posterUrl), pixel, "the card's centre shows the poster, not the blank surface")
         }
@@ -80,7 +80,7 @@ class LandscapePosterFallbackTest {
 
     @Test fun tvLandscapeCardWithOnlyAPosterShowsThePoster() = onEdt {
         withFakeArtwork { requested ->
-            val pixel = renderCenter(440, 360) { TvCatalogCard(imported, 1f, false, focused = {}, open = {}) }
+            val pixel = renderCenter(TV_ART) { TvCatalogCard(imported, 1f, false, focused = {}, open = {}) }
             assertTrue(requested.any { it.contains("poster") }, "the poster is requested: $requested")
             assertEquals(artColor(posterUrl), pixel, "the card's centre shows the poster, not the title tile")
         }
@@ -89,22 +89,23 @@ class LandscapePosterFallbackTest {
     @Test fun landscapeStillIsUnchangedWhenPresent() = onEdt {
         val still = imported.copy(landscape = landscapeUrl)
         withFakeArtwork { requested ->
-            assertEquals(artColor(landscapeUrl), renderCenter(320, 220) { MediaCard(still, width = 240, open = {}) })
-            assertEquals(artColor(landscapeUrl), renderCenter(440, 360) { TvCatalogCard(still, 1f, false, focused = {}, open = {}) })
+            assertEquals(artColor(landscapeUrl), renderCenter(PHONE_ART) { MediaCard(still, width = PHONE_ART, open = {}) })
+            assertEquals(artColor(landscapeUrl), renderCenter(TV_ART) { TvCatalogCard(still, 1f, false, focused = {}, open = {}) })
             assertTrue(requested.none { it.contains("poster") }, "a card with a still never loads its poster: $requested")
         }
     }
 
     @Test fun tvLandscapeCardWithNoImageKeepsTheTitleTile() = onEdt {
         withFakeArtwork { requested ->
-            val pixel = renderCenter(440, 360) { TvCatalogCard(imported.copy(poster = null), 1f, false, focused = {}, open = {}) }
+            val pixel = renderCenter(TV_ART) { TvCatalogCard(imported.copy(poster = null), 1f, false, focused = {}, open = {}) }
             assertTrue(requested.isEmpty(), "nothing to load: $requested")
             assertEquals(0xFF1A1A1C.toInt(), pixel, "the title tile's dark fill")
         }
     }
 
-    /** Renders one card at the top-left and samples the centre of its 16:9 art. */
-    private suspend fun renderCenter(width: Int, height: Int, content: @Composable () -> Unit): Int {
+    /** Renders one card at the top-left and samples the centre of its [artWidth]-wide 16:9 art. */
+    private suspend fun renderCenter(artWidth: Int, content: @Composable () -> Unit): Int {
+        val width = artWidth + 80; val height = artWidth * 9 / 16 + 160
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(true) {
             Box(Modifier.fillMaxSize().background(Palette.background)) { content() }
         } }
@@ -112,8 +113,6 @@ class LandscapePosterFallbackTest {
             repeat(10) { scene.render(it * 16_666_667L).close(); delay(10) }
             scene.render(1_000_000_000L).use { image ->
                 val bitmap = Bitmap.makeFromImage(image)
-                // Every card here is at (0, 0); its art is the first 16:9 box.
-                val artWidth = if (width == 320) 240 else 384
                 return bitmap.getColor(artWidth / 2, artWidth * 9 / 16 / 2)
             }
         } finally { scene.close() }
@@ -160,6 +159,10 @@ class LandscapePosterFallbackTest {
     }
 
     private companion object {
+        /** Art widths at scale 1: MediaCard(width = 240) and the TV landscape card. */
+        const val PHONE_ART = 240
+        const val TV_ART = 384
+
         /** A distinct opaque colour per image URL, so pixels prove which image a card shows. */
         fun artColor(url: String) = (0xFF shl 24) or (url.hashCode() and 0x7F7F7F) or 0x202020
 

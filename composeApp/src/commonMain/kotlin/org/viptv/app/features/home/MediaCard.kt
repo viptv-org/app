@@ -124,11 +124,13 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             val density = androidx.compose.ui.platform.LocalDensity.current
             val slotW = with(density) { width.dp.toPx().toInt() }
             val slotH = with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() }
-            val landscapeArt = if (portrait) null else card.landscapeArt()
-            if (landscapeArt is LandscapeArt.Poster) CardPosterInLandscape(landscapeArt.url, card.title, slotW, slotH)
-            else {
-                val art = org.viptv.app.images.sizedArtwork(if (portrait) card.poster else (landscapeArt as? LandscapeArt.Still)?.url, slotW, slotH)
-                AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            // app#62: a 16:9 card without a still centres its poster over a soft fill.
+            when (val art = if (portrait) null else card.landscapeArt()) {
+                is LandscapeArt.Poster -> PosterInLandscape(
+                    org.viptv.app.images.sizedArtwork(art.url, slotH * 2 / 3, slotH) ?: art.url, card.title)
+                else -> AsyncImage(org.viptv.app.images.sizedArtwork(
+                    if (portrait) card.poster else (art as? LandscapeArt.Still)?.url, slotW, slotH),
+                    card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
             // New episodes win the text label; Watched is the corner check below.
             card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
@@ -188,23 +190,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             }
         }
     }
-}
-
-/**
- * app#62: a poster-only card in a 16:9 slot. The soft fill is asked from the image
- * service already blurred where the host can be proxied; other hosts blur at
- * runtime (phone, tablet, desktop and web only; the TV card never blurs).
- */
-@Composable
-private fun CardPosterInLandscape(poster: String, title: String, slotW: Int, slotH: Int) {
-    val preBlurred = org.viptv.app.images.sizedArtwork(poster, slotW, slotH, blur = 8)
-        ?.takeIf { it.startsWith("https://wsrv.nl/") }
-    PosterInLandscape(
-        poster = org.viptv.app.images.sizedArtwork(poster, slotH * 2 / 3, slotH) ?: poster,
-        contentDescription = title,
-        backdrop = preBlurred ?: poster,
-        runtimeBlur = if (preBlurred != null) null else 16.dp,
-    )
 }
 
 /** Test tags on a hovered card's dim + play disc and on its hover ring (app#56). */
@@ -302,7 +287,7 @@ private fun CardPreview(card: Card, saved: Boolean,
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).background(Palette.raised)) {
             when (val art = card.landscapeArt()) {
                 is LandscapeArt.Still -> AsyncImage(art.url, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                is LandscapeArt.Poster -> PosterInLandscape(art.url, card.title, runtimeBlur = 24.dp)
+                is LandscapeArt.Poster -> PosterInLandscape(art.url, card.title)
                 LandscapeArt.None -> Unit
             }
             card.progress?.let { progress ->
