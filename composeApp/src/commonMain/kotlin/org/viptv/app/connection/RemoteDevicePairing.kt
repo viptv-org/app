@@ -15,12 +15,12 @@ data class DevicePairingDisplay(val verificationUri: String, val qrUri: String, 
  */
 class DevicePairingEnded(val reason: Reason) : Exception(when (reason) {
     Reason.Denied -> "Sign-in was declined. Request a new code."
-    Reason.Expired -> DEVICE_PAIRING_EXPIRED
+    Reason.Expired -> DEVICE_PAIRING_EXPIRED_MESSAGE
 }) {
     enum class Reason { Denied, Expired }
 }
 
-internal const val DEVICE_PAIRING_EXPIRED = "This sign-in code expired. Request a new code."
+internal const val DEVICE_PAIRING_EXPIRED_MESSAGE = "This sign-in code expired. Request a new code."
 
 internal class DevicePairingChallenge(val display: DevicePairingDisplay, internal val secret: String, var intervalSeconds: Long) {
     override fun toString() = "DevicePairingChallenge(deviceCode=<redacted>)"

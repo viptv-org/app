@@ -44,11 +44,13 @@ fun ApplicationController.startDevicePairing(origin: String) {
                 }
             }
         } catch (_: TimeoutCancellationException) {
-            if (active()) mutable.value = mutable.value.copy(error = DEVICE_PAIRING_EXPIRED)
+            if (active()) mutable.value = mutable.value.copy(error = DEVICE_PAIRING_EXPIRED_MESSAGE)
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (active()) mutable.value = mutable.value.copy(error = (error as? RemoteFailure)?.message
-                ?: (error as? DevicePairingEnded)?.message ?: "Could not reach your server. Check the address and try again.")
+            if (active()) mutable.value = mutable.value.copy(error = when (error) {
+                is RemoteFailure, is DevicePairingEnded -> error.message
+                else -> "Could not reach your server. Check the address and try again."
+            })
         } finally {
             if (!adopted) candidate?.close()
             if (active()) mutable.value = mutable.value.copy(devicePairing = null, busy = false)
