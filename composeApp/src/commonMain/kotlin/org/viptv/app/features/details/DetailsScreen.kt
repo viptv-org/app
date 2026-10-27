@@ -30,7 +30,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     paging: Boolean = true) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
-            continuing = continuing, paging = paging)
+            continuing = continuing, shown = paging)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
