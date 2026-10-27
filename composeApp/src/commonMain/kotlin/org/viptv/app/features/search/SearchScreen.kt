@@ -1,11 +1,12 @@
 package org.viptv.app.features.search
 
+import org.viptv.app.components.bleedHorizontally
+import org.viptv.app.components.edgeToEdgeScroll
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
@@ -42,11 +43,13 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     val hasResults = if (searchRows.isNotEmpty()) groups.any { it.cards.isNotEmpty() } else visible.isNotEmpty()
     BoxWithConstraints(Modifier.fillMaxSize()) {
     val phone = maxWidth < 640.dp
-    Column(Modifier.fillMaxSize().imePadding().padding(horizontal = if (phone) 16.dp else 40.dp, vertical = if (phone) 8.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp)) {
+    val gutter = if (phone) 16.dp else 40.dp
+    Column(Modifier.fillMaxSize().imePadding().padding(horizontal = gutter, vertical = if (phone) 8.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp)) {
         if (!phone) Text(if (desktop && term.isNotBlank()) "Results for “$term”" else "Search",
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
         if (!desktop) SearchField(term, query)
-        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("All", "Movies", "Series", "Anime", "Channels").forEach { tab ->
                 // DUI-06: the chips are the desktop search page's only controls and
                 // had neither state. Board `Chip · hover` = white 6%; the ring is
@@ -70,13 +73,14 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
-            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
+            // The rows run to the screen edges (app#63); labels and first cards keep the gutter.
+            LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text(group.label, style = MaterialTheme.typography.titleMedium)
-                            (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, color = Palette.secondary) }
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
+                            (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
+                            LazyRow(contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 rowItems(group.cards, key = ::searchCardKey) { MediaCard(it, width = 160, portrait = true, showLabels = true, open = open) }
                             }
                         }

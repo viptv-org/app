@@ -23,7 +23,7 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
         }
         if (screen == Screen.Home) {
             Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
-                HomeFilters(screen, navigate)
+                HomeFilters(screen, navigate, gutter = 16.dp)
             }
         }
     }

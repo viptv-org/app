@@ -1,20 +1,23 @@
 package org.viptv.app.features.live
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Surface
+import org.viptv.app.components.edgeToEdgeScroll
 
 @Composable
-internal fun LiveFilters(categories: List<String>, selected: String, choose: (String) -> Unit, scale: Float = 1f, labels: Map<String, String> = emptyMap(), favoritesSelected: Boolean = false, favorites: (() -> Unit)? = null) {
-    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+internal fun LiveFilters(categories: List<String>, selected: String, choose: (String) -> Unit, scale: Float = 1f, labels: Map<String, String> = emptyMap(), favoritesSelected: Boolean = false, favorites: (() -> Unit)? = null,
+    /** The page gutter the chips scroll out of, to the screen edges (app#63). */
+    gutter: Dp = 0.dp) {
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         (listOf("All") + categories).distinct().forEach { category ->
             Surface(onClick = { choose(category) }, color = if (category == selected && !favoritesSelected) Palette.text else Palette.raised,
                 contentColor = if (category == selected && !favoritesSelected) Palette.background else Palette.text, shape = RoundedCornerShape(24.dp * scale)) {

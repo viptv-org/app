@@ -57,9 +57,10 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                     HomeStatus(home, null, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
                 }
                 items(visibleRows, key = { it.id }) { row ->
-                    HomeCatalogRow(row, compact, television,
-                        Modifier.padding(horizontal = gutter),
-                        { focused = it }, open, scale, tablet, browser, play)
+                    // The row bleeds to the screen edges; it insets its own title,
+                    // arrows and first card by the gutter (app#63).
+                    HomeCatalogRow(row, compact, television, Modifier,
+                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter)
                 }
             }
         }
