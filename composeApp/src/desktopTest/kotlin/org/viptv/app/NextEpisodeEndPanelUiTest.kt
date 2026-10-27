@@ -259,6 +259,11 @@ class NextEpisodeEndPanelUiTest {
             assertTrue(player.hasText("Play next episode"), "The panel stays, without the countdown")
             assertTrue(player.hasText("Nothing plays on its own."))
             player.back(); player.frames()
+            // Play/pause is handled by the player itself, before the panel sees it; it still cancels.
+            player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
+            player.focus("Next episode in 10"); player.key(Key.MediaPlayPause); player.seconds(12.0)
+            assertTrue(played.isEmpty(), "Play/pause cancels"); assertTrue(player.hasText("Play next episode"))
+            player.back(); player.frames()
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.seconds(2.0)
             assertTrue(player.hasText("Next episode in 8"))
             player.back(); player.seconds(12.0)

@@ -24,9 +24,13 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () -> Unit, keepWatching: () -> Unit,
-    creditsLabel: String? = null, autoplay: Boolean = false, reduceMotion: Boolean = false) {
+    creditsLabel: String? = null, autoplay: Boolean = false, reduceMotion: Boolean = false,
+    /** The player's key-press count: keys it handles itself (play/pause) never reach the panel but still cancel. */
+    interactions: Int = 0) {
     val initial = remember { FocusRequester() }
     val countdown = rememberNextEpisodeCountdown(autoplay, play)
+    val opened = remember { interactions }
+    LaunchedEffect(interactions) { if (interactions != opened) countdown.cancel() }
     val arrival = remember { Animatable(if (reduceMotion) 1f else 0f) }
     LaunchedEffect(Unit) { arrival.animateTo(1f, tween(450, delayMillis = 350, easing = CubicBezierEasing(.2f, 0f, 0f, 1f))) }
     LaunchedEffect(Unit) { initial.requestFocus() }

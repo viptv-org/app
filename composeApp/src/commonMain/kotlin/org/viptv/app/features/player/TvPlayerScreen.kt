@@ -115,7 +115,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
                 { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) }, state::keepWatching, extras.creditsLabel,
-                nextEpisodeAutoplays(autoplayNext, title, state.live) && state.ended, reduceMotion)
+                nextEpisodeAutoplays(autoplayNext, title, state.live) && state.ended, reduceMotion, state.interaction)
             else -> {
                 TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes) {
                     TvPlayerControls(state, title, extras, scale, timeline, audio,
