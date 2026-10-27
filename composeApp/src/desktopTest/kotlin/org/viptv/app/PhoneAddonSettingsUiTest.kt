@@ -20,17 +20,14 @@ import org.viptv.engine.wire.*
 import java.io.File
 import java.awt.EventQueue
 import kotlinx.coroutines.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PhoneAddonSettingsUiTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private var frameTime = 0L
     private val fixtures = listOf(
         IntegrationConnection("addon:a", "stremio", "fixture", null, "Fixture A", true, 1, listOf(Capability.METADATA, Capability.SOURCES)),

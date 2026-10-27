@@ -14,10 +14,12 @@ import org.viptv.app.connection.AccountDevices
 import org.viptv.app.features.settings.AccountDevicesScreen
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountDevicesUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val snapshot = Json.decodeFromString<AccountDevices>(accountFixture)
 
     @Test fun devicesLoadOnceAndCurrentBrowserHasNoPerDeviceSignOut() {

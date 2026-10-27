@@ -7,10 +7,12 @@ import androidx.compose.ui.unit.Density
 import org.viptv.app.features.entry.ConnectScreen
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class StartupStorageFailureUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val error = "Your saved connection could not be read from secure storage. Choose a connection to continue."
 
     @Test fun desktopInitialChoiceShowsStorageFailureAndKeepsLocalActionVisible() = verify(false)

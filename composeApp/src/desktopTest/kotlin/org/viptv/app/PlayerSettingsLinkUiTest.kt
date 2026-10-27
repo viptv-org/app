@@ -22,9 +22,8 @@ import org.viptv.app.features.settings.SettingsRoute
 import org.viptv.app.player.*
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -34,15 +33,12 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PlayerSettingsLinkUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val tracks = PlaybackTracks(
         audio = listOf(PlaybackTrack(1, "English · 5.1", true, "en"), PlaybackTrack(2, "Japanese · Stereo", false, "ja")),
         subtitles = listOf(PlaybackTrack(3, "English", true, "en"), PlaybackTrack(4, "English (SDH)", false, "en"), PlaybackTrack(5, "Spanish", false, "es")))
 
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
     private suspend fun settle(scene: ImageComposeScene) = repeat(4) { repeat(8) { scene.render(frame++ * 16_666_667L).close() }; delay(10) }

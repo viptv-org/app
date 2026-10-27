@@ -11,10 +11,12 @@ import org.viptv.app.player.PlayerFact
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PhonePlayerActionsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),

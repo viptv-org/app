@@ -16,10 +16,12 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.state.*
 import org.viptv.app.theme.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class StremioImportUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     @AfterTest fun close() = scope.cancel()
     private fun session(transport: StremioImportTransport, restricted: Boolean = false, name: String = "Synthetic profile") =

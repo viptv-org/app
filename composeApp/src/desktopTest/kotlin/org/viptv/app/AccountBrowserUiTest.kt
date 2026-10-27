@@ -12,10 +12,12 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountBrowserUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun televisionWithoutBrowserKeepsValidatedDashboardAddressVisible() {
         var attempts = 0
         val address = "https://example.test:18457/"

@@ -29,8 +29,7 @@ import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -40,6 +39,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ContinueWatchingActivationTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val origin = MetadataOrigin("stremio", "addon:4", "c".repeat(32))
     private val series = Card(MediaIdentity("tt38262097", "series", listOf(ExternalId("imdb", "tt38262097"))),
         provider_id = "addon:4", title = "Level 999 no Murabito", badges = emptyList(), metadata_origin = origin)
@@ -59,11 +59,7 @@ class ContinueWatchingActivationTest {
             HomeRow(id = "favorites", title = "My List", provider_id = "library", state = RowState.READY, cards = listOf(saved))),
         complete = true)
 
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
         node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }).joinToString(" ")

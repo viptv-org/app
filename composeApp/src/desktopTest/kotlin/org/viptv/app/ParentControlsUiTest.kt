@@ -17,10 +17,12 @@ import org.viptv.engine.wire.MediaIdentity
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class ParentControlsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun parentPinRequiresMatchingConfirmationAndCancelNeverSubmits() {
         var submitted: Pair<String, String>? = null
         var canceled = 0

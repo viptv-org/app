@@ -14,11 +14,13 @@ import org.viptv.app.features.settings.SettingsInformation
 import org.viptv.app.features.settings.TvAboutSettings
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.app.updates.*
+import org.junit.Rule
 import kotlin.test.*
 
 /** app#64: "Update ready" outside the player, and the update rows in Settings › About. */
 @OptIn(ExperimentalComposeUiApi::class)
 class AppUpdateUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val platform = FakeUpdatePlatform(feedJson(1301))
     private val updater = AppUpdater(platform, scope) { "https://viptv.example/updates/android/update.json" }

@@ -11,11 +11,13 @@ import org.viptv.app.features.browse.DiscoveryFilters
 import org.viptv.app.features.browse.DiscoveryMultiChoiceSheet
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
+import org.junit.Rule
 import kotlin.test.*
 
 /** Actual Compose input/focus checks; no host or provider request is involved. */
 @OptIn(ExperimentalComposeUiApi::class)
 class DiscoveryChoiceSheetTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val control = QueryControl("genre", "Genres", ControlKind.MULTICHOICE, true,
         (0 until 40).map { Choice("g$it", "Genre $it") }, maximum_selections = 2)
 

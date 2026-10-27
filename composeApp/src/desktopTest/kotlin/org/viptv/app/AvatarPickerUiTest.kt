@@ -11,10 +11,12 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.*
 import org.viptv.app.theme.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AvatarPickerUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     init { runBlocking { loadAvatarCatalog() } }
     private val saved = Profile("kid", "Kid", null, avatarStyle = "clay", avatarChoice = 20, avatarUrl = "https://avatars.example/clay-20.png")
 

@@ -26,6 +26,7 @@ import org.viptv.app.connection.*
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -38,6 +39,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class TvDetailsFocusReturnTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

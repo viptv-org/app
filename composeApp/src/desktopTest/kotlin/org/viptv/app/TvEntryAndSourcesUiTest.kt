@@ -18,10 +18,12 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class TvEntryAndSourcesUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun firstProfileReceivesFocusAfterAsyncLoginEnablesTheLazyRow() {
         val busy = mutableStateOf(true)
         val profiles = mutableStateOf(emptyList<Profile>())

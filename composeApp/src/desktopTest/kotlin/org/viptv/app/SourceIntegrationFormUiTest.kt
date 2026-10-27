@@ -11,10 +11,12 @@ import org.viptv.app.connection.*
 import org.viptv.app.features.settings.SourceIntegrationForm
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class SourceIntegrationFormUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun credentialFormKeepsCancelAndSaveVisibleAboveKeyboardWithScrollableProviderChoices() {
         val schema = SourceIntegrationSchema("fixture", "Fixture source", "NeedsConfiguration", true,
             listOf(SourceCredentialField("key", "API key", required = true, secret = true)),

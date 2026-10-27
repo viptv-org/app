@@ -29,9 +29,8 @@ import org.viptv.app.features.calendar.CalendarDates
 import org.viptv.app.features.calendar.CalendarDay
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -41,6 +40,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PointerAffordanceTest {
+    @get:Rule val uiThread = UiThreadRule()
     private fun cursor(modifier: Modifier): PointerIcon? = modifier.foldIn<PointerIcon?>(null) { found, element ->
         found ?: (element as? InspectableValue)?.takeIf { it.nameFallback == "pointerHoverIcon" }
             ?.inspectableElements?.firstOrNull { it.name == "icon" }?.value as? PointerIcon
@@ -55,11 +55,7 @@ class PointerAffordanceTest {
         assertNull(cursor(Modifier.pointerClickable(enabled = false) {}), "a disabled control keeps the arrow")
     }
 
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private class Frames(val scene: ImageComposeScene) {
         var frame = 0L

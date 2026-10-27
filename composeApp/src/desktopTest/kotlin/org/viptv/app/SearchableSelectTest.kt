@@ -30,6 +30,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Choice
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -38,6 +39,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SearchableSelectTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val genres = listOf("Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Café Society")
         .map { SelectOption(it.lowercase(), it) }
 

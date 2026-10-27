@@ -19,6 +19,7 @@ import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.*
 import org.viptv.engine.wire.CatalogPage
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -28,6 +29,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class HomeGenresAppUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun genresChipOpensFilteredBrowseInThePhoneApp() = runBlocking {
         val discover = mutableListOf<Url>()
         val client = HttpClient(MockEngine { request ->

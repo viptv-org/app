@@ -12,6 +12,7 @@ import org.viptv.app.features.settings.SettingsRoute
 import org.viptv.app.features.settings.stremioImportSection
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import kotlin.test.*
 
 private object NoSavedSession : RemoteSessionStore {
@@ -23,6 +24,7 @@ private object NoSavedSession : RemoteSessionStore {
 /** app#7: Back from a Settings sub-page returns to Settings, one level at a time. */
 @OptIn(ExperimentalComposeUiApi::class)
 class SettingsBackTest {
+    @get:Rule val uiThread = UiThreadRule()
     /** Phone-width Settings rendered from the controller, as App does. */
     private class Harness(browser: Boolean, start: ApplicationState, height: Int = 844) : AutoCloseable {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)

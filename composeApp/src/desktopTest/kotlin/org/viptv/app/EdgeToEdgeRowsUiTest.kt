@@ -20,6 +20,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import kotlin.math.abs
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -30,6 +31,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class)
 class EdgeToEdgeRowsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private class Case(val name: String, val width: Int, val gutter: Int, val title: String, val prefix: String,
         val arrows: Boolean = false, val content: @Composable () -> Unit)
 

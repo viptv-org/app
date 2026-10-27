@@ -13,10 +13,8 @@ import androidx.compose.ui.unit.Density
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -35,11 +33,8 @@ import kotlinx.coroutines.runBlocking
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvFocusReachabilityTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private data class Target(val key: String, val label: String)
 

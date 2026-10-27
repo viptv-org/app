@@ -30,6 +30,7 @@ import org.jetbrains.skia.Surface
 import org.jetbrains.skia.Image as SkiaImage
 import org.jetbrains.skia.Rect as SkiaRect
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -38,6 +39,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class NextEpisodeEndPanelUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),

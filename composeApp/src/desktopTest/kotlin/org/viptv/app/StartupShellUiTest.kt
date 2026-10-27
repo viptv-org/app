@@ -16,10 +16,12 @@ import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class, ExperimentalCoroutinesApi::class)
 class StartupShellUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun safeStartingScreenAllowsConnectionChangeBeforeAnimationAndHidesCachedPrivateContent() {
         repeat(5) { exerciseRecreation() }
     }

@@ -21,6 +21,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -30,6 +31,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class MergedCalendarAppUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun phoneShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 390, height = 844, name = "phone")
     @Test fun tvShowsYourShowsMergedAndFiltersThem() = merged(television = true, width = 1920, height = 1080, name = "tv")
     @Test fun tabletShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1024, height = 768, name = "tablet", details = false)

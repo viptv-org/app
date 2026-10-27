@@ -14,10 +14,12 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class GroupedSearchUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun suppliedCarouselTitleRemainsVisibleForOneRowAndLaterProviderResultsKeepTheirOwnActions() {
         val first = Card(MediaIdentity("same-id", "movie", emptyList()), provider_id = "stremio", title = "First copy", badges = emptyList())
         val second = first.copy(title = "Second copy")

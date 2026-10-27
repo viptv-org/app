@@ -19,6 +19,7 @@ import org.viptv.app.connection.*
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -29,6 +30,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BestMatchesAppUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun phonePickerGroupsRowsWhileDiscoveryRuns() = picker(television = false, width = 390, height = 844, name = "phone")
     @Test fun tvPickerGroupsRowsWhileDiscoveryRuns() = picker(television = true, width = 1920, height = 1080, name = "tv")
 

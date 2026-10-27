@@ -19,17 +19,13 @@ import org.viptv.app.features.sources.TvSourcesScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
 
 /** SRC-BEST-MATCH-001 Progressive ranking: a re-rank keeps focus and the scroll anchor on the same source. */
 class SourceRerankUiTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private fun row(id: String) = SourceCandidate(id, "addon:fixture", "Source $id", detail = "Release $id")
     private fun ranked(ids: List<String>, best: Int = 5) = ids.map(::row) to SourceGroups.of(ids.take(best), ids.first())

@@ -6,10 +6,12 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import org.viptv.app.features.entry.TvSignIn
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class StartupFailureUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun expiredRestoreReasonIsVisibleOnTheActualWelcomeStepAndSignInRemainsEnabled() {
         val reason = "Session expired. Sign in again."
         val scene = ImageComposeScene(1920, 1080, Density(1f)) {

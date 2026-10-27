@@ -13,10 +13,12 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class LiveUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private fun channel() = LiveChannel(Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "Fixture news", badges = emptyList()), id = "one", connectionId = "m3u:1")
     @Test fun tvFavoriteAndCategoryAreRealActionsWithinTheExistingLayout() {
         var saved = 0; var filtered = 0

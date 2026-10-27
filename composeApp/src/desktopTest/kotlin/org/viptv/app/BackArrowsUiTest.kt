@@ -14,6 +14,7 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.state.*
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -22,6 +23,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BackArrowsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

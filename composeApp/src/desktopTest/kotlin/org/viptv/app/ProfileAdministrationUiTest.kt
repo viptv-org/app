@@ -13,11 +13,13 @@ import org.viptv.app.features.entry.*
 import org.viptv.app.features.settings.*
 import org.viptv.app.theme.*
 import kotlinx.coroutines.runBlocking
+import org.junit.Rule
 import kotlin.test.*
 import java.io.File
 
 @OptIn(ExperimentalComposeUiApi::class)
 class ProfileAdministrationUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val parentLocked=Profile("other","Other",null,locked=true,lockKind="parent")
     @Test fun remoteParentNameAndAvatarEditsNeverAskForALocalPin(){
         var renamed:Pair<String,String>?=null

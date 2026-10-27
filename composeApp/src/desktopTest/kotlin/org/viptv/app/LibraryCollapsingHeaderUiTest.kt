@@ -19,10 +19,9 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -32,11 +31,8 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class LibraryCollapsingHeaderUiTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

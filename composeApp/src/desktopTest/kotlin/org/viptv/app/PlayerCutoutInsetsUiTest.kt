@@ -20,11 +20,13 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /** app#9: the phone player draws under a display cutout; its tappable controls stay inside the safe-drawing insets. */
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerCutoutInsetsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val width = 844; private val height = 390
     private val cutout = 48; private val bottomBar = 16
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))

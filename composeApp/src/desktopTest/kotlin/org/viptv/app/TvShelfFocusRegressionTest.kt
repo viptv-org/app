@@ -24,10 +24,8 @@ import org.viptv.app.features.home.TvHomeShelf
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -46,11 +44,8 @@ import kotlinx.coroutines.runBlocking
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvShelfFocusRegressionTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private fun cards(count: Int) = (1..count).map { index ->
         Card(MediaIdentity("tt$index", "series", emptyList()), provider_id = "simkl",

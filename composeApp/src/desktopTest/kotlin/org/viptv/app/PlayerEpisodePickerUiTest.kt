@@ -26,6 +26,7 @@ import org.viptv.app.features.player.*
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -35,6 +36,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class PlayerEpisodePickerUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun still(number: Long) = "https://img.example/private-show/e$number-still.jpg"

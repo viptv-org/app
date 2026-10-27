@@ -13,10 +13,12 @@ import org.viptv.app.theme.*
 import org.viptv.app.preview.PreviewTvCalendar
 import org.viptv.engine.wire.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class CalendarControlsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val days=listOf(CalendarDay("one","Thu","15","Today","Oct15"),CalendarDay("two","Fri","16","Tomorrow","Oct16"))
     private val card=PreviewTvCalendar.entries.first().card.copy(identity=MediaIdentity("simkl:tv:20","series",emptyList()),provider_id="simkl",title="Scheduled series",description="An actual scheduled release.",metadata_origin=MetadataOrigin("simkl"))
     private val entry=CalendarEntry("release","one","4 PM",card,subtitle="S2 E4 · Actual episode",aired=true,description="An actual scheduled release.",season=2,episode=4)

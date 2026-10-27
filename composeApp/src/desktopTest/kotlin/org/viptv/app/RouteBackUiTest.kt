@@ -11,6 +11,7 @@ import org.viptv.app.player.PlaybackTrack
 import org.viptv.app.player.PlaybackTracks
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -19,6 +20,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class)
 class RouteBackUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private var frame = 0L
     private fun ImageComposeScene.frames(count: Int = 16) = repeat(count) { render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

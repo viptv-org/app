@@ -24,8 +24,7 @@ import org.viptv.app.components.LocalVerticalPage
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -34,11 +33,8 @@ import kotlin.test.*
  * rail inside a vertical page leaves the wheel to the page.
  */
 class PointerRowScrollTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private class Scene(pointer: Boolean, television: Boolean = false, content: @Composable () -> Unit) : AutoCloseable {
         val scene = ImageComposeScene(400, 600, Density(1f)) {

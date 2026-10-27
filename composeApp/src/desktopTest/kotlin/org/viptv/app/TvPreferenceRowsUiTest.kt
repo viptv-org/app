@@ -19,23 +19,18 @@ import org.viptv.app.features.sources.TvSourceRow
 import org.viptv.app.features.sources.TvSourceInfo
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
+import org.junit.Rule
 import kotlin.test.*
 
 /** D-pad geometry of the TV preference pages and the release-fact badges in source rows. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvPreferenceRowsUiTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
+    @get:Rule val uiThread = UiThreadRule()
 
-    @Test fun playbackStartsOnTheFirstStoredRowAndMovesUpDownAndLeft() = runBlocking(edt) {
+    @Test fun playbackStartsOnTheFirstStoredRowAndMovesUpDownAndLeft() = runBlocking {
         val choices = mutableListOf<String>()
         var prefs by mutableStateOf(TvSettingsPreferences())
         val scene = tvSettings("Playback", { prefs }) { prefs = it; choices += it.hdr }
@@ -61,7 +56,7 @@ class TvPreferenceRowsUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun subtitlesAndAudioIsOneVerticalList() = runBlocking(edt) {
+    @Test fun subtitlesAndAudioIsOneVerticalList() = runBlocking {
         var prefs by mutableStateOf(TvSettingsPreferences(audioLanguage = "French"))
         val scene = tvSettings("Subtitles & audio", { prefs }) { prefs = it }
         try {
@@ -82,7 +77,7 @@ class TvPreferenceRowsUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun badgesStayOnTheTitleLineAndDropOnNarrowPhones() = runBlocking(edt) {
+    @Test fun badgesStayOnTheTitleLineAndDropOnNarrowPhones() = runBlocking {
         val source = SourceCandidate("a", "p", "Provider name that is fairly long", detail = "Some.Release.2160p.WEB-DL.DV.mkv",
             quality_height = 2160, release_type = "web_dl", dynamic_range = listOf("dv"), audio_flags = listOf("dual"), three_d = true)
         fun heightOf(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.maxOf { it.boundsInRoot.height }

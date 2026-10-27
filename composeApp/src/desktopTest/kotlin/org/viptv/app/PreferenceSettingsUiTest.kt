@@ -12,10 +12,12 @@ import org.viptv.app.connection.*
 import org.viptv.app.features.settings.*
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PreferenceSettingsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val original = ProfilePreferences("cs-CZ", "uk", true, "best", 480, 1.1, "#AA1122", "#60223344")
 
     @Test fun tvPreferenceFailureFocusesRetryDisablesDuplicatesAndRestoresLoadedControls() {

@@ -15,6 +15,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import org.viptv.engine.wire.SourceCandidate
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -23,6 +24,7 @@ import kotlin.test.*
  * so a long release line wraps to fewer lines than in the old 460 dp drawer.
  */
 class SourceDrawerLayoutTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val title = Card(MediaIdentity("tt13293588", "movie", emptyList()), provider_id = "addon:21", title = "Oak Street", badges = emptyList())
     private val release = "Oak.Street.2026.2160p.WEB-DL.DUAL.DDP5.1.Atmos.DV.HDR10.H.265.MSubs-ToonsHub 👤 412 💾 14.2 GB ⚙️ ThePirateBay [RD+] multi-audio"
     private val sources = (1..3).map { n ->

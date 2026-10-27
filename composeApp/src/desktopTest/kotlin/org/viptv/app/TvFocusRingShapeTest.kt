@@ -18,11 +18,9 @@ import org.jetbrains.skia.EncodedImageFormat
 import org.viptv.app.features.sources.TvSourcesFilters
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
+import org.junit.Rule
 import kotlin.test.*
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 
@@ -32,11 +30,8 @@ import kotlinx.coroutines.runBlocking
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvFocusRingShapeTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private fun luminance(argb: Int) = ((argb shr 16 and 0xFF) + (argb shr 8 and 0xFF) + (argb and 0xFF)) / 3
 

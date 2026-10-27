@@ -16,10 +16,12 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.*
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountDevicesBrowserLayoutTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun browserAccountLayoutUsesTheSuppliedSidebarAndContentGeometry() {
         var addonLoads = 0
         val scene = ImageComposeScene(1440,860,Density(1f)) { Fixture { addonLoads++ } }

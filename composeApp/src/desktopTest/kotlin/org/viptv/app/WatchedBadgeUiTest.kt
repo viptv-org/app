@@ -19,6 +19,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 /**
@@ -28,6 +29,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class WatchedBadgeUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private fun card(id: String, badges: List<String>, progress: Double? = null) = Card(
         MediaIdentity(id, "movie", emptyList()), provider_id = "addon:1", title = "Title $id",
         badges = badges, progress = progress)

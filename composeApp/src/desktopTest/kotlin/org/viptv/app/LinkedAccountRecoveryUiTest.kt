@@ -9,10 +9,12 @@ import org.viptv.app.connection.*
 import org.viptv.app.features.settings.LinkedAccounts
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
+import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class LinkedAccountRecoveryUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun nativeFailedIdentityCanRetryWithoutInventingBrowserManagement() {
         var busy by mutableStateOf(false); var error by mutableStateOf<String?>(null)
         var identity by mutableStateOf<AccountIdentity?>(null); var loads = 0
