@@ -51,7 +51,7 @@ class CalendarActionsTest {
         try{c.calendarCategory("anime");c.job?.join();assertTrue(requests.last().contains("type=anime"));val first=requests.last();c.calendarWeek(1);c.job?.join();assertEquals(1,c.state.value.calendarWeek);assertNotEquals(first,requests.last());c.calendarCategory("movie");c.job?.join();assertFalse(c.state.value.calendarAvailable);assertNull(c.state.value.error);assertTrue(c.state.value.calendarEntries.isEmpty());assertEquals(3,requests.size)}finally{r.close()}
         val page=CalendarPage(listOf(CalendarRelease("release",parent,"2026-10-15T16:00:00Z",season=2,episode=4)),complete=true)
         val client2=HttpClient(MockEngine{respond(codec.encodeToString(page),headers=headersOf(HttpHeaders.ContentType,"application/json"))}){configureTransport()};val remote=RemoteConnection("https://fixture.example",client=client2,browserMode=false)
-        try{val day=requireNotNull(calendarLabel("2026-10-15T16:00:00Z")).day;val mapped=remote.calendar(CalendarWindow(day,day,listOf(CalendarDay(day,"Thu","15","Today","Oct15")))).single();assertEquals(2L,mapped.season);assertEquals(4L,mapped.episode);assertEquals("2026-10-15T16:00:00Z",mapped.releaseDate)}finally{remote.close()}
+        try{val day=requireNotNull(calendarLabel("2026-10-15T16:00:00Z")).day;val mapped=remote.calendar(CalendarWindow(day,day,listOf(CalendarDay(day,"Thu","15","Today","Oct15")))).entries.single();assertEquals(2L,mapped.season);assertEquals(4L,mapped.episode);assertEquals("2026-10-15T16:00:00Z",mapped.releaseDate)}finally{remote.close()}
     }
     @Test fun aChangedOriginOrNavigationNeverStartsScheduledPlayback()=runBlocking<Unit>{
         val gate=CompletableDeferred<Unit>();val entered=CompletableDeferred<Unit>()
