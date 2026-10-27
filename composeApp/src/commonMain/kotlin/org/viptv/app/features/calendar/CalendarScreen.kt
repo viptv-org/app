@@ -20,29 +20,52 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
+/** Shown when the server has no calendar for this profile (HTTP 422). */
+internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
+
+/** The empty-day line; with Your shows chosen it says that none of the viewer's shows air. */
+internal fun calendarEmptyDay(filter: CalendarFilter?) =
+    if (filter == CalendarFilter.YourShows) "None of your shows air this day." else "No releases for this day."
+
+/**
+ * The merged schedule: the profile's own series ([CalendarEntry.library]) and the public
+ * schedule, by date. [sources] are the sources the server answered from; with both, the
+ * controls offer All / Your shows (All first). [openEntry] opens a chosen row; without it
+ * a row opens its title card.
+ */
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
     type: String = "series", week: Int = 0, controls: Boolean = false,
-    categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null) {
-    if (television) { TvCalendarScreen(days, entries, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch); return }
+    categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
+    sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null) {
+    // A fresh visit starts on All; so does a window where the choice is not offered.
+    var chosen by remember { mutableStateOf(CalendarFilter.All) }
+    val offered = calendarFilterOffered(entries, sources)
+    LaunchedEffect(offered) { if (!offered) chosen = CalendarFilter.All }
+    val filter = chosen.takeIf { offered }
+    val shown = entries.shown(chosen, offered)
+    if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
+        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry); return }
+    val choose = calendarOpener(open, openEntry)
     var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    var focused by remember(entries) { mutableStateOf(entries.firstOrNull()) }
+    var focused by remember(shown) { mutableStateOf(shown.firstOrNull()) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else if (phone) 1f else 0.65f
-        val visible = if (phone) entries else entries.filter { it.day == selected }
+        val visible = if (phone) shown else shown.filter { it.day == selected }
         Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else if (television) 96.dp * scale else 40.dp,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
-            if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"})
-            if (days.isNotEmpty()) CalendarDates(days, entries, selected, phone, scale) { day ->
-                selected = day; focused = entries.firstOrNull { it.day == day }
+            if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
+                filter = filter, filterChanged = { chosen = it })
+            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale) { day ->
+                selected = day; focused = shown.firstOrNull { it.day == day }
                 if (phone) scope.launch {
                     val index = days.takeWhile { it.id != day }.sumOf { preceding ->
-                        entries.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 2 }
+                        shown.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 2 }
                     }
                     list.animateScrollToItem(index)
                 }
@@ -50,7 +73,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             error?.let { Text(it, color = Palette.danger) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             if (entries.isEmpty() && !busy && error == null) {
-                Text(if (available) "Nothing is scheduled in these dates." else "Release schedules are not available for this profile.", color = Palette.secondary)
+                Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
                 TextButton(manage) { Text("Manage integrations") }
             } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
                 LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp),
@@ -64,20 +87,20 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                                     Text(day.fullDate, fontSize = 12.sp, color = Palette.secondary)
                                 }
                             }
-                            if(releases.isEmpty())item(key="empty:${day.id}"){Text("No releases for this day.",color=Palette.secondary,fontSize=13.sp)}
-                            items(releases, key = { it.id }) { CalendarReleaseRow(it,true,scale,watch,{focused=it},{open(it.card)}) }
+                            if(releases.isEmpty())item(key="empty:${day.id}"){Text(calendarEmptyDay(filter),color=Palette.secondary,fontSize=13.sp)}
+                            items(releases, key = { it.id }) { CalendarReleaseRow(it,true,scale,watch,{focused=it},{choose(it)}) }
                         }
                     } else items(visible, key = { it.id }) {
-                        CalendarReleaseRow(it,false,scale,watch,{focused=it},{open(it.card)})
+                        CalendarReleaseRow(it,false,scale,watch,{focused=it},{choose(it)})
                     }
-                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text("No releases for this day.",color=Palette.secondary)}
+                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(filter),color=Palette.secondary)}
                 }
                 if (television && focused != null) Column(Modifier.width(584.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     val entry = requireNotNull(focused)
                     AsyncImage(entry.card.landscape ?: entry.card.poster, entry.card.title, Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(RoundedCornerShape(16.dp * scale)), contentScale = ContentScale.Crop)
                     Text(entry.card.title, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
                     entry.description?.let { Text(it, fontSize = (24 * scale).sp, color = Palette.body) }
-                    Button(onClick = { open(entry.card) }, shape = RoundedCornerShape(12.dp * scale), modifier = Modifier.height(72.dp * scale),
+                    Button(onClick = { choose(entry) }, shape = RoundedCornerShape(12.dp * scale), modifier = Modifier.height(72.dp * scale),
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) { Text("View details", fontSize = (26 * scale).sp) }
                 }
             }
