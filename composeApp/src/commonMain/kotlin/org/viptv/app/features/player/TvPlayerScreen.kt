@@ -114,7 +114,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                 scale, retry, chooseSources, close)
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
-                { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) }, state::keepWatching, extras.creditsLabel,
+                // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
+                { if (state.showNext) { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) } }, state::keepWatching, extras.creditsLabel,
                 nextEpisodeAutoplays(autoplayNext, title, state.live) && state.ended, reduceMotion, state.interaction)
             else -> {
                 TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes) {

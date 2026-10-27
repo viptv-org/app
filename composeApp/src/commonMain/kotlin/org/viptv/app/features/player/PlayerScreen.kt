@@ -214,8 +214,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }
             }
         }, ::dismissPanel, controlInsets)
+        // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
         if (phonePanel == PhonePlaybackPanel.Next) nextChoice?.let { candidate -> PhoneNextEpisode(candidate, {
-            if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
+            if (phonePanel == PhonePlaybackPanel.Next && latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
                 latestNext?.let(::cardLookupKey) == cardLookupKey(candidate)) {
                 endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
             }
