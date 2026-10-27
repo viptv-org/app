@@ -1,7 +1,6 @@
 package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +20,7 @@ import coil3.compose.LocalPlatformContext
 import org.viptv.app.components.rememberTvColumnItem
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 /** Tv3SetDisplay's four accent swatches, in board order. */
 private data class TvAccentChoice(val name: String, val color: Long)
@@ -36,7 +36,7 @@ private val TvAccentChoices = listOf(
  * power cut cannot lose a choice.
  */
 @Stable
-internal class TvDisplayState(initial: TvDisplayPreferences, private val store: TvDisplayStore) {
+internal class TvDisplayState(initial: TvDisplayPreferences, private val store: DeviceRecordStore) {
     var value by mutableStateOf(initial)
         private set
 
@@ -49,8 +49,18 @@ internal class TvDisplayState(initial: TvDisplayPreferences, private val store: 
 @Composable
 internal fun rememberTvDisplayState(): TvDisplayState {
     val context = LocalPlatformContext.current
-    val store = remember(context) { tvDisplayStore(context) }
+    val store = remember(context) { deviceRecordStore(context, DeviceRecord.Display) }
     return remember(store) { TvDisplayState(decodeTvDisplay(runCatching { store.read() }.getOrNull()), store) }
+}
+
+/** The Display setting's Reduce motion, resolved against the device's own setting. */
+@Composable
+internal fun rememberReducedMotion(): Boolean {
+    val context = LocalPlatformContext.current
+    return remember(context) {
+        val display = decodeTvDisplay(runCatching { deviceRecordStore(context, DeviceRecord.Display).read() }.getOrNull())
+        reducedMotion(display, systemReducedMotion(context))
+    }
 }
 
 @Composable
@@ -110,7 +120,7 @@ private fun TvDisplayAccentRow(prefs: TvDisplayPreferences, scale: Float, reques
             clip = false
         }
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = RoundedCornerShape(14.dp * scale)) {
             change(prefs.copy(accent = TvAccentChoices[(TvAccentChoices.indexOf(selected) + 1) % TvAccentChoices.size].color)) }
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {

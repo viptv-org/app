@@ -1,7 +1,6 @@
 package org.viptv.app.features.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -45,6 +44,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
 
 /**
  * The card's focus state is passed down instead of read here, so a focus move
@@ -82,7 +82,7 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
                 event.key == androidx.compose.ui.input.key.Key.DirectionUp) { onUp(); true } else false
         }
         .onFocusChanged { if (focus.value != it.isFocused) { focus.value = it.isFocused; if (it.isFocused) focused(card) } }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }
         .clearAndSetSemantics {
             role = Role.Button
             text = AnnotatedString(description)

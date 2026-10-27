@@ -76,6 +76,8 @@ private fun launchApplication() = application {
         val scope = rememberCoroutineScope()
         val controller = remember { ApplicationController(scope) }
         val state by controller.state.collectAsState()
+        // One Back for the chevron, Escape and the mouse buttons; a route's own step comes first.
+        val globalBack = remember(controller) { GlobalBack(controller) }
         val mac = remember { System.getProperty("os.name").startsWith("Mac") }
         val base = remember { desktopDataDirectory() }
         var menuOpen by remember { mutableStateOf(false) }
@@ -114,7 +116,7 @@ private fun launchApplication() = application {
             }
         }
         org.viptv.app.player.mpv.MpvWindow(window) {
-        ViptvTheme {
+        ViptvTheme(pointer = true) {
             // Native app framing: a rounded root surface with a hairline outline.
             // macOS already rounds and outlines its own windows, so it keeps the
             // plain surface.
@@ -128,19 +130,21 @@ private fun launchApplication() = application {
             // own surface underneath so no unpainted pixel can go black; the
             // rounded layer stays on top where transparency is available.
             Box(Modifier.fillMaxSize().background(Palette.background)) {
+            DesktopBackInputs(globalBack, state) {
             Box(Modifier.fillMaxSize().then(framed)) {
             Column(Modifier.fillMaxSize()) {
                 if (state.screen == Screen.Player) {
                     Box(Modifier.fillMaxSize()) {
-                        App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
+                        App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
+                            entryBackChanged = globalBack.routeBackChanged)
                         DesktopWindowButtons(mac, minimize, maximize, ::exitApplication, Modifier.align(Alignment.TopEnd), maximized = maximized)
                     }
                 } else {
                     WindowDraggableArea(Modifier.fillMaxWidth()) {
                         DesktopTitleBar(state, mac, controller::navigate, controller::search,
                             { menuOpen = !menuOpen }, minimize, maximize, ::exitApplication, Modifier,
-                            back = if (state.navBack.isNotEmpty() || state.screen != Screen.Home) controller::navigateBack else null,
-                            forward = if (state.navForward.isNotEmpty()) controller::navigateForward else null,
+                            back = if (globalBack.canGoBack(state)) globalBack::back else null,
+                            forward = if (globalBack.canGoForward(state)) globalBack::forward else null,
                             searchFocus = searchFocus,
                             maximized = maximized)
                     }
@@ -152,7 +156,8 @@ private fun launchApplication() = application {
                             play = controller::playTitle,
                             toggleSave = controller::toggleFavorite,
                             isSaved = { state.isSaved(it) })) {
-                            App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller)
+                            App(localDatabase = "$base/viptv-experiment/local.sqlite", desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
+                                entryBackChanged = globalBack.routeBackChanged)
                         }
                         // Board D3Offline: overlays the content area below the title
                         // bar and leaves the 72 dp rail visible. Home only — that is
@@ -163,6 +168,7 @@ private fun launchApplication() = application {
                             modifier = Modifier.align(Alignment.TopStart).padding(start = 72.dp))
                     }
                 }
+            }
             }
             }
             }

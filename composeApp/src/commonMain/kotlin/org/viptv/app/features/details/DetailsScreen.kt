@@ -19,6 +19,8 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.app.components.Button
+import org.viptv.app.components.IconButton
 
 @Composable
 fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null,

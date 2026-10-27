@@ -3,7 +3,6 @@ package org.viptv.app.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -49,7 +48,7 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
             val hovered by interaction.collectIsHoveredAsState()
             val focused by interaction.collectIsFocusedAsState()
             Text(destination.label, Modifier.clip(RoundedCornerShape(8.dp))
-                .clickable(interactionSource = interaction, indication = null) { navigate(destination.screen) }.padding(vertical = 10.dp),
+                .pointerClickable(interactionSource = interaction, indication = null, shape = RoundedCornerShape(8.dp), hover = null) { navigate(destination.screen) }.padding(vertical = 10.dp),
                 color = if (selected == destination.screen || hovered || focused) Palette.text else Palette.body,
                 fontSize = 14.sp,
                 fontWeight = if (selected == destination.screen) FontWeight.Bold else FontWeight.Medium)

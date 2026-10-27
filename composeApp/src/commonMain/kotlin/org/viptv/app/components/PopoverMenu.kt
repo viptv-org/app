@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -84,7 +83,7 @@ internal fun PopoverMenuItem(label: String, icon: ImageVector? = null, onClick: 
     val fill by animateColorAsState(if (active) Palette.raised else Color.Transparent, tween(150), label = "Popover row fill")
     val scale by animateFloatAsState(if (pressed) .99f else 1f, tween(150), label = "Popover row press")
     Box(Modifier.padding(horizontal = 6.dp).fillMaxWidth().heightIn(min = 44.dp).scale(scale).clip(RoundedCornerShape(10.dp)).background(fill)
-        .clickable(interaction, indication = null, role = Role.Button, onClick = onClick)) {
+        .pointerClickable(interaction, indication = null, role = Role.Button, onClick = onClick, shape = RoundedCornerShape(10.dp), hover = null)) {
         Row(Modifier.align(Alignment.CenterStart).padding(horizontal = 10.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             if (icon != null) Icon(icon, null, Modifier.size(18.dp).testTag(PopoverMenuItemIconTag), tint = if (active) Palette.text else Palette.secondary)

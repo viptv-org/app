@@ -1,7 +1,6 @@
 package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, requester: FocusRequester,
@@ -35,7 +35,7 @@ internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, reques
                 // Fill alone marks focus here: a ring on top of the white fill read
                 // as a double indicator (board Tv3SetSources has no sidebar ring).
                 .background(if (highlighted) Palette.text else if (section == selected) Color(0xFF333333) else Color.Transparent, RoundedCornerShape(12.dp * scale))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { select(section) }
+                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = RoundedCornerShape(12.dp * scale)) { select(section) }
                 .padding(horizontal = 24.dp * scale), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {
                 val tint = if (highlighted) Palette.background else if (section == selected) Palette.text else Palette.secondary

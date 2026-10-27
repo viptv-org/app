@@ -1,7 +1,6 @@
 package org.viptv.app.features.player
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -28,6 +27,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.IconButton
 
 @Composable
 fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
@@ -38,11 +39,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     /** The video and its scrims draw edge to edge, under a display cutout; tappable controls stay inside these insets. */
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     /** Facts from a preview or test harness rather than a mounted surface; never forwarded to [observe]. */
-    externalFacts: Flow<PlayerFact> = emptyFlow()) {
+    externalFacts: Flow<PlayerFact> = emptyFlow(),
+    /** Opens the full Subtitles & audio settings from the Audio & subtitles menu (app#44). */
+    openSettings: (() -> Unit)? = null,
+    /** Settings › Playback › Autoplay next episode: the end panel counts down and plays the next episode (app#65). */
+    autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
-            trackChosen = trackChosen, canvasColor = canvasColor)
+            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -94,9 +99,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             else -> latestClose() }
     }
     val latestPhoneBack by rememberUpdatedState(phoneBack)
+    // Desktop and browser Back (mouse button, browser history): the Audio & subtitles menu or an open panel
+    // closes first, as Escape does; the player has no lock off a phone.
+    val keyboardBack = {
+        when { showTracks -> { showTracks = false; visible = true }
+            phonePanel != null -> dismissPanel()
+            else -> latestClose() }
+    }
+    val latestKeyboardBack by rememberUpdatedState(keyboardBack)
     DisposableEffect(phone, playbackKey) {
-        if (phone) backChanged { latestPhoneBack() }
-        onDispose { if (phone) backChanged(null) }
+        backChanged { if (phone) latestPhoneBack() else latestKeyboardBack() }
+        onDispose { backChanged(null) }
     }
     LaunchedEffect(restorePanel, phonePanel) {
         val restoring = restorePanel
@@ -162,7 +175,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             else -> if (!visible && !locked) { visible = true; interaction++; true } else false
         }
     }) {
-        Box(Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
+        Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
         if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
             modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
             Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
@@ -204,18 +217,19 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             send(choice)
             trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
                 .firstOrNull { it.id == choice.id }?.language)
-        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets)
+        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets, openSettings)
         if (phone && phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
             if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }
             }
         }, ::dismissPanel, controlInsets)
+        // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
         if (phonePanel == PhonePlaybackPanel.Next) nextChoice?.let { candidate -> PhoneNextEpisode(candidate, {
-            if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
+            if (phonePanel == PhonePlaybackPanel.Next && latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
                 latestNext?.let(::cardLookupKey) == cardLookupKey(candidate)) {
                 endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
             }
-        }, ::dismissPanel, controlInsets) }
+        }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
         if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
             "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
         else {

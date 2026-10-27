@@ -68,7 +68,7 @@ fun App(
         if (manageControllerLifecycle) lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }
-    ViptvTheme(television) {
+    ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
@@ -105,12 +105,12 @@ fun App(
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television,
-                        back = if (state.selectedProfile != null) ({ controller.navigate(Screen.Home) }) else null)
+                        back = if (state.selectedProfile != null) controller::navigateBack else null)
                 }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
-                    state.busy, state.error, controller::submitProfilePin, { controller.navigate(Screen.Profiles) }, television)
+                    state.busy, state.error, controller::submitProfilePin, controller::navigateBack, television)
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
-                    state.busy, state.error, compact, { controller.navigate(Screen.Profiles) }, controller::renameProfile,
+                    state.busy, state.error, compact, controller::navigateBack, controller::renameProfile,
                     controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile, television, entryBackChanged, pinAvailable = state.localMode,
                     editingCurrent = state.profileToEdit == state.selectedProfile, openSettings = controller::profileSettings,
                     language = state.preferences?.takeIf { state.profileToEdit == state.selectedProfile }?.preferences?.let { it.preferred_audio_language ?: "Original audio" },
@@ -158,18 +158,20 @@ fun App(
                                         // must show it instead of rendering blank (NAV-04).
                                         state.detailPageError ?: state.error.takeIf { state.detail == null }, controller::backDetails, controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
                                         defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
-                                        continuing = state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty(),
+                                        // A Calendar row's episode comes first: Details opened from it land on its season (app#46).
+                                        continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty(),
                                         paging = state.screen == Screen.Details)
                                     if (state.screen == Screen.Sources) SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups)
                                 }
                             }
                             Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
-                                type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar)
+                                type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
+                                sources = state.calendarSources, openEntry = controller::openCalendarEntry)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
                             Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
                             Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
                                 controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                            else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
+                            else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }

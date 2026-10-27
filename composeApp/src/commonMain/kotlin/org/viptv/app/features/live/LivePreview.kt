@@ -1,7 +1,6 @@
 package org.viptv.app.features.live
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -21,13 +20,15 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
 
 @Composable
 internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, phone: Boolean, television: Boolean,
     scale: Float, watch: () -> Unit, favourite: () -> Unit, guide: (() -> Unit)? = null) {
     val art = program?.artwork ?: channel.card.landscape ?: channel.card.poster
     if (phone) {
-        Box(Modifier.fillMaxWidth().height(196.dp).clickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
+        Box(Modifier.fillMaxWidth().height(196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
             if (art != null) AsyncImage(art, channel.card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
             LiveBadge(Modifier.padding(12.dp))

@@ -3,6 +3,13 @@ package org.viptv.app.features.settings
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import org.viptv.app.state.*
 import org.viptv.app.connection.ProfilePreferences
@@ -11,22 +18,35 @@ import org.viptv.app.connection.addonLogo
 @Composable
 internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
     desktop: Boolean = false, entryBackChanged: ((() -> Unit)?) -> Unit = {}) {
-    // Android's system Back: while a sub-page is open it takes the same step as the in-page arrow;
-    // on the Settings list the activity keeps its own behaviour.
-    val backStaysInSettings = state.parentTitles != null || state.settingsPage?.subpage == true
+    // Android's system Back (and the TV remote's): while a sub-page is open it takes the same step as
+    // the in-page arrow; on the Settings list the activity keeps its own behaviour. A visit from the
+    // player always routes Back here, so it returns to the player (app#44).
+    val returnsToPlayer = state.settingsReturnsToPlayer
+    val backStaysInSettings = state.parentTitles != null || state.settingsPage?.subpage == true || returnsToPlayer
     DisposableEffect(backStaysInSettings) {
         entryBackChanged(if (backStaysInSettings) controller::navigateBack else null)
         onDispose { entryBackChanged(null) }
     }
     val deviceLink by controller.deviceLink.collectAsState()
+    val devicePlayback = rememberDevicePlaybackState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
+    // On a keyboard (desktop, browser) Escape is Back while the player waits, as Escape leaves the player.
+    // With a field or control focused, Escape first leaves it (unsaved text stays), then returns.
+    val escapeReturns = returnsToPlayer && (desktop || browser) && !television
+    val keyboard = remember { FocusRequester() }
+    var pageFocused by remember { mutableStateOf(false) }
+    if (escapeReturns) LaunchedEffect(Unit) { keyboard.requestFocus() }
+    Box(if (escapeReturns) Modifier.focusRequester(keyboard).onFocusChanged { pageFocused = it.isFocused }.focusable().onKeyEvent { event ->
+        if (event.type != KeyEventType.KeyDown || event.key != Key.Escape) false
+        else { if (pageFocused) controller.navigateBack() else keyboard.requestFocus(); true }
+    } else Modifier) {
     SettingsScreen(state.localMode, state.addons, state.enabledAddonIds, state.busy, state.error, state.sessionNotice,
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
-        state.profiles.find { it.id == state.selectedProfile }, { controller.navigate(Screen.Home) }, television,
+        state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         installWithCompletion = controller::installAddon,
@@ -41,13 +61,14 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
             profileName = state.profiles.find { it.id == state.selectedProfile }?.name,
             origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar) } },
-        preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences) },
+        preferences = { ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error, controller::refreshPreferences, controller::updatePreferences,
+            devicePlayback) },
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->
             if (compact && !browser) PhoneProfilePreferences(section, state.preferences, state.busy, state.preferencesError ?: state.error,
-                controller::refreshPreferences, controller::updatePreferences)
+                controller::refreshPreferences, controller::updatePreferences, devicePlayback)
             else ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error,
-                controller::refreshPreferences, controller::updatePreferences)
+                controller::refreshPreferences, controller::updatePreferences, devicePlayback)
         },
         devices = if (browser && !state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null) }) else null,
@@ -75,7 +96,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         tvParentalMaturity = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.let {
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
-        tvParentalPinAvailable = state.localMode)
+        tvParentalPinAvailable = state.localMode,
+        returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback)
+    }
     }
 }
 

@@ -1,7 +1,6 @@
 package org.viptv.app.features.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -26,6 +25,10 @@ import com.composables.icons.lucide.Plus
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
 
 /**
  * Desktop title hero per reference board D3Title: ambient blurred backdrop,
@@ -154,7 +157,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
         }
         // Source row: the current default-source behaviour; opens the source sheet.
         Row(Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
-            .clickable { chooseSource(card) }.padding(horizontal = 12.dp),
+            .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(card) }.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(sourceLabel ?: "Best match", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.text)
             Icon(Lucide.ChevronDown, "Choose source", Modifier.size(16.dp), tint = Palette.secondary)

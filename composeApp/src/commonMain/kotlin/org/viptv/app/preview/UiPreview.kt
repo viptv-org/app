@@ -64,7 +64,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
         if (tvDetailVariant == "LoadingThenReady") { kotlinx.coroutines.delay(3000); homeArrived = true }
     }
     val genres = HomeGenrePicker(PreviewData.genres) { go(Screen.Discover) }
-    ViptvTheme(television) { CompositionLocalProvider(LocalHomeGenres provides genres) {
+    ViptvTheme(television, pointer = desktop || browser) { CompositionLocalProvider(LocalHomeGenres provides genres) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             val phone = maxWidth < 640.dp && !television && !desktop && !browser
             val tablet = !phone && !television && !desktop && !browser
@@ -113,6 +113,8 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 else LiveScreen(PreviewLive.channels, false, PreviewLive.start, PreviewLive.now, watchLive, { go(Screen.Settings) })
                             Screen.Library -> if (television) TvLibraryScreen(if (tvDetailVariant in listOf("Empty", "Unavailable")) emptyList() else PreviewTvLibrary.cards,
                                 tvDetailVariant != "Unavailable", { go(Screen.Details) }, { go(Screen.Home) }, PreviewTvLibrary.watched)
+                                else if (tvDetailVariant == "Long") LibraryScreen(PreviewData.longLibrary.cards, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) },
+                                    snapshot = PreviewData.longLibrary)
                                 else LibraryScreen(PreviewData.posters, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) })
                             Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(PreviewData.history, false, null,
                                 { go(Screen.Details) }, {}, { go(Screen.Home) })

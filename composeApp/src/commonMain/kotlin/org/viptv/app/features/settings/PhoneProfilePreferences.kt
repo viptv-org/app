@@ -12,10 +12,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,
-    retry: () -> Unit, save: (ProfilePreferences) -> Unit) {
+    retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null) {
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     var dialog by remember(section) { mutableStateOf<PhonePreferenceField?>(null) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
@@ -26,10 +28,17 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
         error?.let { Text(it, color = Palette.danger) }
         val value = draft
         if (value == null || error != null) TextButton(retry, enabled = !busy) { Text(if (value == null && error == null) "Load settings" else "Retry settings") }
+        // Stored on this device, so it shows and applies at once even while the profile's preferences can't load.
+        if (section == "Playback" && devicePlayback != null) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Next episode", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            PhonePreferenceGroup {
+                PhonePreferenceSwitchRow(autoplayNextRow, autoplayNextDescription, devicePlayback.value.autoplayNext, devicePlayback::setAutoplayNext)
+            }
+        }
         if (value != null) {
             if (section == "Subtitles & audio") PhoneSubtitlePreferences(value, busy, { edit -> draft = draft?.let(edit) }, { dialog = it })
             else {
-                Text("Playback resumes from your saved position. Next episodes start only when you choose.", color = Palette.secondary, fontSize = 13.sp)
+                Text("Playback resumes from your saved position.", color = Palette.secondary, fontSize = 13.sp)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Sources", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     PhonePreferenceGroup {

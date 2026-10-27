@@ -5,14 +5,12 @@ import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +25,9 @@ import org.viptv.app.theme.Palette
 import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.ChevronLeft
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
 
 @Composable
 internal fun MobileProfiles(
@@ -68,7 +68,7 @@ internal fun MobileProfiles(
 
 @Composable
 private fun MobileProfileTile(profile: Profile, busy: Boolean, open: () -> Unit) {
-    Column(Modifier.fillMaxWidth().clickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxWidth().pointerClickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
         ProfileAvatar(profile, 120.dp, 22.dp)
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -86,7 +86,7 @@ internal fun LockMark() {
 
 @Composable
 private fun AddProfileTile(busy: Boolean, add: () -> Unit) {
-    Column(Modifier.fillMaxWidth().clickable(enabled = !busy, onClick = add), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxWidth().pointerClickable(enabled = !busy, onClick = add), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(120.dp).clip(RoundedCornerShape(22.dp))
             .border(BorderStroke(2.dp, Color.White.copy(alpha = 0.14f)), RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
             androidx.compose.material3.Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp), tint = Palette.secondary)

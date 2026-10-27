@@ -1,7 +1,6 @@
 package org.viptv.app.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -32,7 +31,7 @@ internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Sc
         val entries = listOf(Destination(Screen.Home, "Home", Lucide.House), Destination(Screen.Live, "Live", Lucide.Tv),
             Destination(Screen.Library, "My List", Lucide.Bookmark), Destination(Screen.Search, "Search", Lucide.Search))
         entries.forEach { entry ->
-            Column(Modifier.fillMaxWidth().clickable { navigate(entry.screen) }, horizontalAlignment = Alignment.CenterHorizontally,
+            Column(Modifier.fillMaxWidth().pointerClickable { navigate(entry.screen) }, horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Box(Modifier.size(56.dp, 32.dp).background(if (selected == entry.screen) Color.White.copy(alpha = .16f) else Color.Transparent,
                     RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
@@ -45,7 +44,7 @@ internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Sc
         Spacer(Modifier.weight(1f))
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
             IconButton(onClick = { navigate(Screen.Settings) }, modifier = Modifier.size(44.dp)) { Icon(Lucide.Settings, "Settings", Modifier.size(22.dp), tint = Palette.text) }
-            Box(Modifier.size(36.dp).clickable { navigate(Screen.Profiles) }, contentAlignment = Alignment.Center) { ProfileAvatar(profile, 36.dp, 9.dp) }
+            Box(Modifier.size(36.dp).pointerClickable { navigate(Screen.Profiles) }, contentAlignment = Alignment.Center) { ProfileAvatar(profile, 36.dp, 9.dp) }
         }
     }
 }

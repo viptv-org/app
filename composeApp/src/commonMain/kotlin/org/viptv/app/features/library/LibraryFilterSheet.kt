@@ -9,7 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -24,6 +23,9 @@ import org.viptv.app.components.TvRequestedFocus
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.LibraryQuery
 import org.viptv.engine.wire.QueryControl
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.Button
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun LibraryFilterSheet(query: LibraryQuery, controls: List<QueryControl>, television: Boolean,
@@ -36,7 +38,7 @@ internal fun LibraryFilterSheet(query: LibraryQuery, controls: List<QueryControl
         BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }.background(Color.Black.copy(alpha = .55f))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
+            .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
         val panel = if (phone) Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(.9f)
             else Modifier.align(Alignment.CenterEnd).width(if (television) 800.dp * scale else 480.dp).fillMaxHeight()
         Surface(panel.graphicsLayer {

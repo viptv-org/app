@@ -8,6 +8,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 /** Unsupported authentication methods must not imply that an approval or code is pending. */
 @Composable

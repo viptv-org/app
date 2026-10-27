@@ -1,7 +1,6 @@
 package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.rememberTvColumnItem
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float, value: String? = null,
@@ -52,7 +52,7 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
             clip = false
         }
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = activate)
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = activate, shape = RoundedCornerShape(14.dp * scale))
         .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
         leading?.let { Icon(it, null, Modifier.size(28.dp * scale), labelColor ?: color); Spacer(Modifier.width(24.dp * scale)) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {

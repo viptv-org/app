@@ -87,6 +87,9 @@ class PlaybackPreferenceMappingTest {
         assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision",
             "Match frame rate"), tvPlaybackRows(actualPreferencesOnly = false))
         assertFalse("Start with subtitles" in tvPlaybackRows(false))
+        // Autoplay next episode is stored on the device, so a real connection shows it first (app#65).
+        assertEquals(listOf("Autoplay next episode", "Default source", "Preferred quality", "HDR and Dolby Vision"),
+            tvPlaybackRows(actualPreferencesOnly = true, deviceRows = true))
         assertEquals(listOf("Audio language", "Subtitles", "Subtitle language", "Subtitle size", "Subtitle background", "Subtitle colour"), tvSubtitleRows)
     }
 

@@ -26,6 +26,8 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.app.components.Button
+import org.viptv.app.components.IconButton
 
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},

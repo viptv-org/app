@@ -9,6 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 
 @Composable
 internal fun SettingsLeaveDialog(local: Boolean, compact: Boolean, busy: Boolean, error: String?, dismiss: () -> Unit, confirm: () -> Unit) {

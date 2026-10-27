@@ -7,14 +7,12 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +40,8 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvCardFocusOutline
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.pointerSelectable
+import org.viptv.app.components.TextButton
 
 /**
  * Full-catalog avatar picker (design ADM-004): world chips in catalog order, then
@@ -156,7 +156,7 @@ private fun WorldChip(name: String, selected: Boolean, metrics: AvatarPickerMetr
     Box(Modifier.height(metrics.chip).onFocusChanged { focused = it.isFocused }
         .tvCardFocusOutline(focused, metrics.chip / 2, metrics.scale)
         .clip(shape).background(if (selected) Palette.text else Palette.raised)
-        .selectable(selected, role = Role.Tab, onClick = select).padding(horizontal = metrics.chip / 2.4f),
+        .pointerSelectable(selected, role = Role.Tab, onClick = select, shape = shape).padding(horizontal = metrics.chip / 2.4f),
         contentAlignment = Alignment.Center) {
         Text(name, color = if (selected) Palette.background else Palette.text, fontSize = metrics.body, fontWeight = FontWeight.SemiBold,
             maxLines = 1)
@@ -171,7 +171,7 @@ private fun AvatarTile(uri: String?, label: String, saved: Boolean, enabled: Boo
     // Clipped before `selectable` so its focus/press layer follows the tile's corners.
     Box(modifier.size(metrics.tile).onFocusChanged { focused = it.isFocused }.clip(shape)
         .semantics { contentDescription = label }
-        .selectable(saved, enabled = enabled, role = Role.RadioButton, onClick = pick)
+        .pointerSelectable(saved, enabled = enabled, role = Role.RadioButton, onClick = pick)
         .tvCardFocusOutline(focused, metrics.tileRadius, metrics.scale, width = 4.dp)) {
         AsyncImage(uri, null, Modifier.fillMaxSize().background(Color(0xFF0E0E10))
             .then(if (saved) Modifier.border(3.dp * metrics.scale, Palette.accent, shape) else Modifier),

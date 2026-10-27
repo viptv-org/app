@@ -34,7 +34,7 @@ fun main() {
             window.location.hash == "#playback-qa" -> PlaybackQa(canvasColor = Color.Transparent)
             preview -> UiPreview(initialScreen = screen, browser = true, tvDetailVariant = variant)
             window.location.pathname.trimEnd('/').endsWith("/device") -> DeviceApprovalRoute()
-            else -> App(browser = true)
+            else -> BrowserApp()
         }
     }
 }
@@ -46,7 +46,7 @@ private fun DeviceApprovalRoute() {
     val scope = rememberCoroutineScope()
     val controller = remember { DeviceApprovalController(scope) }
     DisposableEffect(controller) { onDispose { controller.reset() } }
-    ViptvTheme(television = false) {
+    ViptvTheme(television = false, pointer = true) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
             val compact = maxWidth < 640.dp
             val initialCode = remember { window.location.search.removePrefix("?").split("&")

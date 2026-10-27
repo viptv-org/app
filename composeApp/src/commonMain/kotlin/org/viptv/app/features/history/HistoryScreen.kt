@@ -16,6 +16,8 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.connection.HistoryDisplay
+import org.viptv.app.components.TextButton
+import org.viptv.app.components.IconButton
 
 @Composable
 fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, open: (Card) -> Unit,
