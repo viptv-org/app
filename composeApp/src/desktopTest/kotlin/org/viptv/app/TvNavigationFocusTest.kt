@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
@@ -14,25 +15,19 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.viptv.app.components.TvNavigation
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 /** The profile menu is the only remote path to Settings, so Right from the last tab must reach it. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvNavigationFocusTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun text(node: SemanticsNode): String = listOf(
         node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty(),

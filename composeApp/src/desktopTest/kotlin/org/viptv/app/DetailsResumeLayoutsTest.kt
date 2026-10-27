@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,8 +20,6 @@ import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -33,6 +32,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailsResumeLayoutsTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val show = "tt5607616"
     private val origin = MetadataOrigin("stremio", "addon:21", "2ed4f1b83f8ca47b35d2dbd6f579fa92")
     private val series = Card(MediaIdentity(show, "series", listOf(ExternalId("imdb", show))), provider_id = "addon:21",
@@ -51,11 +51,7 @@ class DetailsResumeLayoutsTest {
     private fun withSeason(detail: DetailSnapshot, season: Long, count: Long) =
         detail.copy(episodes = detail.episodes + (1L..count).map { episode(season, it) })
 
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private inner class Details(val width: Int, val height: Int, initial: DetailSnapshot, val continuing: List<Card> = listOf(resume),
         val tablet: Boolean = false, val browser: Boolean = false, val television: Boolean = false) : AutoCloseable {

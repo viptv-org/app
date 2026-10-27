@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.material3.Text
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -11,6 +12,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PhoneSettingsRoutingTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun phoneOpensAvailablePreferencesAndReturnsToSettings() {
         val scene = ImageComposeScene(390,844,Density(1f)) {
             ViptvTheme { SettingsScreen(false,emptyList(),emptySet(),false,null,null,{}, { _, _ -> },{}, {},{},

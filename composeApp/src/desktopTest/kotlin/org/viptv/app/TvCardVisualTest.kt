@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -16,9 +17,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import java.io.File
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -32,11 +30,8 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvCardVisualTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private fun card(poster: String?, progress: Double? = null) = Card(
         MediaIdentity("tt1", "movie", emptyList()), provider_id = "simkl", title = "Cached title",

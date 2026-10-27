@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
@@ -30,6 +31,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class)
 class ContinueWatchingPlayerEpisodesTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

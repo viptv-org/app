@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -16,6 +17,7 @@ import kotlin.test.*
 /** Actual Compose input/focus checks; no host or provider request is involved. */
 @OptIn(ExperimentalComposeUiApi::class)
 class DiscoveryChoiceSheetTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val control = QueryControl("genre", "Genres", ControlKind.MULTICHOICE, true,
         (0 until 40).map { Choice("g$it", "Genre $it") }, maximum_selections = 2)
 

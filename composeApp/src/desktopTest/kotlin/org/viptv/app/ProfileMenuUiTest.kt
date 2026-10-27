@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -21,6 +22,7 @@ import kotlin.test.*
 /** The profile-picture menu is one shared popover in the phone header and the browser top bar. */
 @OptIn(ExperimentalComposeUiApi::class)
 class ProfileMenuUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val profile = Profile("qa", "Stremio import QA", null, avatarId = "initial-blue")
 
     @Test fun phoneHeaderOpensTheProfileMenuInPortraitAndLandscape() {

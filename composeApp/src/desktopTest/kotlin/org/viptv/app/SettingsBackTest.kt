@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -23,6 +24,7 @@ private object NoSavedSession : RemoteSessionStore {
 /** app#7: Back from a Settings sub-page returns to Settings, one level at a time. */
 @OptIn(ExperimentalComposeUiApi::class)
 class SettingsBackTest {
+    @get:Rule val uiThread = UiThreadRule()
     /** Phone-width Settings rendered from the controller, as App does. */
     private class Harness(browser: Boolean, start: ApplicationState, height: Int = 844) : AutoCloseable {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)

@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -28,6 +29,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class WatchedBadgeUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private fun card(id: String, badges: List<String>, progress: Double? = null) = Card(
         MediaIdentity(id, "movie", emptyList()), provider_id = "addon:1", title = "Title $id",
         badges = badges, progress = progress)

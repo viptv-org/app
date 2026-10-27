@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
@@ -18,6 +19,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountDevicesUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val snapshot = Json.decodeFromString<AccountDevices>(accountFixture)
 
     @Test fun devicesLoadOnceAndCurrentBrowserHasNoPerDeviceSignOut() {

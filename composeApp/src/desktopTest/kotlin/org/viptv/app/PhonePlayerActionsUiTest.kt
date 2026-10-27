@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -15,6 +16,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PhonePlayerActionsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),

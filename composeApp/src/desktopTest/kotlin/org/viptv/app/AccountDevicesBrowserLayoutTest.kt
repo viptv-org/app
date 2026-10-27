@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountDevicesBrowserLayoutTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun browserAccountLayoutUsesTheSuppliedSidebarAndContentGeometry() {
         var addonLoads = 0
         val scene = ImageComposeScene(1440,860,Density(1f)) { Fixture { addonLoads++ } }

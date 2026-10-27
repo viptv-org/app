@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import coil3.ImageLoader
@@ -22,6 +23,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BackArrowsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

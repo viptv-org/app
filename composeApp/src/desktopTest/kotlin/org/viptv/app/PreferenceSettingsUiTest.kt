@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -16,6 +17,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PreferenceSettingsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val original = ProfilePreferences("cs-CZ", "uk", true, "best", 480, 1.1, "#AA1122", "#60223344")
 
     @Test fun tvPreferenceFailureFocusesRetryDisablesDuplicatesAndRestoresLoadedControls() {

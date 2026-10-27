@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -30,6 +31,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class EpisodeWatchedStateUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private fun episode(number: Long, badges: List<String> = emptyList(), progress: Double? = null) = Card(
         MediaIdentity("tt38262097:1:$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
         provider_id = "addon:4", title = "Episode $number", badges = badges, progress = progress)

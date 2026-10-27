@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -21,6 +22,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class ParentControlsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun parentPinRequiresMatchingConfirmationAndCancelNeverSubmits() {
         var submitted: Pair<String, String>? = null
         var canceled = 0

@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -13,6 +14,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class LinkedAccountRecoveryUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun nativeFailedIdentityCanRetryWithoutInventingBrowserManagement() {
         var busy by mutableStateOf(false); var error by mutableStateOf<String?>(null)
         var identity by mutableStateOf<AccountIdentity?>(null); var loads = 0

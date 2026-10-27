@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -9,18 +10,13 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.*
 import org.viptv.app.features.settings.*
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class TvAccountRecoveryUiTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     @Test fun failedAccountFocusesRetryThenReplacesTheLoadingStateWithActualIdentity() = onEdt {
         var busy by mutableStateOf(false); var error by mutableStateOf<String?>(null)

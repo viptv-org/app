@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -20,6 +21,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class StremioImportUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     @AfterTest fun close() = scope.cancel()
     private fun session(transport: StremioImportTransport, restricted: Boolean = false, name: String = "Synthetic profile") =

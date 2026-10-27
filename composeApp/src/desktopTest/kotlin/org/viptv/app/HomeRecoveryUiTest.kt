@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.InternalComposeUiApi
@@ -15,8 +16,6 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import java.io.File
 import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -24,11 +23,8 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class HomeRecoveryUiTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private val scope = Scope("local", "device", "one", 1)
     private val card = Card(MediaIdentity("tt1", "movie", emptyList()), provider_id = "simkl", title = "Cached title", badges = emptyList())
     private fun home(rows: List<HomeRow> = emptyList()) = HomeSnapshot(scope, 1, rows = rows, complete = true)

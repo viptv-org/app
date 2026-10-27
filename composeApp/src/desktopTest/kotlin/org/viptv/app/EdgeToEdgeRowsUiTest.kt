@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class)
 class EdgeToEdgeRowsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private class Case(val name: String, val width: Int, val gutter: Int, val title: String, val prefix: String,
         val arrows: Boolean = false, val content: @Composable () -> Unit)
 

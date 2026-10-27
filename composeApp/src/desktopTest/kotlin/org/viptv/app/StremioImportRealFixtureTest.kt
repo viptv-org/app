@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -29,6 +30,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class)
 class StremioImportRealFixtureTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val directory = System.getenv("VIPTV_STREMIO_REAL_FIXTURES")?.takeIf { it.isNotBlank() }?.let(::File)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     @AfterTest fun close() = scope.cancel()

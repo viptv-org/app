@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
@@ -17,7 +18,6 @@ import coil3.decode.DataSource
 import coil3.intercept.Interceptor
 import coil3.request.ImageResult
 import coil3.request.SuccessResult
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -34,9 +34,7 @@ import org.viptv.app.features.home.landscapeArt
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 /**
@@ -50,11 +48,8 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class LandscapePosterFallbackTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private val posterUrl = "https://art.example/poster/tt0903747.jpg"
     private val landscapeUrl = "https://art.example/background/tt0903747.jpg"

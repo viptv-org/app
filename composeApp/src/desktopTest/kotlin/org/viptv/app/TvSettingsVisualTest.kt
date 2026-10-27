@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -8,9 +9,6 @@ import org.viptv.app.preview.PreviewTvSettings
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -19,12 +17,9 @@ import kotlin.test.*
 /** Deterministic capture of the TV settings screens, for design comparison. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvSettingsVisualTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
+    @get:Rule val uiThread = UiThreadRule()
 
-    @Test fun captureSourcesSection() = runBlocking(edt) {
+    @Test fun captureSourcesSection() = runBlocking {
         for (variant in listOf("Sources")) {
             val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) { PreviewTvSettings(variant) { _: Screen -> } } }
             try {

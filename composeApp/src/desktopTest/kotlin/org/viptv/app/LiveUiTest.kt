@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -17,6 +18,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class LiveUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private fun channel() = LiveChannel(Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "Fixture news", badges = emptyList()), id = "one", connectionId = "m3u:1")
     @Test fun tvFavoriteAndCategoryAreRealActionsWithinTheExistingLayout() {
         var saved = 0; var filtered = 0

@@ -2,6 +2,7 @@
 
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
@@ -22,17 +23,12 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.*
 import org.viptv.app.components.*
 import org.viptv.app.theme.ViptvTheme
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 import kotlinx.coroutines.*
 
 class TvLeadingFocusTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private class Fixture(width: Int = 900, height: Int = 400, television: Boolean = true, content: @Composable () -> Unit) : AutoCloseable {
         private var focusManager: androidx.compose.ui.focus.FocusManager? = null

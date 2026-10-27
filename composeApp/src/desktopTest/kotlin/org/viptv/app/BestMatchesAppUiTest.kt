@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -29,6 +30,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BestMatchesAppUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun phonePickerGroupsRowsWhileDiscoveryRuns() = picker(television = false, width = 390, height = 844, name = "phone")
     @Test fun tvPickerGroupsRowsWhileDiscoveryRuns() = picker(television = true, width = 1920, height = 1080, name = "tv")
 

@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -16,6 +17,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountBrowserUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun televisionWithoutBrowserKeepsValidatedDashboardAddressVisible() {
         var attempts = 0
         val address = "https://example.test:18457/"

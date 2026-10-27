@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +19,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class GroupedSearchUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun suppliedCarouselTitleRemainsVisibleForOneRowAndLaterProviderResultsKeepTheirOwnActions() {
         val first = Card(MediaIdentity("same-id", "movie", emptyList()), provider_id = "stremio", title = "First copy", badges = emptyList())
         val second = first.copy(title = "Second copy")

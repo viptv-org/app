@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -15,6 +16,7 @@ import kotlin.test.*
 /** app#65: Settings › Playback › Autoplay next episode, on by default, stored on this device. */
 @OptIn(ExperimentalComposeUiApi::class)
 class AutoplayNextSettingTest {
+    @get:Rule val uiThread = UiThreadRule()
     /** The platform store's stand-in: one string per record, as SharedPreferences, java.util.prefs and localStorage hold it. */
     private class MemoryStore(var raw: String? = null) : DeviceRecordStore {
         override fun read() = raw

@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -20,10 +21,7 @@ import org.viptv.app.features.home.TvHomeScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -31,11 +29,8 @@ import kotlinx.coroutines.runBlocking
 /** Up from a lower Home row moves to the row above; only the first row returns to the billboard. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvHomeUpNavigationTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun text(node: SemanticsNode): String =
         node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty()

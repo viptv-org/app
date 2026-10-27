@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AddDeviceScreenTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

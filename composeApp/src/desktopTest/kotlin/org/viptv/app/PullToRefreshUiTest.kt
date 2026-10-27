@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -20,19 +21,14 @@ import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 /** Pulling down at the top of a phone page shows the Material 3 indicator and rebuilds the page (app#1). */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class PullToRefreshUiTest {
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    @get:Rule val uiThread = UiThreadRule()
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

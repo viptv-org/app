@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
@@ -19,6 +20,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class)
 class RouteBackUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private var frame = 0L
     private fun ImageComposeScene.frames(count: Int = 16) = repeat(count) { render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

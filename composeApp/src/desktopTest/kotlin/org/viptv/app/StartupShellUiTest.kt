@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
@@ -20,6 +21,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class, ExperimentalCoroutinesApi::class)
 class StartupShellUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun safeStartingScreenAllowsConnectionChangeBeforeAnimationAndHidesCachedPrivateContent() {
         repeat(5) { exerciseRecreation() }
     }

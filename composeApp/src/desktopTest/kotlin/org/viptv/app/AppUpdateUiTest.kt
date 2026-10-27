@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +20,7 @@ import kotlin.test.*
 /** app#64: "Update ready" outside the player, and the update rows in Settings › About. */
 @OptIn(ExperimentalComposeUiApi::class)
 class AppUpdateUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val platform = FakeUpdatePlatform(feedJson(1301))
     private val updater = AppUpdater(platform, scope) { "https://viptv.example/updates/android/update.json" }

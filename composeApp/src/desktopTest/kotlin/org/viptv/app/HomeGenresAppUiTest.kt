@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -28,6 +29,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class HomeGenresAppUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun genresChipOpensFilteredBrowseInThePhoneApp() = runBlocking {
         val discover = mutableListOf<Url>()
         val client = HttpClient(MockEngine { request ->

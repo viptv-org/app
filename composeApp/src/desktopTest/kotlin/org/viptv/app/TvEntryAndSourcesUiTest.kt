@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class TvEntryAndSourcesUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun firstProfileReceivesFocusAfterAsyncLoginEnablesTheLazyRow() {
         val busy = mutableStateOf(true)
         val profiles = mutableStateOf(emptyList<Profile>())

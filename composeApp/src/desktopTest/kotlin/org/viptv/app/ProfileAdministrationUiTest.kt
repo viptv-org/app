@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -18,6 +19,7 @@ import java.io.File
 
 @OptIn(ExperimentalComposeUiApi::class)
 class ProfileAdministrationUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val parentLocked=Profile("other","Other",null,locked=true,lockKind="parent")
     @Test fun remoteParentNameAndAvatarEditsNeverAskForALocalPin(){
         var renamed:Pair<String,String>?=null

@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -15,6 +16,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class SourceIntegrationFormUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     @Test fun credentialFormKeepsCancelAndSaveVisibleAboveKeyboardWithScrollableProviderChoices() {
         val schema = SourceIntegrationSchema("fixture", "Fixture source", "NeedsConfiguration", true,
             listOf(SourceCredentialField("key", "API key", required = true, secret = true)),

@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.material3.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -15,6 +16,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AvatarPickerUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     init { runBlocking { loadAvatarCatalog() } }
     private val saved = Profile("kid", "Kid", null, avatarStyle = "clay", avatarChoice = 20, avatarUrl = "https://avatars.example/clay-20.png")
 

@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -23,6 +24,7 @@ import kotlin.test.*
 /** Phone and tablet chrome shows only controls that work: no placeholder dialogs (app#15). */
 @OptIn(ExperimentalComposeUiApi::class)
 class HomeHeaderControlsUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val profile = Profile("qa", "Stremio import QA", null, avatarId = "initial-blue")
     private val genres = listOf("Action", "Comedy", "Science Fiction").map { GenreChoice(it, BrowseQuery("movie", "top", "addon:1", genre = it)) }
     private val removed = listOf("Cast", "Remote control", "Calendar filters")

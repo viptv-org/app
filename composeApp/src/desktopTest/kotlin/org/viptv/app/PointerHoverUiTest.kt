@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -25,8 +26,6 @@ import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
-import java.awt.EventQueue
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 /**
@@ -37,6 +36,7 @@ import kotlin.test.*
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PointerHoverUiTest {
+    @get:Rule val uiThread = UiThreadRule()
     private val origin = MetadataOrigin("stremio", "addon:4", "c".repeat(32))
     private val resume = Card(MediaIdentity("tt0111161", "movie", emptyList()), provider_id = "addon:4",
         title = "Resume Movie", badges = emptyList(), progress = 0.4, metadata_origin = origin)
@@ -49,11 +49,7 @@ class PointerHoverUiTest {
             HomeRow(id = "favorites", title = "My List", provider_id = "library", state = RowState.READY, cards = listOf(saved))),
         complete = true)
 
-    private val edt = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext) = !EventQueue.isDispatchThread()
-        override fun dispatch(context: CoroutineContext, block: Runnable) = EventQueue.invokeLater(block)
-    }
-    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(edt, block)
+    private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private fun nodes(scene: ImageComposeScene, merged: Boolean = true): List<SemanticsNode> =
         scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(merged) }
     private fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +

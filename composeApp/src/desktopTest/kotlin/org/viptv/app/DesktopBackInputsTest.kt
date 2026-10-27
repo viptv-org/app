@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.junit.Rule
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,7 @@ import kotlin.test.*
 /** app#45: the desktop window's Escape and mouse Back/Forward take the app's one Back. */
 @OptIn(ExperimentalComposeUiApi::class, androidx.compose.ui.InternalComposeUiApi::class)
 class DesktopBackInputsTest {
+    @get:Rule val uiThread = UiThreadRule()
     private class Window(start: ApplicationState) : AutoCloseable {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, object : RemoteSessionStore {
