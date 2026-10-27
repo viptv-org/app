@@ -1,0 +1,238 @@
+package org.viptv.app
+
+import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.semantics.*
+import androidx.compose.ui.unit.Density
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
+import coil3.compose.LocalPlatformContext
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.*
+import io.ktor.client.request.HttpRequestData
+import io.ktor.http.*
+import kotlinx.coroutines.*
+import kotlinx.serialization.json.Json
+import org.viptv.app.connection.*
+import org.viptv.app.preview.PreviewData
+import org.viptv.app.state.*
+import org.viptv.engine.wire.*
+import kotlin.test.*
+
+/**
+ * On TV, Back to a title's Details puts focus on the episode the viewer last focused in the
+ * shelf, not on the hero (app#66): Back from the source selector, and Back from the player
+ * (which closes onto the selector). If that episode is gone, focus falls back to the
+ * continued episode (app#40), then to the hero. First entry into Details keeps the hero.
+ *
+ * The real TV App shell over a fake host; the remote's D-pad is sent as key events.
+ */
+@OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
+class TvDetailsFocusReturnTest {
+    private val store = object : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = null
+        override suspend fun save(session: SavedRemoteSession) = Unit
+        override suspend fun clear() = Unit
+    }
+    private val show = "tt0903747"
+    private val origin = MetadataOrigin("stremio", "addon:21", "c".repeat(32))
+    private val series = Card(MediaIdentity(show, "series", listOf(ExternalId("imdb", show))), provider_id = "addon:21",
+        title = "Breaking Bad", badges = emptyList(), metadata_origin = origin)
+    private fun episode(number: Long, progress: Double? = null) = series.copy(
+        identity = MediaIdentity("$show:1:$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
+        parent_identity = series.identity, title = "Episode $number", progress = progress)
+    private fun label(number: Long) = "$number. Episode $number"
+    private val detail = DetailSnapshot(series, episodes = (1L..10L).map { episode(it) })
+
+    private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+    private fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
+        "/api/meta/series/$show" -> json(Json.encodeToString(detail))
+        // No stream add-ons: the selector opens and finishes with nothing.
+        "/api/streams" -> json("""{"id":"job-1"}""")
+        "/api/streams/job-1" -> json("""{"done":true,"events":[]}""")
+        else -> if (request.url.encodedPath.endsWith("/source-ranking")) json("""{"streams":[]}""")
+            else respond("{\"error\":\"not in this fixture\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+    }
+
+    private inner class TvApp : AutoCloseable {
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        private val client = HttpClient(MockEngine { request -> host(request) }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val controller = ApplicationController(scope, store)
+        private var previousLoader: ImageLoader? = null
+        private var appLoader: ImageLoader? = null
+        val scene: ImageComposeScene
+        private var frame = 0L
+
+        init {
+            controller.connection = remote
+            controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = PreviewData.profile.id,
+                profiles = PreviewData.profiles, home = PreviewData.home, preferences = PreferencesSnapshot())
+            scene = ImageComposeScene(1920, 1080, Density(1f)) {
+                val context = LocalPlatformContext.current
+                remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
+                App(television = true, providedController = controller, manageControllerLifecycle = false)
+                appLoader = SingletonImageLoader.get(context)
+            }
+        }
+
+        val state get() = controller.state.value
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun nodes() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
+        fun focused() = nodes().filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.map(::text)
+        fun until(what: String, condition: () -> Boolean) {
+            val deadline = System.nanoTime() + 10_000_000_000L
+            while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what (focus: ${focused()})" }; frames(2) }
+        }
+        fun press(key: Key, times: Int = 1) = repeat(times) {
+            scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)); frames(6)
+        }
+        fun assertFocus(text: String, why: String) {
+            frames(30)
+            val now = focused()
+            assertTrue(now.any { it.contains(text) }, "$why: focus is on $text, not $now")
+        }
+
+        /** Home → the title's Details, with focus on the hero's Play. */
+        fun openDetails() {
+            controller.open(series)
+            until("Details") { state.screen == Screen.Details && state.detail != null && nodes().any { text(it).contains(label(1)) } }
+            until("the hero's Play") { focused().any { it.contains("Play") } }
+        }
+        /** Down into the shelf, then Right to episode [number]. */
+        fun focusEpisode(number: Long) {
+            press(Key.DirectionDown)
+            until("the shelf") { focused().any { it.contains(label(1)) } }
+            press(Key.DirectionRight, (number - 1).toInt())
+            assertFocus(label(number), "the viewer moved to episode $number")
+        }
+        /** OK on the focused episode opens the source selector for it. */
+        fun openSources(number: Long) {
+            press(Key.Enter)
+            until("the source selector") { state.screen == Screen.Sources }
+            assertEquals(episode(number).identity, state.sourceTitle?.identity, "the selector is for episode $number")
+            frames(20)
+        }
+        /** The selector plays a source; the player's Back closes onto the selector, whose Back returns to Details. */
+        fun playThenBack() {
+            controller.mutable.value = state.copy(screen = Screen.Player)
+            frames(20)
+            controller.closePlayer()
+            frames(20)
+            assertEquals(Screen.Sources, state.screen)
+            controller.backSources()
+            frames()
+            assertEquals(Screen.Details, state.screen)
+        }
+
+        override fun close() {
+            scene.close(); controller.job?.cancel(); scope.cancel(); remote.close()
+            appLoader?.shutdown(); previousLoader?.let { SingletonImageLoader.setUnsafe(it) }
+        }
+    }
+
+    @Test fun firstEntryFocusesTheHero() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.assertFocus("Play", "first entry into Details")
+        }
+    }
+
+    @Test fun backFromSourcesFocusesTheLastFocusedEpisode() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.openSources(7)
+            app.controller.backSources()
+            assertEquals(Screen.Details, app.state.screen)
+            app.assertFocus(label(7), "Back from Sources")
+        }
+    }
+
+    @Test fun backFromThePlayerFocusesTheLastFocusedEpisode() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.openSources(7)
+            app.playThenBack()
+            app.assertFocus(label(7), "Back from the player, then from Sources")
+        }
+    }
+
+    @Test fun backFromSourcesOpenedFromTheHeroFocusesTheHero() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.press(Key.Enter)
+            app.until("the source selector") { app.state.screen == Screen.Sources }
+            app.frames(20)
+            app.controller.backSources()
+            app.assertFocus("Play", "Back to Details the viewer left from the hero")
+        }
+    }
+
+    @Test fun reopeningTheTitleFromHomeIsAFirstEntry() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.openSources(7)
+            app.playThenBack()
+            app.assertFocus(label(7), "Back from the player")
+            app.controller.backDetails()
+            app.until("Home") { app.state.screen == Screen.Home }
+            app.frames(20)
+            app.openDetails()
+            app.assertFocus("Play", "a new visit to the same title starts on the hero")
+        }
+    }
+
+    @Test fun aMissingEpisodeFallsBackToTheContinuedEpisodeThenTheHero() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.openSources(7)
+            // While the selector shows, Details refresh without episode 7; episode 3 is half watched.
+            app.controller.mutable.value = app.state.copy(detail = detail.copy(
+                episodes = detail.episodes.filter { it.identity.episode?.episode != 7L }.map { if (it.identity.episode?.episode == 3L) episode(3, 0.5) else it }))
+            app.frames(20)
+            app.controller.backSources()
+            app.assertFocus(label(3), "episode 7 is gone: the continued episode")
+        }
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.openSources(7)
+            app.controller.mutable.value = app.state.copy(detail = detail.copy(episodes = detail.episodes.filter { it.identity.episode?.episode != 7L }))
+            app.frames(20)
+            app.controller.backSources()
+            app.assertFocus("Play", "episode 7 is gone and nothing is continued: the hero")
+        }
+    }
+
+    @Test fun episodesPagingInAfterTheReturnDoNotMoveFocus() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.openSources(7)
+            app.controller.backSources()
+            app.assertFocus(label(7), "Back from Sources")
+            app.controller.mutable.value = app.state.copy(detail = detail.copy(episodes = (1L..16L).map { episode(it) }))
+            app.assertFocus(label(7), "a later page arrived")
+            assertEquals(1, app.focused().size, "one focused node: ${app.focused()}")
+        }
+    }
+
+    private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
+}
