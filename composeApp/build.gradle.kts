@@ -9,7 +9,11 @@ plugins {
 }
 
 kotlin {
-    android { namespace = "org.viptv.app.shared"; compileSdk = 37; minSdk = 26; androidResources.enable = true }
+    android {
+        namespace = "org.viptv.app.shared"; compileSdk = 37; minSdk = 26; androidResources.enable = true
+        // Robolectric host tests run Media3's real subtitle parsers and SubtitleView drawing on the JVM.
+        withHostTest { isIncludeAndroidResources = true }
+    }
     jvm("desktop")
     wasmJs { browser(); binaries.executable() }
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
@@ -78,12 +82,22 @@ kotlin {
             implementation("io.ktor:ktor-client-core:3.4.0")
             implementation("io.ktor:ktor-client-js:3.4.0")
         }
+        getByName("androidHostTest").dependencies {
+            implementation(kotlin("test-junit"))
+            implementation("junit:junit:4.13.2")
+            implementation("org.robolectric:robolectric:4.17")
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation("io.ktor:ktor-client-mock:3.4.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
         }
     }
+}
+
+// Robolectric's native graphics reach raw FileDescriptor internals on JDK 17+.
+tasks.matching { it.name == "testAndroidHostTest" }.configureEach {
+    (this as Test).jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED")
 }
 
 val buildDesktopMpv by tasks.registering(Exec::class) {
