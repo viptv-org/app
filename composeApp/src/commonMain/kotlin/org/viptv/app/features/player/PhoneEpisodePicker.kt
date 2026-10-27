@@ -43,14 +43,14 @@ internal fun PhoneEpisodePicker(current: Card?, episodes: List<Card>, choose: (C
     val latestChoose by rememberUpdatedState(choose)
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .35f))) {
-            Column(Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(.56f).background(Palette.background)
+            Column(Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(.56f).background(Palette.surface)
                 .windowInsetsPadding(insets.endSheet())) {
                 Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("Episodes", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     IconButton(close) { Icon(Lucide.X, "Close episodes", Modifier.size(20.dp)) }
                 }
-                // The Details episode list: its cards on its ground (an art-less tile stays visible), a row
-                // beside the still in a landscape sheet, stacked in a narrow one.
+                // The Details episode cards, spaced as Details lists them: a row beside the still in a
+                // landscape sheet, stacked in a narrow one.
                 BoxWithConstraints(Modifier.weight(1f)) {
                     val wide = maxWidth >= 360.dp
                     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {

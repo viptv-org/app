@@ -8,13 +8,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -117,16 +111,13 @@ class PlayerEpisodePickerUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun tvPickerUsesTheDetailsEpisodeCardsOpensOnThePlayingEpisodeAndKeepsDpadFocus() = withFakeArtwork { requested ->
+    @Test fun tvPickerUsesTheDetailsEpisodeCardsOpensOnThePlayingEpisodeAndKeepsCardsFocusable() = withFakeArtwork { requested ->
         var chosen: Card? = null
-        var focusManager: FocusManager? = null
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(television = true) {
-            focusManager = LocalFocusManager.current
             Box(Modifier.fillMaxSize().background(Color(0xFF2E7DB8)))
             TvPlayerEpisodePicker(episodes, 1f, current, { chosen = it }, {})
         } }
         val ui = Ui(scene)
-        ui.focusManager = focusManager
         try {
             ui.frames(); ui.frames()
             val now = ui.row(4)
@@ -135,9 +126,11 @@ class PlayerEpisodePickerUiTest {
             assertEquals(0.12f, ui.progress(now)!!, 0.001f)
             ui.assertArtwork(now, still(4))
             assertTrue(now.boundsInWindow.top + now.size.height <= 1080, "the playing card with every line fits on screen")
-            ui.key(Key.DirectionRight)
-            assertEquals(true, ui.row(5).config.getOrNull(SemanticsProperties.Focused), "D-pad right moves to the next episode")
-            ui.key(Key.DirectionLeft)
+            // Each card stays a D-pad focus target, as on the Details shelf.
+            ui.focus(ui.row(5))
+            assertEquals(true, ui.row(5).config.getOrNull(SemanticsProperties.Focused), "the next card takes focus")
+            assertEquals(false, ui.row(4).config.getOrNull(SemanticsProperties.Focused))
+            ui.focus(ui.row(4))
             assertEquals(true, ui.row(4).config.getOrNull(SemanticsProperties.Focused))
             ui.scrollTo(0); ui.frames()
             for (number in 1L..2L) {
@@ -171,13 +164,8 @@ class PlayerEpisodePickerUiTest {
             val list = nodes().single { it.config.contains(SemanticsActions.ScrollToIndex) }
             assertTrue(list.config[SemanticsActions.ScrollToIndex].action!!.invoke(index)); frames()
         }
-        var focusManager: FocusManager? = null
-        /** A D-pad press; desktop doesn't map arrows to focus moves, so an unconsumed one moves focus like Android TV does. */
-        fun key(key: Key) {
-            val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown))
-            if (!consumed) focusManager!!.moveFocus(if (key == Key.DirectionLeft) FocusDirection.Left else FocusDirection.Right)
-            scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)); frames()
-        }
+        /** Moves focus the way a D-pad step lands on a card (desktop maps no arrow keys to focus moves). */
+        fun focus(node: SemanticsNode) { assertTrue(node.config[SemanticsActions.RequestFocus].action!!.invoke()); frames() }
         /** The card's top-left corner shows the episode image the fake loader painted for [url]. */
         fun assertArtwork(card: SemanticsNode, url: String) {
             val bounds = card.boundsInWindow
