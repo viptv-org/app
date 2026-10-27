@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
@@ -27,7 +30,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     chooseSources: (() -> Unit)?, playEpisode: ((Card) -> Unit)?, retry: (() -> Unit)?, backChanged: ((() -> Unit)?) -> Unit,
     previewFrame: String? = null, scene: TvPlayerScene = TvPlayerScene.Controls, initialFacts: List<PlayerFact> = emptyList(),
     externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
-    playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> }) {
+    playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
+    /** What shows where the video does not draw, as on the other players; black on every TV build. */
+    canvasColor: Color = Color.Black) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
@@ -51,6 +56,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     // screen this TV cannot decode; surface it instead of playing nothing.
     LaunchedEffect(state) { while (true) { delay(1000); state.checkFirstFrame() } }
     LaunchedEffect(externalFacts, state) { externalFacts.collect(state::observe) }
+    LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, state.failed) {
+        state.offerNext(extras.nextEpisode != null && playEpisode != null)
+    }
     LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, state.failed, state.scrub) {
         if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { delay(5000); state.visible = false }
     }
@@ -63,7 +71,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
         else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive) root.requestFocus()
     }
-    TvBackdrop(Modifier.fillMaxSize().background(if (state.showNext) Palette.background else Color.Black).focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
+    TvBackdrop(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown) state.interaction++
         if (state.showTracks && event.key != Key.Escape) false
         else if (event.type == KeyEventType.KeyUp && event.key in listOf(Key.DirectionLeft, Key.DirectionRight) &&
@@ -88,15 +96,15 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
     }.focusable()) {
         val scale = maxWidth / 1920.dp
-        // Keep the source registered while paused; Haze records only while an effect consumes it.
-        val video = rememberTvVideoFrame(state.showNext, scale)
-        Box(video) {
+        // The video keeps its full frame, also behind the next-episode panel at the end.
+        Box(Modifier.fillMaxSize()) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), {
                 if (input === rendering) { state.observe(it); observe(it) }
             }, state.commands)
         }
-        if (state.showNext) Box(video.background(Color.Black.copy(alpha = 0.25f)))
+        if (state.showNext) Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = .35f),
+            .45f to Color.Black.copy(alpha = .55f), 1f to Color.Black.copy(alpha = .82f))))
         when {
             // `undecodable` is the "clock runs, no picture" case: the TV opened a
             // decoder it cannot display (unsupported Dolby Vision profile). Saying so
@@ -105,7 +113,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                 if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error,
                 scale, retry, chooseSources, close)
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
-            state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale, { playEpisode?.invoke(extras.nextEpisode) }, { state.showNext = false; state.visible = false }, extras.creditsLabel)
+            state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
+                { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) }, state::keepWatching, extras.creditsLabel)
             else -> {
                 TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes) {
                     TvPlayerControls(state, title, extras, scale, timeline, audio,
