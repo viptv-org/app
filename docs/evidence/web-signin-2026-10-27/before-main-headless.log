@@ -1,0 +1,31 @@
+PASS [enter] Compose canvas attached on a cold load without resizing (1)
+PASS [enter] the signed-out restore probe ran
+PASS [enter] the textbox 'Username' is on the page
+PASS [enter] the textbox 'Password' is on the page
+FAIL [enter] signing in posted /api/auth/login once (0)
+FAIL [enter] the login carried the typed username and password (fake values; got None)
+FAIL [enter] the signed-in bootstrap followed the login
+FAIL [enter] the profile picker shows the fake profile
+PASS [enter] no page errors []
+     [enter] requests: ["GET /api/auth/status"]
+PASS [keyboard] Compose canvas attached on a cold load without resizing (1)
+PASS [keyboard] the signed-out restore probe ran
+PASS [keyboard] the textbox 'Username' is on the page
+FAIL [keyboard] signing in posted /api/auth/login once (0)
+FAIL [keyboard] the login carried the typed username and password (fake values; got None)
+FAIL [keyboard] the signed-in bootstrap followed the login
+FAIL [keyboard] the profile picker shows the fake profile
+PASS [keyboard] no page errors []
+     [keyboard] requests: ["GET /api/auth/status"]
+PASS [button] Compose canvas attached on a cold load without resizing (1)
+PASS [button] the signed-out restore probe ran
+PASS [button] the textbox 'Username' is on the page
+PASS [button] the textbox 'Password' is on the page
+PASS [button] the button 'Sign in' is on the page
+PASS [button] signing in posted /api/auth/login once (1)
+PASS [button] the login carried the typed username and password (fake values; got {'username': 'smoke-visitor', 'password': 'smoke-password-55', 'device_name': 'VIPTV Web'})
+PASS [button] the signed-in bootstrap followed the login
+PASS [button] the profile picker shows the fake profile
+PASS [button] no page errors []
+     [button] requests: ["GET /api/auth/status", "POST /api/auth/login", "GET /api/bootstrap"]
+screenshots in /tmp/app55-ev-before
