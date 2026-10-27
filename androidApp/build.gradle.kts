@@ -14,17 +14,36 @@ val selectedAbis: List<String> = providers.gradleProperty("viptv.abis").orNull?.
     }
     shippedAbis.filter { it in requested }
 } ?: shippedAbis
+// Every build gets its own version from git (docs/APP_UPDATES.md): versionCode is a base plus the
+// commit count, so a later commit on main always has a higher one, and the same commit always
+// builds the same version. Without git (a source archive) the build is 0.1.0+unknown.
+val versionCodeBase = 1000
+fun gitOutput(vararg args: String): String? = try {
+    providers.exec { commandLine("git", *args); workingDir = rootDir; isIgnoreExitValue = true }
+        .standardOutput.asText.get().trim().takeIf { it.isNotEmpty() }
+} catch (_: Exception) { null }
+val commitCount = gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull()
+val commitSha = gitOutput("rev-parse", "--short=7", "HEAD")
+val appVersionCode = versionCodeBase + (commitCount ?: 0)
+val appVersionName = if (commitCount != null && commitSha != null) "0.1.$commitCount+$commitSha" else "0.1.0+unknown"
 android {
     namespace = "org.viptv.experiment"
     compileSdk = 37
     defaultConfig {
-        applicationId = "org.viptv.experiment"; minSdk = 26; targetSdk = 36; versionCode = 1; versionName = "0.1.0-experiment"
+        applicationId = "org.viptv.experiment"; minSdk = 26; targetSdk = 36; versionCode = appVersionCode; versionName = appVersionName
         // Package only ABIs with both the Rust engine and FFmpeg audio decoder.
         ndk { abiFilters += selectedAbis }
         // Optional prefilled sign-in server for dev builds: -Pviptv.defaultServer=https://host
         val defaultServer = providers.gradleProperty("viptv.defaultServer").orNull.orEmpty()
         require(defaultServer.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?").matches(defaultServer)) { "viptv.defaultServer must be an https origin" }
         buildConfigField("String", "DEFAULT_SERVER", "\"$defaultServer\"")
+        // Updates come from <signed-in server>/updates/android/update.json. -Pviptv.updateFeed=<url>
+        // replaces that address (a future GitHub Releases feed, or a loopback test feed).
+        val updateFeed = providers.gradleProperty("viptv.updateFeed").orNull.orEmpty()
+        require(updateFeed.isEmpty() || Regex("(https://|http://(127\\.0\\.0\\.1|localhost)(:[0-9]+)?/)[^\"\\\\\\s]*").matches(updateFeed)) {
+            "viptv.updateFeed must be an https URL (plain http only on 127.0.0.1 or localhost)" }
+        buildConfigField("String", "UPDATE_FEED", "\"$updateFeed\"")
+        buildConfigField("boolean", "APP_UPDATES", "true")
         // App Links (the sign-in QR opens the app): the default server's host. Android cannot verify a
         // port, so those servers, and builds without one, get a host that matches nothing real.
         manifestPlaceholders["viptvLinkHost"] = Regex("https://([A-Za-z0-9.-]+)").matchEntire(defaultServer)?.groupValues?.get(1) ?: "viptv-links.invalid"
@@ -32,7 +51,11 @@ android {
     buildFeatures { compose = true; buildConfig = true }
     buildTypes {
         getByName("debug") {
-            if (providers.gradleProperty("viptv.torrentQa").orNull == "true") applicationIdSuffix = ".torrentqa"
+            if (providers.gradleProperty("viptv.torrentQa").orNull == "true") {
+                applicationIdSuffix = ".torrentqa"
+                // The feed's APK is org.viptv.experiment; this package cannot install it over itself.
+                buildConfigField("boolean", "APP_UPDATES", "false")
+            }
         }
         getByName("release") {
             isMinifyEnabled = true
