@@ -5,7 +5,6 @@ import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -24,7 +23,8 @@ internal fun launchUiPreview() = application {
     val window = rememberWindowState(width = width.dp, height = height.dp)
     var screen by remember { mutableStateOf(runCatching { Screen.valueOf(System.getenv("VIPTV_UI_SCREEN") ?: "Home") }.getOrDefault(Screen.Home)) }
     var term by remember { mutableStateOf(if (screen == Screen.Search) "the w" else "") }
-    Window(onCloseRequest = ::exitApplication, title = "VIPTV UI Preview", state = window, undecorated = true) {
+    // The app's own window and frame, so the preview shows what the app shows (app#92).
+    DesktopAppWindow(::exitApplication, "VIPTV UI Preview", window, mac = false) {
         org.viptv.app.player.mpv.MpvWindow(this.window) {
         ViptvTheme(pointer = !phone) {
             Column {
