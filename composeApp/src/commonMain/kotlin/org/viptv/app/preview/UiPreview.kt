@@ -64,6 +64,13 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
         if (tvDetailVariant == "LoadingThenReady") { kotlinx.coroutines.delay(3000); homeArrived = true }
     }
     val genres = HomeGenrePicker(PreviewData.genres) { go(Screen.Discover) }
+    // `Sources/Filters`: enough qualities and add-ons for the web Quality and Source dropdowns;
+    // `Sources/Chips`: three options each with long add-on names, chip rows that scroll (app#59).
+    val previewSources = when (tvDetailVariant) {
+        "Filters" -> PreviewData.filterSources
+        "Chips" -> PreviewData.chipSources
+        else -> PreviewData.sources
+    }
     ViptvTheme(television, pointer = desktop || browser) { CompositionLocalProvider(LocalHomeGenres provides genres) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
             val phone = maxWidth < 640.dp && !television && !desktop && !browser
@@ -108,12 +115,12 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                     // As in the App: the drawer slides in over the Details dialog (app#60).
                                     PreviewDetails(tvDetailVariant, go, tablet, browser, desktop)
                                     org.viptv.app.features.sources.BrowserSourceDrawer({ go(Screen.Details) }) {
-                                        SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail,
-                                            groups = org.viptv.app.connection.interimSourceGroups(PreviewData.sources))
+                                        SourcesScreen(PreviewData.hero, previewSources, false, null, {}, { go(Screen.Details) }, PreviewData.detail,
+                                            groups = org.viptv.app.connection.interimSourceGroups(previewSources))
                                     }
                                 }
-                                else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail, tablet = tablet,
-                                    groups = org.viptv.app.connection.interimSourceGroups(PreviewData.sources))
+                                else SourcesScreen(PreviewData.hero, previewSources, false, null, {}, { go(Screen.Details) }, PreviewData.detail, tablet = tablet,
+                                    groups = org.viptv.app.connection.interimSourceGroups(previewSources))
                             Screen.Calendar -> if (television) TvCalendarScreen(PreviewTvCalendar.days, PreviewTvCalendar.entries,
                                 { go(Screen.Details) }, { go(Screen.Settings) }, PreviewTvCalendar.actions, { go(Screen.Sources) })
                                 else CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, false, { go(Screen.Details) }, { go(Screen.Settings) })
