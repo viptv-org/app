@@ -24,7 +24,6 @@ import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /** app#64: a fake feed on loopback, the real Android download, verification and PackageInstaller session. */
@@ -42,6 +41,7 @@ class AndroidAppUpdateTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
 
     @Before fun serve() {
+        org.robolectric.shadows.ShadowLog.stream = System.out
         server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         server.createContext("/updates/android/update.json") { exchange ->
             val body = """{"version_code":999999,"version_name":"0.1.999+test","url":"viptv-999999.apk","sha256":"$feedSha","size":${apk.size}}"""
@@ -74,11 +74,21 @@ class AndroidAppUpdateTest {
         assertEquals("http://127.0.0.1:${server.address.port}/updates/android/viptv-999999.apk", ready.feed.url)
 
         shadowOf(application.packageManager).setCanRequestPackageInstalls(true)
-        updater.install()
-        awaitStatus(updater) { it is UpdateStatus.Installing }
         val installer = application.packageManager.packageInstaller
-        val session = assertNotNull(awaitSession(installer))
-        assertEquals(application.packageName, session.appPackageName)
+        val created = mutableListOf<Int>()
+        val finished = mutableListOf<Boolean>()
+        installer.registerSessionCallback(object : PackageInstaller.SessionCallback() {
+            override fun onCreated(sessionId: Int) { created += sessionId }
+            override fun onBadgingChanged(sessionId: Int) = Unit
+            override fun onActiveChanged(sessionId: Int, active: Boolean) = Unit
+            override fun onProgressChanged(sessionId: Int, progress: Float) = Unit
+            override fun onFinished(sessionId: Int, success: Boolean) { finished += success }
+        }, android.os.Handler(Looper.getMainLooper()))
+        updater.install()
+        // Robolectric commits a session at once; on a device Android now shows its confirmation.
+        awaitStatus(updater) { finished.isNotEmpty() }
+        assertEquals(1, created.size, "One PackageInstaller session for the verified APK")
+        assertEquals(listOf(true), finished, "The session was written and committed")
 
         // Android asks the viewer to confirm: the updater opens the installer's own confirmation.
         val confirm = Intent("android.content.pm.action.CONFIRM_INSTALL")
@@ -86,11 +96,15 @@ class AndroidAppUpdateTest {
             .putExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_PENDING_USER_ACTION).putExtra(Intent.EXTRA_INTENT, confirm))
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals("android.content.pm.action.CONFIRM_INSTALL", shadowOf(application).nextStartedActivity?.action)
+    }
 
-        // Android rejects the install: the viewer sees why in Settings.
-        shadowOf(installer).setSessionFails(session.sessionId)
-        shadowOf(Looper.getMainLooper()).idle()
-        assertIs<UpdateStatus.Failed>(updater.state.value.status)
+    @Test fun theInstallIsRefusedWhenTheFileChangedAfterVerification() {
+        val platform = platform()
+        val feed = feed(platform)
+        runBlocking { platform.download(feed) {} }
+        platform.directory.listFiles()!!.single().appendBytes(byteArrayOf(1))
+        assertFailsWith<UpdateVerificationException> { runBlocking { platform.install(feed) {} } }
+        assertTrue(application.packageManager.packageInstaller.allSessions.isEmpty())
     }
 
     @Test fun aChecksumMismatchIsRejectedAndNothingIsKept() {
@@ -134,12 +148,6 @@ class AndroidAppUpdateTest {
             shadowOf(Looper.getMainLooper()).idle(); Thread.sleep(10)
         }
         return updater.state.value.status
-    }
-
-    private fun awaitSession(installer: PackageInstaller): PackageInstaller.SessionInfo? {
-        val deadline = System.currentTimeMillis() + 15_000
-        while (installer.allSessions.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(10)
-        return installer.allSessions.firstOrNull()
     }
 
     private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }

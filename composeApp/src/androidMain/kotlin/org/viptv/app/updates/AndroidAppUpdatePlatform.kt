@@ -149,6 +149,7 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
                     session.commit(status.intentSender)
                 }
             } catch (error: Exception) {
+                Log.w("VIPTV_UPDATE", "Could not start the install session", error)
                 runCatching { installer.abandonSession(id) }
                 pendingResult = null
                 throw error
