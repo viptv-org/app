@@ -7,8 +7,12 @@ fresh Chromium context, and checks that
 1. Compose attaches its drawing surface (a <canvas>, also inside shadow roots)
    without any resize or interaction,
 2. the Username and Password fields take keyboard input, and
-3. Sign in posts /api/auth/login with what was typed and reaches the profile
+3. signing in posts /api/auth/login with what was typed and reaches the profile
    picker (a /api/bootstrap request follows the login).
+
+Three fresh visitors each fill the form by clicking where the fields are drawn:
+`enter` presses Enter in Password (app#96), `keyboard` presses Enter in Username
+to move to Password and Enter again to sign in, and `button` clicks Sign in.
 
 No real account or server is involved: every /api request is answered here.
 The web app accepts only an HTTPS origin, so the fake serves HTTPS with a
@@ -20,6 +24,11 @@ Usage (after `./gradlew :composeApp:wasmJsBrowserDistribution`):
     python3 tools/web_signin_smoke.py \
         --dist composeApp/build/dist/wasmJs/productionExecutable \
         --out /tmp/web-signin [--headed]
+
+Headed on a machine without a display or GPU:
+
+    xvfb-run -a -s "-screen 0 1920x1080x24" python3 tools/web_signin_smoke.py --headed \
+        --browser-arg=--use-angle=swiftshader --browser-arg=--enable-unsafe-swiftshader
 
 Exits 0 when every check passes and writes screenshots to --out.
 """
@@ -153,11 +162,15 @@ def visit(browser, origin, scenario, args, log, check):
 
     click("textbox", "Username")
     page.keyboard.type(USERNAME, delay=20)
-    click("textbox", "Password")
+    if scenario == "keyboard":
+        page.keyboard.press("Enter")  # Enter in Username moves to Password
+        page.wait_for_timeout(300)
+    else:
+        click("textbox", "Password")
     page.keyboard.type(PASSWORD, delay=20)
     page.wait_for_timeout(400)
     shot("02-form-filled")
-    if scenario == "enter":
+    if scenario in ("enter", "keyboard"):
         page.keyboard.press("Enter")  # app#96: Enter in Password submits the form
     else:
         click("button", "Sign in")
@@ -172,7 +185,7 @@ def visit(browser, origin, scenario, args, log, check):
     body = logins[0]["body"] if logins else None
     check(len(logins) == 1, f"[{scenario}] signing in posted /api/auth/login once ({len(logins)})")
     check(isinstance(body, dict) and body.get("username") == USERNAME and body.get("password") == PASSWORD,
-          f"[{scenario}] the login carried the typed username and password")
+          f"[{scenario}] the login carried the typed username and password (fake values; got {body})")
     check(bool(logins) and any(e["path"] == "/api/bootstrap" for e in log[log.index(logins[0]):]),
           f"[{scenario}] the signed-in bootstrap followed (profile picker)")
     check(not errors, f"[{scenario}] no page errors {errors}")
@@ -185,6 +198,8 @@ def main():
     parser.add_argument("--dist", type=Path, default=Path("composeApp/build/dist/wasmJs/productionExecutable"))
     parser.add_argument("--out", type=Path, default=Path("/tmp/web-signin-smoke"))
     parser.add_argument("--headed", action="store_true")
+    parser.add_argument("--browser-arg", action="append", default=[], help="Extra Chromium flag, repeatable. Headed under "
+                        "Xvfb without a GPU needs --browser-arg=--use-angle=swiftshader --browser-arg=--enable-unsafe-swiftshader")
     parser.add_argument("--chromium", help="Chromium executable; default: Playwright's own, else the newest in ~/.cache/ms-playwright")
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
@@ -204,8 +219,9 @@ def main():
             failures.append(message)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=not args.headed, executable_path=args.chromium or chromium_binary())
-        for scenario in ("enter", "button"):
+        browser = p.chromium.launch(headless=not args.headed, executable_path=args.chromium or chromium_binary(),
+                                    args=args.browser_arg)
+        for scenario in ("enter", "keyboard", "button"):
             log.clear()
             visit(browser, origin, scenario, args, log, check)
         browser.close()
