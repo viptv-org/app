@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
@@ -26,9 +27,10 @@ internal class HomeGenrePicker(val choices: List<GenreChoice>, val choose: (Genr
 internal val LocalHomeGenres = compositionLocalOf<HomeGenrePicker?> { null }
 
 @Composable
-internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit) {
+internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, gutter: Dp = 0.dp) {
     val genres = LocalHomeGenres.current?.takeIf { it.choices.isNotEmpty() }
-    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
+    // With a gutter the chips scroll out to the screen edges (app#63).
+    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.bleedHorizontally(gutter).horizontalScroll(rememberScrollState()).padding(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series, "Anime" to Screen.Anime).forEach { (label, destination) ->
             Surface(onClick = { navigate(destination) }, shape = RoundedCornerShape(20.dp),

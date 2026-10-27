@@ -61,7 +61,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
             if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
                 filter = filter, filterChanged = { chosen = it })
-            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale) { day ->
+            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale, if (phone) 16.dp else 40.dp) { day ->
                 selected = day; focused = shown.firstOrNull { it.day == day }
                 if (phone) scope.launch {
                     val index = days.takeWhile { it.id != day }.sumOf { preceding ->
