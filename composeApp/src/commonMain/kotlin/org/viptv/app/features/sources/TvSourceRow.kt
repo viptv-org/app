@@ -19,16 +19,24 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
+/**
+ * A TV source row. [header] is the group label this row opens (SRC-BEST-MATCH-001): it
+ * sits inside the row's focus target, so the leading-edge focus scroll keeps it in view
+ * when focus enters the group, while the D-pad never stops on it.
+ */
 @Composable
 internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Float, requester: FocusRequester?,
-    enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null, focusedSource: (String) -> Unit = {}) {
+    enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null, focusedSource: (String) -> Unit = {},
+    header: String? = null, bestMatch: Boolean = false, headerMeasured: (Int) -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
-    Row(Modifier.fillMaxWidth().heightIn(min = 104.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
+    Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
         .focusProperties { if (up != null) this.up = up }
-        .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }.clip(RoundedCornerShape(14.dp * scale))
+        .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }
+        .clickable(enabled = enabled, interactionSource = remember { MutableInteractionSource() }, indication = null) { choose(source) }) {
+    header?.let { SourceGroupHeader(it, (22 * scale).sp, Modifier.padding(start = 4.dp * scale, top = 14.dp * scale, bottom = 12.dp * scale), measured = headerMeasured) }
+    Row(Modifier.fillMaxWidth().heightIn(min = 104.dp * scale).clip(RoundedCornerShape(14.dp * scale))
         .background(if (focused) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))
-        .clickable(enabled = enabled, interactionSource = remember { MutableInteractionSource() }, indication = null) { choose(source) }
         .padding(horizontal = 28.dp * scale, vertical = 20.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
         Column(Modifier.width(116.dp * scale)) {
             Text(info?.quality ?: "—", color = color, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, fontWeight = FontWeight.ExtraBold)
@@ -38,11 +46,12 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
             SourceTitleLine(source.label, TextStyle(fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.SemiBold), color,
                 source.factBadges(), SourceBadgeStyle((18 * scale).sp, (20 * scale).sp, radius = 8.dp * scale, horizontal = 10.dp * scale,
                     vertical = 4.dp * scale, gap = 12.dp * scale), Modifier.fillMaxWidth(),
-                trailing = if (info?.bestMatch == true) ({ Text("Best match", Modifier.background(color, RoundedCornerShape(5.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
+                trailing = if (bestMatch) ({ Text(BEST_MATCH_MARKER, Modifier.background(color, RoundedCornerShape(5.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
                     color = if (focused) Palette.text else Palette.background, fontSize = (18 * scale).sp, lineHeight = (20 * scale).sp, fontWeight = FontWeight.Bold) }) else null)
             source.releaseDetail()?.let { Text(it, color = color, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp) }
             source.technicalDetail()?.let { Text(it, color = color.copy(alpha = 0.75f), fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp) }
         }
         info?.addon?.let { Text(it, Modifier.widthIn(max = 170.dp * scale), maxLines = 1, overflow = TextOverflow.Ellipsis, color = color.copy(alpha = 0.75f), fontSize = (20 * scale).sp) }
+    }
     }
 }

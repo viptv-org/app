@@ -160,7 +160,7 @@ fun App(
                                         defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
                                         continuing = state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty(),
                                         paging = state.screen == Screen.Details)
-                                    if (state.screen == Screen.Sources) SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage)
+                                    if (state.screen == Screen.Sources) SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups)
                                 }
                             }
                             Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,

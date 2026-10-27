@@ -205,7 +205,7 @@ class ContinueWatchingPlayerEpisodesTest {
 
     /**
      * Renders the phone controls for this state, checks which buttons are enabled,
-     * then picks [pick] from Episodes and, when enabled, confirms Next episode.
+     * then picks [pick] from Episodes and, when enabled, presses Next episode.
      * Returns the cards the player handed to `playEpisode`, in that order.
      * `VIPTV_PHONE_PLAYER_CAPTURE_DIR` saves what the controls show.
      */
@@ -231,7 +231,7 @@ class ContinueWatchingPlayerEpisodesTest {
                 scene.render(3_000_000_000L).use { image -> image.encodeToData()!!.use { java.io.File(path, "$capture.png").writeBytes(it.bytes) } }
             }
             click("Episodes"); click("${pick.identity.episode!!.episode}. ${pick.title} Play episode")
-            if (nextEnabled) { click("Next episode"); click("Next episode") }
+            if (nextEnabled) click("Next episode")
             return played
         } finally { scene.close() }
     }

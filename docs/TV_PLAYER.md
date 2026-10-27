@@ -103,9 +103,12 @@ playback. Desktop tests, Wasm compilation and Android assembly passed.
 
 ## Next-episode motion and geometry
 
-The video shrinks from 1920×1080 into the ZIP's 880×495 frame at (96,96), with
-12-pixel corners and a 600 ms decelerating transition. Keep watching reverses
-the same transition. The information and credits caption fade up 16 pixels over
+Since app#41 the panel opens by itself when the player reports the end of a
+series episode with a known next episode, and the Next episode pill plays that
+episode directly. The ended video keeps its last frame full screen behind the
+panel under a dark scrim; it no longer shrinks into the ZIP's 880×495 frame, and
+no app background shows. Keep watching and Back dismiss it until the episode
+ends again. The information and credits caption fade up 16 pixels over
 450 ms after a 350 ms delay. Optional credits-label facts are supplied explicitly;
 normal connections fall back to the actual title, and the fixture supplies the
 ZIP's short label.

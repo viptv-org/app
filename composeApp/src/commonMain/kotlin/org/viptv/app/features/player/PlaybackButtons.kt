@@ -15,7 +15,9 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, volume: Float,
     setVolume: (Float) -> Unit, speed: Double, setSpeed: (Double) -> Unit, close: () -> Unit, tracks: () -> Unit, seekEnabled: Boolean = true,
-    streams: (() -> Unit)? = null, streamLabel: String? = null) {
+    streams: (() -> Unit)? = null, streamLabel: String? = null,
+    /** Series episodes only: plays the next episode straight away; disabled while none is known. */
+    next: (() -> Unit)? = null, nextEnabled: Boolean = false) {
     var speeds by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         IconButton(onClick = toggle) {
@@ -24,6 +26,7 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
         }
         IconButton(onClick = { skip(-10000) }, enabled = seekEnabled) { PlaybackSkipIcon(false, 22.dp) }
         IconButton(onClick = { skip(10000) }, enabled = seekEnabled) { PlaybackSkipIcon(true, 22.dp) }
+        next?.let { IconButton(onClick = it, enabled = nextEnabled) { Icon(Lucide.SkipForward, "Next episode", Modifier.size(22.dp)) } }
         IconButton(onClick = { setVolume(if (volume == 0f) 1f else 0f) }) {
             Icon(if (volume == 0f) Lucide.VolumeX else Lucide.Volume2, "Mute or unmute", Modifier.size(22.dp))
         }

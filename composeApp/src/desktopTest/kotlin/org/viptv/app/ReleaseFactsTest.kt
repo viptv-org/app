@@ -103,7 +103,7 @@ class ReleaseFactsTest {
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         try {
-            assertEquals(listOf("b", "a"), remote.rankSources("7", candidates, 2160).map { it.id })
+            assertEquals(listOf("b", "a"), remote.rankSources("7", candidates, 2160).rows.map { it.id })
             remote.rankSources("7", candidates, null)
         } finally { remote.close() }
         assertEquals(2160, bodies[0].getValue("device_max_height").jsonPrimitive.int)

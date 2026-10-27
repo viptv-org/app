@@ -149,9 +149,11 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
 
     override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray = fetchLocalSubtitleContent(id, input)
 
-    override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): List<SourceCandidate> = withContext(Dispatchers.IO) {
-        json.decodeFromString(engine.rankSourcesForDevice(profile, json.encodeToString(sources),
+    override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources = withContext(Dispatchers.IO) {
+        val ranked = json.decodeFromString<List<SourceCandidate>>(engine.rankSourcesForDevice(profile, json.encodeToString(sources),
             deviceMaxHeight?.takeIf { it in 144..4320 }?.toUInt()))
+        // The engine returns only its order so far (core#12).
+        RankedSources(ranked, interimSourceGroups(ranked))
     }
     override suspend fun openSource(id: String): PlaybackInput = fetchLocalOpenSource(id)
 
