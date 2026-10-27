@@ -31,7 +31,12 @@ internal data class TvDetailExtras(
 @Composable
 internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, sources: (Card) -> Unit,
     extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null,
-    back: (() -> Unit)? = null, continuing: List<Card> = emptyList(), paging: Boolean = true) {
+    back: (() -> Unit)? = null, continuing: List<Card> = emptyList(),
+    /**
+     * False while the page is composed behind the source selector: it neither pages nor
+     * takes focus. Shown again means the viewer came back: see the return rule below (app#66).
+     */
+    shown: Boolean = true) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     if (detail == null) {
         // NAV-04: never a blank, focus-dead page. Explain the failure and give
@@ -48,9 +53,19 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         val scope = rememberCoroutineScope()
         val playFocus = remember { FocusRequester() }
         val episodesRestore = remember(card?.identity) { TvFocusHandle() }
+        val episodesReturn = remember(card?.identity) { ShelfReturnHandle() }
         var notice by remember { mutableStateOf<String?>(null) }
-        var episodeMode by remember(card?.identity) { mutableStateOf(false) }
-        var activeRow by remember(card?.identity) { mutableIntStateOf(0) }
+        // Return rule (app#66). Details composed while shown is a first entry: focus starts on
+        // the hero. While the source selector covers Details (opened from an episode or the
+        // hero, or reopened as the player closes), the page keeps the row the viewer left from,
+        // per title and across the player, where it leaves composition. Shown again, focus goes
+        // back to that row: the last focused episode, else the continued episode (app#40),
+        // else the hero.
+        var leftFrom by rememberSaveable(card?.identity) { mutableStateOf<Int?>(null) }
+        val firstEntry = remember(card?.identity) { shown }
+        var activeRow by remember(card?.identity) { mutableIntStateOf(if (shown) 0 else leftFrom ?: 0) }
+        var episodeMode by remember(card?.identity) { mutableStateOf(activeRow == 1) }
+        var wasShown by remember(card?.identity) { mutableStateOf(shown) }
         val sectionScroll = org.viptv.app.components.rememberTvSectionScroll(scroll)
         val density = LocalDensity.current
         fun offset(index: Int): Float = with(density) {
@@ -75,6 +90,29 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                 }
             }
         }
+        fun returnToEpisode() {
+            activeRow = 1; episodeMode = true
+            sectionScroll.focus(1, force = true)
+            scope.launch {
+                repeat(32) {
+                    withFrameNanos { }
+                    if (activeRow != 1) return@launch
+                    when (episodesReturn.request?.invoke()) {
+                        ShelfReturn.Focused -> return@launch
+                        ShelfReturn.Missing -> { returnHero(); return@launch }
+                        ShelfReturn.Pending, null -> Unit
+                    }
+                }
+                if (activeRow == 1) returnHero()
+            }
+        }
+        LaunchedEffect(card?.identity, shown) {
+            if (!shown) { leftFrom = activeRow; wasShown = false; return@LaunchedEffect }
+            leftFrom = null
+            if (wasShown) return@LaunchedEffect
+            wasShown = true
+            if (activeRow == 1 && detail.episodes.isNotEmpty()) returnToEpisode() else returnHero()
+        }
         key(card?.identity) {
             TvDetailBackdrop(card, scale) { offset(scroll.firstVisibleItemIndex) + scroll.firstVisibleItemScrollOffset }
         }
@@ -87,7 +125,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                         save = { save(detail.item) }, saved = saved,
                         trailer = { notice = "No trailer is available for this title." },
                         restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
-                        down = null, requestInitialFocus = requestInitialFocus && activeRow == 0,
+                        down = null, requestInitialFocus = requestInitialFocus && firstEntry && activeRow == 0,
                         downAction = if (detail.episodes.isEmpty()) null else ::returnEpisodes)
                 }
                 if (detail.episodes.isNotEmpty()) item(key = "episodes") {
@@ -95,7 +133,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                         focused = { episodeMode = true; focusRow(1) }, expanded = episodeMode,
                         resume = remember(detail, continuing) { detailResume(detail, continuing) },
                         returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
-                        busy = busy, loadPage = loadPage, restoreChanged = { episodesRestore.request = it }, paging = paging)
+                        busy = busy, loadPage = loadPage, restoreChanged = { episodesRestore.request = it }, paging = shown,
+                        returnChanged = { episodesReturn.request = it })
                 }
                 if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
                     TvRecommendationShelf(extras.recommendations, scale, open,

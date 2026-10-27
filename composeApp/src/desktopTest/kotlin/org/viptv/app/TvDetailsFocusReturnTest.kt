@@ -3,6 +3,7 @@ package org.viptv.app
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -32,7 +33,7 @@ import kotlin.test.*
  *
  * The real TV App shell over a fake host; the remote's D-pad is sent as key events.
  */
-@OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
+@OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class TvDetailsFocusReturnTest {
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null

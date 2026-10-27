@@ -18,13 +18,29 @@ import coil3.compose.AsyncImage
 import org.viptv.app.components.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import kotlinx.coroutines.launch
+
+/** One step of putting focus back in the shelf when the viewer returns to Details (app#66). */
+internal enum class ShelfReturn {
+    /** The episode has focus. */
+    Focused,
+    /** The episode is in the list but not placed yet: try again next frame. */
+    Pending,
+    /** Neither the last focused nor the continued episode is in the list: focus the hero instead. */
+    Missing,
+}
+
+/** The shelf's current [ShelfReturn] step, for the Details page that hosts it. */
+internal class ShelfReturnHandle { var request: (() -> ShelfReturn)? = null }
 
 @Composable
 internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, play: (Card) -> Unit,
     focused: () -> Unit, expanded: Boolean, resume: DetailResume?, returnToHero: () -> Unit,
     seasonIndex: List<org.viptv.engine.wire.EpisodeSeason> = emptyList(), nextCursor: String? = null,
     busy: Boolean = false, loadPage: (Long) -> Unit = {}, restoreChanged: ((() -> Boolean)?) -> Unit = {},
-    paging: Boolean = true) {
+    paging: Boolean = true,
+    /** Publishes [ShelfReturn]'s step for Back to Details (app#66); null once the shelf leaves. */
+    returnChanged: ((() -> ShelfReturn)?) -> Unit = {}) {
     val groups = remember(episodes, seasonIndex) { detailSeasons(episodes, seasonIndex) }
     val seasons = groups.map { it.number }
     // The viewer's season once they pick one or move into the shelf; until then the
@@ -58,6 +74,16 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
         targets[visible.find { resume?.matches(it) == true }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
         visible.firstNotNullOfOrNull { targets[episodeKey(it)] }?.requestPlacedFocus() == true
     fun restore(): Boolean = focusEpisode() || seasonFocus.requestPlacedFocus()
+    val scope = rememberCoroutineScope()
+    // Back to Details (app#66): the episode the viewer last focused, else the continued one.
+    // An unplaced target is brought into the row first; the caller retries on the next frame.
+    fun returnFocus(): ShelfReturn {
+        val index = visible.indexOfFirst { episodeKey(it) == lastFocused }.takeIf { it >= 0 }
+            ?: resume.indexIn(visible) ?: return ShelfReturn.Missing
+        if (targets[episodeKey(visible[index])]?.requestPlacedFocus() == true) return ShelfReturn.Focused
+        if (episodeRows.layoutInfo.visibleItemsInfo.none { it.index == index }) scope.launch { episodeRows.scrollToItem(index) }
+        return ShelfReturn.Pending
+    }
     fun enterEpisodes(): Boolean {
         val wanted = selected.takeIf { it in seasons } ?: activeSeason
         if (wanted == activeSeason && focusEpisode()) { pendingEntry = null; return true }
@@ -77,8 +103,8 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
         }
     }
     AutomaticEpisodes(group, nextCursor, busy, loadPage, enabled = paging, scopeKey = parent.provider_id to parent.identity)
-    SideEffect { restoreChanged(::restore) }
-    DisposableEffect(parent.identity) { onDispose { restoreChanged(null) } }
+    SideEffect { restoreChanged(::restore); returnChanged(::returnFocus) }
+    DisposableEffect(parent.identity) { onDispose { restoreChanged(null); returnChanged(null) } }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
 
         Column(Modifier.fillMaxWidth().heightIn(min = if (expanded) 656.dp * scale else 460.dp * scale)) {
