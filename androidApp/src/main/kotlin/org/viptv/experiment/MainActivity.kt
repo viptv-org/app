@@ -10,8 +10,7 @@ import androidx.compose.runtime.*
 import org.viptv.app.state.*
 import org.viptv.app.state.Screen
 import org.viptv.app.App
-import org.viptv.app.updates.AppUpdatePrompt
-import org.viptv.app.updates.LocalAppUpdater
+import org.viptv.app.updates.AppWithUpdates
 import org.viptv.app.updates.updatePromptAllowed
 import org.viptv.app.updates.updateServerOrigin
 import org.viptv.app.preview.UiPreview
@@ -72,12 +71,9 @@ open class MainActivity : ComponentActivity() {
                 // Not while starting: the restored session is not known yet, and About would flash "Sign in to a server".
                 LaunchedEffect(state.starting, state.localMode, controller.updateServerOrigin()) { if (!state.starting) updater.connectionChanged() }
             }
-            CompositionLocalProvider(LocalAppUpdater provides updater) {
-                androidx.compose.foundation.layout.Box {
-                    App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
-                        manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
-                    if (updater != null) AppUpdatePrompt(updater, tv, allowed = controller.updatePromptAllowed())
-                }
+            AppWithUpdates(updater, tv, promptAllowed = controller.updatePromptAllowed()) {
+                App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
+                    manageControllerLifecycle = false, entryBackChanged = { entryBack = it }, defaultServer = BuildConfig.DEFAULT_SERVER)
             }
         }
     }

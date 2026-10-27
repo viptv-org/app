@@ -56,6 +56,20 @@ private const val FIRE_TV_PERMISSION =
 private const val PERMISSION_STEP = "Allow VIPTV to install apps in the screen that opens, then come back to finish the update."
 
 /**
+ * The app with updates: provides [LocalAppUpdater] for Settings › About and lays the prompt over
+ * [content] where [promptAllowed]. Without an updater (debug QA packages) it is just [content].
+ */
+@Composable
+fun AppWithUpdates(updater: AppUpdater?, television: Boolean, promptAllowed: Boolean, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalAppUpdater provides updater) {
+        Box(Modifier.fillMaxSize()) {
+            content()
+            if (updater != null) AppUpdatePrompt(updater, television, promptAllowed)
+        }
+    }
+}
+
+/**
  * "Update ready: Install" outside the player. [allowed] is false while the player (or sign-in)
  * is on screen. Phones and tablets get a banner that does not block the page; TV gets a small
  * D-pad dialog whose Back is Later.
