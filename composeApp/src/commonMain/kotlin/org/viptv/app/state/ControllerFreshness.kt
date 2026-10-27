@@ -35,11 +35,11 @@ fun ApplicationController.appForeground(foreground: Boolean) {
  * The one foreground hook: start and stop are [appForeground], resume is [freshen].
  * App.kt installs it when it owns the controller; Android's MainActivity installs it
  * on its own lifecycle, because ApplicationModel owns the controller there (app#75).
- * [returned] runs after each return to the front, once the controller knows of it.
+ * [onReturn] runs after each return to the front, once the controller knows of it.
  */
-fun ApplicationController.foregroundObserver(returned: () -> Unit = {}) = LifecycleEventObserver { _, event ->
+fun ApplicationController.foregroundObserver(onReturn: () -> Unit = {}) = LifecycleEventObserver { _, event ->
     when (event) {
-        Lifecycle.Event.ON_START -> { appForeground(true); returned() }
+        Lifecycle.Event.ON_START -> { appForeground(true); onReturn() }
         Lifecycle.Event.ON_RESUME -> freshen()
         Lifecycle.Event.ON_STOP -> appForeground(false)
         else -> Unit

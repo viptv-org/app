@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import org.viptv.app.state.ApplicationController
+import org.viptv.app.state.Screen
 import org.viptv.app.state.disconnect
 import org.viptv.app.state.restore
 import org.viptv.app.updates.AndroidAppUpdatePlatform
@@ -29,6 +30,11 @@ class ApplicationModel : ViewModel() {
             updateFeedUrl(controller.updateServerOrigin(), BuildConfig.UPDATE_FEED)
         }
         controller.restore(localDatabase)
+    }
+    /** A return to the front checks for an app update (docs/APP_UPDATES.md), not while the session is restoring. */
+    fun foregroundReturned() {
+        val current = controller.state.value
+        if (!current.starting) updater?.foreground(playing = current.screen == Screen.Player)
     }
     override fun onCleared() { controller.disconnect(); scope.cancel() }
 }

@@ -9,11 +9,14 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,6 +31,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
 
@@ -36,6 +40,7 @@ import kotlin.time.TestTimeSource
  * stop are appForeground(true/false), once per transition, and a return checks
  * the server for changes made elsewhere (app#2).
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [36])
 class AndroidForegroundTest {
@@ -43,11 +48,13 @@ class AndroidForegroundTest {
     class HostActivity : ComponentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            lifecycle.addObserver(controller!!.foregroundObserver(returned = { returns++ }))
+            lifecycle.addObserver(controller!!.foregroundObserver(onReturn = { returns++ }))
         }
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    /** Virtual time never advances, so the Home watcher's ticks never run: every check counted is a lifecycle one. */
+    private val scheduler = TestCoroutineScheduler()
+    private val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(scheduler))
     private val time = TestTimeSource()
     private val requests = mutableListOf<String>()
     private val store = object : RemoteSessionStore {
@@ -55,11 +62,11 @@ class AndroidForegroundTest {
         override suspend fun save(session: SavedRemoteSession) = Unit
         override suspend fun clear() = Unit
     }
-    private val revisions = """{"library":"4","configuration":"2","addons":"a1","policy":"0","preferences":"1","profiles":"7"}"""
+    private val revisions = mapOf("library" to "4", "configuration" to "2", "addons" to "a1", "policy" to "0", "preferences" to "1", "profiles" to "7")
     private val client = HttpClient(MockEngine { request ->
         synchronized(requests) { requests += request.url.encodedPath }
         if (request.url.encodedPath != "/api/profiles/12/revisions") error("Unexpected ${request.url.encodedPath}")
-        respond(revisions, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        respond(JsonObject(revisions.mapValues { JsonPrimitive(it.value) }).toString(), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
     }) { configureTransport() }
 
     @After fun stop() {
@@ -71,11 +78,18 @@ class AndroidForegroundTest {
     private fun signedInController() = ApplicationController(scope, store, freshness = Freshness(time)).also {
         it.connection = RemoteConnection("https://watch.example", store, client, browserMode = false)
         it.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "12")
-        it.freshness.homeBuilt(mapOf("library" to "4", "configuration" to "2", "addons" to "a1", "policy" to "0", "preferences" to "1", "profiles" to "7"))
+        it.freshness.homeBuilt(revisions)
     }
 
-    private fun ApplicationController.settle() = runBlocking {
-        while (true) { val running = quietJob ?: return@runBlocking; running.join(); if (quietJob === running) return@runBlocking }
+    /** Runs the controller's coroutines until the quiet lane is done; the fake server answers on its own thread. */
+    private fun ApplicationController.settle() {
+        val deadline = System.nanoTime() + 10_000_000_000L
+        while (true) {
+            scheduler.runCurrent()
+            val running = quietJob
+            if (running == null || running.isCompleted && quietJob === running) return
+            assertTrue(System.nanoTime() < deadline, "the quiet lane settles"); Thread.sleep(1)
+        }
     }
 
     private fun revisionChecks() = synchronized(requests) { requests.count { it == "/api/profiles/12/revisions" } }
@@ -131,8 +145,9 @@ class AndroidForegroundTest {
         activity.pause().stop().destroy()
     }
 
+    // Static because Robolectric builds HostActivity by reflection.
     companion object {
-        var controller: ApplicationController? = null
-        var returns = 0
+        private var controller: ApplicationController? = null
+        private var returns = 0
     }
 }
