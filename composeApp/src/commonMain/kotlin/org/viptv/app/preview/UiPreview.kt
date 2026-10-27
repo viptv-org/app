@@ -104,6 +104,14 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 info = PreviewTvSources.info, detail = PreviewTvDetails.movie,
                                 loadingMore = tvDetailVariant in listOf("Loading", "LoadingEmpty"),
                                 groups = org.viptv.app.connection.interimSourceGroups(PreviewTvSources.sources))
+                                else if (browser) Box {
+                                    // As in the App: the drawer slides in over the Details dialog (app#60).
+                                    PreviewDetails(tvDetailVariant, go, tablet, browser, desktop)
+                                    org.viptv.app.features.sources.BrowserSourceDrawer({ go(Screen.Details) }) {
+                                        SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail,
+                                            groups = org.viptv.app.connection.interimSourceGroups(PreviewData.sources))
+                                    }
+                                }
                                 else SourcesScreen(PreviewData.hero, PreviewData.sources, false, null, {}, { go(Screen.Details) }, PreviewData.detail, tablet = tablet,
                                     groups = org.viptv.app.connection.interimSourceGroups(PreviewData.sources))
                             Screen.Calendar -> if (television) TvCalendarScreen(PreviewTvCalendar.days, PreviewTvCalendar.entries,
