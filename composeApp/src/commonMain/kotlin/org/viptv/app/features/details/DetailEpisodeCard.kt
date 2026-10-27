@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -63,7 +64,8 @@ private fun EpisodeArtwork(episode: Card, modifier: Modifier) {
             Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(11.dp), tint = Palette.text)
         }
         episode.progress?.takeIf { it.isFinite() && it > 0 && !episode.watchedEpisode() }?.let { progress ->
-            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = .25f))) {
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = .25f))
+                .progressSemantics(progress.toFloat().coerceIn(0f, 1f))) {
                 Box(Modifier.fillMaxWidth(progress.toFloat().coerceIn(0f, 1f)).fillMaxHeight().background(Palette.accent))
             }
         }

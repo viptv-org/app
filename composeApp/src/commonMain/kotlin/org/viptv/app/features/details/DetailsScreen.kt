@@ -21,9 +21,14 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
 @Composable
-fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null) {
+fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null,
+    /** Home's Continue Watching cards: the one for this series names the episode Details open on (app#40). */
+    continuing: List<Card> = emptyList(),
+    /** False while the page is composed behind the source selector; it pages again once it is shown. */
+    paging: Boolean = true) {
     if (television) {
-        TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back)
+        TvDetailsScreen(detail, busy, error, sources, extras = detailExtras(detail), open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
+            continuing = continuing, paging = paging)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
@@ -32,22 +37,31 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         DetailUnavailable(error, back)
         return
     }
-    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage); return }
+    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
-    var seasonKey by remember(detail?.item?.identity) { mutableStateOf<String?>(null) }
+    val resume = remember(detail, continuing) { detailResume(detail, continuing) }
+    val seasonChoice = rememberSeasonChoice(detail)
     var section by remember(detail?.item?.identity) { mutableStateOf(
         when { detail?.episodes?.isNotEmpty() == true -> DetailSection.Episodes
             detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
             else -> DetailSection.Information }) }
-    val selected = seasons.find { (it.number?.toString() ?: "unknown") == seasonKey } ?: seasons.firstOrNull { (it.number ?: 0L) > 0L } ?: seasons.firstOrNull()
-    AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = section == DetailSection.Episodes,
+    val selected = seasonChoice.selected(seasons, resume)
+    AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging && section == DetailSection.Episodes,
         scopeKey = detail?.item?.let { it.provider_id to it.identity })
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val compact = maxWidth < 900.dp
         val gutter = if (phone) 16.dp else 40.dp
         val listState = rememberLazyListState()
+        val desktop = !phone && !tablet
+        // The continued episode's place in the list below: progress, error, hero,
+        // section tabs (not on desktop), season picker, then the season's episodes.
+        val episodesShown = detail != null && (!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())
+        val resumeIndex = resume.takeIf { episodesShown }.indexIn(selected?.episodes)?.let { episode ->
+            (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 + (if (desktop) 0 else 1) + 1 + episode }
+        // The phone's back bar floats over the list's top edge.
+        LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
         val scrolled by remember(phone) { derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
         LazyColumn(Modifier.fillMaxSize(), state = listState,
@@ -58,7 +72,6 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             detail?.let { value ->
                 // Desktop chrome renders its own back/forward in the title bar;
                 // phone/tablet keep the in-content affordances.
-                val desktop = !phone && !tablet
                 item {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, seriesResumeEpisode(value))
                     else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
@@ -80,15 +93,15 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     item {
                         Box(Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter))) {
                             DetailSeasonPicker(seasons, season, phone) { number ->
-                                seasonKey = number?.toString() ?: "unknown"
+                                seasonChoice.pick(number)
                                 seasons.find { it.number == number }?.nextOffset?.let(loadPage)
                             }
                         }
                     }
                     if (phone) items(season.episodes, key = ::episodeKey) { episode ->
-                        DetailEpisodeCard(episode, true, sources, Modifier.fillMaxWidth().padding(horizontal = gutter))
+                        DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter))
                     } else items(season.episodes, key = ::episodeKey) { episode ->
-                        DesktopEpisodeRow(episode, sources, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)))
+                        DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)))
                     }
                 }
                 if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {

@@ -31,7 +31,7 @@ internal data class TvDetailExtras(
 @Composable
 internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, sources: (Card) -> Unit,
     extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null,
-    back: (() -> Unit)? = null) {
+    back: (() -> Unit)? = null, continuing: List<Card> = emptyList(), paging: Boolean = true) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     if (detail == null) {
         // NAV-04: never a blank, focus-dead page. Explain the failure and give
@@ -93,9 +93,9 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                 if (detail.episodes.isNotEmpty()) item(key = "episodes") {
                     TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
                         focused = { episodeMode = true; focusRow(1) }, expanded = episodeMode,
-                        resumeId = extras.resume?.identity?.id,
+                        resume = remember(detail, continuing) { detailResume(detail, continuing) },
                         returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
-                        busy = busy, loadPage = loadPage, restoreChanged = { episodesRestore.request = it })
+                        busy = busy, loadPage = loadPage, restoreChanged = { episodesRestore.request = it }, paging = paging)
                 }
                 if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
                     TvRecommendationShelf(extras.recommendations, scale, open,
