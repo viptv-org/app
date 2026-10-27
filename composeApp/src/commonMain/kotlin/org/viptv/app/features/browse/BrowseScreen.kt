@@ -139,7 +139,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
 private fun SortMenu(sort: String, menu: Boolean, select: (String) -> Unit, toggle: () -> Unit) {
     Box {
         Row(Modifier.background(Color(0xFF222224), RoundedCornerShape(8.dp))
-            .pointerClickable (shape = RoundedCornerShape(8.dp)) { toggle() }.padding(horizontal = 12.dp, vertical = 8.dp),
+            .pointerClickable(shape = RoundedCornerShape(8.dp)) { toggle() }.padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(Lucide.SlidersHorizontal, null, Modifier.size(16.dp))
             Text(sort, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -207,7 +207,7 @@ private fun PhoneFilterChips(facets: List<Pair<QueryControl, List<String>>>, mod
         facets.forEach { (control, values) -> values.forEach { value ->
             val label = control.choices.find { it.value == value }?.label ?: value
             Row(Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(Color.White.copy(alpha = .10f))
-                .pointerClickable (shape = RoundedCornerShape(15.dp)) { remove(control, value) }.padding(start = 11.dp, end = 6.dp),
+                .pointerClickable(shape = RoundedCornerShape(15.dp)) { remove(control, value) }.padding(start = 11.dp, end = 6.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Icon(Lucide.X, "Remove $label", Modifier.size(14.dp))

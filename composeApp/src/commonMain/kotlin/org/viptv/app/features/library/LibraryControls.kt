@@ -22,7 +22,7 @@ internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: 
         Row(Modifier.background(Palette.raised, RoundedCornerShape(20.dp)).padding(4.dp)) {
             listOf("All", "Movies", "Series").forEach { choice ->
                 Text(choice, Modifier.background(if (choice == filter) Palette.background else Palette.raised, RoundedCornerShape(18.dp))
-                    .pointerClickable (shape = RoundedCornerShape(18.dp)) { setFilter(choice) }.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp)
+                    .pointerClickable(shape = RoundedCornerShape(18.dp)) { setFilter(choice) }.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp)
             }
         }
         Box {

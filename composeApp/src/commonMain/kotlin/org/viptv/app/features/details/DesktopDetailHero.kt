@@ -157,7 +157,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
         }
         // Source row: the current default-source behaviour; opens the source sheet.
         Row(Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
-            .pointerClickable (shape = RoundedCornerShape(10.dp)) { chooseSource(card) }.padding(horizontal = 12.dp),
+            .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(card) }.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(sourceLabel ?: "Best match", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.text)
             Icon(Lucide.ChevronDown, "Choose source", Modifier.size(16.dp), tint = Palette.secondary)

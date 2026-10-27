@@ -61,7 +61,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                             if (channel == channels.firstOrNull()) up else null, { select(channel, channel.current(now)) }, { watch(channel) })
                         else
                         Row(Modifier.width(channelWidth).height(rowHeight).clip(RoundedCornerShape(8.dp * scale))
-                            .background(Palette.surface).pointerClickable (shape = RoundedCornerShape(8.dp * scale)) { watch(channel) }.padding(horizontal = (if (television) 18 else 12).dp * scale),
+                            .background(Palette.surface).pointerClickable(shape = RoundedCornerShape(8.dp * scale)) { watch(channel) }.padding(horizontal = (if (television) 18 else 12).dp * scale),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                             channel.number?.let { Text(it, fontSize = (if (television) 20 * scale else 12f).sp, color = Palette.secondary) }
                             Text(channel.card.title, fontSize = (if (television) 26 * scale else 14f).sp, fontWeight = FontWeight.Bold)

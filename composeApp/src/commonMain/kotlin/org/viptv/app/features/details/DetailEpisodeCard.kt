@@ -30,7 +30,7 @@ import org.viptv.app.components.pointerClickable
 internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Unit, modifier: Modifier = Modifier, tablet: Boolean = false,
     /** The player's Episodes list marks the episode on screen; Details never sets it. */
     playing: Boolean = false) {
-    Column(modifier.clip(RoundedCornerShape(8.dp)).pointerClickable (shape = RoundedCornerShape(8.dp)) { play(episode) }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.clip(RoundedCornerShape(8.dp)).pointerClickable(shape = RoundedCornerShape(8.dp)) { play(episode) }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (phone) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             EpisodeArtwork(episode, Modifier.width(if (tablet) 176.dp else 136.dp).aspectRatio(16f / 9))
             EpisodeCaption(episode, Modifier.weight(1f), true, playing)

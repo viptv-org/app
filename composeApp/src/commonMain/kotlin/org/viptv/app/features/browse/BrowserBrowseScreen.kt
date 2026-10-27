@@ -117,7 +117,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
                 Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
                 if (peers.isNotEmpty()) Box {
                     Row(Modifier.height(34.dp).clip(RoundedCornerShape(17.dp)).background(Color.White.copy(alpha = .12f))
-                        .pointerClickable (shape = RoundedCornerShape(17.dp)) { catalogMenu = true }.padding(horizontal = 12.dp),
+                        .pointerClickable(shape = RoundedCornerShape(17.dp)) { catalogMenu = true }.padding(horizontal = 12.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(catalog?.displayName(peers) ?: "Catalog", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         catalog?.connection_name?.takeIf(String::isNotBlank)?.let {
@@ -232,7 +232,7 @@ private fun BrowserSegments(control: QueryControl, selected: String, select: (St
             val active = choice.value == selected
             Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(12.dp))
                 .then(if (active) Modifier.background(Palette.background).border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(12.dp)) else Modifier)
-                .pointerClickable (shape = RoundedCornerShape(12.dp)) { select(choice.value) }, contentAlignment = Alignment.Center) {
+                .pointerClickable(shape = RoundedCornerShape(12.dp)) { select(choice.value) }, contentAlignment = Alignment.Center) {
                 Text(choice.label, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     color = if (active) Palette.text else Palette.secondary)
             }
