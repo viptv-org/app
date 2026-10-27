@@ -74,7 +74,7 @@ fun ApplicationController.backDetails() {
 }
 
 fun ApplicationController.backSources() {
-    generation++; job?.cancel()
+    generation++; job?.cancel(); cancelSourceDetail()
     mutable.value = mutable.value.copy(screen = mutable.value.sourceReturnScreen,
         busy = false, findingSources = false, error = null)
 }
