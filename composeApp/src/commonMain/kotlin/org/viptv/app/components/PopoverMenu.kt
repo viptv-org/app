@@ -71,11 +71,11 @@ internal fun PopoverMenu(
 }
 
 /**
- * A popover row: leading Lucide icon and label, 44 tall. Hover, focus and press fill it with
+ * A popover row: an optional leading Lucide icon and a label, 44 tall. Hover, focus and press fill it with
  * surface-2; a press also applies the phone row scale (`pressed-scale-row`, 0.99).
  */
 @Composable
-internal fun PopoverMenuItem(label: String, icon: ImageVector, onClick: () -> Unit) {
+internal fun PopoverMenuItem(label: String, icon: ImageVector? = null, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val focused by interaction.collectIsFocusedAsState()
@@ -87,7 +87,7 @@ internal fun PopoverMenuItem(label: String, icon: ImageVector, onClick: () -> Un
         .clickable(interaction, indication = null, role = Role.Button, onClick = onClick)) {
         Row(Modifier.align(Alignment.CenterStart).padding(horizontal = 10.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(icon, null, Modifier.size(18.dp).testTag(PopoverMenuItemIconTag), tint = if (active) Palette.text else Palette.secondary)
+            if (icon != null) Icon(icon, null, Modifier.size(18.dp).testTag(PopoverMenuItemIconTag), tint = if (active) Palette.text else Palette.secondary)
             Text(label, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         FocusOutline(focused, 10.dp, 2.dp, Modifier.matchParentSize())

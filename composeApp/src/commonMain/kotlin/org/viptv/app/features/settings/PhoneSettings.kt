@@ -2,6 +2,7 @@ package org.viptv.app.features.settings
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.*
@@ -23,7 +24,6 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
     profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: Boolean = false,
     /** Owned by Settings so Back from a sub-page lands on the list where the row was opened. */
     listState: LazyListState = rememberLazyListState()) {
-    var unavailable by remember { mutableStateOf<String?>(null) }
     LazyColumn(Modifier.fillMaxSize(), listState, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
@@ -48,41 +48,20 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             }
         }
         notice?.let { item { Text(it, color = Palette.danger) } }
-        item {
-            SettingsGroup {
-                SettingsItem("Playback", Lucide.CirclePlay) { if (preferences != null) preferences("Playback") else unavailable = "Playback preferences" }
-                SettingsDivider()
-                SettingsItem("Subtitles & audio", Lucide.Captions) { if (preferences != null) preferences("Subtitles & audio") else unavailable = "Subtitle and audio preferences" }
-            }
-        }
-        item {
-            SettingsGroup {
-                SettingsItem("Watch on TV", Lucide.Airplay, if (addDevice) "Sign in a TV or another device" else null) { if (information != null) information("Watch on TV") else unavailable = "TV pairing" }
-                SettingsDivider()
-                SettingsItem("Add-ons", Lucide.Puzzle, "$addonCount installed", addons)
-            }
-        }
-        item {
-            SettingsGroup {
-                SettingsItem("Account", Lucide.UserRound, if (local) "Using this device locally" else "Connected to a server") { if (account != null) account() else unavailable = "Account settings" }
-                SettingsDivider()
-                if (devices != null) {
-                    SettingsItem("Devices", Lucide.Monitor, action = devices)
-                    SettingsDivider()
-                }
-                if (stremioImport != null) {
-                    SettingsItem(stremioImportSection, Lucide.Import, action = stremioImport)
-                    SettingsDivider()
-                }
-                if (parental != null) {
-                    SettingsItem("Parental controls", Lucide.Lock, action = parental)
-                    SettingsDivider()
-                }
-                SettingsItem("Help", Lucide.Info) { if (information != null) information("Help") else unavailable = "Help" }
-                SettingsDivider()
-                SettingsItem("About VIPTV", Lucide.Info) { if (information != null) information("About") else unavailable = "About VIPTV" }
-            }
-        }
+        // A row appears only when it has somewhere to go; SettingsRoute supplies every handler.
+        settingsGroup(listOfNotNull(
+            preferences?.let { open -> { SettingsItem("Playback", Lucide.CirclePlay) { open("Playback") } } },
+            preferences?.let { open -> { SettingsItem("Subtitles & audio", Lucide.Captions) { open("Subtitles & audio") } } }))
+        settingsGroup(listOfNotNull(
+            information?.let { open -> { SettingsItem("Watch on TV", Lucide.Airplay, if (addDevice) "Sign in a TV or another device" else null) { open("Watch on TV") } } },
+            { SettingsItem("Add-ons", Lucide.Puzzle, "$addonCount installed", addons) }))
+        settingsGroup(listOfNotNull(
+            account?.let { { SettingsItem("Account", Lucide.UserRound, if (local) "Using this device locally" else "Connected to a server", action = it) } },
+            devices?.let { { SettingsItem("Devices", Lucide.Monitor, action = it) } },
+            stremioImport?.let { { SettingsItem(stremioImportSection, Lucide.Import, action = it) } },
+            parental?.let { { SettingsItem("Parental controls", Lucide.Lock, action = it) } },
+            information?.let { open -> { SettingsItem("Help", Lucide.Info) { open("Help") } } },
+            information?.let { open -> { SettingsItem("About VIPTV", Lucide.Info) { open("About") } } }))
         item {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 TextButton(onClick = leave) { Text(if (local) "Change connection" else "Sign out", color = Palette.danger, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
@@ -90,16 +69,15 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
         }
         item { Spacer(Modifier.height(24.dp)) }
     }
-    unavailable?.let { label ->
-        AlertDialog(onDismissRequest = { unavailable = null }, title = { Text(label) },
-            text = { Text(if (label == "About VIPTV") "VIPTV · Experimental build" else "$label is not available in this experiment yet.") },
-            confirmButton = { TextButton(onClick = { unavailable = null }) { Text("OK") } })
-    }
 }
 
-@Composable
-private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) { Column(content = content) }
+/** One rounded group of [rows] with hairlines between them; an empty group is left out. */
+private fun LazyListScope.settingsGroup(rows: List<@Composable () -> Unit>) {
+    if (rows.isNotEmpty()) item {
+        Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
+            Column { rows.forEachIndexed { index, row -> if (index > 0) SettingsDivider(); row() } }
+        }
+    }
 }
 
 @Composable

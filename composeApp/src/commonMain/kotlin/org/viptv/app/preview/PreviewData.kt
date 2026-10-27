@@ -1,5 +1,7 @@
 package org.viptv.app.preview
 
+import org.viptv.app.connection.BrowseQuery
+import org.viptv.app.connection.GenreChoice
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.connection.Profile
 import org.viptv.app.resources.Res
@@ -26,6 +28,8 @@ internal object PreviewData {
     val home = HomeSnapshot(scope = Scope("preview", "preview", "preview", 1), revision = 1, hero = hero,
         rows = listOf(HomeRow(id = "continue", title = "Continue Watching", provider_id = "preview", state = RowState.READY, cards = watching),
             HomeRow(id = "new", title = "New this week", provider_id = "preview", state = RowState.READY, cards = posters)), complete = true)
+    val genres = listOf("Action", "Comedy", "Drama", "Horror", "Science Fiction", "Thriller")
+        .map { GenreChoice(it, BrowseQuery("movie", genre = it)) }
     val playerTitle = watching.first().copy(subtitle = "S1 E2 · Please Don’t Go")
     val detail = DetailSnapshot(item = hero.copy(subtitle = "Movie · " + hero.subtitle), episodes = emptyList())
     val sources = listOf(SourceCandidate("source-1", "preview", "LordStreams", "WEB-DL · HEVC · 5.1 · 18.4 GB"),

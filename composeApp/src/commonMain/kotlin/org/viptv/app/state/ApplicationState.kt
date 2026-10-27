@@ -56,6 +56,8 @@ data class ApplicationState(
     val browseControls: DiscoveryControls? = null,
     val browseCards: List<Card> = emptyList(),
     val browseNext: String? = null,
+    /** What the Home Genres chip offers, fetched once per profile. */
+    val homeGenres: HomeGenres? = null,
     val livePage: LiveCatalogPage? = null,
     val liveQuery: LiveQuery = LiveQuery(),
     val liveGuides: Map<String, LiveGuideSnapshot> = emptyMap(),

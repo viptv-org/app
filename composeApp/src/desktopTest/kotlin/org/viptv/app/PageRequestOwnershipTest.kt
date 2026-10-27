@@ -32,7 +32,9 @@ class PageRequestOwnershipTest {
             assertFalse(controller.state.value.busy, "Leaving a page immediately releases its loading UI")
             release.complete(Unit); pending.join(); controller.job?.join()
             assertEquals(Screen.Home, controller.state.value.screen)
-            assertNull(controller.state.value.detail); assertNull(controller.state.value.sourceTitle); assertNull(controller.state.value.error)
+            assertNull(controller.state.value.detail); assertNull(controller.state.value.error)
+            // Play opens the selector on the tap (app#11); the retired read must not reopen it or find sources.
+            if (action == "play") assertEquals(card, controller.state.value.sourceTitle) else assertNull(controller.state.value.sourceTitle)
             assertEquals(0, sourceCalls); assertEquals("default", controller.state.value.selectedProfile); assertFalse(controller.state.value.busy)
         } finally { release.complete(Unit); controller.job?.cancelAndJoin(); fixture.close(controller) }
     }
@@ -51,7 +53,7 @@ class PageRequestOwnershipTest {
             controller.navigate(Screen.Search); controller.navigate(Screen.Home)
             finishPrior.complete(Unit); controller.job?.join()
             assertEquals(0, metadataCalls); assertEquals(Screen.Home, controller.state.value.screen)
-            assertNull(controller.state.value.sourceTitle); assertFalse(controller.state.value.busy)
+            assertFalse(controller.state.value.findingSources); assertFalse(controller.state.value.busy)
         } finally { finishPrior.complete(Unit); controller.job?.cancelAndJoin(); fixture.close(controller) }
     }
 

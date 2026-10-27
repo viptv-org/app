@@ -128,7 +128,7 @@ class ContinueWatchingActivationTest {
         val detail = DetailSnapshot(series, episodes = (1L..5L).map(::episode), next_cursor = null)
         val paths = mutableListOf<String>()
         val client = HttpClient(MockEngine { request ->
-            paths += request.url.encodedPath
+            synchronized(paths) { paths += request.url.encodedPath }
             val expected = request.url.parameters["card"]?.let { Json.decodeFromString<Card>(it) }
             // Host rule: the metadata expectation must name the title being looked up.
             if (request.url.encodedPath == "/api/meta/series/tt38262097" && expected?.identity != series.identity)
@@ -142,13 +142,15 @@ class ContinueWatchingActivationTest {
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "1", home = home)
         try {
             controller.playTitle(resume)
-            withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources) delay(10) }
+            // The selector opens on the tap; the title's Details fill in behind it (app#11).
+            withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources || controller.state.value.detail == null) delay(10) }
             val state = controller.state.value
             assertEquals(resume.identity, state.sourceTitle?.identity, "sources are for S1 E3")
             assertEquals(series.identity, state.sourceTitle?.parent_identity)
             assertEquals(Screen.Details, state.sourceReturnScreen, "Back from sources lands on the title's Details")
             assertEquals(Screen.Home, state.detailReturnScreen, "and Back again returns Home")
-            assertEquals("/api/meta/series/tt38262097", paths.first())
+            // Discovery for this scoped episode runs beside the Details read, so either may reach the host first.
+            assertTrue("/api/meta/series/tt38262097" in synchronized(paths) { paths.toList() })
         } finally { controller.job?.cancel(); remote.close() }
     }
 }
