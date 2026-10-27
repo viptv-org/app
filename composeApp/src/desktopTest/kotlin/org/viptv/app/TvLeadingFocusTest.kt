@@ -138,16 +138,16 @@ class TvLeadingFocusTest {
         for ((loaded, cancel) in listOf(true to false, false to false, false to true)) {
             val elsewhere = FocusRequester()
             var episodes by mutableStateOf(if (loaded) listOf(episode(1), episode(2)) else listOf(episode(1)))
-            var restore: (() -> Boolean)? = null
+            val shelf = org.viptv.app.features.details.ShelfFocusHandle()
             Fixture(1920, 1080) {
                 Column {
                 Box(Modifier.size(20.dp).testTag("elsewhere").focusRequester(elsewhere).focusable())
                 org.viptv.app.features.details.TvEpisodeShelf(parent, episodes, 1f, {}, {}, true, null, {},
                     seasonIndex = listOf(org.viptv.engine.wire.EpisodeSeason(1, 1, 0), org.viptv.engine.wire.EpisodeSeason(2, 1, 1)),
-                    restoreChanged = { restore = it })
+                    focus = shelf)
                 }
             }.use { f ->
-                f.settle(); assertTrue(restore!!()); f.settle()
+                f.settle(); assertEquals(org.viptv.app.features.details.ShelfFocus.Focused, shelf.request!!(false)); f.settle()
                 // restore enters an episode; Up goes to its selected season.
                 f.press(Key.DirectionUp); f.settle()
                 f.press(Key.DirectionRight); f.settle()
