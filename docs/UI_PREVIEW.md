@@ -49,6 +49,11 @@ for three seconds, then supplies the fixture snapshot to the same screen instanc
 This exercises the real loading-to-content transition without account, provider,
 or persistence operations. `Loading` remains the static loading-scene entry point.
 
+Phone, tablet, desktop and browser `Library` variant `Long` (desktop
+`VIPTV_UI_VARIANT=Long`, browser `#ui-preview/Library/Long`) renders 48 saved
+titles with type chips and Filters, long enough to review the collapsing title
+and History card (app#58). Preview state only; nothing is saved.
+
 TV `Library` renders the supplied My List artwork with fixture watched ordering.
 Variants `Empty` and `Unavailable` render the corresponding provisional states.
 Filters and sort choices change preview state only; no saved-list database or
