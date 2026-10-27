@@ -1,6 +1,11 @@
 package org.viptv.app
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
+import coil3.compose.LocalPlatformContext
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
@@ -15,7 +20,7 @@ import kotlin.test.*
  * app#45: in the phone App shell, each page's back arrow takes the same step as Android Back
  * (MainActivity: the route's own step, else [navigateBack] while [systemBackStaysInApp]).
  */
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BackArrowsUiTest {
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -28,8 +33,14 @@ class BackArrowsUiTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, store).also { it.mutable.value = start }
         var routeBack: (() -> Unit)? = null
+        private var previousLoader: ImageLoader? = null
+        private var appLoader: ImageLoader? = null
         val scene = ImageComposeScene(390, 844, Density(1f)) {
+            val context = LocalPlatformContext.current
+            // App configures Coil's singleton loader; an earlier test may already have created the default one.
+            remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
             App(providedController = controller, manageControllerLifecycle = false, entryBackChanged = { routeBack = it })
+            appLoader = SingletonImageLoader.get(context)
         }
         private var frame = 0L
         fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
@@ -47,7 +58,10 @@ class BackArrowsUiTest {
             assertTrue(routeBack != null || controller.state.value.systemBackStaysInApp(), "Android Back left the app from ${controller.state.value.screen}")
             routeBack?.invoke() ?: controller.navigateBack(); render()
         }
-        override fun close() { scene.close(); scope.cancel() }
+        override fun close() {
+            scene.close(); scope.cancel()
+            appLoader?.shutdown(); previousLoader?.let { SingletonImageLoader.setUnsafe(it) }
+        }
     }
 
     private fun assertSameStep(name: String, start: ApplicationState, expected: Screen, check: (ApplicationState) -> Unit = {}) {
