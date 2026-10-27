@@ -12,8 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
@@ -47,15 +51,16 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val headerHeight = remember { SourceHeaderHeight() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        // The real details page stays composed behind this overlay.
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(onClick = back))
+        // The real details page stays composed behind this overlay. The scrim closes it on
+        // a click but never takes keyboard focus, which stays in the panel.
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.clickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
             television -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.5f)
-            else -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().widthIn(max = 461.dp).fillMaxWidth()
+            else -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(sourceDrawerWidth(maxWidth))
         }
         Column(panel.clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
-            topEnd = if (phone) 24.dp else 0.dp)).background(Palette.surface)) {
+            topEnd = if (phone) 24.dp else 0.dp)).background(Palette.surface).semantics { paneTitle = "Choose a source" }) {
             if (phone) Box(Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp)
                 .width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Palette.secondary.copy(alpha = 0.4f)))
             Column(Modifier.padding(horizontal = if (television) 48.dp else 20.dp, vertical = 16.dp),
@@ -86,11 +91,16 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                         focusChanged = { has -> if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null })
                 }
             }
-            HorizontalDivider(color = Palette.secondary.copy(alpha = .12f))
-            Text("Play always starts the best match. Change this in Settings › Playback.", Modifier.padding(horizontal = 20.dp, vertical = 16.dp), color = Palette.secondary, fontSize = 12.sp)
         }
     }
 }
+
+/**
+ * The web/desktop and tablet drawer's width in a [window] that wide: room for source
+ * titles, badges and release lines (owner, app#60), never narrower than the 460 the
+ * design specified, and the whole window when that is narrower still.
+ */
+internal fun sourceDrawerWidth(window: Dp): Dp = minOf(window, maxOf(460.dp, minOf(720.dp, window * 0.55f)))
 
 internal fun sourceSummary(sources: List<SourceCandidate>): String {
     val addons = sources.map { it.sourceFilterId() }.distinct().size

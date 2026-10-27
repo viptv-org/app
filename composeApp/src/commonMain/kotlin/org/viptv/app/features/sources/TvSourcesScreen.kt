@@ -160,9 +160,10 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     }
                 }
 
-                if (!noSources && !torrentOnly) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-                    if (loadingMore || busy) CircularProgressIndicator(Modifier.size(20.dp * scale), color = Palette.secondary, strokeWidth = 2.dp * scale)
-                    Text(if (loadingMore || busy && sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else if (busy) openingStage ?: "Opening stream…" else "Play always starts the best match. Change how it’s chosen in Settings › Playback.",
+                // Only while add-ons answer or a stream opens: an idle picker has no status line.
+                if (!noSources && !torrentOnly && (loadingMore || busy)) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
+                    CircularProgressIndicator(Modifier.size(20.dp * scale), color = Palette.secondary, strokeWidth = 2.dp * scale)
+                    Text(if (loadingMore || sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else openingStage ?: "Opening stream…",
                         color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
                 }
             }
