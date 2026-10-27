@@ -47,7 +47,8 @@ private fun BrowserHistory(controller: ApplicationController, back: GlobalBack) 
 
 /**
  * Before a click or Tab moves DOM focus into Compose, keys reach the page, not Compose. Escape there
- * takes the same Back. Keyup, after the Details dialog's own first-key handler, which marks it handled.
+ * takes the same Back. It listens for keyup on the window, after the browser Details dialog's own
+ * document keyup handler (InitialBrowserEscape), which marks the event handled so one press is one step.
  */
 @Composable
 private fun BodyEscape(back: GlobalBack) {

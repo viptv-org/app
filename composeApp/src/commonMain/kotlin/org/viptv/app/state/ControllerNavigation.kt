@@ -101,7 +101,7 @@ fun ApplicationController.navigateBack() {
         BackStep.Details -> backDetails()
         BackStep.Profiles -> navigate(Screen.Profiles, record = false)
         BackStep.ManageProfiles -> stopManagingProfiles()
-        BackStep.History -> popHistory()
+        BackStep.PopHistory -> popHistory()
         BackStep.Home -> navigate(Screen.Home, record = false)
     }
 }
@@ -122,7 +122,7 @@ fun ApplicationState.systemBackStaysInApp(): Boolean = when (screen) {
     else -> canNavigateBack()
 }
 
-private enum class BackStep { Root, Sources, Player, Details, Profiles, ManageProfiles, History, Home }
+private enum class BackStep { Root, Sources, Player, Details, Profiles, ManageProfiles, PopHistory, Home }
 
 private fun ApplicationState.backStep(): BackStep = when (screen) {
     Screen.Sources -> BackStep.Sources
@@ -135,16 +135,17 @@ private fun ApplicationState.backStep(): BackStep = when (screen) {
         managingProfiles -> BackStep.ManageProfiles
         // The first choice after sign-in has nowhere to go back to.
         selectedProfile == null -> BackStep.Root
-        navBack.isNotEmpty() -> BackStep.History
+        navBack.isNotEmpty() -> BackStep.PopHistory
         else -> BackStep.Home
     }
     else -> when {
-        navBack.isNotEmpty() -> BackStep.History
+        navBack.isNotEmpty() -> BackStep.PopHistory
         screen == Screen.Home -> BackStep.Root
         else -> BackStep.Home
     }
 }
 
+/** Parental controls' Titles or a Settings sub-page is open: [backWithinSettings] goes up one level. */
 private fun ApplicationState.settingsLevelOpen() =
     screen == Screen.Settings && (parentTitles != null || settingsPage?.parent() != null)
 
@@ -156,7 +157,7 @@ fun ApplicationController.showSettingsPage(page: SettingsPage) {
 /** Back inside Settings, one level at a time: Parental controls' Titles, then a sub-page back to the Settings list. */
 private fun ApplicationController.backWithinSettings(): Boolean {
     val state = mutable.value
-    if (state.screen != Screen.Settings) return false
+    if (!state.settingsLevelOpen()) return false
     if (state.parentTitles != null) { closeParentTitles(); return true }
     val parent = state.settingsPage?.parent() ?: return false
     mutable.value = state.copy(settingsPage = parent)

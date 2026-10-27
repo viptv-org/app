@@ -56,7 +56,7 @@ class BrowserBackHistory(
     private fun settle() {
         if (pending > 0) return
         // An entry behind to catch Back; pushing also drops entries ahead the app can't replay.
-        if (canBack() && current == 0 || !canForward() && top > current) { current++; top = current; history.push(current) }
+        if ((canBack() && current == 0) || (!canForward() && top > current)) { current++; top = current; history.push(current) }
         // An entry ahead to catch Forward: push it, then step back onto the current one.
         if (canForward() && top == current) { top = current + 1; history.push(top); pending++; history.go(-1) }
     }

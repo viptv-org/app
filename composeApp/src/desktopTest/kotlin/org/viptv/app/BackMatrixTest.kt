@@ -27,7 +27,7 @@ class BackMatrixTest {
         } finally { scope.cancel() }
     }
 
-    /** MainActivity's BackHandler: a route's own step first, else navigateBack(); false when the activity leaves the app. */
+    /** MainActivity's BackHandler with no route step registered: navigateBack(), or false when the activity leaves the app. */
     private fun ApplicationController.androidBack(): Boolean {
         if (!state.value.systemBackStaysInApp()) return false
         navigateBack(); return true
