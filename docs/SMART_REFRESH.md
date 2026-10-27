@@ -3,7 +3,8 @@
 Status: first implemented in app `360e597` and backend `63b2ecd`. The foreground
 gap, the no-baseline rule and the visible-Details reload were revised for
 app#2 (2026-10-26); see the rules in section 2. A moved `addons` token also
-reloads the add-on list since app#3 (2026-10-26).
+reloads the add-on list since app#3 (2026-10-26). Phone and tablet
+pull-to-refresh was added for app#1 (2026-10-26); see section 6.
 
 ## Audit
 
@@ -267,11 +268,27 @@ which Compose Multiplatform maps per platform) that sends
 I will check each platform's mapping during implementation. If one is wrong,
 it gets an `expect`/`actual` replacement.
 
-### 6. Pull-to-refresh
+### 6. Pull-to-refresh (phone and tablet, app#1)
 
-Not recommended now. With foreground checks and 15 s checks it would almost
-never find anything, and the design has no control for it. If the owner wants
-it, it needs a design entry first, phone Home only.
+The owner asked for the standard Android gesture (2026-10-26), so it ships on
+phone and tablet layouts. TV, desktop and browser layouts have no gesture.
+
+- **Where.** Home, My List, History and Details: the pages the quiet lane
+  reloads in place. The sources sheet over Details, Browse, Calendar, Live,
+  Search and Settings have no gesture.
+- **Gesture.** Material 3 `pullToRefresh` with its indicator at the top of
+  the page. A pull released before the threshold does nothing.
+- **What it runs.** `pullToRefresh()` asks the quiet lane for a `Refresh`
+  straight away: no revisions check, so no token comparison and no 2 s
+  coalescing. The rebuild is the same one that follows playback: Home, the
+  visible My List or History page, and Details when it is on screen. If a
+  check or refresh is already running, the forced refresh runs right after
+  it. The indicator stays until the lane has nothing left to do.
+- **Quiet-lane rules apply.** No `busy` cover, no scroll reset, and the
+  viewer's operation is not cancelled. A failure keeps the shown data, shows
+  no error and ends the indicator. An expired session goes to sign-in.
+- **Design.** The design specs do not cover the gesture yet; the spec entry
+  is tracked in viptv-org/design#23.
 
 ## Cost
 
