@@ -14,37 +14,79 @@ internal class PublicArtworkMapper : Mapper<String, Uri> {
 }
 
 internal fun publicArtworkUrl(value: String): String {
-    if (!value.startsWith("https://")) return value
-    val url = runCatching { Url(value) }.getOrNull() ?: return value
-    if (url.host !in publicArtworkHosts || url.port != 443 || url.user != null || url.password != null ||
-        url.encodedQuery.isNotEmpty() || url.fragment.isNotEmpty()) return value
+    if (!isPublicArtwork(value)) return value
     // WebP retains the alpha channel without turning photographic art into large PNGs.
     // No background/flatten option: the caller owns the background color.
-    return "https://wsrv.nl/?url=${value.encodeURLParameter()}&output=webp&q=90"
+    return "$IMAGE_SERVICE?url=${value.encodeURLParameter()}&output=webp&q=90"
 }
+
+private const val IMAGE_SERVICE = "https://wsrv.nl/"
 
 private val publicArtworkHosts = setOf("images.metahub.space", "episodes.metahub.space", "live.metahub.space",
     "image.tmdb.org", "artworks.thetvdb.com", "assets.fanart.tv", "i.imgur.com", "simkl.in")
+
+/** A plain public URL on a known artwork host: no port, credentials, query or fragment that could carry a secret. */
+private fun isPublicArtwork(value: String): Boolean {
+    if (!value.startsWith("https://")) return false
+    val url = runCatching { Url(value) }.getOrNull() ?: return false
+    return url.host in publicArtworkHosts && url.port == 443 && url.user == null && url.password == null &&
+        url.encodedQuery.isEmpty() && url.fragment.isEmpty()
+}
 
 /**
  * wsrv.nl request sized for the slot the art is drawn into.
  *
  * Without `w`/`h` the service hands back the full-resolution poster (often 2000 px
  * wide) for a 232 px card, so the device pays decode + upload for pixels it never
- * shows. `fit=cover` preserves the existing crop, `we` keeps small art from being
- * enlarged, and [blur] asks wsrv for a Gaussian blur (sigma) so a backdrop can be
- * composed from an already-blurred bitmap instead of a runtime blur pass.
+ * shows. `fit=cover` preserves the existing crop and `we` keeps small art from being
+ * enlarged. Art the server already proxied through wsrv.nl is re-sized from its
+ * source the same way (app#115). Art the service cannot fetch is returned unchanged.
  */
-internal fun sizedArtwork(url: String?, widthPx: Int, heightPx: Int, blur: Int? = null): String? {
-    if (url == null) return null
-    if (url.isBlank()) return null
-    if (!url.startsWith("https://")) return url
-    if (url.startsWith("https://wsrv.nl/")) return url
-    val url2 = runCatching { Url(url) }.getOrNull() ?: return url
-    if (url2.host !in publicArtworkHosts || url2.port != 443 || url2.user != null || url2.password != null ||
-        url2.encodedQuery.isNotEmpty() || url2.fragment.isNotEmpty()) return url
+internal fun sizedArtwork(url: String?, widthPx: Int, heightPx: Int): String? =
+    if (url.isNullOrBlank()) null else serviceArtwork(url, widthPx, heightPx, blur = null) ?: url
+
+/**
+ * The image service's Gaussian-blurred (sigma [blur]) rendition of [url] for a soft
+ * backdrop, or null when the service cannot fetch it and the caller must blur at
+ * runtime. Never an unblurred URL (app#80).
+ */
+internal fun blurredArtwork(url: String?, widthPx: Int, heightPx: Int, blur: Int): String? =
+    if (url.isNullOrBlank()) null else serviceArtwork(url, widthPx, heightPx, blur)
+
+private fun serviceArtwork(url: String, widthPx: Int, heightPx: Int, blur: Int?): String? {
+    val source = largestSimklSize(artworkSource(url) ?: return null)
     val w = widthPx.coerceIn(64, 3840)
     val h = heightPx.coerceIn(64, 2160)
     val blurPart = blur?.let { "&blur=$it" } ?: ""
-    return "https://wsrv.nl/?url=${url.encodeURLParameter()}&w=$w&h=$h&fit=cover&we=1&output=webp&q=82$blurPart"
+    return "$IMAGE_SERVICE?url=${source.encodeURLParameter()}&w=$w&h=$h&fit=cover&we=1&output=webp&q=82$blurPart"
 }
+
+/** The original the service should fetch: a public artwork URL, or the `url` an existing wsrv.nl request wraps. */
+private fun artworkSource(url: String): String? {
+    if (!url.startsWith(IMAGE_SERVICE)) return url.takeIf(::isPublicArtwork)
+    // Already on its way to the service, so any plain https source may be re-requested at the slot's size.
+    val inner = runCatching { Url(url).parameters["url"] }.getOrNull() ?: return null
+    val parsed = runCatching { Url(inner) }.getOrNull() ?: return null
+    return inner.takeIf { it.startsWith("https://") && parsed.user == null && parsed.password == null }
+}
+
+/**
+ * Simkl serves each image in fixed sizes (measured 2026-10-27): posters `_s` 40, `_cm` 84,
+ * `_c` 170, `_ca` 190 and `_m` 340 px wide (`_w` is a 600 x 338 landscape crop, not a
+ * poster); fanart `_w` 600, `_mobile` 960 and `_medium` 1920 px; episode stills `_m` 112,
+ * `_c` 210 and `_w` 600 px. Ask for the largest of the same shape and let the service
+ * scale it down to the slot.
+ */
+private fun largestSimklSize(url: String): String {
+    val match = simklImage.matchEntire(url) ?: return url
+    val (folder, path, size, extension) = match.destructured
+    val largest = when (folder) {
+        "posters" -> "m".takeIf { size in setOf("s", "cm", "c", "ca") }
+        "fanart" -> "medium".takeIf { size in setOf("w", "mobile") }
+        "episodes" -> "w".takeIf { size in setOf("m", "c") }
+        else -> null
+    } ?: return url
+    return "https://simkl.in/$folder/${path}_$largest.$extension"
+}
+
+private val simklImage = Regex("""https://simkl\.in/(posters|fanart|episodes)/([A-Za-z0-9/]+)_([a-z0-9]+)\.(webp|jpg)""")
