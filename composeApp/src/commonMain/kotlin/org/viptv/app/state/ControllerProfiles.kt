@@ -49,9 +49,10 @@ fun ApplicationController.renameProfile(name: String, pin: String) = profileMuta
     mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true)
 }
 
-fun ApplicationController.setProfileAvatar(avatarId: String, pin: String) = profileMutation {
+/** Saves a design catalog pick ([style], 1-based [choice]) for the profile being edited. */
+fun ApplicationController.setProfileAvatar(style: String, choice: Int, pin: String) = profileMutation {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
-    if (local != null) requireNotNull(local).setProfileAvatar(id,avatarId,pin) else requireNotNull(connection).setProfileAvatar(id,avatarId)
+    if (local != null) requireNotNull(local).setProfileAvatar(id,style,choice,pin) else requireNotNull(connection).setProfileAvatar(id,style,choice)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement)
 }

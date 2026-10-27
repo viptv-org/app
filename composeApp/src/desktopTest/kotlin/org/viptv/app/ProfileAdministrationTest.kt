@@ -18,7 +18,7 @@ class ProfileAdministrationTest {
         val remote=RemoteConnection("https://fixture.example",client=client,browserMode=true);val controller=ApplicationController(this)
         controller.connection=remote;controller.mutable.value=ApplicationState(screen=Screen.Profiles,profileToEdit="one",profiles=listOf(Profile("one","One",null)))
         try{controller.createProfile("New");entered.await();val original=controller.job
-            controller.createProfile("New");controller.renameProfile("Other","");controller.setProfileAvatar("initial-blue","");controller.deleteProfile("");controller.setProfilePin("","1234");controller.selectProfile("one")
+            controller.createProfile("New");controller.renameProfile("Other","");controller.setProfileAvatar("clay",2,"");controller.deleteProfile("");controller.setProfilePin("","1234");controller.selectProfile("one")
             assertSame(original,controller.job);assertTrue(original!!.isActive);assertEquals(1,writes)
             release.complete(Unit);original.join();assertEquals(1,writes);assertEquals(1,bootstraps);assertFalse(controller.state.value.busy)
         }finally{release.complete(Unit);controller.job?.cancelAndJoin();remote.close()}

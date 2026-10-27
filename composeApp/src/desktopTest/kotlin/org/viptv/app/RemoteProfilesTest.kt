@@ -19,7 +19,7 @@ class RemoteProfilesTest {
         val writes = mutableListOf<Pair<String, JsonObject>>()
         val allowed = """{"availability":"Available","message":null}"""
         val unsupported = """{"availability":"Unsupported","message":"Account parent PINs apply"}"""
-        val management = """{"profiles":[{"id":"1","name":"Parent","avatar_id":"vynxc","is_primary":true,"can_delete":false,"kids":true,"max_age":10}],"capabilities":{"create":$allowed,"rename":$allowed,"delete":$allowed,"avatar":$allowed,"profile_pin":$unsupported,"parent_unlock":$allowed},"parent":{"pin_configured":true,"unlocked":true,"restricted":false}}"""
+        val management = """{"profiles":[{"id":"1","name":"Parent","avatar_id":"vynxc","avatar_style":"critters","avatar_choice":null,"avatar_url":"https://avatars.example/seed.png","is_primary":true,"can_delete":false,"kids":true,"max_age":10},{"id":"2","name":"Kid","avatar_id":null,"avatar_style":"disney","avatar_choice":6,"avatar_url":"https://avatars.example/disney-6.png"}],"capabilities":{"create":$allowed,"rename":$allowed,"delete":$allowed,"avatar":$allowed,"profile_pin":$unsupported,"parent_unlock":$allowed},"parent":{"pin_configured":true,"unlocked":true,"restricted":false}}"""
         val client = HttpClient(MockEngine { request ->
             if (request.method in listOf(HttpMethod.Patch, HttpMethod.Post))
                 writes += request.url.encodedPath to Json.parseToJsonElement((request.body as TextContent).text).jsonObject
@@ -27,18 +27,25 @@ class RemoteProfilesTest {
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
         val profiles = remote.profileManagement()
-        assertTrue(profiles.profiles.single().kids)
-        assertEquals(10, profiles.profiles.single().max_age)
+        assertTrue(profiles.profiles.first().kids)
+        assertEquals(10, profiles.profiles.first().max_age)
         assertTrue(profiles.canManage)
-        assertFalse(profiles.cards().single().canDelete)
-        assertFalse(profiles.cards().single().locked)
+        val (parent, kid) = profiles.cards()
+        assertFalse(parent.canDelete)
+        assertFalse(parent.locked)
+        assertEquals("vynxc", parent.avatarId)
+        assertEquals("critters", parent.avatarStyle)
+        assertNull(parent.avatarChoice)
+        assertEquals("https://avatars.example/seed.png", parent.avatarUrl)
+        assertEquals(Profile("2", "Kid", null, avatarStyle = "disney", avatarChoice = 6, avatarUrl = "https://avatars.example/disney-6.png"), kid)
         assertEquals("Unsupported", profiles.capabilities.profile_pin.availability)
         remote.renameProfile("1", "Updated")
-        remote.setProfileAvatar("1", "initial-blue")
+        remote.setProfileAvatar("1", "disney", 6)
         remote.unlockParent("1234")
         assertEquals(listOf("/api/profiles/1", "/api/profiles/1", "/api/parent/unlock"), writes.map { it.first })
         assertEquals(setOf("name"), writes[0].second.keys)
-        assertEquals(setOf("avatar_id"), writes[1].second.keys)
+        // A catalog pick alone: the server rejects a write naming the legacy avatar_id too.
+        assertEquals(buildJsonObject { put("avatar_style", "disney"); put("avatar_choice", 6) }, writes[1].second)
         assertEquals(setOf("pin"), writes[2].second.keys)
         remote.close()
     }
