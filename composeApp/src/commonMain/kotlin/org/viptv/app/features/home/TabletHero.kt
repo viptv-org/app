@@ -26,7 +26,6 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {
-    var notice by remember { mutableStateOf<String?>(null) }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val portrait = maxWidth < 900.dp
         Box(Modifier.fillMaxWidth().height(if (portrait) 640.dp else 520.dp)) {
@@ -37,7 +36,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                 0.45f to Palette.background.copy(alpha = 0.4f), 0.7f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.55f to Color.Transparent, 1f to Palette.background)))
             Box(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 40.dp)) {
-                HomeFilters(Screen.Home, navigate) { notice = "Genre filtering" }
+                HomeFilters(Screen.Home, navigate)
             }
             Column(Modifier.align(Alignment.BottomStart).padding(start = 32.dp, end = 32.dp, bottom = 40.dp).widthIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -65,7 +64,4 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
             }
         }
     }
-    notice?.let { label -> AlertDialog(onDismissRequest = { notice = null }, title = { Text(label) },
-        text = { Text("$label is not available in this experiment yet.") },
-        confirmButton = { TextButton(onClick = { notice = null }) { Text("OK") } }) }
 }

@@ -89,6 +89,12 @@ fun App(
             // Native phone and tablet layouts; fixed for the life of the app.
             val touch = !television && !browser && !desktopChrome
             val tablet = !compact && touch
+            // Only the phone header and the tablet hero carry Home's Genres chip.
+            val showsGenreChip = touch && state.screen == Screen.Home
+            LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
+            val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
+                state.homeGenres?.takeIf { showsGenreChip && it.profile == state.selectedProfile }?.let { HomeGenrePicker(it.choices, controller::browseGenre) }
+            }
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: defaultServer, state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
@@ -110,7 +116,7 @@ fun App(
                     maturity = state.profileManagement?.profiles?.find { it.id == state.profileToEdit }?.let { if(it.kids)it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction" })
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
-                  Column(Modifier.fillMaxSize()) {
+                  CompositionLocalProvider(LocalHomeGenres provides homeGenres) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings))) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
@@ -167,7 +173,7 @@ fun App(
                         }
                         }
                     }
-                  }
+                  } }
                   if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       BottomNavigation(state.screen, controller::navigate)
                   }
