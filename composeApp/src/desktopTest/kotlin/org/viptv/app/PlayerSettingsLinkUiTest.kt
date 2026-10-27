@@ -213,6 +213,21 @@ class PlayerSettingsLinkUiTest {
         }
     }
 
+    @Test fun escapeInATextFieldLeavesTheFieldBeforeLeavingSettings() = onEdt {
+        Visit(1280, 800, desktop = true).use { ui ->
+            ui.open(); settle(ui.scene)
+            val field = ui.scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
+                .first { it.config.contains(SemanticsActions.RequestFocus) && it.config.contains(SemanticsProperties.EditableText) &&
+                    label(it).contains("Preferred audio language") }
+            assertTrue(field.config[SemanticsActions.RequestFocus].action!!.invoke()); settle(ui.scene)
+            fun escape() { ui.scene.sendKeyEvent(KeyEvent(Key.Escape, KeyEventType.KeyDown)); ui.scene.sendKeyEvent(KeyEvent(Key.Escape, KeyEventType.KeyUp)) }
+            escape(); settle(ui.scene)
+            assertEquals(Screen.Settings, ui.controller.state.value.screen, "The first Escape only leaves the text field")
+            escape(); settle(ui.scene)
+            ui.assertBackInThePlayer("Escape twice")
+        }
+    }
+
     @Test fun tvRemoteBackFromTheVisitReturnsToThePlayer() = onEdt {
         Visit(1920, 1080, television = true).use { ui ->
             ui.open(); settle(ui.scene)

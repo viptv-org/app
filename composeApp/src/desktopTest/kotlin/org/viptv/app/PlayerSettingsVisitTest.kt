@@ -27,7 +27,6 @@ class PlayerSettingsVisitTest {
     }
     private val title = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "metadata", title = "Movie", badges = emptyList())
     private val source = SourceCandidate("opaque-stream", "addon:1", "Fixture")
-    private val facts = buildJsonObject { put("platform", "android"); put("can_play_direct", true) }
 
     /** A fake backend: each `POST /api/playback` opens lease-1, lease-2, …; preferences are stored by revision. */
     private class Server {
@@ -36,6 +35,9 @@ class PlayerSettingsVisitTest {
         val released = mutableListOf<String>()
         var heartbeat: (String) -> HttpStatusCode = { HttpStatusCode.OK }
         var preferences = PreferencesSnapshot(revision = 3)
+        /** A server gateway conversion (HLS from [offsetSeconds]) instead of the source URL itself. */
+        var gateway = false
+        var offsetSeconds = 0.0
     }
 
     private val codec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -51,8 +53,12 @@ class PlayerSettingsVisitTest {
                     when {
                         path == "/api/playback" && request.method == HttpMethod.Post -> {
                             server.opens += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
-                            json("""{"id":"lease-${server.opens.size}","status":"ready","renew_after_seconds":20,
-                                "delivery":{"kind":"direct","url":"https://media.example/movie-${server.opens.size}.mp4","position":${server.opens.last()["position"]}}}""")
+                            val n = server.opens.size
+                            if (server.gateway) json("""{"id":"lease-$n","status":"ready","renew_after_seconds":20,
+                                "delivery":{"kind":"gateway","format":"hls","url":"https://watch.example/gateway/$n/index.m3u8","position":0,
+                                "timeline_offset_seconds":${server.offsetSeconds}}}""")
+                            else json("""{"id":"lease-$n","status":"ready","renew_after_seconds":20,
+                                "delivery":{"kind":"direct","url":"https://media.example/movie-$n.mp4","position":${server.opens.last()["position"]}}}""")
                         }
                         path.endsWith("/heartbeat") -> {
                             val lease = path.removePrefix("/api/playback/").removeSuffix("/heartbeat")
@@ -80,6 +86,7 @@ class PlayerSettingsVisitTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(backgroundScope, store)
         controller.connection = remote
+        val facts = buildJsonObject { put("platform", "android"); put("can_play_direct", !server.gateway) }
         controller.leaseOpener = PlaybackLeaseOpener { connection, candidate, profile, forceGateway, position, stage ->
             connection.openPlayback(candidate, profile, facts, forceGateway, position, torrents = null, stage = stage)
         }
@@ -104,8 +111,7 @@ class PlayerSettingsVisitTest {
         controller.openPlayerSettings(); runCurrent()
         val state = controller.state.value
         assertEquals(Screen.Settings, state.screen)
-        assertEquals(PLAYER_SETTINGS_SECTION, state.settingsEntrySection)
-        assertEquals("Subtitles & audio", PLAYER_SETTINGS_SECTION)
+        assertEquals("Subtitles & audio", state.settingsEntrySection)
         assertTrue(state.settingsReturnsToPlayer)
         assertTrue(state.paused, "Opening Settings pauses playback")
         assertSame(input, state.playback, "Playback waits behind Settings")
@@ -208,6 +214,59 @@ class PlayerSettingsVisitTest {
         assertEquals(754_000L, state.playback?.positionMillis)
         assertTrue(state.paused)
         assertNull(state.error)
+        controller.closePlayer()
+    }
+
+    @Test fun aGatewayStreamReturnsAtTheSameTitlePositionWithoutReopening() = runTest {
+        val server = Server().apply { gateway = true; offsetSeconds = 600.0 }
+        val controller = controller(server)
+        play(controller, positionMillis = 801_500)
+        val input = assertNotNull(controller.state.value.playback)
+        assertEquals(600_000L, input.timelineOffsetMillis)
+        controller.openPlayerSettings(); runCurrent()
+        val current = assertNotNull(controller.state.value.preferences).preferences
+        controller.updatePreferences(current.copy(subtitle_font_scale = 1.25)); runCurrent()
+        controller.navigateBack(); runCurrent()
+        assertSame(input, controller.state.value.playback, "Size and colours are drawn by this device: no new lease")
+        assertEquals(1, server.opens.size)
+        // The gateway's media starts at 600 s: title 801.5 s is 201.5 s into it.
+        assertEquals(201_500L, input.positionMillis)
+        assertEquals(1.25, input.preferences.subtitle_font_scale)
+        controller.closePlayer()
+    }
+
+    @Test fun aLanguageChangedForAGatewayStreamReopensItAtTheSamePositionPaused() = runTest {
+        val server = Server().apply { gateway = true; offsetSeconds = 600.0 }
+        val controller = controller(server)
+        play(controller, positionMillis = 801_500)
+        controller.openPlayerSettings(); runCurrent()
+        val current = assertNotNull(controller.state.value.preferences).preferences
+        controller.updatePreferences(current.copy(preferred_audio_language = "ja")); runCurrent()
+        controller.navigateBack(); runCurrent()
+        // The gateway picked its audio when the lease opened; it picks again from the new profile.
+        assertEquals(2, server.opens.size)
+        assertEquals(801.5, server.opens[1].getValue("position").jsonPrimitive.double)
+        val state = controller.state.value
+        assertEquals(Screen.Player, state.screen)
+        assertEquals("lease-2", state.playback?.id)
+        assertEquals("ja", state.playback?.preferences?.preferred_audio_language)
+        assertTrue(state.paused)
+        assertNull(state.error)
+        assertEquals(listOf("lease-1"), server.released)
+        controller.closePlayer()
+    }
+
+    @Test fun aTrackPickedInThePlayerDoesNotReopenAGatewayStreamOnReturn() = runTest {
+        val server = Server().apply { gateway = true }
+        val controller = controller(server)
+        play(controller)
+        // The player menu stores the pick in the profile; the stream already plays it.
+        controller.rememberTrackChoice(org.viptv.app.player.PlaybackTrackKind.Audio, "ja"); runCurrent()
+        assertEquals(org.viptv.app.player.canonicalLanguageTag("ja"), server.preferences.preferences.preferred_audio_language)
+        controller.openPlayerSettings(); runCurrent()
+        controller.navigateBack(); runCurrent()
+        assertEquals(1, server.opens.size)
+        assertEquals("lease-1", controller.state.value.playback?.id)
         controller.closePlayer()
     }
 

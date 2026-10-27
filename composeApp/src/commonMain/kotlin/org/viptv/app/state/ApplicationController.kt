@@ -66,6 +66,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var lastProgress: PlayerFact.Progress? = null
     internal var backgroundPlayback: org.viptv.app.player.PlaybackInput? = null
     internal var completionSeen = false
+    /** The profile's server-chosen tracks when the player opened Settings (app#44). */
+    internal var playerVisitTracks: ServerTracks? = null
     internal var progressSavedAt = TimeSource.Monotonic.markNow()
     /** The background refresh lane: never [busy], never cancels [job]. */
     internal var quietJob: Job? = null

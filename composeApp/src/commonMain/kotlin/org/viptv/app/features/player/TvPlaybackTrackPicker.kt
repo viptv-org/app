@@ -67,7 +67,7 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                 if (openSettings != null) TvAction(Modifier.width(520.dp * scale).height(64.dp * scale), scale, activate = openSettings,
                     background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
                     Box(Modifier.width(40.dp * scale)) { Icon(Lucide.Settings, null, Modifier.size(24.dp * scale), tint) }
-                    Text(PLAYER_SETTINGS_LINK, Modifier.weight(1f), color = if (tint == Palette.text) Color(0xFFDAD8D3) else tint,
+                    Text(PLAYER_SETTINGS_LINK, Modifier.weight(1f), color = if (tint == Palette.text) Palette.body else tint,
                         fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.Medium)
                     Icon(Lucide.ChevronRight, null, Modifier.size(24.dp * scale), tint)
                 }
