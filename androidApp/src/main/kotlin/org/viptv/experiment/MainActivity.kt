@@ -47,6 +47,9 @@ open class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
         model.start(filesDir.resolve("local.sqlite").absolutePath, applicationContext)
+        // The foreground hook (app#75); App.kt skips it because ApplicationModel owns the controller.
+        // ON_START dispatches after onStart's resumePlayback, ON_STOP after onPause's suspendPlayback.
+        lifecycle.addObserver(model.controller.foregroundObserver(onReturn = model::foregroundReturned))
         // A recreated activity gets the launching intent again; only the first creation may act on it.
         if (savedInstanceState == null) offerDeviceCode(intent)
         setContent {
@@ -106,11 +109,5 @@ open class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         applicationModel?.controller?.resumePlayback()
-        // Return-to-app update check. App.kt's foreground hook (appForeground) is not installed on Android
-        // while ApplicationModel owns the controller (app#75), so the activity drives it directly.
-        applicationModel?.let { model ->
-            val current = model.controller.state.value
-            if (!current.starting) model.updater?.foreground(playing = current.screen == Screen.Player)
-        }
     }
 }

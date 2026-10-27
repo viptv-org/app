@@ -54,17 +54,10 @@ fun App(
     // A device sign-in link opens Add a device only once signed in with a profile chosen.
     LaunchedEffect(deviceLink, state.screen, state.starting) { controller.deliverDeviceCode() }
     DisposableEffect(controller, manageControllerLifecycle) { onDispose { if (manageControllerLifecycle) controller.disconnect() } }
-    // Android start/stop, desktop minimise/restore and window focus, browser tab visibility.
+    // Desktop minimise/restore and window focus, browser tab visibility. Android's MainActivity installs this hook itself.
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     DisposableEffect(controller, lifecycle, manageControllerLifecycle) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            when (event) {
-                androidx.lifecycle.Lifecycle.Event.ON_START -> controller.appForeground(true)
-                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> controller.freshen()
-                androidx.lifecycle.Lifecycle.Event.ON_STOP -> controller.appForeground(false)
-                else -> Unit
-            }
-        }
+        val observer = controller.foregroundObserver()
         if (manageControllerLifecycle) lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }

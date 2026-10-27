@@ -90,6 +90,10 @@ kotlin {
             implementation(kotlin("test-junit"))
             implementation("junit:junit:4.13.2")
             implementation("org.robolectric:robolectric:4.17")
+            // AndroidForegroundTest: a real activity lifecycle against a fake server.
+            implementation("androidx.activity:activity:1.10.1")
+            implementation("io.ktor:ktor-client-mock:3.4.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
