@@ -8,6 +8,20 @@ data class DevicePairingDisplay(val verificationUri: String, val qrUri: String, 
     override fun toString() = "DevicePairingDisplay(code=<redacted>, remainingSeconds=$remainingSeconds)"
 }
 
+/**
+ * The server ended a pairing before approval, reported with the OAuth device-flow errors
+ * (RFC 8628 section 3.5): `access_denied` when the account holder declined it, `expired_token`
+ * when the code ran out. `authorization_pending` is never an ending.
+ */
+class DevicePairingEnded(val reason: Reason) : Exception(when (reason) {
+    Reason.Denied -> "Sign-in was declined. Request a new code."
+    Reason.Expired -> DEVICE_PAIRING_EXPIRED_MESSAGE
+}) {
+    enum class Reason { Denied, Expired }
+}
+
+internal const val DEVICE_PAIRING_EXPIRED_MESSAGE = "This sign-in code expired. Request a new code."
+
 internal class DevicePairingChallenge(val display: DevicePairingDisplay, internal val secret: String, var intervalSeconds: Long) {
     override fun toString() = "DevicePairingChallenge(deviceCode=<redacted>)"
 }
@@ -43,7 +57,11 @@ internal class RemoteDevicePairing(
         val value = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         if (response.status == HttpStatusCode.OK) return adopt(value)
         val code = value["error_code"]?.jsonPrimitive?.contentOrNull ?: value["error"]?.jsonPrimitive?.contentOrNull
-        if (response.status == HttpStatusCode.BadRequest && code == "authorization_pending") return null
+        if (response.status == HttpStatusCode.BadRequest) when (code) {
+            "authorization_pending" -> return null
+            "access_denied" -> throw DevicePairingEnded(DevicePairingEnded.Reason.Denied)
+            "expired_token" -> throw DevicePairingEnded(DevicePairingEnded.Reason.Expired)
+        }
         if (response.status == HttpStatusCode.TooManyRequests) { challenge.intervalSeconds = (challenge.intervalSeconds + 5).coerceAtMost(60); return null }
         throw RemoteFailure(response.status.value, "This sign-in code is no longer available. Request a new code.")
     }

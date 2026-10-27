@@ -50,6 +50,31 @@ class RemoteDevicePairingTest {
         } finally { remote.close() }
     }
 
+    /** app#102: the OAuth device-flow errors end the wait with their own copy; only `authorization_pending` keeps waiting. */
+    @Test fun deniedAndExpiredCodesEndPollingWithTheirOwnMessages() = runBlocking {
+        val answers = ArrayDeque(listOf(
+            """{"error":"authorization_pending"}""", """{"error":"access_denied"}""",
+            """{"error":"Access denied","error_code":"access_denied"}""", """{"error":"expired_token"}"""))
+        val client = HttpClient(MockEngine { request ->
+            val body = if (request.url.encodedPath.endsWith("/code")) challenge else answers.removeFirst()
+            respond(body, if (body == challenge) HttpStatusCode.OK else HttpStatusCode.BadRequest,
+                headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", Store(), client, browserMode = false)
+        try {
+            val pairing = remote.devicePairing(); val code = pairing.create()
+            assertNull(pairing.poll(code), "authorization_pending is never a denial")
+            repeat(2) {
+                val denied = assertFailsWith<DevicePairingEnded> { pairing.poll(code) }
+                assertEquals(DevicePairingEnded.Reason.Denied, denied.reason)
+                assertEquals("Sign-in was declined. Request a new code.", denied.message)
+            }
+            val expired = assertFailsWith<DevicePairingEnded> { pairing.poll(code) }
+            assertEquals(DevicePairingEnded.Reason.Expired, expired.reason)
+            assertEquals("This sign-in code expired. Request a new code.", expired.message)
+        } finally { remote.close() }
+    }
+
     @Test fun cancelledPairingCannotInstallLateApprovedTokens() = runBlocking {
         val store = Store()
         val client = HttpClient(MockEngine { request ->
