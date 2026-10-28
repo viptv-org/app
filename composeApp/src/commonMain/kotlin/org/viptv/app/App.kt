@@ -161,14 +161,15 @@ fun App(
                                     val showingSources = state.screen == Screen.Sources
                                     // The browser Details is a Dialog window floating above the page. It
                                     // stays open under a drawer that returns to it, decided when the drawer
-                                    // opens: a drawer opened from Home keeps Home behind it even when the
-                                    // title's Details arrive meanwhile (app#11), and Back then opens them.
+                                    // opens: a drawer opened by a play tap keeps the title's page behind it,
+                                    // loading until the tap's read fills it in (app#140).
                                     val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
                                     if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
                                     if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
                                         // A failed first load lands in state.error; the details page
-                                        // must show it instead of rendering blank (NAV-04).
-                                        state.detailPageError ?: state.error.takeIf { state.detail == null },
+                                        // must show it instead of rendering blank (NAV-04). A play tap's
+                                        // own failed read is reported on its page (app#140).
+                                        state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null },
                                         // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
                                         if (browser && showingSources) controller::backSources else controller::backDetails,
                                         controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,

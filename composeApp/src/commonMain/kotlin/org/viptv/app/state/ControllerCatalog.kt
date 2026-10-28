@@ -233,10 +233,10 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
     sourceDetailJob = scope.launch {
         val detail = try { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
         catch (error: CancellationException) { throw error }
-        catch (error: Exception) { if (current()) resolveFailed(error, remote, device, sourcesSuffice = false); return@launch }
+        catch (error: Exception) { if (current()) resolveFailed(error, remote, device, onSelector = true); return@launch }
         if (!current()) return@launch
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
-            if (current()) resolveFailed(error, remote, device, sourcesSuffice = false)
+            if (current()) resolveFailed(error, remote, device, onSelector = true)
             return@launch
         }
         showSourceDetail(detail, card, target)
@@ -251,16 +251,20 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
 private const val DETAILS_TIMEOUT = "Your server took too long to show this title. Try again."
 
 /**
- * A play tap's Details read failed. The viewer waiting on the title's page sees the error
- * there, with its Retry; while the selector is up for an episode whose sources do not need
- * them, the read's failure is not the selector's ([sourcesSuffice]) (app#140).
+ * A play tap's Details read failed. The title's page, which Back may already have opened,
+ * shows the failure and offers its Retry (app#140); the selector reports it only when its
+ * sources were waiting on those Details ([onSelector]), and the player never does (app#10).
  */
-private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, sourcesSuffice: Boolean) {
+private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
     if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
     val state = mutable.value
-    // The title stays behind the page: Details' Retry reads it again.
-    if (sourcesSuffice && state.screen != Screen.Details) return
-    mutable.value = state.copy(error = failureMessage(error), findingSources = false, busy = false)
+    val message = failureMessage(error)
+    when {
+        state.screen == Screen.Details -> mutable.value = state.copy(error = message, findingSources = false, busy = false)
+        onSelector && state.screen == Screen.Sources -> mutable.value = state.copy(error = message, findingSources = false, busy = false)
+        // Only the title's page reports a read whose sources were found without it.
+        state.playTapTitle != null -> mutable.value = state.copy(detailFailure = message)
+    }
 }
 
 /**
@@ -271,7 +275,7 @@ fun ApplicationController.retryDetails() {
     val card = mutable.value.playTapTitle ?: return
     if (mutable.value.screen != Screen.Details) return
     val navigation = navigationGeneration
-    mutable.value = mutable.value.copy(error = null, detailPageError = null)
+    mutable.value = mutable.value.copy(error = null, detailFailure = null, detailPageError = null)
     if (card.identity.episode != null && card.metadata_origin != null) loadSourceDetail(card, navigation)
     else resolveSourceTarget(card, navigation)
 }
@@ -300,11 +304,13 @@ private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long)
         val detail = try {
             withTimeoutOrNull(12_000) { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
         } catch (error: CancellationException) { throw error }
-        catch (error: Exception) { if (current()) resolveFailed(error, remote, device, sourcesSuffice = true); return@launch }
-        if (detail == null) { if (current()) resolveFailed(LocalFailure(DETAILS_TIMEOUT), remote, device, sourcesSuffice = true); return@launch }
+        catch (error: Exception) { if (current()) resolveFailed(error, remote, device, onSelector = false); return@launch }
+        if (detail == null) { if (current()) resolveFailed(LocalFailure(DETAILS_TIMEOUT), remote, device, onSelector = false); return@launch }
         if (!current()) return@launch
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
-            if (current()) resolveFailed(error, remote, device, sourcesSuffice = true)
+            // Without the target, the selector cannot discover; on the player the host already
+            // accepted this episode's scope for its sources.
+            if (current()) resolveFailed(error, remote, device, onSelector = true)
             return@launch
         }
         showSourceDetail(detail, card, target)
@@ -373,7 +379,7 @@ fun ApplicationController.chooseSource(card: Card) {
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null) {
     mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
-        playTapTitle = playTap)
+        playTapTitle = playTap, detailFailure = null)
 }
 
 /**
@@ -507,6 +513,6 @@ internal fun ApplicationController.beginDetails() {
     val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
         else (previous.navBack + previous.screen).takeLast(32)
     mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
-        navBack = navBack, navForward = emptyList(), playTapTitle = null,
+        navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null,
         screen = Screen.Details, detail = null, calendarEpisode = null)
 }

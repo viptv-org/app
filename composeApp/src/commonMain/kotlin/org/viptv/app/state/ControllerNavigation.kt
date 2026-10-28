@@ -24,7 +24,8 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     // A play tap's pending Details belong to the overlay group the viewer is now leaving (app#140).
     if (screen !in listOf(Screen.Details, Screen.Sources, Screen.Player)) {
         cancelSourceDetail()
-        if (mutable.value.playTapTitle != null) mutable.value = mutable.value.copy(playTapTitle = null)
+        if (mutable.value.playTapTitle != null || mutable.value.detailFailure != null)
+            mutable.value = mutable.value.copy(playTapTitle = null, detailFailure = null)
     }
     if (screen != Screen.Sources && mutable.value.findingSources) {
         generation++

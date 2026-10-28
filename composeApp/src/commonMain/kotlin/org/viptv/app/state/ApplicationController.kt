@@ -117,7 +117,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     }}
 
 /** The message a failure shows the viewer; every surface that reports one words it here, as [run] does. */
-internal fun ApplicationController.failureMessage(error: Exception): String = when (error) {
+internal fun ApplicationController.failureMessage(error: Exception): String? = when (error) {
     is RemoteFailure -> error.message
     is LocalFailure -> error.message
     is kotlinx.serialization.SerializationException -> "The server returned an incompatible response."

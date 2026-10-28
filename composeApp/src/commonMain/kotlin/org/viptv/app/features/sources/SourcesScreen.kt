@@ -73,7 +73,14 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                         fontWeight = FontWeight.Bold)
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
-                Text(listOfNotNull(sourceHeading(title, detail), if (busy) { if (sources.isEmpty()) "Loading sources…" else openingStage ?: "Opening stream…" } else sourceSummary(sources)).joinToString(" · "),
+                // A selector still finding its first sources says so, whether it is opening a
+                // stream or waiting for the Details a play tap needs (app#140).
+                val summary = when {
+                    busy -> if (sources.isEmpty()) "Loading sources…" else openingStage ?: "Opening stream…"
+                    sources.isEmpty() && loadingMore -> "Loading sources…"
+                    else -> sourceSummary(sources)
+                }
+                Text(listOfNotNull(sourceHeading(title, detail), summary).joinToString(" · "),
                     color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
             }
             SourceFilters(sources, quality, provider, { quality = it }, { provider = it })

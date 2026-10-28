@@ -96,6 +96,12 @@ data class ApplicationState(
      * title page themselves or leaves the overlays.
      */
     val playTapTitle: Card? = null,
+    /**
+     * Why the play tap's Details did not arrive ([playTapTitle]): its page says so and offers Retry
+     * (app#140). Kept apart from [error] because a selector whose sources were found without them
+     * does not report it there.
+     */
+    val detailFailure: String? = null,
     val detail: DetailSnapshot? = null,
     val detailLoadingOffset: Long? = null,
     val detailPageError: String? = null,
@@ -137,7 +143,8 @@ data class ApplicationState(
  * has not reported an error, so Back from its selector opens the title's page in its loading
  * state (app#140).
  */
-internal fun ApplicationState.detailsPending(): Boolean = detail == null && error == null && playTapTitle != null
+internal fun ApplicationState.detailsPending(): Boolean =
+    detail == null && error == null && detailFailure == null && playTapTitle != null
 
 internal fun ApplicationState.isSaved(card: Card?): Boolean {
     card ?: return false

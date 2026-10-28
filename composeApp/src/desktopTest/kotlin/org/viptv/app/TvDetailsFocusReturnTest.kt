@@ -69,12 +69,12 @@ class TvDetailsFocusReturnTest {
     private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
 
     /** The real TV App shell over a fake host serving [fixture]; a later Details page waits for [releasePage]. */
-    private inner class TvApp(val fixture: DetailSnapshot = detail, holdDetails: Boolean = false) : AutoCloseable {
+    private inner class TvApp(val fixture: DetailSnapshot = detail, val holdDetails: Boolean = false) : AutoCloseable {
         val releasePage = CompletableDeferred<Unit>()
         /** The title's first Details answer waits for this when [holdDetails] (app#140). */
         val releaseDetails = CompletableDeferred<Unit>()
         val pageOffsets = java.util.concurrent.CopyOnWriteArrayList<String>()
-        private fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
+        private suspend fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
             "/api/meta/series/$show" -> request.url.parameters["offset"]?.takeIf { it != "0" }.let { offset ->
                 if (offset != null) { pageOffsets += offset; null }
                 else if (holdDetails) { releaseDetails.await(); json(Json.encodeToString(fixture)) }
