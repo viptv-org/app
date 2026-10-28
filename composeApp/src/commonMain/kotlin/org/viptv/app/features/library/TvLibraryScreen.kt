@@ -13,6 +13,7 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
@@ -27,7 +28,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf(if (lastWatched.isEmpty()) "Date added" else "Last watched") }
-    val first = remember { FocusRequester() }; val selectedFilter = remember { FocusRequester() }
+    val selectedFilter = remember { FocusRequester() }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
     val visible = if (snapshot != null) cards else when (sort) {
         "A–Z" -> filtered.sortedBy { it.title.lowercase() }
@@ -40,33 +41,39 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
-            .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
-            if (snapshot != null) TvLibraryHeader(snapshot, query, changeQuery, scale, selectedFilter, if (visible.isNotEmpty()) first else null)
-            else TvLibraryControls(filter, { filter = it }, sort, { sort = it }, scale, selectedFilter,
-                if (visible.isNotEmpty()) first else null, lastWatched.isNotEmpty())
-            Spacer(Modifier.height(32.dp * scale))
-            if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp) }
-            if (visible.isEmpty()) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                Text(empty.title, fontSize = (32 * scale).sp)
-                Text(empty.message,
-                    fontSize = (24 * scale).sp, color = Palette.secondary)
-                TvAction(Modifier.height(64.dp * scale), scale, primary = true, activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
-                    contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
-            } else
-                LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
-                    contentPadding = PaddingValues(bottom = 96.dp * scale)) {
-                    itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
-                        TvCatalogCard(card, scale, true, Modifier.tvGridItem(index).then(if (index == 0) Modifier.focusRequester(first) else Modifier)
-                            .focusProperties {
-                                if (index < 7) up = selectedFilter
-                                if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
-                            }, {}, open, focusedCaptions = true)
-                    }
+        CompositionLocalProvider(LocalTvScale provides scale) {
+            Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
+                .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
+                // TV filters are the shared dropdown chips (app#121); the group makes Up from the
+                // grid land on the first chip, and the panel puts focus back on its chip.
+                Box(Modifier.focusGroup().focusRequester(selectedFilter)) {
+                    if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
+                    else LibraryControls(filter, { filter = it }, sort, { sort = it }, watchedAvailable = lastWatched.isNotEmpty())
                 }
-
+                Spacer(Modifier.height(32.dp * scale))
+                if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let {
+                    Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp)
+                }
+                if (visible.isEmpty()) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                    Text(empty.title, fontSize = (32 * scale).sp)
+                    Text(empty.message, fontSize = (24 * scale).sp, color = Palette.secondary)
+                    TvAction(Modifier.height(64.dp * scale), scale, primary = true,
+                        activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
+                        contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
+                } else
+                    LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
+                        contentPadding = PaddingValues(bottom = 96.dp * scale)) {
+                        itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                            TvCatalogCard(card, scale, true, Modifier.tvGridItem(index)
+                                .focusProperties {
+                                    if (index < 7) up = selectedFilter
+                                    if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
+                                }, {}, open, focusedCaptions = true)
+                        }
+                    }
+            }
         }
     }
 }

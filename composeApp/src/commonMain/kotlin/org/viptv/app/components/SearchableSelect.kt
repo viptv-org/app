@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -69,11 +70,12 @@ import org.viptv.app.theme.Palette
 internal data class SelectOption(val id: String, val label: String, val trailing: String? = null, val enabled: Boolean = true)
 
 /**
- * How a filter chip opens its choices (components.md section 8): the anchored popover on
- * desktop, web and tablet, the bottom sheet on a phone. The content and behaviour are the
- * same; only the container changes. [FilterBar] picks it from the layout.
+ * How a filter chip opens its choices (components.md section 2): the anchored popover on
+ * desktop, web and tablet, the bottom sheet on a phone, the right panel on a TV. The content
+ * and behaviour are the same; only the container changes. [FilterBar] picks it from the
+ * layout, and a TV's chips are focus stops the remote walks along.
  */
-internal enum class SelectPresentation { Popover, Sheet }
+internal enum class SelectPresentation { Popover, Sheet, Panel }
 
 /** The presentation for every chip below; [FilterBar] provides it. */
 internal val LocalSelectPresentation = staticCompositionLocalOf { SelectPresentation.Popover }
@@ -130,9 +132,11 @@ private val SheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 /** A chip never grows past this; a long value ellipsizes. */
 private val ChipMaxWidth = 280.dp
 
-/** Row and list sizes of each presentation: 40 dp popover rows, 48 dp touch rows in the sheet. */
-private class SelectMetrics(val rowHeight: Dp, val listMaxHeight: Dp, val sheet: Boolean) {
-    val width: Modifier get() = if (sheet) Modifier.fillMaxWidth() else Modifier.width(PopoverMenuWidth)
+/** Row and list sizes of each presentation: 40 dp popover rows, 48 dp touch rows in the
+ * sheet, and on TV 72 × scale rows in the right panel. */
+private class SelectMetrics(val rowHeight: Dp, val listMaxHeight: Dp, val sheet: Boolean,
+    val tv: Boolean = false, val scale: Float = 1f) {
+    val width: Modifier get() = if (sheet || tv) Modifier.fillMaxWidth() else Modifier.width(PopoverMenuWidth)
 }
 private val PopoverMetrics = SelectMetrics(40.dp, 320.dp, sheet = false)
 
@@ -201,14 +205,17 @@ internal fun TextSelect(
 /** An on/off filter is a chip that toggles: the same chip, filled with a check while on. */
 @Composable
 internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    val sheet = LocalSelectPresentation.current == SelectPresentation.Sheet
+    val metrics = chipMetrics()
     val shape = RoundedCornerShape(50)
-    Row(modifier.chipFrame(on, sheet, shape).pointerToggleable(on, role = Role.Switch, shape = shape, onValueChange = onChange)
-        .padding(start = if (on) 12.dp else 14.dp, end = 14.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (on) Icon(Lucide.Check, null, Modifier.size(14.dp), tint = Palette.text)
-        Text(title, fontSize = chipText(sheet), fontWeight = FontWeight.SemiBold, maxLines = 1,
-            color = if (on) Palette.text else Palette.secondary)
+    var focused by remember { mutableStateOf(false) }
+    Row(modifier.chipFrame(on, focused, metrics, shape)
+        .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
+        .pointerToggleable(on, role = Role.Switch, shape = shape, onValueChange = onChange)
+        .padding(start = if (on) metrics.startInset - 2.dp else metrics.startInset, end = metrics.endInset),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
+        if (on) Icon(Lucide.Check, null, Modifier.size(metrics.icon), tint = if (focused) Palette.background else Palette.text)
+        Text(title, fontSize = metrics.textSize, fontWeight = FontWeight.SemiBold, maxLines = 1,
+            color = when { focused -> Palette.background; on -> Palette.text; else -> Palette.secondary })
     }
 }
 
@@ -218,50 +225,107 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
  */
 @Composable
 internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val sheet = LocalSelectPresentation.current == SelectPresentation.Sheet
+    val metrics = chipMetrics()
     val shape = RoundedCornerShape(50)
-    Row(modifier.height(chipHeight(sheet)).clip(shape).pointerClickable(role = Role.Button, shape = shape, onClick = onClick)
-        .padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        icon?.let { Icon(it, null, Modifier.size(14.dp), tint = Palette.secondary) }
-        Text(label, fontSize = chipText(sheet), fontWeight = FontWeight.SemiBold, color = Palette.secondary, maxLines = 1)
+    var focused by remember { mutableStateOf(false) }
+    Row(modifier.chipFrame(false, focused, metrics, shape, bordered = false)
+        .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
+        .pointerClickable(role = Role.Button, shape = shape, onClick = onClick)
+        .padding(horizontal = metrics.actionInset), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
+        icon?.let { Icon(it, null, Modifier.size(metrics.icon), tint = if (focused) Palette.background else Palette.secondary) }
+        Text(label, fontSize = metrics.textSize, fontWeight = FontWeight.SemiBold,
+            color = if (focused) Palette.background else Palette.secondary, maxLines = 1)
     }
 }
 
-/** Design filter chip heights: P 44, D 40 (components.md section 2). */
-private fun chipHeight(sheet: Boolean) = if (sheet) 44.dp else 40.dp
-private fun chipText(sheet: Boolean) = if (sheet) 14.sp else 13.sp
+/** The design's secondary ink on the light TV focus fill (`on-light` at 0.62). */
+private val OnLightSecondary = Color(0xFF4A4945)
 
-/** Unset: transparent with a 0.10 border. Set: surface-3 with a 0.22 border. */
-private fun Modifier.chipFrame(set: Boolean, sheet: Boolean, shape: RoundedCornerShape) =
-    height(chipHeight(sheet)).clip(shape).background(if (set) Surface3 else Color.Transparent)
-        .border(1.dp, Color.White.copy(alpha = if (set) .22f else .10f), shape)
+/**
+ * The chip's geometry for one presentation (components.md section 2): P 44 tall with 14 sp
+ * text, D and tablet 40 with 13 sp, TV 56 × scale with 22 × scale text.
+ */
+private class ChipMetrics(val presentation: SelectPresentation, val scale: Float) {
+    val tv = presentation == SelectPresentation.Panel
+    private val sheet = presentation == SelectPresentation.Sheet
+    val height: Dp = when { tv -> 56.dp * scale; sheet -> 44.dp; else -> 40.dp }
+    val textSize = when { tv -> (22 * scale).sp; sheet -> 14.sp; else -> 13.sp }
+    val icon: Dp = if (tv) 22.dp * scale else 14.dp
+    val corner: Dp = height / 2
+    val startInset: Dp = if (tv) 24.dp * scale else 14.dp
+    val endInset: Dp = if (tv) 20.dp * scale else 12.dp
+    val actionInset: Dp = if (tv) 20.dp * scale else 12.dp
+    val gap: Dp = if (tv) 10.dp * scale else 6.dp
+}
 
-/** The chip plus its popover or sheet; [panel] gets the presentation's sizes and a close callback. */
+@Composable
+private fun chipMetrics(): ChipMetrics {
+    val presentation = LocalSelectPresentation.current
+    return ChipMetrics(presentation, if (presentation == SelectPresentation.Panel) LocalTvScale.current else 1f)
+}
+
+/**
+ * Unset: transparent with a 0.10 border. Set: surface-3 with a 0.22 border. A focused TV chip
+ * takes the board's light focus fill and dark ink instead (its ring comes from [tvFocusOutline]).
+ */
+private fun Modifier.chipFrame(set: Boolean, focused: Boolean, metrics: ChipMetrics, shape: RoundedCornerShape,
+    bordered: Boolean = true) =
+    height(metrics.height).clip(shape)
+        .background(when { focused -> Palette.text; set -> Surface3; else -> Color.Transparent })
+        .then(if (bordered && !focused) Modifier.border(1.dp, Color.White.copy(alpha = if (set) .22f else .10f), shape) else Modifier)
+
+/** The chip plus its popover, sheet or TV panel; [panel] gets the presentation's sizes and a close callback. */
 @Composable
 private fun SelectChip(title: String, value: String, valueSet: Boolean, highlighted: Boolean, modifier: Modifier,
     open: MutableState<Boolean>, panel: @Composable (SelectMetrics, () -> Unit) -> Unit) {
-    val sheet = LocalSelectPresentation.current == SelectPresentation.Sheet
+    val presentation = LocalSelectPresentation.current
+    val metrics = chipMetrics()
     val close = { open.value = false }
+    // On a TV, closing the panel (a pick, Back) puts focus back on the chip that opened it.
+    val chipFocus = remember { FocusRequester() }
+    var wasOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(open.value) {
+        if (open.value) wasOpen = true
+        else if (wasOpen) runCatching { chipFocus.requestFocus() }
+    }
     Box(modifier) {
-        SelectTrigger(title, value, valueSet, highlighted, sheet) { open.value = true }
-        if (sheet) { if (open.value) SelectSheet(title, close) { listMax -> panel(SelectMetrics(48.dp, listMax, sheet = true), close) } }
-        else PopoverMenu(open.value, close) { panel(PopoverMetrics, close) }
+        SelectTrigger(title, value, valueSet, highlighted, metrics, chipFocus.takeIf { metrics.tv }) { open.value = true }
+        when (presentation) {
+            SelectPresentation.Sheet -> if (open.value) SelectSheet(title, close) { listMax ->
+                panel(SelectMetrics(48.dp, listMax, sheet = true), close) }
+            SelectPresentation.Panel -> if (open.value) SelectPanelSheet(title, close) { scale ->
+                panel(SelectMetrics(72.dp * scale, 640.dp * scale, sheet = false, tv = true, scale = scale), close) }
+            SelectPresentation.Popover -> PopoverMenu(open.value, close) { panel(PopoverMetrics, close) }
+        }
     }
 }
 
-/** The design's dropdown chip: "Genre: " in secondary text, then the value, primary once set. */
+/**
+ * The design's dropdown chip: "Genre: " in secondary text, then the value, primary once set.
+ * A TV chip is a focus stop in the row; focused it fills with the light surface, carries dark
+ * ink and the board's outside ring, and Enter or OK opens its list (the clickable node does that).
+ */
 @Composable
-private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highlighted: Boolean, sheet: Boolean, onClick: () -> Unit) {
+private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highlighted: Boolean, metrics: ChipMetrics,
+    focus: FocusRequester?, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
-    Row(Modifier.widthIn(max = ChipMaxWidth).chipFrame(highlighted, sheet, shape)
-        .pointerClickable(role = Role.DropdownList, shape = shape, onClick = onClick).padding(start = 14.dp, end = 12.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        // Not `fill`: inside the scrolling bar the chip is as wide as its text, up to [ChipMaxWidth].
+    var focused by remember { mutableStateOf(false) }
+    val ink = if (focused) Palette.background else if (valueSet) Palette.text else Palette.secondary
+    Row(Modifier.widthIn(max = if (metrics.tv) 420.dp * metrics.scale else ChipMaxWidth)
+        .then(if (focus == null) Modifier else Modifier.focusRequester(focus).onFocusChanged { focused = it.isFocused }
+            .tvFocusOutline(focused, metrics.corner, metrics.scale))
+        .chipFrame(highlighted, focused, metrics, shape)
+        .pointerClickable(role = Role.DropdownList, shape = shape, onClick = onClick)
+        .padding(start = metrics.startInset, end = metrics.endInset),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
+        // Not `fill`: inside the scrolling bar the chip is as wide as its text, up to the cap.
         Text(buildAnnotatedString {
-            withStyle(SpanStyle(color = Palette.secondary)) { append("$title: ") }
-            withStyle(SpanStyle(color = if (valueSet) Palette.text else Palette.secondary)) { append(value) }
-        }, Modifier.weight(1f, fill = false), fontSize = chipText(sheet), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Icon(Lucide.ChevronDown, null, Modifier.size(14.dp), tint = Palette.secondary)
+            withStyle(SpanStyle(color = if (focused) OnLightSecondary else Palette.secondary)) { append("$title: ") }
+            withStyle(SpanStyle(color = ink)) { append(value) }
+        }, Modifier.weight(1f, fill = false), fontSize = metrics.textSize, fontWeight = FontWeight.SemiBold, maxLines = 1,
+            overflow = TextOverflow.Ellipsis)
+        Icon(Lucide.ChevronDown, null, Modifier.size(metrics.icon), tint = if (focused) OnLightSecondary else Palette.secondary)
     }
 }
 
@@ -301,21 +365,49 @@ private fun SelectSheet(title: String, dismiss: () -> Unit, content: @Composable
     }
 }
 
+/**
+ * The TV presentation (components.md sections 2 and 5): the choice list as a right panel over
+ * a 0.6 scrim, 760 × scale wide, with the chip's title as its heading. Focus opens on the
+ * current option, the rows are focus stops the D-pad walks, and Back, Escape, the scrim or a
+ * closing pick return to the chip (SelectChip requests its focus back).
+ */
+@Composable
+private fun SelectPanelSheet(title: String, dismiss: () -> Unit, content: @Composable (Float) -> Unit) {
+    Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val scale = maxWidth / 1920.dp
+            Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .6f))
+                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+            Column(Modifier.align(Alignment.CenterEnd).width(760.dp * scale).fillMaxHeight()
+                // Back and Escape close only the panel; the chip row behind it stays as it was.
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && (event.key == Key.Back || event.key == Key.Escape)) { dismiss(); true }
+                    else false
+                }
+                .background(Color(0xFF161618)).padding(start = 56.dp * scale, end = 56.dp * scale,
+                    top = 72.dp * scale, bottom = 56.dp * scale)) {
+                Text(title, Modifier.semantics { heading() }, fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp,
+                    letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(24.dp * scale))
+                Column(Modifier.fillMaxWidth().weight(1f)) { content(scale) }
+            }
+        }
+    }
+}
+
 @Composable
 private fun SelectPanel(options: List<SelectOption>, selected: List<String>, multiple: Boolean, cap: Int?,
     anyLabel: String?, anyTrailing: String?, searchPlaceholder: String, metrics: SelectMetrics,
     onChange: (List<String>) -> Unit, close: () -> Unit) {
+    if (metrics.tv) {
+        SelectTvPanel(options, selected, multiple, cap, anyLabel, anyTrailing, searchPlaceholder, metrics, onChange, close)
+        return
+    }
     var query by remember { mutableStateOf("") }
     val folded = remember(options) { options.map { foldForSearch(it.label) } }
     val searchable = options.size + (if (anyLabel != null) 1 else 0) > SearchRowLimit
     // A null row is the "Any" row; it is only offered before a search narrows the list.
-    val rows: List<SelectOption?> = remember(options, folded, query, anyLabel) {
-        val needle = foldForSearch(query.trim())
-        buildList {
-            if (anyLabel != null && needle.isEmpty()) add(null)
-            options.forEachIndexed { index, option -> if (folded[index].contains(needle)) add(option) }
-        }
-    }
+    val rows = remember(options, folded, query, anyLabel) { choiceRows(options, folded, query, anyLabel) }
     var active by remember { mutableIntStateOf(rows.indexOfFirst { if (it == null) selected.isEmpty() else it.id in selected }.coerceAtLeast(0)) }
     // Bumped by the arrow keys only: hovering a row moves the highlight but never scrolls the list under the mouse.
     var keyboardMoves by remember { mutableIntStateOf(0) }
@@ -327,16 +419,11 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     // over the list, so there the panel itself takes focus and only arrows and OK act.
     val searchFirst = searchable && LocalPointerHover.current
 
-    fun enabled(row: SelectOption?) = row == null ||
-        row.enabled && (!multiple || cap == null || row.id in selected || selected.size < cap)
+    fun enabled(row: SelectOption?) = choiceEnabled(row, multiple, cap, selected)
     fun pick(row: SelectOption?) {
         if (!enabled(row)) return
-        if (!multiple) { onChange(listOfNotNull(row?.id)); close(); return }
-        onChange(when {
-            row == null -> emptyList()
-            row.id in selected -> selected - row.id
-            else -> selected + row.id
-        })
+        applyChoice(row, selected, multiple, onChange)
+        if (!multiple) close()
     }
     /** The next row in [step]'s direction that can be picked; unavailable and over-cap rows are skipped. */
     fun move(step: Int) {
@@ -365,7 +452,7 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
             Key.DirectionDown -> { move(1); true }
             Key.DirectionUp -> { move(-1); true }
             Key.Enter, Key.NumPadEnter, Key.DirectionCenter -> { if (active in rows.indices) pick(rows[active]); true }
-            Key.Escape -> { close(); true }
+            Key.Escape, Key.Back -> { close(); true }
             else -> false
         }
     }.then(if (searchFirst) Modifier else Modifier.focusRequester(focus).focusable())) {
@@ -388,7 +475,80 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     }
 }
 
+/** The rows a choice panel shows: "Any" first until a search narrows it, then the matching options. */
+private fun choiceRows(options: List<SelectOption>, folded: List<String>, query: String, anyLabel: String?): List<SelectOption?> {
+    val needle = foldForSearch(query.trim())
+    return buildList {
+        if (anyLabel != null && needle.isEmpty()) add(null)
+        options.forEachIndexed { index, option -> if (folded[index].contains(needle)) add(option) }
+    }
+}
+
+/** A row can be picked unless it is unavailable, or a multiple choice is already at its cap. */
+private fun choiceEnabled(row: SelectOption?, multiple: Boolean, cap: Int?, selected: List<String>): Boolean =
+    row == null || row.enabled && (!multiple || cap == null || row.id in selected || selected.size < cap)
+
+/** Picking applies at once: a multiple choice ticks or unticks, a single one replaces. */
+private fun applyChoice(row: SelectOption?, selected: List<String>, multiple: Boolean, onChange: (List<String>) -> Unit) {
+    if (!multiple) { onChange(listOfNotNull(row?.id)); return }
+    onChange(when {
+        row == null -> emptyList()
+        row.id in selected -> selected - row.id
+        else -> selected + row.id
+    })
+}
+
 private val SelectKeys = listOf(Key.DirectionUp, Key.DirectionDown, Key.Enter, Key.NumPadEnter, Key.DirectionCenter)
+
+/**
+ * The TV choice list (components.md sections 2 and 5): the rows are focus stops in the right
+ * panel, focus opens on the current option, OK picks, and a single pick closes the panel. A
+ * list past [SearchRowLimit] rows gains the same search field; on TV it is the board's
+ * editable field (the device IME), placed above the rows so Up reaches it.
+ */
+@Composable
+private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, multiple: Boolean, cap: Int?,
+    anyLabel: String?, anyTrailing: String?, searchPlaceholder: String, metrics: SelectMetrics,
+    onChange: (List<String>) -> Unit, close: () -> Unit) {
+    val scale = metrics.scale
+    var query by remember { mutableStateOf("") }
+    val folded = remember(options) { options.map { foldForSearch(it.label) } }
+    val searchable = options.size + (if (anyLabel != null) 1 else 0) > SearchRowLimit
+    val rows = remember(options, folded, query, anyLabel) { choiceRows(options, folded, query, anyLabel) }
+    val list = rememberLazyListState()
+    // Keyed by option so a requester survives a search that renumbers the rows.
+    val requesters = remember { mutableMapOf<String, FocusRequester>() }
+    fun key(row: SelectOption?) = row?.id ?: "any"
+    fun enabled(row: SelectOption?) = choiceEnabled(row, multiple, cap, selected)
+    fun pick(row: SelectOption?) {
+        if (!enabled(row)) return
+        applyChoice(row, selected, multiple, onChange)
+        if (!multiple) close()
+    }
+    // The panel opens on the current option, scrolled into view (components.md section 5).
+    LaunchedEffect(Unit) {
+        val current = rows.indexOfFirst { if (it == null) selected.isEmpty() else it.id in selected }.coerceAtLeast(0)
+        if (current > 0) list.scrollToItem((current - 2).coerceAtLeast(0))
+        repeat(30) {
+            withFrameNanos { }
+            if (requesters[key(rows.getOrNull(current))]?.requestFocus() == true) return@LaunchedEffect
+        }
+    }
+    Column(Modifier.fillMaxSize()) {
+        if (searchable) SelectField(query, searchPlaceholder, Lucide.Search, metrics, Modifier) { query = it }
+        if (rows.isEmpty()) Text("No matches for “${query.trim()}”",
+            Modifier.padding(horizontal = 8.dp * scale, vertical = 12.dp * scale), fontSize = (20 * scale).sp, color = Palette.secondary)
+        LazyColumn(Modifier.fillMaxWidth().weight(1f), state = list,
+            verticalArrangement = Arrangement.spacedBy(10.dp * scale), contentPadding = PaddingValues(vertical = 4.dp * scale)) {
+            itemsIndexed(rows) { _, row ->
+                val checked = if (row == null) selected.isEmpty() else row.id in selected
+                TvSelectRow(row?.label ?: anyLabel.orEmpty(), unavailable = row != null && !row.enabled,
+                    trailing = listOfNotNull(if (row == null) anyTrailing else row.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
+                    checked, multiple, enabled(row), scale, requesters.getOrPut(key(row)) { FocusRequester() }) { pick(row) }
+            }
+        }
+    }
+}
 
 /** A text filter's panel: one field that applies on Enter or Done, and "Any" to clear a set value. */
 @Composable
@@ -406,7 +566,7 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     Column(metrics.width.onPreviewKeyEvent { event ->
         when {
-            event.key == Key.Escape && event.type == KeyEventType.KeyDown -> { close(); true }
+            event.key in listOf(Key.Escape, Key.Back) && event.type == KeyEventType.KeyDown -> { close(); true }
             event.key != Key.Enter && event.key != Key.NumPadEnter -> false
             event.type == KeyEventType.KeyDown -> { apply(draft.trim()); true }
             else -> true
@@ -417,8 +577,12 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
             KeyboardActions(onDone = { apply(draft.trim()) })) { draft = it }
         if (LocalPointerHover.current) Text("Press Enter to apply", Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
             fontSize = 12.sp, color = Palette.tertiary)
-        if (value.isNotBlank()) SelectRow("Any", unavailable = false, trailing = null, checked = false, multiple = false, enabled = true,
-            active = false, metrics.rowHeight, hovered = {}) { apply("") }
+        if (value.isNotBlank()) {
+            if (metrics.tv) TvSelectRow("Any", unavailable = false, trailing = null, checked = false, multiple = false, enabled = true,
+                metrics.scale, remember { FocusRequester() }) { apply("") }
+            else SelectRow("Any", unavailable = false, trailing = null, checked = false, multiple = false, enabled = true,
+                active = false, metrics.rowHeight, hovered = {}) { apply("") }
+        }
     }
 }
 
@@ -432,22 +596,47 @@ private fun SelectField(text: String, placeholder: String, icon: ImageVector?, m
     keyboard: KeyboardOptions = KeyboardOptions.Default, actions: KeyboardActions = KeyboardActions.Default, change: (String) -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
-    val shape = RoundedCornerShape(12.dp)
-    Row(Modifier.padding(horizontal = 8.dp).padding(bottom = 4.dp).fillMaxWidth().height(if (metrics.sheet) 44.dp else 40.dp).clip(shape)
+    val shape = RoundedCornerShape(if (metrics.tv) 20.dp * metrics.scale else 12.dp)
+    Row(Modifier.padding(horizontal = if (metrics.tv) 0.dp else 8.dp).padding(bottom = 4.dp).fillMaxWidth()
+        .height(if (metrics.tv) 80.dp * metrics.scale else if (metrics.sheet) 44.dp else 40.dp).clip(shape)
         .background(Palette.background).border(if (focused) 1.5.dp else 1.dp, if (focused) Color.White.copy(alpha = .22f) else Hairline, shape)
-        .padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        icon?.let { Icon(it, null, Modifier.size(15.dp), tint = Palette.tertiary) }
+        .padding(horizontal = if (metrics.tv) 24.dp * metrics.scale else 10.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(if (metrics.tv) 14.dp * metrics.scale else 8.dp)) {
+        icon?.let { Icon(it, null, Modifier.size(if (metrics.tv) 22.dp * metrics.scale else 15.dp), tint = Palette.tertiary) }
+        val size = if (metrics.tv) (22 * metrics.scale).sp else 14.sp
         BasicTextField(text, change, modifier.weight(1f), singleLine = true, interactionSource = interaction,
-            textStyle = TextStyle(color = Palette.text, fontSize = 14.sp), cursorBrush = SolidColor(Palette.accent),
+            textStyle = TextStyle(color = Palette.text, fontSize = size), cursorBrush = SolidColor(Palette.accent),
             keyboardOptions = keyboard, keyboardActions = actions,
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.CenterStart) {
-                    if (text.isEmpty()) Text(placeholder, fontSize = 14.sp, color = Palette.tertiary, maxLines = 1)
+                    if (text.isEmpty()) Text(placeholder, fontSize = size, color = Palette.tertiary, maxLines = 1)
                     inner()
                 }
             })
-        if (text.isNotEmpty()) Icon(Lucide.X, "Clear text", Modifier.size(16.dp)
+        if (text.isNotEmpty()) Icon(Lucide.X, "Clear text", Modifier.size(if (metrics.tv) 22.dp * metrics.scale else 16.dp)
             .pointerClickable(shape = CircleShape) { change("") }, tint = Palette.secondary)
+    }
+}
+
+/**
+ * The check (single choice) or checkbox (multiple) of a choice row, in either presentation's
+ * sizes. [onLight] is a TV row's focused state: dark ink on the light focus fill.
+ */
+@Composable
+private fun ChoiceMark(checked: Boolean, multiple: Boolean, enabled: Boolean, onLight: Boolean,
+    box: Dp, mark: Dp, radius: Dp, border: Dp, glyph: Dp) {
+    Box(Modifier.size(box), contentAlignment = Alignment.Center) {
+        if (!multiple) {
+            if (checked) Icon(Lucide.Check, null, Modifier.size(mark), tint = if (onLight) Palette.background else Palette.accent)
+            return@Box
+        }
+        Box(Modifier.size(mark).clip(RoundedCornerShape(radius))
+            .background(if (checked) (if (onLight) Palette.background else Palette.accent) else Color.Transparent)
+            .then(if (checked) Modifier else Modifier.border(border,
+                if (onLight) OnLightSecondary else if (enabled) Palette.secondary else Palette.tertiary, RoundedCornerShape(radius))),
+            contentAlignment = Alignment.Center) {
+            if (checked) Icon(Lucide.Check, null, Modifier.size(glyph), tint = if (onLight) Palette.text else Palette.background)
+        }
     }
 }
 
@@ -467,19 +656,48 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
     Row(Modifier.padding(horizontal = 6.dp).fillMaxWidth().height(height).clip(RowShape)
         .background(if (active && enabled) Palette.raised else Color.Transparent).then(click).padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
-            if (multiple) Box(Modifier.size(16.dp).clip(RoundedCornerShape(4.dp))
-                .background(if (checked) Palette.accent else Color.Transparent)
-                .then(if (checked) Modifier else Modifier.border(1.5.dp, if (enabled) Palette.secondary else Palette.tertiary, RoundedCornerShape(4.dp))),
-                contentAlignment = Alignment.Center) {
-                if (checked) Icon(Lucide.Check, null, Modifier.size(12.dp), tint = Palette.background)
-            } else if (checked) Icon(Lucide.Check, null, Modifier.size(16.dp), tint = Palette.accent)
-        }
+        ChoiceMark(checked, multiple, enabled, onLight = false,
+            box = 18.dp, mark = 16.dp, radius = 4.dp, border = 1.5.dp, glyph = 12.dp)
         Text(buildAnnotatedString {
             append(label)
             if (unavailable) withStyle(SpanStyle(color = Palette.tertiary, fontWeight = FontWeight.Normal)) { append(" · unavailable") }
         }, Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
             color = if (enabled) Palette.text else Palette.tertiary)
         trailing?.let { Text(it, Modifier.widthIn(max = 120.dp), fontSize = 12.sp, color = Palette.tertiary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+    }
+}
+
+/**
+ * A TV choice row: 72 × scale tall with a 24 × scale label, in the board's list-row look. It
+ * is its own focus stop (so Up reaches the search field and Down the next option); focused it
+ * takes the light fill, dark ink and the outside ring. Enter or OK picks through its clickable
+ * node, Escape and Back close the panel in [SelectPanelSheet].
+ */
+@Composable
+private fun TvSelectRow(label: String, unavailable: Boolean, trailing: String?, checked: Boolean, multiple: Boolean,
+    enabled: Boolean, scale: Float, requester: FocusRequester, pick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    var focused by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(14.dp * scale)
+    val click = if (multiple) Modifier.pointerToggleable(checked, interaction, null, enabled, Role.Checkbox, shape, hover = null) { pick() }
+    else Modifier.pointerSelectable(checked, interaction, null, enabled, Role.RadioButton, shape, hover = null, onClick = pick)
+    Row(Modifier.fillMaxWidth().height(72.dp * scale).focusRequester(requester)
+        .onFocusChanged { focused = it.isFocused }
+        .tvFocusOutline(focused, 14.dp * scale, scale)
+        .clip(shape)
+        .background(when { focused -> Palette.text; checked -> Color.White.copy(alpha = .16f); else -> Color.White.copy(alpha = .04f) })
+        .then(click).padding(horizontal = 24.dp * scale),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+        ChoiceMark(checked, multiple, enabled, onLight = focused,
+            box = 24.dp * scale, mark = if (multiple) 22.dp * scale else 24.dp * scale,
+            radius = 6.dp * scale, border = 2.dp * scale, glyph = 16.dp * scale)
+        Text(buildAnnotatedString {
+            append(label)
+            if (unavailable) withStyle(SpanStyle(color = if (focused) OnLightSecondary else Palette.tertiary,
+                fontWeight = FontWeight.Normal)) { append(" · unavailable") }
+        }, Modifier.weight(1f), fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, color = if (focused) Palette.background else if (enabled) Palette.text else Palette.tertiary)
+        trailing?.let { Text(it, Modifier.widthIn(max = 260.dp * scale), fontSize = (20 * scale).sp,
+            color = if (focused) OnLightSecondary else Palette.tertiary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
 }

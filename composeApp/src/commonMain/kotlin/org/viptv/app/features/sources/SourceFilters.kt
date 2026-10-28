@@ -2,6 +2,8 @@ package org.viptv.app.features.sources
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.components.FilterBar
@@ -17,16 +19,18 @@ internal fun sourceProviderOptions(sources: List<SourceCandidate>): List<SelectO
     sources.groupBy { it.sourceFilterId() }.map { (id, group) -> SelectOption(id, group.first().providerLabel(), group.size.toString()) }
 
 /**
- * The Quality and Source filters of the phone, tablet, web and desktop picker: the same
- * filter bar as Browse and My List (app#117), "Quality: All ⌄" and "Source: All sources ⌄",
- * each with its count, then "Clear" while either is set. TV keeps its own panel.
+ * The Quality and Source filters of the source picker on every layout (app#117): the same
+ * filter bar as Browse and My List, "Quality: All ⌄" and "Source: All sources ⌄", each with
+ * its count, then "Clear" while either is set. TV composes it too (app#121); its chips open
+ * the panel and take focus, so [gutter] and [bleed] let the host place the row.
  */
 @Composable
 internal fun SourceFilters(sources: List<SourceCandidate>, quality: String?, provider: String?,
-    qualityChanged: (String?) -> Unit, providerChanged: (String?) -> Unit) {
+    qualityChanged: (String?) -> Unit, providerChanged: (String?) -> Unit,
+    modifier: Modifier = Modifier, gutter: Dp = 20.dp, bleed: Boolean = false) {
     val qualities = remember(sources) { sourceQualityOptions(sources) }
     val providers = remember(sources) { sourceProviderOptions(sources) }
-    FilterBar(gutter = 20.dp, bleed = false,
+    FilterBar(modifier, gutter = gutter, bleed = bleed,
         clear = if (quality != null || provider != null) ({ qualityChanged(null); providerChanged(null) }) else null) {
         item(key = "quality") {
             SearchableSelect("Quality", qualities, listOfNotNull(quality), { qualityChanged(it.firstOrNull()) },

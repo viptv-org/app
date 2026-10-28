@@ -4,13 +4,12 @@ import java.io.File
 import kotlin.test.*
 
 /**
- * app#117: the dropdown chip and its list are the one filter pattern. This scan keeps the
- * retired paths from coming back: the phone "Filters" toggle and applied-chip strip, the
- * button-and-menu and Apply-sheet filters, the web rail's segments and chips, the source
- * picker's chip rows and the old segments-or-dropdown rule.
- *
- * TV still has its own filter panels (`TvBrowseChrome`, the `Tv*` My List files) until the
- * follow-up moves it to the same chips; they are the only files allowed a "Filters" button.
+ * app#117 and app#121: the dropdown chip and its list are the one filter pattern on every
+ * layout. This scan keeps the retired paths from coming back: the phone "Filters" toggle and
+ * applied-chip strip, the button-and-menu and Apply-sheet filters, the web rail's segments and
+ * chips, the source picker's chip rows, the old segments-or-dropdown rule, and TV's own
+ * filter surface (`TvFiltersPage` with "Show results", the `TvLibrary*` sheet and fields) and
+ * its two pill rows on the source picker.
  */
 class FilterPatternScanTest {
     private val root = File("src/commonMain/kotlin/org/viptv/app")
@@ -21,7 +20,10 @@ class FilterPatternScanTest {
         "DiscoveryFilters", "DiscoveryChoiceFilter", "DiscoveryMultiChoiceFilter", "DiscoveryMultiChoiceSheet", "DiscoveryTextFilter",
         "LibraryHeader", "LibraryFilterSheet", "LibraryFilterField", "LibraryListPicker", "LibraryTypeFilters",
         "BrowserFilterRail", "BrowserFacet", "BrowserSegments", "BrowserChip", "BrowserToggle", "BrowserFacetField", "BrowserAppliedRow",
-        "useSelect", "InlineChoiceLimit", "sourceFilterUsesSelect")
+        "useSelect", "InlineChoiceLimit", "sourceFilterUsesSelect",
+        "TvBrowseChrome", "TvCatalogsSheet", "TvFiltersPage", "TvFacetChoices", "TvFacetText", "tvAppliedChips",
+        "TvLibraryHeader", "TvLibraryFilterSheet", "TvLibraryFilterField", "TvLibraryListPicker", "TvLibraryTypeFilters",
+        "TvLibraryControls", "TvSourcesFilters")
 
     @Test fun theRetiredFilterComponentsAreGone() {
         assertTrue(root.isDirectory, "run from the composeApp module: ${root.absolutePath}")
@@ -32,12 +34,12 @@ class FilterPatternScanTest {
         assertEquals(emptyList(), found, "use SearchableSelect / FilterBar instead")
     }
 
-    @Test fun onlyTvFilesStillOpenAFiltersPanel() {
+    @Test fun noPageStillOpensAFiltersPanel() {
         val pages = listOf("features/browse", "features/library", "features/sources")
         val found = pages.flatMap { File(root, it).listFiles().orEmpty().toList() }
-            .filter { !it.name.startsWith("Tv") && Regex(""""Filters"|"Apply"|Show results""").containsMatchIn(it.readText()) }
+            .filter { Regex(""""Filters"|"Apply"|Show results""").containsMatchIn(it.readText()) }
             .map { it.name }
-        assertEquals(emptyList(), found, "non-TV pages filter through the shared chips only")
+        assertEquals(emptyList(), found, "every layout filters through the shared chips only")
     }
 
     @Test fun nonTvPagesBuildTheirFiltersFromTheSharedBar() {
@@ -50,5 +52,17 @@ class FilterPatternScanTest {
         assertTrue(File(root, "features/library/LibraryFilterBar.kt").readText().contains("FilterBar("))
         assertTrue(File(root, "features/library/LibraryControls.kt").readText().contains("FilterBar("))
         assertTrue(File(root, "features/sources/SourceFilters.kt").readText().contains("FilterBar("))
+    }
+
+    @Test fun tvPagesBuildTheirFiltersFromTheSharedBar() {
+        // app#121: the TV pages compose the same bar as every other layout; the TV-only part
+        // is the presentation the bar picks, not a second filter surface.
+        val pages = mapOf(
+            "features/browse/TvBrowseScreen.kt" to "BrowseFilterBar(",
+            "features/library/TvLibraryScreen.kt" to "LibraryFilterBar(",
+            "features/sources/TvSourcesScreen.kt" to "SourceFilters(")
+        for ((name, bar) in pages) assertTrue(File(root, name).readText().contains(bar), "$name uses $bar")
+        assertTrue(File(root, "features/library/TvLibraryScreen.kt").readText().contains("LibraryControls("),
+            "My List before the server query uses the shared local controls too")
     }
 }

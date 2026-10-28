@@ -8,10 +8,18 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
 internal val LocalTvFocusAnchoring = staticCompositionLocalOf { false }
+
+/**
+ * The TV board scale: the screen width over 1920 dp, so a 1080p TV at 1920 dp is 1. TV pages
+ * that compute it from their own width provide it for the shared controls (the filter chips
+ * and their panel, app#121); every other layout leaves it at 1.
+ */
+internal val LocalTvScale = staticCompositionLocalOf { 1f }
 
 /** Distances are in viewport coordinates; Foundation owns animation and scroll-limit clamping. */
 internal class LeadingFocusScroll(private val inset: Float, private val fromEnd: Boolean = false) : BringIntoViewSpec {
