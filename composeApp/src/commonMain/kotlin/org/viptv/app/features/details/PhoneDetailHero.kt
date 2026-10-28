@@ -51,15 +51,10 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
             MediaMetadata(card, fontSize = 13f, lineHeight = 19f)
             // Board pill: coordinates left-aligned, time left hard right, progress underline inside.
-            val resume = resumeEpisode ?: card.takeIf { it.progress != null && it.progress > 0.0 && it.progress < 1.0 }
-            val progress = resume?.progress?.takeIf { it > 0.0 && it < 1.0 }
-            val coordinates = resume?.identity?.episode
-            val remaining = if (progress != null) remainingMinutesLabel(resume ?: card) else null
-            val label = when {
-                coordinates != null -> "Resume S${coordinates.season ?: 1L} E${coordinates.episode}"
-                progress != null -> "Resume"
-                else -> "Play"
-            }
+            val resume = resumeEpisode ?: card.takeIf(::resuming)
+            val progress = resume?.progress?.takeIf { resuming(resume) }
+            val remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel)
+            val label = heroPlayLabel(resume)
             Box(Modifier.fillMaxWidth()) {
                 Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 19.dp),
