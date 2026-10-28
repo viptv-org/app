@@ -49,11 +49,17 @@ class TvDetailsFocusReturnTest {
     private val origin = MetadataOrigin("stremio", "addon:21", "c".repeat(32))
     private val series = Card(MediaIdentity(show, "series", listOf(ExternalId("imdb", show))), provider_id = "addon:21",
         title = "Breaking Bad", badges = emptyList(), metadata_origin = origin)
-    private fun episode(number: Long, progress: Double? = null) = series.copy(
-        identity = MediaIdentity("$show:1:$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
+    private fun episode(season: Long, number: Long, progress: Double? = null) = series.copy(
+        identity = MediaIdentity("$show:$season:$number", "series", emptyList(), EpisodeCoordinates("aired", season, number)),
         parent_identity = series.identity, title = "Episode $number", progress = progress)
+    private fun episode(number: Long, progress: Double? = null) = episode(1, number, progress)
+    /** Season 2 titles its episodes by season, so a focus check says which season the shelf is on. */
+    private fun seasonTwo(number: Long, progress: Double? = null) =
+        episode(2, number, progress).copy(title = "S2 Episode $number")
     private fun label(number: Long) = "$number. Episode $number"
     private val detail = DetailSnapshot(series, episodes = (1L..10L).map { episode(it) })
+    private val twoSeasons = DetailSnapshot(series, episodes = (1L..5L).map { episode(it) } + (1L..5L).map { seasonTwo(it) },
+        seasons = listOf(EpisodeSeason(1, 5, 0), EpisodeSeason(2, 5, 5)))
     /** The same season served in two pages: episodes 11-16 come from `offset=10`. */
     private val pagedDetail = detail.copy(next_cursor = "10", seasons = listOf(EpisodeSeason(1, 16, 0)))
     private val secondPage = DetailSnapshot(series, episodes = (11L..16L).map { episode(it) })
@@ -259,13 +265,14 @@ class TvDetailsFocusReturnTest {
     /**
      * Home → Continue Watching card → Sources (Details load behind it) → Back (app#112).
      * The page was never on screen before the selector, so Back is its first entry: it
-     * opens onto the episode being continued, with the shelf on its season, not the hero.
+     * opens onto the episode being continued, with the shelf on that episode's season,
+     * not the hero.
      */
     @Test fun backFromSourcesAfterAContinueWatchingTapFocusesTheContinuedEpisode() {
-        TvApp().use { app ->
+        TvApp(twoSeasons).use { app ->
             app.frames()
-            app.backFromContinueWatching(episode(4, 0.45), "Episode 4")
-            app.assertFocus(label(4), "Back from Sources after a Continue Watching tap")
+            app.backFromContinueWatching(seasonTwo(3, 0.45), "S2 Episode 3")
+            app.assertFocus("3. S2 Episode 3", "Back from Sources after a Continue Watching tap in season 2")
         }
     }
 
