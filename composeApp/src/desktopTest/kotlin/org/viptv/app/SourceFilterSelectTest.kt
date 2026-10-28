@@ -21,9 +21,9 @@ import java.io.File
 import kotlin.test.*
 
 /**
- * app#59, app#117: the source picker's Quality and Source filters are the shared dropdown
- * chips on every non-TV layout, whatever the number of options. Picking filters exactly
- * like the old chips did, and "Clear" resets both.
+ * app#59, app#117, app#121: the source picker's Quality and Source filters are the shared
+ * dropdown chips on every layout, TV included, whatever the number of options. Picking
+ * filters exactly like the old chips did, and "Clear" resets both.
  */
 class SourceFilterSelectTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -92,9 +92,10 @@ class SourceFilterSelectTest {
         }
     }
 
-    @Test fun tvKeepsItsOwnFilters() {
+    @Test fun tvUsesTheSameChips() {
         Picker(mixed + source("a8", 1080, "MediaFusion"), pointer = true, television = true, width = 1920, height = 1080).use {
-            assertNull(it.triggers().firstOrNull(), "TV has no dropdowns")
+            assertEquals(listOf("Quality: All", "Source: All sources"), it.triggers().map(it::text), "TV filters through the same chips")
+            assertFalse(it.clickable("1080p 4"), "the old quality pill row is gone")
         }
     }
 

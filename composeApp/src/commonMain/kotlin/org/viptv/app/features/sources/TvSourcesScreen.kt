@@ -3,6 +3,7 @@ package org.viptv.app.features.sources
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.*
@@ -36,6 +38,8 @@ import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.CompositionLocalProvider
+import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.pointerClickable
 
 @androidx.compose.runtime.Immutable
@@ -59,12 +63,8 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val headerHeight = remember { SourceHeaderHeight() }
             val listState = androidx.compose.foundation.lazy.rememberLazyListState()
             val filterFocus = remember { FocusRequester() }
-            val providerFocus = remember { FocusRequester() }
-            val scope = rememberCoroutineScope()
-            var entryJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
             var quality by remember { mutableStateOf<String?>(null) }
             var provider by remember { mutableStateOf<String?>(null) }
-            var lastProviderFocus by remember { mutableStateOf<String?>(null) }
             val visible = remember(sources, info, quality, provider) { sources.filter { (quality == null || info[it.id]?.quality == quality) && (provider == null || it.sourceFilterId() == provider) } }
             val rows = remember(visible, groups) { sourceListRows(visible, groups) }
             val finding = loadingMore || busy && sources.isEmpty()
@@ -129,12 +129,15 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     if (torrentOnly) TvSourcesTorrentPanel(torrentOnlyProviders, scale, debridHelp, motion.dismiss, stateFocus)
                     else TvSourcesEmptyPanel(sourceHeading(title, detail), checkedAddons, checkedProviders, scale,
                         checkAgain, manageAddons, stateFocus)
-                } else TvSourcesFilters(sources, info, scale, quality, provider, { quality = it; navigated = true }, { provider = it; navigated = true }, filterFocus, providerFocus,
-                    focusedProvider = lastProviderFocus, providerFocused = { lastProviderFocus = it }) {
-                    if (entryJob?.isActive != true && rows.isNotEmpty()) entryJob = scope.launch {
-                        listState.scrollToItem(if (error != null) 1 else 0)
-                        withFrameNanos { }
-                        rowFocus[rows.first().source.id]?.requestFocus()
+                } else {
+                    // The picker filters through the same dropdown chips as every layout (app#121):
+                    // Quality and Source open the right panel and return focus to their chip.
+                    Box(Modifier.focusGroup().focusRequester(filterFocus)) {
+                        CompositionLocalProvider(LocalTvScale provides scale) {
+                            SourceFilters(sources, quality, provider,
+                                { quality = it; navigated = true }, { provider = it; navigated = true },
+                                Modifier.fillMaxWidth(), gutter = 0.dp)
+                        }
                     }
                 }
                 Spacer(Modifier.height(20.dp * scale))
@@ -148,7 +151,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     error?.let { item { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) } }
                     itemsIndexed(rows, key = { _, row -> row.source.id }) { index, row ->
                         TvSourceRow(row.source, info[row.source.id], scale, rowFocus.getOrPut(row.source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
-                            up = if (index == 0) providerFocus else null, focusedSource = { focusedSource = it },
+                            up = if (index == 0) filterFocus else null, focusedSource = { focusedSource = it },
                             header = row.header, bestMatch = row.bestMatch, headerMeasured = { headerHeight.pixels = it })
                     }
                     if (finding) items(3) {

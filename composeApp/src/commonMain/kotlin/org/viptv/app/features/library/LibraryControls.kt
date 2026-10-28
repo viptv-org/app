@@ -1,6 +1,7 @@
 package org.viptv.app.features.library
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import org.viptv.app.components.FilterBar
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
@@ -10,17 +11,20 @@ private val LocalSorts = listOf("Date added", "A–Z", "Z–A").map { SelectOpti
 
 /**
  * My List before the server's list query is available: the same filter bar, with Type and
- * Sort applied to the cards on this device.
+ * Sort applied to the cards on this device. [watchedAvailable] adds the local "Last watched"
+ * sort TV keeps by default when it has watch history.
  */
 @Composable
-internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: String, setSort: (String) -> Unit) {
+internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: String, setSort: (String) -> Unit,
+    watchedAvailable: Boolean = false) {
+    val sorts = remember(watchedAvailable) { LocalSorts + if (watchedAvailable) listOf(SelectOption("Last watched", "Last watched")) else emptyList() }
     FilterBar(clear = if (filter != "All" || sort != "Date added") ({ setFilter("All"); setSort("Date added") }) else null) {
         item(key = "type") {
             SearchableSelect("Type", LocalTypes, listOf(filter), { it.firstOrNull()?.let(setFilter) }, anyLabel = null,
                 highlighted = filter != "All")
         }
         item(key = "sort") {
-            SearchableSelect("Sort", LocalSorts, listOf(sort), { it.firstOrNull()?.let(setSort) }, anyLabel = null,
+            SearchableSelect("Sort", sorts, listOf(sort), { it.firstOrNull()?.let(setSort) }, anyLabel = null,
                 highlighted = sort != "Date added")
         }
     }

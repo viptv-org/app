@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
@@ -25,23 +28,42 @@ private val PhoneWidth = 640.dp
  * [clear], when given, ends the row with a "Clear" chip that resets every filter.
  *
  * The row decides the presentation for every chip in it ([LocalSelectPresentation]): a
- * phone-width touch layout gets bottom sheets, everything else the anchored popover.
- * [gutter] is the side padding the first chip rests on. With [bleed] the parent pads its
- * content by [gutter] and the row scrolls out under that padding to the screen edges;
- * without it the row spans its parent and insets its chips itself.
+ * phone-width touch layout gets bottom sheets, a TV (where focus is the only pointer) the
+ * right panel, everything else the anchored popover. [gutter] is the side padding the first
+ * chip rests on. With [bleed] the parent pads its content by [gutter] and the row scrolls out
+ * under that padding to the screen edges; without it the row spans its parent and insets its
+ * chips itself.
  */
 @Composable
 internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: Boolean = true, clear: (() -> Unit)? = null,
     content: LazyListScope.() -> Unit) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val phone = !LocalPointerHover.current && maxWidth + (if (bleed) gutter * 2 else 0.dp) < PhoneWidth
-        CompositionLocalProvider(LocalSelectPresentation provides if (phone) SelectPresentation.Sheet else SelectPresentation.Popover) {
-            FocusLazyRow(Modifier.fillMaxWidth().bleedHorizontally(if (bleed) gutter else 0.dp), contentPadding = PaddingValues(horizontal = gutter),
+        // TV filters keep the shared chips and open the list as the right panel (app#121).
+        val tv = LocalTvFocusAnchoring.current
+        val scale = LocalTvScale.current
+        val presentation = when {
+            tv -> SelectPresentation.Panel
+            phone -> SelectPresentation.Sheet
+            else -> SelectPresentation.Popover
+        }
+        // The row is one focus group on TV: clipping the Clear chip must not strand the remote.
+        val row = remember { FocusRequester() }
+        // A TV ring is drawn outside the chip; the scrolling row would clip it at either end.
+        val reach = if (tv) tvRingReach(scale) else 0.dp
+        CompositionLocalProvider(LocalSelectPresentation provides presentation) {
+            FocusLazyRow(Modifier.fillMaxWidth().then(if (tv) Modifier.tvRingRoom(reach, vertical = false) else Modifier)
+                .bleedHorizontally(if (bleed) gutter else 0.dp)
+                .then(if (tv) Modifier.focusRequester(row) else Modifier),
+                contentPadding = PaddingValues(horizontal = gutter + reach),
                 horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
                 // A chip row pinned above a grid: the wheel over it scrolls it sideways (app#59).
                 wheelScrollsRow = true) {
                 content()
-                if (clear != null) item(key = "filter-bar:clear") { ActionChip("Clear", Lucide.X, clear) }
+                if (clear != null) item(key = "filter-bar:clear") {
+                    // Clearing removes the Clear chip itself, so TV puts focus back on the row.
+                    ActionChip("Clear", Lucide.X, { clear(); runCatching { row.requestFocus() } })
+                }
             }
         }
     }
