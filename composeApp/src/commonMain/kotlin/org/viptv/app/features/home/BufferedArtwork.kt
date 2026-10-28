@@ -81,7 +81,7 @@ private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: A
     val fade = remember { Animatable(1f) }
     LaunchedEffect(url, status) {
         if (url == null) { shown = null; outgoing = null; return@LaunchedEffect }
-        if (status is AsyncImagePainter.State.Error && url != null) onError(url)
+        if (status is AsyncImagePainter.State.Error) onError(url)
         val ready = status as? AsyncImagePainter.State.Success
         if (ready != null && ready.result.request.data == url && shown?.url != url) {
             outgoing = shown

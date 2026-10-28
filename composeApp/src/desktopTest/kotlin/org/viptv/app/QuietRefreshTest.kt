@@ -457,4 +457,46 @@ class QuietRefreshTest {
         val otherProfile = fresh.copy(scope = fresh.scope.copy(profile_id = "13"))
         assertSame(otherProfile, mergeHome(paged, otherProfile))
     }
+
+    /** The same title, but this rebuild missed the metadata deadline and came back without artwork. */
+    private fun sparse() = card("c1").copy(title = "The End of Oak Street", subtitle = "2026 · Action")
+    private val billboard = card("c1").copy(title = "The End of Oak Street", subtitle = "2026 · Action",
+        landscape = "https://art.example/landscape.jpg", poster = "https://art.example/poster.jpg",
+        logo = "https://art.example/logo.png")
+    private val withArtwork = home(6, listOf(card("old"))).let { shown ->
+        shown.copy(hero = billboard, featured = listOf(billboard) + shown.featured.drop(1),
+            rows = shown.rows.map { if (it.id == "top") it.copy(cards = listOf(billboard, card("c2"))) else it })
+    }
+
+    /** app#94: the billboard the viewer is looking at keeps its artwork when a rebuild comes back sparse. */
+    @Test fun aRebuildKeepsTheArtworkHomeIsAlreadyShowing() {
+        val fresh = home(7, listOf(card("new")), catalog = listOf(sparse(), card("c2")))
+        val merged = requireNotNull(mergeHome(withArtwork, fresh))
+        assertEquals(billboard, merged.hero, "the hero keeps the artwork it is showing")
+        assertEquals(billboard, merged.featured.first(), "the carousel keeps the slide's artwork")
+        assertEquals(billboard, merged.rows.single { it.id == "top" }.cards.first(), "a row keeps the art it shows")
+        val reshuffled = requireNotNull(mergeHome(withArtwork, fresh.copy(hero = card("other"), featured = listOf(card("other")))))
+        assertEquals(card("other"), reshuffled.hero, "a rebuild that picks a different title still swaps the billboard")
+        val reArt = requireNotNull(mergeHome(withArtwork, fresh.copy(hero = sparse().copy(logo = "https://art.example/new-logo.png"))))
+        assertEquals("https://art.example/new-logo.png", reArt.hero?.logo, "art a rebuild does bring wins")
+        assertEquals("https://art.example/landscape.jpg", reArt.hero?.landscape, "art the rebuild lacks is kept")
+    }
+
+    @Test fun aQuietRebuildNeverBlanksTheBillboard() = runBlocking<Unit> {
+        val moved = base + ("library" to "5")
+        val server = Server { path ->
+            when (path) {
+                "/api/profiles/12/revisions" -> json(revisionsJson(moved))
+                "/api/bootstrap" -> json(bootstrap(home(7, listOf(card("new")), catalog = listOf(sparse())), moved))
+                else -> error("Unexpected $path")
+            }
+        }
+        val controller = controller(server, state = ApplicationState(screen = Screen.Home, selectedProfile = "12", home = withArtwork))
+        controller.freshen(); controller.settle()
+        assertEquals(7L, controller.state.value.home?.revision, "the rebuild landed")
+        val hero = requireNotNull(controller.state.value.home?.hero)
+        assertEquals("https://art.example/landscape.jpg", hero.landscape, "the hero's backdrop survives the rebuild")
+        assertEquals("https://art.example/logo.png", hero.logo, "the hero's logo survives the rebuild")
+        controller.connection?.close()
+    }
 }
