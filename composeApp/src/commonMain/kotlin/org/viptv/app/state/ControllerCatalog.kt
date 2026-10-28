@@ -359,9 +359,9 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
     } finally { if (generation == operation) mutable.value = mutable.value.copy(findingSources = false) }
 }
 
-/** Best match autoplay plays the first Best matches row, or the top row when the ranking formed no group. */
+/** Best match autoplay plays the first Best matches row; an empty Best matches group plays nothing (app#110). */
 internal fun RankedSources.autoplayTarget(): org.viptv.engine.wire.SourceCandidate? =
-    groups.bestMatches.firstOrNull()?.let { id -> rows.firstOrNull { it.id == id } } ?: rows.firstOrNull()
+    groups.bestMatches.firstOrNull()?.let { id -> rows.firstOrNull { it.id == id } }
 
 internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapshot): Card {
     val delegated = card.metadata_origin != null && card.metadata_origin != detail.item.metadata_origin
