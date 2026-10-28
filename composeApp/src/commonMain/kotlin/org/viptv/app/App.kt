@@ -107,7 +107,8 @@ fun App(
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television,
-                        back = if (state.selectedProfile != null) controller::navigateBack else null)
+                        // The picker opened by Back from Home has no arrow: Back leaves the app (app#109).
+                        back = if (state.selectedProfile != null && !state.profilesFromHome) controller::navigateBack else null)
                 }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
                     state.busy, state.error, controller::submitProfilePin, controller::navigateBack, television)
