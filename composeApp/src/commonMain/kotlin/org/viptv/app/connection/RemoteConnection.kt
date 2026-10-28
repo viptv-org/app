@@ -290,7 +290,7 @@ class RemoteConnection(
         throw RemoteFailure(status, when (status) {
             401 -> "Sign in to continue."
             403 -> "This action is not available for this profile."
-            429 -> rateLimitedMessage(response)
+            429 -> tooManyRequestsMessage(response)
             else -> "The server could not complete this request."
         })
     }
@@ -300,13 +300,14 @@ class RemoteConnection(
      * in `Retry-After` (backend#35, backend#59), so sign-in can show that window instead of a
      * generic wait. A 429 from another limiter, or one without a positive hint, keeps the copy.
      */
-    private suspend fun rateLimitedMessage(response: HttpResponse): String {
+    private suspend fun tooManyRequestsMessage(response: HttpResponse): String {
         val generic = "Too many requests. Please wait and try again."
         val seconds = response.headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull()?.takeIf { it > 0 }
             ?: return generic
-        val code = runCatching {
+        val code = try {
             codec.parseToJsonElement(response.bodyAsText()).jsonObject["error_code"]?.jsonPrimitive?.contentOrNull
-        }.getOrNull()
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
         return if (code == "rate_limited") "Too many attempts. Try again in $seconds s." else generic
     }
 
