@@ -29,12 +29,22 @@ internal enum class ShelfFocus {
     Missing,
 }
 
+/** Which episode the Details page is asking the shelf for. */
+internal enum class ShelfLanding {
+    /** Any episode, else the season selector: the viewer pressed Down into the shelf. */
+    Any,
+    /** The last focused episode, else the continued one, and never another (Back to a page they saw, app#66). */
+    Return,
+    /** The continued episode itself (Back to a page first opened behind the selector, app#112). */
+    Resume,
+}
+
 /**
- * The shelf's focus request, published to the Details page that hosts it. Entering the
- * shelf takes any episode, else the season selector. Returning to Details (app#66) takes
- * the last focused episode, else the continued one, and never another.
+ * The shelf's focus request, published to the Details page that hosts it. [ShelfLanding.Any]
+ * takes any episode, else the season selector. [ShelfLanding.Return] and
+ * [ShelfLanding.Resume] take a named episode and never another.
  */
-internal class ShelfFocusHandle { var request: ((returning: Boolean) -> ShelfFocus)? = null }
+internal class ShelfFocusHandle { var request: ((landing: ShelfLanding) -> ShelfFocus)? = null }
 
 /** How many frames a TV focus request waits for lazy children to be placed. */
 internal const val TV_FOCUS_RETRY_FRAMES = 32
@@ -78,10 +88,12 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
         targets[visible.find { resume?.matches(it) == true }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
         visible.firstNotNullOfOrNull { targets[episodeKey(it)] }?.requestPlacedFocus() == true
     val scope = rememberCoroutineScope()
-    fun requestFocus(returning: Boolean): ShelfFocus {
-        if (!returning) return if (focusEpisode() || seasonFocus.requestPlacedFocus()) ShelfFocus.Focused else ShelfFocus.Pending
-        // The landing target: an unplaced one is brought into the row first.
-        val index = landingIndex ?: return ShelfFocus.Missing
+    fun requestFocus(landing: ShelfLanding): ShelfFocus {
+        if (landing == ShelfLanding.Any) return if (focusEpisode() || seasonFocus.requestPlacedFocus()) ShelfFocus.Focused else ShelfFocus.Pending
+        // The landing target: an unplaced one is brought into the row first. A page first
+        // opened behind the selector (app#112) takes the continued episode even when an
+        // earlier visit left a different episode remembered.
+        val index = (if (landing == ShelfLanding.Resume) resume.indexIn(visible) else landingIndex) ?: return ShelfFocus.Missing
         if (targets[episodeKey(visible[index])]?.requestPlacedFocus() == true) return ShelfFocus.Focused
         if (episodeRows.layoutInfo.visibleItemsInfo.none { it.index == index }) scope.launch { episodeRows.scrollToItem(index) }
         return ShelfFocus.Pending

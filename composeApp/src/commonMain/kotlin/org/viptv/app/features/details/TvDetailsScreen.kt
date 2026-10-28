@@ -23,8 +23,15 @@ import org.viptv.app.components.TextButton
 /** The rows of the TV Details page, top to bottom. */
 internal enum class TvDetailRow { Hero, Episodes, Recommendations }
 
-/** How this composition of the TV Details page began, and whether it was on screen at the last check (app#66). */
-private class TvDetailVisit(val firstEntry: Boolean) { var shown = firstEntry }
+/**
+ * How this composition of the TV Details page began, and whether it was on screen at the last check (app#66).
+ * [seen] says whether the viewer has been on this page during this Details visit: a page first composed
+ * behind the source selector, as a Continue Watching tap opens it, has not (app#112).
+ */
+private class TvDetailVisit(val firstEntry: Boolean, seen: Boolean) {
+    var shown = firstEntry
+    var seen = seen
+}
 
 internal data class TvDetailExtras(
     val cast: String? = null,
@@ -53,6 +60,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val card = detail?.item
+        val resume = remember(detail, continuing) { detailResume(detail, continuing) }
         // Saveable so the page behind the sources sheet keeps its position
         // instead of visibly resetting to the hero when the sheet opens.
         val scroll = key(card?.identity) { rememberSaveable(saver = LazyListState.Saver) { LazyListState() } }
@@ -66,10 +74,16 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         // per title and across the player, where it leaves composition. Shown again, focus goes
         // back to that row: the last focused episode, else the continued episode (app#40),
         // else the hero. Any other row returns to the hero.
+        // A page first composed behind the selector (a Continue Watching tap, app#112) was never
+        // entered: it opens on the continued episode instead, and on the hero without one.
         // Keyed by title, not by position: one saved-state slot serves every title's Details.
         var leftFrom by rememberSaveable(card?.provider_id, card?.identity,
             key = card?.let { "tv-detail-left-from:${it.provider_id}:${it.identity.kind}:${it.identity.id}" }) { mutableStateOf<TvDetailRow?>(null) }
-        val visit = remember(card?.identity) { TvDetailVisit(firstEntry = shown) }
+        // Composed while shown, or composed again behind the selector after the viewer had left a
+        // row from it (the player closed onto the selector): either way they have been on this
+        // page. A page first composed behind the selector, where a Continue Watching tap lands,
+        // has not (app#112). No visit of this page ends hidden on TV, so a saved row means seen.
+        val visit = remember(card?.identity) { TvDetailVisit(firstEntry = shown, seen = shown || leftFrom != null) }
         var activeRow by remember(card?.identity) { mutableStateOf(if (shown) TvDetailRow.Hero else leftFrom ?: TvDetailRow.Hero) }
         var episodeMode by remember(card?.identity) { mutableStateOf(activeRow == TvDetailRow.Episodes) }
         val sectionScroll = org.viptv.app.components.rememberTvSectionScroll(scroll)
@@ -91,8 +105,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             activeRow = TvDetailRow.Hero; episodeMode = false
             sectionScroll.focus(0, force = true) { if (activeRow == TvDetailRow.Hero) playFocus.requestFocus() }
         }
-        /** Into the episode shelf; a [returning] viewer (app#66) gets their episode or the hero, never another episode. */
-        fun focusEpisodes(returning: Boolean = false) {
+        /** Into the episode shelf; a [landing] other than [ShelfLanding.Any] takes the episode it names, never another. */
+        fun focusEpisodes(landing: ShelfLanding = ShelfLanding.Any) {
             if (detail.episodes.isEmpty()) { returnHero(); return }
             activeRow = TvDetailRow.Episodes; episodeMode = true
             sectionScroll.focus(index(TvDetailRow.Episodes), force = true)
@@ -100,13 +114,13 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                 repeat(TV_FOCUS_RETRY_FRAMES) {
                     withFrameNanos { }
                     if (activeRow != TvDetailRow.Episodes) return@launch
-                    when (shelfFocus.request?.invoke(returning)) {
+                    when (shelfFocus.request?.invoke(landing)) {
                         ShelfFocus.Focused -> return@launch
                         ShelfFocus.Missing -> { returnHero(); return@launch }
                         ShelfFocus.Pending, null -> Unit
                     }
                 }
-                if (returning && activeRow == TvDetailRow.Episodes) returnHero()
+                if (landing != ShelfLanding.Any && activeRow == TvDetailRow.Episodes) returnHero()
             }
         }
         LaunchedEffect(card?.identity, shown) {
@@ -114,7 +128,16 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             leftFrom = null
             if (visit.shown) return@LaunchedEffect
             visit.shown = true
-            if (activeRow == TvDetailRow.Episodes) focusEpisodes(returning = true) else returnHero()
+            // A page the viewer never saw was composed behind the source selector, as a
+            // Continue Watching tap opens it (app#112): it comes back onto the episode being
+            // continued. A page they saw returns to the row they left from (app#66).
+            val firstLook = !visit.seen
+            visit.seen = true
+            when {
+                firstLook -> if (resume != null) focusEpisodes(ShelfLanding.Resume) else returnHero()
+                activeRow == TvDetailRow.Episodes -> focusEpisodes(ShelfLanding.Return)
+                else -> returnHero()
+            }
         }
         key(card?.identity) {
             TvDetailBackdrop(card, scale) { offset(scroll.firstVisibleItemIndex) + scroll.firstVisibleItemScrollOffset }
@@ -134,7 +157,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                 if (detail.episodes.isNotEmpty()) item(key = "episodes") {
                     TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
                         focused = { episodeMode = true; focusRow(TvDetailRow.Episodes) }, expanded = episodeMode,
-                        resume = remember(detail, continuing) { detailResume(detail, continuing) },
+                        resume = resume,
                         returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
                         busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown)
                 }

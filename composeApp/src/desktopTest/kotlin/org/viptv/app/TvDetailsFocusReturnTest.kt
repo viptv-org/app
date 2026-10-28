@@ -127,6 +127,19 @@ class TvDetailsFocusReturnTest {
             assertTrue(now.any { it.contains(text) }, "$why: focus is on $text, not $now")
         }
 
+        /** Home's Continue Watching row becomes these cards, as the host's bootstrap sends it. */
+        fun continueWatching(vararg cards: Card) {
+            val home = requireNotNull(state.home)
+            controller.mutable.value = state.copy(home = home.copy(rows = home.rows.map { row ->
+                if (row.id == org.viptv.app.features.home.CONTINUE_ROW) row.copy(state = RowState.READY, cards = cards.toList()) else row }))
+        }
+        /** Down from the billboard into the Continue Watching row, then OK on its card for [title]. */
+        fun tapContinueWatching(title: String) {
+            press(Key.DirectionDown)
+            until("the Continue Watching card") { focused().any { it.contains(title) } }
+            press(Key.Enter)
+        }
+
         /** Home → the title's Details, with focus on the hero's Play. */
         fun openDetails() {
             controller.open(series)
@@ -224,6 +237,51 @@ class TvDetailsFocusReturnTest {
             app.frames(20)
             app.openDetails()
             app.assertFocus("Play", "a new visit to the same title starts on the hero")
+        }
+    }
+
+    /**
+     * Home → Continue Watching card → Sources (Details load behind it) → Back (app#112).
+     * The page was never on screen before the selector, so Back is its first entry: it
+     * opens onto the episode being continued, with the shelf on its season, not the hero.
+     */
+    @Test fun backFromSourcesAfterAContinueWatchingTapFocusesTheContinuedEpisode() {
+        TvApp().use { app ->
+            app.frames()
+            app.continueWatching(episode(4, 0.45))
+            app.frames()
+            app.tapContinueWatching("Episode 4")
+            app.until("the source selector") { app.state.screen == Screen.Sources }
+            app.selectorTakesFocus()
+            app.until("the Details loading behind the selector") { app.state.detail != null }
+            assertEquals(Screen.Details, app.state.sourceReturnScreen, "Back from sources lands on the title's Details")
+            app.controller.backSources()
+            assertEquals(Screen.Details, app.state.screen)
+            app.assertFocus(label(4), "Back from Sources after a Continue Watching tap")
+        }
+    }
+
+    /**
+     * The same tap after an earlier visit to this title's shelf left another episode
+     * remembered: the continued episode wins, not the remembered one (app#112).
+     */
+    @Test fun aContinueWatchingTapIgnoresTheEpisodeAnEarlierVisitLeftFocused() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.controller.backDetails()
+            app.until("Home") { app.state.screen == Screen.Home }
+            app.until("the hero's Play") { app.focused().any { it.contains("Play") } }
+            app.continueWatching(episode(4, 0.45))
+            app.frames()
+            app.tapContinueWatching("Episode 4")
+            app.until("the source selector") { app.state.screen == Screen.Sources }
+            app.selectorTakesFocus()
+            app.until("the Details loading behind the selector") { app.state.detail != null }
+            app.controller.backSources()
+            assertEquals(Screen.Details, app.state.screen)
+            app.assertFocus(label(4), "Back from Sources after a Continue Watching tap, episode 7 was focused earlier")
         }
     }
 
