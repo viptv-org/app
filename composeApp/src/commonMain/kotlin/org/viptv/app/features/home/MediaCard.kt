@@ -121,16 +121,16 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
-            val density = androidx.compose.ui.platform.LocalDensity.current
-            val slotW = with(density) { width.dp.toPx().toInt() }
-            val slotH = with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() }
-            // app#62: a 16:9 card without a still centres its poster over a soft fill.
-            when (val art = if (portrait) null else card.landscapeArt()) {
-                is LandscapeArt.Poster -> PosterInLandscape(
-                    org.viptv.app.images.sizedArtwork(art.url, slotH * 2 / 3, slotH) ?: art.url, card.title)
-                else -> AsyncImage(org.viptv.app.images.sizedArtwork(
-                    if (portrait) card.poster else (art as? LandscapeArt.Still)?.url, slotW, slotH),
-                    card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            // app#115: a grid card passes width = 0 and fills its cell, so its art is
+            // sized from the laid-out slot instead of a 0 px (clamped to 64 px) guess.
+            // Fixed-width cards (Home and TV rows) keep the plain path: BoxWithConstraints
+            // is a subcomposition per card, which those long scrolling rows don't need.
+            if (width > 0) {
+                val density = LocalDensity.current
+                CardArtwork(card, portrait, with(density) { width.dp.toPx().toInt() },
+                    with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() })
+            } else BoxWithConstraints(Modifier.matchParentSize()) {
+                CardArtwork(card, portrait, constraints.maxWidth, constraints.maxHeight)
             }
             // New episodes win the text label; Watched is the corner check below.
             card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
@@ -189,6 +189,19 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 }
             }
         }
+    }
+}
+
+/** The card's art, asked of the image service at the [slotW] x [slotH] px it is drawn into. */
+@Composable
+private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int) {
+    // app#62: a 16:9 card without a still centres its poster over a soft fill.
+    when (val art = if (portrait) null else card.landscapeArt()) {
+        is LandscapeArt.Poster -> PosterInLandscape(
+            org.viptv.app.images.sizedArtwork(art.url, slotH * 2 / 3, slotH) ?: art.url, card.title)
+        else -> AsyncImage(org.viptv.app.images.sizedArtwork(
+            if (portrait) card.poster else (art as? LandscapeArt.Still)?.url, slotW, slotH),
+            card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
     }
 }
 
