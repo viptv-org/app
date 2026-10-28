@@ -79,9 +79,8 @@ class TvDetailsFocusReturnTest {
         private suspend fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
             "/api/meta/series/$show" -> request.url.parameters["offset"]?.takeIf { it != "0" }.let { offset ->
                 if (offset != null) { pageOffsets += offset; null }
-                else if (failures.getAndUpdate { left -> (left - 1).coerceAtLeast(0) } > 0) {
+                else if (failures.getAndUpdate { left -> (left - 1).coerceAtLeast(0) } > 0)
                     respond("{\"error\":\"Title not found\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
-                }
                 else if (holdDetails) { releaseDetails.await(); json(Json.encodeToString(fixture)) }
                 else json(Json.encodeToString(fixture))
             }
