@@ -139,6 +139,22 @@ class TvDetailsFocusReturnTest {
             until("the Continue Watching card") { focused().any { it.contains(title) } }
             press(Key.Enter)
         }
+        /**
+         * Home → the Continue Watching card for [card] → Sources, with the title's Details loading
+         * behind the selector → Back to Details.
+         */
+        fun backFromContinueWatching(card: Card, title: String) {
+            continueWatching(card)
+            frames()
+            tapContinueWatching(title)
+            until("the source selector") { state.screen == Screen.Sources }
+            selectorTakesFocus()
+            until("the Details loading behind the selector") { state.detail != null }
+            assertEquals(Screen.Details, state.sourceReturnScreen, "Back from sources lands on the title's Details")
+            controller.backSources()
+            frames()
+            assertEquals(Screen.Details, state.screen)
+        }
 
         /** Home → the title's Details, with focus on the hero's Play. */
         fun openDetails() {
@@ -248,15 +264,7 @@ class TvDetailsFocusReturnTest {
     @Test fun backFromSourcesAfterAContinueWatchingTapFocusesTheContinuedEpisode() {
         TvApp().use { app ->
             app.frames()
-            app.continueWatching(episode(4, 0.45))
-            app.frames()
-            app.tapContinueWatching("Episode 4")
-            app.until("the source selector") { app.state.screen == Screen.Sources }
-            app.selectorTakesFocus()
-            app.until("the Details loading behind the selector") { app.state.detail != null }
-            assertEquals(Screen.Details, app.state.sourceReturnScreen, "Back from sources lands on the title's Details")
-            app.controller.backSources()
-            assertEquals(Screen.Details, app.state.screen)
+            app.backFromContinueWatching(episode(4, 0.45), "Episode 4")
             app.assertFocus(label(4), "Back from Sources after a Continue Watching tap")
         }
     }
@@ -273,14 +281,7 @@ class TvDetailsFocusReturnTest {
             app.controller.backDetails()
             app.until("Home") { app.state.screen == Screen.Home }
             app.until("the hero's Play") { app.focused().any { it.contains("Play") } }
-            app.continueWatching(episode(4, 0.45))
-            app.frames()
-            app.tapContinueWatching("Episode 4")
-            app.until("the source selector") { app.state.screen == Screen.Sources }
-            app.selectorTakesFocus()
-            app.until("the Details loading behind the selector") { app.state.detail != null }
-            app.controller.backSources()
-            assertEquals(Screen.Details, app.state.screen)
+            app.backFromContinueWatching(episode(4, 0.45), "Episode 4")
             app.assertFocus(label(4), "Back from Sources after a Continue Watching tap, episode 7 was focused earlier")
         }
     }
