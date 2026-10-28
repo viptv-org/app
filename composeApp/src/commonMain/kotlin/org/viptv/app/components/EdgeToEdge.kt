@@ -38,7 +38,8 @@ internal fun Modifier.bleedHorizontally(left: Dp, right: Dp): Modifier = layout 
         minWidth = if (constraints.minWidth == 0) 0 else constraints.minWidth + extra,
         maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + extra else Constraints.Infinity)
     val placeable = measurable.measure(wide)
-    // `place`, not `placeRelative`: the bleed is the same on both sides, so RTL needs no mirroring.
+    // `place`, not `placeRelative`: the sides are physical, so a symmetric bleed needs no
+    // mirroring and a one-sided one names its own side.
     layout(constraints.constrainWidth(placeable.width - extra), placeable.height) { placeable.place(-leftSide, 0) }
 }
 
