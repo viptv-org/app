@@ -17,6 +17,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.engine.wire.SourcePresentation
 import org.junit.Rule
+import java.io.File
 import kotlin.test.*
 
 /**
@@ -82,6 +83,15 @@ class SourceFilterSelectTest {
         }
     }
 
+    @Test fun sourcePickerRendersForEvidence() {
+        Picker(mixed, pointer = true).use {
+            assertEquals(listOf("Quality: All", "Source: All sources"), it.triggers().map(it::text))
+            it.capture("source-picker-closed")
+            it.open("Quality: All")
+            it.capture("source-picker-quality-open")
+        }
+    }
+
     @Test fun tvKeepsItsOwnFilters() {
         Picker(mixed + source("a8", 1080, "MediaFusion"), pointer = true, television = true, width = 1920, height = 1080).use {
             assertNull(it.triggers().firstOrNull(), "TV has no dropdowns")
@@ -132,6 +142,9 @@ class SourceFilterSelectTest {
             assertTrue(row.config[SemanticsActions.OnClick].action!!.invoke())
             frames(30)
         }
+        fun capture(name: String) { System.getenv("VIPTV_FILTER_CAPTURE_DIR")?.let { path ->
+            File(path).mkdirs(); scene.render(frame++ * 16_666_667L).use { image -> image.encodeToData()!!.use { File(path, "$name.png").writeBytes(it.bytes) } }
+        } }
         override fun close() = scene.close()
     }
 }
