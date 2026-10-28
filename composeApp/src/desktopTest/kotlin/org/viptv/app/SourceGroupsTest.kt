@@ -3,6 +3,7 @@ package org.viptv.app
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.app.features.sources.*
+import org.viptv.app.state.autoplayTarget
 import org.viptv.engine.wire.SourceCandidate
 import kotlin.test.*
 
@@ -99,5 +100,23 @@ class SourceGroupsTest {
     @Test fun membershipIsCappedAtFive() {
         assertEquals(5, SourceGroups.of((1..8).map { "r$it" }, "r1").bestMatches.size)
         assertNull(SourceGroups.of(listOf("a"), "z").bestMatchId)
+    }
+
+    @Test fun anEmptyBestMatchesGroupHasNoAutoplayTarget() {
+        assertEquals("b", RankedSources(listOf(row("a"), row("b")), SourceGroups(listOf("b", "a"))).autoplayTarget()?.id)
+        assertNull(RankedSources(listOf(row("a"), row("b")), SourceGroups()).autoplayTarget(),
+            "No Best matches rows means no autoplay")
+    }
+
+    @Test fun anEmptyServerBestMatchIdsListAutoplaysNothing() {
+        val candidates = listOf(row("a"), row("b"), row("c"))
+        val response = buildJsonObject {
+            put("streams", buildJsonArray { listOf("a", "b", "c").forEach { add(buildJsonObject { put("id", it) }) } })
+            put("best_match_ids", buildJsonArray { })
+        }
+        val ranked = rankedSourcesResponse(response, candidates)
+        assertEquals(listOf("a", "b", "c"), ranked.rows.map { it.id })
+        assertEquals(SourceGroups(), ranked.groups, "An explicit empty list is no Best matches group")
+        assertNull(ranked.autoplayTarget(), "Nothing autoplays with no Best matches rows")
     }
 }

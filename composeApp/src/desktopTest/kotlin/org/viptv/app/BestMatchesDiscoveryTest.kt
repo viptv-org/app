@@ -96,13 +96,25 @@ class BestMatchesDiscoveryTest {
         assertNull(controller.state.value.error)
     }
 
-    @Test fun onlyCameraReleasesFormNoGroupAndAutoplayIsUnchanged() = discover("best", {
+    @Test fun onlyCameraReleasesFormNoGroupAndAutoplayPlaysNothing() = discover("best", {
         Discovery(it, listOf(row("cam1", 1080, "cam"), row("cam2", 2160, "cam")), emptyList())
     }) { controller, fake ->
         fake.release.complete(Unit)
         settle(controller)
         assertEquals(SourceGroups(), controller.state.value.sourceGroups, "No header and no marker (scenario 15)")
-        // The countdown's hard-filter rule is separate work; today's autoplay still plays the top row.
-        assertEquals(listOf("cam2"), fake.opened)
+        assertEquals(listOf("cam2", "cam1"), controller.state.value.sources.map { it.id },
+            "The camera rows are still listed for the viewer to pick")
+        assertTrue(fake.opened.isEmpty(), "Best match autoplay plays nothing when every row fails the hard filters (scenario 5)")
+        assertFalse(controller.state.value.findingSources)
+    }
+
+    @Test fun aSinglePassingRowAutoplaysWhileCameraRowsStayListed() = discover("best", {
+        Discovery(it, listOf(row("cam", 1080, "cam"), row("good", 720)), emptyList())
+    }) { controller, fake ->
+        fake.release.complete(Unit)
+        settle(controller)
+        assertEquals(listOf("good", "cam"), controller.state.value.sources.map { it.id })
+        assertEquals(SourceGroups(listOf("good"), "good"), controller.state.value.sourceGroups)
+        assertEquals(listOf("good"), fake.opened, "The one passing row is the autoplay target, unchanged")
     }
 }

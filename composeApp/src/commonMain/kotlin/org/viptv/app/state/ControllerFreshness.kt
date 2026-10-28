@@ -47,7 +47,26 @@ fun ApplicationController.foregroundObserver(onReturn: () -> Unit = {}) = Lifecy
 }
 
 /** Key, remote, touch or pointer input. An aged Home waits until the viewer is idle. */
-fun ApplicationController.userActivity() = freshness.input()
+fun ApplicationController.userActivity() {
+    freshness.input()
+    if (!viewerPresent) { viewerPresent = true; viewerReturned.trySend(Unit) }
+}
+
+/**
+ * Keeps [ApplicationController.viewerPresent] current while something depends on it:
+ * sleeps until the viewer has been [Freshness.idle], marks them away, then waits for
+ * [userActivity] to bring them back. Neither wait asks for frames.
+ */
+internal suspend fun ApplicationController.trackViewerPresence(): Nothing {
+    while (true) {
+        val left = freshness.untilIdle()
+        if (left > kotlin.time.Duration.ZERO) { delay(left); continue }
+        viewerPresent = false
+        // Drop a wake-up left over from before this idle spell, then wait for input.
+        viewerReturned.tryReceive()
+        if (!viewerPresent) viewerReturned.receive()
+    }
+}
 
 /** Foreground return or entry to a screen: check now, or rebuild an aged Home. */
 fun ApplicationController.freshen() {
@@ -57,10 +76,13 @@ fun ApplicationController.freshen() {
     else if (freshness.checkDue(polling = false)) requestQuiet(QuietWork.Check)
 }
 
+/** Home and its full Continue Watching list (app#114) poll; other pages refresh on return and after playback. */
+private val POLLED_SCREENS = setOf(Screen.Home, Screen.ContinueWatching)
+
 /** While Home is visible: poll the revisions, and rebuild an aged Home once the viewer is idle. */
 internal fun ApplicationController.freshnessTick() {
     val state = mutable.value
-    if (!freshness.active() || state.screen != Screen.Home || state.home == null || state.selectedProfile == null) return
+    if (!freshness.active() || state.screen !in POLLED_SCREENS || state.home == null || state.selectedProfile == null) return
     if (freshness.homeStale() && freshness.idle()) requestQuiet(QuietWork.Refresh)
     else if (freshness.checkDue(polling = true)) requestQuiet(QuietWork.Check)
 }
@@ -189,6 +211,7 @@ internal fun mergeHome(current: HomeSnapshot?, fresh: HomeSnapshot?): HomeSnapsh
 private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner) {
     when (mutable.value.screen) {
         Screen.Library -> if (mutable.value.libraryPage != null && current(owner)) loadLibraryPage(refresh = true)
+        Screen.ContinueWatching -> reloadVisibleContinueWatching(owner)
         Screen.History -> {
             val history = owner.local?.history(owner.profile) ?: requireNotNull(owner.remote).history(owner.profile)
             if (current(owner) && mutable.value.screen == Screen.History) mutable.value = mutable.value.copy(history = history)

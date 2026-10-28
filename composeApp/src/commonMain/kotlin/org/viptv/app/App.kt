@@ -6,8 +6,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
@@ -65,7 +68,7 @@ fun App(
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
-            .pointerInput(controller) { awaitPointerEventScope { while (true) { awaitPointerEvent(PointerEventPass.Initial); controller.userActivity() } } }
+            .pointerInput(controller) { awaitPointerEventScope { observeViewerInput(controller::userActivity) } }
             .background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background)
             .then(if (playerDrawsEdgeToEdge(state.screen, television)) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
             if (state.starting) {
@@ -89,6 +92,12 @@ fun App(
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
                 state.homeGenres?.takeIf { showsGenreChip && it.profile == state.selectedProfile }?.let { HomeGenrePicker(it.choices, controller::browseGenre) }
             }
+            // A full Continue Watching row reads the whole list once per Home revision, so the row
+            // knows whether it ends with "See all" (app#114).
+            val continueRowSize = state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards?.size
+            LaunchedEffect(state.selectedProfile, state.home?.scope, state.home?.revision, continueRowSize) { controller.checkContinueWatching() }
+            // The full Continue Watching list belongs to Home in every navigation bar.
+            val navigationScreen = if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: defaultServer, state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
@@ -98,7 +107,8 @@ fun App(
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television,
-                        back = if (state.selectedProfile != null) controller::navigateBack else null)
+                        // The picker opened by Back from Home has no arrow: Back leaves the app (app#109).
+                        back = if (state.selectedProfile != null && !state.profilesFromHome) controller::navigateBack else null)
                 }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
                     state.busy, state.error, controller::submitProfilePin, controller::navigateBack, television)
@@ -111,22 +121,28 @@ fun App(
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres) { Column(Modifier.fillMaxSize()) {
-                    if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings))) TopNavigation(state.screen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
-                    else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                    if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
+                    else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
                     Row(Modifier.weight(1f)) {
-                        if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                        if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
-                            if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen else state.screen, controller::navigate)
+                            if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen.let { if (it == Screen.ContinueWatching) Screen.Home else it } else navigationScreen, controller::navigate)
                         // Phone and tablet only: TV, desktop and browser compose the page directly.
                         PullRefresh(touch, enabled = state.screen in PULL_REFRESH_SCREENS,
                             refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         when (state.screen) {
                             Screen.Home -> {
+                                // Phone, tablet, desktop and browser: the hero rotates while the viewer is
+                                // present, so an idle window draws nothing (app#95). TV keeps its own timer.
+                                if (!television) LaunchedEffect(controller) { controller.trackViewerPresence() }
+                                val viewerPresent = controller.viewerPresent
                                 val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
-                                summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary) }
-                                if (television) routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent) else homeContent()
+                                summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent,
+                                continueMore = state.continueWatchingMore(), seeAll = { controller.navigate(Screen.ContinueWatching) }) }
+                                // Kept per profile on every layout, so Back from Continue Watching (and any page) finds the row and focus it left.
+                                routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
                             // W3Browse: the browser renders the rail-and-content
                             // page; phone and desktop keep the shared inline chips.
@@ -158,7 +174,8 @@ fun App(
                                         controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
                                         defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
                                         // A Calendar row's episode comes first: Details opened from it land on its season (app#46).
-                                        continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty(),
+                                        continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
+                                            state.continueWatching?.takeIf { it.profile == state.selectedProfile }?.cards.orEmpty(),
                                         paging = state.screen == Screen.Details)
                                     if (showingSources) {
                                         val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups) }
@@ -172,6 +189,9 @@ fun App(
                                 sources = state.calendarSources, openEntry = controller::openCalendarEntry)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
                             Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
+                            Screen.ContinueWatching -> routes.SaveableStateProvider("${state.selectedProfile}:continue") {
+                                org.viptv.app.features.continuewatching.ContinueWatchingRoute(state, controller, television)
+                            }
                             Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
                                 controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
                             else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
@@ -183,7 +203,7 @@ fun App(
                     }
                   } }
                   if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
-                      BottomNavigation(state.screen, controller::navigate)
+                      BottomNavigation(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate)
                   }
                 }
             }
@@ -199,4 +219,23 @@ fun App(
 internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
 
 /** Pages the quiet lane reloads in place. The sources sheet over Details does not refresh. */
-private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.Library, Screen.History, Screen.Details)
+private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.ContinueWatching, Screen.Library, Screen.History, Screen.Details)
+
+/**
+ * Reports real pointer input: a press, release or scroll, or a pointer that moved.
+ * Compose re-sends the resting pointer as a synthetic move, enter or exit whenever
+ * content changes under it; counting those let the hero's own redraws keep an idle
+ * viewer "present" for ever (app#95).
+ */
+internal suspend fun AwaitPointerEventScope.observeViewerInput(activity: () -> Unit) {
+    var last: List<Offset>? = null
+    while (true) {
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        val at = event.changes.map { it.position }
+        val type = event.type
+        if (at != last || type == PointerEventType.Press ||
+            type == PointerEventType.Release ||
+            type == PointerEventType.Scroll) activity()
+        last = at
+    }
+}

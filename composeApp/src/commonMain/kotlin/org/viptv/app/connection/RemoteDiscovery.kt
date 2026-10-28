@@ -45,7 +45,10 @@ internal data class HomeRowPageQuery(val type: String, val catalog: String, val 
 
 private val rowIdentityKeys = setOf("type", "catalog", "connection_id", "addon_id")
 
-/** Only catalog rows page; personal rows (continue/favorites) have no cursor producer. */
+/**
+ * Only catalog rows page in place; personal rows (continue/favorites) have no cursor producer.
+ * Continue Watching's `Continue` action opens the full list instead ([opensContinueWatching]).
+ */
 internal fun HomeRow.pageQuery(): HomeRowPageQuery? {
     val action = browse ?: return null
     if (action.target != HomeBrowseTarget.DISCOVER) return null

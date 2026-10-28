@@ -19,9 +19,11 @@ web build) and the browser history bridge (`BrowserBackHistory`).
 Rules: an open overlay or panel closes before the screen goes back;
 nested pages go up one level at a time; otherwise Back pops the
 screen-to-screen history (`navBack`); a page with no history goes to its
-parent (Profiles for its PIN and editor, Home for the rest). Home,
-Connect and the first Profiles choice are roots: Back there belongs to
-the platform.
+parent (Profiles for its PIN and editor, Home for the rest). On Android
+and TV, Back on Home opens the profile picker first, and Back on that
+picker leaves the app — no Home↔Profiles bounce (app#109). Connect and
+the first Profiles choice are roots: Back there belongs to the
+platform.
 
 ## Matrix
 
@@ -32,14 +34,16 @@ one column: both use `MainActivity`'s Back and the same routes; they
 differ only in which in-page arrows they show, and the arrows now call
 `navigateBack`.
 
-Tests: `BackMatrixTest` (every screen, Android/TV Back and `navigateBack`),
+Tests: `BackMatrixTest` (every screen, Android/TV Back (`navigateSystemBack`) and `navigateBack`),
 `BackArrowsUiTest` (phone arrows = Android Back = `navigateBack`),
 `DesktopBackInputsTest` (Escape, focused controls and dialogs keep theirs,
 mouse buttons, route step first), `BrowserBackHistoryTest` (browser
 Back/Forward over a fake session history), `RouteBackUiTest` (player menu
 closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 `PlayerSettingsLinkUiTest`, `DetailNavigationTest`,
-`ContinueWatchingSourcesOpenTest`, `NextEpisodeEndPanelUiTest`.
+`ContinueWatchingSourcesOpenTest`, `NextEpisodeEndPanelUiTest`. The Continue
+Watching page (app#114) rows: `ContinueWatchingListTest` (Back, Android/TV
+Back, Sources' Back) and `ContinueWatchingUiTest` (TV focus on the way back).
 
 | Screen / state | Expected | Phone, tablet (`main`) | TV (`main`) | Desktop (`main`) | Browser (`main`) | Branch |
 |---|---|---|---|---|---|---|
@@ -48,11 +52,12 @@ closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 | Recovery codes | Stay until the viewer confirms (D4) | ✗ goes Home with no profile | ✗ same | ✓ nothing | ✗ Back leaves the site | D4 |
 | Profiles, first choice (no profile yet) | Leave the app | ✓ | ✓ | ✓ | ✓ leaves the site | ✓ |
 | Profiles, switching (profile selected) | Where the viewer came from, else Home | ✗ leaves the app; arrow went Home and recorded Profiles | ✗ leaves the app | ✗ Escape nothing (no chevron on this bar) | ✗ leaves the site | ✓ |
+| Profiles, reached by Back from Home | Leave the app, no bounce | ✗ the header arrow bounced Home | ✓ leaves the app | n/a | n/a | ✓ |
 | Profiles, Manage profiles | Leave Manage, stay on Profiles | ✗ leaves the app | ✗ leaves the app | ✗ nothing | ✗ leaves the site | ✓ |
 | Profile PIN | Profiles | ✓ (but recorded the PIN page in history) | ✓ | ✗ `navigateBack` popped history (Home) | ✗ leaves the site | ✓ |
 | Profile editor | Profiles | ✓ | ✓ | ✗ `navigateBack` popped history (Home) | ✗ leaves the site | ✓ |
 | Home, TV rows | Back to the hero | n/a | ✓ | n/a | n/a | ✓ |
-| Home | Platform root (D1) | ✗ goes to Profiles | ✗ goes to Profiles | ✓ chevron pops history if any | ✗ leaves the site even with history | D1 |
+| Home | Profile picker first; Back there leaves the app (D1) | ✗ goes to Profiles | ✗ goes to Profiles | ✓ chevron pops history if any | ✗ leaves the site even with history | ✓ |
 | Movies / Series / Anime / Discover, also genre-filtered (app#15) | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | Search | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ (Escape in the field too) | ✗ leaves the site | ✓ |
 | Details (all layouts), related-title chain | Previous Details, then the origin page | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
@@ -60,6 +65,8 @@ closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 | Player | Sources (app#13 lease rules) | ✓ | ✓ | ✓ Escape; ✗ mouse Back | ✗ leaves the site | ✓ |
 | Player panel open (Episodes, Audio & subtitles, Next episode app#41, lock) | Close the panel first | ✓ | ✓ | ✓ Escape; ✗ mouse Back closed the player | ✗ browser Back closed the player under the panel | ✓ |
 | Settings opened from the player (app#44) | The paused player | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
+| Continue Watching page (app#114), from Home's "See all" | Home, with the row and focus where they were; else Home | new: Home | new: Home, focus on the See all card | new: Home | new: Home | ✓ |
+| Sources or Details opened from the Continue Watching page | The page, focus on the card that opened them | new | new: same card focused | new | new | ✓ |
 | My List | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | History | Previous screen, else Home | ✗ always Home; arrow went Home and recorded History | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | Calendar | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
@@ -73,16 +80,15 @@ closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 
 ## Decisions for the owner
 
-- **D1, Back on Home.** The issue says to keep today's platform behaviour,
-  "Android leaves the app". On `main`, Android and TV Back on Home opened
-  Profiles, and only Back there left the app. Design agrees with the issue
-  (`roku-ux-contract.md`: "Back from Home exits the app"; Back from the
-  profile chooser "returns Home when a profile is selected"). Keeping
-  Home → Profiles while also making Profiles' Back go Home would trap the
-  viewer between the two. This branch makes Android and TV Back on Home
-  leave the app, with no new exit prompt; there was none before. Desktop
-  and browser keep the history pop on Home. To restore the Profiles hop,
-  change one line in `systemBackStaysInApp()`.
+- **D1, Back on Home.** Owner decision 2026-10-27 (app#109), reversing
+  app#45: on Android phone and TV, Back on Home opens the profile picker
+  first ("Who's watching?"), and Back from that picker leaves the app.
+  There is no Home↔Profiles bounce: choosing a profile still opens Home,
+  and the picker is marked so Back there belongs to the platform (its back
+  handler and header arrow are off). Profiles reached by other routes
+  (Switch profile, PIN, editor) keeps its own Back rules. Desktop and
+  browser are unchanged: desktop pops Home's history, browser Back on a
+  root page leaves the site.
 - **D2, TV Settings sections.** app#7's open point. TV Back with focus in
   a section's content now leaves Settings for the previous screen (it went
   Home). Moving focus back to the section list first would be a TV design

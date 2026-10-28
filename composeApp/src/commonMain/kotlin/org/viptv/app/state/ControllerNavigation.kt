@@ -59,6 +59,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     if (screen == Screen.Live) run { loadLive(LiveQuery()) }
     if (screen == Screen.Settings && connection?.accountManagementEnabled != true) refreshAddons()
     if (screen == Screen.Library) run { loadLibraryPage() }
+    if (screen == Screen.ContinueWatching) loadContinueWatching(navigation)
     if (screen == Screen.Calendar && connection != null) run { loadCalendar() }
     if (screen == Screen.History) runPage {
         progressJob?.join()
@@ -106,19 +107,35 @@ fun ApplicationController.navigateBack() {
     }
 }
 
+/**
+ * Android system Back and the TV remote's Back, once no route took it (docs/BACK_MATRIX.md).
+ * MainActivity calls this instead of [navigateBack] so Back on Home opens the profile picker first
+ * (app#109); desktop and browser keep [navigateBack]'s history pop on Home. The picker reached this
+ * way records no history and is marked [ApplicationState.profilesFromHome] so Back there leaves the
+ * app instead of bouncing back to Home.
+ */
+fun ApplicationController.navigateSystemBack() {
+    if (mutable.value.screen == Screen.Home) {
+        navigate(Screen.Profiles, record = false)
+        mutable.value = mutable.value.copy(profilesFromHome = true)
+        return
+    }
+    navigateBack()
+}
+
 /** Whether [navigateBack] has a step to take here; false on a root page, where Back belongs to the platform. */
 fun ApplicationState.canNavigateBack(): Boolean =
     settingsLevelOpen() || inPlayerSettings() || backStep() != BackStep.Root
 
 /**
  * Android system Back and the TV remote's Back, once no route took it: true when the app takes the
- * step ([navigateBack]), false when the activity leaves the app. Home is the root on Android and TV
- * (design: "Back from Home exits the app"); desktop and browser still pop Home's history.
- * The recovery codes are shown once, so Back there stays on the page.
+ * step ([navigateSystemBack]), false when the activity leaves the app. Back on Home opens the
+ * profile picker first (app#109); Back on that picker leaves the app. The recovery codes are shown
+ * once, so Back there stays on the page.
  */
 fun ApplicationState.systemBackStaysInApp(): Boolean = when (screen) {
     Screen.RecoveryCodes -> true
-    Screen.Home -> false
+    Screen.Home -> true
     else -> canNavigateBack()
 }
 
@@ -133,6 +150,8 @@ private fun ApplicationState.backStep(): BackStep = when (screen) {
     Screen.ProfilePin, Screen.ProfileEdit -> BackStep.Profiles
     Screen.Profiles -> when {
         managingProfiles -> BackStep.ManageProfiles
+        // Reached from Home by Back (app#109): Back leaves the app — no Home<->Profiles bounce.
+        profilesFromHome -> BackStep.Root
         // The first choice after sign-in has nowhere to go back to.
         selectedProfile == null -> BackStep.Root
         navBack.isNotEmpty() -> BackStep.PopHistory
