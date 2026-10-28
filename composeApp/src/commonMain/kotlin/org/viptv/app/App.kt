@@ -165,7 +165,7 @@ fun App(
                                     // title's Details arrive meanwhile (app#11), and Back then opens them.
                                     val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
                                     if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
-                                    if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details,
+                                    if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
                                         // A failed first load lands in state.error; the details page
                                         // must show it instead of rendering blank (NAV-04).
                                         state.detailPageError ?: state.error.takeIf { state.detail == null },
@@ -176,7 +176,12 @@ fun App(
                                         // A Calendar row's episode comes first: Details opened from it land on its season (app#46).
                                         continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
                                             state.continueWatching?.takeIf { it.profile == state.selectedProfile }?.cards.orEmpty(),
-                                        paging = state.screen == Screen.Details)
+                                        paging = state.screen == Screen.Details,
+                                        // Back from a play tap's selector opened this page, or a tile named it: its
+                                        // episodes land on what is being continued (app#112). A failed read here is
+                                        // the tap's own, and Retry reads the title again (app#140).
+                                        playTap = state.playTapTitle != null,
+                                        retry = if (state.playTapTitle != null && state.detail == null) controller::retryDetails else null)
                                     if (showingSources) {
                                         val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups) }
                                         // Over the Details dialog the drawer needs a window layer of its own.

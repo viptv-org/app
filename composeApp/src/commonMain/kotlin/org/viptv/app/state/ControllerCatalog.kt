@@ -171,7 +171,9 @@ internal fun org.viptv.engine.wire.DetailSnapshot.withCardArt(card: Card): org.v
 /**
  * Play from a row without opening the title page (Continue Watching, a Home hero).
  * The source selector opens on the tap in its finding-sources state; the title's
- * Details never hold up that screen change (app#11).
+ * Details never hold up that screen change (app#11). Back from it always goes to the
+ * title's Details, whether or not they have arrived: the page loads from the tap's own
+ * read and Back again leaves for the page the tap came from (app#140).
  *
  * An episode card that carries its metadata scope already says exactly what to look
  * for, so its discovery starts right away and the Details load beside it
@@ -196,25 +198,15 @@ fun ApplicationController.playTitle(card: Card) {
     val keptDetail = before.detail?.takeIf { sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
     releaseRemotePlayback()
     mutable.value = mutable.value.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null)
-    openSources(card, returnTo = if (keptDetail != null) Screen.Details else origin)
+    // Back from the selector opens this title's Details, arrived or not (app#140); a tap
+    // that found them already loaded needs nothing read for it.
+    openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null })
     if (card.identity.episode != null && card.metadata_origin != null) {
         loadSourceDetail(card, navigation)
         run { discoverSources(card) }
         return
     }
-    runPage {
-        val operation = generation
-        var target: Card? = null
-        try {
-            val profile = requireNotNull(mutable.value.selectedProfile)
-            val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-            target = sourceTarget(card, detail).also { showSourceDetail(detail, card, it) }
-        } finally {
-            // Without a target there is nothing to find (failed, retired or replaced).
-            if (target == null && generation == operation) mutable.value = mutable.value.copy(findingSources = false)
-        }
-        discoverSources(requireNotNull(target))
-    }
+    resolveSourceTarget(card, navigation)
 }
 
 /** The title's Details arrived for [card]: Back from sources returns to them, and sources are for [target]. */
@@ -223,13 +215,77 @@ private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire
 }
 
 /**
+ * The Details a play tap needs to pick its source target (a movie, a series, an imported
+ * episode) are read beside the open selector, and they decide what to look for. Back while
+ * they are still on their way opens the title's page, which this read fills in with no
+ * second request (app#140); a failure shows the page's own error there. On the selector
+ * they start the discovery in their scope.
+ */
+private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Long) {
+    cancelSourceDetail()
+    val profile = mutable.value.selectedProfile ?: return
+    val remote = connection
+    val device = local
+    val selection = cardLookupKey(card)
+    fun current() = navigationGeneration == navigation && mutable.value.selectedProfile == profile &&
+        connection === remote && local === device && mutable.value.screen in listOf(Screen.Sources, Screen.Details) &&
+        mutable.value.sourceTitle?.let(::cardLookupKey) == selection
+    sourceDetailJob = scope.launch {
+        val detail = try { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
+        catch (error: CancellationException) { throw error }
+        catch (error: Exception) { if (current()) resolveFailed(error, remote, device, sourcesSuffice = false); return@launch }
+        if (!current()) return@launch
+        val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
+            if (current()) resolveFailed(error, remote, device, sourcesSuffice = false)
+            return@launch
+        }
+        showSourceDetail(detail, card, target)
+        // The viewer went Back to the title's page: filling it in was all that was left.
+        if (mutable.value.screen != Screen.Sources) return@launch
+        // The controller's run, not the scope function on this coroutine.
+        this@resolveSourceTarget.run { discoverSources(target) }
+    }
+}
+
+/** A pending Details read took too long to show the title it is for (app#140). */
+private const val DETAILS_TIMEOUT = "Your server took too long to show this title. Try again."
+
+/**
+ * A play tap's Details read failed. The viewer waiting on the title's page sees the error
+ * there, with its Retry; while the selector is up for an episode whose sources do not need
+ * them, the read's failure is not the selector's ([sourcesSuffice]) (app#140).
+ */
+private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, sourcesSuffice: Boolean) {
+    if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
+    val state = mutable.value
+    // The title stays behind the page: Details' Retry reads it again.
+    if (sourcesSuffice && state.screen != Screen.Details) return
+    mutable.value = state.copy(error = failureMessage(error), findingSources = false, busy = false)
+}
+
+/**
+ * Retry the title page a play tap opened when its Details failed to arrive (app#140). The
+ * retry is the same read that Back kept, so a retried page lands where the first would have.
+ */
+fun ApplicationController.retryDetails() {
+    val card = mutable.value.playTapTitle ?: return
+    if (mutable.value.screen != Screen.Details) return
+    val navigation = navigationGeneration
+    mutable.value = mutable.value.copy(error = null, detailPageError = null)
+    if (card.identity.episode != null && card.metadata_origin != null) loadSourceDetail(card, navigation)
+    else resolveSourceTarget(card, navigation)
+}
+
+/**
  * The Details of a scoped episode whose sources are already being found. They fill
  * in without blocking the selector. When they arrive, Back from sources returns to
- * the title's Details, and the player gets the season and the next episode as it
- * does from Details (app#10). Discovery keeps running unless the episode's own
- * metadata scope turned out stale. A failed read changes nothing: sources do not
- * need it, and the discovery request itself reports an unreachable host or an
- * expired session.
+ * the title's Details, and the player gets the season and the next episode as it does
+ * from Details (app#10). Discovery keeps running unless the episode's own metadata
+ * scope turned out stale. A failed read changes nothing on the selector: sources do not
+ * need it, and the discovery request itself reports an unreachable host or an expired
+ * session. The one place it does change something is the title's page, which Back may
+ * already have opened in its loading state (app#140): the read fills it in, or ends that
+ * loading state with the page's own error.
  */
 private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long) {
     cancelSourceDetail()
@@ -238,27 +294,24 @@ private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long)
     val device = local
     val selection = cardLookupKey(card)
     fun current() = navigationGeneration == navigation && mutable.value.selectedProfile == profile &&
-        connection === remote && local === device && mutable.value.screen in listOf(Screen.Sources, Screen.Player) &&
+        connection === remote && local === device && mutable.value.screen in listOf(Screen.Sources, Screen.Details, Screen.Player) &&
         mutable.value.sourceTitle?.let(::cardLookupKey) == selection
     sourceDetailJob = scope.launch {
         val detail = try {
             withTimeoutOrNull(12_000) { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
         } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { null } ?: return@launch
+        catch (error: Exception) { if (current()) resolveFailed(error, remote, device, sourcesSuffice = true); return@launch }
+        if (detail == null) { if (current()) resolveFailed(LocalFailure(DETAILS_TIMEOUT), remote, device, sourcesSuffice = true); return@launch }
         if (!current()) return@launch
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
-            // On the player the host already accepted this episode's scope for its sources.
-            if (mutable.value.screen == Screen.Sources) {
-                generation++; job?.cancel()
-                mutable.value = mutable.value.copy(error = error.message, findingSources = false, busy = false)
-            }
+            if (current()) resolveFailed(error, remote, device, sourcesSuffice = true)
             return@launch
         }
         showSourceDetail(detail, card, target)
         when (mutable.value.screen) {
             // The episode's integration moved on: find its sources again in the title's scope.
             Screen.Sources -> if (card.metadata_origin != detail.item.metadata_origin) {
-                openSources(target, returnTo = Screen.Details)
+                openSources(target, returnTo = Screen.Details, playTap = mutable.value.playTapTitle)
                 // The controller's run, not the scope function on this coroutine.
                 this@loadSourceDetail.run { discoverSources(target) }
             }
@@ -316,10 +369,11 @@ fun ApplicationController.chooseSource(card: Card) {
     run { discoverSources(card) }
 }
 
-/** Show the source selector for [card] in its finding-sources state. */
-private fun ApplicationController.openSources(card: Card, returnTo: Screen) {
+/** Show the source selector for [card] in its finding-sources state; [playTap] is the title a play tap opened it for (app#140). */
+private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null) {
     mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
-        sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList())
+        sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
+        playTapTitle = playTap)
 }
 
 /**
@@ -441,6 +495,8 @@ private fun compatiblePublicIdentity(expected: MediaIdentity, actual: MediaIdent
 }
 
 internal fun ApplicationController.beginDetails() {
+    // The page is the viewer's own now: a play tap's pending Details belong to the selector's page (app#140).
+    cancelSourceDetail()
     val previous = mutable.value
     val origin = previous.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: previous.detailReturnScreen
@@ -451,6 +507,6 @@ internal fun ApplicationController.beginDetails() {
     val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
         else (previous.navBack + previous.screen).takeLast(32)
     mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
-        navBack = navBack, navForward = emptyList(),
+        navBack = navBack, navForward = emptyList(), playTapTitle = null,
         screen = Screen.Details, detail = null, calendarEpisode = null)
 }

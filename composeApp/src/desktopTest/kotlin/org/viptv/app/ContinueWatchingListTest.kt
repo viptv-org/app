@@ -92,8 +92,12 @@ class ContinueWatchingListTest {
             assertEquals(Screen.Sources, state.screen, "the card opens its sources at once (app#11)")
             assertEquals(card(30), state.sourceTitle, "sources are for exactly that episode, not the series' first")
             assertEquals(Screen.ContinueWatching, state.detailReturnScreen)
+            // Back from the selector opens the title's page (app#140); Back there is the page the tap came from.
+            assertEquals(Screen.Details, state.sourceReturnScreen)
             controller.navigateBack()
-            assertEquals(Screen.ContinueWatching, controller.state.value.screen, "Back from sources returns to the page")
+            assertEquals(Screen.Details, controller.state.value.screen, "Back from sources opens the title's Details")
+            controller.navigateBack()
+            assertEquals(Screen.ContinueWatching, controller.state.value.screen, "Back again returns to the page")
             assertEquals(40, controller.state.value.continueWatching?.cards?.size, "with every loaded page")
             controller.job?.cancel()
         }

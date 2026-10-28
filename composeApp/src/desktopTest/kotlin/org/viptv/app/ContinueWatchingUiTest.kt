@@ -237,9 +237,12 @@ class ContinueWatchingUiTest {
                 app.until("the source selector") { app.state.screen == Screen.Sources }
                 assertEquals(card(22), app.state.sourceTitle)
                 app.frames(30)
+                // Back from the selector opens the title's page (app#140); Back there is the page the tap came from.
                 app.controller.backSources()
-                assertEquals(Screen.ContinueWatching, app.state.screen)
-                app.focusOn("Show 22", "Back from the source selector returns to the card the viewer left")
+                assertEquals(Screen.Details, app.state.screen)
+                app.controller.backDetails()
+                app.until("the page") { app.state.screen == Screen.ContinueWatching }
+                app.focusOn("Show 22", "Back from the title's Details returns to the card the viewer left")
                 app.controller.navigateBack()
                 assertEquals(Screen.Home, app.state.screen)
                 app.focusOn("See all Continue Watching", "Back to Home lands on the end card that opened the page")

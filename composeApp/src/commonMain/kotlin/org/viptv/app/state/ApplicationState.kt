@@ -89,6 +89,13 @@ data class ApplicationState(
     val calendarEpisode: Card? = null,
     val searchTerm: String = "",
     val detailReturnScreen: Screen = Screen.Home,
+    /**
+     * The title a play tap (`playTitle`) opened its source selector for, whose Details Back from
+     * that selector shows: they may still be on their way when the page appears (app#140). Null
+     * when the tap found the title's Details already loaded, and cleared when the viewer opens a
+     * title page themselves or leaves the overlays.
+     */
+    val playTapTitle: Card? = null,
     val detail: DetailSnapshot? = null,
     val detailLoadingOffset: Long? = null,
     val detailPageError: String? = null,
@@ -124,6 +131,13 @@ data class ApplicationState(
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
 )
+
+/**
+ * The Details page is still loading rather than failed: a play tap's read has not landed yet and
+ * has not reported an error, so Back from its selector opens the title's page in its loading
+ * state (app#140).
+ */
+internal fun ApplicationState.detailsPending(): Boolean = detail == null && error == null && playTapTitle != null
 
 internal fun ApplicationState.isSaved(card: Card?): Boolean {
     card ?: return false
