@@ -214,7 +214,7 @@ Every device call must stay behind `timeout`/`adb_t` (R4, `ISSUES.md:17-18`).
      `composeApp/build/dist/wasmJs/productionExecutable` is the physical TV's
      live bundle — `AGENTS.md:72-74`,
      `docs/AGENT_HANDOFF_2026-10-14.md:106,117`):
-     `VIPTV_WEB_OUTPUT=/tmp/viptv-kmp-browser-<id>/dist ./gradlew
+     `VIPTV_WEB_OUTPUT=/tmp/kmp-browser-<id>/dist ./gradlew
      :composeApp:wasmJsBrowserDistribution --init-script
      /tmp/viptv-isolated-web.gradle` (wasm target is `browser(); binaries.executable()`,
      `composeApp/build.gradle.kts:14`). The init script is not currently in

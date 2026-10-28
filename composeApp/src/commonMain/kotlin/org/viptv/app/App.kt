@@ -6,8 +6,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
@@ -65,7 +68,7 @@ fun App(
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
-            .pointerInput(controller) { awaitPointerEventScope { while (true) { awaitPointerEvent(PointerEventPass.Initial); controller.userActivity() } } }
+            .pointerInput(controller) { awaitPointerEventScope { observeViewerInput(controller::userActivity) } }
             .background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background)
             .then(if (playerDrawsEdgeToEdge(state.screen, television)) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
             if (state.starting) {
@@ -123,9 +126,13 @@ fun App(
                             refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         when (state.screen) {
                             Screen.Home -> {
+                                // Phone, tablet, desktop and browser: the hero rotates while the viewer is
+                                // present, so an idle window draws nothing (app#95). TV keeps its own timer.
+                                if (!television) LaunchedEffect(controller) { controller.trackViewerPresence() }
+                                val viewerPresent = controller.viewerPresent
                                 val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
-                                summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary) }
+                                summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent) }
                                 if (television) routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent) else homeContent()
                             }
                             // W3Browse: the browser renders its board page; both use the
@@ -200,3 +207,22 @@ internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean
 
 /** Pages the quiet lane reloads in place. The sources sheet over Details does not refresh. */
 private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.Library, Screen.History, Screen.Details)
+
+/**
+ * Reports real pointer input: a press, release or scroll, or a pointer that moved.
+ * Compose re-sends the resting pointer as a synthetic move, enter or exit whenever
+ * content changes under it; counting those let the hero's own redraws keep an idle
+ * viewer "present" for ever (app#95).
+ */
+internal suspend fun AwaitPointerEventScope.observeViewerInput(activity: () -> Unit) {
+    var last: List<Offset>? = null
+    while (true) {
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        val at = event.changes.map { it.position }
+        val type = event.type
+        if (at != last || type == PointerEventType.Press ||
+            type == PointerEventType.Release ||
+            type == PointerEventType.Scroll) activity()
+        last = at
+    }
+}

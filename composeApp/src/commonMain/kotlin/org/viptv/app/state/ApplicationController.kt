@@ -1,5 +1,7 @@
 package org.viptv.app.state
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +49,15 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var resumeAfterRenewal: org.viptv.app.player.PlaybackInput? = null
     /** False while the app is behind (Android stop, minimised window, hidden tab). */
     internal val inFront = MutableStateFlow(true)
+    /**
+     * False once the viewer has been [Freshness.idle] (no key, remote, touch or pointer
+     * input): ambient motion such as the hero rotation holds still and the window stops
+     * drawing frames (app#95). Snapshot state, so composition reads it with no collector
+     * coroutine in between; written only when it changes, never per pointer event.
+     */
+    internal var viewerPresent by androidx.compose.runtime.mutableStateOf(true)
+    /** Wakes [trackViewerPresence] when input returns after the viewer went idle. */
+    internal val viewerReturned = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
     /** Bumped to make a sleeping lease renewal run now: a return to the front or a held resume. */
     internal val leaseWake = MutableStateFlow(0L)
     internal var subtitleDiscovery: Job? = null

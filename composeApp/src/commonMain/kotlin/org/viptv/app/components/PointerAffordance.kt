@@ -208,6 +208,8 @@ fun InteractionSource.pointerHovered(): Boolean {
 object HoverFill {
     /** `surface-4`: secondary / destructive button hover (desktop). */
     val surface4 = Color(0xFF34343A)
+    /** `surface-2`: a hovered row, such as an unselected side-navigation item. */
+    val row = Color(0xFF212124)
     /** `fill-wash`: the outline / quiet hover wash. */
     val wash = Color.White.copy(alpha = .06f)
     /** `fill-wash-pressed`: the outline / quiet pressed wash. */

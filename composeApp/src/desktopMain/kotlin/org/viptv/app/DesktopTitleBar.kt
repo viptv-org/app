@@ -26,6 +26,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -102,7 +103,7 @@ internal fun DesktopTitleBar(
                     .hoverable(searchHover)
                     .onFocusChanged { searchFocused = it.hasFocus }
                     .tvFocusOutline(searchFocused, 8.dp, darkGap = 2.dp, width = 2.dp)
-                    .background(if (searchHovered) Color(0xFF26262A) else Color(0xFF1E1E21), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
+                    .background(if (searchHovered) SearchFieldHover else SearchField, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     DesktopChromeIcon(ChromeIcon.Search, Palette.text, Modifier.size(16.dp))
                     BasicTextField(query, { query = it; if (it.isNotEmpty()) navigate(Screen.Search); search(it) },
@@ -158,6 +159,10 @@ internal fun DesktopTitleBar(
         Box(Modifier.fillMaxWidth().height(1.dp).align(Alignment.BottomCenter).background(Color(0xFF1E1E21)))
     }
 }
+
+private val SearchField = Color(0xFF1E1E21)
+/** app#92: the search field hovers like the other title-bar controls, their 8 % white wash over its fill. */
+private val SearchFieldHover = Color.White.copy(alpha = .08f).compositeOver(SearchField)
 
 @Composable
 private fun DesktopBrand() {
