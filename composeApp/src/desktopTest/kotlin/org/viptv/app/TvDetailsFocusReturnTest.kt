@@ -49,11 +49,17 @@ class TvDetailsFocusReturnTest {
     private val origin = MetadataOrigin("stremio", "addon:21", "c".repeat(32))
     private val series = Card(MediaIdentity(show, "series", listOf(ExternalId("imdb", show))), provider_id = "addon:21",
         title = "Breaking Bad", badges = emptyList(), metadata_origin = origin)
-    private fun episode(number: Long, progress: Double? = null) = series.copy(
-        identity = MediaIdentity("$show:1:$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
+    private fun episode(season: Long, number: Long, progress: Double? = null) = series.copy(
+        identity = MediaIdentity("$show:$season:$number", "series", emptyList(), EpisodeCoordinates("aired", season, number)),
         parent_identity = series.identity, title = "Episode $number", progress = progress)
+    private fun episode(number: Long, progress: Double? = null) = episode(1, number, progress)
+    /** Season 2 titles its episodes by season, so a focus check says which season the shelf is on. */
+    private fun seasonTwo(number: Long, progress: Double? = null) =
+        episode(2, number, progress).copy(title = "S2 Episode $number")
     private fun label(number: Long) = "$number. Episode $number"
     private val detail = DetailSnapshot(series, episodes = (1L..10L).map { episode(it) })
+    private val twoSeasons = DetailSnapshot(series, episodes = (1L..5L).map { episode(it) } + (1L..5L).map { seasonTwo(it) },
+        seasons = listOf(EpisodeSeason(1, 5, 0), EpisodeSeason(2, 5, 5)))
     /** The same season served in two pages: episodes 11-16 come from `offset=10`. */
     private val pagedDetail = detail.copy(next_cursor = "10", seasons = listOf(EpisodeSeason(1, 16, 0)))
     private val secondPage = DetailSnapshot(series, episodes = (11L..16L).map { episode(it) })
@@ -125,6 +131,35 @@ class TvDetailsFocusReturnTest {
             frames(30)
             val now = focused()
             assertTrue(now.any { it.contains(text) }, "$why: focus is on $text, not $now")
+        }
+
+        /** Home's Continue Watching row becomes these cards, as the host's bootstrap sends it. */
+        fun continueWatching(vararg cards: Card) {
+            val home = requireNotNull(state.home)
+            controller.mutable.value = state.copy(home = home.copy(rows = home.rows.map { row ->
+                if (row.id == org.viptv.app.features.home.CONTINUE_ROW) row.copy(state = RowState.READY, cards = cards.toList()) else row }))
+        }
+        /** Down from the billboard into the Continue Watching row, then OK on its card for [title]. */
+        fun tapContinueWatching(title: String) {
+            press(Key.DirectionDown)
+            until("the Continue Watching card") { focused().any { it.contains(title) } }
+            press(Key.Enter)
+        }
+        /**
+         * Home → the Continue Watching card for [card] → Sources, with the title's Details loading
+         * behind the selector → Back to Details.
+         */
+        fun backFromContinueWatching(card: Card, title: String) {
+            continueWatching(card)
+            frames()
+            tapContinueWatching(title)
+            until("the source selector") { state.screen == Screen.Sources }
+            selectorTakesFocus()
+            until("the Details loading behind the selector") { state.detail != null }
+            assertEquals(Screen.Details, state.sourceReturnScreen, "Back from sources lands on the title's Details")
+            controller.backSources()
+            frames()
+            assertEquals(Screen.Details, state.screen)
         }
 
         /** Home → the title's Details, with focus on the hero's Play. */
@@ -224,6 +259,55 @@ class TvDetailsFocusReturnTest {
             app.frames(20)
             app.openDetails()
             app.assertFocus("Play", "a new visit to the same title starts on the hero")
+        }
+    }
+
+    /**
+     * Home → Continue Watching card → Sources (Details load behind it) → Back (app#112).
+     * The page was never on screen before the selector, so Back is its first entry: it
+     * opens onto the episode being continued, with the shelf on that episode's season,
+     * not the hero.
+     */
+    @Test fun backFromSourcesAfterAContinueWatchingTapFocusesTheContinuedEpisode() {
+        TvApp(twoSeasons).use { app ->
+            app.frames()
+            app.backFromContinueWatching(seasonTwo(3, 0.45), "S2 Episode 3")
+            app.assertFocus("3. S2 Episode 3", "Back from Sources after a Continue Watching tap in season 2")
+        }
+    }
+
+    /**
+     * The same tap, then the viewer plays straight from the selector before ever seeing the
+     * page: the player closing onto the selector must not make Back land on the hero.
+     */
+    @Test fun aContinueWatchingTapThatPlaysFirstStillLandsOnTheContinuedEpisode() {
+        TvApp(twoSeasons).use { app ->
+            app.frames()
+            app.continueWatching(seasonTwo(3, 0.45))
+            app.frames()
+            app.tapContinueWatching("S2 Episode 3")
+            app.until("the source selector") { app.state.screen == Screen.Sources }
+            app.selectorTakesFocus()
+            app.until("the Details loading behind the selector") { app.state.detail != null }
+            app.playThenBack()
+            app.assertFocus("3. S2 Episode 3", "Back from the player, then Sources, after a Continue Watching tap")
+        }
+    }
+
+    /**
+     * The same tap after an earlier visit to this title's shelf left another episode
+     * remembered: the continued episode wins, not the remembered one (app#112).
+     */
+    @Test fun aContinueWatchingTapIgnoresTheEpisodeAnEarlierVisitLeftFocused() {
+        TvApp().use { app ->
+            app.frames()
+            app.openDetails()
+            app.focusEpisode(7)
+            app.controller.backDetails()
+            app.until("Home") { app.state.screen == Screen.Home }
+            app.until("the hero's Play") { app.focused().any { it.contains("Play") } }
+            app.backFromContinueWatching(episode(4, 0.45), "Episode 4")
+            app.assertFocus(label(4), "Back from Sources after a Continue Watching tap, episode 7 was focused earlier")
         }
     }
 
