@@ -162,18 +162,40 @@ class BrowserSourceDrawerTest {
             scene.render(frame++ * 16_666_667L).use { image -> image.encodeToData()!!.use { File(dir, "$name.png").writeBytes(it.bytes) } }
         }
 
-        /** Details open on S2 E8 (the Continue Watching episode), then the viewer scrolls the dialog a little. */
+        /** One wheel notch over the dialog's episode list. */
+        fun scrollDialog() {
+            scene.sendPointerEvent(PointerEventType.Scroll, Offset(500f * density, 600f * density), scrollDelta = Offset(0f, 1f))
+        }
+
+        /** The dialog's row for [episode] when the dialog draws all of it, not just part of it at an edge. */
+        fun shownRow(episode: String): SemanticsNode? {
+            val dialog = pane(title)?.let(::bounds) ?: return null
+            return episodeRow(episode)?.takeIf { row -> bounds(row).let { it.top >= dialog.top && it.bottom <= dialog.bottom } }
+        }
+
+        /**
+         * Details open on S2 E8 (the Continue Watching episode), then the viewer scrolls the dialog
+         * down to S2 E12 and the list comes to rest there.
+         *
+         * The dialog lands on S2 E8 by itself once its episodes arrive (app#40), unless a scroll
+         * reaches the list first, in which case the app keeps the viewer's position — the landing is
+         * one-shot and stops for good. Both are correct, so this walks the list to a row the dialog
+         * draws in full instead of stopping at "S2 E10 is composed": a lazy list also composes the
+         * row just past its edge, and the row a test clicks must be one the scroll actually put on
+         * screen (app#142: stopping at a composed row left S2 E11/E12 outside the list).
+         */
         fun openDetailsAndScroll() {
             until("Home") { nodes().any { text(it).contains("Continue Watching") } }
             controller.open(continueCard)
             until("season 2's episodes in the Details dialog") { episodeTops().isNotEmpty() && !controller.state.value.busy }
-            frames(20)
-            // Into the middle of season 2, whether or not the dialog already landed on S2 E8 (app#40).
-            until("the viewer's scroll to S2 E10") {
-                episodeRow("Episode 2-1") == null && episodeRow("Episode 2-10") != null ||
-                    run { scene.sendPointerEvent(PointerEventType.Scroll, Offset(500f * density, 600f * density), scrollDelta = Offset(0f, 1f)); false }
+            until("the viewer's scroll to S2 E12") {
+                val shown = shownRow("Episode 2-12")
+                // A landing still under way can jump the list once, as it would for a viewer who
+                // scrolled a moment too early: only a row that is on screen now and after the next
+                // frames counts, so the tests never act on a position the app is about to change.
+                if (shown == null) scrollDialog() else frames(8)
+                shown != null && shownRow("Episode 2-12") != null
             }
-            frames(20)
         }
 
         /** The viewer picks S2 E10 in the dialog; its sources finish loading in the drawer. */
@@ -260,8 +282,10 @@ class BrowserSourceDrawerTest {
             val metaBefore = requested().filter { it.startsWith("meta") }
             app.chooseEpisode()
             val streams = requested().count { it == "streams" }
-            // Over the dialog's episode list, left of the drawer: without the scrim this picks another episode.
-            val under = assertNotNull(app.episodeRow("Episode 2-12") ?: app.episodeRow("Episode 2-11"), "an episode row is under the scrim")
+            // Over the dialog's episode list, left of the drawer: without the scrim this picks another
+            // episode. S2 E12 is the row openDetailsAndScroll scrolled fully into view, so the click
+            // lands on the list rather than on an edge row the list only composed (app#142).
+            val under = assertNotNull(app.shownRow("Episode 2-12"), "S2 E12 is on screen under the scrim: ${app.episodeTops()}")
             val point = app.bounds(under).center.copy(x = 400f)
             assertTrue(point.x < app.bounds(app.pane("Choose a source")!!).left)
             app.click(point.x, point.y)
