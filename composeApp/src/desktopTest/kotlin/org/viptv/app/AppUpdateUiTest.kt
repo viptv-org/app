@@ -102,7 +102,7 @@ class AppUpdateUiTest {
             scene.render()
             scene.clickContaining("Install")
             assertTrue(scene.shows("Updating VIPTV to 0.1.1301…"))
-            assertTrue(scene.shows("Writing the update. It is not finished until you confirm it."))
+            assertTrue(scene.shows("Writing the update. Android asks you to confirm before it installs."))
             assertEquals(1, scene.nodes().count { it.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo) != null },
                 "A progress indicator is on screen")
             assertTrue(scene.shows("VIPTV restarts by itself when the update is installed."))
@@ -118,7 +118,7 @@ class AppUpdateUiTest {
             scene.render()
             scene.clickContaining("Install")
             assertTrue(scene.shows("Updating VIPTV to 0.1.1301…"))
-            assertTrue(scene.shows("Writing the update. It is not finished until you confirm it."))
+            assertTrue(scene.shows("Writing the update. Android asks you to confirm before it installs."))
             scene.capture("phone-updating")
         }
     }

@@ -56,7 +56,7 @@ private fun InstallingScreen(updater: AppUpdater, status: UpdateStatus.Installin
     val fraction = if (status.confirming || feed.size <= 0) null else (status.bytes.toFloat() / feed.size).coerceIn(0f, 1f)
     val title = "Updating VIPTV to ${feed.versionName}…"
     val body = if (status.confirming) "Confirm the update in the dialog Android is showing."
-        else "Writing the update. It is not finished until you confirm it."
+        else "Writing the update. Android asks you to confirm before it installs."
     val detail = if (updater.relaunchesAfterUpdate) "VIPTV restarts by itself when the update is installed."
         else "VIPTV closes when the update is installed. Open it again to finish."
     UpdatingLayout(television, title, body, detail, fraction, percent = fraction?.let { "${(it * 100).toInt()}%" })
@@ -70,20 +70,20 @@ private fun PermissionScreen(updater: AppUpdater, status: UpdateStatus.NeedsPerm
     }
     UpdatingLayout(television, "Allow updates",
         if (status.settingsScreen) PERMISSION_STEP else FIRE_TV_PERMISSION,
-        "The update continues by itself when you come back.", fraction = null, percent = null,
+        "The update continues by itself when you come back.", fraction = null, percent = null, showBar = false,
         action = primary, act = act, later = updater::dismissPendingInstall)
 }
 
 /** The one layout behind both full-screen states: mark, title, what is happening, progress, what next. */
 @Composable
 private fun UpdatingLayout(television: Boolean, title: String, body: String, detail: String, fraction: Float?, percent: String?,
-    action: String? = null, act: (() -> Unit)? = null, later: (() -> Unit)? = null) {
-    if (television) TvUpdating(title, body, detail, fraction, percent, action, act, later)
-    else PhoneUpdating(title, body, detail, fraction, percent, action, act, later)
+    showBar: Boolean = true, action: String? = null, act: (() -> Unit)? = null, later: (() -> Unit)? = null) {
+    if (television) TvUpdating(title, body, detail, fraction, percent, showBar, action, act, later)
+    else PhoneUpdating(title, body, detail, fraction, percent, showBar, action, act, later)
 }
 
 @Composable
-private fun PhoneUpdating(title: String, body: String, detail: String, fraction: Float?, percent: String?,
+private fun PhoneUpdating(title: String, body: String, detail: String, fraction: Float?, percent: String?, showBar: Boolean,
     action: String?, act: (() -> Unit)?, later: (() -> Unit)?) {
     UpdatingSurface(Modifier.windowInsetsPadding(WindowInsets.safeDrawing).padding(32.dp)) {
         Column(Modifier.widthIn(max = 420.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
@@ -91,7 +91,7 @@ private fun PhoneUpdating(title: String, body: String, detail: String, fraction:
             BrandMark(56.dp)
             Text(title, style = MaterialTheme.typography.headlineSmall, color = Palette.text, textAlign = TextAlign.Center)
             Text(body, style = MaterialTheme.typography.bodyLarge, color = Palette.secondary, textAlign = TextAlign.Center)
-            Progress(fraction, percent, height = 6.dp)
+            if (showBar) Progress(fraction, percent, height = 6.dp)
             Text(detail, style = MaterialTheme.typography.bodySmall, color = Palette.tertiary, textAlign = TextAlign.Center)
             if (act != null && action != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -104,7 +104,7 @@ private fun PhoneUpdating(title: String, body: String, detail: String, fraction:
 }
 
 @Composable
-private fun TvUpdating(title: String, body: String, detail: String, fraction: Float?, percent: String?,
+private fun TvUpdating(title: String, body: String, detail: String, fraction: Float?, percent: String?, showBar: Boolean,
     action: String?, act: (() -> Unit)?, later: (() -> Unit)?) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
@@ -122,7 +122,7 @@ private fun TvUpdating(title: String, body: String, detail: String, fraction: Fl
                 Spacer(Modifier.height(16.dp * scale))
                 Text(body, color = Palette.body, fontSize = (28 * scale).sp, lineHeight = (40 * scale).sp, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(40.dp * scale))
-                Progress(fraction, percent, height = 8.dp * scale, width = 760.dp * scale, fontSize = (24 * scale).sp)
+                if (showBar) Progress(fraction, percent, height = 8.dp * scale, width = 760.dp * scale, fontSize = (24 * scale).sp)
                 Spacer(Modifier.height(24.dp * scale))
                 Text(detail, color = Palette.tertiary, fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp, textAlign = TextAlign.Center)
                 if (act != null && action != null) {
@@ -165,10 +165,10 @@ private fun Progress(fraction: Float?, percent: String?, height: androidx.compos
     Column(Modifier.then(if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (percent != null) Text(percent, color = Palette.body, fontSize = fontSize)
-        if (fraction == null) LinearProgressIndicator(Modifier.fillMaxWidth().height(height).testTag("app-updating-progress"),
+        if (fraction == null) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(height).testTag("app-updating-progress"),
             color = Palette.accent, trackColor = Palette.raised)
-        else LinearProgressIndicator(progress = { fraction }, Modifier.fillMaxWidth().height(height).testTag("app-updating-progress"),
-            color = Palette.accent, trackColor = Palette.raised)
+        else LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth().height(height).testTag("app-updating-progress"),
+            color = Palette.accent, trackColor = Palette.raised, drawStopIndicator = {})
     }
 }
 
