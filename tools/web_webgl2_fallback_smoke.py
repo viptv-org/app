@@ -70,9 +70,9 @@ NOTICE_IN_VIEWPORT = """() => {
 }"""
 
 
-def launch(p, args):
+def launch(p, args, flags):
     """Playwright's own Chromium, else the newest numbered build in its cache (the Python package may pin an absent one)."""
-    options = {"headless": not args.headed, "args": args.browser_arg}
+    options = {"headless": not args.headed, "args": flags + args.browser_arg}
     if args.chromium:
         return p.chromium.launch(executable_path=args.chromium, **options)
     try:
@@ -187,7 +187,6 @@ def main():
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
     args = parser.parse_args()
-    args.browser_arg = NO_WEBGL2_ARGS + args.browser_arg
     dist = args.dist.resolve()
     if not (dist / "index.html").is_file():
         sys.exit(f"No web build at {dist}; run ./gradlew :composeApp:wasmJsBrowserDistribution")
@@ -205,11 +204,10 @@ def main():
 
     try:
         with sync_playwright() as p:
-            browser = launch(p, args)
+            browser = launch(p, args, NO_WEBGL2_ARGS)
             visit_fallback(browser, origin, args, check)
             browser.close()
-            args.browser_arg = [a for a in args.browser_arg if a not in NO_WEBGL2_ARGS]
-            browser = launch(p, args)
+            browser = launch(p, args, [])
             visit_webgl2(browser, origin, args, check)
             browser.close()
     finally:
