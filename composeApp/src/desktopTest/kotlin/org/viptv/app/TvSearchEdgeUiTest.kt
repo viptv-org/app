@@ -141,16 +141,12 @@ class TvSearchEdgeUiTest {
     }
 
     /**
-     * PR evidence only, like [TvShelfScrollVisualTest]: with
-     * VIPTV_SEARCH_CAPTURE_DIR set it renders the real TV Search preview screen
-     * (bundled artwork, top navigation, real grouping) and writes the before/after
-     * PNGs. It stays inert in the suite because composing [UiPreview] installs the
-     * image loader, which only one scene per JVM may do first.
+     * The real TV Search preview screen: bundled artwork, top navigation and real
+     * grouping rather than fixture cards. Set VIPTV_SEARCH_CAPTURE_DIR to write
+     * the before/after PNGs.
      */
-    @Test fun captureTheTvSearchPreviewRender() = ui {
-        System.getenv("VIPTV_SEARCH_CAPTURE_DIR") ?: return@ui
+    @Test fun previewResultsRunToTheRightScreenEdge() = ui {
         Fixture(screenWidth) {
-            org.viptv.app.images.ConfigureImageLoading()
             org.viptv.app.preview.UiPreview(television = true, screen = org.viptv.app.state.Screen.Search)
         }.use { screen ->
             screen.settle(150)
