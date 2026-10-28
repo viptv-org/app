@@ -71,6 +71,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var sourceDetailJob: Job? = null
     internal var pairingJob: Job? = null
     internal var pairingGeneration = 0L
+    /** The code this device last received, with the server that issued it (app#129). */
+    internal var pairingCode: PairingCode? = null
     internal var stremioImport: StremioImportSession? = null
     /** Set when the next playback open should start from the beginning instead of resuming. */
     internal var restartRequested = false
