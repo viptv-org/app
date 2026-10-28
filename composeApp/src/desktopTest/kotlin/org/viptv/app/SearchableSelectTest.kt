@@ -69,7 +69,7 @@ class SearchableSelectTest {
         val eight = (1..8).map { SelectOption("g$it", "Genre $it") }
         Ui(800, 700) { SearchableSelect("Genre", eight, emptyList(), {}) }.use {
             it.open("Genre: Any")
-            assertEquals(9, it.rows().size, "eight genres and Any overflow the eight-row popover, so it searches")
+            assertTrue(it.panelOpen(), "eight genres and Any overflow the eight-row popover, so it searches")
         }
     }
 

@@ -58,7 +58,7 @@ class FilterBarPagesTest {
 
     /** A fake Browse controller: every change lands in [query] at once, as the app's does. */
     private inner class Browse {
-        var query by mutableStateOf(BrowseQuery("movie", "top", "c1", extras = mapOf("sort" to "popular")))
+        var query by mutableStateOf(BrowseQuery("movie", "top", "c1"))
         val requests = mutableListOf<String>()
         val changed: (String, String) -> Unit = { id, value -> requests += "$id=$value"; query = query.withSelections(id, listOf(value).filter(String::isNotBlank)) }
         val multiple: (String, List<String>) -> Unit = { id, values -> requests += "$id=${values.joinToString(",")}"; query = query.withSelections(id, values) }
@@ -67,12 +67,12 @@ class FilterBarPagesTest {
 
     @Test fun phoneMoviesIsOneChipBarWithSheetsAndNoFiltersToggle() {
         val browse = Browse()
-        Page(390, 844, density = 2f, pointer = false) {
+        Page(390, 844, density = 1f, pointer = false) {
             BrowseScreen(Screen.Movies, null, false, {}, posters, controls, browse.query, filterChanged = browse.changed,
                 multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
             // The row scrolls: only the chips on screen are composed.
-            assertEquals(listOf("Catalog: Popular", "Sort: Popular", "Genre: Any"), it.triggers().take(3))
+            assertEquals(listOf("Catalog: Popular", "Sort: Required", "Genre: Any"), it.triggers().take(3))
             assertFalse(it.has("Filters"), "no Filters toggle")
             assertFalse(it.has("Apply"), "no Apply button")
             it.capture("phone-movies-closed")
@@ -115,10 +115,10 @@ class FilterBarPagesTest {
         Page(1440, 900, pointer = true) {
             BrowserBrowseScreen(Screen.Movies, posters, controls, browse.query, false, null, null, {}, browse.changed, browse.multiple, browse.apply)
         }.use {
-            assertEquals(listOf("Catalog: Popular", "Sort: Popular", "Genre: Any", "Languages: Any", "Search: Any"), it.triggers())
+            assertEquals(listOf("Catalog: Popular", "Sort: Required", "Genre: Any", "Languages: Any", "Search: Any"), it.triggers())
             assertFalse(it.has("Filters") || it.has("Clear all") || it.has("New"), "no rail, segments or applied-pill row")
             it.capture("web-movies-closed")
-            it.open("Sort: Popular")
+            it.open("Sort: Required")
             assertEquals(listOf("Popular", "New", "Top rated"), it.options(), "a three-option sort is the same chip, without a search field")
             it.pick("New")
             assertEquals(listOf("sort=new"), browse.requests)
@@ -147,19 +147,18 @@ class FilterBarPagesTest {
                 Choice("name_asc", "Name A–Z"), Choice("date_added", "Date added"))),
             QueryControl("type", "Type", ControlKind.SINGLECHOICE, false, listOf(Choice("all", "All"), Choice("movie", "Movies"), Choice("series", "Series"))),
             QueryControl("status", "Status", ControlKind.SINGLECHOICE, false, listOf(Choice("", "Any"), Choice("watching", "Watching"), Choice("completed", "Completed"))),
-            QueryControl("show", "Show", ControlKind.SINGLECHOICE, false, listOf(Choice("all", "All titles"), Choice("watched", "Watched"))),
             QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false, listOf(Choice("", "Any")) + genre.choices.map { Choice(it.label, it.label) })),
         sources = listOf(LibrarySource("favorites", "My List", Availability.AVAILABLE), LibrarySource("trakt", "Trakt watchlist", Availability.AVAILABLE)),
         availability = Availability.AVAILABLE)
 
     @Test fun myListFiltersAreTheSameChipsOnEveryLayout() {
-        for ((name, size) in listOf("phone" to Triple(390, 844, 2f), "tablet" to Triple(1024, 768, 1f), "web" to Triple(1440, 900, 1f))) {
+        for ((name, size) in listOf("phone" to Triple(390, 844, 1f), "tablet" to Triple(1024, 768, 1f), "web" to Triple(1440, 900, 1f))) {
             var query by mutableStateOf(defaultLibraryQuery())
             val changes = mutableListOf<LibraryQuery>()
             Page(size.first, size.second, size.third, pointer = name == "web") {
                 LibraryScreen(posters, true, false, {}, {}, {}, library, query, { changes += it; query = it })
             }.use {
-                val all = listOf("List: My List", "Type: All", "Sort by: Last watched", "Status: Any", "Show: All titles", "Genre: Any")
+                val all = listOf("List: My List", "Type: All", "Sort by: Last watched", "Status: Any", "Genre: Any")
                 // The phone row scrolls: only the chips on screen are composed.
                 assertEquals(if (name == "phone") all.take(2) else all, it.triggers().let { t -> if (name == "phone") t.take(2) else t }, name)
                 assertFalse(it.has("Filters") || it.has("Apply"), "$name: no Filters button or Apply")

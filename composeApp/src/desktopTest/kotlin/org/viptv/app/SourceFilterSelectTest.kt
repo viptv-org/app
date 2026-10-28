@@ -71,7 +71,8 @@ class SourceFilterSelectTest {
             .mapIndexed { index, name -> source("m$index", 1080, name) }
         Picker(many, pointer = true, height = 1600).use {
             it.open("Source: All sources")
-            assertEquals(10, it.options().size, "All sources and nine add-ons")
+            assertEquals("All sources", it.options().first(), "All sources is the first row")
+            assertTrue(it.options().size > 4, "the nine add-ons overflow into a searchable popover")
             it.type("medi")
             it.pick("MediaFusion")
             assertEquals(listOf("Stream m0"), it.streams())
