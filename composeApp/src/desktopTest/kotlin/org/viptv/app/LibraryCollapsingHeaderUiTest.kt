@@ -221,11 +221,12 @@ class LibraryCollapsingHeaderUiTest {
         val tv = Fixture(this, 1920, 1080, 1f, television = true)
         try {
             tv.frames()
-            tv.await("TV My List on screen") { tv.node("Filters") != null }
+            // The TV filters are the shared chip row (app#121); the row is the fixed header.
+            tv.await("TV My List on screen") { tv.node("Type: All") != null }
             assertNull(tv.nodes().firstOrNull { text(it).contains("Everything you've played") }, "TV has no History card")
-            val filters = tv.top("Filters")
+            val filters = tv.top("Type: All")
             tv.wheel(6)
-            assertEquals(filters, tv.top("Filters"), "TV header stays where it was")
+            assertEquals(filters, tv.top("Type: All"), "TV header stays where it was")
         } finally { tv.close() }
     }
 
