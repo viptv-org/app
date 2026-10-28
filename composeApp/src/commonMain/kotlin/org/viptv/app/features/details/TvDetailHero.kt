@@ -74,7 +74,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         Text(extras.resumeLabel ?: "Play", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                         extras.remaining?.let { Spacer(Modifier.width(54.dp * scale)); Text(it, color = tint.copy(alpha = 0.7f), fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold) }
                     }
-                    extras.resume?.progress?.let { progress -> LinearProgressIndicator(progress = { progress.toFloat() },
+                    extras.resume?.progress?.takeIf { resuming(extras.resume) }?.let { progress -> LinearProgressIndicator(progress = { progress.toFloat() },
                         modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 12.dp * scale).fillMaxWidth().height(4.dp * scale),
                         color = tint, trackColor = tint.copy(alpha = 0.2f)) }
                 }
@@ -82,7 +82,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
             // The hero actions focus by fill alone (board Tv3Movie): a ring on the
             // round buttons read as a double outline around the circle.
             TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = save) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
-            if (extras.resume != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
+            if (resuming(extras.resume)) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
         }
     }
 }
