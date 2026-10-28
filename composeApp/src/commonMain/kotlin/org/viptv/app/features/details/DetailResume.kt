@@ -7,11 +7,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.viptv.app.connection.LocalFailure
+import org.viptv.app.state.sourceTarget
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 
-/** The numbered episode a series' Details opens on, and the progress that marks it (app#40). */
-internal data class DetailResume(val season: Long?, val episode: Long, val progress: Double?) {
+/**
+ * The numbered episode a series' Details opens on, and the progress that marks it (app#40).
+ * [card] named it: the title's Continue Watching or Calendar card, or a loaded episode.
+ */
+internal data class DetailResume(val season: Long?, val episode: Long, val progress: Double?, val card: Card) {
     fun matches(card: Card): Boolean = card.identity.episode?.let { it.season == season && it.episode == episode } == true
 
     /** [card] as the list shows it: the continued episode carries its progress even when its page has none. */
@@ -38,8 +43,29 @@ internal fun detailResume(detail: DetailSnapshot?, continuing: List<Card>): Deta
     if (item.identity.kind != "series" || item.identity.episode != null) return null
     val card = continuing.firstOrNull { continues(it, item) } ?: seriesResumeEpisode(detail) ?: return null
     val coordinates = card.identity.episode ?: return null
-    return DetailResume(coordinates.season, coordinates.episode, card.progress)
+    return DetailResume(coordinates.season, coordinates.episode, card.progress, card)
 }
+
+/**
+ * The episode a Details hero plays (app#49), the one its episode list lands on and marks:
+ * its own card when a loaded page holds it, else the card that named it, scoped to
+ * [detail] as a Continue Watching tap scopes it ([sourceTarget]). Sources then search
+ * the title's metadata, and the player gets this title's episodes.
+ */
+internal fun DetailResume?.heroEpisode(detail: DetailSnapshot): Card? {
+    val resume = this ?: return null
+    detail.episodes.firstOrNull(resume::matches)?.let { return resume.mark(it) }
+    // A card from another integration that these Details cannot scope never searches in
+    // its stale scope: the hero plays the title instead, as it did before.
+    return try { sourceTarget(resume.card, detail) } catch (_: LocalFailure) { null }
+}
+
+/** [card]'s progress is partway through: the hero resumes it. */
+internal fun resuming(card: Card?): Boolean = card?.progress?.let { it > 0.0 && it < 1.0 } == true
+
+/** A hero's play label: "Resume S2 E20" partway through, "Play S2 E20" for an episode not started, else "Resume" or "Play". */
+internal fun heroPlayLabel(card: Card?): String =
+    (if (resuming(card)) "Resume" else "Play") + card?.identity?.episode?.let { " S${it.season ?: 1L} E${it.episode}" }.orEmpty()
 
 /** [card] is a numbered episode of exactly the series [item] describes. */
 private fun continues(card: Card, item: Card): Boolean {
