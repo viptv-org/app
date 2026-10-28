@@ -1,5 +1,5 @@
 Starting a Gradle Daemon, 1 busy and 2 incompatible Daemons could not be reused, use --status for details
-VIPTV_ISOLATED_WEB_OUTPUT=/tmp/viptv-kmp-browser-completion-OaZSX6/dist
+VIPTV_ISOLATED_WEB_OUTPUT=/tmp/kmp-browser-completion-OaZSX6/dist
 Configuration 'wasmJsNpmAggregated' was resolved during configuration time.
 This is a build performance and scalability issue.
 See https://github.com/gradle/gradle/issues/2298

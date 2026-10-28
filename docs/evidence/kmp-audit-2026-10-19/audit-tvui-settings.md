@@ -79,7 +79,7 @@ Mismatches vs boards:
   "Add an add-on", label + 1060×80 field (r14) with 3px inset white focus ring,
   **alphabetical keyboard** (`1…0 a…z - _ . :` + `https:// .com / Clear` utility
   row), 564px QR panel ("Easier: scan to add it from your phone or go to
-  viptv.syek.tech/addons"), Install 260×72 + Cancel 220×72 at y=860. The app opens
+  your-server.example/addons"), Install 260×72 + Cancel 220×72 at y=860. The app opens
   a **Material3 `AlertDialog`** with an `OutlinedTextField`, a
   `LinearProgressIndicator` and TextButtons ("Add"/"Cancel") —
   `TvSettingsScreen.kt:111-121`. No TV keyboard (remote cannot type without one),
@@ -93,7 +93,7 @@ Mismatches vs boards:
   (`TvSettingsScreen.kt:113-121`). No manifest preview, no permissions/capability
   summary, no trust copy.
 - **Add-ons list QR panel**: board `Tv3SetAddons` shows a real QR + "Scan to add
-  one from your phone or go to viptv.syek.tech/addons". App renders a 236px box
+  one from your phone or go to your-server.example/addons". App renders a 236px box
   that says either "Pairing unavailable / Add-on pairing is not available yet."
   (production: `placeholderQr` defaults false, only `PreviewTvSettings.kt:35` sets
   it) or the literal "[QR code]" placeholder — `TvAddonSettings.kt:62-70`. Sign-in
@@ -128,7 +128,7 @@ never shown again…") — `TvSourceIntegrationForm.kt:111-160, 163-225`. Form p
   Shift/Space/.com/@gmail.com keys (`TvEntryKeyboard.kt:22-52`) —
   `TvSourceIntegrationForm.kt:95`.
 - **QR panel**: board has a "Long key? Type it on your phone or open
-  viptv.syek.tech/tv…" QR box at x=96 y=806; app has none.
+  your-server.example/tv…" QR box at x=96 y=806; app has none.
 - **Providers grid**: board is a 3-column grid of 268×56 checkbox chips with a
   "Providers 8 of 12" count + "Pick up to 12…" hint; app chunks into 4-per-row
   64px chips with no count line and a different hint ("Leave empty to use the
@@ -237,7 +237,7 @@ generic `AlertDialog` (`TvSettingsScreen.kt:104`); the dashboard action can fall
 back to another `AlertDialog` ("Open server dashboard…", `TvSettingsScreen.kt:106-109`).
 The only board guidance is `Tv3SignOut`, which shows an Account column ("Email …
 [name@email.com]", "Devices — Sign out of other TVs and phones from
-viptv.syek.tech … [3] devices", "Sign out of this TV") plus the sign-out dialog
+your-server.example … [3] devices", "Sign out of this TV") plus the sign-out dialog
 (matched well by `TvLeaveConfirmation`). The app's placeholder copy ("Managed on
 web") and non-actionable rows are invented; the board's Devices subtitle copy is
 not implemented. Needs a board (DOC-04) or an adaptation.

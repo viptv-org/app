@@ -89,14 +89,14 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 else if (television && tvDetailVariant in listOf("SignedIn", "SignedInHold")) TvSignedIn(
                                     TvSignedInIdentity("isolated-preview", "vynxc", "[name@email.com]", PreviewData.profile),
                                     if (tvDetailVariant == "SignedInHold") null else ({ go(Screen.Profiles) }))
-                                else if (television) TvSignIn("https://viptv.syek.tech", false, null, { go(Screen.Profiles) },
+                                else if (television) TvSignIn("https://your-server.example", false, null, { go(Screen.Profiles) },
                                 { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Pairing", "PairingUnavailable" -> TvSignInStep.Phone; "Email" -> TvSignInStep.Email; "EmailCode" -> TvSignInStep.EmailCode; else -> TvSignInStep.Welcome },
                                 if (tvDetailVariant == "Email") "vynxc" else "",
                                 if (tvDetailVariant == "EmailCode") TvEmailCodeChallenge("Sent to [name@email.com] · expires in 15 minutes", "481", "isolated-preview") else null,
                                 if (tvDetailVariant == "Pairing") TvPairingSession("https://example.invalid/device?code=AB12CD34EF", "example.invalid/device", "AB12CD34EF", "14:52") else null)
                                 else if (!browser && tvDetailVariant in listOf("PairingDevice", "PairingBrowser", "PairingDeviceLoading", "PairingBrowserLoading"))
                                     PreviewNativePairing(desktop, tvDetailVariant) { go(Screen.Profiles) }
-                                else ConnectScreen(browser, "https://viptv.syek.tech", false, null, { go(Screen.Profiles) }, { _, _, _ -> }, desktop, phone, false, entryBackChanged)
+                                else ConnectScreen(browser, "https://your-server.example", false, null, { go(Screen.Profiles) }, { _, _, _ -> }, desktop, phone, false, entryBackChanged)
                             Screen.Player -> if (television && liveTitle == null) PreviewTvPlayer(tvDetailVariant, go, entryBackChanged)
                                 else PlayerScreen(null, true, null, {}, {}, { go(if (liveTitle == null) Screen.Home else Screen.Live) }, liveTitle ?: PreviewData.playerTitle, if (liveTitle == null) PlayerFact.Progress(842000, 3132000) else PlayerFact.Progress(0, null), phone = handheld, previewFrame = liveTitle?.landscape ?: PreviewData.playerFrame, television = television, backChanged = entryBackChanged)
                             Screen.Details -> if (television && tvDetailVariant in listOf("SeriesSeasons", "SeriesDelayed")) PreviewTvSeasons(tvDetailVariant, go)
