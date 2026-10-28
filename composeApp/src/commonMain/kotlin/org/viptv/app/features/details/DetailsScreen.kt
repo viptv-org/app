@@ -27,16 +27,20 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     /** Home's Continue Watching cards: the one for this series names the episode Details open on (app#40). */
     continuing: List<Card> = emptyList(),
     /** False while the page is composed behind the source selector; it pages again once it is shown. */
-    paging: Boolean = true) {
+    paging: Boolean = true,
+    /** Back from a play tap's selector opened this page, whose content the viewer has not seen yet (app#140). */
+    playTap: Boolean = false,
+    /** Reads the title again after a play tap's Details failed; absent when there is nothing to read (app#140). */
+    retry: (() -> Unit)? = null) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
-            continuing = continuing, shown = paging)
+            continuing = continuing, shown = paging, playTap = playTap, retry = retry)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
     if (detail == null && !busy) {
         // NAV-04: an initial-load failure used to compose nothing at all.
-        DetailUnavailable(error, back)
+        DetailUnavailable(error, back, retry)
         return
     }
     if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
@@ -159,13 +163,16 @@ internal fun detailExtras(detail: DetailSnapshot?, continuing: List<Card>): TvDe
 
 
 @Composable
-private fun DetailUnavailable(error: String?, back: () -> Unit) {
+private fun DetailUnavailable(error: String?, back: () -> Unit, retry: (() -> Unit)?) {
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center,
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
         Text("This title couldn’t load", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(12.dp))
         Text(error ?: "The provider didn’t return this title’s details.", color = Palette.secondary)
         Spacer(Modifier.height(20.dp))
-        Button(onClick = back) { Text("Go back") }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            retry?.let { again -> Button(onClick = again) { Text("Try again") } }
+            Button(onClick = back) { Text("Go back") }
+        }
     }
 }

@@ -69,12 +69,20 @@ class TvDetailsFocusReturnTest {
     private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
 
     /** The real TV App shell over a fake host serving [fixture]; a later Details page waits for [releasePage]. */
-    private inner class TvApp(val fixture: DetailSnapshot = detail) : AutoCloseable {
+    private inner class TvApp(val fixture: DetailSnapshot = detail, val holdDetails: Boolean = false, detailFailures: Int = 0) : AutoCloseable {
         val releasePage = CompletableDeferred<Unit>()
+        /** The title's first Details answer waits for this when [holdDetails] (app#140). */
+        val releaseDetails = CompletableDeferred<Unit>()
+        /** The title's first Details answers fail with the host's 404 (app#140's Retry). */
+        private val failures = java.util.concurrent.atomic.AtomicInteger(detailFailures)
         val pageOffsets = java.util.concurrent.CopyOnWriteArrayList<String>()
-        private fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
+        private suspend fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
             "/api/meta/series/$show" -> request.url.parameters["offset"]?.takeIf { it != "0" }.let { offset ->
-                if (offset == null) json(Json.encodeToString(fixture)) else { pageOffsets += offset; null }
+                if (offset != null) { pageOffsets += offset; null }
+                else if (failures.getAndUpdate { left -> (left - 1).coerceAtLeast(0) } > 0)
+                    respond("{\"error\":\"Title not found\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+                else if (holdDetails) { releaseDetails.await(); json(Json.encodeToString(fixture)) }
+                else json(Json.encodeToString(fixture))
             }
             // No stream add-ons: the selector opens and finishes with nothing.
             "/api/streams" -> json("""{"id":"job-1"}""")
@@ -110,6 +118,9 @@ class TvDetailsFocusReturnTest {
         val state get() = controller.state.value
         fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
         fun nodes() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
+        /** The page's loading placeholders are the only thing it says while a play tap's Details are on their way. */
+        fun loadingPage() = nodes().any { node ->
+            node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { it == "Loading title details" } }
         fun focused() = nodes().filter { it.config.getOrNull(SemanticsProperties.Focused) == true }
             .map { text(it) + " " + it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString(" ") }
         fun until(what: String, condition: () -> Boolean) {
@@ -126,6 +137,11 @@ class TvDetailsFocusReturnTest {
             }
             if (!consumed && direction != null) requireNotNull(focusManager).moveFocus(direction)
             frames(6)
+        }
+        /** The remote's OK on the focused control: desktop has no D-pad centre for a clickable. */
+        fun ok() {
+            val node = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }
+            assertTrue(requireNotNull(node) { "nothing is focused: ${focused()}" }.config[SemanticsActions.OnClick].action!!.invoke())
         }
         fun assertFocus(text: String, why: String) {
             frames(30)
@@ -198,8 +214,59 @@ class TvDetailsFocusReturnTest {
         }
 
         override fun close() {
+            releaseDetails.complete(Unit)
             scene.close(); controller.job?.cancel(); scope.cancel(); remote.close()
             appLoader?.shutdown(); previousLoader?.let { SingletonImageLoader.setUnsafe(it) }
+        }
+    }
+
+    /**
+     * The same tap, then Back **before** the Details answer (app#140). The title's page is
+     * already open in its loading state, and the pending read fills it in with the season and
+     * the episode, which takes the focus as it does behind the selector (app#112).
+     */
+    @Test fun backBeforeTheContinueWatchingDetailsArriveFocusesTheContinuedEpisode() {
+        TvApp(twoSeasons, holdDetails = true).use { app ->
+            app.frames()
+            app.continueWatching(seasonTwo(3, 0.45))
+            app.frames()
+            app.tapContinueWatching("S2 Episode 3")
+            app.until("the source selector") { app.state.screen == Screen.Sources }
+            app.selectorTakesFocus()
+            assertEquals(Screen.Details, app.state.sourceReturnScreen, "Back from sources goes to the title's Details")
+            app.controller.backSources()
+            app.until("the title's page opens on its loading state") { app.state.screen == Screen.Details && app.loadingPage() }
+            assertNull(app.state.detail, "the Details have not arrived yet")
+            assertNull(app.state.error, "a pending read is not a failure")
+
+            app.releaseDetails.complete(Unit)
+            app.until("the title's episodes") { app.state.detail != null }
+            app.assertFocus("3. S2 Episode 3", "Back before the Details arrived: the pending read fills the page in")
+        }
+    }
+
+    /**
+     * The same tap with a failing Details answer (app#140): Back opens the title's error, whose
+     * Retry takes the first action and reads the title again into the page.
+     */
+    @Test fun backBeforeAFailedContinueWatchingDetailsShowsTheErrorAndRetryReloadsThePage() {
+        TvApp(twoSeasons, detailFailures = 1).use { app ->
+            app.frames()
+            // Art and copy on the row: Home's billboard enrichment must not spend the failing answer.
+            app.continueWatching(seasonTwo(3, 0.45).copy(logo = "https://art.example/s2e3.png", description = "Episode three"))
+            app.frames()
+            app.tapContinueWatching("S2 Episode 3")
+            app.until("the source selector") { app.state.screen == Screen.Sources }
+            app.selectorTakesFocus()
+            app.until("the failure") { app.state.error != null || app.state.detailFailure != null }
+            app.controller.backSources()
+            app.until("the title's error") { app.state.screen == Screen.Details && app.focused().any { it.contains("Try again") } }
+            assertNull(app.state.detail, "never Home, and never a page that pretends to have loaded")
+            assertFalse(app.state.detailsPending(), "an error is not a loading page")
+
+            app.ok()
+            app.until("the retried Details") { app.state.detail != null }
+            app.assertFocus("3. S2 Episode 3", "Retry fills the page in and lands on the continued episode")
         }
     }
 

@@ -9,7 +9,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
@@ -49,12 +48,21 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
      * False while the page is composed behind the source selector: it neither pages nor
      * takes focus. Shown again means the viewer came back: see the return rule below (app#66).
      */
-    shown: Boolean = true) {
+    shown: Boolean = true,
+    /**
+     * Back from a play tap's selector opened this page, and its Details filled it in while the
+     * viewer was already on it (app#140). They have not seen this page before, so it is not a
+     * first entry: like a page first composed behind the selector (app#112), it opens on the
+     * continued episode rather than the hero.
+     */
+    playTap: Boolean = false,
+    /** Reads the title again after a play tap's Details failed; absent when there is nothing to read (app#140). */
+    retry: (() -> Unit)? = null) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     if (detail == null) {
         // NAV-04: never a blank, focus-dead page. Explain the failure and give
         // the remote a real action.
-        TvDetailUnavailable(error, scale = 1f, back = back, retry = if (error != null && back == null) null else back)
+        TvDetailUnavailable(error, scale = 1f, back = back, retry = retry)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -82,12 +90,14 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         // leaving composition. A page they have not been on leaves none.
         var leftFrom by rememberSaveable(card?.provider_id, card?.identity,
             key = card?.let { "tv-detail-left-from:${it.provider_id}:${it.identity.kind}:${it.identity.id}" }) { mutableStateOf<TvDetailRow?>(null) }
+        // The viewer has been on this page when it composed while shown, unless a play tap's
+        // selector sent them here (app#140), or when an earlier look left a row to return to.
         // Composed while shown, or composed again behind the selector after the viewer had left a
         // row from it (the player closed onto the selector): either way they have been on this
         // page. A page first composed behind the selector, where a Continue Watching tap lands,
         // has not (app#112), and a player detour does not make it one.
-        val visit = remember(card?.identity) { TvDetailVisit(firstEntry = shown, seen = shown || leftFrom != null) }
-        var activeRow by remember(card?.identity) { mutableStateOf(if (shown) TvDetailRow.Hero else leftFrom ?: TvDetailRow.Hero) }
+        val visit = remember(card?.identity) { TvDetailVisit(firstEntry = shown && !playTap, seen = leftFrom != null || shown && !playTap) }
+        var activeRow by remember(card?.identity) { mutableStateOf(if (shown && !playTap) TvDetailRow.Hero else leftFrom ?: TvDetailRow.Hero) }
         var episodeMode by remember(card?.identity) { mutableStateOf(activeRow == TvDetailRow.Episodes) }
         val sectionScroll = org.viptv.app.components.rememberTvSectionScroll(scroll)
         val density = LocalDensity.current
@@ -135,8 +145,9 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             if (visit.shown) return@LaunchedEffect
             visit.shown = true
             // A page the viewer never saw was composed behind the source selector, as a
-            // Continue Watching tap opens it (app#112): it comes back onto the episode being
-            // continued. A page they saw returns to the row they left from (app#66).
+            // Continue Watching tap opens it (app#112), or was opened by Back from that tap's
+            // selector while its Details still loaded (app#140): it comes back onto the episode
+            // being continued. A page they saw returns to the row they left from (app#66).
             val firstLook = !visit.seen
             visit.seen = true
             when {
@@ -195,10 +206,19 @@ private fun TvDetailUnavailable(error: String?, scale: Float, back: (() -> Unit)
             Text(error ?: "The provider didn’t return this title’s details.", color = Palette.secondary,
                 fontSize = (24 * s).sp, lineHeight = (34 * s).sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.widthIn(max = 900.dp * s))
-            (retry ?: back)?.let { action ->
-                org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s).focusRequester(focus), s, primary = true, ring = false,
-                    activate = action, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
-                    Text("Go back", color = it, fontSize = (24 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            // Retry is the first action when the play tap's read can run again; Back always is one.
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp * s)) {
+                retry?.let { again ->
+                    org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s), s, primary = true, ring = false,
+                        requester = focus, activate = again, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
+                        Text("Try again", color = it, fontSize = (24 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                    }
+                }
+                back?.let { leave ->
+                    org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s), s, primary = retry == null, ring = false,
+                        requester = if (retry == null) focus else null, activate = leave, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
+                        Text("Go back", color = it, fontSize = (24 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                    }
                 }
             }
         }

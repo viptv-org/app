@@ -21,6 +21,12 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         mutable.value = mutable.value.copy(busy = false)
     }
     if (screen != Screen.Details) cancelDetailPaging()
+    // A play tap's pending Details belong to the overlay group the viewer is now leaving (app#140).
+    if (screen !in listOf(Screen.Details, Screen.Sources, Screen.Player)) {
+        cancelSourceDetail()
+        if (mutable.value.playTapTitle != null || mutable.value.detailFailure != null)
+            mutable.value = mutable.value.copy(playTapTitle = null, detailFailure = null)
+    }
     if (screen != Screen.Sources && mutable.value.findingSources) {
         generation++
         job?.cancel()
@@ -79,9 +85,16 @@ fun ApplicationController.backDetails() {
 }
 
 fun ApplicationController.backSources() {
-    generation++; job?.cancel(); cancelSourceDetail()
-    mutable.value = mutable.value.copy(screen = mutable.value.sourceReturnScreen,
-        busy = false, findingSources = false, error = null)
+    val state = mutable.value
+    // A play tap still resolving its title's Details keeps that read: Back opens the title's
+    // page in its loading state, and the read fills it in with no second request (app#140).
+    // The selector's own work always stops here.
+    val awaitingTitle = state.playTapTitle != null && state.detail == null && state.sourceReturnScreen == Screen.Details
+    generation++; job?.cancel()
+    if (!awaitingTitle) cancelSourceDetail()
+    mutable.value = state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false,
+        // The title's read is what failed, or may still: its page is where that error belongs.
+        error = state.error.takeIf { awaitingTitle })
 }
 
 /**

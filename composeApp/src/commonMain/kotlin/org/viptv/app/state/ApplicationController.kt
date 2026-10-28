@@ -111,13 +111,16 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                     discardStremioImport()
                     connection?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                } else if (generation == current) mutable.value = mutable.value.copy(error = when (e) {
-                    is RemoteFailure -> e.message
-                    is LocalFailure -> e.message
-                    is kotlinx.serialization.SerializationException -> "The server returned an incompatible response."
-                    is IllegalArgumentException -> "Enter a valid HTTPS server address."
-                    else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
-                })
+                } else if (generation == current) mutable.value = mutable.value.copy(error = failureMessage(e))
             } finally { if (generation == current) mutable.value = mutable.value.copy(starting = false, busy = false, sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning) }
         }
     }}
+
+/** The message a failure shows the viewer; every surface that reports one words it here, as [run] does. */
+internal fun ApplicationController.failureMessage(error: Exception): String? = when (error) {
+    is RemoteFailure -> error.message
+    is LocalFailure -> error.message
+    is kotlinx.serialization.SerializationException -> "The server returned an incompatible response."
+    is IllegalArgumentException -> "Enter a valid HTTPS server address."
+    else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
+}

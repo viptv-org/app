@@ -43,7 +43,12 @@ closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 `PlayerSettingsLinkUiTest`, `DetailNavigationTest`,
 `ContinueWatchingSourcesOpenTest`, `NextEpisodeEndPanelUiTest`. The Continue
 Watching page (app#114) rows: `ContinueWatchingListTest` (Back, Android/TV
-Back, Sources' Back) and `ContinueWatchingUiTest` (TV focus on the way back).
+Back, Sources' Back → the title's Details, then the page) and
+`ContinueWatchingUiTest` (TV focus on the way back). A play tap's selector
+opens the title's Details in their loading state when the read is still
+running, and fills them in from it (app#140,
+`ContinueWatchingSourcesOpenTest.backBeforeDetailsArriveOpensTheTitlesDetailsAndTheLoadFillsThemIn`,
+`TvDetailsFocusReturnTest.backBeforeTheContinueWatchingDetailsArriveFocusesTheContinuedEpisode`).
 
 | Screen / state | Expected | Phone, tablet (`main`) | TV (`main`) | Desktop (`main`) | Browser (`main`) | Branch |
 |---|---|---|---|---|---|---|
@@ -61,12 +66,12 @@ Back, Sources' Back) and `ContinueWatchingUiTest` (TV focus on the way back).
 | Movies / Series / Anime / Discover, also genre-filtered (app#15) | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | Search | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ (Escape in the field too) | ✗ leaves the site | ✓ |
 | Details (all layouts), related-title chain | Previous Details, then the origin page | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
-| Sources (app#11 rule) | Details if open, else origin | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
+| Sources (app#11 rule, app#140) | The title's Details, arrived or not: they load in place, or show their error with Retry | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
 | Player | Sources (app#13 lease rules) | ✓ | ✓ | ✓ Escape; ✗ mouse Back | ✗ leaves the site | ✓ |
 | Player panel open (Episodes, Audio & subtitles, Next episode app#41, lock) | Close the panel first | ✓ | ✓ | ✓ Escape; ✗ mouse Back closed the player | ✗ browser Back closed the player under the panel | ✓ |
 | Settings opened from the player (app#44) | The paused player | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
 | Continue Watching page (app#114), from Home's "See all" | Home, with the row and focus where they were; else Home | new: Home | new: Home, focus on the See all card | new: Home | new: Home | ✓ |
-| Sources or Details opened from the Continue Watching page | The page, focus on the card that opened them | new | new: same card focused | new | new | ✓ |
+| Sources or Details opened from the Continue Watching page | The title's Details (app#140), then the page, focus on the card that opened them | new | new: same card focused | new | new | ✓ |
 | My List | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | History | Previous screen, else Home | ✗ always Home; arrow went Home and recorded History | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | Calendar | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
