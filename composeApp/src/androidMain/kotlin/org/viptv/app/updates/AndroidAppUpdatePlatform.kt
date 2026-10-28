@@ -116,6 +116,9 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
 
     override fun canInstall(): Boolean = application.packageManager.canRequestPackageInstalls()
 
+    /** The app declares [UpdateRelaunchReceiver] for `MY_PACKAGE_REPLACED` (androidApp manifest). */
+    override val relaunchesAfterUpdate: Boolean = true
+
     private fun permissionIntent() = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + application.packageName))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
@@ -125,7 +128,7 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
         application.startActivity(permissionIntent()); true
     } catch (_: RuntimeException) { false }
 
-    override suspend fun install(feed: UpdateFeed, result: (InstallResult) -> Unit) {
+    override suspend fun install(feed: UpdateFeed, progress: (bytes: Long) -> Unit, result: (InstallResult) -> Unit) {
         val apk = apkFile(feed)
         // The file sat on disk since it was verified; check it again right before Android reads it.
         if (!hasVerifiedDownload(feed)) { apk.delete(); throw UpdateVerificationException("The downloaded update changed on disk") }
@@ -143,7 +146,20 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
             try {
                 installer.openSession(id).use { session ->
                     session.openWrite("base.apk", 0, apk.length()).use { output ->
-                        apk.inputStream().use { it.copyTo(output, 64 * 1024) }
+                        // The copy into the session can take a while on a slow device: report it for
+                        // the Updating screen (app#139).
+                        var written = 0L
+                        apk.inputStream().use { input ->
+                            val buffer = ByteArray(64 * 1024)
+                            while (true) {
+                                coroutineContext.ensureActive()
+                                val count = input.read(buffer)
+                                if (count < 0) break
+                                output.write(buffer, 0, count)
+                                written += count
+                                progress(written)
+                            }
+                        }
                         session.fsync(output)
                     }
                     val mutable = if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0

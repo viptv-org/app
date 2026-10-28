@@ -488,3 +488,17 @@ for updates", turning into "Install update", with the state as subtitle and
 the last check as value) and the same lines and button on phone. The old
 design spec AND-APP-UPDATE-001 (viptv-org/design#19, never merged) informed the
 copy; layout, type and spacing need a board.
+
+### GAP-065 — Updating screen while an Android update installs
+
+app#139 adds the full-screen Updating screen (docs/APP_UPDATES.md) without a
+design board. The provisional surface is `updates/AppUpdatingScreen.kt`: a
+centred V mark, **Updating VIPTV to {versionName}…**, a progress bar with a
+percent, the write/confirm line and the restart line on the phone 390-wide and
+TV 1920 layouts (renders in
+`docs/evidence/2026-10-28-app-updating-screen/`). The permission step reuses
+the prompt's **Allow updates** copy on the same full screen. The "Updated to
+{versionName}" confirmation is a small raised bar at the bottom for six
+seconds. The copy is to be recorded in the design repository's `copy.md` and
+in AND-APP-UPDATE-001, kept "proposed" (viptv-org/design#32); layout, type and
+spacing need a board.
