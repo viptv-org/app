@@ -27,8 +27,8 @@ internal fun SoftArtwork(url: String?, modifier: Modifier, radius: Dp, opacity: 
         // wsrv blur is a Gaussian sigma; the runtime pass blurs the quarter-size
         // surface and upscales 4x, so the sigma that matches it is radius/4 in px.
         val sigma = with(density) { radius.toPx() / 4f }.toInt().coerceIn(1, 200)
-        val proxied = org.viptv.app.images.sizedArtwork(url, targetWidth, targetHeight, blur = sigma)
-        val preBlurred = proxied != null && proxied.startsWith("https://wsrv.nl/")
+        // app#80: only a URL that really carries the service blur skips the runtime pass.
+        val preBlurred = org.viptv.app.images.blurredArtwork(url, targetWidth, targetHeight, blur = sigma)
         val base = Modifier.size(maxWidth / 4, maxHeight / 4).graphicsLayer {
             scaleX = 4f; scaleY = 4f
             transformOrigin = TransformOrigin(0f, 0f)
@@ -37,7 +37,7 @@ internal fun SoftArtwork(url: String?, modifier: Modifier, radius: Dp, opacity: 
             // bitmap separately (which brightens overlapping images).
             compositingStrategy = CompositingStrategy.Auto
         }
-        if (preBlurred) BufferedArtwork(proxied, base)
+        if (preBlurred != null) BufferedArtwork(preBlurred, base)
         else BufferedArtwork(url, base.blur(radius / 4))
     }
 }

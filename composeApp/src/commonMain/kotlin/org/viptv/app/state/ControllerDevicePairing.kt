@@ -20,7 +20,7 @@ fun ApplicationController.startDevicePairing(origin: String) {
         var adopted = false
         fun active() = pairingGeneration == generation && mutable.value.screen == Screen.Connect
         try {
-            candidate = RemoteConnection(origin, sessionStore = sessionStore)
+            candidate = remoteFactory(origin, sessionStore)
             val transport = candidate.devicePairing(::active)
             val challenge = transport.create()
             val started = TimeSource.Monotonic.markNow()
@@ -44,11 +44,13 @@ fun ApplicationController.startDevicePairing(origin: String) {
                 }
             }
         } catch (_: TimeoutCancellationException) {
-            if (active()) mutable.value = mutable.value.copy(error = "This sign-in code expired. Request a new code.")
+            if (active()) mutable.value = mutable.value.copy(error = DEVICE_PAIRING_EXPIRED_MESSAGE)
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (active()) mutable.value = mutable.value.copy(error = (error as? RemoteFailure)?.message
-                ?: "Could not reach your server. Check the address and try again.")
+            if (active()) mutable.value = mutable.value.copy(error = when (error) {
+                is RemoteFailure, is DevicePairingEnded -> error.message
+                else -> "Could not reach your server. Check the address and try again."
+            })
         } finally {
             if (!adopted) candidate?.close()
             if (active()) mutable.value = mutable.value.copy(devicePairing = null, busy = false)
