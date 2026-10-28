@@ -74,15 +74,18 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         // per title and across the player, where it leaves composition. Shown again, focus goes
         // back to that row: the last focused episode, else the continued episode (app#40),
         // else the hero. Any other row returns to the hero.
-        // A page first composed behind the selector (a Continue Watching tap, app#112) was never
-        // entered: it opens on the continued episode instead, and on the hero without one.
+        // A page the viewer has not been on, because it was composed behind the selector (a play
+        // tap, app#112), has no row to go back to: it opens on the continued episode instead, and
+        // on the hero without one.
         // Keyed by title, not by position: one saved-state slot serves every title's Details.
+        // The row the viewer left the page from, saved per title so the page survives the player
+        // leaving composition. A page they have not been on leaves none.
         var leftFrom by rememberSaveable(card?.provider_id, card?.identity,
             key = card?.let { "tv-detail-left-from:${it.provider_id}:${it.identity.kind}:${it.identity.id}" }) { mutableStateOf<TvDetailRow?>(null) }
         // Composed while shown, or composed again behind the selector after the viewer had left a
         // row from it (the player closed onto the selector): either way they have been on this
         // page. A page first composed behind the selector, where a Continue Watching tap lands,
-        // has not (app#112). No visit of this page ends hidden on TV, so a saved row means seen.
+        // has not (app#112), and a player detour does not make it one.
         val visit = remember(card?.identity) { TvDetailVisit(firstEntry = shown, seen = shown || leftFrom != null) }
         var activeRow by remember(card?.identity) { mutableStateOf(if (shown) TvDetailRow.Hero else leftFrom ?: TvDetailRow.Hero) }
         var episodeMode by remember(card?.identity) { mutableStateOf(activeRow == TvDetailRow.Episodes) }
@@ -124,7 +127,10 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             }
         }
         LaunchedEffect(card?.identity, shown) {
-            if (!shown) { leftFrom = activeRow; visit.shown = false; return@LaunchedEffect }
+            // Only a page the viewer has been on remembers a row to come back to; one that only ever
+            // opened behind the selector has none, so the player closing onto the selector does not
+            // turn it into a page they left (app#112).
+            if (!shown) { if (visit.seen) leftFrom = activeRow; visit.shown = false; return@LaunchedEffect }
             leftFrom = null
             if (visit.shown) return@LaunchedEffect
             visit.shown = true

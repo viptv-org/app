@@ -277,6 +277,24 @@ class TvDetailsFocusReturnTest {
     }
 
     /**
+     * The same tap, then the viewer plays straight from the selector before ever seeing the
+     * page: the player closing onto the selector must not make Back land on the hero.
+     */
+    @Test fun aContinueWatchingTapThatPlaysFirstStillLandsOnTheContinuedEpisode() {
+        TvApp(twoSeasons).use { app ->
+            app.frames()
+            app.continueWatching(seasonTwo(3, 0.45))
+            app.frames()
+            app.tapContinueWatching("S2 Episode 3")
+            app.until("the source selector") { app.state.screen == Screen.Sources }
+            app.selectorTakesFocus()
+            app.until("the Details loading behind the selector") { app.state.detail != null }
+            app.playThenBack()
+            app.assertFocus("3. S2 Episode 3", "Back from the player, then Sources, after a Continue Watching tap")
+        }
+    }
+
+    /**
      * The same tap after an earlier visit to this title's shelf left another episode
      * remembered: the continued episode wins, not the remembered one (app#112).
      */
