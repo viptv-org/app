@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.viptv.app.features.home.MediaCard
+import org.viptv.app.images.publicArtworkUrl
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -52,7 +53,7 @@ class ImageLoaderSingletonTest {
         render(television = true) { UiPreview(television = true, screen = Screen.Search) }
         val installed = SingletonImageLoader.get(PlatformContext.INSTANCE)
         val mapped = installed.components.map(poster, Options(PlatformContext.INSTANCE)).toString()
-        assertTrue(mapped.startsWith("https://wsrv.nl/"), "the installed loader maps public artwork, was $mapped")
+        assertEquals(publicArtworkUrl(poster), mapped, "the installed loader maps public artwork")
 
         // 3. Screens and previews that compose afterwards reuse that loader.
         render(television = true) { UiPreview(television = true, screen = Screen.Home) }
