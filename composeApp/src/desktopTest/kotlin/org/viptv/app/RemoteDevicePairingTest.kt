@@ -3,8 +3,10 @@ package org.viptv.app
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
+import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import kotlin.test.*
 
@@ -72,6 +74,32 @@ class RemoteDevicePairingTest {
             val expired = assertFailsWith<DevicePairingEnded> { pairing.poll(code) }
             assertEquals(DevicePairingEnded.Reason.Expired, expired.reason)
             assertEquals("This sign-in code expired. Request a new code.", expired.message)
+        } finally { remote.close() }
+    }
+
+    /**
+     * app#129: a code request answers with a new `device_code`, so "New code" sends the one this
+     * screen still holds. The server then expires it (backend#42), and the first request sends none.
+     */
+    @Test fun aNewCodeSendsThePreviousDeviceCodeAndTheFirstCodeSendsNone() = runBlocking {
+        val bodies = mutableListOf<JsonObject>()
+        val client = HttpClient(MockEngine { request ->
+            bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            respond(challenge, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", Store(), client, browserMode = false)
+        try {
+            val pairing = remote.devicePairing()
+            val first = pairing.create()
+            assertFalse(bodies.single().containsKey("device_code"), "the first code request sends no previous code")
+            assertTrue(bodies.single().containsKey("device_name"))
+
+            pairing.create(first.secret)
+            assertEquals("private-device-secret", bodies.last().getValue("device_code").jsonPrimitive.content)
+            assertEquals(setOf("device_name", "device_code"), bodies.last().keys)
+
+            pairing.create("  ")
+            assertFalse(bodies.last().containsKey("device_code"), "a blank previous code is not sent")
         } finally { remote.close() }
     }
 
