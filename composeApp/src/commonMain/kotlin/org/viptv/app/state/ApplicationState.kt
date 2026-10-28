@@ -140,8 +140,8 @@ data class ApplicationState(
 
 /**
  * The Details page is still loading rather than failed: a play tap's read has not landed yet and
- * has not reported an error, so Back from its selector opens the title's page in its loading
- * state (app#140).
+ * has reported neither kind of failure, so Back from its selector opens the title's page in its
+ * loading state (app#140).
  */
 internal fun ApplicationState.detailsPending(): Boolean =
     detail == null && error == null && detailFailure == null && playTapTitle != null
