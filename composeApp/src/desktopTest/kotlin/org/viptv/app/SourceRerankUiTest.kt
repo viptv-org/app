@@ -177,10 +177,10 @@ class SourceRerankUiTest {
             s.settle()
             // The first row item starts at the list's top content padding.
             val anchor = ids.first { id -> shown(id)?.let { it.boundsInRoot.top >= top - 1 } == true }
-            val before = s.row(anchor).boundsInRoot.top
+            val before = s.row(anchor).boundsInRoot.bottom
             list = ranked(listOf("x1", "x2", "x3") + ids)
             s.settle()
-            near(before, s.row(anchor).boundsInRoot.top, "The first fully visible row keeps its offset")
+            near(before, s.row(anchor).boundsInRoot.bottom, "The row, below its new header, keeps its on-screen position")
             assertTrue(shown("x1").let { it == null || it.boundsInRoot.bottom <= top }, "New rows above are seen only by scrolling up")
             assertTrue(chosen.isEmpty())
         }

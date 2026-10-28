@@ -32,8 +32,8 @@ private const val LIBRARY_CARD_TYPE = "library:card"
 
 /**
  * Phone, tablet, desktop and browser My List. One grid scrolls everything: the large title and the
- * History card scroll away with the cards (fading as they go), while the list picker, type chips,
- * Filters and the busy/error line stay pinned as a sticky header (app#58). TV has its own screen.
+ * History card scroll away with the cards (fading as they go), while the filter bar (app#117) and the
+ * busy/error line stay pinned as a sticky header (app#58). TV has its own screen.
  */
 @Composable
 fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, open: (Card) -> Unit,
@@ -59,7 +59,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                 ?.minus(layout.totalItemsCount - gridCards.size) ?: -1
         }
         Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else 40.dp, vertical = if (phone) 8.dp else 24.dp)) {
-            // The grid stays the same composition when the list empties, so an open Filters sheet survives.
+            // The grid stays the same composition when the list empties, so an open filter list survives.
             // Empty, it only holds the header and the empty state takes the rest of the page.
             LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(176.dp), state = grid,
                 modifier = if (visible.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
@@ -73,7 +73,8 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                 stickyHeader(LIBRARY_CONTROLS_KEY, contentType = LIBRARY_CONTROLS_KEY) {
                     Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        if (snapshot != null) LibraryHeader(snapshot, query, changeQuery, false, 1f, busy, null, null)
+                        // The filter bar is the sticky row (app#117). The grid clips at the gutter, so the bar does not bleed.
+                        if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                         else LibraryControls(filter, { filter = it }, sort, { sort = it })
                         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                         (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }

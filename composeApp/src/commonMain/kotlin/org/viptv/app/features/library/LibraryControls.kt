@@ -1,43 +1,27 @@
 package org.viptv.app.features.library
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.*
-import org.viptv.app.theme.Palette
-import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.DropdownMenuItem
-import org.viptv.app.components.Surface
+import androidx.compose.runtime.Composable
+import org.viptv.app.components.FilterBar
+import org.viptv.app.components.SearchableSelect
+import org.viptv.app.components.SelectOption
 
+private val LocalTypes = listOf("All", "Movies", "Series").map { SelectOption(it, it) }
+private val LocalSorts = listOf("Date added", "A–Z", "Z–A").map { SelectOption(it, it) }
+
+/**
+ * My List before the server's list query is available: the same filter bar, with Type and
+ * Sort applied to the cards on this device.
+ */
 @Composable
 internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: String, setSort: (String) -> Unit) {
-    var menu by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Row(Modifier.background(Palette.raised, RoundedCornerShape(20.dp)).padding(4.dp)) {
-            listOf("All", "Movies", "Series").forEach { choice ->
-                Text(choice, Modifier.background(if (choice == filter) Palette.background else Palette.raised, RoundedCornerShape(18.dp))
-                    .pointerClickable(shape = RoundedCornerShape(18.dp)) { setFilter(choice) }.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp)
-            }
+    FilterBar(clear = if (filter != "All" || sort != "Date added") ({ setFilter("All"); setSort("Date added") }) else null) {
+        item(key = "type") {
+            SearchableSelect("Type", LocalTypes, listOf(filter), { it.firstOrNull()?.let(setFilter) }, anyLabel = null,
+                highlighted = filter != "All")
         }
-        Box {
-            Surface(onClick = { menu = true }, shape = RoundedCornerShape(20.dp), color = Palette.raised) {
-                Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Lucide.SlidersHorizontal, null, Modifier.size(14.dp))
-                    Text(sort, fontSize = 12.sp)
-                }
-            }
-            DropdownMenu(menu, onDismissRequest = { menu = false }) {
-                listOf("Date added", "A–Z", "Z–A").forEach { choice ->
-                    DropdownMenuItem(text = { Text(choice) }, onClick = { setSort(choice); menu = false })
-                }
-            }
+        item(key = "sort") {
+            SearchableSelect("Sort", LocalSorts, listOf(sort), { it.firstOrNull()?.let(setSort) }, anyLabel = null,
+                highlighted = sort != "Date added")
         }
     }
 }
