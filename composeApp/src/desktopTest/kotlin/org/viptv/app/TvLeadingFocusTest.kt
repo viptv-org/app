@@ -143,7 +143,7 @@ class TvLeadingFocusTest {
                     focus = shelf)
                 }
             }.use { f ->
-                f.settle(); assertEquals(org.viptv.app.features.details.ShelfFocus.Focused, shelf.request!!(false)); f.settle()
+                f.settle(); assertEquals(org.viptv.app.features.details.ShelfFocus.Focused, shelf.request!!(org.viptv.app.features.details.ShelfLanding.Any)); f.settle()
                 // restore enters an episode; Up goes to its selected season.
                 f.press(Key.DirectionUp); f.settle()
                 f.press(Key.DirectionRight); f.settle()
