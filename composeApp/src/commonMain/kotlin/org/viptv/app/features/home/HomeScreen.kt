@@ -18,6 +18,8 @@ import org.viptv.engine.wire.*
 @Composable
 fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     summaryCards: Map<String, Card> = emptyMap(), enrichSummary: (Card) -> Unit = {},
+    /** False while the viewer is idle: the hero holds its slide and progress instead of drawing every step (app#95). */
+    heroRotates: Boolean = true,
     /** Continue Watching holds more than its row shows: the row ends with "See all", which calls [seeAll] (app#114). */
     continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
     if (television) {
@@ -26,7 +28,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val carousel = rememberHeroCarousel(home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) }, true, home?.scope?.owner())
+        val carousel = rememberHeroCarousel(home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) }, heroRotates, home?.scope?.owner())
         val compact = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else 1f
         val gutter = if (compact) 16.dp else if (television) 96.dp * scale else if (tablet) 32.dp else if (browser) 57.dp else 40.dp

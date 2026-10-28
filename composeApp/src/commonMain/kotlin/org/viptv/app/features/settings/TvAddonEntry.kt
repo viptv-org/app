@@ -103,7 +103,7 @@ internal fun TvAddonEntryPage(address: String, addressChange: (String) -> Unit, 
             }
             Text(if (placeholderQr) "Easier: scan to add it from your phone" else "Add-on pairing is not available yet.",
                 fontSize = (26 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Text(if (placeholderQr) "or go to viptv.syek.tech/addons" else "Type its address on this screen instead.",
+            Text(if (placeholderQr) "or go to https://your-server.example/addons" else "Type its address on this screen instead.",
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary, textAlign = TextAlign.Center)
         }
         if (busy || error != null) Column(Modifier.offset(1260.dp * scale, 700.dp * scale).width(564.dp * scale),

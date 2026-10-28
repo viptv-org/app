@@ -47,7 +47,26 @@ fun ApplicationController.foregroundObserver(onReturn: () -> Unit = {}) = Lifecy
 }
 
 /** Key, remote, touch or pointer input. An aged Home waits until the viewer is idle. */
-fun ApplicationController.userActivity() = freshness.input()
+fun ApplicationController.userActivity() {
+    freshness.input()
+    if (!viewerPresent) { viewerPresent = true; viewerReturned.trySend(Unit) }
+}
+
+/**
+ * Keeps [ApplicationController.viewerPresent] current while something depends on it:
+ * sleeps until the viewer has been [Freshness.idle], marks them away, then waits for
+ * [userActivity] to bring them back. Neither wait asks for frames.
+ */
+internal suspend fun ApplicationController.trackViewerPresence(): Nothing {
+    while (true) {
+        val left = freshness.untilIdle()
+        if (left > kotlin.time.Duration.ZERO) { delay(left); continue }
+        viewerPresent = false
+        // Drop a wake-up left over from before this idle spell, then wait for input.
+        viewerReturned.tryReceive()
+        if (!viewerPresent) viewerReturned.receive()
+    }
+}
 
 /** Foreground return or entry to a screen: check now, or rebuild an aged Home. */
 fun ApplicationController.freshen() {

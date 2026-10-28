@@ -89,7 +89,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                 }
                 Text(if (placeholderQr) "Scan to add one from your phone" else "Add-on pairing is not available yet.",
                     fontSize = (24 * scale).sp, lineHeight = (35 * scale).sp, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                Text(if (placeholderQr) "or go to\nviptv.syek.tech/addons" else "Use Add an add-on to enter its address on this TV.",
+                Text(if (placeholderQr) "or go to\nhttps://your-server.example/addons" else "Use Add an add-on to enter its address on this TV.",
                     fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
