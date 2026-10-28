@@ -144,8 +144,8 @@ fun App(
                                 // Kept per profile on every layout, so Back from Continue Watching (and any page) finds the row and focus it left.
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
-                            // W3Browse: the browser renders the rail-and-content
-                            // page; phone and desktop keep the shared inline chips.
+                            // W3Browse: the browser renders its board page; both use the
+                            // shared filter bar (app#117).
                             Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->
                                 if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
                                 else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,

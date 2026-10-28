@@ -42,7 +42,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
         val scale = maxWidth / 1920.dp
         Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
             .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
-            if (snapshot != null) LibraryHeader(snapshot, query, changeQuery, true, scale, busy, selectedFilter, if (visible.isNotEmpty()) first else null)
+            if (snapshot != null) TvLibraryHeader(snapshot, query, changeQuery, scale, selectedFilter, if (visible.isNotEmpty()) first else null)
             else TvLibraryControls(filter, { filter = it }, sort, { sort = it }, scale, selectedFilter,
                 if (visible.isNotEmpty()) first else null, lastWatched.isNotEmpty())
             Spacer(Modifier.height(32.dp * scale))
