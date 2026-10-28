@@ -47,11 +47,14 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     val chromeFocus = remember { FocusRequester() }
     val grid = rememberLazyGridState()
     LaunchedEffect(Unit) {
-        if (selected.isNotEmpty()) {
-            grid.scrollToItem(targetIndex)
-            withFrameNanos { }
-            first.requestFocus()
-        } else chromeFocus.requestFocus()
+        // A page without controls has no chrome to fall back to (discovery unavailable).
+        runCatching {
+            if (selected.isNotEmpty()) {
+                grid.scrollToItem(targetIndex)
+                withFrameNanos { }
+                first.requestFocus()
+            } else chromeFocus.requestFocus()
+        }
     }
     AutomaticPage(selected.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {

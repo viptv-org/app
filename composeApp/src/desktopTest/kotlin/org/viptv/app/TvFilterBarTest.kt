@@ -119,6 +119,14 @@ class TvFilterBarTest {
             it.press(Key.DirectionCenter)
             assertEquals(listOf("sort=new", "genre=adventure"), browse.requests, "the genre applies at once")
             assertEquals("Genre: Adventure", it.focusedChip(), "the chip shows the value and keeps focus")
+
+            // Clear ends the row; pressing it resets the facets and leaves the remote on the row.
+            for (step in 0 until it.triggers().size) it.press(Key.DirectionRight)
+            assertEquals("Clear", it.focusedAction(), "Clear ends the chip row")
+            it.press(Key.DirectionCenter)
+            assertEquals(BrowseQuery("movie", "top", "c1"), browse.query, "Clear drops every facet and keeps the catalog")
+            assertFalse(it.has("Clear"), "nothing left to clear")
+            assertEquals("Catalog: Popular", it.focusedChip(), "the remote stays on the row after Clear")
         }
     }
 
@@ -154,6 +162,7 @@ class TvFilterBarTest {
             it.press(Key.DirectionCenter)
             assertTrue(it.panel("Type"))
             assertEquals("All", it.focusedRow(), "the current type opens focused")
+            it.capture("tv-mylist-panel-open")
             it.focusRow("Movies")
             it.press(Key.DirectionCenter)
             assertEquals("movie", changes.last().type, "the type applies at once")
@@ -207,6 +216,10 @@ class TvFilterBarTest {
         /** The chip the remote rests on. An open panel is a second focus owner, so scope by role. */
         fun focusedChip() = nodes().single {
             it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList
+        }.let(::text)
+        /** The action chip (Clear) the remote rests on. */
+        fun focusedAction() = nodes().single {
+            it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.getOrNull(SemanticsProperties.Role) == Role.Button
         }.let(::text)
         /** The option the remote rests on inside the open panel. */
         fun focusedRow() = nodes().single {

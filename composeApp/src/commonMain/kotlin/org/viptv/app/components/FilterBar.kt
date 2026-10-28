@@ -1,6 +1,7 @@
 package org.viptv.app.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
@@ -47,14 +48,15 @@ internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: 
             phone -> SelectPresentation.Sheet
             else -> SelectPresentation.Popover
         }
-        // The row is one focus group on TV: clipping the Clear chip must not strand the remote.
+        // The row is one focus group on TV: a panel closing lands back on its chip (the group's
+        // last focused child), and clearing re-enters the row instead of stranding the remote.
         val row = remember { FocusRequester() }
         // A TV ring is drawn outside the chip; the scrolling row would clip it at either end.
         val reach = if (tv) tvRingReach(scale) else 0.dp
         CompositionLocalProvider(LocalSelectPresentation provides presentation) {
             FocusLazyRow(Modifier.fillMaxWidth().then(if (tv) Modifier.tvRingRoom(reach, vertical = false) else Modifier)
                 .bleedHorizontally(if (bleed) gutter else 0.dp)
-                .then(if (tv) Modifier.focusRequester(row) else Modifier),
+                .then(if (tv) Modifier.focusRequester(row).focusGroup() else Modifier),
                 contentPadding = PaddingValues(horizontal = gutter + reach),
                 horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
                 // A chip row pinned above a grid: the wheel over it scrolls it sideways (app#59).

@@ -407,13 +407,7 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     val folded = remember(options) { options.map { foldForSearch(it.label) } }
     val searchable = options.size + (if (anyLabel != null) 1 else 0) > SearchRowLimit
     // A null row is the "Any" row; it is only offered before a search narrows the list.
-    val rows: List<SelectOption?> = remember(options, folded, query, anyLabel) {
-        val needle = foldForSearch(query.trim())
-        buildList {
-            if (anyLabel != null && needle.isEmpty()) add(null)
-            options.forEachIndexed { index, option -> if (folded[index].contains(needle)) add(option) }
-        }
-    }
+    val rows = remember(options, folded, query, anyLabel) { choiceRows(options, folded, query, anyLabel) }
     var active by remember { mutableIntStateOf(rows.indexOfFirst { if (it == null) selected.isEmpty() else it.id in selected }.coerceAtLeast(0)) }
     // Bumped by the arrow keys only: hovering a row moves the highlight but never scrolls the list under the mouse.
     var keyboardMoves by remember { mutableIntStateOf(0) }
@@ -425,16 +419,11 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     // over the list, so there the panel itself takes focus and only arrows and OK act.
     val searchFirst = searchable && LocalPointerHover.current
 
-    fun enabled(row: SelectOption?) = row == null ||
-        row.enabled && (!multiple || cap == null || row.id in selected || selected.size < cap)
+    fun enabled(row: SelectOption?) = choiceEnabled(row, multiple, cap, selected)
     fun pick(row: SelectOption?) {
         if (!enabled(row)) return
-        if (!multiple) { onChange(listOfNotNull(row?.id)); close(); return }
-        onChange(when {
-            row == null -> emptyList()
-            row.id in selected -> selected - row.id
-            else -> selected + row.id
-        })
+        applyChoice(row, selected, multiple, onChange)
+        if (!multiple) close()
     }
     /** The next row in [step]'s direction that can be picked; unavailable and over-cap rows are skipped. */
     fun move(step: Int) {
@@ -486,6 +475,29 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     }
 }
 
+/** The rows a choice panel shows: "Any" first until a search narrows it, then the matching options. */
+private fun choiceRows(options: List<SelectOption>, folded: List<String>, query: String, anyLabel: String?): List<SelectOption?> {
+    val needle = foldForSearch(query.trim())
+    return buildList {
+        if (anyLabel != null && needle.isEmpty()) add(null)
+        options.forEachIndexed { index, option -> if (folded[index].contains(needle)) add(option) }
+    }
+}
+
+/** A row can be picked unless it is unavailable, or a multiple choice is already at its cap. */
+private fun choiceEnabled(row: SelectOption?, multiple: Boolean, cap: Int?, selected: List<String>): Boolean =
+    row == null || row.enabled && (!multiple || cap == null || row.id in selected || selected.size < cap)
+
+/** Picking applies at once: a multiple choice ticks or unticks, a single one replaces. */
+private fun applyChoice(row: SelectOption?, selected: List<String>, multiple: Boolean, onChange: (List<String>) -> Unit) {
+    if (!multiple) { onChange(listOfNotNull(row?.id)); return }
+    onChange(when {
+        row == null -> emptyList()
+        row.id in selected -> selected - row.id
+        else -> selected + row.id
+    })
+}
+
 private val SelectKeys = listOf(Key.DirectionUp, Key.DirectionDown, Key.Enter, Key.NumPadEnter, Key.DirectionCenter)
 
 /**
@@ -502,27 +514,16 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
     var query by remember { mutableStateOf("") }
     val folded = remember(options) { options.map { foldForSearch(it.label) } }
     val searchable = options.size + (if (anyLabel != null) 1 else 0) > SearchRowLimit
-    val rows: List<SelectOption?> = remember(options, folded, query, anyLabel) {
-        val needle = foldForSearch(query.trim())
-        buildList {
-            if (anyLabel != null && needle.isEmpty()) add(null)
-            options.forEachIndexed { index, option -> if (folded[index].contains(needle)) add(option) }
-        }
-    }
+    val rows = remember(options, folded, query, anyLabel) { choiceRows(options, folded, query, anyLabel) }
     val list = rememberLazyListState()
     // Keyed by option so a requester survives a search that renumbers the rows.
     val requesters = remember { mutableMapOf<String, FocusRequester>() }
     fun key(row: SelectOption?) = row?.id ?: "any"
-    fun enabled(row: SelectOption?) = row == null ||
-        row.enabled && (!multiple || cap == null || row.id in selected || selected.size < cap)
+    fun enabled(row: SelectOption?) = choiceEnabled(row, multiple, cap, selected)
     fun pick(row: SelectOption?) {
         if (!enabled(row)) return
-        if (!multiple) { onChange(listOfNotNull(row?.id)); close(); return }
-        onChange(when {
-            row == null -> emptyList()
-            row.id in selected -> selected - row.id
-            else -> selected + row.id
-        })
+        applyChoice(row, selected, multiple, onChange)
+        if (!multiple) close()
     }
     // The panel opens on the current option, scrolled into view (components.md section 5).
     LaunchedEffect(Unit) {
@@ -618,6 +619,28 @@ private fun SelectField(text: String, placeholder: String, icon: ImageVector?, m
 }
 
 /**
+ * The check (single choice) or checkbox (multiple) of a choice row, in either presentation's
+ * sizes. [onLight] is a TV row's focused state: dark ink on the light focus fill.
+ */
+@Composable
+private fun ChoiceMark(checked: Boolean, multiple: Boolean, enabled: Boolean, onLight: Boolean,
+    box: Dp, mark: Dp, radius: Dp, border: Dp, glyph: Dp) {
+    Box(Modifier.size(box), contentAlignment = Alignment.Center) {
+        if (!multiple) {
+            if (checked) Icon(Lucide.Check, null, Modifier.size(mark), tint = if (onLight) Palette.background else Palette.accent)
+            return@Box
+        }
+        Box(Modifier.size(mark).clip(RoundedCornerShape(radius))
+            .background(if (checked) (if (onLight) Palette.background else Palette.accent) else Color.Transparent)
+            .then(if (checked) Modifier else Modifier.border(border,
+                if (onLight) OnLightSecondary else if (enabled) Palette.secondary else Palette.tertiary, RoundedCornerShape(radius))),
+            contentAlignment = Alignment.Center) {
+            if (checked) Icon(Lucide.Check, null, Modifier.size(glyph), tint = if (onLight) Palette.text else Palette.background)
+        }
+    }
+}
+
+/**
  * A choice row: a check (single) or checkbox (multiple), the label (with "· unavailable" when
  * it cannot be picked) and tertiary trailing text. Mouse hover and the keyboard share one
  * highlight, the popover row's surface-2 fill.
@@ -633,14 +656,8 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
     Row(Modifier.padding(horizontal = 6.dp).fillMaxWidth().height(height).clip(RowShape)
         .background(if (active && enabled) Palette.raised else Color.Transparent).then(click).padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
-            if (multiple) Box(Modifier.size(16.dp).clip(RoundedCornerShape(4.dp))
-                .background(if (checked) Palette.accent else Color.Transparent)
-                .then(if (checked) Modifier else Modifier.border(1.5.dp, if (enabled) Palette.secondary else Palette.tertiary, RoundedCornerShape(4.dp))),
-                contentAlignment = Alignment.Center) {
-                if (checked) Icon(Lucide.Check, null, Modifier.size(12.dp), tint = Palette.background)
-            } else if (checked) Icon(Lucide.Check, null, Modifier.size(16.dp), tint = Palette.accent)
-        }
+        ChoiceMark(checked, multiple, enabled, onLight = false,
+            box = 18.dp, mark = 16.dp, radius = 4.dp, border = 1.5.dp, glyph = 12.dp)
         Text(buildAnnotatedString {
             append(label)
             if (unavailable) withStyle(SpanStyle(color = Palette.tertiary, fontWeight = FontWeight.Normal)) { append(" · unavailable") }
@@ -671,14 +688,9 @@ private fun TvSelectRow(label: String, unavailable: Boolean, trailing: String?, 
         .background(when { focused -> Palette.text; checked -> Color.White.copy(alpha = .16f); else -> Color.White.copy(alpha = .04f) })
         .then(click).padding(horizontal = 24.dp * scale),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-        Box(Modifier.size(24.dp * scale), contentAlignment = Alignment.Center) {
-            if (multiple) Box(Modifier.size(22.dp * scale).clip(RoundedCornerShape(6.dp * scale))
-                .background(if (checked) (if (focused) Palette.background else Palette.accent) else Color.Transparent)
-                .then(if (checked) Modifier else Modifier.border(2.dp * scale, if (focused) OnLightSecondary else Palette.secondary, RoundedCornerShape(6.dp * scale))),
-                contentAlignment = Alignment.Center) {
-                if (checked) Icon(Lucide.Check, null, Modifier.size(16.dp * scale), tint = if (focused) Palette.text else Palette.background)
-            } else if (checked) Icon(Lucide.Check, null, Modifier.size(24.dp * scale), tint = if (focused) Palette.background else Palette.accent)
-        }
+        ChoiceMark(checked, multiple, enabled, onLight = focused,
+            box = 24.dp * scale, mark = if (multiple) 22.dp * scale else 24.dp * scale,
+            radius = 6.dp * scale, border = 2.dp * scale, glyph = 16.dp * scale)
         Text(buildAnnotatedString {
             append(label)
             if (unavailable) withStyle(SpanStyle(color = if (focused) OnLightSecondary else Palette.tertiary,

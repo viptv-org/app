@@ -2,8 +2,8 @@ package org.viptv.app.features.sources
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
+import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.SourceGroups
 import org.viptv.app.components.rememberTvDrawerMotion
@@ -37,9 +38,6 @@ import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.CompositionLocalProvider
-import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.pointerClickable
 
 @androidx.compose.runtime.Immutable

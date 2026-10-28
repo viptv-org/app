@@ -28,7 +28,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf(if (lastWatched.isEmpty()) "Date added" else "Last watched") }
-    val first = remember { FocusRequester() }; val selectedFilter = remember { FocusRequester() }
+    val selectedFilter = remember { FocusRequester() }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
     val visible = if (snapshot != null) cards else when (sort) {
         "A–Z" -> filtered.sortedBy { it.title.lowercase() }
@@ -66,7 +66,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                         horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
                         contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                         itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
-                            TvCatalogCard(card, scale, true, Modifier.tvGridItem(index).then(if (index == 0) Modifier.focusRequester(first) else Modifier)
+                            TvCatalogCard(card, scale, true, Modifier.tvGridItem(index)
                                 .focusProperties {
                                     if (index < 7) up = selectedFilter
                                     if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
