@@ -39,8 +39,7 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
             Column(Modifier.width(56.dp).height(48.dp)
                 .onFocusChanged { focused = it.isFocused }
                 .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
-                .background(if (hovered) Color.White.copy(alpha = .04f)
-                    else if (destination.screen == selected) Color(0xFF2A2A2D) else Color.Transparent, RoundedCornerShape(10.dp))
+                .background(railFill(destination.screen == selected, hovered), RoundedCornerShape(10.dp))
                 .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = destination.label, shape = RoundedCornerShape(10.dp), hover = null) { navigate(destination.screen) },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center) {
@@ -59,6 +58,18 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
     }
 }
 
+/**
+ * A rail row's fill (README colour table): a hovered row is `surface-2`, the
+ * selected one `surface-3`, and hovering the selected row lifts it to
+ * `surface-4`, the design's desktop hover for a `surface-3` fill, so hover never
+ * darkens it (app#92).
+ */
+private fun railFill(selected: Boolean, hovered: Boolean): Color = when {
+    selected -> if (hovered) HoverFill.surface4 else Color(0xFF2A2A2E)
+    hovered -> HoverFill.row
+    else -> Color.Transparent
+}
+
 /** The rail's footer buttons need the row's hover/focus pair (DUI-06, NAV-14). */
 @Composable
 private fun RailAction(icon: ImageVector, label: String, action: () -> Unit) {
@@ -68,7 +79,7 @@ private fun RailAction(icon: ImageVector, label: String, action: () -> Unit) {
     Box(Modifier.size(48.dp)
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
-        .background(if (hovered) Color.White.copy(alpha = .04f) else Color.Transparent, RoundedCornerShape(10.dp))
+        .background(railFill(selected = false, hovered), RoundedCornerShape(10.dp))
         .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = action, shape = RoundedCornerShape(10.dp), hover = null),
         contentAlignment = Alignment.Center) { Icon(icon, label, Modifier.size(20.dp), tint = Palette.secondary) }
 }

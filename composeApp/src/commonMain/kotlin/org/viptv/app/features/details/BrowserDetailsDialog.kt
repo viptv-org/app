@@ -44,6 +44,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     LaunchedEffect(Unit) { closeFocus.requestFocus() }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
+    // The hero plays the episode the list lands on (app#49).
+    val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail)
     val selected = seasonChoice.selected(seasons, resume)
     AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
@@ -65,7 +67,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
                         error?.let { item { Text(it, Modifier.padding(gutter), color = Palette.danger) } }
                         detail?.item?.let { card ->
-                            item { BrowserDetailHero(card, gutter, play, save, saved) }
+                            item { BrowserDetailHero(card, gutter, play, save, saved, heroEpisode) }
                             item { Column(Modifier.padding(horizontal = gutter, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 MediaMetadata(card)
                                 card.description?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
@@ -95,17 +97,18 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
 }
 
 @Composable
-private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean) {
+private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
+    resumeEpisode: Card?) {
     Box(Modifier.fillMaxWidth().aspectRatio(16f / 8.2f).heightIn(min = 260.dp)) {
         AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
         Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
-            Button(onClick = { play(card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
+            Button(onClick = { play(resumeEpisode ?: card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                 Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(15.dp))
-                Spacer(Modifier.width(8.dp)); Text("Play", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(resumeEpisode), fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             FavoriteAction(card, saved, save)
         }
