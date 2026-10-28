@@ -68,17 +68,19 @@ class DetailsResumeSeasonTest {
             "episodes":[${window.joinToString(",") { (s, e) -> metaEpisode(s, e) }}],"next_cursor":$next,"recommendations":[],"seasons":[$index]}"""
     }
 
-    /** A Continue Watching row card from `/api/bootstrap` for a Stremio-imported resume point. */
-    private fun continueCard(season: Long, episode: Long) = """{"badges":[],"description":null,"identity":${episodeIdentity(season, episode)},
+    /** A Continue Watching row card from `/api/bootstrap` for a Stremio-imported resume point.
+     * A [caughtUp] card is the one the queue keeps for a finished finale (`mark_finished`):
+     * watched, with no progress bar and no caption of its own (app#132). */
+    private fun continueCard(season: Long, episode: Long, caughtUp: Boolean = false) = """{"badges":${if (caughtUp) "[\"Watched\"]" else "[]"},"description":null,"identity":${episodeIdentity(season, episode)},
         "landscape":null,"logo":null,"parent_identity":{"edition":null,"episode":null,"id":"$show","ids":[],"kind":"series"},
-        "poster":null,"progress":0.42,"provider_id":"library",
-        "subtitle":"S$season E$episode · 14m left","title":"Mushoku Tensei: Jobless Reincarnation"}"""
+        "poster":null,"progress":${if (caughtUp) "null" else "0.42"},"provider_id":"library",
+        "subtitle":${if (caughtUp) "null" else "\"S$season E$episode · 14m left\""},"title":"Mushoku Tensei: Jobless Reincarnation"}"""
 
-    private fun bootstrap(resume: Pair<Long, Long>) = """{"contract_version":3,
+    private fun bootstrap(resume: Pair<Long, Long>, caughtUp: Boolean = false) = """{"contract_version":3,
         "identity":{"account_id":"1","profile_id":"2","profiles":[{"id":"2","name":"Stremio import QA"}]},
         "home":{"complete":true,"featured":[],"hero":null,"revision":1818,
             "scope":{"account_id":"1","connection_id":"server","profile_id":"2","revision":0},
-            "rows":[{"browse":{"query":[],"target":"Continue"},"cards":[${continueCard(resume.first, resume.second)}],"id":"continue",
+            "rows":[{"browse":{"query":[],"target":"Continue"},"cards":[${continueCard(resume.first, resume.second, caughtUp)}],"id":"continue",
                 "message":null,"next_cursor":null,"provider_id":"library","state":"Ready","title":"Continue Watching"}]}}"""
 
     private val metaOffsets = mutableListOf<Int>()
@@ -99,9 +101,9 @@ class DetailsResumeSeasonTest {
     }
 
     /** The real phone App shell over the fake host, signed into the QA profile with its Continue Watching row. */
-    private inner class PhoneApp(resume: Pair<Long, Long>, val capture: String? = null) : AutoCloseable {
+    private inner class PhoneApp(resume: Pair<Long, Long>, val capture: String? = null, caughtUp: Boolean = false) : AutoCloseable {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        private val client = HttpClient(MockEngine { request -> host(request, bootstrap(resume)) }) { configureTransport() }
+        private val client = HttpClient(MockEngine { request -> host(request, bootstrap(resume, caughtUp)) }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store)
         private val captureDir = System.getenv("VIPTV_DETAILS_RESUME_CAPTURE_DIR")?.let(::File)
@@ -145,6 +147,13 @@ class DetailsResumeSeasonTest {
             controller.backSources()
             frames()
             assertEquals(Screen.Details, controller.state.value.screen)
+        }
+        /** Tap the Continue Watching card itself, as a viewer does. */
+        fun tapContinueCard() {
+            val node = nodes().firstOrNull { candidate -> candidate.config.contains(SemanticsActions.OnClick) &&
+                flatten(candidate).any { text(it).contains("Mushoku Tensei") } }
+            assertNotNull(node, "the Continue Watching card is clickable: ${nodes().map(::text).filter { it.isNotBlank() }}")
+            assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
         }
         override fun close() {
             scene.close(); controller.job?.cancel(); scope.cancel(); remote.close()
@@ -191,6 +200,32 @@ class DetailsResumeSeasonTest {
             app.frames(20)
             assertEquals(Screen.Details, app.controller.state.value.screen)
             app.assertEpisodeAtTop("8. Episode 2-8")
+        }
+    }
+
+    @Test fun aCaughtUpCardIsLabelledAndOpensDetailsOnTheFinishedEpisode() {
+        // The show's finale (S3 has 14 episodes): nothing after it is released, so the queue keeps
+        // it, watched, instead of advancing (backend#61). Tapping it has nothing to play (app#132).
+        PhoneApp(3L to 14L, caughtUp = true).use { app ->
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.until("the caught-up label") { app.nodes().any { text(it).contains("S3 E14 · Watched") } }
+            app.tapContinueCard()
+            app.until("the title's Details") {
+                app.controller.state.value.let { it.screen == Screen.Details && it.detail != null }
+            }
+            assertNotEquals(Screen.Sources, app.controller.state.value.screen,
+                "a caught-up card never opens the source picker for an episode that is watched")
+            app.until("season 3's episodes") { app.node("14. Episode 3-14") != null }
+            app.frames(20)
+            assertEquals(1, app.controller.state.value.detail!!.episodes
+                .count { it.identity.episode?.season == 3L && it.identity.episode?.episode == 14L },
+                "the finished episode came in through the Details pages")
+            // The finale is the season's last episode, so the list bottoms out on it instead of
+            // putting it first: it is on screen, and the list landed on its season (not season 1).
+            val top = assertNotNull(app.node("14. Episode 3-14")).boundsInRoot.top / app.density
+            assertTrue(top in 48f..800f, "the finished finale is on screen below the back bar, not at ${top}dp")
+            assertTrue(app.nodes().none { text(it).contains(". Episode 1-") }, "the list landed on season 3")
+            app.save("phone-caught-up-details")
         }
     }
 

@@ -27,13 +27,14 @@ private const val GAP = 24f
 private const val CARD_WIDTH = (1728f - GAP * (COLUMNS - 1)) / COLUMNS
 
 /**
- * TV Continue Watching: a D-pad grid of the Home shelf's cards. OK resumes the card ([play]). Focus
+ * TV Continue Watching: a D-pad grid of the Home shelf's cards. OK resumes the card ([play]); a
+ * caught-up card has nothing to resume, so it opens the show's Details ([open], app#132). Focus
  * starts on the first card and, back from Details, the source selector or the player, returns to
  * the card the viewer left (app#66). A card a refresh removes hands focus to the one now in its place.
  */
 @Composable
-internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, more: (() -> Unit)?,
-    retry: () -> Unit, home: () -> Unit) {
+internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
+    more: (() -> Unit)?, retry: () -> Unit, home: () -> Unit) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val grid = rememberLazyGridState()
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
@@ -96,7 +97,8 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                                 if (index < COLUMNS) up = FocusRequester.Cancel
                                 if (index % COLUMNS == COLUMNS - 1) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                             },
-                            { lastKey = cardLookupKey(it); lastIndex = index; focusedKey = lastKey }, play,
+                            { lastKey = cardLookupKey(it); lastIndex = index; focusedKey = lastKey },
+                            continueWatchingActivation(play, open),
                             artworkWidth = CARD_WIDTH.dp * scale)
                     }
                 }

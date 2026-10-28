@@ -33,7 +33,8 @@ private val MIN_CARD = 260.dp
 /**
  * Phone, tablet, desktop and browser: Continue Watching as a grid of the Home row's 16:9 cards,
  * with their progress bars and art fallbacks (app#62). It loads more as the viewer nears the
- * end. A card resumes ([play]); the desktop preview's Info still opens Details ([open]).
+ * end. A card resumes ([play]); a caught-up card, which has nothing to resume, opens Details
+ * instead (app#132), as the desktop preview's Info does ([open]).
  */
 @Composable
 internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
@@ -82,7 +83,7 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
                     PageMessage("Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, phone)
                 }
                 else -> items(cards, key = ::cardLookupKey, contentType = { CARD_TYPE }) { card ->
-                    MediaCard(card, cardWidth, portrait = false, open = open, select = play,
+                    MediaCard(card, cardWidth, portrait = false, open = open, select = continueWatchingActivation(play, open),
                         showFocusOutline = !phone)
                 }
             }

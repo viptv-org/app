@@ -2,6 +2,7 @@ package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import org.viptv.app.connection.cardLookupKey
+import org.viptv.app.features.continuewatching.continueWatchingActivation
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -44,7 +45,9 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     val portrait = row.id != "continue"
     // A Continue Watching card resumes: tapping/clicking it opens that exact
     // episode's (or movie's) sources. Info in the desktop preview still opens Details.
-    val select = if (row.id == CONTINUE_ROW) play else null
+    // The exception is a caught-up card, which has nothing to resume and opens
+    // the show's Details instead (app#132).
+    val select = if (row.id == CONTINUE_ROW) continueWatchingActivation(play, open) else null
     // Touch platforms (phone web/app) have no focus navigation; the swipe
     // outline a focused card would show must not render during scrolling.
     val showFocusOutline = television || !compact && !browser

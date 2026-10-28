@@ -59,6 +59,7 @@ import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.cardChip
+import org.viptv.app.components.caughtUpCaption
 import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvBackdropBlur
@@ -106,7 +107,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     var previewHovered by remember { mutableStateOf(false) }
     var menuAt by remember { mutableStateOf<IntOffset?>(null) }
     val saved = actions?.isSaved?.invoke(card) == true
-    val activate = actions?.play ?: open
+    // Continue Watching's primary activation can differ from Play (a caught-up card opens
+    // Details, app#132), so the preview's and the menu's Play follow the card's own tap.
+    val activate = select ?: actions?.play ?: open
     // The preview needs a deliberate hover, and it survives the 12 dp gap so the
     // pointer can reach its own buttons.
     LaunchedEffect(desktop, hovered) { if (desktop && hovered) { delay(450); previewOpen = true } }
@@ -163,7 +166,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             Spacer(Modifier.height(9.dp))
             Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, // Ellipsis in every state; basicMarquee already clips its own slice. (NAV-13)
                 overflow = TextOverflow.Ellipsis)
-            card.subtitle?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            // A caught-up Continue Watching card names the episode it finished (app#132);
+            // the next episode's line waits for the server's next-episode facts (backend#78).
+            (card.subtitle ?: card.caughtUpCaption())?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         if (actions != null) {
             menuAt?.let { at ->

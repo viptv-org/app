@@ -10,7 +10,8 @@ internal fun ContinueWatchingRoute(state: ApplicationState, controller: Applicat
     val more = if (list?.next != null) controller::continueWatchingMore else null
     val page = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy, error = state.error)
     // A card resumes exactly as on Home: straight to that episode's (or movie's) sources (app#11, app#40).
-    if (television) TvContinueWatchingScreen(page, controller::playTitle, more, retry = { controller.loadContinueWatching() },
+    // A caught-up card has nothing left to play and opens the show's Details instead (app#132).
+    if (television) TvContinueWatchingScreen(page, controller::playTitle, controller::open, more, retry = { controller.loadContinueWatching() },
         home = { controller.navigate(Screen.Home) })
     else ContinueWatchingScreen(page, controller::playTitle, controller::open, more, retry = { controller.loadContinueWatching() },
         back = controller::navigateBack, home = { controller.navigate(Screen.Home) })

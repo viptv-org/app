@@ -208,10 +208,11 @@ session and a line that the app will restart. Nothing behind it can be touched.
 | The session is committed and Android shows its confirmation | **Confirm the update in the dialog Android is showing.** |
 | Install failed or the viewer cancelled | The screen goes away; a failure returns as the prompt with **Try again** · **Later**, a cancel acts as Later |
 
-- On TV the screen takes focus, so the page behind cannot be operated. Back is
-  ignored while the session is committing (`backIgnoredWhileUpdating`, wired
-  into `MainActivity`'s Back): Android cannot cancel it at that point. On the
-  permission step Back is Later, as it is on the prompt.
+- On TV the screen takes focus, so the page behind cannot be operated. Back is ignored while
+  the session is committing (`updatingBack` returns `Ignored`, wired into `MainActivity`'s
+  Back): Android cannot cancel it at that point. On the permission step Back is Later
+  (`Later`): it dismisses the pending install exactly as the **Later** button does, and the
+  page behind never sees the press (app#146).
 - The restart line depends on the platform: Android says **VIPTV restarts by
   itself when the update is installed.**; where a platform cannot reopen the
   app itself the screen says to open it again.
