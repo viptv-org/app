@@ -220,13 +220,18 @@ internal fun mergeHome(current: HomeSnapshot?, fresh: HomeSnapshot?): HomeSnapsh
 
 /**
  * A title keeps the artwork it is already shown with when a rebuild leaves it
- * out; art the rebuild does bring wins, and a blank URL is no art at all.
+ * out; art the rebuild does bring wins, and a blank URL is no art at all. The
+ * card is returned untouched when it needs nothing, so a rebuild keeps the same
+ * instances for everything it did not sparsen.
  */
 private fun artworkOf(card: Card, shown: Card?): Card {
     if (shown == null) return card
     fun kept(fresh: String?, current: String?) = fresh?.takeIf { it.isNotBlank() } ?: current
-    return card.copy(landscape = kept(card.landscape, shown.landscape), poster = kept(card.poster, shown.poster),
-        logo = kept(card.logo, shown.logo))
+    val landscape = kept(card.landscape, shown.landscape)
+    val poster = kept(card.poster, shown.poster)
+    val logo = kept(card.logo, shown.logo)
+    if (landscape == card.landscape && poster == card.poster && logo == card.logo) return card
+    return card.copy(landscape = landscape, poster = poster, logo = logo)
 }
 
 private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner) {

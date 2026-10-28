@@ -67,6 +67,7 @@ class DesktopHeroHoverTest {
 
     private class Shell(val scene: ImageComposeScene) {
         private var frame = 0L
+        /** Renders past the state layers' short animations, so two looks at the same state are equal. */
         fun pixels(): Bitmap {
             repeat(40) { scene.render(frame++ * 16_666_667L).close() }
             return scene.render(frame++ * 16_666_667L).use { Bitmap.makeFromImage(it) }
@@ -82,11 +83,9 @@ class DesktopHeroHoverTest {
     }
 
     private fun shell(test: suspend (Shell, ApplicationController) -> Unit) = runBlocking {
-        val requests = java.util.Collections.synchronizedList(mutableListOf<String>())
         // Revisions moved elsewhere, so the foreground check rebuilds Home.
         val moved = revisions + ("library" to "5")
         val client = HttpClient(MockEngine { request ->
-            requests += request.url.encodedPath
             val body = when (request.url.encodedPath) {
                 "/api/profiles/12/revisions" -> JsonObject(moved.mapValues { (_, v) -> JsonPrimitive(v) }).toString()
                 "/api/bootstrap" -> bootstrap(rebuilt(), moved)
@@ -166,12 +165,14 @@ class DesktopHeroHoverTest {
         val logo = shell.labelled(billboard.title).also {
             assertTrue(it.isNotEmpty(), "the billboard shows its logo")
         }.first().boundsInRoot
+        val play = shell.button("Play").boundsInRoot
         val before = shell.pixels()
 
         controller.freshen(); settle(controller)
         assertEquals(8L, controller.state.value.home?.revision, "the rebuild landed")
         assertEquals(artwork, shell.tagged(HERO_ARTWORK_TAG).single().boundsInRoot, "the rebuild keeps the billboard artwork in place")
         assertEquals(logo, shell.labelled(billboard.title).first().boundsInRoot, "the rebuild keeps the billboard logo in place")
+        assertEquals(play, shell.button("Play").boundsInRoot, "the rebuild keeps the actions where they were")
         assertEquals(0, changedPixels(before, shell.pixels()), "the rebuild paints the same billboard")
     }
 }
