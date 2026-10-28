@@ -108,7 +108,7 @@ class DesktopShellHoverTest {
             return pixels().getColor(row.left.toInt() + 4, row.center.y.toInt())
         }
         fun argb(value: Long) = value.toInt()
-        assertEquals(argb(0xFF2A2A2D), fillOf("Home", hovered = false), "the selected row rests on surface-3")
+        assertEquals(argb(0xFF2A2A2E), fillOf("Home", hovered = false), "the selected row rests on surface-3")
         assertEquals(argb(0xFF34343A), fillOf("Home", hovered = true), "the hovered selected row lifts to surface-4")
         assertEquals(argb(0xFF0B0B0C), fillOf("Live", hovered = false), "an unselected row rests on the ground")
         assertEquals(argb(0xFF212124), fillOf("Live", hovered = true), "a hovered row is surface-2")

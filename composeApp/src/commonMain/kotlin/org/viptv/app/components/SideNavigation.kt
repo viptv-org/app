@@ -65,7 +65,7 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
  * darkens it (app#92).
  */
 private fun railFill(selected: Boolean, hovered: Boolean): Color = when {
-    selected -> if (hovered) HoverFill.surface4 else Color(0xFF2A2A2D)
+    selected -> if (hovered) HoverFill.surface4 else Color(0xFF2A2A2E)
     hovered -> HoverFill.row
     else -> Color.Transparent
 }
