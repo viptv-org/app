@@ -38,6 +38,9 @@ data class ApplicationState(
     val parentSettingsSaved: Long = 0,
     val policyRefreshNeeded: Boolean = false,
     val managingProfiles: Boolean = false,
+    /** The profile picker was opened by Back on Home: Back there leaves the app instead of
+     *  bouncing back to Home (app#109). Choosing a profile still opens Home. */
+    val profilesFromHome: Boolean = false,
     val selectedProfile: String? = null,
     val home: HomeSnapshot? = null,
     /** Detail-enriched display fields for the TV billboard, keyed by identity id.

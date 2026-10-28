@@ -19,7 +19,7 @@ import kotlin.test.*
 
 /**
  * app#45: in the phone App shell, each page's back arrow takes the same step as Android Back
- * (MainActivity: the route's own step, else [navigateBack] while [systemBackStaysInApp]).
+ * (MainActivity: the route's own step, else [navigateSystemBack] while [systemBackStaysInApp]).
  */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BackArrowsUiTest {
@@ -58,7 +58,7 @@ class BackArrowsUiTest {
         /** MainActivity's BackHandler. */
         fun androidBack() {
             assertTrue(routeBack != null || controller.state.value.systemBackStaysInApp(), "Android Back left the app from ${controller.state.value.screen}")
-            routeBack?.invoke() ?: controller.navigateBack(); render()
+            routeBack?.invoke() ?: controller.navigateSystemBack(); render()
         }
         override fun close() {
             scene.close(); scope.cancel()

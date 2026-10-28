@@ -59,7 +59,7 @@ open class MainActivity : ComponentActivity() {
             // The open route's own step first (a panel, a sign-in step, a Settings sub-page), else the
             // app's one Back (docs/BACK_MATRIX.md). Disabled on a root page, so the activity leaves the app.
             BackHandler(enabled = entryBack != null || state.systemBackStaysInApp()) {
-                entryBack?.invoke() ?: controller.navigateBack()
+                entryBack?.invoke() ?: controller.navigateSystemBack()
             }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
             val updater = model.updater
