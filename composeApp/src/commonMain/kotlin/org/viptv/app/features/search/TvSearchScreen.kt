@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.bleedHorizontally
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -34,6 +35,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
     suggestions: List<String> = emptyList(), searchRows: List<SearchResultRow> = emptyList()) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
+        val gutter = 96.dp * scale
         var focusedId by rememberSaveable(term) { mutableStateOf<String?>(null) }
         val restoreId = remember(term) { focusedId }
         val keyboardFocus = remember { FocusRequester() }
@@ -46,7 +48,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
         val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows) else searchGroups(titles, addons)
         val hasResults = if (searchRows.isNotEmpty()) searchRows.any { it.cards.isNotEmpty() } else unique.isNotEmpty()
 
-        Row(Modifier.fillMaxSize().padding(start = 96.dp * scale, end = 96.dp * scale, top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(84.dp * scale)) {
+        Row(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(84.dp * scale)) {
             Column(Modifier.width(520.dp * scale)) {
                 Row(Modifier.fillMaxWidth().height(72.dp * scale).background(Palette.raised, RoundedCornerShape(12.dp * scale)).padding(horizontal = 20.dp * scale),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
@@ -81,7 +83,11 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                     if (!resultsHaveFocus) runCatching { keyboardFocus.requestFocus() }
                 }
             }
-            LazyColumn(Modifier.weight(1f).onFocusChanged { resultsHaveFocus = it.hasFocus }, state = rows, sectionControlled = true, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
+            // The results pane ends beside the keyboard column, so only its trailing edge
+            // has page padding: bleeding that side runs the rows to the right screen edge
+            // while the first card stays on the results column and the pane keeps its
+            // distance from the keyboard (app#111).
+            LazyColumn(Modifier.weight(1f).bleedHorizontally(left = 0.dp, right = gutter).onFocusChanged { resultsHaveFocus = it.hasFocus }, state = rows, sectionControlled = true, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = gutter)) {
                 if (busy && !hasResults && groups.none { it.message != null }) item { TvSearchLoading(scale) }
                 error?.let { item { Text(it, color = Palette.danger) } }
                 groups.forEachIndexed { rowIndex, group -> item(key = group.id) {
