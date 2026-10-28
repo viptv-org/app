@@ -61,10 +61,24 @@ class AppUpdatePolicyTest {
         assertFalse(showUpdatePrompt(UpdateStatus.Installing(feed, confirming = true), allowed = true, snoozedVersionCodes = emptySet()))
         assertTrue(backIgnoredWhileUpdating(UpdateStatus.Installing(feed)))
         assertTrue(backIgnoredWhileUpdating(UpdateStatus.Installing(feed, confirming = true)), "Android is replacing the process")
-        assertFalse(backIgnoredWhileUpdating(UpdateStatus.NeedsPermission(feed, true)), "Before the session starts Back is Later")
+        assertFalse(backIgnoredWhileUpdating(UpdateStatus.NeedsPermission(feed, true)), "The permission step has nothing to cancel")
         assertFalse(backIgnoredWhileUpdating(UpdateStatus.Ready(feed)))
         assertFalse(backIgnoredWhileUpdating(UpdateStatus.Failed("x", feed, installAttempt = true)))
         assertFalse(backIgnoredWhileUpdating(null))
+    }
+
+    /** app#146: the permission step must not let Back reach the page behind it; it leaves as Later. */
+    @Test fun backOnThePermissionStepActsAsLater() {
+        assertEquals(UpdatingBack.Ignored, updatingBack(UpdateStatus.Installing(feed)))
+        assertEquals(UpdatingBack.Ignored, updatingBack(UpdateStatus.Installing(feed, confirming = true)))
+        assertEquals(UpdatingBack.Later, updatingBack(UpdateStatus.NeedsPermission(feed, settingsScreen = true)),
+            "Before the session starts Back is Later")
+        assertEquals(UpdatingBack.Later, updatingBack(UpdateStatus.NeedsPermission(feed, settingsScreen = false)),
+            "The Fire TV step is the same step")
+        assertEquals(UpdatingBack.Page, updatingBack(UpdateStatus.Ready(feed)))
+        assertEquals(UpdatingBack.Page, updatingBack(UpdateStatus.Downloading(feed, 10)))
+        assertEquals(UpdatingBack.Page, updatingBack(UpdateStatus.Failed("x", feed, installAttempt = true)))
+        assertEquals(UpdatingBack.Page, updatingBack(null))
     }
 
     @Test fun aFailedInstallComesBackAsTryAgainUntilLater() {

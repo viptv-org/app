@@ -267,7 +267,7 @@ class AppUpdaterTest {
         updater.foreground(playing = false); advanceUntilIdle()
         updater.install(); advanceUntilIdle()
         assertTrue(showUpdatingScreen(updater.state.value.status))
-        assertFalse(backIgnoredWhileUpdating(updater.state.value.status), "Back can still leave the permission step")
+        assertEquals(UpdatingBack.Later, updatingBack(updater.state.value.status), "Back leaves the permission step as Later (app#146)")
         updater.dismissPendingInstall()
         assertIs<UpdateStatus.Ready>(updater.state.value.status)
         assertFalse(showUpdatingScreen(updater.state.value.status))
