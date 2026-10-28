@@ -42,11 +42,31 @@ fun showUpdatePrompt(status: UpdateStatus, allowed: Boolean, snoozedVersionCodes
 /** The full-screen Updating screen covers the app from Install until the process is replaced (app#139). */
 fun showUpdatingScreen(status: UpdateStatus): Boolean = status is UpdateStatus.Installing || status is UpdateStatus.NeedsPermission
 
+/** What Android and TV Back do while the Updating screen covers the app (app#139, app#146). */
+enum class UpdatingBack {
+    /** No Updating screen is up: Back belongs to the page behind. */
+    Page,
+    /** The session is committing; Android cannot cancel it, so Back does nothing (app#139). */
+    Ignored,
+    /** The permission step has not started the session: Back is Later, as on the prompt (app#146). */
+    Later,
+}
+
 /**
- * Back while the install is committing (app#139): Android's session cannot be cancelled at that point,
- * so Back does nothing. Before it starts (the permission step) Back is Later.
+ * Back on the Updating screen: nothing behind it may take the press. Only the permission step can
+ * still be left, and it leaves exactly as Later does.
  */
-fun backIgnoredWhileUpdating(status: UpdateStatus?): Boolean = status is UpdateStatus.Installing
+fun updatingBack(status: UpdateStatus?): UpdatingBack = when (status) {
+    is UpdateStatus.Installing -> UpdatingBack.Ignored
+    is UpdateStatus.NeedsPermission -> UpdatingBack.Later
+    else -> UpdatingBack.Page
+}
+
+/**
+ * The app#139 outcome by name: Back while the install is committing, which Android cannot cancel.
+ * [updatingBack] is what `MainActivity` reads; the design spec records this case under this name.
+ */
+fun backIgnoredWhileUpdating(status: UpdateStatus?): Boolean = updatingBack(status) == UpdatingBack.Ignored
 
 /** "Checked just now", "Checked 5 min ago", ... for Settings › About. */
 fun lastCheckLabel(lastCheckMillis: Long?, nowMillis: Long): String {

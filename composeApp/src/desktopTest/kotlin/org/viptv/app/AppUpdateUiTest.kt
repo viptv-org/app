@@ -95,6 +95,47 @@ class AppUpdateUiTest {
         }
     }
 
+    /**
+     * MainActivity's BackHandler (app#139, app#146): the same [updatingBack] decision, with the page's
+     * own step behind it. True when the Updating screen took the press, so nothing behind it moved.
+     */
+    private fun androidBack(): Boolean = when (updatingBack(updater.state.value.status)) {
+        UpdatingBack.Ignored -> true
+        UpdatingBack.Later -> { updater.dismissPendingInstall(); true }
+        UpdatingBack.Page -> false
+    }
+
+    @Test fun backOnThePermissionStepActsAsLaterOnAPhone() {
+        platform.installAllowed = false
+        updater.foreground(playing = false)
+        Scene(390, 844) { ViptvTheme { Updates(television = false) } }.use { scene ->
+            scene.render()
+            scene.clickContaining("Install")
+            assertTrue(scene.shows("Allow updates"))
+            assertTrue(androidBack(), "The permission step takes Back, so the page behind never sees it")
+            scene.render()
+            assertFalse(scene.shows("Allow updates"), "Back leaves the Updating screen")
+            assertTrue(platform.installs.isEmpty(), "Back never starts an install")
+            assertEquals(setOf(1301L), updater.state.value.snoozed, "Back puts that version off for this session")
+            assertFalse(scene.shows("Update ready"), "Back acted as Later, so the prompt does not come back")
+        }
+    }
+
+    @Test fun backOnThePermissionStepActsAsLaterOnATv() {
+        platform.installAllowed = false
+        updater.foreground(playing = false)
+        Scene(1920, 1080) { ViptvTheme(television = true) { Updates(television = true) } }.use { scene ->
+            scene.render()
+            scene.clickContaining("Install")
+            assertTrue(scene.shows("Allow updates"))
+            assertTrue(androidBack(), "The TV remote's Back is the same press")
+            scene.render()
+            assertFalse(scene.shows("Allow updates"))
+            assertTrue(platform.installs.isEmpty())
+            assertEquals(setOf(1301L), updater.state.value.snoozed)
+        }
+    }
+
     @Test fun onATvTheUpdatingScreenCoversThePageWithProgressAndTheRestartLine() {
         updater.foreground(playing = false)
         platform.installGate = CompletableDeferred()

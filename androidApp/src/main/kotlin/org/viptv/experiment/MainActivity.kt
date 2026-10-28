@@ -12,7 +12,8 @@ import org.viptv.app.state.Screen
 import org.viptv.app.App
 import org.viptv.app.updates.AppWithUpdates
 import org.viptv.app.updates.UpdateRelaunchReceiver
-import org.viptv.app.updates.backIgnoredWhileUpdating
+import org.viptv.app.updates.UpdatingBack
+import org.viptv.app.updates.updatingBack
 import org.viptv.app.updates.updatePromptAllowed
 import org.viptv.app.updates.updateServerOrigin
 import org.viptv.app.preview.UiPreview
@@ -70,10 +71,15 @@ open class MainActivity : ComponentActivity() {
                 // Not while starting: the restored session is not known yet, and About would flash "Sign in to a server".
                 LaunchedEffect(state.starting, state.localMode, controller.updateServerOrigin()) { if (!state.starting) updater.connectionChanged() }
             }
-            // app#139: Back cannot cancel an install that is already committing, and the system dialog owns it.
-            val committing = updater?.state?.collectAsState()?.value?.let { backIgnoredWhileUpdating(it.status) } == true
-            BackHandler(enabled = committing || entryBack != null || state.systemBackStaysInApp()) {
-                if (!committing) entryBack?.invoke() ?: controller.navigateSystemBack()
+            // app#139/app#146: Back cannot cancel an install that is already committing, and on the
+            // permission step it is Later; the page behind the Updating screen never takes the press.
+            val updateBack = updater?.state?.collectAsState()?.value?.let { updatingBack(it.status) } ?: UpdatingBack.Page
+            BackHandler(enabled = updateBack != UpdatingBack.Page || entryBack != null || state.systemBackStaysInApp()) {
+                when (updateBack) {
+                    UpdatingBack.Ignored -> Unit
+                    UpdatingBack.Later -> updater?.dismissPendingInstall()
+                    UpdatingBack.Page -> entryBack?.invoke() ?: controller.navigateSystemBack()
+                }
             }
             AppWithUpdates(updater, tv, promptAllowed = controller.updatePromptAllowed()) {
                 App(television = tv, localDatabase = filesDir.resolve("local.sqlite").absolutePath, providedController = controller,
