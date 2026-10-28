@@ -3,6 +3,8 @@ package org.viptv.app
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import coil3.ImageLoader
@@ -200,6 +202,31 @@ class DetailsResumeSeasonTest {
             app.until("season 2's episodes") { app.node("8. Episode 2-8") != null }
             app.frames(20)
             app.assertEpisodeAtTop("8. Episode 2-8")
+        }
+    }
+
+    @Test fun theHerosResumeOpensSourcesForTheContinuedEpisodeInTheDetailsScope() {
+        // The issue's repro (app#49): Continue Watching, Back to Details, then the hero's Resume.
+        PhoneApp(2L to 20L).use { app ->
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.continueThenBack()
+            app.until("season 2's episodes") { app.node("20. Episode 2-20") != null }
+            app.frames(20)
+            // The list landed on S2 E20; scroll back up to the hero.
+            fun hero() = app.nodes().firstOrNull { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("Resume") }
+            app.until("the hero") {
+                hero() != null || run { app.scene.sendPointerEvent(PointerEventType.Scroll,
+                    Offset(195f * app.density, 400f * app.density), scrollDelta = Offset(0f, -10f)); false }
+            }
+            val button = assertNotNull(hero())
+            assertTrue(text(button).startsWith("Resume S2 E20"), "the hero names S2 E20: ${text(button)}")
+            assertTrue(button.config[SemanticsActions.OnClick].action!!.invoke())
+            app.until("Sources for the hero's episode") { app.controller.state.value.let { it.screen == Screen.Sources && it.sourceTitle != null } }
+            val state = app.controller.state.value
+            val playing = assertNotNull(state.sourceTitle)
+            assertEquals("$show:2:20", playing.identity.id, "sources are for S2 E20, not S1 E1")
+            assertEquals(state.detail?.item?.metadata_origin, playing.metadata_origin, "in the Details' metadata scope")
+            assertEquals(state.detail?.item?.provider_id, playing.provider_id)
         }
     }
 

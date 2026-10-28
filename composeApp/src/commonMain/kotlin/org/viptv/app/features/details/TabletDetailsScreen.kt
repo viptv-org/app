@@ -34,6 +34,8 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
     continuing: List<Card> = emptyList(), paging: Boolean = true) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
+    // The hero plays the episode the list lands on (app#49).
+    val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail)
     val selected = seasonChoice.selected(seasons, resume)
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -64,10 +66,10 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                 else Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
                                 MediaMetadata(card)
                                 card.description?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
-                                Button(onClick = { play(card) }, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
+                                Button(onClick = { play(heroEpisode ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
-                                    Spacer(Modifier.width(8.dp)); Text("Play", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(heroEpisode), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
                                 FavoriteAction(card, saved, save)
                             }
