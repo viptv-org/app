@@ -62,7 +62,10 @@ fun updatingBack(status: UpdateStatus?): UpdatingBack = when (status) {
     else -> UpdatingBack.Page
 }
 
-/** Back while the install is committing (app#139): Android's session cannot be cancelled at that point. */
+/**
+ * The app#139 outcome by name: Back while the install is committing, which Android cannot cancel.
+ * [updatingBack] is what `MainActivity` reads; the design spec records this case under this name.
+ */
 fun backIgnoredWhileUpdating(status: UpdateStatus?): Boolean = updatingBack(status) == UpdatingBack.Ignored
 
 /** "Checked just now", "Checked 5 min ago", ... for Settings › About. */
