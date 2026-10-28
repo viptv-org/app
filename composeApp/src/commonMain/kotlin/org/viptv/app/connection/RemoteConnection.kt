@@ -284,15 +284,31 @@ class RemoteConnection(
         return codec.parseToJsonElement(response.bodyAsText()).resolveRemoteImages(origin)
     }
 
-    private fun checkStatus(response: HttpResponse) {
-        if (response.status.value !in 200..299) {
-            throw RemoteFailure(response.status.value, when (response.status.value) {
-                401 -> "Sign in to continue."
-                403 -> "This action is not available for this profile."
-                429 -> "Too many requests. Please wait and try again."
-                else -> "The server could not complete this request."
-            })
-        }
+    private suspend fun checkStatus(response: HttpResponse) {
+        val status = response.status.value
+        if (status in 200..299) return
+        throw RemoteFailure(status, when (status) {
+            401 -> "Sign in to continue."
+            403 -> "This action is not available for this profile."
+            429 -> tooManyRequestsMessage(response)
+            else -> "The server could not complete this request."
+        })
+    }
+
+    /**
+     * The auth limiter answers `error_code: "rate_limited"` with the seconds it keeps refusing
+     * in `Retry-After` (backend#35, backend#59), so sign-in can show that window instead of a
+     * generic wait. A 429 from another limiter, or one without a positive hint, keeps the copy.
+     */
+    private suspend fun tooManyRequestsMessage(response: HttpResponse): String {
+        val generic = "Too many requests. Please wait and try again."
+        val seconds = response.headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull()?.takeIf { it > 0 }
+            ?: return generic
+        val code = try {
+            codec.parseToJsonElement(response.bodyAsText()).jsonObject["error_code"]?.jsonPrimitive?.contentOrNull
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+        return if (code == "rate_limited") "Too many attempts. Try again in $seconds s." else generic
     }
 
     private suspend fun installDeviceTokens(value: JsonObject, persist: Boolean = true) {

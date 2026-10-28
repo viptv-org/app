@@ -28,6 +28,11 @@ internal class FakeUpdatePlatform(var feed: String) : AppUpdatePlatform {
     var permissionOpened = 0
     val installs = mutableListOf<UpdateFeed>()
     var installResult: ((InstallResult) -> Unit)? = null
+    /** Holds the session write open, so a test can see the Updating screen mid-install. */
+    var installGate: CompletableDeferred<Unit>? = null
+    /** Bytes the session write reports; null reports nothing. */
+    var installProgress: Long? = 50L
+    override var relaunchesAfterUpdate = true
 
     override suspend fun fetchFeed(url: String): String {
         fetched += url
@@ -47,6 +52,10 @@ internal class FakeUpdatePlatform(var feed: String) : AppUpdatePlatform {
     override fun canInstall() = installAllowed
     override fun hasInstallPermissionScreen() = permissionScreen
     override fun openInstallPermissionScreen(): Boolean { permissionOpened++; return permissionScreen }
-    override suspend fun install(feed: UpdateFeed, result: (InstallResult) -> Unit) { installs += feed; installResult = result }
+    override suspend fun install(feed: UpdateFeed, progress: (Long) -> Unit, result: (InstallResult) -> Unit) {
+        installs += feed; installResult = result
+        installProgress?.let(progress)
+        installGate?.await()
+    }
 }
 

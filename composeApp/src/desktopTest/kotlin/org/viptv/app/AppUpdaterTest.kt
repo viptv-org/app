@@ -197,6 +197,95 @@ class AppUpdaterTest {
         assertEquals(1, platform.installs.size, "Came back with it allowed: the install continues")
     }
 
+    @Test fun theUpdatingScreenCoversTheAppWhileTheSessionWritesThenWaitsForAndroid() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        platform.installGate = CompletableDeferred()
+        val updater = updater(platform)
+        updater.foreground(playing = false); advanceUntilIdle()
+        updater.install(); advanceUntilIdle()
+        val writing = assertIs<UpdateStatus.Installing>(updater.state.value.status)
+        assertEquals(50, writing.bytes, "The screen shows the session write")
+        assertFalse(writing.confirming)
+        assertTrue(showUpdatingScreen(updater.state.value.status))
+        assertTrue(backIgnoredWhileUpdating(updater.state.value.status))
+        platform.installGate!!.complete(Unit); advanceUntilIdle()
+        val confirming = assertIs<UpdateStatus.Installing>(updater.state.value.status)
+        assertTrue(confirming.confirming, "Android shows its own confirmation from here")
+        assertTrue(backIgnoredWhileUpdating(updater.state.value.status))
+    }
+
+    @Test fun aReturnToTheAppDoesNotHideTheUpdatingScreenWhileTheSessionWrites() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        platform.installGate = CompletableDeferred()
+        val updater = updater(platform)
+        updater.foreground(playing = false); advanceUntilIdle()
+        updater.install(); advanceUntilIdle()
+        updater.foreground(playing = false); advanceUntilIdle()
+        val status = assertIs<UpdateStatus.Installing>(updater.state.value.status, "The session write is still running")
+        assertEquals(50, status.bytes)
+        platform.installGate!!.complete(Unit); advanceUntilIdle()
+        assertTrue(assertIs<UpdateStatus.Installing>(updater.state.value.status).confirming)
+        // Android's confirmation is gone and no result came back: Install works again.
+        updater.foreground(playing = false); advanceUntilIdle()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+    }
+
+    @Test fun cancellingOrFailingTheInstallTakesTheUpdatingScreenAway() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        val updater = updater(platform)
+        updater.foreground(playing = false); advanceUntilIdle()
+        updater.install(); advanceUntilIdle()
+        platform.installResult!!(InstallResult.Cancelled); advanceUntilIdle()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+        assertFalse(showUpdatingScreen(updater.state.value.status), "Never stuck on the Updating screen")
+        assertFalse(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed), "Backing out acts as Later")
+
+        updater.install(); advanceUntilIdle()
+        platform.installResult!!(InstallResult.Failed); advanceUntilIdle()
+        val failed = assertIs<UpdateStatus.Failed>(updater.state.value.status)
+        assertEquals("Android didn't install the update.", failed.message)
+        assertFalse(showUpdatingScreen(failed))
+        assertTrue(showUpdatePrompt(failed, true, updater.state.value.snoozed), "The failure offers Try again")
+    }
+
+    @Test fun aStartedInstallCannotBeCancelledByBack() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        val updater = updater(platform)
+        updater.foreground(playing = false); advanceUntilIdle()
+        updater.install(); advanceUntilIdle()
+        assertTrue(backIgnoredWhileUpdating(updater.state.value.status))
+        val installs = platform.installs.size
+        updater.later()
+        assertEquals(installs, platform.installs.size)
+        assertIs<UpdateStatus.Installing>(updater.state.value.status, "Later does nothing while committing")
+    }
+
+    @Test fun thePermissionStepKeepsTheUpdatingScreenAndBackActsAsLater() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        platform.installAllowed = false
+        val updater = updater(platform)
+        updater.foreground(playing = false); advanceUntilIdle()
+        updater.install(); advanceUntilIdle()
+        assertTrue(showUpdatingScreen(updater.state.value.status))
+        assertFalse(backIgnoredWhileUpdating(updater.state.value.status), "Back can still leave the permission step")
+        updater.dismissPendingInstall()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+        assertFalse(showUpdatingScreen(updater.state.value.status))
+        assertFalse(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
+    }
+
+    @Test fun theNewVersionIsConfirmedForAMomentAfterTheRelaunch() = runTest {
+        val updater = updater(FakeUpdatePlatform(feedJson(1301)))
+        updater.announceUpdated("0.1.301+bbbbbbb")
+        assertEquals("0.1.301+bbbbbbb", updater.state.value.updatedTo)
+        advanceTimeBy(UPDATE_NOTICE_MILLIS - 1)
+        assertEquals("0.1.301+bbbbbbb", updater.state.value.updatedTo, "Still on screen")
+        advanceUntilIdle()
+        assertNull(updater.state.value.updatedTo)
+        updater.announceUpdated("   ")
+        assertNull(updater.state.value.updatedTo, "Nothing to confirm")
+    }
+
     @Test fun aFailedQuietCheckKeepsAReadyDownload() = runTest {
         val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)
