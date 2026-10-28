@@ -4,6 +4,7 @@ package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import org.viptv.app.connection.cardLookupKey
+import org.viptv.app.features.continuewatching.continueWatchingActivation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -62,8 +63,9 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val portrait = row.id != "continue"
-    // OK on a Continue Watching card goes straight to that episode's sources.
-    val activate = if (row.id == CONTINUE_ROW) play else open
+    // OK on a Continue Watching card goes straight to that episode's sources; a caught-up
+    // card has nothing to resume, so it opens the show's Details instead (app#132).
+    val activate = if (row.id == CONTINUE_ROW) continueWatchingActivation(play, open) else open
     val arrival = rememberTvContentArrival(row.state == RowState.READY)
     val cards = remember(row.cards) { row.cards.distinctBy(::cardLookupKey) }
     val endCard = continueMore?.takeIf { row.id == CONTINUE_ROW }
