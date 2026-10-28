@@ -1,6 +1,7 @@
 package org.viptv.app.components
 
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.EpisodeCoordinates
 import kotlin.math.roundToInt
 
 internal fun Card.metadataParts(): List<String> = metadata?.let { value -> buildList {
@@ -31,6 +32,29 @@ internal fun newEpisodesDescription(badge: String): String =
     } ?: badge
 
 internal fun Card.newEpisodesBadge(): String? = badges.firstOrNull(::isNewEpisodesBadge)
+
+/**
+ * The card Continue Watching keeps for a series the profile is caught up on: the last episode it
+ * finished, while no later episode is released (`continuation::page::mark_finished`; a released
+ * next episode is the up-next card, backend#61). The queue drops its progress bar and its caption
+ * and marks it watched, and that shape is what tells it apart from a resume card (progress) and
+ * from an up-next card (the next episode's caption).
+ */
+internal fun Card.isCaughtUp(): Boolean =
+    identity.kind == "series" && identity.episode != null &&
+        progress == null && subtitle == null && isWatched()
+
+/** `S3 E4`, or `E4` for an episode with no season, as every card board draws the coordinates. */
+internal fun EpisodeCoordinates.caption(): String =
+    season?.let { "S$it E$episode" } ?: "E$episode"
+
+/**
+ * The label a caught-up Continue Watching card carries under its title: the finished episode and
+ * the watched check, `S3 E4 · Watched` (app#132). Null for every other card, which keeps its own
+ * caption; the next episode's line needs facts the server does not send yet (backend#78).
+ */
+internal fun Card.caughtUpCaption(): String? =
+    identity.episode?.takeIf { isCaughtUp() }?.let { "${it.caption()} · $WATCHED_BADGE" }
 
 /** The one label a phone/desktop/web card draws on its art: new episodes first. */
 internal fun Card.cardChip(): String? = newEpisodesBadge() ?: badges.firstOrNull { !it.equals("Simkl", true) && !it.equals(WATCHED_BADGE, true) }
