@@ -6,8 +6,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
@@ -211,15 +214,15 @@ private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.Library, Screen.His
  * content changes under it; counting those let the hero's own redraws keep an idle
  * viewer "present" for ever (app#95).
  */
-internal suspend fun androidx.compose.ui.input.pointer.AwaitPointerEventScope.observeViewerInput(activity: () -> Unit) {
-    var last: List<androidx.compose.ui.geometry.Offset>? = null
+internal suspend fun AwaitPointerEventScope.observeViewerInput(activity: () -> Unit) {
+    var last: List<Offset>? = null
     while (true) {
         val event = awaitPointerEvent(PointerEventPass.Initial)
         val at = event.changes.map { it.position }
         val type = event.type
-        if (at != last || type == androidx.compose.ui.input.pointer.PointerEventType.Press ||
-            type == androidx.compose.ui.input.pointer.PointerEventType.Release ||
-            type == androidx.compose.ui.input.pointer.PointerEventType.Scroll) activity()
+        if (at != last || type == PointerEventType.Press ||
+            type == PointerEventType.Release ||
+            type == PointerEventType.Scroll) activity()
         last = at
     }
 }
