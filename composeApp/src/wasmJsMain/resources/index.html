@@ -9,7 +9,34 @@
         html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0B0C; }
         #viptv-video-layer { position: fixed; inset: 0; z-index: 0; background: #000; pointer-events: none; }
         #viptv-ui-layer { position: absolute; inset: 0; z-index: 1; }
+        /*
+         * Without WebGL2 Compose never creates its drawing surface and instead writes its
+         * "requires WebGL2" notice into #viptv-ui-layer as plain text (app#104). The default
+         * text colour is black on this near-black page, so style that notice only in that
+         * case: readable `color.text.body` text, centred, with a comfortable measure.
+         */
+        html.no-webgl2 #viptv-ui-layer {
+            display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+            padding: 24px max(24px, calc(50% - 20rem));
+            color: #DAD8D3; text-align: center; text-wrap: balance;
+            font: 400 18px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
     </style>
+    <script>
+        // Mark the page before first paint when the browser cannot give Compose a WebGL2
+        // context, so the fallback notice above is styled. The probe context is released
+        // immediately, and a browser with WebGL2 keeps the untouched page shell.
+        (function () {
+            var context = null;
+            try { context = document.createElement('canvas').getContext('webgl2'); } catch (error) { context = null; }
+            if (context) {
+                var release = context.getExtension('WEBGL_lose_context');
+                if (release) release.loseContext();
+            } else {
+                document.documentElement.classList.add('no-webgl2');
+            }
+        })();
+    </script>
 </head>
 <body>
     <div id="viptv-video-layer"></div>
