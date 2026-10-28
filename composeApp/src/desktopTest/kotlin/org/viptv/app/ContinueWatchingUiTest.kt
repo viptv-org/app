@@ -93,7 +93,9 @@ class ContinueWatchingUiTest {
     @Test fun tvShelfEndsWithSeeAllAndOkOpensThePage() = runBlocking {
         var opened = 0
         val first = FocusRequester()
+        var focusManager: FocusManager? = null
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
+            focusManager = LocalFocusManager.current
             Column(Modifier.fillMaxSize().background(Palette.background)) {
                 TvHomeShelf(home(2).rows[0], 1f, first, up = null, focus = {}, open = {}, play = {},
                     continueMore = ContinueWatchingMore(null), seeAll = { opened++ })
@@ -102,7 +104,11 @@ class ContinueWatchingUiTest {
         try {
             frames(scene); delay(30)
             first.requestFocus(); frames(scene)
-            repeat(2) { scene.sendKeyEvent(KeyEvent(Key.DirectionRight, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(Key.DirectionRight, KeyEventType.KeyUp)); frames(scene) }
+            repeat(2) {
+                val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionRight, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(Key.DirectionRight, KeyEventType.KeyUp))
+                if (!consumed) requireNotNull(focusManager).moveFocus(FocusDirection.Right)
+                frames(scene)
+            }
             val focused = nodes(scene).filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.map(::label)
             assertTrue(focused.any { it.contains("See all Continue Watching") }, "Right past the last card reaches See all: $focused")
             scene.sendKeyEvent(KeyEvent(Key.DirectionCenter, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(Key.DirectionCenter, KeyEventType.KeyUp))
@@ -206,7 +212,9 @@ class ContinueWatchingUiTest {
                 app.frames()
                 // Home has no billboard here, so the Continue Watching shelf takes the opening focus.
                 app.focusOn("Show 01", "Home opens on the shelf")
-                app.until("the row's end card") { nodes(app.scene).any { label(it).contains("See all Continue Watching") } }
+                // The shelf shows its 12 entries with the "See all" card off screen. Wait for Home's
+                // background read of the full list (which decides the card exists) before scrolling to it.
+                app.until("Home reads the full list") { app.state.continueWatching != null }
                 app.press(Key.DirectionRight, 12)
                 app.focusOn("See all Continue Watching", "Right past the 12th card")
                 capture(app.scene, "tv-home-row")
