@@ -105,7 +105,6 @@ class IdleRenderTest {
             assertEquals(held, featured(), "the hero holds its slide while the viewer is idle")
 
             // Input resumes the rotation where it stopped.
-            repeat(4) { println("[DEBUG-95] resume ${it}: frames=${run(500, active = true)} present=${controller.viewerPresent} ${featured()}") }
             assertTrue(run(1_000, active = true) > 2, "input resumes the hero's progress")
 
             controller.navigate(Screen.Search)

@@ -77,7 +77,6 @@ internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey:
     val context = LocalPlatformContext.current
     LaunchedEffect(progress, key) { progress.bind(key) }
     LaunchedEffect(key, enabled, ready, cards.size) {
-        println("[DEBUG-95] carousel enabled=$enabled ready=$ready key=${key?.toString()?.take(30)} t=${System.nanoTime()/1_000_000}")
         if (enabled && ready && cards.size > 1) {
             progress.run(key)
             val next = (active + 1) % cards.size
