@@ -31,7 +31,7 @@ internal fun DesktopShell(
     controller: ApplicationController,
     globalBack: GlobalBack,
     mac: Boolean,
-    window: DesktopWindowControls,
+    controls: DesktopWindowControls,
     localDatabase: String? = null,
     searchFocus: FocusRequester? = null,
     manageControllerLifecycle: Boolean = true,
@@ -50,16 +50,16 @@ internal fun DesktopShell(
                     Box(Modifier.fillMaxSize()) {
                         App(localDatabase = localDatabase, desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
                             manageControllerLifecycle = manageControllerLifecycle, entryBackChanged = globalBack.routeBackChanged)
-                        DesktopWindowButtons(mac, window.minimize, window.maximize, window.close, Modifier.align(Alignment.TopEnd), maximized = window.maximized)
+                        DesktopWindowButtons(mac, controls.minimize, controls.maximize, controls.close, Modifier.align(Alignment.TopEnd), maximized = controls.maximized)
                     }
                 } else {
                     titleBarArea {
                         DesktopTitleBar(state, mac, controller::navigate, controller::search,
-                            { menuOpen = !menuOpen }, window.minimize, window.maximize, window.close, Modifier,
+                            { menuOpen = !menuOpen }, controls.minimize, controls.maximize, controls.close, Modifier,
                             back = if (globalBack.canGoBack(state)) globalBack::back else null,
                             forward = if (globalBack.canGoForward(state)) globalBack::forward else null,
                             searchFocus = searchFocus,
-                            maximized = window.maximized)
+                            maximized = controls.maximized)
                     }
                     Box(Modifier.weight(1f)) {
                         // DUI-04: the card hover preview and right-click menu need

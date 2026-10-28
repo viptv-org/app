@@ -15,10 +15,14 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.junit.Assume.assumeTrue
 import java.awt.GraphicsEnvironment
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.Robot
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.*
 
 /**
@@ -38,10 +42,10 @@ class DesktopWindowRepaintTest {
         val hoverColour = Color(0xFFE81123)
         val robot = Robot()
         val seen = mutableListOf<java.awt.Color>()
-        val started = java.util.concurrent.atomic.AtomicBoolean()
+        val started = AtomicBoolean()
         application(exitProcessOnExit = false) {
             val state = rememberWindowState(position = WindowPosition(40.dp, 40.dp), size = DpSize(320.dp, 240.dp))
-            DesktopAppWindow(::exitApplication, "app#92 repaint", state, mac = false) {
+            DesktopAppWindow(::exitApplication, "app#92 repaint", state, framed = true) {
                 val hover = remember { MutableInteractionSource() }
                 val hovered by hover.collectIsHoveredAsState()
                 Box(Modifier.fillMaxSize().hoverable(hover).background(if (hovered) hoverColour else Color(0xFF0B0B0C)))
@@ -49,9 +53,9 @@ class DesktopWindowRepaintTest {
                     // Sample once, however often the window content is composed.
                     if (!started.compareAndSet(false, true)) return@LaunchedEffect
                     // The first composition runs before the window is on screen.
-                    while (!window.isShowing || window.width == 0) kotlinx.coroutines.delay(50)
-                    val bounds = java.awt.Rectangle(window.locationOnScreen, window.size)
-                    val centre = java.awt.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+                    while (!window.isShowing || window.width == 0) delay(50)
+                    val bounds = Rectangle(window.locationOnScreen, window.size)
+                    val centre = Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
                     withContext(Dispatchers.IO) {
                         fun look(x: Int, y: Int) { robot.mouseMove(x, y); Thread.sleep(1_000); seen += robot.getPixelColor(centre.x, centre.y) }
                         look(bounds.x + bounds.width + 60, bounds.y + bounds.height + 60) // resting, mouse outside

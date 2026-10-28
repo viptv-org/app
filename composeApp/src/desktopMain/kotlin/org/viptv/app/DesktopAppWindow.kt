@@ -27,30 +27,30 @@ import org.viptv.app.theme.Palette
  * so a transparent window bought nothing.
  */
 @Composable
-internal fun DesktopAppWindow(onCloseRequest: () -> Unit, title: String, state: WindowState, mac: Boolean,
+internal fun DesktopAppWindow(onCloseRequest: () -> Unit, title: String, state: WindowState, framed: Boolean,
     onPreviewKeyEvent: (KeyEvent) -> Boolean = { false }, content: @Composable FrameWindowScope.() -> Unit) {
     Window(onCloseRequest = onCloseRequest, title = title, state = state, undecorated = true,
         onPreviewKeyEvent = onPreviewKeyEvent) {
-        DesktopWindowFrame(mac) { content() }
+        DesktopWindowFrame(framed) { content() }
     }
 }
 
 /**
  * Native app framing: a rounded surface with a hairline outline, which is what
  * makes an undecorated window read as a native app instead of a pasted-on
- * panel. macOS already rounds and outlines its own windows, so it keeps the
- * plain surface.
+ * panel. Unframed ([framed] false) is the plain surface: macOS already rounds
+ * and outlines its own windows, and the phone preview is no desktop window.
  */
 @Composable
-internal fun DesktopWindowFrame(mac: Boolean, content: @Composable () -> Unit) {
+internal fun DesktopWindowFrame(framed: Boolean, content: @Composable () -> Unit) {
     val shape = RoundedCornerShape(10.dp)
-    val framed = if (mac) Modifier else Modifier
+    val frame = if (!framed) Modifier else Modifier
         .clip(shape)
         .background(Palette.background)
         .border(1.dp, Color.White.copy(alpha = 0.09f), shape)
     // NAV-15: paint the window's own surface underneath, so no unpainted pixel
     // can go black on an X11 host without a compositor.
     Box(Modifier.fillMaxSize().background(Palette.background)) {
-        Box(Modifier.fillMaxSize().then(framed)) { content() }
+        Box(Modifier.fillMaxSize().then(frame)) { content() }
     }
 }

@@ -23,8 +23,9 @@ internal fun launchUiPreview() = application {
     val window = rememberWindowState(width = width.dp, height = height.dp)
     var screen by remember { mutableStateOf(runCatching { Screen.valueOf(System.getenv("VIPTV_UI_SCREEN") ?: "Home") }.getOrDefault(Screen.Home)) }
     var term by remember { mutableStateOf(if (screen == Screen.Search) "the w" else "") }
-    // The app's own window and frame, so the preview shows what the app shows (app#92).
-    DesktopAppWindow(::exitApplication, "VIPTV UI Preview", window, mac = false) {
+    // The app's own window and frame (the Windows / Linux one), so the desktop
+    // preview shows what the app shows (app#92); the phone preview stays plain.
+    DesktopAppWindow(::exitApplication, "VIPTV UI Preview", window, framed = !phone) {
         org.viptv.app.player.mpv.MpvWindow(this.window) {
         ViptvTheme(pointer = !phone) {
             Column {

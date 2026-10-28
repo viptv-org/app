@@ -35,7 +35,7 @@ private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
     val searchFocus = remember { FocusRequester() }
     val mac = remember { System.getProperty("os.name").startsWith("Mac") }
-    DesktopAppWindow(::exitApplication, "VIPTV Experiment", windowState, mac,
+    DesktopAppWindow(::exitApplication, "VIPTV Experiment", windowState, framed = !mac,
         onPreviewKeyEvent = { event ->
             // Ctrl/⌘+K is advertised in the title bar; it has to actually work.
             if (event.type == KeyEventType.KeyDown && (event.isCtrlPressed || event.isMetaPressed) && event.key == Key.K) {

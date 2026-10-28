@@ -70,7 +70,7 @@ class DesktopShellHoverTest {
     /** Empty rail space between History and the footer: nothing there reacts to the mouse. */
     private val rest = Offset(36f, 700f)
 
-    private fun Shell.changedPixels(before: Bitmap, after: Bitmap, bounds: Rect): Int {
+    private fun changedPixels(before: Bitmap, after: Bitmap, bounds: Rect): Int {
         var changed = 0
         for (x in bounds.left.toInt() until bounds.right.toInt()) for (y in bounds.top.toInt() until bounds.bottom.toInt())
             if (before.getColor(x, y) != after.getColor(x, y)) changed++
@@ -97,6 +97,21 @@ class DesktopShellHoverTest {
         assertHoverRepaints("rail Live") { it.startsWith("Live|") }
         assertHoverRepaints("rail My List") { it.startsWith("My List|") }
         assertHoverRepaints("rail Settings") { it.startsWith("Settings|") }
+    }
+
+    /** README colour table: hovered row `surface-2`; the selected `surface-3` row lifts to `surface-4`, never darker. */
+    @Test fun railRowsHoverWithTheDesignRowTokens() = shell {
+        fun fillOf(name: String, hovered: Boolean): Int {
+            val row = clickable(name) { it.startsWith("$name|") }.boundsInRoot
+            scene.sendPointerEvent(PointerEventType.Move, if (hovered) row.center else rest)
+            // Inside the rounded row, clear of its icon and label.
+            return pixels().getColor(row.left.toInt() + 4, row.center.y.toInt())
+        }
+        fun argb(value: Long) = value.toInt()
+        assertEquals(argb(0xFF2A2A2D), fillOf("Home", hovered = false), "the selected row rests on surface-3")
+        assertEquals(argb(0xFF34343A), fillOf("Home", hovered = true), "the hovered selected row lifts to surface-4")
+        assertEquals(argb(0xFF0B0B0C), fillOf("Live", hovered = false), "an unselected row rests on the ground")
+        assertEquals(argb(0xFF212124), fillOf("Live", hovered = true), "a hovered row is surface-2")
     }
 
     @Test fun theTitleBarSearchAndProfileAnswerHover() = shell {
