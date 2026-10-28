@@ -1,4 +1,4 @@
-VIPTV_ISOLATED_WEB_OUTPUT=/tmp/viptv-kmp-browser-completion-OaZSX6/dist
+VIPTV_ISOLATED_WEB_OUTPUT=/tmp/kmp-browser-completion-OaZSX6/dist
 WARNING: We recommend using a newer Android Gradle plugin to use compile SDK version 37.0
 
 This Android Gradle plugin (9.1.0) was tested up to compile SDK version 36.1.
