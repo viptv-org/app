@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,6 +21,9 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.DesktopBreakpoints
 import org.viptv.app.components.MediaMetadata
 import org.viptv.engine.wire.Card
+
+/** Test identity of the desktop billboard's artwork; only a UI test reads it. */
+internal const val HERO_ARTWORK_TAG = "hero-artwork"
 
 @Composable
 internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, carousel: HeroCarousel? = null) {
@@ -53,7 +57,7 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
 private fun HeroArtwork(card: Card, modifier: Modifier, carousel: HeroCarousel?) {
     val heroArt = card.landscape ?: card.poster
     if (heroArt == null) HeroArtworkFallback(modifier.aspectRatio(16f / 9)) else BufferedArtwork(heroArt,
-        modifier.aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)).background(Palette.surface),
+        modifier.aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)).background(Palette.surface).testTag(HERO_ARTWORK_TAG),
         onReady = { carousel?.artworkReady(it) })
 }
 

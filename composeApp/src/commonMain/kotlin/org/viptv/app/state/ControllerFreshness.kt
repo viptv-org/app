@@ -4,6 +4,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
+import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.HomeRow
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.RowState
 import org.viptv.engine.wire.Scope
@@ -197,12 +199,31 @@ private fun ApplicationController.publishHome(fresh: HomeSnapshot?) {
 internal fun mergeHome(current: HomeSnapshot?, fresh: HomeSnapshot?): HomeSnapshot? {
     if (current == null || fresh == null || current.scope.owner() != fresh.scope.owner()) return fresh
     val shown = current.rows.associateBy { it.id }
-    return fresh.copy(rows = fresh.rows.map { row ->
-        val old = shown[row.id]
-        if (old == null || row.state != RowState.READY || old.state != RowState.READY || row.pageQuery() == null ||
-            row.browse != old.browse || old.cards.size <= row.cards.size) row
-        else row.copy(cards = (row.cards + old.cards).distinctBy(::cardLookupKey), next_cursor = old.next_cursor)
-    })
+    // The billboard is the surface the viewer is already looking at, and a
+    // rebuild's metadata pass has a deadline: one that comes back without
+    // artwork must not blank the art on screen, or the hero drops to its flat
+    // fill and loses its logo for the life of the screen (app#94).
+    val artwork = (current.featured + listOfNotNull(current.hero)).associateBy(::cardLookupKey)
+    fun kept(row: HomeRow) = row.copy(cards = row.cards.map { artworkOf(it, artwork[cardLookupKey(it)]) })
+    return fresh.copy(hero = fresh.hero?.let { artworkOf(it, artwork[cardLookupKey(it)]) },
+        featured = fresh.featured.map { artworkOf(it, artwork[cardLookupKey(it)]) },
+        rows = fresh.rows.map { row ->
+            val old = shown[row.id]
+            if (old == null || row.state != RowState.READY || old.state != RowState.READY || row.pageQuery() == null ||
+                row.browse != old.browse || old.cards.size <= row.cards.size) kept(row)
+            else kept(row.copy(cards = (row.cards + old.cards).distinctBy(::cardLookupKey), next_cursor = old.next_cursor))
+        })
+}
+
+/**
+ * A title keeps the artwork it is already shown with when a rebuild leaves it
+ * out; art the rebuild does bring wins, and a blank URL is no art at all.
+ */
+private fun artworkOf(card: Card, shown: Card?): Card {
+    if (shown == null) return card
+    fun kept(fresh: String?, current: String?) = fresh?.takeIf { it.isNotBlank() } ?: current
+    return card.copy(landscape = kept(card.landscape, shown.landscape), poster = kept(card.poster, shown.poster),
+        logo = kept(card.logo, shown.logo))
 }
 
 private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner) {
