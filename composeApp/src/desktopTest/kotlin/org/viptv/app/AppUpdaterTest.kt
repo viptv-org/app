@@ -214,6 +214,22 @@ class AppUpdaterTest {
         assertTrue(backIgnoredWhileUpdating(updater.state.value.status))
     }
 
+    @Test fun aReturnToTheAppDoesNotHideTheUpdatingScreenWhileTheSessionWrites() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        platform.installGate = CompletableDeferred()
+        val updater = updater(platform)
+        updater.foreground(playing = false); advanceUntilIdle()
+        updater.install(); advanceUntilIdle()
+        updater.foreground(playing = false); advanceUntilIdle()
+        val status = assertIs<UpdateStatus.Installing>(updater.state.value.status, "The session write is still running")
+        assertEquals(50, status.bytes)
+        platform.installGate!!.complete(Unit); advanceUntilIdle()
+        assertTrue(assertIs<UpdateStatus.Installing>(updater.state.value.status).confirming)
+        // Android's confirmation is gone and no result came back: Install works again.
+        updater.foreground(playing = false); advanceUntilIdle()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+    }
+
     @Test fun cancellingOrFailingTheInstallTakesTheUpdatingScreenAway() = runTest {
         val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)

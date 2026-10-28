@@ -123,6 +123,17 @@ class AppUpdateUiTest {
         }
     }
 
+    @Test fun aPlatformWithoutARelaunchTellsTheViewerToOpenTheAppAgain() {
+        platform.relaunchesAfterUpdate = false
+        updater.foreground(playing = false)
+        platform.installGate = CompletableDeferred()
+        Scene(390, 844) { ViptvTheme { Updates(television = false) } }.use { scene ->
+            scene.render()
+            scene.clickContaining("Install")
+            assertTrue(scene.shows("VIPTV closes when the update is installed. Open it again to finish."))
+        }
+    }
+
     @Test fun theUpdatingScreenWaitsBehindAndroidsConfirmation() {
         updater.foreground(playing = false)
         Scene(390, 844) { ViptvTheme { Updates(television = false) } }.use { scene ->

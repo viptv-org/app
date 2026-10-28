@@ -113,6 +113,8 @@ class AppUpdater(
     /** Read by progress callbacks on the download thread. */
     @Volatile private var downloadGeneration = 0
     private var awaitingPermission = false
+    /** The session write, so a return to the app cannot hide the Updating screen mid-install (app#139). */
+    private var installing: Job? = null
     /** Clears the "Updated to …" confirmation after [UPDATE_NOTICE_MILLIS]. */
     private var notice: Job? = null
 
@@ -131,7 +133,8 @@ class AppUpdater(
         // A required update asks again on every return, even after Later.
         if (mutable.value.required) mutable.update { it.copy(snoozed = emptySet()) }
         // Back from Android's confirmation without an answer (Home, or the task switcher): Install works again.
-        (status as? UpdateStatus.Installing)?.let { status = UpdateStatus.Ready(it.feed) }
+        // Not while the session is still being written: that screen has to stay up (app#139).
+        if (installing?.isActive != true) (status as? UpdateStatus.Installing)?.let { status = UpdateStatus.Ready(it.feed) }
         if (awaitingPermission && status is UpdateStatus.NeedsPermission) {
             if (platform.canInstall()) { awaitingPermission = false; install() }
         }
@@ -170,7 +173,7 @@ class AppUpdater(
             return
         }
         status = UpdateStatus.Installing(feed)
-        scope.launch {
+        installing = scope.launch {
             try {
                 platform.install(feed, progress = { bytes ->
                     mutable.update { state ->
