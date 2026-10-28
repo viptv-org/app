@@ -41,7 +41,8 @@ import org.viptv.engine.wire.*
 internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card) -> Unit, retry: () -> Unit,
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap(),
-    enrichSummary: (Card) -> Unit = {}) {
+    enrichSummary: (Card) -> Unit = {},
+    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
     var browsing by rememberSaveable(home?.scope?.profile_id) { mutableStateOf(false) }
     // Timestamp of the last D-pad event: the billboard and prefetch wait for
     // navigation to go quiet instead of thrashing artwork while a key repeats.
@@ -266,7 +267,8 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 resume = if (index == (if (browsing) activeRow else firstReadyRow)) resumeShelf else null,
                                 rowAlpha = alpha,
                                 onHeightChange = { if (it > measuredShelfHeight) measuredShelfHeight = it; if (index == 0) firstShelfHeight = it },
-                                play = play, state = shelfState)
+                                play = play, state = shelfState,
+                                continueMore = continueMore, seeAll = seeAll)
                         }
                     }
                 }
