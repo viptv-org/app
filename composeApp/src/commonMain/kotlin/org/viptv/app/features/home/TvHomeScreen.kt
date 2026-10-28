@@ -199,7 +199,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             val wPx = with(density) { viewport.toPx().toInt() }
             val hPx = with(density) { (620.dp * scale).toPx().toInt() }
             val sigma = with(density) { (70.dp * scale).toPx() / 4f }.toInt().coerceIn(1, 200)
-            val build = { c: Card -> c.poster?.let { org.viptv.app.images.sizedArtwork(it, wPx, hPx, blur = sigma) } }
+            val build = { c: Card -> c.poster?.let { org.viptv.app.images.blurredArtwork(it, wPx, hPx, blur = sigma) ?: it } }
             build
         }
         val selection = rememberTvBillboardSelection(focused, { browsing }, portraitSelection, quietForMillis, softArtwork = softPlane,
