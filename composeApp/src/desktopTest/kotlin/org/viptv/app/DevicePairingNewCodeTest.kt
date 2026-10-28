@@ -13,11 +13,12 @@ import kotlin.test.*
 /**
  * app#129: "New code" asks the server for a fresh code and sends the `device_code` this screen
  * still holds, so the server expires the superseded one (backend#42). The first request of a
- * pairing sends none, and a code issued by one server is never offered to another.
+ * pairing sends none, a code issued by one server is never offered to another, and a redeemed
+ * code is not offered again.
  */
 class DevicePairingNewCodeTest {
-    private class FakeServer {
-        val bodies = mutableListOf<JsonObject>()
+    private class FakeServer(private val approved: Boolean = false) {
+        val bodies = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
         fun connection(origin: String, store: RemoteSessionStore) = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             val (body, status) = when (request.url.encodedPath) {
                 "/api/auth/device/code" -> {
@@ -25,7 +26,10 @@ class DevicePairingNewCodeTest {
                     val code = "ABCD-%04d".format(bodies.size)
                     """{"device_code":"secret-$code","user_code":"$code","verification_uri":"https://watch.example/device","verification_uri_complete":"https://watch.example/device?code=$code","expires_in":600,"interval":1}""" to HttpStatusCode.OK
                 }
-                "/api/auth/device/token" -> """{"error":"authorization_pending"}""" to HttpStatusCode.BadRequest
+                "/api/auth/device/token" ->
+                    if (approved) """{"access_token":"approved-access","refresh_token":"approved-refresh"}""" to HttpStatusCode.OK
+                    else """{"error":"authorization_pending"}""" to HttpStatusCode.BadRequest
+                "/api/bootstrap" -> """{"identity":{"profiles":[],"profile_id":null},"home":null}""" to HttpStatusCode.OK
                 else -> error("Unexpected pairing route ${request.url.encodedPath}")
             }
             respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -43,13 +47,6 @@ class DevicePairingNewCodeTest {
         val server = FakeServer()
         val controller = ApplicationController(scope, store, remoteFactory = server::connection)
         controller.mutable.value = ApplicationState(screen = Screen.Connect)
-        fun await(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) {
-                assertTrue(System.nanoTime() < deadline, "Timed out waiting for $what")
-                Thread.sleep(20)
-            }
-        }
         try {
             controller.startDevicePairing("https://watch.example")
             await("the first code") { server.bodies.size == 1 && controller.state.value.devicePairing?.userCode == "ABCD-0001" }
@@ -65,5 +62,30 @@ class DevicePairingNewCodeTest {
             assertFalse(server.bodies.last().containsKey("device_code"),
                 "a code issued by one server must not be offered to another")
         } finally { controller.cancelDevicePairing(); scope.cancel() }
+    }
+
+    @Test fun anApprovedPairingDoesNotOfferItsRedeemedCodeToTheNextOne() = runBlocking<Unit> {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val server = FakeServer(approved = true)
+        val controller = ApplicationController(scope, store, remoteFactory = server::connection)
+        controller.mutable.value = ApplicationState(screen = Screen.Connect)
+        try {
+            controller.startDevicePairing("https://watch.example")
+            await("the approved pairing") { controller.state.value.screen == Screen.Profiles }
+            assertEquals(1, server.bodies.size)
+
+            controller.mutable.value = ApplicationState(screen = Screen.Connect)
+            controller.startDevicePairing("https://watch.example")
+            await("the next pairing's code") { server.bodies.size == 2 && controller.state.value.devicePairing != null }
+            assertTrue(server.bodies.none { it.containsKey("device_code") }, "a redeemed code is not offered again")
+        } finally { controller.cancelDevicePairing(); scope.cancel() }
+    }
+
+    private fun await(what: String, condition: () -> Boolean) {
+        val deadline = System.nanoTime() + 10_000_000_000L
+        while (!condition()) {
+            assertTrue(System.nanoTime() < deadline, "Timed out waiting for $what")
+            Thread.sleep(20)
+        }
     }
 }
