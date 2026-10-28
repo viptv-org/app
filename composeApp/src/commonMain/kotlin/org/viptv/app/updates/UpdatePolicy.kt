@@ -31,12 +31,22 @@ fun downloadRetryDelayMillis(retry: Int): Long? = listOf(15_000L, 60_000L, 5 * 6
 
 /**
  * The "Update ready" prompt shows where [allowed] (never over the player or sign-in), for a verified
- * download (or one waiting for the install permission) the viewer has not put off with Later this session.
+ * download the viewer has not put off with Later this session. Once Install is chosen the full-screen
+ * Updating screen takes over ([showUpdatingScreen]); the prompt never sits on top of it.
  */
 fun showUpdatePrompt(status: UpdateStatus, allowed: Boolean, snoozedVersionCodes: Set<Long>): Boolean {
-    val feed = status.offeredFeed ?: return false
+    val feed = status.promptFeed ?: return false
     return allowed && feed.versionCode !in snoozedVersionCodes
 }
+
+/** The full-screen Updating screen covers the app from Install until the process is replaced (app#139). */
+fun showUpdatingScreen(status: UpdateStatus): Boolean = status is UpdateStatus.Installing || status is UpdateStatus.NeedsPermission
+
+/**
+ * Back while the install is committing (app#139): Android's session cannot be cancelled at that point,
+ * so Back does nothing. Before it starts (the permission step) Back is Later.
+ */
+fun backIgnoredWhileUpdating(status: UpdateStatus?): Boolean = status is UpdateStatus.Installing
 
 /** "Checked just now", "Checked 5 min ago", ... for Settings › About. */
 fun lastCheckLabel(lastCheckMillis: Long?, nowMillis: Long): String {

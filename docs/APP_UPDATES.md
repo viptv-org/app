@@ -175,6 +175,10 @@ the app with `-Pviptv.updateFeed` pointing at `latest/download/update.json`.
 - **TV:** a small D-pad card in the top-right corner, **Install** (focused after a short delay, so a
   press meant for the page cannot start the install) · **Later**. Back is
   Later.
+- An install that failed (`UpdateStatus.Failed` from an install attempt) comes
+  back as the same banner or card: **Couldn't update VIPTV**, the failure line,
+  **Try again** · **Later**. A failed *download* or *check* is only reported
+  in Settings › About.
 - Never over the player or the sign-in screens. **Later** hides the prompt
   for that version until the app restarts. A newer build asks again.
 - **Install** checks Android's "Install unknown apps" permission for VIPTV.
@@ -188,6 +192,40 @@ the app with `-Pviptv.updateFeed` pointing at `latest/download/update.json`.
   Install starts a fresh session. Android itself refuses a
   lower `versionCode` and a different signing key. The app never offers the
   same or a lower `version_code`.
+
+## Updating screen (app#139)
+
+From the moment the viewer chooses Install until Android has replaced the
+process, a full-screen Updating screen covers the app on phone, tablet and TV
+(`updates/AppUpdatingScreen.kt`). It shows the V mark, **Updating VIPTV to
+{versionName}…**, a progress bar over the bytes written into the installer
+session and a line that the app will restart. Nothing behind it can be touched.
+
+| State | Screen |
+|---|---|
+| The APK is written into the `PackageInstaller` session | Progress bar and percent, **Writing the update. Android asks you to confirm before it installs.** |
+| Android needs "Install unknown apps" (`NeedsPermission`) | **Allow updates**, the permission steps, **Open settings** (or **Try again** on Fire TV) · **Later**; no progress bar |
+| The session is committed and Android shows its confirmation | **Confirm the update in the dialog Android is showing.** |
+| Install failed or the viewer cancelled | The screen goes away; a failure returns as the prompt with **Try again** · **Later**, a cancel acts as Later |
+
+- On TV the screen takes focus, so the page behind cannot be operated. Back is
+  ignored while the session is committing (`backIgnoredWhileUpdating`, wired
+  into `MainActivity`'s Back): Android cannot cancel it at that point. On the
+  permission step Back is Later, as it is on the prompt.
+- The restart line depends on the platform: Android says **VIPTV restarts by
+  itself when the update is installed.**; where a platform cannot reopen the
+  app itself the screen says to open it again.
+- A rebuild that finishes the install while the app is still running is Android
+  replacing the process: the screen simply stays until the app returns.
+
+## After the update
+
+`UpdateRelaunchReceiver` (declared in `androidApp`'s manifest for
+`MY_PACKAGE_REPLACED`) reopens VIPTV on the new build, clearing the old task.
+`MainActivity` passes the version to the updater, which shows **Updated to
+0.1.312+a1b2c3d** in a small bar at the bottom for six seconds
+(`UPDATE_NOTICE_MILLIS`). A device that refuses to start the app falls back to
+the Updating screen having said to open it again.
 
 ## Testing an upgrade locally
 

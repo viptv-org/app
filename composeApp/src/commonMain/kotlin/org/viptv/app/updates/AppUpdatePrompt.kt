@@ -52,20 +52,21 @@ fun AppUpdater.settingsAction() {
     }
 }
 
-private const val FIRE_TV_PERMISSION =
-    "On Fire TV, open Settings › My Fire TV › Developer options › Install unknown apps, turn on VIPTV, then come back."
-private const val PERMISSION_STEP = "Allow VIPTV to install apps in the screen that opens, then come back to finish the update."
-
 /**
- * The app with updates: provides [LocalAppUpdater] for Settings › About and lays the prompt over
- * [content] where [promptAllowed]. Without an updater (debug QA packages) it is just [content].
+ * The app with updates: provides [LocalAppUpdater] for Settings › About and lays the update surfaces
+ * over [content] where [promptAllowed]. Without an updater (debug QA packages) it is just [content].
  */
 @Composable
 fun AppWithUpdates(updater: AppUpdater?, television: Boolean, promptAllowed: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAppUpdater provides updater) {
         Box(Modifier.fillMaxSize()) {
             content()
-            if (updater != null) AppUpdatePrompt(updater, television, promptAllowed)
+            if (updater != null) {
+                AppUpdatePrompt(updater, television, promptAllowed)
+                // Once Install is chosen the full-screen Updating screen takes over (app#139).
+                AppUpdating(updater, television)
+                AppUpdateNotice(updater, television)
+            }
         }
     }
 }
@@ -73,35 +74,28 @@ fun AppWithUpdates(updater: AppUpdater?, television: Boolean, promptAllowed: Boo
 /**
  * "Update ready: Install" outside the player. [allowed] is false while the player (or sign-in)
  * is on screen. Phones and tablets get a banner that does not block the page; TV gets a small
- * D-pad dialog whose Back is Later.
+ * D-pad dialog whose Back is Later. Choosing Install shows [AppUpdating] instead; an install that
+ * fails comes back here as "Couldn't update VIPTV" with Try again · Later (app#139).
  */
 @Composable
 fun AppUpdatePrompt(updater: AppUpdater, television: Boolean, allowed: Boolean) {
     val state by updater.state.collectAsState()
     if (!showUpdatePrompt(state.status, allowed, state.snoozed)) return
     val status = state.status
-    val feed = status.offeredFeed ?: return
-    val permission = status as? UpdateStatus.NeedsPermission
-    val title = if (permission != null) "Allow updates" else if (state.required) "Update required" else "Update ready"
-    val body = when {
-        permission == null -> "VIPTV ${feed.versionName} is ready to install." +
-            (if (state.required) " This version is no longer supported." else "") +
-            (feed.notes?.takeIf { it.isNotBlank() }?.let { "\n$it" } ?: "")
-        permission.settingsScreen -> PERMISSION_STEP
-        else -> FIRE_TV_PERMISSION
+    val feed = status.promptFeed ?: return
+    val failure = status as? UpdateStatus.Failed
+    val title = when {
+        failure != null -> "Couldn't update VIPTV"
+        state.required -> "Update required"
+        else -> "Update ready"
     }
-    val primary = when {
-        permission == null -> "Install"
-        permission.settingsScreen -> "Open settings"
-        else -> "Try again"
-    }
-    val act: () -> Unit = {
-        if (permission?.settingsScreen == true) { if (!updater.openPermissionSettings()) updater.install() }
-        else updater.install()
-    }
+    val body = if (failure != null) failure.message else "VIPTV ${feed.versionName} is ready to install." +
+        (if (state.required) " This version is no longer supported." else "") +
+        (feed.notes?.takeIf { it.isNotBlank() }?.let { "\n$it" } ?: "")
+    val primary = if (failure != null) "Try again" else "Install"
     ViptvTheme(television) {
-        if (television) TvUpdatePrompt(title, body, primary, act, updater::later)
-        else PhoneUpdateBanner(title, body, primary, act, updater::later)
+        if (television) TvUpdatePrompt(title, body, primary, updater::install, updater::later)
+        else PhoneUpdateBanner(title, body, primary, updater::install, updater::later)
     }
 }
 
