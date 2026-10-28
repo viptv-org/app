@@ -36,6 +36,8 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from collections import Counter
+
 from playwright.sync_api import sync_playwright
 from PIL import Image
 
@@ -128,10 +130,10 @@ def contrast(foreground, background):
 def light_text_pixels(shot: Path):
     """Pixels clearly lighter than the page background, i.e. the notice's glyphs in the screenshot."""
     image = Image.open(shot).convert("RGB")
-    pixels = list(image.getdata())
-    background = max(set(pixels), key=pixels.count)  # the flat page colour fills most of the frame
+    background = Counter(image.getdata()).most_common(1)[0][0]  # the flat page colour fills most of the frame
+    pixels = image.getdata()
     light = [p for p in pixels if sum(p) / 3 > sum(background) / 3 + 40]
-    return len(light) / len(pixels), background
+    return len(light) / (image.width * image.height), background
 
 
 def visit_fallback(browser, origin, args, check):
@@ -142,8 +144,6 @@ def visit_fallback(browser, origin, args, check):
         page.wait_for_function(f"() => ({NOTICE_IN_DOM})().includes({NOTICE!r})", timeout=60000)
     except Exception as error:
         check(False, f"the WebGL2 notice reached #viptv-ui-layer ({error})")
-        page.screenshot(path=str(args.out / "no-webgl2.png"))
-        return context.close()
     page.wait_for_timeout(500)
     shot = args.out / "no-webgl2.png"
     page.screenshot(path=str(shot))
