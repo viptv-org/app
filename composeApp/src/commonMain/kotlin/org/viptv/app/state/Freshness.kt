@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
@@ -14,7 +15,7 @@ typealias Revisions = Map<String, String>
  * Checks are one cheap revisions request. Home is rebuilt only when a token
  * moved, after playback, or when an aged Home meets an idle viewer.
  */
-class Freshness(private val time: TimeSource = TimeSource.Monotonic) {
+class Freshness(private val time: TimeSource = TimeSource.Monotonic, private val idleAfter: Duration = IDLE) {
     private var foreground = true
     private var supported = true
     /** A check requested in this foreground spell that has not finished yet. */
@@ -66,7 +67,9 @@ class Freshness(private val time: TimeSource = TimeSource.Monotonic) {
 
     /** Catalog contents, trending and next-episode availability age even when no token moves. */
     fun homeStale(): Boolean = builtAt?.let { it.elapsedNow() >= HOME_MAX_AGE } ?: false
-    fun idle(): Boolean = lastInput.elapsedNow() >= IDLE
+    fun idle(): Boolean = lastInput.elapsedNow() >= idleAfter
+    /** How long until the viewer counts as [idle] without further input; zero or less once they are. */
+    fun untilIdle(): Duration = idleAfter - lastInput.elapsedNow()
 
     companion object {
         val EVENT_GAP = 2.seconds

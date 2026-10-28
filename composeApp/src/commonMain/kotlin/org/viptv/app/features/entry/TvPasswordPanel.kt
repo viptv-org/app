@@ -16,7 +16,7 @@ import org.viptv.app.components.TextButton
 @Composable
 internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scale: Float,
     connect: (String, String, String) -> Unit, forgot: () -> Unit, serverChanged: (String) -> Unit = {}) {
-    var server by remember { mutableStateOf(origin.ifBlank { "https://viptv.syek.tech" }) }
+    var server by remember { mutableStateOf(origin.ifBlank { "https://your-server.example" }) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var editingPassword by remember { mutableStateOf(false) }
