@@ -107,7 +107,7 @@ class SourceFilterSelectTest {
         fun clickable(label: String) = nodes().any { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
         /** The source rows on screen, top to bottom, by their release line ("Release a2" is "Stream a2"). */
         fun streams() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
-            .filter { n -> text(n).matches(Regex("Release a\\d+")) }
+            .filter { n -> text(n).matches(Regex("Release [a-z]\\d+")) }
             .sortedBy { it.boundsInRoot.top }.map { text(it).replace("Release", "Stream") }
         private fun rows() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.RadioButton }.sortedBy { it.boundsInRoot.top }
         fun options() = rows().map { it.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text }
