@@ -57,7 +57,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     if (television) {
         TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, controls = controls, query = query,
             onQuery = { next ->
-                // One batched request for the whole draft (Show results).
+                // One batched request for the whole draft of the TV filter page.
                 if (next.type != query.type) filterChanged("type", next.type) else applyQuery(next)
             },
             more = more, error = error, retry = { applyQuery(query) })
