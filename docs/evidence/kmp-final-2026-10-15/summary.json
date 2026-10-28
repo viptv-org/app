@@ -28,7 +28,7 @@
   "command": "./gradlew :composeApp:desktopTest :composeApp:wasmJsBrowserDistribution :androidApp:assembleRelease --init-script /tmp/viptv-isolated-web.gradle --max-workers=1 -x :composeApp:buildDesktopEngine -x :androidApp:buildAndroidEngine",
   "environment": {
     "JAVA_HOME": "/tmp/viptv-temurin21/jdk-21.0.12.1+1",
-    "VIPTV_WEB_OUTPUT": "/tmp/viptv-kmp-browser-completion-OaZSX6/dist",
+    "VIPTV_WEB_OUTPUT": "/tmp/kmp-browser-completion-OaZSX6/dist",
     "VIPTV_PROFILE_CAPTURE_DIR": "/tmp/viptv-profile-administration-qa"
   },
   "apk_sha256": "3b047c819950adf15ac33563033da4c9147ca734fa5387b47f567a971fae56a6",
