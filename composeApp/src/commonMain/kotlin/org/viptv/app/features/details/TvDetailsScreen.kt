@@ -9,7 +9,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
@@ -210,14 +209,14 @@ private fun TvDetailUnavailable(error: String?, scale: Float, back: (() -> Unit)
             // Retry is the first action when the play tap's read can run again; Back always is one.
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp * s)) {
                 retry?.let { again ->
-                    org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s).focusRequester(focus), s, primary = true, ring = false,
-                        activate = again, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
+                    org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s), s, primary = true, ring = false,
+                        requester = focus, activate = again, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
                         Text("Try again", color = it, fontSize = (24 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                     }
                 }
                 back?.let { leave ->
                     org.viptv.app.components.TvAction(Modifier.height(72.dp * s).width(300.dp * s), s, primary = retry == null, ring = false,
-                        activate = leave, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
+                        requester = if (retry == null) focus else null, activate = leave, contentPadding = PaddingValues(horizontal = 24.dp * s)) {
                         Text("Go back", color = it, fontSize = (24 * s).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                     }
                 }

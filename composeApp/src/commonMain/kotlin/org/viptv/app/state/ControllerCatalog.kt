@@ -231,6 +231,9 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
         connection === remote && local === device && mutable.value.screen in listOf(Screen.Sources, Screen.Details) &&
         mutable.value.sourceTitle?.let(::cardLookupKey) == selection
     sourceDetailJob = scope.launch {
+        // A play tap retires the page request it interrupts, as [run] does, so work for the page
+        // the viewer left cannot write over the selector before the tap's own read lands.
+        job?.let { retired -> retired.cancel(); retired.join() }
         val detail = try { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) { if (current()) resolveFailed(error, remote, device, onSelector = true); return@launch }
