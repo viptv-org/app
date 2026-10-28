@@ -15,27 +15,21 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import org.viptv.app.components.FilterBar
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
+import org.viptv.app.components.TextSelect
+import org.viptv.app.components.ToggleSelect
 import org.viptv.app.components.filterOptions
 import org.viptv.app.components.selectTriggerLabel
-import org.viptv.app.components.useSelect
-import org.viptv.app.connection.BrowseQuery
-import org.viptv.app.connection.DiscoveryControls
-import org.viptv.app.connection.FeatureAvailability
-import org.viptv.app.features.browse.BrowserBrowseScreen
-import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
-import org.viptv.engine.wire.Choice
-import org.viptv.engine.wire.ControlKind
-import org.viptv.engine.wire.QueryControl
 import org.junit.Rule
 import kotlin.test.*
 
 /**
- * app#57: the shared searchable, virtualised dropdown and its first caller, the
- * browser Browse filter rail (Genre used to render as an empty segmented bar).
+ * app#57, app#117: the shared searchable, virtualised dropdown chip, its text and toggle
+ * chips, and its phone bottom sheet. The pages that use it are in `FilterBarPagesTest`.
  */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SearchableSelectTest {
@@ -61,12 +55,70 @@ class SearchableSelectTest {
         assertTrue(filterOptions(genres, "zzz").isEmpty())
     }
 
-    @Test fun theInlineVersusDropdownRuleLivesInOnePlace() {
-        assertFalse(useSelect(listOf("Any", "Popular", "New", "Rated").map { SelectOption(it, it) }), "a short Sort set stays segments")
-        assertFalse(useSelect(listOf("Any", "5+", "6+", "7+", "8+").map { SelectOption(it, it) }), "five short options stay segments")
-        assertTrue(useSelect(listOf("Any", "5+", "6+", "7+", "8+", "9+").map { SelectOption(it, it) }), "more than five options use the dropdown")
-        assertTrue(useSelect(listOf("Any", "Recently added", "Most watched").map { SelectOption(it, it) }), "labels too long for segments use the dropdown")
-        assertTrue(useSelect(genres))
+    @Test fun onlyAListLongerThanThePopoverGetsTheSearchField() {
+        val sorts = listOf("Popular", "New", "Rated").map { SelectOption(it.lowercase(), it) }
+        val picked = mutableListOf<List<String>>()
+        Ui(800, 700) { SearchableSelect("Sort", sorts, listOf("popular"), { picked += it }, anyLabel = null) }.use {
+            assertEquals("Sort: Popular", it.trigger())
+            it.open("Sort: Popular", search = false)
+            assertEquals(listOf("Popular", "New", "Rated"), it.rows())
+            assertFalse(it.panelOpen(), "three rows need no search field")
+            it.key(Key.DirectionDown); it.key(Key.Enter)
+            assertEquals(listOf(listOf("new")), picked, "without a search field the list itself takes the arrow keys")
+        }
+        val eight = (1..8).map { SelectOption("g$it", "Genre $it") }
+        Ui(800, 700) { SearchableSelect("Genre", eight, emptyList(), {}) }.use {
+            it.open("Genre: Any")
+            assertTrue(it.panelOpen(), "eight genres and Any overflow the eight-row popover, so it searches")
+        }
+    }
+
+    @Test fun aTextChipAppliesOnEnterOnlyAndAnyClearsIt() {
+        val applied = mutableListOf<String>()
+        var value by mutableStateOf("")
+        Ui(800, 700) { TextSelect("Search", value, { applied += it; value = it }, placeholder = "Required") }.use {
+            assertEquals("Search: Required", it.trigger())
+            it.open("Search: Required")
+            assertTrue(it.searchFocused(), "the field takes focus")
+            it.type("Naruto")
+            assertTrue(applied.isEmpty(), "typing never applies")
+            it.key(Key.Enter)
+            assertEquals(listOf("Naruto"), applied, "Enter applies once")
+            assertFalse(it.panelOpen())
+            assertEquals("Search: Naruto", it.trigger())
+            it.open("Search: Naruto")
+            it.click("Any")
+            assertEquals(listOf("Naruto", ""), applied)
+            assertEquals("Search: Required", it.trigger())
+        }
+    }
+
+    @Test fun aToggleChipTogglesInPlace() {
+        var on by mutableStateOf(false)
+        Ui(800, 700) { ToggleSelect("Free only", on, { on = it }) }.use {
+            val chip = it.nodes().single { n -> n.config.getOrNull(SemanticsProperties.Role) == Role.Switch }
+            assertEquals(ToggleableState.Off, chip.config[SemanticsProperties.ToggleableState])
+            assertTrue(chip.config[SemanticsActions.OnClick].action!!.invoke()); it.frames()
+            assertTrue(on)
+            assertFalse(it.panelOpen(), "a toggle opens nothing")
+        }
+    }
+
+    @Test fun aPhoneWidthTouchBarOpensTheSameListAsABottomSheet() {
+        val picked = mutableListOf<List<String>>()
+        Ui(390, 844, pointer = false) {
+            var value by remember { mutableStateOf(emptyList<String>()) }
+            FilterBar { item { SearchableSelect("Genre", genres, value, { picked += it; value = it }) } }
+        }.use {
+            it.open("Genre: Any")
+            assertTrue(it.nodes().any { n -> n.config.contains(SemanticsProperties.Heading) && it.text(n) == "Genre" }, "the sheet is titled")
+            assertFalse(it.searchFocused(), "a touch sheet never raises the keyboard by itself")
+            assertEquals("Any", it.rows().first())
+            it.click("Drama")
+            assertEquals(listOf(listOf("drama")), picked)
+            assertFalse(it.panelOpen())
+            assertEquals("Genre: Drama", it.trigger())
+        }
     }
 
     @Test fun pickingAFilteredSingleChoiceAppliesItAndClosesThePanel() {
@@ -149,56 +201,11 @@ class SearchableSelectTest {
         }
     }
 
-    @Test fun browseRailUsesTheDropdownForGenreAndKeepsSegmentsForASmallSort() {
-        val genre = QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false,
-            (listOf("Action", "Comedy", "Drama") + (1..197).map { "Genre $it" }).map { Choice(it.lowercase(), it) })
-        val sort = QueryControl("sort", "Sort", ControlKind.SINGLECHOICE, true, listOf(Choice("popular", "Popular"), Choice("new", "New")))
-        val controls = DiscoveryControls("stremio", listOf("movie"), listOf(sort, genre),
-            discovery = FeatureAvailability("Available"), search = FeatureAvailability("Available"),
-            filters = FeatureAvailability("Available"), calendar = FeatureAvailability("Unsupported"))
-        var query by mutableStateOf(BrowseQuery("movie"))
-        val changed = mutableListOf<Pair<String, String>>()
-        Ui(1440, 900) {
-            BrowserBrowseScreen(Screen.Movies, emptyList(), controls, query, false, null, null, {},
-                { id, value -> changed += id to value; query = if (id == "genre") query.copy(genre = value.ifEmpty { null }) else query },
-                { _, _ -> }, {})
-        }.use {
-            assertEquals("Genre: Any", it.trigger())
-            assertTrue(it.clickable("Popular") && it.clickable("New"), "Sort keeps its segmented control")
-            assertFalse(it.nodes().any { n -> it.text(n).startsWith("Sort:") }, "Sort has no dropdown trigger")
-            it.open("Genre: Any")
-            it.type("com")
-            assertEquals(listOf("Comedy"), it.rows())
-            it.click("Comedy")
-            assertEquals(listOf("genre" to "comedy"), changed)
-            assertEquals("Genre: Comedy", it.trigger())
-        }
-    }
-
-    @Test fun browseRailUsesTheMultipleDropdownForAManyChoiceMultiFilter() {
-        val genres = QueryControl("genres", "Genres", ControlKind.MULTICHOICE, false,
-            (1..40).map { Choice("g$it", "Genre $it") }, maximum_selections = 3)
-        val few = QueryControl("audio", "Audio", ControlKind.MULTICHOICE, false, listOf(Choice("en", "EN"), Choice("ja", "JA")))
-        val controls = DiscoveryControls("stremio", listOf("movie"), listOf(genres, few),
-            discovery = FeatureAvailability("Available"), search = FeatureAvailability("Available"),
-            filters = FeatureAvailability("Available"), calendar = FeatureAvailability("Unsupported"))
-        val changed = mutableListOf<Pair<String, List<String>>>()
-        Ui(1440, 900) {
-            BrowserBrowseScreen(Screen.Movies, emptyList(), controls, BrowseQuery("movie"), false, null, null, {},
-                { _, _ -> }, { id, values -> changed += id to values }, {})
-        }.use {
-            assertTrue(it.clickable("EN") && it.clickable("JA"), "a small multi set keeps its chips")
-            assertFalse(it.nodes().any { n -> it.text(n).startsWith("+") && it.text(n).endsWith("more") }, "no '+N more' wall of chips")
-            it.open("Genres: Any")
-            it.click("Genre 7")
-            assertEquals(listOf("genres" to listOf("g7")), changed)
-        }
-    }
-
-    private class Ui(width: Int, height: Int, content: @Composable () -> Unit) : AutoCloseable {
+    /** Desktop and web (a pointer) unless [pointer] is false. */
+    private class Ui(width: Int, height: Int, pointer: Boolean = true, content: @Composable () -> Unit) : AutoCloseable {
         private var frame = 0L
         val scene = ImageComposeScene(width, height, Density(1f)) {
-            ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) { Box(Modifier.padding(20.dp)) { content() } } }
+            ViptvTheme(false, pointer = pointer) { Surface(Modifier.fillMaxSize(), color = Palette.background) { Box(Modifier.padding(20.dp)) { content() } } }
         }.also { s -> repeat(20) { s.render(frame++ * 16_666_667L).close() } }
 
         fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(2) }
@@ -214,15 +221,15 @@ class SearchableSelectTest {
         fun rows(): List<String> = options().map(::label)
         fun row(label: String) = options().single { label(it) == label }
         fun panelOpen() = nodes().any { it.config.contains(SemanticsActions.SetText) }
-        fun searchFocused() = nodes().single { it.config.contains(SemanticsActions.SetText) }.config.getOrNull(SemanticsProperties.Focused) == true
+        fun searchFocused() = nodes().singleOrNull { it.config.contains(SemanticsActions.SetText) }?.config?.getOrNull(SemanticsProperties.Focused) == true
         fun clickable(label: String) = nodes().any { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
 
-        fun open(label: String) {
+        fun open(label: String, search: Boolean = true) {
             val trigger = nodes().single { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList }
             assertEquals(label, text(trigger))
             assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke())
             frames(30)
-            assertTrue(panelOpen(), "the panel opened")
+            assertTrue(if (search) panelOpen() else options().isNotEmpty(), "the panel opened")
         }
         fun type(query: String) {
             val field = nodes().single { it.config.contains(SemanticsActions.SetText) }
