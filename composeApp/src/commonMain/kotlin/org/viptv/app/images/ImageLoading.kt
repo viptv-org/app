@@ -22,11 +22,15 @@ internal expect fun imageCacheDirectory(context: PlatformContext): Path?
  * `AsyncImage` or `load` runs — a preview window or a desktop test JVM composes
  * a card before the app shell composes this. Replacing that default keeps
  * [PublicArtworkMapper] and the caches in play instead of throwing (app#134).
+ *
+ * Coil exposes no query for "a loader is already there", and calling
+ * [SingletonImageLoader.get] to ask would build one, so the refusal is the only
+ * signal. It is a plain [IllegalStateException] from `setSafe`.
  */
 @OptIn(DelicateCoilApi::class)
 @Composable
 internal fun ConfigureImageLoading(diagnostics: ((String) -> Unit)? = null) {
-    val factory = SingletonImageLoader.Factory { context -> imageLoader(context, diagnostics) }
+    val factory = SingletonImageLoader.Factory { context -> buildImageLoader(context, diagnostics) }
     try {
         SingletonImageLoader.setSafe(factory)
     } catch (_: IllegalStateException) {
@@ -35,7 +39,7 @@ internal fun ConfigureImageLoading(diagnostics: ((String) -> Unit)? = null) {
     }
 }
 
-private fun imageLoader(context: PlatformContext, diagnostics: ((String) -> Unit)?): ImageLoader =
+private fun buildImageLoader(context: PlatformContext, diagnostics: ((String) -> Unit)?): ImageLoader =
     ImageLoader.Builder(context)
         .components { add(PublicArtworkMapper()) }
         .eventListenerFactory(object : EventListener.Factory {
