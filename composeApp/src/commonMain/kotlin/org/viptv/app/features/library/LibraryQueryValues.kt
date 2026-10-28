@@ -12,3 +12,11 @@ internal fun LibraryQuery.withValues(values: Map<String, String>) = copy(offset 
     status = values["status"]?.takeIf(String::isNotBlank), genre = values["genre"]?.takeIf(String::isNotBlank),
     rated = values["rated"]?.takeIf(String::isNotBlank), added = values["added"]?.takeIf(String::isNotBlank),
     episodes_left_max = values["episodes_left_max"]?.toLongOrNull())
+
+/** Switching lists keeps the sort and type and drops the filters, which belong to the old list. */
+internal fun LibraryQuery.forList(id: String) = copy(source = id, offset = 0, show = "all", status = null,
+    genre = null, rated = null, added = null, episodes_left_max = null)
+
+/** The TV sheet's Clear: every filter back to its default, keeping the list and type. */
+internal fun LibraryQuery.clearedFilters() = copy(offset = 0, show = "all", sort = "last_watched", status = null,
+    genre = null, rated = null, added = null, episodes_left_max = null)

@@ -3,49 +3,36 @@ package org.viptv.app.features.browse
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryCatalog
 import org.viptv.app.connection.DiscoveryControls
-import org.viptv.app.connection.displayName
-import org.viptv.app.connection.forCatalog
 import org.viptv.app.connection.selectedCatalog
-import org.viptv.app.connection.selectionKey
-import org.viptv.app.connection.selections
 import org.viptv.app.state.Screen
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
-import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.DropdownMenuItem
-import androidx.compose.ui.graphics.RectangleShape
+import org.viptv.app.components.SearchableSelect
+import org.viptv.app.components.SelectOption
 import org.viptv.app.components.HoverFill
 import org.viptv.app.components.pointerHovered
 
@@ -56,7 +43,6 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     multipleChanged: (String, List<String>) -> Unit = { _, _ -> }, browser: Boolean = false,
     applyQuery: (BrowseQuery) -> Unit = {}) {
     var sort by remember(screen) { mutableStateOf("Popular") }
-    var menu by remember { mutableStateOf(false) }
     val cards = remember(home, loadedCards, screen, sort) {
         val loaded = loadedCards ?: home?.rows.orEmpty().flatMap { it.cards }
             .distinctBy(::cardLookupKey)
@@ -71,7 +57,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     if (television) {
         TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, controls = controls, query = query,
             onQuery = { next ->
-                // One batched request for the whole draft (Show results).
+                // One batched request for the whole draft of the TV filter page.
                 if (next.type != query.type) filterChanged("type", next.type) else applyQuery(next)
             },
             more = more, error = error, retry = { applyQuery(query) })
@@ -81,41 +67,34 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     AutomaticPage(cards.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val width = maxWidth
-        val compact = width < 640.dp && !television
-        val gutter = if (television) 70.dp else if (compact) 16.dp else 40.dp
-        var catalogs by remember { mutableStateOf(false) }
-        var facetsOpen by remember { mutableStateOf(false) }
-        val facets = remember(controls, query) { activeFacets(controls, query) }
-        val applied = remember(facets) { facets.sumOf { it.second.size } }
+        val compact = width < 640.dp
+        val gutter = if (compact) 16.dp else 40.dp
+        val catalogOpen = remember { mutableStateOf(false) }
+        val facets = remember(controls, query, screen) { browseFacets(controls, query, screen == Screen.Discover) }
+        val applied = remember(facets, query) { appliedFacets(facets, query).size }
         val catalog = controls?.selectedCatalog(query)
         val loading = busy || (loadedCards == null && home == null)
-        Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = if (television) 32.dp else 24.dp),
+        // Server-supplied facets already include Sort; a second local sort would contradict them.
+        val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
+            controls?.controls?.any { it.id == "sort" } == true
+        Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(screen.name, fontSize = if (television) 36.sp else 28.sp, fontWeight = FontWeight.Bold)
-            // The Catalog/Filters bar only exists when the server supplied
-            // browsable controls; without them it would be two dead chips.
+            Text(screen.name, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            // One filter bar (app#117): the catalog and every facet are dropdown chips.
             if (loading && controls == null) BrowseHeaderSkeleton()
-            else if (controls != null) PhoneBrowseBar(catalog, applied, { catalogs = true }) { facetsOpen = !facetsOpen }
-            // Server-supplied facets already include Sort; a second local sort
-            // control would contradict them (and duplicated on phone).
-            val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
-                controls?.controls?.any { it.id == "sort" } == true
-            if (facets.isNotEmpty() || !serverSort) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PhoneFilterChips(facets, Modifier.weight(1f)) { control, value ->
-                    val values = facets.firstOrNull { it.first.id == control.id }?.second.orEmpty()
-                    if (values.size <= 1) filterChanged(control.id, "") else multipleChanged(control.id, values - value)
+            else BrowseFilterBar(controls, query, screen == Screen.Discover, filterChanged, multipleChanged, applyQuery,
+                catalogOpen, gutter = gutter) {
+                if (!serverSort) item(key = "local:sort") {
+                    SearchableSelect("Sort", LocalSorts, listOf(sort), { sort = it.firstOrNull() ?: sort }, anyLabel = null)
                 }
-                if (!serverSort) SortMenu(sort, menu, { sort = it; menu = false }, { menu = !menu })
             }
-            if (facetsOpen && controls != null) DiscoveryFilters(controls, query, screen == Screen.Discover, filterChanged,
-                multipleChanged = multipleChanged, catalogPill = true)
             if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
             // Column count from the boards: M3Browse is 3 across on a phone,
             // D3Browse is 6 across at desktop width and 4 in its narrower
             // variant. Cards fill their cell (minmax(0,1fr)), never a fixed px.
             val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
-            if (error != null && cards.isEmpty()) BrowseErrorState(catalog, error, Modifier.weight(1f), { applyQuery(query) }) { if (controls != null) catalogs = true }
+            val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
+            if (error != null && cards.isEmpty()) BrowseErrorState(catalog, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
             else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Fixed(columns), Modifier.weight(1f))
             else if (cards.isEmpty()) BrowseEmptyState(catalog, applied, Modifier.weight(1f)) { applyQuery(clearedFilters(query)) }
             else LazyVerticalGrid(GridCells.Fixed(columns),
@@ -127,102 +106,19 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                         modifier = Modifier.fillMaxWidth(), showFocusOutline = !compact || !browser)
                 }
             }
-            if (catalogs && controls != null) PhoneCatalogsSheet(controls, query, { catalogs = false }) { selected ->
-                catalogs = false
-                applyQuery(query.forCatalog(selected))
-            }
         }
     }
 }
 
-@Composable
-private fun SortMenu(sort: String, menu: Boolean, select: (String) -> Unit, toggle: () -> Unit) {
-    Box {
-        Row(Modifier.background(Color(0xFF222224), RoundedCornerShape(8.dp))
-            .pointerClickable(shape = RoundedCornerShape(8.dp)) { toggle() }.padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(Lucide.SlidersHorizontal, null, Modifier.size(16.dp))
-            Text(sort, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
-            Icon(Lucide.ChevronDown, null, Modifier.size(16.dp))
-        }
-        DropdownMenu(menu, onDismissRequest = toggle) {
-            listOf("Popular", "A–Z", "Z–A").forEach { option ->
-                DropdownMenuItem(text = { Text(option) }, onClick = { select(option) })
-            }
-        }
-    }
-}
+/** The local order when the provider offers no Sort of its own. */
+private val LocalSorts = listOf("Popular", "A–Z", "Z–A").map { SelectOption(it, it) }
 
-/** The facet values the header counts and the chip strip removes (`M3Browse`). */
-private fun activeFacets(controls: DiscoveryControls?, query: BrowseQuery): List<Pair<QueryControl, List<String>>> {
-    if (controls == null) return emptyList()
-    val catalog = controls.selectedCatalog(query)
-    val fields = if (catalog == null) controls.controls
-    else controls.controls.filter { it.id in listOf("type", "catalog") } + catalog.controls.filter { it.id !in listOf("type", "catalog") }
-    return fields.filter { it.id !in listOf("type", "catalog") && it.maximum_selections != 0L }
-        .map { control -> control to query.selections(control.id).filter(String::isNotBlank) }
-        .filter { it.second.isNotEmpty() }
-}
-
-/** "Clear all filters" keeps the chosen catalog and drops every facet (`M3BrowseEmpty`). */
-private fun clearedFilters(query: BrowseQuery): BrowseQuery =
-    query.copy(skip = 0, genre = null, search = null, extras = emptyMap(), values = emptyList())
-
-/** `M3Browse` header: the catalog pill (`Popular · VIPTV Sources`) and the Filters trigger with its count. */
-@Composable
-private fun PhoneBrowseBar(catalog: DiscoveryCatalog?, count: Int, openCatalogs: () -> Unit, toggleFilters: () -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.weight(1f, fill = false).height(36.dp).clip(RoundedCornerShape(18.dp))
-            .background(Color.White.copy(alpha = .12f)).pointerClickable(enabled = catalog != null, onClick = openCatalogs, shape = RoundedCornerShape(18.dp))
-            .padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(catalog?.name ?: "Catalog", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
-            catalog?.connection_name?.takeIf(String::isNotBlank)?.let { provider ->
-                Text("· $provider", color = Palette.secondary, fontSize = 14.sp, fontWeight = FontWeight.Medium,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Icon(Lucide.ChevronDown, null, Modifier.size(16.dp))
-        }
-        Row(Modifier.height(36.dp).clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .12f))
-            .pointerClickable(onClick = toggleFilters, shape = RoundedCornerShape(18.dp)).padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(Lucide.SlidersHorizontal, null, Modifier.size(16.dp))
-            Text("Filters", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            if (count > 0) Box(Modifier.height(20.dp).widthIn(min = 20.dp).clip(RoundedCornerShape(10.dp))
-                .background(Palette.text).padding(horizontal = 5.dp), contentAlignment = Alignment.Center) {
-                Text("$count", color = Palette.background, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            }
-        }
-    }
-}
-
-/** Applied-filter strip: tapping a chip drops that one value without opening Filters. */
-@Composable
-private fun PhoneFilterChips(facets: List<Pair<QueryControl, List<String>>>, modifier: Modifier,
-    remove: (QueryControl, String) -> Unit) {
-    if (facets.isEmpty()) { Spacer(modifier); return }
-    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically) {
-        facets.forEach { (control, values) -> values.forEach { value ->
-            val label = control.choices.find { it.value == value }?.label ?: value
-            Row(Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(Color.White.copy(alpha = .10f))
-                .pointerClickable(shape = RoundedCornerShape(15.dp)) { remove(control, value) }.padding(start = 11.dp, end = 6.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                Icon(Lucide.X, "Remove $label", Modifier.size(14.dp))
-            }
-        } }
-    } }
-}
-
-/** `M3BrowseLoading`: the pill row before the discovery controls have arrived. */
+/** `M3BrowseLoading`: the filter bar's chips before the discovery controls have arrived. */
 @Composable
 private fun BrowseHeaderSkeleton() {
     val shimmer = rememberTvLoadingShimmer(1f)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(Modifier.width(190.dp).height(36.dp).clip(RoundedCornerShape(18.dp)).then(shimmer))
-        Box(Modifier.width(110.dp).height(36.dp).clip(RoundedCornerShape(18.dp)).then(shimmer))
+        listOf(170, 120, 110).forEach { Box(Modifier.width(it.dp).height(40.dp).clip(RoundedCornerShape(20.dp)).then(shimmer)) }
     }
 }
 
@@ -256,10 +152,10 @@ private fun emptyBody(catalog: DiscoveryCatalog?, filters: Int): String {
     else "No titles match these filters. Removing the newest one usually helps."
 }
 
-/** `M3BrowseError`: Try again re-runs the same query; the catalogs sheet is the escape hatch. */
+/** `M3BrowseError`: Try again re-runs the same query; the catalog list is the escape hatch. */
 @Composable
 private fun BrowseErrorState(catalog: DiscoveryCatalog?, error: String, modifier: Modifier,
-    retry: () -> Unit, chooseCatalog: () -> Unit) {
+    retry: () -> Unit, chooseCatalog: (() -> Unit)?) {
     Column(modifier.fillMaxWidth().padding(top = 90.dp, start = 20.dp, end = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Lucide.CloudOff, null, Modifier.size(30.dp))
@@ -268,7 +164,7 @@ private fun BrowseErrorState(catalog: DiscoveryCatalog?, error: String, modifier
         Text("${catalog?.connection_name?.takeIf(String::isNotBlank) ?: "Your source"} didn’t answer in time. Your filters are kept.",
             color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
         BoardAction("Try again", primary = true, run = retry, icon = Lucide.RotateCw)
-        BoardAction("Choose another catalog", primary = false, run = chooseCatalog)
+        chooseCatalog?.let { BoardAction("Choose another catalog", primary = false, run = it) }
         Text(error, color = Palette.tertiary, fontSize = 12.sp, lineHeight = 16.sp, textAlign = TextAlign.Center)
     }
 }
@@ -285,62 +181,5 @@ private fun BoardAction(label: String, primary: Boolean, run: () -> Unit, icon: 
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         icon?.let { Icon(it, null, Modifier.size(18.dp), tint = if (primary) Palette.background else Palette.text) }
         Text(label, color = if (primary) Palette.background else Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-/** `M3BrowseCatalogs`: the 560dp catalog sheet, grouped by source/add-on. */
-@Composable
-private fun PhoneCatalogsSheet(controls: DiscoveryControls, query: BrowseQuery,
-    dismiss: () -> Unit, select: (DiscoveryCatalog) -> Unit) {
-    val peers = controls.catalogs.filter { it.type == query.type }
-    val groups = peers.groupBy { it.connection_name?.takeIf(String::isNotBlank) ?: "VIPTV Sources" }
-    val selected = controls.selectedCatalog(query)?.selectionKey()
-    val shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
-        Box(Modifier.fillMaxSize()) {
-            Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .5f))
-                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
-            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(560.dp)
-                .shadow(24.dp, shape).clip(shape).background(Color(0xFF1A1A1D))) {
-                Box(Modifier.padding(top = 8.dp, bottom = 4.dp).align(Alignment.CenterHorizontally)
-                    .size(width = 36.dp, height = 5.dp).clip(RoundedCornerShape(3.dp))
-                    .background(Color.White.copy(alpha = .3f)))
-                Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Text("Catalog", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.weight(1f))
-                    Box(Modifier.size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = .14f))
-                        .pointerClickable(onClick = dismiss, shape = CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(Lucide.X, "Close", Modifier.size(16.dp))
-                    }
-                }
-                org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.weight(1f).verticalScroll(rememberScrollState())
-                    .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 40.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    groups.forEach { (group, entries) ->
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(group, Modifier.padding(horizontal = 4.dp), color = Palette.secondary,
-                                fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                                .background(Color.White.copy(alpha = .06f))) {
-                                entries.forEachIndexed { index, entry ->
-                                    Row(Modifier.fillMaxWidth().heightIn(min = 50.dp)
-                                        .pointerClickable(interactionSource = remember { MutableInteractionSource() },
-                                            indication = null, shape = RectangleShape) { select(entry) }
-                                        .padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Text(entry.displayName(peers), Modifier.weight(1f), fontSize = 16.sp,
-                                            fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        if (selected == entry.selectionKey())
-                                            Icon(Lucide.Check, "Selected", Modifier.size(18.dp))
-                                    }
-                                    if (index != entries.lastIndex) Box(Modifier.fillMaxWidth().height(1.dp)
-                                        .background(Color.White.copy(alpha = .08f)))
-                                }
-                            }
-                        }
-                    }
-                } }
-            }
-        }
     }
 }
