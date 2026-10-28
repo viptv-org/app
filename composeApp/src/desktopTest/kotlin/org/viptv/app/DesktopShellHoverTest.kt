@@ -5,9 +5,13 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
+import org.viptv.app.theme.Palette
 import kotlinx.coroutines.*
 import org.jetbrains.skia.Bitmap
 import org.junit.Rule
@@ -143,5 +147,60 @@ class DesktopShellHoverTest {
         }
         scene.sendPointerEvent(PointerEventType.Move, rest); pixels()
         assertTrue(tagged(MEDIA_CARD_HOVER_TAG).isEmpty(), "the hover state clears when the mouse leaves")
+    }
+
+    private fun Shell.windowButton(name: String) = clickable(name) { it.startsWith("$name|") }
+
+    /** The native window-button fill at rest under the pointer, read clear of the centre glyph. */
+    private fun Shell.windowButtonFill(bounds: Rect, pressed: Boolean): Int {
+        scene.sendPointerEvent(PointerEventType.Move, bounds.center)
+        if (pressed) scene.sendPointerEvent(PointerEventType.Press, bounds.center)
+        val colour = pixels().getColor(bounds.left.toInt() + 6, bounds.top.toInt() + 6)
+        if (pressed) scene.sendPointerEvent(PointerEventType.Release, bounds.center)
+        scene.sendPointerEvent(PointerEventType.Move, rest)
+        return colour
+    }
+
+    private fun assertNearArgb(expected: Int, actual: Int, message: String, tolerance: Int = 2) {
+        val close = (16 downTo 0 step 8).all { shift ->
+            kotlin.math.abs(((expected shr shift) and 0xFF) - ((actual shr shift) and 0xFF)) <= tolerance
+        }
+        assertTrue(close, "$message: expected #${expected.toUInt().toString(16)}, got #${actual.toUInt().toString(16)}")
+    }
+
+    // app#93: window buttons are native chrome, not TV controls — hover/press use the
+    // native colours and never the board's outside focus ring.
+    @Test fun windowButtonsHoverWithTheNativeColours() = shell {
+        val wash = Color.White.copy(alpha = .08f).compositeOver(Palette.background).toArgb()
+        assertEquals(Color(0xFFE81123).toArgb(), windowButtonFill(windowButton("Close").boundsInRoot, pressed = false),
+            "Close hovers #E81123")
+        assertNearArgb(wash, windowButtonFill(windowButton("Minimise").boundsInRoot, pressed = false),
+            "Minimise hovers the 8 % white wash")
+        assertNearArgb(wash, windowButtonFill(windowButton("Maximise").boundsInRoot, pressed = false),
+            "Maximise hovers the 8 % white wash")
+    }
+
+    @Test fun windowButtonsPressWithASlightlyStrongerColour() = shell {
+        val wash = Color.White.copy(alpha = .12f).compositeOver(Palette.background).toArgb()
+        assertEquals(Color(0xFFF1707A).toArgb(), windowButtonFill(windowButton("Close").boundsInRoot, pressed = true),
+            "Close presses #F1707A")
+        assertNearArgb(wash, windowButtonFill(windowButton("Minimise").boundsInRoot, pressed = true),
+            "Minimise presses a slightly stronger white")
+    }
+
+    @Test fun aFocusedWindowButtonDrawsNothingOutsideItsBounds() = shell {
+        scene.sendPointerEvent(PointerEventType.Move, rest); pixels()
+        val minimise = windowButton("Minimise")
+        val bounds = minimise.boundsInRoot
+        val before = pixels()
+        assertTrue(minimise.config.contains(SemanticsActions.RequestFocus), "Minimise is keyboard-focusable")
+        assertTrue(minimise.config[SemanticsActions.RequestFocus].action!!.invoke(), "Minimise takes focus")
+        val after = pixels()
+        // The old 4 dp TV ring reached ~3 dp past the button on every side (and its
+        // top was cut off by the window edge). None of that paint may remain.
+        val around = Rect((bounds.left - 8f).coerceAtLeast(0f), (bounds.top - 8f).coerceAtLeast(0f),
+            1440f, bounds.bottom + 8f)
+        assertEquals(0, changedPixels(before, after, around),
+            "focusing a window button paints nothing on or around it")
     }
 }

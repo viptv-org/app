@@ -41,7 +41,9 @@ mouse buttons, route step first), `BrowserBackHistoryTest` (browser
 Back/Forward over a fake session history), `RouteBackUiTest` (player menu
 closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 `PlayerSettingsLinkUiTest`, `DetailNavigationTest`,
-`ContinueWatchingSourcesOpenTest`, `NextEpisodeEndPanelUiTest`.
+`ContinueWatchingSourcesOpenTest`, `NextEpisodeEndPanelUiTest`. The Continue
+Watching page (app#114) rows: `ContinueWatchingListTest` (Back, Android/TV
+Back, Sources' Back) and `ContinueWatchingUiTest` (TV focus on the way back).
 
 | Screen / state | Expected | Phone, tablet (`main`) | TV (`main`) | Desktop (`main`) | Browser (`main`) | Branch |
 |---|---|---|---|---|---|---|
@@ -63,6 +65,8 @@ closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 | Player | Sources (app#13 lease rules) | ✓ | ✓ | ✓ Escape; ✗ mouse Back | ✗ leaves the site | ✓ |
 | Player panel open (Episodes, Audio & subtitles, Next episode app#41, lock) | Close the panel first | ✓ | ✓ | ✓ Escape; ✗ mouse Back closed the player | ✗ browser Back closed the player under the panel | ✓ |
 | Settings opened from the player (app#44) | The paused player | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
+| Continue Watching page (app#114), from Home's "See all" | Home, with the row and focus where they were; else Home | new: Home | new: Home, focus on the See all card | new: Home | new: Home | ✓ |
+| Sources or Details opened from the Continue Watching page | The page, focus on the card that opened them | new | new: same card focused | new | new | ✓ |
 | My List | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | History | Previous screen, else Home | ✗ always Home; arrow went Home and recorded History | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | Calendar | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
