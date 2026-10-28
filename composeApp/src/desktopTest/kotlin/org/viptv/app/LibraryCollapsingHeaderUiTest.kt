@@ -118,16 +118,12 @@ class LibraryCollapsingHeaderUiTest {
         }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun node(label: String) = nodes().firstOrNull { text(it) == label }
-        /** The type chip, not a navigation tab with the same label. */
-        fun chip(label: String) = nodes().firstOrNull { text(it) == label && it.config.contains(SemanticsProperties.Selected) }
         fun top(label: String) = assertNotNull(node(label), "$label on screen; texts=" + nodes().map(::text).filter(String::isNotBlank)).boundsInRoot.top
-        fun chipTop(label: String) = assertNotNull(chip(label), "$label chip on screen").boundsInRoot.top
-        /** The History card counts as shown only while some of it is below the pinned controls. */
+        /** The History card counts as shown only while some of it is below the pinned filter bar. */
         fun historyShown(): Boolean {
             val history = nodes().firstOrNull { text(it).contains("Everything you've played") } ?: return false
-            val filters = node("Filters") ?: return false
-            val controlsBottom = nodes().filter { it.config.contains(SemanticsProperties.Selected) }.maxOfOrNull { it.boundsInRoot.bottom } ?: filters.boundsInRoot.bottom
-            return history.boundsInRoot.bottom > controlsBottom + 1f && history.boundsInRoot.top < height
+            val bar = node("Type: All") ?: return false
+            return history.boundsInRoot.bottom > bar.boundsInRoot.bottom + 1f && history.boundsInRoot.top < height
         }
         fun cardTops() = nodes().filter { (text(it) + it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString()).contains("Saved title") }
             .map { it.boundsInRoot.top }
@@ -140,28 +136,27 @@ class LibraryCollapsingHeaderUiTest {
         val phone = Fixture(this, 1080, 2400, 2.625f, error = "Couldn't refresh My List")
         try {
             phone.frames()
-            phone.await("My List on screen") { phone.node("Filters") != null && phone.chip("Movies") != null }
+            phone.await("My List on screen") { phone.node("Type: All") != null }
             assertTrue(phone.historyShown(), "History shows at the top")
-            val filters = phone.top("Filters"); val chips = phone.chipTop("Movies"); val message = phone.top("Couldn't refresh My List")
+            val filters = phone.top("Type: All"); val message = phone.top("Couldn't refresh My List")
             phone.capture("phone-top")
             phone.drag(-1400f)
             assertFalse(phone.historyShown(), "History scrolled away")
-            assertEquals(filters, phone.top("Filters"), "Filters stays pinned")
-            assertEquals(chips, phone.chipTop("Movies"), "type chips stay pinned")
+            assertEquals(filters, phone.top("Type: All"), "the filter bar stays pinned")
             assertEquals(message, phone.top("Couldn't refresh My List"), "the error stays with the pinned controls")
             phone.capture("phone-scrolled")
             // Empty space in the pinned controls covers scrolled cards; a tap there must not open one.
-            val row = assertNotNull(phone.node("Filters")).boundsInRoot
+            val row = assertNotNull(phone.node("Type: All")).boundsInRoot
             phone.tap(row.left / 3f, row.center.y)
             assertEquals(Screen.Library, phone.controller.state.value.screen, "a tap on the pinned controls stays on My List")
             phone.drag(-900f)
-            assertEquals(filters, phone.top("Filters"), "Filters stays pinned while the grid keeps scrolling")
+            assertEquals(filters, phone.top("Type: All"), "the filter bar stays pinned while the grid keeps scrolling")
             // Pulling down while the list is scrolled scrolls it back; only the very top refreshes.
             phone.drag(1000f)
             assertEquals(0, phone.bootstraps.get(), "no pull-to-refresh before the list is back at the top")
             repeat(4) { if (!phone.historyShown()) phone.drag(500f) }
             phone.await("History returns at the top") { phone.historyShown() }
-            assertEquals(filters, phone.top("Filters")); assertEquals(chips, phone.chipTop("Movies"))
+            assertEquals(filters, phone.top("Type: All"))
         } finally { phone.close() }
     }
 
@@ -169,24 +164,24 @@ class LibraryCollapsingHeaderUiTest {
         val tablet = Fixture(this, 1280, 800, 1f)
         try {
             tablet.frames()
-            tablet.await("My List on screen") { tablet.node("Filters") != null }
-            assertNotNull(tablet.nodes().firstOrNull { text(it) == "My List" && it.boundsInRoot.top > tablet.top("Filters") - 120f }, "large title above the controls")
+            tablet.await("My List on screen") { tablet.node("Type: All") != null }
+            assertNotNull(tablet.nodes().firstOrNull { text(it) == "My List" && it.boundsInRoot.top > tablet.top("Type: All") - 120f }, "large title above the controls")
             assertTrue(tablet.historyShown())
-            val filters = tablet.top("Filters")
+            val filters = tablet.top("Type: All")
             tablet.capture("tablet-top")
             tablet.drag(-500f)
             assertFalse(tablet.historyShown(), "History scrolled away")
-            val pinned = tablet.top("Filters")
+            val pinned = tablet.top("Type: All")
             assertTrue(pinned < filters, "the controls take the title's place: $pinned < $filters")
             val cards = tablet.cardTops()
             tablet.capture("tablet-scrolled")
             tablet.drag(-300f)
-            assertEquals(pinned, tablet.top("Filters"), "Filters stays pinned while the grid scrolls")
+            assertEquals(pinned, tablet.top("Type: All"), "the filter bar stays pinned while the grid scrolls")
             assertNotEquals(cards, tablet.cardTops(), "the grid scrolled under the controls")
             // Back at the very top the title returns too, so the controls sit where they started.
-            repeat(6) { if (tablet.top("Filters") != filters) tablet.drag(300f) }
+            repeat(6) { if (tablet.top("Type: All") != filters) tablet.drag(300f) }
             tablet.await("History returns") { tablet.historyShown() }
-            assertEquals(filters, tablet.top("Filters"))
+            assertEquals(filters, tablet.top("Type: All"))
         } finally { tablet.close() }
     }
 
@@ -194,20 +189,20 @@ class LibraryCollapsingHeaderUiTest {
         val web = Fixture(this, 1440, 900, 1f, browser = true)
         try {
             web.frames()
-            web.await("My List on screen") { web.node("Filters") != null }
+            web.await("My List on screen") { web.node("Type: All") != null }
             assertTrue(web.historyShown())
-            val filters = web.top("Filters")
+            val filters = web.top("Type: All")
             web.capture("browser-top")
             web.wheel(6)
             assertFalse(web.historyShown(), "History scrolled away")
-            val pinned = web.top("Filters")
+            val pinned = web.top("Type: All")
             assertTrue(pinned < filters, "the controls take the title's place: $pinned < $filters")
             web.capture("browser-scrolled")
             web.wheel(4)
-            assertEquals(pinned, web.top("Filters"), "Filters stays pinned while the grid scrolls")
+            assertEquals(pinned, web.top("Type: All"), "the filter bar stays pinned while the grid scrolls")
             web.wheel(-30)
             web.await("History returns") { web.historyShown() }
-            assertEquals(filters, web.top("Filters"))
+            assertEquals(filters, web.top("Type: All"))
         } finally { web.close() }
     }
 
@@ -215,10 +210,10 @@ class LibraryCollapsingHeaderUiTest {
         val phone = Fixture(this, 1080, 2400, 2.625f, cards = 0)
         try {
             phone.frames()
-            phone.await("Empty My List on screen") { phone.node("Filters") != null && phone.nodes().any { text(it).contains("Browse Home") } }
+            phone.await("Empty My List on screen") { phone.node("Type: All") != null && phone.nodes().any { text(it).contains("Browse Home") } }
             assertTrue(phone.historyShown())
             val browse = phone.nodes().first { text(it).contains("Browse Home") }
-            assertTrue(browse.boundsInRoot.top > phone.top("Filters"), "the empty state sits below the header")
+            assertTrue(browse.boundsInRoot.top > phone.top("Type: All"), "the empty state sits below the header")
         } finally { phone.close() }
     }
 
