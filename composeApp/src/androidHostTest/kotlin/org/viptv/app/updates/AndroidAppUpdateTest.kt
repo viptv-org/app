@@ -89,6 +89,10 @@ class AndroidAppUpdateTest {
         awaitStatus(updater) { finished.isNotEmpty() }
         assertEquals(1, created.size, "One PackageInstaller session for the verified APK")
         assertEquals(listOf(true), finished, "The session was written and committed")
+        // app#139: the Updating screen sees the session write, then waits for Android's confirmation.
+        val installing = assertIs<UpdateStatus.Installing>(updater.state.value.status)
+        assertEquals(apk.size.toLong(), installing.bytes, "Every byte written into the session is reported")
+        assertTrue(installing.confirming, "The session is committed: Back cannot cancel it any more")
 
         // Android asks the viewer to confirm: the updater opens the installer's own confirmation.
         val confirm = Intent("android.content.pm.action.CONFIRM_INSTALL")

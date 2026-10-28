@@ -25,9 +25,15 @@ sealed interface UpdateStatus {
     data class Ready(val feed: UpdateFeed) : UpdateStatus
     /** Android needs "Install unknown apps" for VIPTV; [settingsScreen] is false where no such screen exists (some Fire TVs). */
     data class NeedsPermission(val feed: UpdateFeed, val settingsScreen: Boolean) : UpdateStatus
-    /** Android's install confirmation is showing. */
-    data class Installing(val feed: UpdateFeed) : UpdateStatus
-    data class Failed(val message: String, val feed: UpdateFeed? = null) : UpdateStatus
+    /**
+     * The APK is going into Android's installer session (app#139); the Updating screen covers the app.
+     * [bytes] counts what the session has written; [confirming] means Android now shows its own
+     * confirmation, or is already replacing the process, so nothing can be cancelled any more.
+     */
+    data class Installing(val feed: UpdateFeed, val bytes: Long = 0, val confirming: Boolean = false) : UpdateStatus
+    data class Failed(val message: String, val feed: UpdateFeed? = null,
+        /** The viewer chose Install and the install failed: the prompt offers Try again (app#139). */
+        val installAttempt: Boolean = false) : UpdateStatus
 }
 
 data class AppUpdateState(
@@ -39,9 +45,14 @@ data class AppUpdateState(
     val snoozed: Set<Long> = emptySet(),
     /** The available build is above `min_supported_version_code` of the installed one. */
     val required: Boolean = false,
+    /** The version this app was just updated to, confirmed briefly after the relaunch (app#139). */
+    val updatedTo: String? = null,
 )
 
 enum class InstallResult { Success, Cancelled, Failed }
+
+/** How long "Updated to 0.1.301+aaaaaaa" stays on screen after the app reopened (app#139). */
+const val UPDATE_NOTICE_MILLIS = 6_000L
 
 /** The downloaded file's size or SHA-256 differs from the feed; it has been deleted. */
 class UpdateVerificationException(message: String) : Exception(message)
@@ -68,10 +79,16 @@ interface AppUpdatePlatform {
     /** Opens the system "Install unknown apps" screen for this app; false when it could not. */
     fun openInstallPermissionScreen(): Boolean
     /**
-     * Hands the verified APK to Android's installer, which asks the viewer to confirm; [result]
-     * arrives later on the main thread. Throws when the session could not be started.
+     * Android reopens the app after it replaced the process with a newer build (a `MY_PACKAGE_REPLACED`
+     * receiver, app#139). Where it does not, the Updating screen tells the viewer to open the app again.
      */
-    suspend fun install(feed: UpdateFeed, result: (InstallResult) -> Unit)
+    val relaunchesAfterUpdate: Boolean
+    /**
+     * Hands the verified APK to Android's installer, which asks the viewer to confirm; [result]
+     * arrives later on the main thread. [progress] counts the bytes written into the installer session.
+     * Throws when the session could not be started.
+     */
+    suspend fun install(feed: UpdateFeed, progress: (bytes: Long) -> Unit = {}, result: (InstallResult) -> Unit)
 }
 
 /**
@@ -96,10 +113,15 @@ class AppUpdater(
     /** Read by progress callbacks on the download thread. */
     @Volatile private var downloadGeneration = 0
     private var awaitingPermission = false
+    /** Clears the "Updated to …" confirmation after [UPDATE_NOTICE_MILLIS]. */
+    private var notice: Job? = null
 
     private var status: UpdateStatus
         get() = mutable.value.status
         set(value) { mutable.update { it.copy(status = value) } }
+
+    /** Where the platform reopens the app itself once it replaced the process (app#139). */
+    val relaunchesAfterUpdate: Boolean get() = platform.relaunchesAfterUpdate
 
     fun nowMillis(): Long = platform.nowMillis()
 
@@ -150,7 +172,13 @@ class AppUpdater(
         status = UpdateStatus.Installing(feed)
         scope.launch {
             try {
-                platform.install(feed) { result ->
+                platform.install(feed, progress = { bytes ->
+                    mutable.update { state ->
+                        val shown = state.status
+                        if (shown is UpdateStatus.Installing && shown.feed == feed && !shown.confirming) state.copy(status = shown.copy(bytes = bytes))
+                        else state
+                    }
+                }) { result ->
                     when (result) {
                         // Android replaces and restarts the app; nothing to do here.
                         InstallResult.Success -> Unit
@@ -159,17 +187,42 @@ class AppUpdater(
                             status = UpdateStatus.Ready(feed)
                             mutable.update { it.copy(snoozed = it.snoozed + feed.versionCode) }
                         }
-                        InstallResult.Failed -> status = UpdateStatus.Failed("Android didn't install the update.", feed)
+                        InstallResult.Failed -> status = UpdateStatus.Failed("Android didn't install the update.", feed, installAttempt = true)
                     }
+                }
+                // The session is committed: from here Android shows its confirmation and then replaces
+                // the process. The Updating screen stays, and Back no longer cancels anything (app#139).
+                mutable.update { state ->
+                    val shown = state.status
+                    if (shown is UpdateStatus.Installing && shown.feed == feed && !shown.confirming) {
+                        state.copy(status = shown.copy(bytes = feed.size, confirming = true))
+                    } else state
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
                 status = UpdateStatus.Failed(if (error is UpdateVerificationException) "The download was damaged. VIPTV will try again later."
-                    else "Android didn't install the update.", feed)
+                    else "Android didn't install the update.", feed, installAttempt = true)
             }
         }
     }
+
+    /**
+     * The app was replaced and has reopened on the new build (app#139): confirm it for a moment.
+     * [version] is the running app's versionName, as the relaunch receiver read it.
+     */
+    fun announceUpdated(version: String?) {
+        val confirmed = version?.takeIf { it.isNotBlank() } ?: return
+        mutable.update { it.copy(updatedTo = confirmed) }
+        notice?.cancel()
+        notice = scope.launch {
+            delay(UPDATE_NOTICE_MILLIS)
+            mutable.update { it.copy(updatedTo = null) }
+        }
+    }
+
+    /** Back from the Updating screen before Android's session started: as if the viewer chose Later. */
+    fun dismissPendingInstall() = later()
 
     /** Opens the system permission screen; the install continues when the viewer comes back with it allowed. */
     fun openPermissionSettings(): Boolean {
@@ -180,7 +233,8 @@ class AppUpdater(
     /** "Later": hides the prompt for this version until the app restarts. */
     fun later() {
         val feed = status.offeredFeed ?: return
-        status = UpdateStatus.Ready(feed)
+        // A failed install keeps its message in Settings › About; the prompt just stops asking.
+        if (status !is UpdateStatus.Failed) status = UpdateStatus.Ready(feed)
         awaitingPermission = false
         mutable.update { it.copy(snoozed = it.snoozed + feed.versionCode) }
     }
@@ -278,11 +332,23 @@ class AppUpdater(
     }
 }
 
-/** The verified build the prompt offers: ready, or waiting for the install permission. */
+/** The verified build Install could use: ready, waiting for the install permission, or a failed install. */
 val UpdateStatus.offeredFeed: UpdateFeed?
     get() = when (this) {
         is UpdateStatus.Ready -> feed
         is UpdateStatus.NeedsPermission -> feed
+        is UpdateStatus.Failed -> feed?.takeIf { installAttempt }
+        else -> null
+    }
+
+/**
+ * The build the "Update ready" prompt offers. Waiting for the install permission is not part of it:
+ * the full-screen Updating screen owns that step (app#139).
+ */
+val UpdateStatus.promptFeed: UpdateFeed?
+    get() = when (this) {
+        is UpdateStatus.Ready -> feed
+        is UpdateStatus.Failed -> feed?.takeIf { installAttempt }
         else -> null
     }
 

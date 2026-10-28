@@ -25,5 +25,9 @@
         </activity>
         <!-- Shared torrent runtime (native transport v2): app-private worker process, never exported. -->
         <service android:name="org.viptv.experiment.TorrentRuntimeService" android:process=":torrent_runtime" android:exported="false" android:stopWithTask="true" />
+        <!-- app#139: Android replaced the app with a newer build; reopen it so the viewer lands back in VIPTV. -->
+        <receiver android:name="org.viptv.app.updates.UpdateRelaunchReceiver" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
     </application>
 </manifest>

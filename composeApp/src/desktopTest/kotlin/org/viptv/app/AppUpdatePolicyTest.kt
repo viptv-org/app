@@ -46,11 +46,34 @@ class AppUpdatePolicyTest {
     @Test fun thePromptShowsAReadyUpdateOutsideThePlayerUntilLater() {
         val ready = UpdateStatus.Ready(feed)
         assertTrue(showUpdatePrompt(ready, allowed = true, snoozedVersionCodes = emptySet()))
-        assertTrue(showUpdatePrompt(UpdateStatus.NeedsPermission(feed, true), allowed = true, snoozedVersionCodes = emptySet()))
         assertFalse(showUpdatePrompt(ready, allowed = false, snoozedVersionCodes = emptySet()), "Never over the player")
         assertFalse(showUpdatePrompt(ready, allowed = true, snoozedVersionCodes = setOf(1301)), "Later")
         assertTrue(showUpdatePrompt(ready, allowed = true, snoozedVersionCodes = setOf(1300)), "A newer build asks again")
         assertFalse(showUpdatePrompt(UpdateStatus.Downloading(feed, 10), allowed = true, snoozedVersionCodes = emptySet()))
+    }
+
+    @Test fun theUpdatingScreenTakesOverFromInstallAndBackIsIgnoredOnlyWhileCommitting() {
+        assertTrue(showUpdatingScreen(UpdateStatus.Installing(feed)))
+        assertTrue(showUpdatingScreen(UpdateStatus.NeedsPermission(feed, true)), "The permission step is part of it")
+        assertFalse(showUpdatingScreen(UpdateStatus.Ready(feed)))
+        assertFalse(showUpdatePrompt(UpdateStatus.NeedsPermission(feed, true), allowed = true, snoozedVersionCodes = emptySet()),
+            "The prompt never sits on top of the Updating screen")
+        assertFalse(showUpdatePrompt(UpdateStatus.Installing(feed, confirming = true), allowed = true, snoozedVersionCodes = emptySet()))
+        assertTrue(backIgnoredWhileUpdating(UpdateStatus.Installing(feed)))
+        assertTrue(backIgnoredWhileUpdating(UpdateStatus.Installing(feed, confirming = true)), "Android is replacing the process")
+        assertFalse(backIgnoredWhileUpdating(UpdateStatus.NeedsPermission(feed, true)), "Before the session starts Back is Later")
+        assertFalse(backIgnoredWhileUpdating(UpdateStatus.Ready(feed)))
+        assertFalse(backIgnoredWhileUpdating(UpdateStatus.Failed("x", feed, installAttempt = true)))
+        assertFalse(backIgnoredWhileUpdating(null))
+    }
+
+    @Test fun aFailedInstallComesBackAsTryAgainUntilLater() {
+        val failed = UpdateStatus.Failed("Android didn't install the update.", feed, installAttempt = true)
+        assertTrue(showUpdatePrompt(failed, allowed = true, snoozedVersionCodes = emptySet()))
+        assertFalse(showUpdatePrompt(failed, allowed = true, snoozedVersionCodes = setOf(1301)))
+        assertEquals(feed, failed.offeredFeed, "Settings can install again")
+        assertTrue(showUpdatePrompt(UpdateStatus.Failed("Couldn't download", feed), allowed = true, snoozedVersionCodes = emptySet()) == false,
+            "A download that failed is reported in About only")
     }
 
     @Test fun lastCheckLabels() {
