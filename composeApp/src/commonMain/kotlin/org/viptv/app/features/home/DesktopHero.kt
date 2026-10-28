@@ -55,7 +55,8 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
 
 @Composable
 private fun HeroArtwork(card: Card, modifier: Modifier, carousel: HeroCarousel?) {
-    val heroArt = card.landscape ?: card.poster
+    // A blank URL is no artwork at all: Decoding an empty string paints the flat fill NAV-10 forbids.
+    val heroArt = (card.landscape ?: card.poster)?.takeIf { it.isNotBlank() }
     if (heroArt == null) HeroArtworkFallback(modifier.aspectRatio(16f / 9)) else BufferedArtwork(heroArt,
         modifier.aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)).background(Palette.surface).testTag(HERO_ARTWORK_TAG),
         onReady = { carousel?.artworkReady(it) })

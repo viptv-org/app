@@ -16,9 +16,11 @@ import kotlinx.serialization.json.*
 import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.connection.*
+import org.viptv.app.features.home.DesktopHero
 import org.viptv.app.features.home.HERO_ARTWORK_TAG
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.*
+import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
@@ -120,6 +122,24 @@ class DesktopHeroHoverTest {
             if (before.getColor(x, y) != after.getColor(x, y)) changed++
         }
         return changed
+    }
+
+    /** NAV-10: a blank artwork URL is no artwork, so it gets the branded billboard and never a flat fill. */
+    @Test fun aBlankArtworkUrlPaintsTheBrandedBillboard() = runBlocking {
+        fun capture(card: Card): Shell {
+            val scene = ImageComposeScene(1200, 700, Density(1f)) {
+                ViptvTheme(pointer = true) { DesktopHero(card, {}, {}) }
+            }
+            return Shell(scene)
+        }
+        val blank = capture(billboard.copy(landscape = "", poster = ""))
+        val absent = capture(billboard.copy(landscape = null, poster = null))
+        try {
+            blank.pixels(); absent.pixels()
+            assertTrue(blank.tagged(HERO_ARTWORK_TAG).isEmpty(), "a blank URL never becomes the artwork layer")
+            val withBlank = blank.pixels(); val withoutArt = absent.pixels()
+            assertEquals(0, changedPixels(withBlank, withoutArt), "a blank URL paints the same billboard as no artwork at all")
+        } finally { blank.scene.close(); absent.scene.close() }
     }
 
     @Test fun hoveringTheHeroPlayButtonRepaintsOnlyTheButton() = shell { shell, _ ->
