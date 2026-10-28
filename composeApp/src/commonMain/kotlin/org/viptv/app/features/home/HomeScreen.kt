@@ -19,9 +19,12 @@ import org.viptv.engine.wire.*
 fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     summaryCards: Map<String, Card> = emptyMap(), enrichSummary: (Card) -> Unit = {},
     /** False while the viewer is idle: the hero holds its slide and progress instead of drawing every step (app#95). */
-    heroRotates: Boolean = true) {
+    heroRotates: Boolean = true,
+    /** Continue Watching holds more than its row shows: the row ends with "See all", which calls [seeAll] (app#114). */
+    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
     if (television) {
-        TvHomeScreen(home, open, play, retry, navigate, profile, summaryCards = summaryCards, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error, enrichSummary = enrichSummary)
+        TvHomeScreen(home, open, play, retry, navigate, profile, summaryCards = summaryCards, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error, enrichSummary = enrichSummary,
+            continueMore = continueMore, seeAll = seeAll)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -62,7 +65,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                     // The row bleeds to the screen edges; it insets its own title,
                     // arrows and first card by the gutter (app#63).
                     HomeCatalogRow(row, compact, television, Modifier,
-                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter)
+                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter, continueMore = continueMore, seeAll = seeAll)
                 }
             }
         }

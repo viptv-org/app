@@ -18,19 +18,29 @@ import androidx.compose.ui.unit.constrainWidth
  * itself by [gutter] again (`contentPadding`, or [edgeToEdgeScroll]) so the
  * first item still rests on the page gutter.
  */
-internal fun Modifier.bleedHorizontally(gutter: Dp): Modifier = layout { measurable, constraints ->
-    val side = gutter.roundToPx()
-    if (side <= 0) {
+internal fun Modifier.bleedHorizontally(gutter: Dp): Modifier = bleedHorizontally(left = gutter, right = gutter)
+
+/**
+ * The same bleed per side, for a pane that only has page padding on one edge:
+ * TV Search's results sit beside the keyboard column, so only their right edge
+ * runs under the page gutter to the screen edge (app#111). A zero side keeps
+ * that edge where it is, which also keeps the bleed off the neighbouring
+ * column. The sides are physical, like the placement below.
+ */
+internal fun Modifier.bleedHorizontally(left: Dp, right: Dp): Modifier = layout { measurable, constraints ->
+    val leftSide = left.roundToPx()
+    val extra = leftSide + right.roundToPx()
+    if (extra <= 0) {
         val placeable = measurable.measure(constraints)
         return@layout layout(placeable.width, placeable.height) { placeable.place(0, 0) }
     }
-    val extra = side * 2
     val wide = constraints.copy(
         minWidth = if (constraints.minWidth == 0) 0 else constraints.minWidth + extra,
         maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + extra else Constraints.Infinity)
     val placeable = measurable.measure(wide)
-    // `place`, not `placeRelative`: the bleed is the same on both sides, so RTL needs no mirroring.
-    layout(constraints.constrainWidth(placeable.width - extra), placeable.height) { placeable.place(-side, 0) }
+    // `place`, not `placeRelative`: the sides are physical, so a symmetric bleed needs no
+    // mirroring and a one-sided one names its own side.
+    layout(constraints.constrainWidth(placeable.width - extra), placeable.height) { placeable.place(-leftSide, 0) }
 }
 
 /**

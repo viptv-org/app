@@ -31,8 +31,15 @@ internal class RemoteDevicePairing(
     private val send: suspend (String, JsonObject) -> HttpResponse,
     private val adopt: suspend (JsonObject) -> Bootstrap,
 ) {
-    suspend fun create(): DevicePairingChallenge {
-        val response = send("/api/auth/device/code", buildJsonObject { put("device_name", deviceDisplayName()) })
+    /**
+     * Requests a code. [previousDeviceCode] is the `device_code` this screen still shows, so the
+     * server expires the code it replaces (backend#42); the first request sends none.
+     */
+    suspend fun create(previousDeviceCode: String? = null): DevicePairingChallenge {
+        val response = send("/api/auth/device/code", buildJsonObject {
+            put("device_name", deviceDisplayName())
+            previousDeviceCode?.takeIf { it.isNotBlank() }?.let { put("device_code", it) }
+        })
         if (response.status != HttpStatusCode.OK) throw RemoteFailure(response.status.value, "Could not create a sign-in code. Try again.")
         val value = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         fun text(key: String) = value[key]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() && it.length <= 2048 }

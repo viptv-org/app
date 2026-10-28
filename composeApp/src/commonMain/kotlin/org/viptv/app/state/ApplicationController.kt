@@ -37,6 +37,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveFavoriteScope = 0L
     internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
+    /** The Home revision whose full Continue Watching list was last read (app#114). */
+    internal var continueChecked: ContinueCheck? = null
     internal var libraryImportRefresh: Job? = null
     /** The quiet calendar re-read while the server is still looking up library series (app#46). */
     internal var calendarReread: Job? = null
@@ -71,6 +73,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var sourceDetailJob: Job? = null
     internal var pairingJob: Job? = null
     internal var pairingGeneration = 0L
+    /** The code this device last received, with the server that issued it (app#129). */
+    internal var pairingCode: PairingCode? = null
     internal var stremioImport: StremioImportSession? = null
     /** Set when the next playback open should start from the beginning instead of resuming. */
     internal var restartRequested = false

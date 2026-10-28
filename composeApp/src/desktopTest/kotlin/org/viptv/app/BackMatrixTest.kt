@@ -8,8 +8,8 @@ import kotlin.test.*
 
 /**
  * app#45: the Back matrix (docs/BACK_MATRIX.md) at the controller. Every Back input ends in one of
- * two calls: Android and TV system Back ask [systemBackStaysInApp] and then call [navigateBack], as
- * MainActivity does; desktop and browser call [navigateBack] when [canNavigateBack].
+ * two calls: Android and TV system Back ask [systemBackStaysInApp] and then call [navigateSystemBack],
+ * as MainActivity does; desktop and browser call [navigateBack] when [canNavigateBack].
  */
 class BackMatrixTest {
     private val store = object : RemoteSessionStore {
@@ -27,10 +27,10 @@ class BackMatrixTest {
         } finally { scope.cancel() }
     }
 
-    /** MainActivity's BackHandler with no route step registered: navigateBack(), or false when the activity leaves the app. */
+    /** MainActivity's BackHandler with no route step registered: navigateSystemBack(), or false when the activity leaves the app. */
     private fun ApplicationController.androidBack(): Boolean {
         if (!state.value.systemBackStaysInApp()) return false
-        navigateBack(); return true
+        navigateSystemBack(); return true
     }
 
     private fun signedIn(screen: Screen, navBack: List<Screen> = emptyList()) =
@@ -59,18 +59,35 @@ class BackMatrixTest {
         }
     }
 
-    @Test fun homeIsTheAndroidRootButDesktopAndBrowserStillPopTheirHistory() {
+    @Test fun homeBacksToProfilesOnAndroidButDesktopAndBrowserPopTheirHistory() {
+        // app#109 (D1 reversed): Android/TV Back on Home opens the profile picker.
+        controller(signedIn(Screen.Home)) { c ->
+            assertTrue(c.state.value.systemBackStaysInApp(), "Android/TV Back on Home must open Profiles")
+            assertTrue(c.androidBack())
+            assertEquals(Screen.Profiles, c.state.value.screen)
+        }
+        // Desktop and browser keep Home's history pop via navigateBack.
         controller(signedIn(Screen.Home, navBack = listOf(Screen.Movies))) { c ->
-            assertFalse(c.state.value.systemBackStaysInApp(), "Android/TV Back on Home leaves the app (D1)")
             assertTrue(c.state.value.canNavigateBack())
             c.navigateBack()
             assertEquals(Screen.Movies, c.state.value.screen)
         }
         controller(signedIn(Screen.Home)) { c ->
-            assertFalse(c.state.value.systemBackStaysInApp())
             assertFalse(c.state.value.canNavigateBack(), "Home without history has nothing to go back to")
             c.navigateBack()
             assertEquals(Screen.Home, c.state.value.screen)
+        }
+    }
+
+    @Test fun profilesReachedFromHomeLeavesTheAppWithNoBounce() {
+        controller(signedIn(Screen.Home)) { c ->
+            assertTrue(c.androidBack(), "Android/TV Back on Home opens Profiles")
+            assertEquals(Screen.Profiles, c.state.value.screen)
+            // Back there leaves the app: the handler is disabled, so the system handles it.
+            assertFalse(c.state.value.systemBackStaysInApp(), "Back on the picker reached from Home leaves the app")
+            assertFalse(c.state.value.canNavigateBack(), "no Home<->Profiles bounce")
+            assertFalse(c.androidBack(), "the activity leaves, the app does not navigate")
+            assertEquals(Screen.Profiles, c.state.value.screen)
         }
     }
 

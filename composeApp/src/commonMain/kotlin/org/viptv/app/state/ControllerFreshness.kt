@@ -4,6 +4,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
+import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.HomeRow
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.RowState
 import org.viptv.engine.wire.Scope
@@ -76,10 +78,13 @@ fun ApplicationController.freshen() {
     else if (freshness.checkDue(polling = false)) requestQuiet(QuietWork.Check)
 }
 
+/** Home and its full Continue Watching list (app#114) poll; other pages refresh on return and after playback. */
+private val POLLED_SCREENS = setOf(Screen.Home, Screen.ContinueWatching)
+
 /** While Home is visible: poll the revisions, and rebuild an aged Home once the viewer is idle. */
 internal fun ApplicationController.freshnessTick() {
     val state = mutable.value
-    if (!freshness.active() || state.screen != Screen.Home || state.home == null || state.selectedProfile == null) return
+    if (!freshness.active() || state.screen !in POLLED_SCREENS || state.home == null || state.selectedProfile == null) return
     if (freshness.homeStale() && freshness.idle()) requestQuiet(QuietWork.Refresh)
     else if (freshness.checkDue(polling = true)) requestQuiet(QuietWork.Check)
 }
@@ -197,17 +202,42 @@ private fun ApplicationController.publishHome(fresh: HomeSnapshot?) {
 internal fun mergeHome(current: HomeSnapshot?, fresh: HomeSnapshot?): HomeSnapshot? {
     if (current == null || fresh == null || current.scope.owner() != fresh.scope.owner()) return fresh
     val shown = current.rows.associateBy { it.id }
-    return fresh.copy(rows = fresh.rows.map { row ->
-        val old = shown[row.id]
-        if (old == null || row.state != RowState.READY || old.state != RowState.READY || row.pageQuery() == null ||
-            row.browse != old.browse || old.cards.size <= row.cards.size) row
-        else row.copy(cards = (row.cards + old.cards).distinctBy(::cardLookupKey), next_cursor = old.next_cursor)
-    })
+    // The billboard is the surface the viewer is already looking at, and a
+    // rebuild's metadata pass has a deadline: one that comes back without
+    // artwork must not blank the art on screen, or the hero drops to its flat
+    // fill and loses its logo for the life of the screen (app#94).
+    val artwork = (current.featured + listOfNotNull(current.hero)).associateBy(::cardLookupKey)
+    fun kept(row: HomeRow) = row.copy(cards = row.cards.map { artworkOf(it, artwork[cardLookupKey(it)]) })
+    return fresh.copy(hero = fresh.hero?.let { artworkOf(it, artwork[cardLookupKey(it)]) },
+        featured = fresh.featured.map { artworkOf(it, artwork[cardLookupKey(it)]) },
+        rows = fresh.rows.map { row ->
+            val old = shown[row.id]
+            if (old == null || row.state != RowState.READY || old.state != RowState.READY || row.pageQuery() == null ||
+                row.browse != old.browse || old.cards.size <= row.cards.size) kept(row)
+            else kept(row.copy(cards = (row.cards + old.cards).distinctBy(::cardLookupKey), next_cursor = old.next_cursor))
+        })
+}
+
+/**
+ * A title keeps the artwork it is already shown with when a rebuild leaves it
+ * out; art the rebuild does bring wins, and a blank URL is no art at all. The
+ * card is returned untouched when it needs nothing, so a rebuild keeps the same
+ * instances for everything it did not sparsen.
+ */
+private fun artworkOf(card: Card, shown: Card?): Card {
+    if (shown == null) return card
+    fun kept(fresh: String?, current: String?) = fresh?.takeIf { it.isNotBlank() } ?: current
+    val landscape = kept(card.landscape, shown.landscape)
+    val poster = kept(card.poster, shown.poster)
+    val logo = kept(card.logo, shown.logo)
+    if (landscape == card.landscape && poster == card.poster && logo == card.logo) return card
+    return card.copy(landscape = landscape, poster = poster, logo = logo)
 }
 
 private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner) {
     when (mutable.value.screen) {
         Screen.Library -> if (mutable.value.libraryPage != null && current(owner)) loadLibraryPage(refresh = true)
+        Screen.ContinueWatching -> reloadVisibleContinueWatching(owner)
         Screen.History -> {
             val history = owner.local?.history(owner.profile) ?: requireNotNull(owner.remote).history(owner.profile)
             if (current(owner) && mutable.value.screen == Screen.History) mutable.value = mutable.value.copy(history = history)

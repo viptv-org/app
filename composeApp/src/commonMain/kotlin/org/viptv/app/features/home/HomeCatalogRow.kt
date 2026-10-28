@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -32,7 +33,9 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     focus: (Card) -> Unit, open: (Card) -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false,
     play: (Card) -> Unit = open,
     /** The page gutter: the title and arrows sit inside it, the cards scroll out to the screen edges. */
-    gutter: Dp = 0.dp) {
+    gutter: Dp = 0.dp,
+    /** Continue Watching only: the full list holds more than the row, so the row ends with "See all" (app#114). */
+    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
     // Home only composes rows with content; this guard keeps a direct caller
     // from drawing a heading with no shelf under it.
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
@@ -52,9 +55,18 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     // same name twice.
     val cards = row.cards.distinctBy(::cardLookupKey)
         .distinctBy { it.title.trim().lowercase() to it.metadata?.year }
+    val endCard = continueMore?.takeIf { row.id == CONTINUE_ROW }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically) {
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
+            // The row title's "See all" link, beside the arrows; the end card is the same action.
+            if (endCard != null && !television) {
+                Text("See all", Modifier.clip(RoundedCornerShape(6.dp))
+                    .pointerClickable(role = androidx.compose.ui.semantics.Role.Button, shape = RoundedCornerShape(6.dp), onClick = seeAll)
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                    color = Palette.secondary, fontSize = (if (tablet) 15f else 14f).sp, fontWeight = FontWeight.Medium)
+                if (!compact && cards.isNotEmpty()) Spacer(Modifier.width(12.dp))
+            }
             if (!compact && !television && cards.isNotEmpty()) {
                 CarouselArrow(false, list.canScrollBackward) {
                     scope.launch { list.animateScrollToItem(carouselPageTarget(list.layoutInfo, forward = false)) }
@@ -89,6 +101,15 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                             showFocusOutline = showFocusOutline,
                             watchedBadgeSize = if (television) 34.dp * scale else null)
                     }
+                }
+                if (endCard != null) item(key = SEE_ALL_KEY) {
+                    val bringIntoView = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+                    SeeAllCard(endCard, width, seeAll, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
+                        cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp,
+                        showFocusOutline = showFocusOutline,
+                        modifier = Modifier.bringIntoViewRequester(bringIntoView).onFocusChanged {
+                            if (it.isFocused && !television) scope.launch { bringIntoView.bringIntoView() }
+                        })
                 }
             }
             RowState.PENDING -> LazyRow(contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
