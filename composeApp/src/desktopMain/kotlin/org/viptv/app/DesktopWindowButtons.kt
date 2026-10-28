@@ -5,20 +5,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
-import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -54,14 +53,20 @@ internal fun DesktopWindowButtons(
     }
 }
 
+// app#93: window controls are native chrome, not TV controls. Hover/press use the
+// native palette (Close #E81123 → #F1707A, the others an 8 % → 12 % white wash),
+// and they never draw the board's outside focus ring, which was clipped by the
+// window edge and overlapped its neighbour.
+private val WindowCloseHover = Color(0xFFE81123)
+private val WindowClosePress = Color(0xFFF1707A)
+private val WindowButtonHover = Color.White.copy(alpha = .08f)
+private val WindowButtonPress = Color.White.copy(alpha = .12f)
+
 @Composable
 private fun TrafficLight(color: Color, label: String, action: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
-    var focused by remember { mutableStateOf(false) }
     Box(Modifier.size(12.dp)
-        .onFocusChanged { focused = it.isFocused }
-        .tvFocusOutline(focused, 6.dp, darkGap = 2.dp, width = 2.dp)
         .background(if (hovered) color.copy(alpha = .85f) else color, CircleShape)
         .hoverable(interaction)
         .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action, shape = CircleShape, hover = null))
@@ -71,11 +76,14 @@ private fun TrafficLight(color: Color, label: String, action: () -> Unit) {
 private fun WindowButton(icon: DrawableResource?, label: String, action: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
-    var focused by remember { mutableStateOf(false) }
-    val background = if (!hovered) Color.Transparent else if (label == "Close") Color(0xFFE81123) else Color.White.copy(alpha = .08f)
+    val pressed by interaction.collectIsPressedAsState()
+    val close = label == "Close"
+    val background = when {
+        pressed -> if (close) WindowClosePress else WindowButtonPress
+        hovered -> if (close) WindowCloseHover else WindowButtonHover
+        else -> Color.Transparent
+    }
     Box(Modifier.width(46.dp).fillMaxHeight()
-        .onFocusChanged { focused = it.isFocused }
-        .tvFocusOutline(focused, 4.dp, darkGap = 2.dp, width = 2.dp)
         .background(background).hoverable(interaction)
         .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action),
         contentAlignment = Alignment.Center) {

@@ -7,7 +7,9 @@ import androidx.compose.ui.unit.Density
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
+import io.ktor.http.content.TextContent
 import kotlinx.coroutines.*
+import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import java.io.File
@@ -29,10 +31,13 @@ class DevicePairingDenialUiTest {
     private class FakeServer {
         val codes = AtomicInteger(); val polls = AtomicInteger(); val pollsAfterDenial = AtomicInteger()
         val denied = AtomicBoolean()
+        /** Each `/api/auth/device/code` request body, so "New code" can be held to the carried code (app#129). */
+        val codeBodies = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
         fun connection(origin: String, store: RemoteSessionStore) = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             val (body, status) = when (request.url.encodedPath) {
                 "/api/auth/device/code" -> {
                     denied.set(false)
+                    codeBodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
                     val code = "ABCD-%04d".format(codes.incrementAndGet())
                     """{"device_code":"secret-$code","user_code":"$code","verification_uri":"https://watch.example/device","verification_uri_complete":"https://watch.example/device?code=$code","expires_in":600,"interval":1}""" to HttpStatusCode.OK
                 }
@@ -90,6 +95,9 @@ class DevicePairingDenialUiTest {
             probe.await("a fresh code") { probe.has("ABCD-0002") && probe.has(waiting) }
             assertFalse(probe.has(DECLINED), "a new code clears the declined state")
             assertEquals(2, server.codes.get())
+            assertFalse(server.codeBodies.first().containsKey("device_code"), "the first code request sends none")
+            assertEquals("secret-ABCD-0001", server.codeBodies.last().getValue("device_code").jsonPrimitive.content,
+                "New code sends the code the screen still showed, so the server expires it")
         } finally {
             controller.cancelDevicePairing(); scene.close(); scope.cancel()
         }

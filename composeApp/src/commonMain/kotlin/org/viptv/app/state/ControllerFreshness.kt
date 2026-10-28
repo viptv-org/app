@@ -78,10 +78,13 @@ fun ApplicationController.freshen() {
     else if (freshness.checkDue(polling = false)) requestQuiet(QuietWork.Check)
 }
 
+/** Home and its full Continue Watching list (app#114) poll; other pages refresh on return and after playback. */
+private val POLLED_SCREENS = setOf(Screen.Home, Screen.ContinueWatching)
+
 /** While Home is visible: poll the revisions, and rebuild an aged Home once the viewer is idle. */
 internal fun ApplicationController.freshnessTick() {
     val state = mutable.value
-    if (!freshness.active() || state.screen != Screen.Home || state.home == null || state.selectedProfile == null) return
+    if (!freshness.active() || state.screen !in POLLED_SCREENS || state.home == null || state.selectedProfile == null) return
     if (freshness.homeStale() && freshness.idle()) requestQuiet(QuietWork.Refresh)
     else if (freshness.checkDue(polling = true)) requestQuiet(QuietWork.Check)
 }
@@ -229,6 +232,7 @@ private fun artworkOf(card: Card, shown: Card?): Card {
 private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner) {
     when (mutable.value.screen) {
         Screen.Library -> if (mutable.value.libraryPage != null && current(owner)) loadLibraryPage(refresh = true)
+        Screen.ContinueWatching -> reloadVisibleContinueWatching(owner)
         Screen.History -> {
             val history = owner.local?.history(owner.profile) ?: requireNotNull(owner.remote).history(owner.profile)
             if (current(owner) && mutable.value.screen == Screen.History) mutable.value = mutable.value.copy(history = history)
