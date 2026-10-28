@@ -33,10 +33,9 @@ import subprocess
 import sys
 import tempfile
 import threading
+from collections import Counter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-
-from collections import Counter
 
 from playwright.sync_api import sync_playwright
 from PIL import Image
@@ -49,7 +48,7 @@ NOTICE_IN_DOM = """() => {
   const layer = document.querySelector('#viptv-ui-layer');
   return layer ? layer.textContent.trim() : '';
 }"""
-# The CSS colour of every element the notice's text actually paints with, and the page behind it.
+# The notice's computed text colour, the page background behind it, and the layer's layout.
 NOTICE_COLOURS = """() => {
   const layer = document.querySelector('#viptv-ui-layer');
   const body = document.body;
