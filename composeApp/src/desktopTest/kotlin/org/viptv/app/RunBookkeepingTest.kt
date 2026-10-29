@@ -1,6 +1,7 @@
 package org.viptv.app
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.*
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import java.util.concurrent.CountDownLatch
@@ -41,5 +42,20 @@ class RunBookkeepingTest {
                 scope.cancel()
             }
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test fun aReplacedRunEndsTheFindingStateItHeld() = runTest {
+        val controller = ApplicationController(this, store)
+        controller.mutable.value = ApplicationState(screen = Screen.Sources, selectedProfile = "profile", findingSources = true)
+        val held = CompletableDeferred<Unit>()
+        controller.run { held.await() }
+        advanceUntilIdle()
+        controller.run { }
+        advanceUntilIdle()
+        assertFalse(controller.state.value.busy)
+        assertFalse(controller.state.value.findingSources, "the run that ended was the selector's last owner")
+        held.complete(Unit)
+        advanceUntilIdle()
     }
 }

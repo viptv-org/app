@@ -115,7 +115,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     private fun settle(current: Long) {
         synchronized(runGate) {
             if (generation != current) return
-            mutable.value = mutable.value.copy(starting = false, busy = false,
+            mutable.value = mutable.value.copy(starting = false, busy = false, findingSources = false,
                 sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning)
         }
     }
