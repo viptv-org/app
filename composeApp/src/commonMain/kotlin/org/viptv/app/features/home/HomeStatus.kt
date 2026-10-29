@@ -18,7 +18,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.app.components.Button
 
-/** Home failures keep cached shelves available and provide an actual recovery action. */
 @Composable
 internal fun HomeStatus(home: HomeSnapshot?, error: String?, busy: Boolean, retry: () -> Unit,
     navigate: (Screen) -> Unit, modifier: Modifier = Modifier, television: Boolean = false, scale: Float = 1f, inline: Boolean = false) {

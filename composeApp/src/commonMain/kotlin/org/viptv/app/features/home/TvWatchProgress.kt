@@ -15,7 +15,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 
-/** The ZIP uses one continuous track, without Material's gap or end marker. */
 @Composable
 internal fun TvWatchProgress(progress: Double, modifier: Modifier, scale: Float, rounded: Boolean = false) {
     val fraction = if (progress.isFinite()) progress.toFloat().coerceIn(0f, 1f) else 0f

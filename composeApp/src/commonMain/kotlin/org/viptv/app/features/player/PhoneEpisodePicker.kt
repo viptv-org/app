@@ -25,7 +25,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.IconButton
 
-/** A loaded episode is usable only in the current title's exact metadata scope. */
 internal fun phonePlaybackEpisodes(current: Card?, episodes: List<Card>): List<Card> {
     val parent = current?.parent_identity ?: return emptyList()
     return episodes.filter { it.identity.kind == "series" && it.identity.episode != null &&
@@ -50,18 +49,14 @@ internal fun PhoneEpisodePicker(current: Card?, episodes: List<Card>, choose: (C
                     Text("Episodes", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     IconButton(close) { Icon(Lucide.X, "Close episodes", Modifier.size(20.dp)) }
                 }
-                // The Details episode cards, spaced as Details lists them: a row beside the still in a
-                // landscape sheet, stacked in a narrow one.
                 BoxWithConstraints(Modifier.weight(1f)) {
                     val wide = maxWidth >= 360.dp
                     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         itemsIndexed(episodes, key = { _, card -> cardLookupKey(card) }) { position, card ->
                             val active = current != null && cardLookupKey(card) == cardLookupKey(current)
                             DetailEpisodeCard(card, phone = wide, play = {
-                                // A queued click cannot dispatch an episode removed or remapped by a newer snapshot.
                                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(card) }?.let(latestChoose)
                             }, modifier = Modifier.fillMaxWidth().then(if (position == index) Modifier.focusRequester(initial) else Modifier)
-                                // No outer padding: the whole highlighted card stays the tap target.
                                 .semantics { selected = active }.background(if (active) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp)),
                                 playing = active)
                         }

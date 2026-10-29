@@ -32,7 +32,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
 
-/** M3Title: full-width artwork, overlapping logo, then a full-width playback action. */
 @Composable
 internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
     resumeEpisode: Card? = null) {
@@ -50,7 +49,6 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
             MediaMetadata(card, fontSize = 13f, lineHeight = 19f)
-            // Board pill: coordinates left-aligned, time left hard right, progress underline inside.
             val resume = resumeEpisode ?: card.takeIf(::resuming)
             val progress = resume?.progress?.takeIf { resuming(resume) }
             val remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel)

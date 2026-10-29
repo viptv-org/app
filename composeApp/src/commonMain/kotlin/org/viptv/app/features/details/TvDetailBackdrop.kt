@@ -11,7 +11,6 @@ import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
-/** One sharp cached surface follows absolute scrolling across lazy-item boundaries. */
 @Composable
 internal fun TvDetailBackdrop(card: Card?, scale: Float, scrollPixels: () -> Float) {
     Box(Modifier.fillMaxSize().background(Palette.background)) {
@@ -19,8 +18,7 @@ internal fun TvDetailBackdrop(card: Card?, scale: Float, scrollPixels: () -> Flo
             translationY = -scrollPixels()
             compositingStrategy = CompositingStrategy.Offscreen
         }) {
-            // The card's landscape can be a dead link (metahub 307s land on a 404):
-            // fall back to the poster when the backdrop's first choice fails.
+            // A card's landscape can be a dead link, so fall back to the poster when the backdrop's first choice fails.
             var artFailed by remember(card?.identity) { mutableStateOf(false) }
             val art = if (artFailed) card?.poster ?: card?.landscape else card?.landscape ?: card?.poster
             BufferedArtwork(art, Modifier.fillMaxSize(),

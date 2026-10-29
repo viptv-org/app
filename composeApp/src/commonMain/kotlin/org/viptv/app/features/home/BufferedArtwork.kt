@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.filterNotNull
 
 internal data class LoadedArtwork(val url: String, val painter: Painter)
 
-/** Keep decoded artwork visible during loading; fade bitmap paints without a full-size offscreen texture. */
 @Composable
 internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}, onError: (String) -> Unit = {}) {
     if (!org.viptv.app.components.LocalTvFocusAnchoring.current) {
@@ -44,8 +43,7 @@ internal fun ArtworkDissolve(ready: LoadedArtwork?, modifier: Modifier, alignmen
     val fade = remember { Animatable(1f) }
     val latest by rememberUpdatedState(ready)
     val readyCallback by rememberUpdatedState(onReady)
-    // Finish each short dissolve before taking the newest ready image. Cancelling
-    // midway promotes a partially transparent image to opaque and visibly flashes.
+    // Finish each short dissolve before taking the newest ready image: cancelling midway promotes a half-transparent image to opaque and flashes.
     LaunchedEffect(Unit) {
         snapshotFlow { latest }.filterNotNull().conflate().collect { ready ->
             if (ready.url != shown?.url) {
@@ -59,8 +57,7 @@ internal fun ArtworkDissolve(ready: LoadedArtwork?, modifier: Modifier, alignmen
         }
     }
     Box(modifier) {
-        // Source-over dissolve: keep the opaque base beneath the incoming
-        // image. Fading both layers exposes the dark background at mid-transition.
+        // Keep the opaque base beneath the incoming image: fading both layers exposes the dark background mid-transition.
         outgoing?.let { Image(it.painter, null, Modifier.fillMaxSize().graphicsLayer {
             alpha = 1f; compositingStrategy = CompositingStrategy.ModulateAlpha
         }, contentScale = ContentScale.Crop, alignment = alignment) }
@@ -70,7 +67,6 @@ internal fun ArtworkDissolve(ready: LoadedArtwork?, modifier: Modifier, alignmen
     }
 }
 
-// Non-TV hero surfaces retain their existing timing and request behavior.
 @Composable
 private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}, onError: (String) -> Unit = {}) {
     val size = rememberConstraintsSizeResolver()
@@ -94,9 +90,7 @@ private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: A
         if (shown != null) { fade.animateTo(1f, tween(200)); outgoing = null }
     }
     Box(modifier.then(size)) {
-        // True crossfade: the outgoing plane leaves as the incoming one
-        // arrives. Holding the outgoing at full alpha while the incoming fades
-        // in stacked both images — a bright flash mid-swap, then a hard cut.
+        // A true crossfade sends the outgoing plane out as the incoming one arrives: holding it at full alpha stacks both images and flashes.
         outgoing?.let { Image(it.painter, null, Modifier.fillMaxSize().graphicsLayer {
             alpha = 1f - fade.value; compositingStrategy = CompositingStrategy.ModulateAlpha
         }, contentScale = ContentScale.Crop, alignment = alignment) }

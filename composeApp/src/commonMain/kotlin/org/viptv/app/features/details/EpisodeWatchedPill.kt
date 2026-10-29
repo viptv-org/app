@@ -19,22 +19,11 @@ import org.viptv.app.components.isWatched
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
-/**
- * The server marks an episode the selected profile finished with the same
- * badge as a watched title. Only that authoritative fact counts; no local
- * completion threshold.
- */
 internal fun Card.watchedEpisode(): Boolean = isWatched()
 
-/** Episode art labels never repeat the Watched fact the caption pill shows. */
 internal fun Card.episodeArtLabel(): String? =
     badges.firstOrNull { !it.equals("Simkl", true) && !it.equals(WATCHED_BADGE, true) }
 
-/**
- * AND-EPISODE-WATCHED-001: a noninteractive check + `Watched` pill beside the
- * episode caption. Surface-3 ground, primary text, accent check, pill radius;
- * 32 px tall on TV (18 px text, 20 px icon), 24 dp on phone (11 sp, 14 dp).
- */
 @Composable
 internal fun EpisodeWatchedPill(television: Boolean, scale: Float = 1f, modifier: Modifier = Modifier) {
     val unit = if (television) scale else 1f

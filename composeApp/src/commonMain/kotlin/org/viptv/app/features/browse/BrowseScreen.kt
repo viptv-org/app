@@ -71,13 +71,11 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         val applied = remember(facets, query) { appliedFacets(facets, query).size }
         val catalog = controls?.selectedCatalog(query)
         val loading = busy || (loadedCards == null && home == null)
-        // Server-supplied facets already include Sort; a second local sort would contradict them.
         val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
             controls?.controls?.any { it.id == "sort" } == true
         Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(screen.name, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            // One filter bar (app#117): the catalog and every facet are dropdown chips.
             if (loading && controls == null) BrowseHeaderSkeleton()
             else BrowseFilterBar(controls, query, screen == Screen.Discover, filterChanged, multipleChanged, applyQuery,
                 catalogOpen, gutter = gutter) {
@@ -86,9 +84,6 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                 }
             }
             if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
-            // Column count from the boards: M3Browse is 3 across on a phone,
-            // D3Browse is 6 across at desktop width and 4 in its narrower
-            // variant. Cards fill their cell (minmax(0,1fr)), never a fixed px.
             val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
             val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
             if (error != null && cards.isEmpty()) BrowseErrorState(catalog, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
@@ -107,10 +102,8 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     }
 }
 
-/** The local order when the provider offers no Sort of its own. */
 private val LocalSorts = listOf("Popular", "A–Z", "Z–A").map { SelectOption(it, it) }
 
-/** `M3BrowseLoading`: the filter bar's chips before the discovery controls have arrived. */
 @Composable
 private fun BrowseHeaderSkeleton() {
     val shimmer = rememberTvLoadingShimmer(1f)
@@ -119,7 +112,6 @@ private fun BrowseHeaderSkeleton() {
     }
 }
 
-/** `M3BrowseLoading`: twelve 2:3 placeholders in the same grid the results use. */
 @Composable
 private fun BrowseSkeletonGrid(columns: GridCells, modifier: Modifier) {
     val shimmer = rememberTvLoadingShimmer(1f)
@@ -129,7 +121,6 @@ private fun BrowseSkeletonGrid(columns: GridCells, modifier: Modifier) {
     }
 }
 
-/** `M3BrowseEmpty`: 30dp icon, 22sp title, one paragraph, then the recovery action. */
 @Composable
 private fun BrowseEmptyState(catalog: DiscoveryCatalog?, filters: Int, modifier: Modifier, clearAll: () -> Unit) {
     Column(modifier.fillMaxWidth().padding(top = 90.dp, start = 20.dp, end = 20.dp),
@@ -149,7 +140,6 @@ private fun emptyBody(catalog: DiscoveryCatalog?, filters: Int): String {
     else "No titles match these filters. Removing the newest one usually helps."
 }
 
-/** `M3BrowseError`: Try again re-runs the same query; the catalog list is the escape hatch. */
 @Composable
 private fun BrowseErrorState(catalog: DiscoveryCatalog?, error: String, modifier: Modifier,
     retry: () -> Unit, chooseCatalog: (() -> Unit)?) {
@@ -166,7 +156,6 @@ private fun BrowseErrorState(catalog: DiscoveryCatalog?, error: String, modifier
     }
 }
 
-/** Board button geometry: 44dp tall, 12dp radius, 18dp side padding (`M3BrowseEmpty`/`M3BrowseError`). */
 @Composable
 private fun BoardAction(label: String, primary: Boolean, run: () -> Unit, icon: ImageVector? = null) {
     val interaction = remember { MutableInteractionSource() }

@@ -22,12 +22,9 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
     var editing by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     var deleting by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     if (television) {
-        // The screen hands down the canvas scale (screen/1920); deriving it from
-        // this pane again shrank every card below its content and clipped them.
+        // The screen hands down the canvas scale (screen/1920): deriving it from this pane again shrinks every card and clips it.
         val schema = editing
         if (schema != null) {
-            // The board's form is a full-screen page: no settings sidebar. A
-            // focusable window-level popup covers the shell, like the remove dialog.
             androidx.compose.ui.window.Popup(
                 onDismissRequest = { if (!busy) editing = null },
                 properties = androidx.compose.ui.window.PopupProperties(focusable = true),

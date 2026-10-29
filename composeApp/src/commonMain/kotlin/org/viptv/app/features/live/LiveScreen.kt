@@ -43,8 +43,6 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
         Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = if (phone) 8.dp else 28.dp * scale),
             verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
             if (sources.size > 1 && sourceChanged != null) LiveSourceSelector(sources, selectedSource, sourceChanged, enabled = !busy)
-            // NAV-24: the guide/connection notice belongs in the page flow,
-            // under the chips, not as an overlay on top of them.
             statusNotice?.let { message ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Text(message, Modifier.weight(1f), color = Palette.secondary, fontSize = if (phone) 13.sp else 15.sp)

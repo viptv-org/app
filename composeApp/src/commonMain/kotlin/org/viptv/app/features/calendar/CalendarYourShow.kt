@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Bookmark
 import com.composables.icons.lucide.Lucide
 
-/** Marks a row from the profile's own series (My List's bookmark), beside the public schedule's rows. */
 @Composable
 internal fun CalendarYourShow(size: Float, color: Color, modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy((size * 0.3f).dp)) {

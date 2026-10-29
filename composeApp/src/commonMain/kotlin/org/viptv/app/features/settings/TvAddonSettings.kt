@@ -36,11 +36,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
     Column(verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         TvSettingsHeading("Add-ons", scale)
         Row(horizontalArrangement = Arrangement.spacedBy(60.dp * scale)) {
-            // The lazy list composes only the rows on screen, so the page's
-            // TvFocusColumn clamp (which only knows composed rows) would stop
-            // Down at the last visible row. Inside the list, its own focus
-            // search moves through every row and scrolls each into view; the
-            // ends are cancelled explicitly so focus never falls to the sidebar.
+            // Inside the list its own focus search moves through every row: the page's TvFocusColumn clamp only knows composed rows and stops Down at the last visible one.
             CompositionLocalProvider(LocalTvColumnFocus provides null) {
                 LazyColumn(Modifier.width(760.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false),
                     contentPadding = PaddingValues(top = tvRingReach(scale), bottom = TvAddonListBottom * scale),
@@ -96,5 +92,4 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
     }
 }
 
-/** Room under the last row, so it can rise clear of the TV's overscan edge. */
 private val TvAddonListBottom = 72.dp

@@ -20,33 +20,20 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import kotlinx.coroutines.launch
 
-/** One attempt to put focus in the episode shelf; the Details page retries a [Pending] one each frame. */
 internal enum class ShelfFocus {
     Focused,
-    /** The target is in the list but not placed yet. */
     Pending,
-    /** A return (app#66) has no target: neither the last focused nor the continued episode is in the list. */
     Missing,
 }
 
-/** Which episode the Details page is asking the shelf for. */
 internal enum class ShelfLanding {
-    /** Any episode, else the season selector: the viewer pressed Down into the shelf. */
     Any,
-    /** The last focused episode, else the continued one, and never another (Back to a page they saw, app#66). */
     Return,
-    /** The continued episode itself (Back to a page first opened behind the selector, app#112). */
     Resume,
 }
 
-/**
- * The shelf's focus request, published to the Details page that hosts it. [ShelfLanding.Any]
- * takes any episode, else the season selector. [ShelfLanding.Return] and
- * [ShelfLanding.Resume] take a named episode and never another.
- */
 internal class ShelfFocusHandle { var request: ((landing: ShelfLanding) -> ShelfFocus)? = null }
 
-/** How many frames a TV focus request waits for lazy children to be placed. */
 internal const val TV_FOCUS_RETRY_FRAMES = 32
 
 @Composable
@@ -57,8 +44,6 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     paging: Boolean = true) {
     val groups = remember(episodes, seasonIndex) { detailSeasons(episodes, seasonIndex) }
     val seasons = groups.map { it.number }
-    // The viewer's season once they pick one or move into the shelf; until then the
-    // continued episode's season as soon as Details know it (app#40), else the first numbered one.
     var kept by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf(false) }
     var selected by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf<Long?>(null) }
     val activeSeason = when {
@@ -70,8 +55,6 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     val visible = group?.episodes.orEmpty()
     var lastFocused by rememberSaveable(parent.provider_id, parent.identity.id, activeSeason) { mutableStateOf<String?>(null) }
     val episodeRows = key(parent.identity, activeSeason) { rememberLazyListState() }
-    // Place the episode the viewer last focused, else the continued one, at the start of the
-    // row so focus can land on it. Once per composition: the row's position isn't saved.
     var landed by remember(parent.identity) { mutableStateOf(false) }
     val landingIndex = visible.indexOfFirst { episodeKey(it) == lastFocused }.takeIf { it >= 0 } ?: resume.indexIn(visible)
     LaunchedEffect(episodeRows, landingIndex) {
@@ -90,9 +73,6 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     val scope = rememberCoroutineScope()
     fun requestFocus(landing: ShelfLanding): ShelfFocus {
         if (landing == ShelfLanding.Any) return if (focusEpisode() || seasonFocus.requestPlacedFocus()) ShelfFocus.Focused else ShelfFocus.Pending
-        // The landing target: an unplaced one is brought into the row first. A page first
-        // opened behind the selector (app#112) takes the continued episode even when an
-        // earlier visit left a different episode remembered.
         val index = (if (landing == ShelfLanding.Resume) resume.indexIn(visible) else landingIndex) ?: return ShelfFocus.Missing
         if (targets[episodeKey(visible[index])]?.requestPlacedFocus() == true) return ShelfFocus.Focused
         if (episodeRows.layoutInfo.visibleItemsInfo.none { it.index == index }) scope.launch { episodeRows.scrollToItem(index) }
@@ -105,8 +85,6 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
         pendingEntry = wanted to ++entrySequence
         return true
     }
-    // A season selection can replace lazy children or fetch its first page. Keep
-    // the Down intent until those children are placed, without needing an Up/Down detour.
     LaunchedEffect(pendingEntry, activeSeason, visible, selectorHasFocus) {
         val pending = pendingEntry ?: return@LaunchedEffect
         if (!selectorHasFocus || pending.first != activeSeason || visible.isEmpty()) return@LaunchedEffect
@@ -145,7 +123,6 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                         TvEpisodeCard(resume.shown(episode), scale, { play(episode) },
                             {
                                 lastFocused = episodeKey(episode)
-                                // The viewer is in the shelf: their season stays put.
                                 if (!kept) { kept = true; selected = activeSeason }
                                 focused()
                             },

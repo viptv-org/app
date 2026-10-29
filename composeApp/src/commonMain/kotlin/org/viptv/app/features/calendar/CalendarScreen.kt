@@ -20,26 +20,17 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
-/** Shown when the server has no calendar for this profile (HTTP 422). */
 internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
 
-/** The empty-day line; with Your shows chosen it says that none of the viewer's shows air. */
 internal fun calendarEmptyDay(filter: CalendarFilter?) =
     if (filter == CalendarFilter.YourShows) "None of your shows air this day." else "No releases for this day."
 
-/**
- * The merged schedule: the profile's own series ([CalendarEntry.library]) and the public
- * schedule, by date. [sources] are the sources the server answered from; with both, the
- * controls offer All / Your shows (All first). [openEntry] opens a chosen row; without it
- * a row opens its title card.
- */
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
     type: String = "series", week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
     sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null) {
-    // A fresh visit starts on All; so does a window where the choice is not offered.
     var chosen by remember { mutableStateOf(CalendarFilter.All) }
     val offered = calendarFilterOffered(entries, sources)
     LaunchedEffect(offered) { if (!offered) chosen = CalendarFilter.All }

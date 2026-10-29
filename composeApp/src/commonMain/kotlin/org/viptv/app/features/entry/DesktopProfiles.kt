@@ -66,9 +66,7 @@ private fun DesktopProfileTile(profile: Profile, busy: Boolean, initialFocus: Bo
     var focused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(profile.id, initialFocus) { if (initialFocus) focusRequester.requestFocus() }
-    // The avatar border is the tile's focus treatment. Material's focus layer
-    // would paint a second, rectangular one around the whole column, and a
-    // separate focusable() made the tile two focus stops.
+    // The avatar border is the tile's focus treatment; Material's focus layer would paint a second, rectangular one around the column.
     OwnFocusTreatment { Column(Modifier.width(148.dp).focusRequester(focusRequester).onFocusChanged { focused = it.isFocused }
         .pointerClickable(enabled = !busy, onClick = open), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(148.dp).border(2.dp, if (focused) Palette.text else Color.Transparent,

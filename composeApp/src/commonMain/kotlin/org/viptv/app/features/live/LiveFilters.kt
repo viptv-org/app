@@ -15,7 +15,6 @@ import org.viptv.app.components.edgeToEdgeScroll
 
 @Composable
 internal fun LiveFilters(categories: List<String>, selected: String, choose: (String) -> Unit, scale: Float = 1f, labels: Map<String, String> = emptyMap(), favoritesSelected: Boolean = false, favorites: (() -> Unit)? = null,
-    /** The page gutter the chips scroll out of, to the screen edges (app#63). */
     gutter: Dp = 0.dp) {
     org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         (listOf("All") + categories).distinct().forEach { category ->

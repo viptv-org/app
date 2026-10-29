@@ -36,18 +36,10 @@ import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
-/** Readable line length on tablets and browsers; phones use their full width. */
 private val contentWidth = 760.dp
 
 private class Entry(val key: String, val content: @Composable () -> Unit)
 
-/**
- * IMP-001 guided Stremio import, identical on browser, Android phone and Android tablet.
- * The password lives only in this composition's field (never saveable state) and is handed to
- * one preview request, then cleared. The screen is one lazy list so thousands of review rows
- * only compose what is on screen; the Back/Next row of the add-on, item and confirm stages stays
- * pinned below the list so it is reachable without scrolling past every row.
- */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StremioImportScreen(session: StremioImportSession?, profileName: String?, compact: Boolean = false,
@@ -145,7 +137,6 @@ internal fun StremioImportScreen(session: StremioImportSession?, profileName: St
                 }
                 if (state.failedAddons.isNotEmpty()) add("failed-summary") {
                     val count = state.failedAddons.size
-                    // The "Uncheck failed add-ons" action lives in the pinned action row, reachable from any scroll position.
                     Text(if (count == 1) "1 add-on couldn't be checked. Uncheck it, or continue without add-ons."
                         else "$count add-ons couldn't be checked. Uncheck them, or continue without add-ons.",
                         Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Palette.danger)
@@ -341,7 +332,6 @@ private fun ImportNote(text: String) = Text(text, fontSize = 13.sp, lineHeight =
 private fun ImportActions(content: @Composable FlowRowScope.() -> Unit) =
     FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = content)
 
-/** Error, status and busy copy sit beside the actions, where the user's attention is after pressing one. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ImportFooter(state: StremioImportState, hints: List<Pair<String, Boolean>> = emptyList(), content: @Composable FlowRowScope.() -> Unit) =
@@ -362,7 +352,6 @@ private suspend fun androidx.compose.foundation.lazy.LazyListState.toTop() {
     if (firstVisibleItemIndex != 0 || firstVisibleItemScrollOffset != 0) { scrollToItem(0); afterLayout() }
 }
 
-/** Four segments mirror "Step N of 4"; the text carries the meaning for assistive technology. */
 @Composable
 private fun StepBar(step: Int) {
     Row(Modifier.widthIn(max = 320.dp).fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -372,7 +361,6 @@ private fun StepBar(step: Int) {
     }
 }
 
-/** Long verifications set expectations up front and show that work is still happening. */
 @Composable
 private fun BusyStatus(busy: StremioImportBusy) {
     var elapsed by remember(busy) { mutableStateOf(0) }
@@ -385,16 +373,10 @@ private fun BusyStatus(busy: StremioImportBusy) {
     }
 }
 
-/**
- * The server's fill of imported titles' Details cards. Nothing here is focusable and it never blocks
- * the actions: the fill continues on the server when the viewer leaves. The first line is one polite
- * live region whose text changes only when the phase does, so counts are not announced every poll.
- */
 @Composable
 private fun TitleDetailsStatus(details: StremioTitleDetails) {
     val running = details.phase == StremioDetailsPhase.Running
     val counted = details.total > 0
-    // A title is looked up even when no metadata add-on knows it; say so rather than claim every card is complete.
     val partly = details.phase == StremioDetailsPhase.Ready && details.filled != null && details.filled < details.total
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(when (details.phase) {
@@ -404,9 +386,7 @@ private fun TitleDetailsStatus(details: StremioTitleDetails) {
         }, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         if (running) {
             val share = if (counted) details.done.toFloat() / details.total else 0f
-            // Glides between reads (one every couple of seconds) so the bar keeps moving while titles fill.
             val shown by animateFloatAsState(share, tween(1_800, easing = LinearEasing), label = "title details")
-            // Until a first title is done there is nothing to measure yet; the indeterminate bar shows work is happening.
             if (counted && details.done > 0) LinearProgressIndicator({ shown },
                 Modifier.fillMaxWidth().semantics { stateDescription = "${details.done} of ${details.total} titles" }, color = Palette.accent)
             else LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
@@ -421,7 +401,6 @@ private fun TitleDetailsStatus(details: StremioTitleDetails) {
     }
 }
 
-/** Server previews last ten minutes; a large review should not expire as a surprise. */
 @Composable
 private fun ExpiryHint(expiresAt: Long) {
     var now by remember { mutableStateOf(epochMillis()) }

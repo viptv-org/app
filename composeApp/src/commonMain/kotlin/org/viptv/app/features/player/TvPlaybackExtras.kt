@@ -2,7 +2,6 @@ package org.viptv.app.features.player
 
 import org.viptv.engine.wire.Card
 
-/** Optional media facts supplied by the connection, rather than inferred from title strings. */
 data class TvPlaybackExtras(
     val sourceLabel: String? = null,
     val sourceQuality: String? = null,

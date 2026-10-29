@@ -20,14 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Text
 import org.viptv.app.theme.Palette
 
-/** W3Device card: 520px surface panel, centered, radius 18, 40px padding. */
 @Composable
 internal fun DeviceCard(compact: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     if (compact) {
-        // W3DeviceMobile: edge-to-edge column, 24px side padding, no card
-        // panel. The Column wraps its content height (like the desktop
-        // branch) instead of fillMaxSize: a size-filling Column clips its
-        // trailing children in the wasm canvas renderer.
+        // The Column wraps its content height: a size-filling Column clips its trailing children in the wasm canvas renderer.
         Box(Modifier.fillMaxSize().background(Palette.background), contentAlignment = Alignment.TopCenter) {
             Column(
                 Modifier.padding(horizontal = 24.dp).padding(top = 96.dp),
@@ -48,10 +44,8 @@ internal fun DeviceCard(compact: Boolean = false, content: @Composable ColumnSco
     }
 }
 
-/** 64x64 tile with the TV glyph, top of the W3Device card. */
 @Composable
 internal fun DeviceTile(size: Int = 64, icon: Int = 32) {
-    // Size is shared by both boards; the compact layout simply reuses it.
     Box(
         Modifier.size(size.dp).background(Color(0x14FFFFFF), RoundedCornerShape(18.dp)),
         contentAlignment = Alignment.Center,
@@ -60,7 +54,6 @@ internal fun DeviceTile(size: Int = 64, icon: Int = 32) {
     }
 }
 
-/** The TV glyph from the W3Device boards: rounded rect body plus antenna. */
 @Composable
 internal fun TvGlyph(modifier: Modifier, tint: Color, stroke: Float = 1.8f) {
     Canvas(modifier) {

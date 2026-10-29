@@ -14,7 +14,6 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
-/** W3Account: browser account navigation, distinct from native device settings. */
 @Composable
 internal fun AccountSettingsSidebar(selected: String, profiles: () -> Unit, stremioImport: Boolean = false, select: (String) -> Unit) {
     LazyColumn(Modifier.width(240.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(2.dp)) {

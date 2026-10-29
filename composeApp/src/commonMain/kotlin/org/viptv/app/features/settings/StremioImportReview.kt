@@ -51,15 +51,12 @@ private val reasons = mapOf(
     "secret_store_not_configured" to "Encrypted configuration storage is unavailable.",
     "vault_unavailable" to "Encrypted configuration storage is unavailable.",
     "unsupported_transport" to "This add-on uses an unsupported connection method.")
-/** Reasons are fixed codes; anything unknown gets generic copy rather than server text. */
 internal fun stremioReasonText(code: String?) = reasons[code] ?: "This entry needs more verified information and will be left unchanged."
-/** m:ss like the dashboard, with hours once a position passes an hour (feature-length movies). */
 internal fun stremioClock(seconds: Double): String {
     val total = seconds.toLong()
     val (h, m, s) = Triple(total / 3600, total % 3600 / 60, total % 60)
     return if (h > 0) "$h:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}" else "$m:${s.toString().padStart(2, '0')}"
 }
-/** Plain-language resources; metadata comes first because it is what helps verification. */
 internal fun stremioResourceText(resources: List<String>) = buildList {
     add(if ("meta" in resources) "Metadata available" else "No metadata resource")
     if ("catalog" in resources) add("Catalogs")
@@ -69,7 +66,6 @@ internal fun stremioResourceText(resources: List<String>) = buildList {
 
 @Composable
 internal fun StremioSummary(counts: Map<String, Int>, labels: List<Pair<String, String>>) {
-    // Two columns once there is room (tablet/browser); one wrapping column on phones.
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val columns = if (maxWidth >= 560.dp) 2 else 1
         Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
@@ -122,22 +118,16 @@ private val addonFailures = mapOf(
     "addon_unreachable" to "This add-on didn't respond. Try again or uncheck it.",
     "addon_manifest_invalid" to "This add-on returned an invalid description. Uncheck it.",
     "addon_checks_busy" to "VIPTV is checking other add-ons. Try again in a moment.")
-/** Fixed copy per failure category; no category keeps the dashboard copy, an unknown one gets generic copy. */
 internal fun stremioAddonFailureText(reason: String?) = when (reason) {
     null -> "Could not verify this add-on. Uncheck it or continue without add-ons."
     else -> addonFailures[reason] ?: "This add-on couldn't be checked. Uncheck it or try again."
 }
 
-/** Ordinal among add-ons sharing an exact name, in Stremio's own order; null when the name is unique. */
 internal fun stremioDuplicateOrdinals(addons: List<StremioAddon>): Map<String, Pair<Int, Int>> {
     val groups = addons.groupBy { it.name }.filterValues { it.size > 1 }
     return groups.values.flatMap { group -> group.mapIndexed { index, addon -> addon.id to (index + 1 to group.size) } }.toMap()
 }
 
-/**
- * One add-on choice. Several Stremio installs can share a name (one per debrid configuration),
- * so duplicates are numbered in Stremio's order; their private configuration is never shown.
- */
 @Composable
 internal fun StremioAddonRow(addon: StremioAddon, selected: Boolean, failed: Boolean, disabled: Boolean, ordinal: Pair<Int, Int>?,
     modifier: Modifier = Modifier, failure: String? = null, toggle: (Boolean) -> Unit) {
@@ -162,11 +152,6 @@ internal val stremioFilters = listOf("all" to "All items", "ready" to "Ready to 
     "needs_review" to "Needs review / unmatched", "selected" to "Included items", "excluded" to "Excluded items")
 internal const val stremioPageSize = 50
 
-/**
- * Search, filter and page for the named review, kept for the whole draft so a re-review keeps them.
- * Lowercased names are computed once per review so a keystroke over thousands of rows is one
- * linear pass; exclusions are a hash set, so filtering never goes quadratic.
- */
 @Stable
 internal class StremioItemQuery {
     var search by mutableStateOf("")
@@ -194,7 +179,6 @@ internal class StremioItemQuery {
         "selected" to items.count { it.selectable && it.id !in excluded }, "excluded" to excluded.size)
 }
 
-/** Live counts, search, status filters and bulk actions above the paged rows. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StremioItemControls(query: StremioItemQuery, items: List<StremioReviewItem>, filtered: List<StremioReviewItem>, page: Int,
@@ -227,7 +211,6 @@ internal fun StremioItemControls(query: StremioItemQuery, items: List<StremioRev
         }
         if (filtered.isEmpty()) Text(if (items.isNotEmpty()) "No items match this filter." else "No supported items were found.",
             Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 14.sp)
-        // Results are paged; say what the list below holds right after a search or filter change.
         else Text("Showing ${page * stremioPageSize + 1}–${minOf(filtered.size, (page + 1) * stremioPageSize)} of ${filtered.size} matching",
             Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 13.sp, color = Palette.secondary)
     }

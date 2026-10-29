@@ -19,7 +19,6 @@ import org.viptv.app.components.DropdownMenuItem
 internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, volume: Float,
     setVolume: (Float) -> Unit, speed: Double, setSpeed: (Double) -> Unit, close: () -> Unit, tracks: () -> Unit, seekEnabled: Boolean = true,
     streams: (() -> Unit)? = null, streamLabel: String? = null,
-    /** Series episodes only: plays the next episode straight away; disabled while none is known. */
     next: (() -> Unit)? = null, nextEnabled: Boolean = false) {
     var speeds by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

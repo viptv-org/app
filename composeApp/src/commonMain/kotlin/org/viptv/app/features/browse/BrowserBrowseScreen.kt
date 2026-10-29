@@ -43,11 +43,6 @@ import org.viptv.app.components.HoverFill
 import org.viptv.app.components.pointerHovered
 import androidx.compose.foundation.interaction.MutableInteractionSource
 
-/**
- * W3Browse entry point: the browser gets the board's page with the same filter bar as
- * every other layout. The card selection mirrors the shared browse screen (browse cards,
- * de-duplicated, filtered to the page's kind).
- */
 @Composable
 internal fun BrowserBrowseRoute(state: ApplicationState, controller: ApplicationController) {
     val cards = remember(state.browseCards, state.screen) {
@@ -66,11 +61,6 @@ internal fun BrowserBrowseRoute(state: ApplicationState, controller: Application
         multipleChanged = controller::browseSelections, applyQuery = controller::applyBrowse)
 }
 
-/**
- * W3Browse / W3BrowseEmpty / W3BrowseError: the title, the shared filter bar (app#117) and a
- * fixed grid. Every chip is a [org.viptv.engine.wire.QueryControl]; nothing is hard-coded
- * here, so a provider that drops or adds a facet just changes the bar.
- */
 @Composable
 internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: DiscoveryControls?, query: BrowseQuery,
     busy: Boolean, error: String?, more: (() -> Unit)?, open: (Card) -> Unit,
@@ -100,7 +90,6 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     }
 }
 
-/** One applied value, newest last: the empty state offers to remove it. */
 internal data class BrowserAppliedChip(val id: String, val value: String, val label: String, val multiple: Boolean)
 
 private fun browserApplied(facets: List<QueryControl>, query: BrowseQuery): List<BrowserAppliedChip> = appliedFacets(facets, query).flatMap { control ->

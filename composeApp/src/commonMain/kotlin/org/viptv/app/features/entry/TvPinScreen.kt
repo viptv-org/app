@@ -28,9 +28,7 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
     LaunchedEffect(forgot, restore, windowFocused) {
         if (!forgot && restore && windowFocused) { withFrameNanos { }; recovery.requestFocus(); restore = false }
     }
-    // Requesting focus in the first frame can run before the key is placed
-    // (the requester exists but is not attached yet), which left the PIN screen
-    // with no focused control at all. Retry until the target is laid out.
+    // Requesting focus in the first frame can run before the key is placed, leaving no focused control; retry until it is laid out.
     LaunchedEffect(busy) {
         if (busy) return@LaunchedEffect
         repeat(60) {

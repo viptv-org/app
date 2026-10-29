@@ -19,7 +19,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
-// Dedicated phone/TV/desktop layouts precede the wide connection fallback.
 @Composable
 fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit, desktop: Boolean = false, phone: Boolean = false,
     television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
@@ -39,7 +38,6 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
         return
     }
     var accountMode by remember { mutableStateOf<String?>(null) }
-    // Browser Back and Escape leave the create-account and recovery forms for sign-in, as their own Back does.
     val formOpen = browser && accountMode != null && register != null && recover != null
     DisposableEffect(formOpen) {
         backChanged(if (formOpen) ({ accountMode = null }) else null)
@@ -62,7 +60,6 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
             Text("Welcome back", style = MaterialTheme.typography.headlineLarge)
             Text("Sign in to your VIPTV server.", color = Palette.secondary)
             if (!browser) OutlinedTextField(server, { server = it }, Modifier.fillMaxWidth(), label = { Text("Server address") }, placeholder = { Text("https://your-server") }, singleLine = true)
-            // Enter moves from Username to Password and signs in from Password, as on any web sign-in (app#55, app#96).
             OutlinedTextField(username, { username = it }, Modifier.fillMaxWidth(), label = { Text("Username") }, singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { passwordField.requestFocus() }))
             OutlinedTextField(password, { password = it }, Modifier.fillMaxWidth().focusRequester(passwordField), label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(), singleLine = true,

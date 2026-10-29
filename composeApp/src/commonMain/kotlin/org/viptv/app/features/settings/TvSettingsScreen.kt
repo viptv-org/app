@@ -86,8 +86,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || unavailable != null || browserFallback) {
                 if (it == TvSettingsSection.Profiles) profiles() else section = it
             }
-            // Add-ons owns a LazyColumn (its own scroll + focus search); nesting it in
-            // the page's scrolling column would hand the list an infinite height.
+            // Add-ons owns a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
                     { installing = true }, { unavailable = "Add-on management" }, placeholderQr)
@@ -137,8 +136,6 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
         }
         if (leaving) TvLeaveConfirmation(local, scale, { leaving = false; leave() }, { leaving = false })
         choice?.let { TvSettingsChoiceDialog(it, scale) { choice = null } }
-        // Fallback dialogs still need an initial focus: the first remote press
-        // should never land on nothing.
         unavailable?.let { label ->
             val ok = remember { FocusRequester() }
             AlertDialog(onDismissRequest = { unavailable = null }, title = { Text(label) },

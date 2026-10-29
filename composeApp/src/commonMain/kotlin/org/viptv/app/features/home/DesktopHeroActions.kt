@@ -22,9 +22,6 @@ import org.viptv.app.components.Button
 
 @Composable
 internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> Unit, saved: Boolean) {
-    // DUI-06: every hero action needs hover *and* keyboard focus. Material draws
-    // a hover state layer; the ring is the board's `0 0 0 2px #0B0B0C, 0 0 0 4px
-    // #F4F2EE`, drawn through tvFocusOutline so it is paint-only (PERF-02).
     val playInteractions = remember { MutableInteractionSource() }
     val playHovered by playInteractions.collectIsHoveredAsState()
     val playFocused by playInteractions.collectIsFocusedAsState()
@@ -35,7 +32,6 @@ internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> 
     val saveHovered by saveInteractions.collectIsHoveredAsState()
     val saveFocused by saveInteractions.collectIsFocusedAsState()
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        // Light pill: board hover is pure #FFFFFF over #F4F2EE.
         Button(play, Modifier.width(140.dp).height(44.dp)
             .tvFocusOutline(playFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
             interactionSource = playInteractions, shape = RoundedCornerShape(12.dp),
@@ -44,7 +40,6 @@ internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> 
             Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp))
             Text("Play", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
-        // Secondary: board hover lifts #212124 to #34343A.
         Button(info, Modifier.height(44.dp)
             .tvFocusOutline(infoFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
             interactionSource = infoInteractions, shape = RoundedCornerShape(12.dp),

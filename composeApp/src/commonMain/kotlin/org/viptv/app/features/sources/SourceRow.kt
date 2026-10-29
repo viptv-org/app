@@ -26,11 +26,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.components.pointerClickable
 
-/**
- * A phone, tablet or desktop source row. [header] is the group label this row opens
- * (SRC-BEST-MATCH-001): it sits inside the row's focus target so keyboard focus brings
- * it into view, but presses on it never choose the source.
- */
 @Composable
 internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false,
     header: String? = null, bestMatch: Boolean = false, focusChanged: (Boolean) -> Unit = {}, headerMeasured: (Int) -> Unit = {}) {

@@ -39,8 +39,6 @@ internal fun TvPinKey(label: String, scale: Float, enabled: Boolean, requester: 
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     val shape = RoundedCornerShape(10.dp * scale)
-    // Tv3Pin's focused key is the light fill only; callers that want the family's
-    // outside outline (the email-code pad) keep the default ring = true.
     val light = enabled && focused
     val fill by animateColorAsState(when { enabled && pressed -> Palette.body; light -> Palette.text; else -> Color.White.copy(alpha = .09f) },
         tween(150), label = "PIN key fill")
@@ -48,9 +46,7 @@ internal fun TvPinKey(label: String, scale: Float, enabled: Boolean, requester: 
         tween(150), label = "PIN key content")
     Box(Modifier.size(width.dp * scale, 76.dp * scale).focusRequester(target)
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused }
-        // Tv3Pin keys paint focus inside their own cell (ring = false): the outside
-        // 4 px outline rows use would grow a 136 px key to 144 px and eat the keypad's
-        // 12 px pitch.
+        // Tv3Pin keys paint focus inside their own cell: the outside 4 px outline would grow a 136 px key to 144 px and eat the 12 px pitch.
         .tvFocusOutline(light && ring, 10.dp * scale, scale)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light && ring) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
@@ -62,7 +58,6 @@ internal fun TvPinKey(label: String, scale: Float, enabled: Boolean, requester: 
     }
 }
 
-/** Tv3Pin digit boxes: 88×104, radius 14, 18 px gaps; eight boxes once the PIN passes four digits. */
 @Composable
 internal fun TvPinDigits(pin: String, scale: Float, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {
@@ -78,7 +73,6 @@ internal fun TvPinDigits(pin: String, scale: Float, modifier: Modifier = Modifie
     }
 }
 
-/** Tv3Pin keypad: 3 × 4 of 136×76 keys, radius 10, 12 px gaps, empty first cell on the last row. */
 @Composable
 internal fun TvPinKeys(pin: String, scale: Float, busy: Boolean, first: FocusRequester?, digit: (String) -> Unit,
     erase: () -> Unit, submit: () -> Unit, modifier: Modifier = Modifier) {
