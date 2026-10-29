@@ -84,4 +84,8 @@ object DesktopBreakpoints {
     val heroArtMax = 774.dp
     val heroSummaryMax = 640.dp
     val heroSummaryWideMax = 800.dp
+    val heroShortViewport = 680.dp
+    val heroShortRowMin = 600.dp
+    const val heroShortArtFraction = 0.26f
+    val heroShortArtMax = 200.dp
 }
