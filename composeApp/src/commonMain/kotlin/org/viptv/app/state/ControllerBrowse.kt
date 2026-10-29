@@ -39,6 +39,7 @@ fun ApplicationController.browseMore() = run {
 }
 
 internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append: Boolean = false) {
+    if (!append) rememberNavigation(query)
     val profile = requireNotNull(mutable.value.selectedProfile)
     val controls = if (mutable.value.browseQuery.type == query.type && mutable.value.browseQuery.genre == query.genre) mutable.value.browseControls else null
     val scoped = controls ?: (local?.discoveryControls(profile, query.type) ?: requireNotNull(connection).discoveryControls(query.type, query.genre))

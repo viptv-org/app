@@ -15,7 +15,7 @@ import org.viptv.app.components.SelectOption
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryCatalog
 import org.viptv.app.connection.DiscoveryControls
-import org.viptv.app.connection.displayName
+import org.viptv.app.connection.catalogTitle
 import org.viptv.app.connection.forCatalog
 import org.viptv.app.connection.selectedCatalog
 import org.viptv.app.connection.selectionKey
@@ -68,7 +68,7 @@ internal fun BrowseFilterBar(controls: DiscoveryControls?, query: BrowseQuery, s
 private fun CatalogSelect(peers: List<DiscoveryCatalog>, catalog: DiscoveryCatalog?, open: MutableState<Boolean>, select: (DiscoveryCatalog) -> Unit) {
     val options = remember(peers) {
         peers.map { peer ->
-            val name = peer.displayName(peers)
+            val name = peer.catalogTitle(peers)
             SelectOption(peer.selectionKey(), name, peer.connection_name?.takeIf { it.isNotBlank() && !name.contains(it) })
         }
     }

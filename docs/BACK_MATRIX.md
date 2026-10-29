@@ -44,7 +44,8 @@ closes first; browser sign-in forms), plus the existing `SettingsBackTest`,
 `ContinueWatchingSourcesOpenTest`, `NextEpisodeEndPanelUiTest`. The Continue
 Watching page (app#114) rows: `ContinueWatchingListTest` (Back, Android/TV
 Back, Sources' Back → the title's Details, then the page) and
-`ContinueWatchingUiTest` (TV focus on the way back). A play tap's selector
+`ContinueWatchingUiTest` (TV focus on the way back); the My List page's
+See all rows: `MyListSeeAllTest`. A play tap's selector
 opens the title's Details in their loading state when the read is still
 running, and fills them in from it (app#140,
 `ContinueWatchingSourcesOpenTest.backBeforeDetailsArriveOpensTheTitlesDetailsAndTheLoadFillsThemIn`,
@@ -72,6 +73,7 @@ running, and fills them in from it (app#140,
 | Settings opened from the player (app#44) | The paused player | ✓ | ✓ | ✓ | ✗ leaves the site | ✓ |
 | Continue Watching page (app#114), from Home's "See all" | Home, with the row and focus where they were; else Home | new: Home | new: Home, focus on the See all card | new: Home | new: Home | ✓ |
 | Sources or Details opened from the Continue Watching page | The title's Details (app#140), then the page, focus on the card that opened them | new | new: same card focused | new | new | ✓ |
+| My List page, from Home's "See all" | Home, with the row and focus where they were | new: Home | new: Home, focus on the See all card | new: Home | new: Home | ✓ |
 | My List | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | History | Previous screen, else Home | ✗ always Home; arrow went Home and recorded History | ✗ always Home | ✓ | ✗ leaves the site | ✓ |
 | Calendar | Previous screen, else Home | ✗ always Home | ✗ always Home | ✓ | ✗ leaves the site | ✓ |

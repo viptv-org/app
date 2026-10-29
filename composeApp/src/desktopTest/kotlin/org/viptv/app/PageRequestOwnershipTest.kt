@@ -8,6 +8,11 @@ import kotlin.test.*
 
 class PageRequestOwnershipTest {
     private val card = Card(MediaIdentity("fixture", "movie", emptyList()), provider_id = "fixture", title = "Fixture", badges = emptyList())
+    private val store = object : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = null
+        override suspend fun save(session: SavedRemoteSession) = Unit
+        override suspend fun clear() = Unit
+    }
 
     @Test fun detailReadCannotRestoreDetailsAfterNavigationHome() = verify("details", false)
     @Test fun playIntentCannotOpenSourcesAfterNavigationAwayAndBack() = verify("play", false)
@@ -60,7 +65,7 @@ class PageRequestOwnershipTest {
 
     @Test fun expiredSameSessionStillRetiresAfterLeavingItsPage() = runBlocking<Unit> {
         val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
-        val controller = ApplicationController(this)
+        val controller = ApplicationController(this, store)
         controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "one")
         val navigation = controller.navigationGeneration
         controller.run { controller.readCurrentPage<Unit>(navigation) {

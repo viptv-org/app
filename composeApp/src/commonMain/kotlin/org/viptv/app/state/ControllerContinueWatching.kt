@@ -16,8 +16,6 @@ private const val CONTINUE_PAGE_MAX = 100
 
 data class ContinueWatchingList(val profile: String, val cards: List<Card>, val next: String?)
 
-data class ContinueWatchingMore(val count: Int?)
-
 internal data class ContinueCheck(val profile: String, val home: Scope, val revision: Long)
 
 internal fun ApplicationController.adoptContinuation(page: ContinuationPage?) {
@@ -26,13 +24,6 @@ internal fun ApplicationController.adoptContinuation(page: ContinuationPage?) {
 }
 
 internal fun HomeSnapshot.continueRow(): HomeRow? = rows.find { it.id == CONTINUE_ROW && it.opensContinueWatching() }
-
-fun ApplicationState.continueWatchingMore(): ContinueWatchingMore? {
-    val row = home?.continueRow() ?: return null
-    val list = continueWatching?.takeIf { it.profile == selectedProfile } ?: return null
-    if (list.next == null && list.cards.size <= row.cards.size) return null
-    return ContinueWatchingMore(list.cards.size.takeIf { list.next == null })
-}
 
 fun ApplicationController.checkContinueWatching() {
     val state = mutable.value

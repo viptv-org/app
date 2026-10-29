@@ -17,6 +17,8 @@ import urllib.request
 import uuid
 import zipfile
 
+import playback_gateway
+
 PACKAGE = 'org.viptv.experiment.torrentqa'
 ACTIVITY = PACKAGE+'/org.viptv.experiment.TorrentColdQaActivity'
 OWNED = {'emulator-5574': 'viptv-native-qa', 'emulator-5576': 'viptv-torrent-tv-20261022'}
@@ -27,7 +29,7 @@ def main():
     p.add_argument('--serial',choices=OWNED,required=True)
     p.add_argument('--apk',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
-    p.add_argument('--gateway',type=Path,default=Path(__file__).resolve().parents[2]/'playback-gateway')
+    p.add_argument('--gateway',type=Path)
     p.add_argument('--adb',default='/home/vynxc/Android/Sdk/platform-tools/adb')
     p.add_argument('--local-fixture',type=Path)
     p.add_argument('--cases',nargs='+',default=['sintel','cosmos-laundromat'])
@@ -37,6 +39,7 @@ def main():
     p.add_argument('--reference-apk',type=Path)
     p.add_argument('--timeout',type=int,default=60)
     args=p.parse_args()
+    args.gateway=args.gateway or playback_gateway.repository()
     adb=[args.adb,'-s',args.serial]
     def run(*cmd,check=True,input=None):
         return subprocess.run(adb+list(cmd),input=input,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=check,timeout=90)

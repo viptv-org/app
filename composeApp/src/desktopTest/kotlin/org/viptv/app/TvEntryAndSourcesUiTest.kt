@@ -5,6 +5,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
@@ -27,7 +28,7 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvEntryAndSourcesUiTest {
     @get:Rule val uiThread = UiThreadRule()
     @Test fun firstProfileReceivesFocusAfterAsyncLoginEnablesTheLazyRow() {

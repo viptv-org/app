@@ -128,7 +128,7 @@ tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsO
 val buildDesktopTorrent by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_desktop_torrent.py")
-    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_desktop_torrent.py"))
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_desktop_torrent.py"), rootProject.file("tools/playback_gateway.py"))
     inputs.property("candidate", providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orElse(""))
     providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orNull?.let {
         inputs.files(fileTree(it) { include("**/*.go", "go.mod", "go.sum") })

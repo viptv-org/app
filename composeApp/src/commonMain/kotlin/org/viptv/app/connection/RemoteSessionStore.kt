@@ -19,6 +19,8 @@ interface RemoteSessionStore {
     suspend fun clear()
     suspend fun savedConnection(): SavedConnection = read()?.let { SavedConnection.Remote(it) } ?: SavedConnection.None
     suspend fun rememberLocalConnection() = Unit
+    suspend fun navigation(profile: String): SavedNavigation? = null
+    suspend fun saveNavigation(profile: String, record: SavedNavigation) = Unit
 }
 
 expect fun remoteSessionStore(): RemoteSessionStore

@@ -36,6 +36,10 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveFavoriteScope = 0L
     internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
+    internal var navigationSaveJob: Job? = null
+    internal var navigationRestoreJob: Job? = null
+    internal var rememberedNavigation: SavedNavigation? = null
+    internal var rememberedNavigationProfile: String? = null
     internal var continueChecked: ContinueCheck? = null
     internal var libraryImportRefresh: Job? = null
     internal var calendarReread: Job? = null
@@ -80,7 +84,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         prior?.cancel()
         detailPagingJob?.cancel(); detailPagingJob = null
         val current = ++generation
-        mutable.value = mutable.value.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null)
+        mutable.value = mutable.value.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null, detailRetryable = true)
         fun settle() { if (generation == current) mutable.value = mutable.value.copy(starting = false, busy = false, sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning) }
         job = scope.launch {
             try { prior?.join(); operation() }
@@ -92,7 +96,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                     discardStremioImport()
                     connection?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                } else if (generation == current) mutable.value = mutable.value.copy(error = failureMessage(e))
+                } else if (generation == current) mutable.value = mutable.value.copy(error = failureMessage(e),
+                    detailRetryable = e !is RemoteFailure || !e.metadataNotFound)
             }
         }.also { started ->
             // A job cancelled before it is dispatched never enters its body, so completion, not a finally, clears busy.

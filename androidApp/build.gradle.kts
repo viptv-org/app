@@ -112,14 +112,13 @@ val buildAndroidEngine by tasks.registering(Exec::class) {
 tasks.named("preBuild") { dependsOn(buildAndroidEngine) }
 
 // -Pviptv.torrentRuntime=false builds without it (no Go/playback-gateway); torrents then need a gateway.
-// The pinned upstream script always builds every shipped ABI (once per checkout, cached by revision);
-// viptv.abis only limits which of them abiFilters packages (viptv-org/playback-gateway#23).
 val torrentRuntime = providers.gradleProperty("viptv.torrentRuntime").orNull != "false"
 val buildTorrentRuntime by tasks.registering(Exec::class) {
     onlyIf { torrentRuntime }
     workingDir(rootProject.projectDir)
-    commandLine("python3", "tools/build_torrent_runtime.py")
-    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_torrent_runtime.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
+    commandLine("python3", "tools/build_torrent_runtime.py", "--abis", selectedAbis.joinToString(","))
+    inputs.property("abis", selectedAbis)
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_torrent_runtime.py"), rootProject.file("tools/playback_gateway.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
     outputs.dir(layout.buildDirectory.dir("generated/torrentRuntime"))
 }
 tasks.named("preBuild") { dependsOn(buildTorrentRuntime) }

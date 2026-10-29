@@ -83,7 +83,8 @@ internal val LocalCardActions = compositionLocalOf<CardActions?> { null }
 @Composable
 fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit, labelScale: Float = 1f, cornerRadius: androidx.compose.ui.unit.Dp = 8.dp, focusWidth: androidx.compose.ui.unit.Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier,
     watchedBadgeSize: Dp? = null,
-    select: ((Card) -> Unit)? = null) {
+    select: ((Card) -> Unit)? = null,
+    onHover: (Boolean) -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
     val nextEpisodes = LocalNextEpisodes.current
@@ -95,6 +96,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
     val pointerHovered = hover.pointerHovered()
+    LaunchedEffect(hovered) { onHover(hovered) }
     val gap = with(LocalDensity.current) { 12.dp.roundToPx() }
     var previewOpen by remember { mutableStateOf(false) }
     var previewHovered by remember { mutableStateOf(false) }

@@ -89,6 +89,7 @@ fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mut
 
 fun ApplicationController.search(term: String) {
     mutable.value = mutable.value.copy(searchTerm = term, results = emptyList(), searchRows = emptyList())
+    rememberNavigation()
     run {
         val operation = generation
         val profile = mutable.value.selectedProfile
@@ -141,6 +142,7 @@ fun ApplicationController.open(card: Card) {
         val profile = requireNotNull(mutable.value.selectedProfile)
         val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
         mutable.value = mutable.value.copy(detail = detail.withCardArt(card))
+        rememberNavigation()
     }
 }
 
@@ -207,10 +209,11 @@ private fun ApplicationController.resolveFailed(error: Exception, remote: Remote
     if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
     val state = mutable.value
     val message = failureMessage(error)
+    val retryable = error !is RemoteFailure || !error.metadataNotFound
     when {
-        state.screen == Screen.Details -> mutable.value = state.copy(error = message, findingSources = false, busy = false)
-        onSelector && state.screen == Screen.Sources -> mutable.value = state.copy(error = message, findingSources = false, busy = false)
-        state.playTapTitle != null -> mutable.value = state.copy(detailFailure = message)
+        state.screen == Screen.Details -> mutable.value = state.copy(error = message, findingSources = false, busy = false, detailRetryable = retryable)
+        onSelector && state.screen == Screen.Sources -> mutable.value = state.copy(error = message, findingSources = false, busy = false, detailRetryable = retryable)
+        state.playTapTitle != null -> mutable.value = state.copy(detailFailure = message, detailRetryable = retryable)
     }
 }
 
@@ -218,7 +221,7 @@ fun ApplicationController.retryDetails() {
     val card = mutable.value.playTapTitle ?: return
     if (mutable.value.screen != Screen.Details) return
     val navigation = navigationGeneration
-    mutable.value = mutable.value.copy(error = null, detailFailure = null, detailPageError = null)
+    mutable.value = mutable.value.copy(error = null, detailFailure = null, detailPageError = null, detailRetryable = true)
     if (card.identity.episode != null && card.metadata_origin != null) loadSourceDetail(card, navigation)
     else resolveSourceTarget(card, navigation)
 }
@@ -301,7 +304,7 @@ fun ApplicationController.chooseSource(card: Card) {
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null) {
     mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
-        playTapTitle = playTap, detailFailure = null)
+        playTapTitle = playTap, detailFailure = null, detailRetryable = true)
 }
 
 private suspend fun ApplicationController.discoverSources(card: Card) {
@@ -414,6 +417,6 @@ internal fun ApplicationController.beginDetails() {
     val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
         else (previous.navBack + previous.screen).takeLast(32)
     mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
-        navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null,
+        navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
         screen = Screen.Details, detail = null, calendarEpisode = null)
 }

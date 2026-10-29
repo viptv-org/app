@@ -71,11 +71,12 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var ended by remember(playbackKey) { mutableStateOf(false) }
     var endHandled by remember(playbackKey) { mutableStateOf(false) }
     val episodesFocus = remember { FocusRequester() }; val nextFocus = remember { FocusRequester() }
-    val episodes = if (phone && input?.live != true) phonePlaybackEpisodes(title, tvExtras.episodes) else emptyList()
+    val episodes = if (input?.live != true) phonePlaybackEpisodes(title, tvExtras.episodes) else emptyList()
     val next = tvExtras.nextEpisode.takeIf { input?.live != true }
     val seriesEpisode = input?.live != true && title?.identity?.episode != null
     val episodeTitle = phone && seriesEpisode
     val playNext = { next?.let { playEpisode?.invoke(it) }; Unit }
+    val openEpisodes = if (seriesEpisode) ({ phonePanel = PhonePlaybackPanel.Episodes; interaction++; Unit }) else null
     val nextEnabled = next != null && playEpisode != null
     val latestEpisodes by rememberUpdatedState(episodes)
     val latestNext by rememberUpdatedState(next)
@@ -83,7 +84,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val latestPlaybackKey by rememberUpdatedState(playbackKey)
     val latestTitle by rememberUpdatedState(title)
     val latestClose by rememberUpdatedState(close)
-    fun closePanel() { restorePanel = phonePanel; phonePanel = null; visible = true; interaction++ }
+    fun closePanel() { restorePanel = if (phone) phonePanel else null; phonePanel = null; visible = true; interaction++ }
     fun dismissPanel() { if (phonePanel == PhonePlaybackPanel.Next) endHandled = true; closePanel() }
     val phoneBack = {
         when { showTracks -> { showTracks = false; visible = true }
@@ -192,7 +193,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
                         color = Palette.secondary, fontSize = 12.sp)
                     PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
-                        episodes = if (episodeTitle) ({ phonePanel = PhonePlaybackPanel.Episodes; interaction++ }) else null,
+                        episodes = openEpisodes,
                         episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
                         next = if (episodeTitle) playNext else null,
                         nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
@@ -200,7 +201,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
                     { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
                     streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
-                    next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled)
+                    next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
+                    episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
             }
         }
         if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
@@ -208,7 +210,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
                 .firstOrNull { it.id == choice.id }?.language)
         }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets, openSettings)
-        if (phone && phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
+        if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
             if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }
             }

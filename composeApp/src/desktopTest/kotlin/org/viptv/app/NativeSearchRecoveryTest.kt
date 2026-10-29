@@ -13,6 +13,12 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.*
 
 class NativeSearchRecoveryTest {
+    private val store = object : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = null
+        override suspend fun save(session: SavedRemoteSession) = Unit
+        override suspend fun clear() = Unit
+    }
+
     private class Fixture : AutoCloseable {
         val directory = Files.createTempDirectory("viptv-native-search-")
         var failAll = false
@@ -41,7 +47,7 @@ class NativeSearchRecoveryTest {
 
     @Test fun actualNativeSearchPublishesPartialAndFailedProvidersWithoutLosingCardOrigin() = runBlocking<Unit> {
         Fixture().use { fixture ->
-            val controller = ApplicationController(this)
+            val controller = ApplicationController(this, store)
             controller.local = fixture.local
             controller.mutable.value = ApplicationState(screen = Screen.Search, selectedProfile = "default", localMode = true)
             try {
