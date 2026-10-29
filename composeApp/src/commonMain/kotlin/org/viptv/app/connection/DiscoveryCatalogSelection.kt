@@ -24,10 +24,40 @@ internal fun BrowseQuery.withDefaultCatalog(controls: DiscoveryControls): Browse
     return copy(catalog = first.id, connection_id = first.connection_id)
 }
 
-internal fun DiscoveryCatalog.displayName(peers: List<DiscoveryCatalog>): String {
-    if (peers.count { it.name == name } < 2) return name
-    val connection = connection_name?.takeIf(String::isNotBlank)
-    val label = connection?.let { "$name · $it" } ?: name
-    val duplicates = peers.filter { it.name == name && it.connection_name?.takeIf(String::isNotBlank) == connection }
-    return if (connection != null && duplicates.size == 1) label else "$label (${duplicates.indexOf(this) + 1})"
+// Mirrors the host's Home add-on row titles (server/src/engine_v3/home_titles.rs): say the type, name the add-on only on a clash.
+internal fun DiscoveryCatalog.catalogTitle(peers: List<DiscoveryCatalog>): String {
+    val typed = typedTitle()
+    val shared = peers.count { it.typedTitle().lowercase() == typed.lowercase() } > 1
+    return if (shared) "$typed · ${addonName()}" else typed
 }
+
+internal fun DiscoveryCatalog.catalogSource(peers: List<DiscoveryCatalog>): String {
+    val title = catalogTitle(peers)
+    val addon = connection_name.orEmpty().filterNot(Char::isISOControl).take(128).trim()
+    return if (title != typedTitle() || addon.isEmpty()) title else "$title from $addon"
+}
+
+private fun DiscoveryCatalog.typedTitle(): String {
+    val (label, words) = typeCopy(type)
+    val nameWords = wordsOf(name)
+    val saysType = nameWords.any { it in words } || wordsOf(label).all { it in nameWords }
+    return if (saysType) name else "$name $label"
+}
+
+private fun typeCopy(kind: String): Pair<String, List<String>> = when (kind.lowercase()) {
+    "movie" -> "Movies" to listOf("movie", "movies", "film", "films")
+    "series" -> "Series" to listOf("series", "show", "shows")
+    "anime" -> "Anime" to listOf("anime")
+    "channel" -> "Channels" to listOf("channel", "channels")
+    "tv" -> "TV" to listOf("tv")
+    else -> titleCase(kind) to emptyList()
+}
+
+private fun DiscoveryCatalog.addonName(): String = connection_name.orEmpty()
+    .filterNot(Char::isISOControl).take(128).trim().ifEmpty { "Stremio addon" }
+
+private fun wordsOf(text: String): List<String> = text.split { !it.isLetterOrDigit() }
+    .filter { it.isNotEmpty() }.map { it.lowercase() }
+
+private fun titleCase(kind: String): String = kind.split { !it.isLetterOrDigit() }
+    .filter { it.isNotEmpty() }.joinToString(" ") { it.take(1).uppercase() + it.drop(1) }
