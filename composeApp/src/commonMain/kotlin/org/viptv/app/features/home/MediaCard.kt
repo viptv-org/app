@@ -100,7 +100,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     val nextEpisodes = LocalNextEpisodes.current
     val caughtUp = remember(card) { card.caughtUpCaption() }
     val nextCaption = remember(card, caughtUp, nextEpisodes) {
-        caughtUp?.let { nextEpisodes[card]?.caughtUpNextCaption() }
+        if (caughtUp != null) nextEpisodes[card]?.caughtUpNextCaption() else null
     }
     // Desktop pointer affordances (boards D3HomeHover / D3Context). `desktop` is
     // only true where the Compose Desktop chrome published the card actions, so
