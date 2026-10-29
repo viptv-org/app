@@ -41,11 +41,7 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
         DisposableEffect(session, lifecycle) {
             val observer = LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_STOP) { session.progress(); session.player.pause() }
-                // onStart can run before paused has been recomposed after the
-                // Activity resumes its controller. Apply intent on the next
-                // composition, never feed a stale pause back into that controller.
-                // The epoch also handles stop/start updates coalescing to the
-                // same paused value while the window recomposer was suspended.
+                // onStart can run before the pause is recomposed: apply the intent on the next composition, never feed a stale pause back.
                 if (event == Lifecycle.Event.ON_START) starts++
             }
             lifecycle.addObserver(observer)

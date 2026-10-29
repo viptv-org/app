@@ -16,13 +16,8 @@ import org.viptv.app.connection.GenreChoice
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 
-/** The genres the Home Genres chip offers and what choosing one does. */
 internal class HomeGenrePicker(val choices: List<GenreChoice>, val choose: (GenreChoice) -> Unit)
 
-/**
- * Provided once by the app shell, so every Home header (phone header, tablet hero) offers the
- * same genres. Without a picker, or with no genres, the Genres chip is not shown.
- */
 internal val LocalHomeGenres = compositionLocalOf<HomeGenrePicker?> { null }
 
 @Composable
@@ -41,7 +36,6 @@ internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, gutter: Dp 
     } }
 }
 
-/** "Genres ⌄" opens an anchored popover of genres (components.md section 8); choosing one closes it. */
 @Composable
 private fun GenresChip(genres: HomeGenrePicker) {
     var open by remember { mutableStateOf(false) }

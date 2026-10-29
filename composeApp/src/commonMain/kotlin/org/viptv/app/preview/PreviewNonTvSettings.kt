@@ -5,7 +5,6 @@ import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.state.Screen
 import org.viptv.engine.wire.*
 
-/** Isolated fixture: local list changes never install an add-on or contact an account. */
 @Composable
 internal fun PreviewNonTvSettings(variant: String, go: (Screen) -> Unit) {
     var addons by remember { mutableStateOf(listOf(

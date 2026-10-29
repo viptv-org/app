@@ -105,7 +105,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
                 withContext(NonCancellable + Dispatchers.IO) { temporary?.delete() }
                 throw error
             }
-            // mpv may read asynchronously after sub-add; retain until this session closes.
+            // mpv may read asynchronously after sub-add: retain until this session closes.
             subtitleFiles.add(file)
             currentCoroutineContext().ensureActive()
             val before = session.state.value.subtitles.map { it.id }.toSet()

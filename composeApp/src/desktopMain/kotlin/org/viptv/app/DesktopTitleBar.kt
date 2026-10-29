@@ -95,8 +95,6 @@ internal fun DesktopTitleBar(
                     Modifier.align(Alignment.Center))
             } else {
                 val searchWidth = minOf(460.dp, maxWidth * .36f)
-                // DUI-06 / NAV-14: the field had a ring but no hover, and the
-                // ring is now the board's 2/2 double ring.
                 val searchHover = remember { MutableInteractionSource() }
                 val searchHovered by searchHover.collectIsHoveredAsState()
                 Row(Modifier.align(Alignment.Center).width(searchWidth).height(32.dp)
@@ -111,11 +109,9 @@ internal fun DesktopTitleBar(
                             .onPreviewKeyEvent { event ->
                                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
                                     Key.Escape -> {
-                                        // Esc dismisses search: clear the query, drop focus and
-                                        // leave the results page so the content gets focus back.
+                                        // Esc dismisses search: clear the query, drop focus and leave the results page so the content gets focus back.
                                         query = ""; search(""); focusManager.clearFocus()
-                                        // Return to the page search was opened from, not to the
-                                        // details route's return target.
+                                        // Return to the page search was opened from, not to the details route's return target.
                                         if (state.screen == Screen.Search) (back ?: { navigate(Screen.Home) })()
                                         true
                                     }
@@ -142,8 +138,6 @@ internal fun DesktopTitleBar(
         }
         Row(Modifier.align(Alignment.CenterEnd).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
             if (!simple) {
-                // D3Mini tier: at ~480dp the cast/remote chips run into the centred
-                // search icon and the window buttons, so only the avatar survives.
                 if (!mini) ChromeButton(ChromeIcon.Cast, "Watch on TV", Palette.text, cast)
                 if (!mini) ChromeButton(ChromeIcon.Remote, "TV remote", Palette.text, remote)
                 state.profiles.find { it.id == state.selectedProfile }?.let { profile ->
@@ -161,7 +155,6 @@ internal fun DesktopTitleBar(
 }
 
 private val SearchField = Color(0xFF1E1E21)
-/** app#92: the search field hovers like the other title-bar controls, their 8 % white wash over its fill. */
 private val SearchFieldHover = Color.White.copy(alpha = .08f).compositeOver(SearchField)
 
 @Composable
@@ -190,10 +183,6 @@ private fun ChromeButton(icon: ChromeIcon, label: String, color: Color, onClick:
     }
 }
 
-/**
- * DUI-06: the title bar's small hit targets share one hover fill and one
- * keyboard-focus ring, so no title-bar control ships with only one of the two.
- */
 @Composable
 private fun TitleBarHit(label: String, onClick: () -> Unit, modifier: Modifier = Modifier,
     radius: Dp = 8.dp, hover: Color = Color.White.copy(alpha = .08f), content: @Composable () -> Unit) {

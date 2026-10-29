@@ -62,35 +62,15 @@ import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.X
 import org.viptv.app.theme.Palette
 
-/**
- * One choice of a [SearchableSelect]: a stable [id], the visible [label], optional
- * [trailing] text such as a count ("5"), and whether it can be picked.
- */
 @Immutable
 internal data class SelectOption(val id: String, val label: String, val trailing: String? = null, val enabled: Boolean = true)
 
-/**
- * How a filter chip opens its choices (components.md section 2): the anchored popover on
- * desktop, web and tablet, the bottom sheet on a phone, the right panel on a TV. The content
- * and behaviour are the same; only the container changes. [FilterBar] picks it from the
- * layout, and a TV's chips are focus stops the remote walks along.
- */
 internal enum class SelectPresentation { Popover, Sheet, Panel }
 
-/** The presentation for every chip below; [FilterBar] provides it. */
 internal val LocalSelectPresentation = staticCompositionLocalOf { SelectPresentation.Popover }
 
-/**
- * The popover shows this many rows before its list scrolls. A longer list ("Any" included)
- * gets the search field; a short one (Sort, Type) is just its rows (app#117).
- */
 internal const val SearchRowLimit = 8
 
-/**
- * The dropdown chip's text (components.md section 2): "Genre: Any", "Genre: Comedy",
- * "Genre: Comedy, Drama", then "Genre: 3 selected". An id the options no longer list
- * shows as itself so a stale value is never hidden.
- */
 internal fun selectTriggerLabel(title: String, options: List<SelectOption>, selected: List<String>, placeholder: String): String =
     "$title: ${selectTriggerValue(options, selected, placeholder)}"
 
@@ -104,7 +84,6 @@ private fun selectTriggerValue(options: List<SelectOption>, selected: List<Strin
     }
 }
 
-/** Options whose label contains [query], ignoring case and accents ("cafe" finds "Café"). */
 internal fun filterOptions(options: List<SelectOption>, query: String): List<SelectOption> {
     val needle = foldForSearch(query.trim())
     return options.filter { foldForSearch(it.label).contains(needle) }
@@ -117,7 +96,6 @@ private val accentFolds: Map<Char, String> = buildMap {
     put('ß', "ss"); put('æ', "ae"); put('œ', "oe"); put('þ', "th")
 }
 
-/** Lower-cases and strips Latin accents and combining marks; commonMain has no `Normalizer`. */
 internal fun foldForSearch(text: String): String = buildString(text.length) {
     text.lowercase().forEach { char ->
         if (char in '̀'..'ͯ') return@forEach
@@ -125,39 +103,17 @@ internal fun foldForSearch(text: String): String = buildString(text.length) {
     }
 }
 
-/** Design `surface-3`: the set chip fill. */
 private val Surface3 = Color(0xFF2A2A2E)
 private val RowShape = RoundedCornerShape(10.dp)
 private val SheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-/** A chip never grows past this; a long value ellipsizes. */
 private val ChipMaxWidth = 280.dp
 
-/** Row and list sizes of each presentation: 40 dp popover rows, 48 dp touch rows in the
- * sheet, and on TV 72 × scale rows in the right panel. */
 private class SelectMetrics(val rowHeight: Dp, val listMaxHeight: Dp, val sheet: Boolean,
     val tv: Boolean = false, val scale: Float = 1f) {
     val width: Modifier get() = if (sheet || tv) Modifier.fillMaxWidth() else Modifier.width(PopoverMenuWidth)
 }
 private val PopoverMetrics = SelectMetrics(40.dp, 320.dp, sheet = false)
 
-/**
- * The single filter control (app#57, app#117): a dropdown chip ("[title]: [value] ⌄") that
- * opens the shared choice list, in the app's [PopoverMenu] or, on a phone, a bottom sheet
- * ([LocalSelectPresentation]). Lists longer than [SearchRowLimit] rows get a search field
- * that filters as you type; the rows use the design's choice-list look: a check and
- * "Current" on the current value, and "unavailable" rows that cannot be picked.
- *
- * Picking applies at once. Single mode picks one id and closes; [multiple] mode ticks
- * checkboxes, stays open and respects [maximumSelections]. [anyLabel] adds a first row that
- * clears the value; pass `null` when the control always has a value. Arrow keys (and the
- * D-pad) move, Enter or OK picks, Escape, Back and a tap outside close. On pointer layouts
- * the search field takes focus on open; touch layouts never raise the keyboard by themselves.
- * Options with a repeated id are shown once.
- *
- * The chip is filled (surface-3 with a 0.22 border) while [highlighted]: by default while an
- * optional control has a value. [open] lets a caller open the list itself ("Choose another
- * catalog").
- */
 @Composable
 internal fun SearchableSelect(
     title: String,
@@ -168,7 +124,6 @@ internal fun SearchableSelect(
     multiple: Boolean = false,
     maximumSelections: Int? = null,
     anyLabel: String? = "Any",
-    /** Trailing text on the [anyLabel] row, such as the total count. */
     anyTrailing: String? = null,
     placeholder: String = anyLabel ?: "Choose",
     searchPlaceholder: String = "Search ${title.lowercase()}",
@@ -181,11 +136,6 @@ internal fun SearchableSelect(
     }
 }
 
-/**
- * A free-text or number filter as the same dropdown chip: the panel holds one field, and
- * Enter (Done on a touch keyboard) applies the value and closes. There is no Apply button.
- * When a value is set an "Any" row clears it.
- */
 @Composable
 internal fun TextSelect(
     title: String,
@@ -202,7 +152,6 @@ internal fun TextSelect(
     }
 }
 
-/** An on/off filter is a chip that toggles: the same chip, filled with a check while on. */
 @Composable
 internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val metrics = chipMetrics()
@@ -219,10 +168,6 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
     }
 }
 
-/**
- * A plain chip in the filter bar's geometry, for an action such as "Clear". It has the
- * unset chip's frame without the border, so it reads as an action rather than a filter.
- */
 @Composable
 internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val metrics = chipMetrics()
@@ -239,13 +184,8 @@ internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, 
     }
 }
 
-/** The design's secondary ink on the light TV focus fill (`on-light` at 0.62). */
 private val OnLightSecondary = Color(0xFF4A4945)
 
-/**
- * The chip's geometry for one presentation (components.md section 2): P 44 tall with 14 sp
- * text, D and tablet 40 with 13 sp, TV 56 × scale with 22 × scale text.
- */
 private class ChipMetrics(val presentation: SelectPresentation, val scale: Float) {
     val tv = presentation == SelectPresentation.Panel
     private val sheet = presentation == SelectPresentation.Sheet
@@ -265,24 +205,19 @@ private fun chipMetrics(): ChipMetrics {
     return ChipMetrics(presentation, if (presentation == SelectPresentation.Panel) LocalTvScale.current else 1f)
 }
 
-/**
- * Unset: transparent with a 0.10 border. Set: surface-3 with a 0.22 border. A focused TV chip
- * takes the board's light focus fill and dark ink instead (its ring comes from [tvFocusOutline]).
- */
 private fun Modifier.chipFrame(set: Boolean, focused: Boolean, metrics: ChipMetrics, shape: RoundedCornerShape,
     bordered: Boolean = true) =
     height(metrics.height).clip(shape)
         .background(when { focused -> Palette.text; set -> Surface3; else -> Color.Transparent })
         .then(if (bordered && !focused) Modifier.border(1.dp, Color.White.copy(alpha = if (set) .22f else .10f), shape) else Modifier)
 
-/** The chip plus its popover, sheet or TV panel; [panel] gets the presentation's sizes and a close callback. */
 @Composable
 private fun SelectChip(title: String, value: String, valueSet: Boolean, highlighted: Boolean, modifier: Modifier,
     open: MutableState<Boolean>, panel: @Composable (SelectMetrics, () -> Unit) -> Unit) {
     val presentation = LocalSelectPresentation.current
     val metrics = chipMetrics()
     val close = { open.value = false }
-    // On a TV, closing the panel (a pick, Back) puts focus back on the chip that opened it.
+    // On a TV, closing the panel puts focus back on the chip that opened it.
     val chipFocus = remember { FocusRequester() }
     var wasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(open.value) {
@@ -301,11 +236,6 @@ private fun SelectChip(title: String, value: String, valueSet: Boolean, highligh
     }
 }
 
-/**
- * The design's dropdown chip: "Genre: " in secondary text, then the value, primary once set.
- * A TV chip is a focus stop in the row; focused it fills with the light surface, carries dark
- * ink and the board's outside ring, and Enter or OK opens its list (the clickable node does that).
- */
 @Composable
 private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highlighted: Boolean, metrics: ChipMetrics,
     focus: FocusRequester?, onClick: () -> Unit) {
@@ -329,11 +259,6 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
     }
 }
 
-/**
- * The phone presentation (components.md section 8): a surface-1 bottom sheet with a 28 dp
- * top radius and a grabber over a 0.62 scrim. It holds at most 80 % of the screen; a tap on
- * the scrim, the close button or Back dismisses it.
- */
 @Composable
 private fun SelectSheet(title: String, dismiss: () -> Unit, content: @Composable (Dp) -> Unit) {
     val rise = remember { Animatable(0f) }
@@ -365,12 +290,6 @@ private fun SelectSheet(title: String, dismiss: () -> Unit, content: @Composable
     }
 }
 
-/**
- * The TV presentation (components.md sections 2 and 5): the choice list as a right panel over
- * a 0.6 scrim, 760 × scale wide, with the chip's title as its heading. Focus opens on the
- * current option, the rows are focus stops the D-pad walks, and Back, Escape, the scrim or a
- * closing pick return to the chip (SelectChip requests its focus back).
- */
 @Composable
 private fun SelectPanelSheet(title: String, dismiss: () -> Unit, content: @Composable (Float) -> Unit) {
     Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
@@ -406,17 +325,16 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     var query by remember { mutableStateOf("") }
     val folded = remember(options) { options.map { foldForSearch(it.label) } }
     val searchable = options.size + (if (anyLabel != null) 1 else 0) > SearchRowLimit
-    // A null row is the "Any" row; it is only offered before a search narrows the list.
+    // A null row is the "Any" row, offered only before a search narrows the list.
     val rows = remember(options, folded, query, anyLabel) { choiceRows(options, folded, query, anyLabel) }
     var active by remember { mutableIntStateOf(rows.indexOfFirst { if (it == null) selected.isEmpty() else it.id in selected }.coerceAtLeast(0)) }
-    // Bumped by the arrow keys only: hovering a row moves the highlight but never scrolls the list under the mouse.
+    // Bumped by the arrow keys only: hovering a row must not scroll the list under the mouse.
     var keyboardMoves by remember { mutableIntStateOf(0) }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = (active - 3).coerceAtLeast(0))
     val scope = rememberCoroutineScope()
     val focus = remember { FocusRequester() }
     val rowPx = with(LocalDensity.current) { metrics.rowHeight.toPx() }
-    // Pointer layouts type straight into the search; touch layouts would raise the keyboard
-    // over the list, so there the panel itself takes focus and only arrows and OK act.
+    // Pointer layouts type into the search; touch layouts focus the panel, where only arrows and OK act.
     val searchFirst = searchable && LocalPointerHover.current
 
     fun enabled(row: SelectOption?) = choiceEnabled(row, multiple, cap, selected)
@@ -425,7 +343,6 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
         applyChoice(row, selected, multiple, onChange)
         if (!multiple) close()
     }
-    /** The next row in [step]'s direction that can be picked; unavailable and over-cap rows are skipped. */
     fun move(step: Int) {
         var index = active + step
         while (index in rows.indices && !enabled(rows[index])) index += step
@@ -433,7 +350,6 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     }
 
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-    // Keep the keyboard row in view: scroll by the overflow, or jump when it is off screen.
     LaunchedEffect(keyboardMoves) {
         val info = list.layoutInfo
         if (keyboardMoves == 0 || active !in rows.indices || info.visibleItemsInfo.isEmpty()) return@LaunchedEffect
@@ -475,7 +391,6 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
     }
 }
 
-/** The rows a choice panel shows: "Any" first until a search narrows it, then the matching options. */
 private fun choiceRows(options: List<SelectOption>, folded: List<String>, query: String, anyLabel: String?): List<SelectOption?> {
     val needle = foldForSearch(query.trim())
     return buildList {
@@ -484,11 +399,9 @@ private fun choiceRows(options: List<SelectOption>, folded: List<String>, query:
     }
 }
 
-/** A row can be picked unless it is unavailable, or a multiple choice is already at its cap. */
 private fun choiceEnabled(row: SelectOption?, multiple: Boolean, cap: Int?, selected: List<String>): Boolean =
     row == null || row.enabled && (!multiple || cap == null || row.id in selected || selected.size < cap)
 
-/** Picking applies at once: a multiple choice ticks or unticks, a single one replaces. */
 private fun applyChoice(row: SelectOption?, selected: List<String>, multiple: Boolean, onChange: (List<String>) -> Unit) {
     if (!multiple) { onChange(listOfNotNull(row?.id)); return }
     onChange(when {
@@ -500,12 +413,6 @@ private fun applyChoice(row: SelectOption?, selected: List<String>, multiple: Bo
 
 private val SelectKeys = listOf(Key.DirectionUp, Key.DirectionDown, Key.Enter, Key.NumPadEnter, Key.DirectionCenter)
 
-/**
- * The TV choice list (components.md sections 2 and 5): the rows are focus stops in the right
- * panel, focus opens on the current option, OK picks, and a single pick closes the panel. A
- * list past [SearchRowLimit] rows gains the same search field; on TV it is the board's
- * editable field (the device IME), placed above the rows so Up reaches it.
- */
 @Composable
 private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, multiple: Boolean, cap: Int?,
     anyLabel: String?, anyTrailing: String?, searchPlaceholder: String, metrics: SelectMetrics,
@@ -525,7 +432,7 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
         applyChoice(row, selected, multiple, onChange)
         if (!multiple) close()
     }
-    // The panel opens on the current option, scrolled into view (components.md section 5).
+    // Open on the current option, scrolled into view; its focus is retried per frame until the requester is placed.
     LaunchedEffect(Unit) {
         val current = rows.indexOfFirst { if (it == null) selected.isEmpty() else it.id in selected }.coerceAtLeast(0)
         if (current > 0) list.scrollToItem((current - 2).coerceAtLeast(0))
@@ -550,7 +457,6 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
     }
 }
 
-/** A text filter's panel: one field that applies on Enter or Done, and "Any" to clear a set value. */
 @Composable
 private fun TextPanel(title: String, value: String, number: Boolean, metrics: SelectMetrics, onChange: (String) -> Unit, close: () -> Unit) {
     var draft by remember { mutableStateOf(value) }
@@ -586,11 +492,6 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
     }
 }
 
-/**
- * The design's text field (radius 12, hairline border, focus raises it to 1.5 px at 0.22,
- * accent caret), 40 tall in the popover and 44 in the sheet. It is filled with the page
- * background because a surface-1 field would vanish into the surface-1 panel.
- */
 @Composable
 private fun SelectField(text: String, placeholder: String, icon: ImageVector?, metrics: SelectMetrics, modifier: Modifier,
     keyboard: KeyboardOptions = KeyboardOptions.Default, actions: KeyboardActions = KeyboardActions.Default, change: (String) -> Unit) {
@@ -618,10 +519,6 @@ private fun SelectField(text: String, placeholder: String, icon: ImageVector?, m
     }
 }
 
-/**
- * The check (single choice) or checkbox (multiple) of a choice row, in either presentation's
- * sizes. [onLight] is a TV row's focused state: dark ink on the light focus fill.
- */
 @Composable
 private fun ChoiceMark(checked: Boolean, multiple: Boolean, enabled: Boolean, onLight: Boolean,
     box: Dp, mark: Dp, radius: Dp, border: Dp, glyph: Dp) {
@@ -640,11 +537,6 @@ private fun ChoiceMark(checked: Boolean, multiple: Boolean, enabled: Boolean, on
     }
 }
 
-/**
- * A choice row: a check (single) or checkbox (multiple), the label (with "· unavailable" when
- * it cannot be picked) and tertiary trailing text. Mouse hover and the keyboard share one
- * highlight, the popover row's surface-2 fill.
- */
 @Composable
 private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, checked: Boolean, multiple: Boolean, enabled: Boolean,
     active: Boolean, height: Dp, hovered: () -> Unit, pick: () -> Unit) {
@@ -667,12 +559,6 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
     }
 }
 
-/**
- * A TV choice row: 72 × scale tall with a 24 × scale label, in the board's list-row look. It
- * is its own focus stop (so Up reaches the search field and Down the next option); focused it
- * takes the light fill, dark ink and the outside ring. Enter or OK picks through its clickable
- * node, Escape and Back close the panel in [SelectPanelSheet].
- */
 @Composable
 private fun TvSelectRow(label: String, unavailable: Boolean, trailing: String?, checked: Boolean, multiple: Boolean,
     enabled: Boolean, scale: Float, requester: FocusRequester, pick: () -> Unit) {

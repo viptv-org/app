@@ -17,11 +17,9 @@ internal fun ComponentActivity.configurePlayerWindow(active: Boolean, television
     if (television) return
     requestedOrientation = if (active) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-    // The full-screen player draws under the display cutout on both landscape sides; its controls keep
-    // the safe-drawing insets. Other screens keep the default window, so their insets are unchanged.
+    // Only the full-screen player draws under the cutout; its controls keep the safe-drawing insets.
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-        // API 35+ is edge to edge already (targetSdk 35+). Below it the decor must stop fitting the
-        // system windows, or the content is laid out inside them and never reaches the cutout.
+        // Below API 35 the decor must stop fitting system windows or the content never reaches the cutout.
         WindowCompat.setDecorFitsSystemWindows(window, !active)
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -32,7 +30,6 @@ internal fun ComponentActivity.configurePlayerWindow(active: Boolean, television
     }
 }
 
-/** Window cutout mode for a handheld: into the cutout only while the player is full screen. */
 private fun playerCutoutMode(active: Boolean): Int = when {
     !active -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS

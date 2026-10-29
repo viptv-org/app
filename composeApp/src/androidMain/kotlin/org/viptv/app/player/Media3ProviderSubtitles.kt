@@ -15,7 +15,7 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.subtitleMode
 import org.viptv.engine.wire.SubtitleCandidate
 
-/** Sidecars never replace the primary MediaSource: its rolling HLS origin and audio stay intact. */
+// Sidecars never replace the primary MediaSource: its rolling HLS origin and audio stay intact.
 @UnstableApi
 internal class Media3ProviderSubtitles(private val player: ExoPlayer, private val input: PlaybackInput,
     private val scope: CoroutineScope, private val tracks: Media3Tracks, private val positionMillis: () -> Long,
@@ -29,7 +29,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     private var timeline: SidecarCueTimeline<Cue>? = null
     private var view: PlayerView? = null
     private var overlay: SubtitleView? = null
-    /** Embedded and stream text, drawn in place of PlayerView's own subtitle view so its cues stack too (app#43). */
+    // Drawn in place of PlayerView's own subtitle view so its cues stack too.
     private var embeddedLayer: SubtitleView? = null
     private val embeddedCues = object : Player.Listener {
         override fun onCues(cueGroup: CueGroup) { embeddedLayer?.setStackedCues(cueGroup.cues) }
@@ -69,7 +69,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         generation++; job?.cancel(); job = null; pending = null
         val candidate = input.providerSubtitle(id)
         if (candidate == null) {
-            // Validate/select embedded tracks before clearing a working provider choice.
+            // Validate and select embedded tracks before clearing a working provider choice.
             tracks.select(PlaybackTrackKind.Subtitle, id)
             clear()
         } else attach(candidate)
@@ -85,8 +85,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         preferredProviderSubtitle(input, values)?.let(::attach)
     }
 
-    // PLAY-SUBTITLE-MODE-001 "When audio isn't …": decided again whenever the
-    // selected audio's language changes, until the viewer picks a subtitle or Off.
+    // "When audio isn't …" is decided again whenever the selected audio language changes, until the viewer picks a subtitle or Off.
     private var decidedAudio: String? = null
     private var decided = false
     private var foreignSatisfied = false
@@ -117,7 +116,6 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         preferredProviderSubtitle(input, values)?.let { foreignSatisfied = true; attach(it) }
     }
 
-    /** Undo only this mode's own choice: embedded text off and any sidecar it attached. */
     private fun automaticOff() {
         generation++; job?.cancel(); job = null; pending = null
         if (desired != null) clear()
@@ -135,7 +133,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
                 val parsed = withContext(Dispatchers.Default) { parseSidecarCues(bytes) }
                 ensureActive()
                 if (closed || generation != operation || input.providerSubtitles.value.none { it.id == candidate.id }) return@launch
-                // Only text selection changes. The media item, seek position and audio override do not.
+                // Only text selection changes: the media item, seek position and audio override do not.
                 tracks.select(PlaybackTrackKind.Subtitle, null)
                 timeline = parsed; desired = candidate.id; shown = null
                 tracks.providerSelected(desired)

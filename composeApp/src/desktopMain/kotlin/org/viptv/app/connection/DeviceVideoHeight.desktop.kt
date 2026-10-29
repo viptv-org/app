@@ -2,7 +2,7 @@ package org.viptv.app.connection
 
 import java.awt.GraphicsEnvironment
 
-/** The largest attached screen's short side in physical pixels (display modes are not scaled by the OS). */
+// The largest attached screen's short side in physical pixels (display modes are not scaled by the OS).
 internal actual fun platformDisplayShortSide(): Int? = try {
     if (GraphicsEnvironment.isHeadless()) null
     else GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices

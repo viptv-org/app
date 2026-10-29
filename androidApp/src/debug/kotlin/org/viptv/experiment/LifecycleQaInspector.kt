@@ -17,7 +17,6 @@ import androidx.media3.common.util.UnstableApi
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.state.ApplicationController
 
-/** Debug-only reads avoid adding test controls to the production shared controller. */
 @UnstableApi
 internal object LifecycleQaInspector {
     private val progress = ApplicationController::class.java.getDeclaredField("lastProgress").apply { isAccessible = true }
@@ -28,7 +27,6 @@ internal object LifecycleQaInspector {
         val session = type.getDeclaredField("session").apply { isAccessible = true }.get(model) ?: return null
         return session.javaClass.getMethod("getPlayer").invoke(session) as ExoPlayer
     }
-    // Invoke the actual suspend command handler without adding a production test API.
     suspend fun command(activity: MainActivity, command: org.viptv.app.player.PlayerCommand): Unit =
         kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn { continuation ->
             val type = Class.forName("org.viptv.app.player.AndroidPlaybackModel").asSubclass(ViewModel::class.java)

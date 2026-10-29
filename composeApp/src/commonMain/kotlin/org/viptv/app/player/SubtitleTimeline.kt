@@ -17,7 +17,7 @@ private fun subtitleTime(value: Long, comma: Boolean = false, centiseconds: Bool
     return "$hours:$minutes:$seconds${if (comma) ',' else '.'}$fraction"
 }
 
-/** Shifts provider cues into a gateway cut without changing the original byte encoding or styles. */
+// Shifts provider cues into a gateway cut without changing the original byte encoding or styles.
 internal fun shiftSubtitleBytes(content: ByteArray, offsetMillis: Long): ByteArray {
     if (offsetMillis <= 0) return content
     val text = content.map { (it.toInt() and 255).toChar() }.joinToString("")

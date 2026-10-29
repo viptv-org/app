@@ -20,24 +20,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 
-/**
- * The board's focus treatment: the focused control is *filled* with the light
- * surface and gets a 4 px white outline outside its own bounds plus a soft
- * shadow. It never changes the control's size or position, so a focus move does
- * not re-measure the row it lives in (PERF-02) and neighbouring controls never
- * shift.
- *
- * The outline is drawn outside the layout bounds on purpose; Compose does not
- * clip a draw scope to the node bounds unless a parent asks it to, so this stays
- * a paint-only effect. The inner dark ring is the board's `0 0 0 3px #0B0B0C`
- * shadow: it keeps a filled control legible on a light page.
- *
- * [radius] is the control's own corner radius exactly as its shape uses it
- * (already scaled); the ring stays concentric with it. [width] and [darkGap] are
- * board pixels at 1920 and are scaled here. Scaling the radius again made the
- * ring's corners tighter than the control's on every TV below 1920 dp wide, so
- * pills got a squarish outline that did not follow them.
- */
 internal fun Modifier.tvFocusOutline(focused: Boolean, radius: Dp, scale: Float = 1f,
     width: Dp = 4.dp, darkGap: Dp = 0.dp): Modifier = if (!focused) this else drawWithContent {
     drawContent()
@@ -45,24 +27,15 @@ internal fun Modifier.tvFocusOutline(focused: Boolean, radius: Dp, scale: Float 
     val g = darkGap.toPx() * scale
     val r = radius.toPx()
     if (g > 0f) {
-        // The sidebar's double ring: 3 px dark, then 3 px white (board
-        // `0 0 0 3px #0B0B0C, 0 0 0 6px #F4F2EE`).
         drawRoundRect(Color.Black.copy(alpha = .65f), Offset(-g / 2f, -g / 2f),
             Size(size.width + g, size.height + g), CornerRadius(r + g / 2f), style = Stroke(g))
     }
-    // TVU-16: a 4 px white outline outside the control's own bounds. Drawing it
-    // outside keeps the layout unchanged (no re-measure on focus).
+    // The ring is drawn outside the control's own bounds, so focus never re-measures the layout.
     drawRoundRect(Color.White, Offset(-g - w / 2f, -g - w / 2f),
         Size(size.width + 2 * g + w, size.height + 2 * g + w), CornerRadius(r + g + w / 2f), style = Stroke(w))
 }
 
-/**
- * Material's ripple paints its own focus state layer on every default-indication
- * `clickable` and on Material buttons. Under a control that already draws the
- * board's focus treatment that layer reads as a second, differently shaped ring
- * (the IconButton's circle, an unclipped column's rectangle). Press and hover
- * feedback keep Material's alphas.
- */
+// Material's ripple would paint a second, differently shaped focus layer under this treatment.
 private val OwnFocusRipple = RippleConfiguration(rippleAlpha = RippleAlpha(
     draggedAlpha = .16f, focusedAlpha = 0f, hoveredAlpha = .08f, pressedAlpha = .1f))
 
@@ -70,18 +43,9 @@ private val OwnFocusRipple = RippleConfiguration(rippleAlpha = RippleAlpha(
 internal fun OwnFocusTreatment(content: @Composable () -> Unit) =
     CompositionLocalProvider(LocalRippleConfiguration provides OwnFocusRipple, content = content)
 
-/**
- * How far an outside ring reaches past its control: the 4 px outline plus the
- * sidebar's 3 px dark gap, rounded up.
- */
 internal fun tvRingReach(scale: Float): Dp = 8.dp * scale
 
-/**
- * Scroll containers clip to their viewport, which cuts the outside ring off a
- * control that touches the edge (the first filter pill, the top row of a list).
- * This grows the container by [room] on each side of the chosen axes without
- * moving it; give the content the same padding so the items stay where they were.
- */
+// Scroll containers clip the outside ring, so the container grows instead and the content takes the same padding.
 internal fun Modifier.tvRingRoom(room: Dp, horizontal: Boolean = true, vertical: Boolean = true): Modifier =
     layout { measurable, constraints ->
         val x = if (horizontal) room.roundToPx() else 0
@@ -91,7 +55,7 @@ internal fun Modifier.tvRingRoom(room: Dp, horizontal: Boolean = true, vertical:
             (placeable.height - 2 * y).coerceIn(constraints.minHeight, constraints.maxHeight)) { placeable.place(-x, -y) }
     }
 
-/** Card focus is an *inset* ring: the board never grows a card on focus. */
+// Card focus is an inset ring: the board never grows a card on focus.
 internal fun Modifier.tvCardFocusOutline(focused: Boolean, radius: Dp, scale: Float = 1f,
     width: Dp = 3.dp): Modifier = if (!focused) this else drawWithContent {
     drawContent()
@@ -101,11 +65,6 @@ internal fun Modifier.tvCardFocusOutline(focused: Boolean, radius: Dp, scale: Fl
         CornerRadius((radius.toPx() - w / 2f).coerceAtLeast(0f)), style = Stroke(w))
 }
 
-/**
- * A surface whose fill flips to the light token when focused. This is the
- * single focus fill used by settings rows, action buttons and sidebar rows so
- * the "two focus styles on one screen" bug cannot come back.
- */
 @Composable
 internal fun TvFocusSurface(focused: Boolean, radius: Dp, scale: Float, modifier: Modifier = Modifier,
     unfocused: Color = Palette.text.copy(alpha = .06f), content: @Composable () -> Unit) {

@@ -70,12 +70,9 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
         video.onerror = { _, _, _, _, _ -> latestObserve(PlayerFact.Failed); null }
         video.onended = { latestObserve(PlayerFact.Status("Ended")); null }
         val playlist = input.isHlsPlaylist()
-        // Chrome reports native HLS as "maybe", but that path can fail to demux
-        // gateway playlists and jump to a live edge on resumed VOD. Prefer the
-        // controlled MSE implementation; native HLS remains the fallback.
+        // Chrome reports native HLS as "maybe", but that path fails on gateway playlists and jumps to a live edge: use MSE first.
         if (playlist && Hls.isSupported()) {
-            // A gateway VOD playlist can initially omit ENDLIST. Keep the
-            // requested VOD origin instead of letting Hls choose a live-sync edge.
+            // A gateway VOD playlist can initially omit ENDLIST: keep the requested VOD origin instead of a live-sync edge.
             hlsController = Hls(hlsPreferences(input.preferences.preferred_audio_language.orEmpty(),
                 if ((input.preferences.subtitleMode != "never")) input.preferences.preferred_subtitle_language.orEmpty() else "",
                 if (input.live) -1.0 else input.positionMillis.coerceAtLeast(0) / 1000.0)).also {
@@ -108,8 +105,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             container.removeChild(captionStyle)
         }
     }
-    // One effect owns selection, including cancellation while caption content
-    // loads. The explicit choice (including Off) survives a gateway seek.
+    // One effect owns subtitle selection, including cancellation while captions load; the explicit choice survives a seek.
     LaunchedEffect(video, input, candidates, subtitleTouched, requestedSubtitle, subtitleRequest) {
         val candidate = if (subtitleTouched) requestedSubtitle?.let { matchingProviderSubtitle(it, candidates) }
             else preferredProviderSubtitle(input, candidates)

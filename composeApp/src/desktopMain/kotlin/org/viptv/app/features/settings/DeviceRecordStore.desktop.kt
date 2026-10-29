@@ -3,7 +3,7 @@ package org.viptv.app.features.settings
 import coil3.PlatformContext
 import java.util.prefs.Preferences
 
-/** java.util.prefs gives the window its own per-user store; [context] is unused. Display keeps the node and key it shipped with. */
+// java.util.prefs gives the window its own per-user store; the Display node and key are the ones it shipped with.
 private class DesktopDeviceRecordStore(node: String, private val key: String) : DeviceRecordStore {
     private val node = Preferences.userRoot().node(node)
 

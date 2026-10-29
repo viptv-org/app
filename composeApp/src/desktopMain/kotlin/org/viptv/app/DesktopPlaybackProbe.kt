@@ -9,7 +9,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.math.abs
 
-/** Opt-in owned-fixture checks; never constructs an account, vault or application controller. */
 internal class DesktopPlaybackProbe(private val result: Path?) {
     val progress = MutableStateFlow<PlayerFact.Progress?>(null)
     val properties = MutableStateFlow<PlayerFact.Properties?>(null)

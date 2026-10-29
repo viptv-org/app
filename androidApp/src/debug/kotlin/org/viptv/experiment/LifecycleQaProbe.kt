@@ -19,7 +19,6 @@ import java.net.HttpURLConnection
 import java.net.URI
 import kotlin.math.abs
 
-/** Retained test driver; all application behavior remains in MainActivity/ApplicationController. */
 @UnstableApi
 class LifecycleQaProbe : ViewModel() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -187,7 +186,6 @@ class LifecycleQaProbe : ViewModel() {
         val duration = requireNotNull(LifecycleQaInspector.progress(controller)?.durationMillis)
         val seconds = held / 1000
         val expected = "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
-        // Up reveals the existing TV controls; it neither resumes playback nor scrubs.
         LifecycleQaInspector.press(activity(), KeyEvent.KEYCODE_DPAD_UP)
         delay(350)
         val semantics = withTimeout(10_000) {

@@ -26,6 +26,7 @@ import org.viptv.app.components.TvAction
 internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, local: Boolean, managing: Boolean,
     select: (String) -> Unit, edit: (String) -> Unit, manage: () -> Unit, done: () -> Unit, add: () -> Unit) {
     val first = remember { FocusRequester() }; val manageFocus = remember { FocusRequester() }
+    var leftTile by remember { mutableStateOf<FocusRequester?>(null) }
     val arrivals = remember { mutableMapOf<String, Animatable<Float, AnimationVector1D>>() }
     var firstPlaced by remember(profiles.firstOrNull()?.id, managing, local) { mutableStateOf(false) }
     LaunchedEffect(firstPlaced, managing, local, busy) {
@@ -46,16 +47,24 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
             .widthIn(max = cardSize * count + 56.dp * scale * (count - 1).coerceAtLeast(0) + 8.dp * scale),
             horizontalArrangement = Arrangement.spacedBy(56.dp * scale), contentPadding = PaddingValues(horizontal = 4.dp * scale)) {
             itemsIndexed(profiles, key = { _, profile -> profile.id }) { index, profile ->
+                val tile = remember { FocusRequester() }
+                DisposableEffect(tile) { onDispose { if (leftTile === tile) leftTile = null } }
                 TvProfileItem(profile.name, profile.locked && !managing, cardSize, scale,
-                    (if (index == 0) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced = true } else Modifier).focusProperties { if (local) down = manageFocus }
+                    (if (index == 0) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced = true } else Modifier)
+                        .focusRequester(tile).focusProperties { if (local) down = manageFocus }
+                        .onFocusChanged { if (it.isFocused) leftTile = tile }
                         .then(tvProfileArrival("profile:${profile.id}", index, scale, arrivals)), !busy,
                     { if (managing) edit(profile.id) else select(profile.id) }) {
                     ProfileAvatar(profile, cardSize, 28.dp * scale)
                 }
             }
             if (local && profiles.size < 12) item {
+                val tile = remember { FocusRequester() }
+                DisposableEffect(tile) { onDispose { if (leftTile === tile) leftTile = null } }
                 TvProfileItem("Add profile", false, cardSize, scale, (if (profiles.isEmpty()) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced = true } else Modifier)
-                    .focusProperties { down = manageFocus }.then(tvProfileArrival("add", profiles.size, scale, arrivals)), !busy, add) {
+                    .focusRequester(tile).focusProperties { down = manageFocus }
+                    .onFocusChanged { if (it.isFocused) leftTile = tile }
+                    .then(tvProfileArrival("add", profiles.size, scale, arrivals)), !busy, add) {
                     Surface(Modifier.size(cardSize).border(2.dp * scale, Color.White.copy(alpha = .18f), RoundedCornerShape(28.dp * scale)), shape = RoundedCornerShape(28.dp * scale), color = Color.White.copy(alpha = .08f)) {
                         Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, null, Modifier.size(64.dp * scale), tint = Palette.secondary) }
                     }
@@ -63,7 +72,7 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
             }
         }
         if (local) Box(Modifier.align(Alignment.TopCenter).padding(top = 780.dp * scale)) {
-            TvAction(Modifier.width(300.dp * scale).height(72.dp * scale).focusProperties { up = first }, scale,
+            TvAction(Modifier.width(300.dp * scale).height(72.dp * scale).focusProperties { up = leftTile ?: first }, scale,
                 requester = manageFocus, activate = if (managing) done else manage, enabled = !busy, background = Color.White.copy(alpha = .16f)) {
                 Icon(Lucide.Pencil, null, Modifier.size(28.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
                 Text(if (managing) "Done" else "Manage profiles", color = it, fontSize = (26 * scale).sp,

@@ -12,21 +12,14 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     preferences: org.viptv.app.connection.ProfilePreferences = org.viptv.app.connection.ProfilePreferences(), val live: Boolean = false,
     val diagnostics: ((String) -> Unit)? = null, val mimeType: String? = null,
     val requiredAudioIndex: Int? = null,
-    /** Loopback media of this device's torrent runtime: reads wait on peers, not a server. */
+    // Loopback media of this device's torrent runtime: reads wait on peers, not a server.
     val localTorrent: Boolean = false) {
     init { require(requiredAudioIndex == null || requiredAudioIndex >= 0) }
-    /** Media position a renderer opens at. */
     var positionMillis: Long = positionMillis
         private set
-    /** Profile preferences a renderer applies when it opens. */
     var preferences: org.viptv.app.connection.ProfilePreferences = preferences
         private set
 
-    /**
-     * The same playback (and server lease) for a renderer that opens later, after this one was
-     * unmounted: from title position [titlePositionMillis] with [preferences] (app#44). Only
-     * call while no renderer shows this input; a mounted one keeps what it opened with.
-     */
     internal fun reopenAt(titlePositionMillis: Long?, preferences: org.viptv.app.connection.ProfilePreferences) {
         if (titlePositionMillis != null && !live) positionMillis = mediaSeekPosition(titlePositionMillis)
         this.preferences = preferences
@@ -48,7 +41,7 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
 }
 
 sealed interface PlayerFact {
-    /** Exactness refers to this stated renderer proof, never physical scanout. */
+    // Exactness refers to this stated renderer proof, never physical scanout.
     data class Presentation(val proof: PresentationProof, val atNanos: Long? = null, val exact: Boolean = false) : PlayerFact
     data class Progress(val positionMillis: Long, val durationMillis: Long?) : PlayerFact
     data class Status(val name: String) : PlayerFact

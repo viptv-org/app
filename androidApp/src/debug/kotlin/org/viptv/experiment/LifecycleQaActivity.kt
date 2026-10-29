@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.util.UnstableApi
 
-/** Uses MainActivity's actual UI, controller ownership and lifecycle callbacks unchanged. */
 @UnstableApi
 class LifecycleQaActivity : MainActivity() {
     var pauses = 0; private set
