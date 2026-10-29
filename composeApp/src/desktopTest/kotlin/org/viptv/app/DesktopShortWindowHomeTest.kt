@@ -64,10 +64,10 @@ class DesktopShortWindowHomeTest {
             scene.sendPointerEvent(PointerEventType.Move, at, type = PointerType.Mouse, timeMillis = time / 1_000_000)
             repeat(notches) {
                 scene.sendPointerEvent(PointerEventType.Scroll, at, type = PointerType.Mouse,
-                    scrollDelta = Offset(0f, 1f), timeMillis = time / 1_000_000)
+                    scrollDelta = Offset(0f, WHEEL_STEP), timeMillis = time / 1_000_000)
                 frames(2)
             }
-            frames(30)
+            frames(20)
         }
     }
 
@@ -107,15 +107,21 @@ class DesktopShortWindowHomeTest {
     @Test fun theWheelScrollsHomeAndMountsTheNextRail() = shell { shell ->
         val rail = assertNotNull(shell.title("Continue Watching"), "the first rail has a title: " + shell.titles())
         assertTrue(shell.nodes().any { text(it) == "Featured" }, "the fold starts on the hero: " + shell.titles())
-        shell.wheel(Offset(400f, 300f))
-        val moved = assertNotNull(shell.title("Continue Watching"), "the first rail is still composed")
-        assertTrue(moved.boundsInRoot.top < rail.boundsInRoot.top, "the wheel scrolls Home up: ${moved.boundsInRoot.top} vs ${rail.boundsInRoot.top}")
+        // Bounds are read live, so the position before the wheel has to be taken before it.
+        val start = rail.boundsInRoot.top
+        fun scrolledUp() = shell.title("Continue Watching")?.boundsInRoot?.top?.let { it < start } == true
+        fun nextRailOnScreen() = shell.title("New this week")?.boundsInRoot?.top?.let { it >= 0f && it < windowHeight } == true
 
-        var notches = 1
-        while (shell.title("New this week")?.boundsInRoot?.top?.let { it >= 0f && it < windowHeight } != true && notches < 12) {
-            shell.wheel(Offset(400f, 300f)); notches++
-        }
-        val next = assertNotNull(shell.title("New this week"), "the wheel reaches the next rail after $notches notches: " + shell.titles())
+        shell.wheel(Offset(400f, 300f))
+        assertTrue(scrolledUp(), "the wheel scrolls Home up: ${shell.title("Continue Watching")?.boundsInRoot} vs $start")
+
+        var turns = 1
+        while (!nextRailOnScreen() && turns < 40) { shell.wheel(Offset(400f, 300f)); turns++ }
+        val next = assertNotNull(shell.title("New this week"), "the wheel reaches the next rail after $turns turns: " + shell.titles())
         assertTrue(next.boundsInRoot.top < windowHeight, "the next rail's title is on screen: ${next.boundsInRoot}")
+    }
+
+    private companion object {
+        const val WHEEL_STEP = 8f
     }
 }
