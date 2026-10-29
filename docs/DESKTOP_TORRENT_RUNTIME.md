@@ -26,10 +26,9 @@ an explicit benchmark specification. It creates no account or user vault. The
 renderer reports distinct drawn images; a changed playback position alone cannot
 complete the seek measurement. Ordinary playback does not install a frame sink.
 
-A verified torrent read can outlast KitePlayer's two-second quiescence deadline.
-Local-torrent seeks retry its documented non-mutating refusal at most three times,
-while preserving cancellation and other failure types. No source interrupt or
-unverified-byte workaround is used.
+A torrent read waits on peers rather than a server. Desktop seeks issue one
+absolute+exact mpv seek; there is no source interrupt and no path that reads
+unverified bytes.
 
 The strict Stremio performance gate is still failed; Android qualification and
 runtime pin promotion remain gated. See the sibling playback-gateway
