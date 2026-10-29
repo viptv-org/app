@@ -45,7 +45,8 @@ class FilterBarPagesTest {
         listOf("English", "Japanese", "Korean", "French", "Spanish").map { Choice(it.lowercase(), it) }, maximum_selections = 2)
     private val free = QueryControl("free", "Free only", ControlKind.TOGGLE, false, emptyList())
     private val search = QueryControl("search", "Search", ControlKind.TEXT, false, emptyList())
-    private val popular = DiscoveryCatalog("top", "Popular", "movie", "c1", controls = listOf(sort, genre, languages, free, search), connection_name = "Cinemeta")
+    // The chip row is a LazyRow: these names stay short so every chip the page-width tests touch is composed.
+    private val popular = DiscoveryCatalog("top", "Movies", "movie", "c1", controls = listOf(sort, genre, languages, free, search), connection_name = "Cinemeta")
     private val featured = DiscoveryCatalog("featured", "Featured", "movie", "c2", controls = listOf(genre), connection_name = "TMDB")
     private val controls = DiscoveryControls("stremio", listOf("movie"), emptyList(), catalogs = listOf(popular, featured),
         discovery = FeatureAvailability("Available"), search = FeatureAvailability("Available"),
@@ -65,7 +66,7 @@ class FilterBarPagesTest {
             BrowseScreen(Screen.Movies, null, false, {}, posters, controls, browse.query, filterChanged = browse.changed,
                 multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
-            assertEquals(listOf("Catalog: Popular Movies", "Sort: Required", "Genre: Any"), it.triggers().take(3))
+            assertEquals(listOf("Catalog: Movies", "Sort: Required", "Genre: Any"), it.triggers().take(3))
             assertFalse(it.has("Filters"), "no Filters toggle")
             assertFalse(it.has("Apply"), "no Apply button")
             it.capture("phone-movies-closed")
@@ -108,7 +109,7 @@ class FilterBarPagesTest {
         Page(1440, 900, pointer = true) {
             BrowserBrowseScreen(Screen.Movies, posters, controls, browse.query, false, null, null, {}, browse.changed, browse.multiple, browse.apply)
         }.use {
-            assertEquals(listOf("Catalog: Popular Movies", "Sort: Required", "Genre: Any", "Languages: Any", "Search: Any"), it.triggers())
+            assertEquals(listOf("Catalog: Movies", "Sort: Required", "Genre: Any", "Languages: Any", "Search: Any"), it.triggers())
             assertFalse(it.has("Filters") || it.has("Clear all") || it.has("New"), "no rail, segments or applied-pill row")
             it.capture("web-movies-closed")
             it.open("Sort: Required")
@@ -126,8 +127,8 @@ class FilterBarPagesTest {
             it.capture("web-movies-open")
             it.type("dra")
             it.pick("Drama")
-            it.open("Catalog: Popular Movies")
-            assertEquals(listOf("Popular Movies", "Featured Movies"), it.options())
+            it.open("Catalog: Movies")
+            assertEquals(listOf("Movies", "Featured Movies"), it.options())
             it.pick("Featured Movies")
             assertEquals(BrowseQuery("movie", "featured", "c2"), browse.query, "a catalog pick starts a fresh query")
         }
