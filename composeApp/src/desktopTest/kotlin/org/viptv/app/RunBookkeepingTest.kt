@@ -8,10 +8,6 @@ import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 import kotlin.test.*
 
-/**
- * The controller starts runs from the UI thread and from jobs on `Dispatchers.Default`, so a run's
- * claim and another run's clearing settle can cross. Whichever run claimed last owns and clears.
- */
 class RunBookkeepingTest {
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
