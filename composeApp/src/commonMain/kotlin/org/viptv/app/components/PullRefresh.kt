@@ -10,15 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
 
-/**
- * Phone and tablet pull-to-refresh. Pulling down at the top of the page past
- * the Material 3 threshold runs [refresh] and shows the indicator until it
- * returns; a shorter pull does nothing. Without [touch] (TV, desktop, browser)
- * the page is composed exactly as before; [touch] must not change at runtime.
- * [enabled] switches the gesture per page without changing the composition, so
- * a page that stays composed (Details behind the sources sheet) is never
- * rebuilt. A page without the gesture never shows the indicator.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PullRefresh(touch: Boolean, enabled: Boolean, refresh: suspend () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {

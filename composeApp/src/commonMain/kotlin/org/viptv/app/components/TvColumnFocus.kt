@@ -8,16 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 
-/**
- * Keeps D-pad Up/Down inside one vertical column of controls.
- *
- * Compose's geometric focus search is happy to jump from the last row of a
- * settings page across to the sidebar's last item, because that is the nearest
- * control in that direction. On a TV that reads as the remote "falling out" of
- * the page. Rows in a [TvFocusColumn] register themselves, and each row clamps
- * Up at the top and Down at the bottom; Left/Right keep their explicit
- * destinations (the sidebar and the page edge).
- */
 internal class TvColumnFocusState {
     val requesters = mutableStateListOf<FocusRequester>()
 
@@ -38,13 +28,11 @@ internal val LocalTvColumnFocus = compositionLocalOf<TvColumnFocusState?> { null
 internal fun TvFocusColumn(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val state = remember { TvColumnFocusState() }
     CompositionLocalProvider(LocalTvColumnFocus provides state) {
-        // Settings pages must scroll: a plain column lays rows out below the
-        // window edge on wide ratios while they stay D-pad-focusable.
+        // Settings pages must scroll: a plain column lays rows out below the window edge on wide ratios while they stay D-pad-focusable.
         org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(modifier.verticalScroll(rememberScrollState())) { content() } }
     }
 }
 
-/** Registers an item with the enclosing [TvFocusColumn]; a no-op elsewhere. */
 @Composable
 internal fun rememberTvColumnItem(own: FocusRequester): Pair<FocusRequester?, FocusRequester?> {
     val column = LocalTvColumnFocus.current

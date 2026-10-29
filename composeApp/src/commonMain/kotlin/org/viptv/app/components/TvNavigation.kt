@@ -35,20 +35,13 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
             Brand(44.dp * scale, (32 * scale).sp, 12.dp * scale, (-1.28f * scale).sp, (32 * scale).sp)
         }
         val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) }
-        // One focus target per nav item, chained left/right. Without the chain
-        // Compose's 2D search happily drops from "Home" into a card that sits
-        // below and to the right, so the remote leaves the navigation row
-        // sideways instead of reaching the next label.
+        // One focus target per item, chained left/right: Compose's 2D search would otherwise drop from the nav into a card below.
         val navFocus = remember { List(destinations.size + 1) { androidx.compose.ui.focus.FocusRequester() } }
-        // The profile menu (Switch profile, Settings) ends the chain; it is the
-        // only way to Settings with a remote.
         val profileFocus = remember { androidx.compose.ui.focus.FocusRequester() }
         Row(Modifier.offset(300.dp * scale, 38.dp * scale).height(56.dp * scale).focusGroup(),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             var searchFocused by remember { mutableStateOf(false) }
-            // Material's IconButton clips itself to a circle, so the ring has to
-            // be drawn by a wrapper outside that clip; its own focus layer would
-            // be a second ring inside ours.
+            // IconButton clips to a circle, so the ring is drawn by a wrapper outside that clip; its own focus layer would be a second ring.
             Box(Modifier.size(56.dp * scale).tvFocusOutline(searchFocused, 28.dp * scale, scale, width = 3.dp)) { OwnFocusTreatment {
                 IconButton(onClick = { navigate(Screen.Search) },
                     modifier = Modifier.fillMaxSize().focusRequester(navFocus[0]).focusProperties {
@@ -70,8 +63,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                         up = androidx.compose.ui.focus.FocusRequester.Cancel
                     }
                     .onFocusChanged { focused = it.isFocused }
-                    // The selected item still needs a visible focus state; the
-                    // board draws the ring on whatever the remote is on.
+                    // The selected item still needs a visible focus state: the ring sits on whatever the remote is on.
                     .background(if (focused) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp * scale))
                     .tvFocusOutline(focused, 8.dp * scale, scale, width = 3.dp)
                     .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, shape = RoundedCornerShape(8.dp * scale)) { navigate(destination.screen) }

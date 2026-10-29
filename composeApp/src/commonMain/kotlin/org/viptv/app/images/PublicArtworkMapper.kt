@@ -8,7 +8,6 @@ import io.ktor.http.Url
 import io.ktor.http.decodeURLQueryComponent
 import io.ktor.http.encodeURLParameter
 
-/** Shared by Android, desktop and browser; private/provider URLs stay on their own transport. */
 internal class PublicArtworkMapper : Mapper<String, Uri> {
     override fun map(data: String, options: Options): Uri? =
         publicArtworkUrl(data).takeIf { it != data }?.toUri()
@@ -16,8 +15,7 @@ internal class PublicArtworkMapper : Mapper<String, Uri> {
 
 internal fun publicArtworkUrl(value: String): String {
     if (!isPublicArtwork(value)) return value
-    // WebP retains the alpha channel without turning photographic art into large PNGs.
-    // No background/flatten option: the caller owns the background color.
+    // No background or flatten option: the caller owns the background color.
     return "$IMAGE_SERVICE?url=${value.encodeURLParameter()}&output=webp&q=90"
 }
 
@@ -26,7 +24,6 @@ private const val IMAGE_SERVICE = "https://wsrv.nl/"
 private val publicArtworkHosts = setOf("images.metahub.space", "episodes.metahub.space", "live.metahub.space",
     "image.tmdb.org", "artworks.thetvdb.com", "assets.fanart.tv", "i.imgur.com", "simkl.in")
 
-/** A plain public URL on a known artwork host: no port, credentials, query or fragment that could carry a secret. */
 private fun isPublicArtwork(value: String): Boolean {
     if (!value.startsWith("https://")) return false
     val url = runCatching { Url(value) }.getOrNull() ?: return false
@@ -34,23 +31,9 @@ private fun isPublicArtwork(value: String): Boolean {
         url.encodedQuery.isEmpty() && url.fragment.isEmpty()
 }
 
-/**
- * wsrv.nl request sized for the slot the art is drawn into.
- *
- * Without `w`/`h` the service hands back the full-resolution poster (often 2000 px
- * wide) for a 232 px card, so the device pays decode + upload for pixels it never
- * shows. `fit=cover` preserves the existing crop and `we` keeps small art from being
- * enlarged. Art the server already proxied through wsrv.nl is re-sized from its
- * source the same way (app#115). Art the service cannot fetch is returned unchanged.
- */
 internal fun sizedArtwork(url: String?, widthPx: Int, heightPx: Int): String? =
     if (url.isNullOrBlank()) null else serviceArtwork(url, widthPx, heightPx, blur = null) ?: url
 
-/**
- * The image service's Gaussian-blurred (sigma [blur]) rendition of [url] for a soft
- * backdrop, or null when the service cannot fetch it and the caller must blur at
- * runtime. Never an unblurred URL (app#80).
- */
 internal fun blurredArtwork(url: String?, widthPx: Int, heightPx: Int, blur: Int): String? =
     if (url.isNullOrBlank()) null else serviceArtwork(url, widthPx, heightPx, blur)
 
@@ -70,18 +53,14 @@ private fun serviceArtwork(url: String, widthPx: Int, heightPx: Int, blur: Int?)
     return IMAGE_SERVICE + "?" + params.entries.joinToString("&") { (k, v) -> "$k=${v.encodeURLParameter()}" }
 }
 
-/** What the service should fetch, and the parameters an existing wsrv.nl request already set. */
 private class ServiceRequest(val source: String, val params: Map<String, String>)
 
-/** A public artwork URL as a fresh request, or the parts of an existing wsrv.nl request; null when it must not go there. */
 private fun serviceRequest(url: String): ServiceRequest? {
     if (!url.startsWith(IMAGE_SERVICE)) return if (isPublicArtwork(url)) ServiceRequest(url, emptyMap()) else null
     if (url.contains('#')) return null
     var source: String? = null
     val params = linkedMapOf<String, String>()
-    // The server writes the source unencoded (`?url=https://simkl.in/...`), so a source with
-    // its own query string spans several `&` segments: every segment that is not one of the
-    // service's own parameters belongs to the source.
+    // The server writes the source unencoded, so a source with its own query spans several `&` segments.
     for (segment in url.substringAfter('?', "").split('&').filter { it.isNotEmpty() }) {
         val key = segment.substringBefore('=')
         val value = segment.substringAfter('=', "")
@@ -97,19 +76,12 @@ private fun serviceRequest(url: String): ServiceRequest? {
     return ServiceRequest(source!!, params)
 }
 
-/** wsrv.nl's documented query parameters (https://wsrv.nl/docs/); anything else belongs to an unencoded source URL. */
+// Only wsrv.nl's documented parameters are the service's; every other segment belongs to the source URL.
 private val serviceParameters = setOf("w", "h", "dpr", "fit", "we", "a", "fpx", "fpy", "cx", "cy", "cw", "ch",
     "precrop", "trim", "mask", "mtrim", "mbg", "flip", "flop", "ro", "bg", "cbg", "blur", "sharp", "sharpf", "sharpj",
     "con", "sat", "hue", "bri", "gam", "mod", "tint", "filter", "output", "q", "l", "af", "il", "n", "page",
     "default", "filename", "maxage", "encoding")
 
-/**
- * Simkl serves each image in fixed sizes (measured 2026-10-27): posters `_s` 40, `_cm` 84,
- * `_c` 170, `_ca` 190 and `_m` 340 px wide (`_w` is a 600 x 338 landscape crop, not a
- * poster); fanart `_w` 600, `_mobile` 960 and `_medium` 1920 px; episode stills `_m` 112,
- * `_c` 210 and `_w` 600 px. Ask for the largest of the same shape and let the service
- * scale it down to the slot.
- */
 private fun largestSimklUrl(url: String): String {
     val match = simklImage.matchEntire(url) ?: return url
     val (folder, path, size, extension) = match.destructured
