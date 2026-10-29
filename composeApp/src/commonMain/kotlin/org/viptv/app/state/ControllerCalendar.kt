@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.calendar.CALENDAR_WEEK_LIMIT
 import org.viptv.app.features.calendar.CalendarEntry
 import org.viptv.engine.wire.*
 
@@ -13,7 +14,7 @@ fun ApplicationController.calendarCategory(type: String) {
 
 fun ApplicationController.calendarWeek(change: Int) {
     if (change !in -1..1) return
-    val week = if (change == 0) 0 else (mutable.value.calendarWeek + change).coerceIn(-52, 52)
+    val week = if (change == 0) 0 else (mutable.value.calendarWeek + change).coerceIn(-CALENDAR_WEEK_LIMIT, CALENDAR_WEEK_LIMIT)
     mutable.value = mutable.value.copy(calendarWeek = week)
     run { loadCalendar() }
 }
