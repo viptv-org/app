@@ -31,8 +31,9 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || activeCategory == AllGroups || (it.groupId ?: it.category) == activeCategory) }
     var channel by remember { mutableStateOf(channels.firstOrNull()) }
     var program by remember { mutableStateOf<LiveProgram?>(null) }
-    val first = remember { FocusRequester() }; val filter = remember { FocusRequester() }
+    val first = remember { FocusRequester() }; val chip = remember { FocusRequester() }
     val hasGuide = start != null && visible.any { channel -> channel.programs.any { it.end > start && it.start < start + 120 } }
+    val hasFilters = groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
     LaunchedEffect(activeCategory, favoritesOnly, channels) {
         category = activeCategory
         channel = visible.find { it.card.provider_id == channel?.card?.provider_id && it.card.identity == channel?.card?.identity }
@@ -42,34 +43,38 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     }
     val channelList = rememberLazyListState()
     AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
-    BoxWithConstraints(Modifier.fillMaxSize().focusProperties { onEnter = { if (visible.isNotEmpty()) first.requestFocus() else filter.requestFocus() } }.focusGroup()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
-        Box(Modifier.offset(96.dp * scale, 380.dp * scale).width(1728.dp * scale).focusGroup().focusRequester(filter)) {
+        val pageHeight = maxHeight
+        // The chip row stays outside the group below: that group's onEnter lands on the guide, and any focus request into it counts as an entry, so a chip inside could never take the remote's focus.
+        Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (visible.isNotEmpty()) first.requestFocus() else if (hasFilters) chip.requestFocus() } }.focusGroup()) {
+            channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
+            Box(Modifier.offset(96.dp * scale, 460.dp * scale).width(1728.dp * scale)
+                .height((pageHeight - 510.dp * scale).coerceAtLeast(0.dp))) {
+                if (visible.isEmpty()) Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                    Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else "No channels are available for this profile.", color = Palette.secondary, fontSize = (24 * scale).sp)
+                    TvAction(Modifier.height(64.dp * scale), scale, activate = if (favoritesOnly) ({ category = AllGroups; groupChanged?.invoke(null); Unit }) else manage, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                        Text(if (favoritesOnly) "All channels" else "Manage add-ons", color = it, fontSize = (24 * scale).sp)
+                    }
+                } else if (hasGuide) {
+                    LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
+                    LiveGuide(visible, start!!, now, true, scale,
+                    { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, chip.takeIf { hasFilters }, more = more, busy = busy)
+                }
+                else LazyColumn(Modifier.tvRingRoom(tvRingReach(scale), horizontal = false), state = channelList,
+                    contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+                    itemsIndexed(visible, key = { _, item -> item.card.provider_id + ":" + item.card.identity.id }) { index, item ->
+                        TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) chip.takeIf { hasFilters } else null,
+                            { channel = item; program = item.current(now); guideRequested(item) }, { watch(item) })
+                    }
+                }
+            }
+        }
+        Box(Modifier.offset(96.dp * scale, 380.dp * scale).width(1728.dp * scale).focusGroup()) {
             CompositionLocalProvider(LocalTvScale provides scale) {
                 LiveFilters(groups, activeCategory.takeUnless { it == AllGroups }, { category = it ?: AllGroups; groupChanged?.invoke(it) },
                     favoritesOnly, favoritesFilter, { category = AllGroups; groupChanged?.invoke(null) },
-                    sources, selectedSource, sourceChanged)
-            }
-        }
-        Box(Modifier.offset(96.dp * scale, 460.dp * scale).width(1728.dp * scale)
-            .height((maxHeight - 510.dp * scale).coerceAtLeast(0.dp))) {
-            if (visible.isEmpty()) Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else "No channels are available for this profile.", color = Palette.secondary, fontSize = (24 * scale).sp)
-                TvAction(Modifier.height(64.dp * scale), scale, activate = if (favoritesOnly) ({ category = AllGroups; groupChanged?.invoke(null); Unit }) else manage, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-                    Text(if (favoritesOnly) "All channels" else "Manage add-ons", color = it, fontSize = (24 * scale).sp)
-                }
-            } else if (hasGuide) {
-                LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
-                LiveGuide(visible, start!!, now, true, scale,
-                { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, filter, more = more, busy = busy)
-            }
-            else LazyColumn(Modifier.tvRingRoom(tvRingReach(scale), horizontal = false), state = channelList,
-                contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-                itemsIndexed(visible, key = { _, item -> item.card.provider_id + ":" + item.card.identity.id }) { index, item ->
-                    TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) filter else null,
-                        { channel = item; program = item.current(now); guideRequested(item) }, { watch(item) })
-                }
+                    sources, selectedSource, sourceChanged, entry = chip)
             }
         }
     }
