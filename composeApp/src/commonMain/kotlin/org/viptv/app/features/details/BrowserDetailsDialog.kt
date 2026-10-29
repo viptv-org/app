@@ -39,7 +39,7 @@ import org.viptv.app.components.IconButton
 
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
-    continuing: List<Card> = emptyList(), paging: Boolean = true, focusOnOpen: Boolean = true) {
+    continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true) {
     InitialBrowserEscape(back)
     val closeFocus = remember { FocusRequester() }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
@@ -52,9 +52,9 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     LandOnResume(seasonChoice, list, resume.takeIf { detail != null }.indexIn(selected?.episodes)?.let { episode ->
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        // The window layer attaches after this content's first frame, and only while no drawer covers it: ask again on each frame until the button is placed.
-        LaunchedEffect(focusOnOpen) {
-            if (!focusOnOpen) return@LaunchedEffect
+        // A window layer attaches a frame after this content: ask again until the button is placed, and again once a drawer over the page closes.
+        LaunchedEffect(closeFocusOnOpen) {
+            if (!closeFocusOnOpen) return@LaunchedEffect
             repeat(30) { if (closeFocus.requestPlacedFocus()) return@LaunchedEffect; withFrameNanos { } }
         }
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
