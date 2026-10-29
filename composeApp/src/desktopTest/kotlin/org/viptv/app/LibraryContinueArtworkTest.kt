@@ -19,7 +19,7 @@ import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
 import org.viptv.app.features.continuewatching.ContinueWatchingScreen
-import org.viptv.app.features.home.ART_ATTEMPTS
+import org.viptv.app.components.ART_ATTEMPTS
 import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.images.ConfigureImageLoading
 import org.viptv.app.theme.Palette

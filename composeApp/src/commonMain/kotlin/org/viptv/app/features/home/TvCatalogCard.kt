@@ -31,7 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.ArtFailure
 import org.viptv.app.components.LocalNextEpisodes
+import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.WATCHED_BADGE
 import org.viptv.app.components.caughtUpNextCaption
