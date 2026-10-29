@@ -42,23 +42,27 @@ Rates measured on this host (Chromium 1247, Playwright 1.57.0):
 | App sign-in, `--scenario button` | 1 | 3/3 passed, exact username and password |
 | App sign-in, `--scenario button` | 6 | 3/3 failed, characters scrambled |
 | App sign-in, `--scenario button` | 20 | 3/3 failed, characters scrambled |
-| Compose-only repro, 25-character string | 1 | 3/3 passed |
-| Compose-only repro, 25-character string | 40 (10 ms key delay) | 3/3 failed |
-| Compose-only repro, 25-character string | 60 | 5/5 failed |
+| Compose-only repro, 25-character string, 20 ms keys | 1 | 3/3 passed |
+| Compose-only repro, 25-character string, 20 ms keys | 40 | 2/3 failed (intermittent) |
+| Compose-only repro, 25-character string, 20 ms keys | 60 | 5/5 failed |
+| Compose-only repro, 13-character string, 10 ms keys | 40 | 3/3 failed |
 
 Failures from these runs (`got` is the `/api/auth/login` body for the app, and the
 Compose field value for the repro):
 
 ```
-typed    'smoke-visitor'                 got 'smk-iiortsveo'
-typed    'smoke-visitor'                 got 'smke-visitoro'
+typed    'smoke-visitor'                 got 'smk-iiortsveo'          (13 characters out)
+typed    'smoke-visitor'                 got 'smke-visitoro'          (reordered)
+typed    'smoke-password-55'             got 'smk-password55-eo'      (reordered)
+typed    'smoke-password-55'             got 'smoke-pasord-55swke'    (17 characters in, 19 out)
 typed    'smoke-visitor-compose-web'     got 'smke-visitor-compose-webo'
 typed    'smoke-visitor-compose-web'     got 'smk-iio-ops-ebweomcrtsveo'
 ```
 
-Both fields of the form are affected, so this is not specific to
-`VisualTransformation`/password masking, and the same characters are usually all
-present but permuted: an early run of characters ends up at the end of the field.
+Reordering is the common case: a run of early characters ends up at the end of the
+field. Characters are also duplicated (both the browser and Compose insert them) or
+dropped. Both fields of the form are affected, so this is not specific to
+`VisualTransformation`/password masking.
 
 The app needs a much lower throttle than the standalone repro (6× versus 60×)
 because its scene is heavier, so a frame there starves the main thread for longer.
@@ -133,9 +137,13 @@ beforeinput "s"  caret 3       text "e-v"         -> input, text "e-vs"
 mutate  text "e-iv" caret 3    childList 1/1
 ```
 
-The final field content is a permutation of the typed text (`smoke-pasord-55swke`
-for `smoke-password-55`): each `childList 1/1` rewrite moves the caret, and the
-next browser insert then lands at the rewritten position.
+The final field content is garbage of the same length as what was typed
+(`smke-visitor-compose-webo` for `smoke-visitor-compose-web`), or longer when a
+character is inserted twice: `smoke-pasord-55swke` is 19 characters for the 17
+character `smoke-password-55`, with `e` and `k` duplicated. Each `childList 1/1`
+rewrite moves the caret, and the next browser insert then lands at the rewritten
+position, which is also where the duplicates come from: the browser and Compose
+both apply the same character.
 
 ## App-side options, and why none is used
 

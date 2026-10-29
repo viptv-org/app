@@ -44,14 +44,17 @@ BACKING_FIELD_TEXT = """() => {
 }"""
 
 
-def run(page, args):
-    page.goto(args.origin + "/")
+def run(page, origin, args):
+    page.goto(origin + "/")
     for _ in range(120):
         if page.get_by_role("textbox").count() > 0:
             break
         page.wait_for_timeout(250)
     page.wait_for_timeout(1000)
-    box = page.get_by_role("textbox").first.bounding_box()
+    field = page.get_by_role("textbox").first
+    box = field.bounding_box()
+    if box is None:
+        sys.exit("The reproduction page never showed its text field; check --dist")
     page.mouse.click(box["x"] + box["width"] / 3, box["y"] + box["height"] / 2)
     page.wait_for_timeout(args.settle)
     page.keyboard.type(args.text, delay=args.type_delay)
@@ -75,12 +78,14 @@ def main():
     parser.add_argument("--chromium", help="Chromium executable; default: Playwright's own, else the newest cached build")
     args = parser.parse_args()
     dist = args.dist.resolve()
+    if args.cpu_throttle < 1:
+        sys.exit("--cpu-throttle is a CPU slowdown factor of 1 or more")
     if not (dist / "index.html").is_file():
         sys.exit(f"No reproduction build at {dist}; see docs/upstream/compose-web-text-order/README.md")
     log: list = []
     keys = Path(tempfile.mkdtemp(prefix="web-text-order-"))
     server = fake_backend(dist, log, keys)
-    args.origin = f"https://127.0.0.1:{server.server_port}"
+    origin = f"https://127.0.0.1:{server.server_port}"
     failures = 0
     try:
         with sync_playwright() as p:
@@ -92,7 +97,7 @@ def main():
                 page.on("pageerror", lambda e: errors.append(str(e)))
                 if args.cpu_throttle != 1:
                     context.new_cdp_session(page).send("Emulation.setCPUThrottlingRate", {"rate": args.cpu_throttle})
-                value, backing = run(page, args)
+                value, backing = run(page, origin, args)
                 ok = value == args.text
                 failures += 0 if ok else 1
                 print(f"{'PASS' if ok else 'FAIL'} run {run_number}/{args.runs} cpu x{args.cpu_throttle} "

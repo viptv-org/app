@@ -243,6 +243,8 @@ def main():
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     args = parser.parse_args()
+    if args.cpu_throttle < 1:
+        sys.exit("--cpu-throttle is a CPU slowdown factor of 1 or more")
     dist = args.dist.resolve()
     if not (dist / "index.html").is_file():
         sys.exit(f"No web build at {dist}; run ./gradlew :composeApp:wasmJsBrowserDistribution")
