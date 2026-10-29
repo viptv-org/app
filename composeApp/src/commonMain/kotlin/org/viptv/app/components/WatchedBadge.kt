@@ -22,22 +22,12 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
-/** The server marks a title the profile has finished with this [Card.badges] value. */
 internal const val WATCHED_BADGE = "Watched"
 
 internal fun Card.isWatched(): Boolean = badges.any { it.equals(WATCHED_BADGE, ignoreCase = true) }
 
 private val WatchedFill = Color(0xFF0B0B0C).copy(alpha = .78f)
 
-/**
- * Canvas dictionary §A1: "Watched is a check in the corner, and the art is not
- * dimmed." Every board draws the same proportions — TV 34/20/10, desktop
- * 26/15/8, phone 22/13/6 (circle / check / top-right inset) — so one diameter
- * sets all three. The check is the board's 3-unit stroke on a 24-unit grid.
- *
- * [description] is null where the card already announces "Watched" itself
- * (the TV card clears its children's semantics).
- */
 @Composable
 internal fun WatchedBadge(diameter: Dp, modifier: Modifier = Modifier, description: String? = WATCHED_BADGE) {
     Box(modifier.padding(diameter * (10f / 34f)).size(diameter)
@@ -51,13 +41,6 @@ internal fun WatchedBadge(diameter: Dp, modifier: Modifier = Modifier, descripti
     }
 }
 
-/**
- * For cards without a platform scale (phone and desktop grids, shelves): size the
- * check from the artwork itself, ~19 % of a 2:3 poster's width like every board,
- * bounded to the phone (22) and desktop (26) sizes so wide landscape art and
- * large desktop posters keep a small corner mark. Place it over the art with
- * `matchParentSize()`.
- */
 @Composable
 internal fun ArtWatchedBadge(modifier: Modifier) {
     BoxWithConstraints(modifier) {

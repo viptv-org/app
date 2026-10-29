@@ -14,12 +14,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.*
 
-/**
- * An offscreen grid row must be laid out before its matching column can take focus.
- * Foundation's geometric beyond-bounds Up search instead starts at the last column.
- * Reveal the destination through native bring-into-view, then focus it as soon as it
- * is placed. Key repeat updates one pending destination; it never queues animations.
- */
+// An offscreen grid row must be laid out before its column can take focus.
 internal class TvGridFocus(private val state: LazyGridState, private val scope: CoroutineScope) {
     internal class Item(val focus: FocusRequester, val reveal: BringIntoViewRequester) {
         var size = IntSize.Zero
@@ -96,7 +91,6 @@ internal class TvGridFocus(private val state: LazyGridState, private val scope: 
 
 internal val LocalTvGridFocus = compositionLocalOf<TvGridFocus?> { null }
 
-/** Adds no layout or semantics node; requesters exist only for composed cards. */
 @Composable
 internal fun Modifier.tvGridItem(index: Int): Modifier {
     val grid = LocalTvGridFocus.current ?: return this

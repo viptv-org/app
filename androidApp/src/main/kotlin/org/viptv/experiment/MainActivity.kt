@@ -50,13 +50,11 @@ open class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
         model.start(filesDir.resolve("local.sqlite").absolutePath, applicationContext)
-        // The foreground hook (app#75); App.kt skips it because ApplicationModel owns the controller.
-        // ON_START dispatches after onStart's resumePlayback, ON_STOP after onPause's suspendPlayback.
+        // ON_START runs after onStart's resumePlayback, ON_STOP after onPause's suspendPlayback; App.kt skips this hook.
         lifecycle.addObserver(model.controller.foregroundObserver(onReturn = model::foregroundReturned))
-        // A recreated activity gets the launching intent again; only the first creation may act on it.
+        // A recreated Activity gets the launching intent again: only the first creation may act on it.
         if (savedInstanceState == null) {
             offerDeviceCode(intent)
-            // Android replaced the app and UpdateRelaunchReceiver reopened it (app#139).
             model.updater?.announceUpdated(intent.getStringExtra(UpdateRelaunchReceiver.EXTRA_UPDATED_TO))
         }
         setContent {
@@ -65,14 +63,11 @@ open class MainActivity : ComponentActivity() {
             var entryBack by remember { mutableStateOf<(() -> Unit)?>(null) }
             LaunchedEffect(state.screen) { configurePlayerWindow(state.screen == Screen.Player, tv) }
             val updater = model.updater
-            // App updates (docs/APP_UPDATES.md): checks follow the connection, and a download waits while the player is open.
             if (updater != null) {
                 LaunchedEffect(state.screen == Screen.Player) { updater.playingChanged(state.screen == Screen.Player) }
-                // Not while starting: the restored session is not known yet, and About would flash "Sign in to a server".
+                // Not while starting: the restored session is unknown and About would flash "Sign in to a server".
                 LaunchedEffect(state.starting, state.localMode, controller.updateServerOrigin()) { if (!state.starting) updater.connectionChanged() }
             }
-            // app#139/app#146: Back cannot cancel an install that is already committing, and on the
-            // permission step it is Later; the page behind the Updating screen never takes the press.
             val updateBack = updater?.state?.collectAsState()?.value?.let { updatingBack(it.status) } ?: UpdatingBack.Page
             BackHandler(enabled = updateBack != UpdatingBack.Page || entryBack != null || state.systemBackStaysInApp()) {
                 when (updateBack) {
@@ -93,7 +88,6 @@ open class MainActivity : ComponentActivity() {
         offerDeviceCode(intent)
     }
 
-    /** The QR code on a TV's sign-in screen is https://server/device?code=...; phones and tablets approve it in the app. */
     private fun offerDeviceCode(intent: Intent) {
         val link = intent.data ?: return
         if (television || intent.action != Intent.ACTION_VIEW || link.scheme != "https" || link.path != "/device") return
@@ -103,8 +97,7 @@ open class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
-        // Lifecycle ON_STOP observers may pause the renderer before onStop is
-        // called. Capture whether playback should resume before that feedback.
+        // ON_STOP observers can pause the renderer before onStop runs: capture the resume intent first.
         applicationModel?.controller?.suspendPlayback()
         super.onPause()
     }
@@ -114,8 +107,7 @@ open class MainActivity : ComponentActivity() {
     }
     override fun onResume() {
         super.onResume()
-        // A translucent Activity can pause us without stopping us. onStart is
-        // not called on that return; only a lifecycle-owned pause may resume.
+        // A translucent Activity pauses without stopping us and onStart is not called: only a lifecycle-owned pause may resume.
         applicationModel?.controller?.resumePlayback()
     }
     override fun onStart() {

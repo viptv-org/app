@@ -7,7 +7,6 @@ import org.viptv.app.features.player.*
 import org.viptv.app.player.*
 import org.viptv.app.state.Screen
 
-/** Synthetic acknowledgements are confined to this fixture; Native uses real decoded video facts. */
 @Composable
 internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged: ((() -> Unit)?) -> Unit) {
     val scene = when {

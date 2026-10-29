@@ -6,13 +6,7 @@ import androidx.media3.exoplayer.source.ForwardingTimeline
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.WrappingMediaSource
 
-/** A growing transcode playlist still represents an on-demand title.
- *
- * Media3's placeholder source treats an explicit zero as a request for the
- * real window default. HLS normally sets that default near its live edge.
- * Keep the title's available window, period identities and timestamps intact,
- * but expose its default at the start and disable live speed correction.
- */
+// Media3's placeholder reads an explicit zero as the window default, which HLS sets near its live edge.
 @UnstableApi
 internal class TitleHlsMediaSource(source: MediaSource) : WrappingMediaSource(source) {
     override fun getInitialTimeline(): Timeline? = mediaSource.initialTimeline?.let(::TitleHlsTimeline)

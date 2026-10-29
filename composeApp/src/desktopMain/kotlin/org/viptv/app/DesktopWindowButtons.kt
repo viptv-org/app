@@ -44,8 +44,7 @@ internal fun DesktopWindowButtons(
     } else {
         Row(modifier.height(barHeight), verticalAlignment = Alignment.CenterVertically) {
             WindowButton(Res.drawable.ic_window_minimize_zip, "Minimise", minimize)
-            // A maximised window's third button must offer "restore", not a second
-            // maximize (DUI-05) — a11y label included.
+            // A maximised window's third button offers restore, not a second maximize; the a11y label too.
             WindowButton(if (maximized) null else Res.drawable.ic_window_maximize_zip,
                 if (maximized) "Restore" else "Maximise", maximize)
             WindowButton(Res.drawable.ic_window_close_zip, "Close", close)
@@ -53,10 +52,7 @@ internal fun DesktopWindowButtons(
     }
 }
 
-// app#93: window controls are native chrome, not TV controls. Hover/press use the
-// native palette (Close #E81123 → #F1707A, the others an 8 % → 12 % white wash),
-// and they never draw the board's outside focus ring, which was clipped by the
-// window edge and overlapped its neighbour.
+// Window controls use the native palette and never draw the board's outside ring, which the window edge clipped.
 private val WindowCloseHover = Color(0xFFE81123)
 private val WindowClosePress = Color(0xFFF1707A)
 private val WindowButtonHover = Color.White.copy(alpha = .08f)
@@ -92,7 +88,6 @@ private fun WindowButton(icon: DrawableResource?, label: String, action: () -> U
     }
 }
 
-/** Restore: a front plate outline plus the back plate's top-right corner. */
 @Composable
 private fun RestoreGlyph(modifier: Modifier) {
     Canvas(modifier) {

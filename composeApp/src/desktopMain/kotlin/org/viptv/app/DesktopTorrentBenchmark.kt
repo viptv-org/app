@@ -20,7 +20,6 @@ import java.nio.file.StandardOpenOption.APPEND
 import java.nio.file.StandardOpenOption.CREATE
 import java.util.concurrent.atomic.AtomicLong
 
-/** Private opt-in measurement hook. Normal playback never installs a sink. */
 internal object DesktopTorrentFrames {
     @Volatile var sink: ((Long, Long) -> Unit)? = null
     fun presented(positionMillis: Long, atNanos: Long) { sink?.invoke(positionMillis, atNanos) }
@@ -42,7 +41,6 @@ internal fun verifyPackagedTorrentRuntime() {
     } finally { cache.toFile().deleteRecursively() }
 }
 
-/** Same production surface for reference URLs and old/new owned runtime workers. */
 internal fun launchDesktopTorrentBenchmark() = application {
     val specification = remember {
         Json.parseToJsonElement(Files.readString(Path.of(requireNotNull(System.getenv("VIPTV_TORRENT_BENCH_INPUT"))))).jsonObject

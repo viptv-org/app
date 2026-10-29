@@ -22,7 +22,7 @@ object Palette {
 
 @Composable
 fun ViptvTheme(television: Boolean = false,
-    /** Desktop and web: hover visuals follow the mouse (see `LocalPointerHover`). Never on TV. */
+    // Desktop and web only: hover visuals follow the mouse, never on TV.
     pointer: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = ViptvColors,

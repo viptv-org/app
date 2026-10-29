@@ -12,7 +12,6 @@ import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
 import kotlin.random.Random
 
-/** The web app with browser Back/Forward and Escape as the app's own Back (app#20, app#45). */
 @Composable
 internal fun BrowserApp() {
     val scope = rememberCoroutineScope()
@@ -45,11 +44,7 @@ private fun BrowserHistory(controller: ApplicationController, back: GlobalBack) 
     }
 }
 
-/**
- * Before a click or Tab moves DOM focus into Compose, keys reach the page, not Compose. Escape there
- * takes the same Back. It listens for keyup on the window, after the browser Details dialog's own
- * document keyup handler (InitialBrowserEscape), which marks the event handled so one press is one step.
- */
+// Before a click or Tab moves DOM focus into Compose, keys reach the page: Escape there takes the same Back.
 @Composable
 private fun BodyEscape(back: GlobalBack) {
     DisposableEffect(back) {
@@ -63,7 +58,6 @@ private fun BodyEscape(back: GlobalBack) {
     }
 }
 
-/** `window.history`, with entries marked by this page load so entries from an earlier load are not ours. */
 private class WindowSessionHistory : SessionHistory {
     override fun push(index: Int) = window.history.pushState(entry(index), "", null)
     override fun replace(index: Int) = window.history.replaceState(entry(index), "", null)

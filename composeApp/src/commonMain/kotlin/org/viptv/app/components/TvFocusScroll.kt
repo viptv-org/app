@@ -14,14 +14,8 @@ import androidx.compose.ui.unit.dp
 
 internal val LocalTvFocusAnchoring = staticCompositionLocalOf { false }
 
-/**
- * The TV board scale: the screen width over 1920 dp, so a 1080p TV at 1920 dp is 1. TV pages
- * that compute it from their own width provide it for the shared controls (the filter chips
- * and their panel, app#121); every other layout leaves it at 1.
- */
 internal val LocalTvScale = staticCompositionLocalOf { 1f }
 
-/** Distances are in viewport coordinates; Foundation owns animation and scroll-limit clamping. */
 internal class LeadingFocusScroll(private val inset: Float, private val fromEnd: Boolean = false) : BringIntoViewSpec {
     override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float =
         if (fromEnd) offset + size - (containerSize - inset) else offset - inset
@@ -30,7 +24,7 @@ internal class LeadingFocusScroll(private val inset: Float, private val fromEnd:
         calculateScrollDistance(offset, size, containerSize) * if (fromEnd) -1f else 1f
 }
 
-/** A section list has one explicit owner; nested collections install their own native policy. */
+// A section list has one explicit owner; nested collections install their own native policy.
 private object SectionFocusScroll : BringIntoViewSpec {
     override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float) = 0f
 }

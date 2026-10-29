@@ -10,12 +10,6 @@ import org.viptv.app.features.settings.StremioImportScreen
 import org.viptv.app.state.*
 import kotlin.time.TimeSource
 
-/**
- * `Settings` variant `ImportDetails`: the completion stage of a confirmed Stremio import while the
- * server fills 162 titles' Details cards over about 45 s, as a real import does. An in-memory
- * transport drives the real import session and screen; nothing connects to Stremio or a server.
- * TV and desktop have no import entry (IMP-001); this renders the same component there for review.
- */
 @Composable
 internal fun PreviewImportDetails(compact: Boolean) {
     val scope = rememberCoroutineScope()
@@ -53,7 +47,6 @@ private class PreviewImportTransport : StremioImportTransport {
             "existing_preserved" to 0, "already_imported" to 0, "needs_review" to 0, "skipped_items" to 0), excludedItems = excluded.size)
     }
     override suspend fun discard(profile: String, preview: String) = Unit
-    /** Uncounted for the first 3 s, then about 3.6 titles a second, like the server's spaced lookups. */
     override suspend fun details(profile: String): StremioDetailsStatus {
         val seconds = (applied ?: return StremioDetailsStatus(false, 0, 0)).elapsedNow().inWholeMilliseconds / 1000.0
         if (seconds < 3) return StremioDetailsStatus(true, 0, 0)

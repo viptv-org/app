@@ -1,8 +1,7 @@
 @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 package org.viptv.app.player
 
-// Keep the exact JavaScript listener for off(); converting a Kotlin callback
-// separately for registration/removal need not preserve its JavaScript identity.
+// Keep the exact JavaScript listener for off(): a Kotlin callback converted twice need not keep its JS identity.
 @JsFun("""(hls, event, failed) => {
  const listener = (_, data) => { if (data && data.fatal === true) failed(); };
  hls.on(event, listener);

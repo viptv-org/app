@@ -7,7 +7,6 @@ import org.viptv.app.player.PlaybackInput
 import java.nio.file.Files
 import java.nio.file.Path
 
-/** Packaging gate: load verified native bytes, create/free renderers and join control threads. */
 internal fun verifyPackagedMpv() = runBlocking {
     repeat(4) {
         val session = MpvSession(PlaybackInput("mpv-packaging", "about:blank"))

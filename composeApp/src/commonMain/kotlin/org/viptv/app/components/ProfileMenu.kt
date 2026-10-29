@@ -31,12 +31,6 @@ private val profileMenuActions = listOf(
     ProfileMenuAction("Settings", Lucide.Settings, Screen.Settings),
 )
 
-/**
- * The profile picture of the non-TV headers ([PhoneHeader], [TopNavigation]) and the menu it
- * opens. [trigger] draws the picture and receives whether the menu is open; the button is
- * announced as "Profile menu". The menu names the current profile over a wash of its colour,
- * then offers Switch profile and Settings; choosing one dismisses the menu and navigates.
- */
 @Composable
 internal fun ProfileMenuButton(
     profile: Profile?,

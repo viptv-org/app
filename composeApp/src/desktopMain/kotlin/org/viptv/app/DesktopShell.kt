@@ -11,7 +11,6 @@ import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
 
-/** The desktop window's controls that belong to the window, not to the app. */
 internal class DesktopWindowControls(
     val minimize: () -> Unit,
     val maximize: () -> Unit,
@@ -19,13 +18,6 @@ internal class DesktopWindowControls(
     val maximized: Boolean = false,
 )
 
-/**
- * Everything inside the desktop window: the title bar, the rail and the app,
- * with the window-wide Back inputs and the offline bar. The window itself
- * ([DesktopAppWindow]) only frames it, so a test can run this exact chrome.
- *
- * [titleBarArea] wraps the title bar; the window passes its drag area there.
- */
 @Composable
 internal fun DesktopShell(
     controller: ApplicationController,
@@ -40,8 +32,7 @@ internal fun DesktopShell(
     val state by controller.state.collectAsState()
     var menuOpen by remember { mutableStateOf(false) }
     var offlineDismissed by remember { mutableStateOf(false) }
-    // A reconnect (or a different failure) clears the flag, so the next outage
-    // shows the bar again.
+    // A reconnect (or a different failure) clears the flag, so the next outage shows the bar again.
     LaunchedEffect(state.error) { if (state.error != ServerUnreachableMessage) offlineDismissed = false }
     ViptvTheme(pointer = true) {
         DesktopBackInputs(globalBack, state) {
@@ -62,9 +53,6 @@ internal fun DesktopShell(
                             maximized = controls.maximized)
                     }
                     Box(Modifier.weight(1f)) {
-                        // DUI-04: the card hover preview and right-click menu need
-                        // Play / My List; publishing them once here keeps
-                        // HomeCatalogRow and MediaCard signatures untouched.
                         CompositionLocalProvider(LocalCardActions provides CardActions(
                             play = controller::playTitle,
                             toggleSave = controller::toggleFavorite,
@@ -72,9 +60,6 @@ internal fun DesktopShell(
                             App(localDatabase = localDatabase, desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
                                 manageControllerLifecycle = manageControllerLifecycle, entryBackChanged = globalBack.routeBackChanged)
                         }
-                        // Board D3Offline: overlays the content area below the title
-                        // bar and leaves the 72 dp rail visible. Home only — that is
-                        // the page whose cached rows the copy promises.
                         if (state.screen == Screen.Home && state.error == ServerUnreachableMessage && !offlineDismissed) DesktopOfflineBar(
                             retry = controller::refresh,
                             dismiss = { offlineDismissed = true },

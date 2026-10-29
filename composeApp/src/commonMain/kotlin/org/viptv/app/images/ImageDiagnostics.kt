@@ -8,7 +8,7 @@ import coil3.fetch.Fetcher
 import coil3.request.*
 import kotlin.time.TimeSource
 
-/** Optional QA timings contain no image URLs, tokens, or account data. */
+// Optional QA timings contain no image URLs, tokens or account data.
 internal class ImageDiagnostics(private val report: (String) -> Unit) : EventListener() {
     private val started = TimeSource.Monotonic.markNow()
     private var fetching = started

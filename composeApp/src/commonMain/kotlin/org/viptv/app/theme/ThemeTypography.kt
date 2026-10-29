@@ -16,10 +16,7 @@ internal fun viptvDisplayFamily(): FontFamily {
 
 @Composable
 internal fun viptvTypography(): Typography {
-    // Font() remembers its instance per resource, so the Typography and its
-    // FontFamily stay identical across recompositions. Rebuilding them creates a
-    // new FontFamily identity, which invalidates LocalTextStyle and forces every
-    // text in the tree to re-resolve its Typeface and re-lay out.
+    // Remember the Font() family: a rebuilt FontFamily changes identity, invalidates LocalTextStyle and re-lays out every text in the tree.
     val regular = Font(Res.font.onest_400, FontWeight.Normal)
     val medium = Font(Res.font.onest_500, FontWeight.Medium)
     val semibold = Font(Res.font.onest_600, FontWeight.SemiBold)
