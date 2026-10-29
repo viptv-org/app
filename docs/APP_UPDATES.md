@@ -246,5 +246,10 @@ On the TV emulator, without the real server:
 The code: `composeApp/src/commonMain/kotlin/org/viptv/app/updates` (feed,
 policy, `AppUpdater` state machine, prompt) and
 `composeApp/src/androidMain/kotlin/org/viptv/app/updates/AndroidAppUpdatePlatform.kt`.
-The tests: `AppUpdateFeedTest`, `AppUpdatePolicyTest` and `AppUpdaterTest`
-(desktopTest), and `AndroidAppUpdateTest` (Robolectric, androidHostTest).
+The tests (desktopTest): `AppUpdateFeedTest` (the feed), `AppUpdatePolicyTest`
+(hourly checks, retries, prompt rules), `AppUpdaterTest` (the state machine) and
+`AppUpdateUiTest` (the real composition: banner, TV card, Updating screen,
+About row). The Robolectric tests (androidHostTest): `AndroidAppUpdateTest`
+(download, verification, `PackageInstaller`) and `UpdateRelaunchReceiverTest`
+(reopening the app on `MY_PACKAGE_REPLACED`). The desktop tests drive
+`FakeUpdatePlatform` (desktopTest), their shared fake platform.
