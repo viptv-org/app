@@ -68,7 +68,7 @@ class HomeRowRefreshAnchorTest {
     }
 
     @Test fun aFocusedRowKeepsItsPlace() {
-        val shown = mutableStateOf(home("top", "Popular", titles("Popular", 6), 6))
+        val shown = mutableStateOf(home("top", "Popular", titles("Popular", 14), 6))
         val scene = scene(1440, 900, shown)
         try {
             frames(scene)
@@ -76,10 +76,12 @@ class HomeRowRefreshAnchorTest {
             frames(scene)
             assertTrue(focusedCard(nodes(scene), "Popular title 1"), "the card holds focus")
             val parked = card(nodes(scene), "Popular title 1")!!.positionInRoot.x
-            shown.value = home("top", "Popular", listOf(card("fresh", "New title")) + titles("Popular", 6), 7)
+            shown.value = home("top", "Popular", listOf(card("fresh", "New title")) + titles("Popular", 14), 7)
             frames(scene, 40)
             assertTrue(focusedCard(nodes(scene), "Popular title 1"), "the refreshed row keeps its focused card focused")
             assertNear(parked, card(nodes(scene), "Popular title 1")!!.positionInRoot.x, "the focused card keeps its place")
+            val fresh = card(nodes(scene), "New title")
+            assertTrue(fresh == null || fresh.boundsInRoot.right <= parked, "the new card peeks in from the left, not at the row's start")
         } finally { scene.close() }
     }
 
