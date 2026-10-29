@@ -45,6 +45,8 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     val cards = row.cards.distinctBy(::cardLookupKey)
         .distinctBy { it.title.trim().lowercase() to it.metadata?.year }
     val endCard = continueMore?.takeIf { row.id == CONTINUE_ROW }
+    var rowFocused by remember { mutableStateOf(false) }
+    FollowNewFirstCard(list, cards.firstOrNull()?.let(::cardLookupKey), rowFocused)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically) {
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
@@ -67,7 +69,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
         }
         when (row.state) {
             RowState.EMPTY, RowState.FAILED -> Unit
-            RowState.READY -> LazyRow(state = list,
+            RowState.READY -> LazyRow(Modifier.onFocusChanged { rowFocused = it.hasFocus }, state = list,
                 contentPadding = PaddingValues(horizontal = gutter),
                 horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(cards, key = ::cardLookupKey) { card ->
