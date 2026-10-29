@@ -129,9 +129,11 @@ internal fun SearchableSelect(
     searchPlaceholder: String = "Search ${title.lowercase()}",
     highlighted: Boolean = anyLabel != null && selected.isNotEmpty(),
     open: MutableState<Boolean> = remember { mutableStateOf(false) },
+    /** A TV page's entry point: the requester its Up or page entry focuses this chip with. */
+    chipFocus: FocusRequester? = null,
 ) {
     val distinct = remember(options) { options.distinctBy { it.id } }
-    SelectChip(title, selectTriggerValue(distinct, selected, placeholder), selected.isNotEmpty(), highlighted, modifier, open) { metrics, close ->
+    SelectChip(title, selectTriggerValue(distinct, selected, placeholder), selected.isNotEmpty(), highlighted, modifier, open, chipFocus) { metrics, close ->
         SelectPanel(distinct, selected, multiple, maximumSelections, anyLabel, anyTrailing, searchPlaceholder, metrics, onChange, close)
     }
 }
@@ -147,7 +149,7 @@ internal fun TextSelect(
     highlighted: Boolean = value.isNotBlank(),
 ) {
     val open = remember { mutableStateOf(false) }
-    SelectChip(title, value.ifBlank { placeholder }, value.isNotBlank(), highlighted, modifier, open) { metrics, close ->
+    SelectChip(title, value.ifBlank { placeholder }, value.isNotBlank(), highlighted, modifier, open, entry = null) { metrics, close ->
         TextPanel(title, value, number, metrics, onChange, close)
     }
 }
@@ -213,12 +215,13 @@ private fun Modifier.chipFrame(set: Boolean, focused: Boolean, metrics: ChipMetr
 
 @Composable
 private fun SelectChip(title: String, value: String, valueSet: Boolean, highlighted: Boolean, modifier: Modifier,
-    open: MutableState<Boolean>, panel: @Composable (SelectMetrics, () -> Unit) -> Unit) {
+    open: MutableState<Boolean>, entry: FocusRequester?, panel: @Composable (SelectMetrics, () -> Unit) -> Unit) {
     val presentation = LocalSelectPresentation.current
     val metrics = chipMetrics()
     val close = { open.value = false }
     // On a TV, closing the panel puts focus back on the chip that opened it.
-    val chipFocus = remember { FocusRequester() }
+    val own = remember { FocusRequester() }
+    val chipFocus = entry ?: own
     var wasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(open.value) {
         if (open.value) wasOpen = true
