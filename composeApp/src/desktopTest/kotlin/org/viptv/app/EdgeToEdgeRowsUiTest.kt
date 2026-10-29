@@ -11,10 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import org.viptv.app.components.FilterBar
+import org.viptv.app.components.SearchableSelect
+import org.viptv.app.components.SelectOption
 import org.viptv.app.connection.SearchResultRow
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.home.HomeScreen
-import org.viptv.app.features.live.LiveFilters
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -103,19 +105,23 @@ class EdgeToEdgeRowsUiTest {
         val categories = (1..12).map { "Category $it" }
         val scene = scene(width, 400) {
             Column(Modifier.fillMaxSize().padding(horizontal = gutter.dp)) {
-                LiveFilters(categories, "All", {}, gutter = gutter.dp)
+                FilterBar(gutter = gutter.dp) {
+                    categories.forEach { category -> item(key = category) {
+                        SearchableSelect("Group", listOf(SelectOption(category, category)), listOf(category), {}, anyLabel = null)
+                    } }
+                }
             }
         }
         try {
             frames(scene)
             val nodes = nodes(scene)
-            val first = nodes.first { it.config.contains(SemanticsActions.OnClick) && "All" in texts(it) }
+            val first = nodes.first { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList }
             val strip = nodes.filter { it.config.contains(SemanticsProperties.HorizontalScrollAxisRange) }
                 .single { strip -> flatten(strip).any { it.id == first.id } }
             assertNear(0f, strip.boundsInRoot.left, "the chip strip starts at the screen edge")
             assertNear(width.toFloat(), strip.boundsInRoot.right, "the chip strip ends at the screen edge")
             assertNear(gutter.toFloat(), first.positionInRoot.x, "the first chip rests on the gutter")
-            val edge = nodes.filter { it.config.contains(SemanticsActions.OnClick) && texts(it).any { text -> text in categories } }
+            val edge = nodes.filter { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList }
                 .firstOrNull { it.positionInRoot.x < width && it.positionInRoot.x + it.size.width > width } ?: fail("no chip runs under the edge")
             assertNear(width.toFloat(), edge.boundsInRoot.right, "the edge chip is cut by the screen, not the gutter")
         } finally { scene.close() }
