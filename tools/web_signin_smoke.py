@@ -30,6 +30,12 @@ Headed on a machine without a display or GPU:
     xvfb-run -a -s "-screen 0 1920x1080x24" python3 tools/web_signin_smoke.py --headed \
         --browser-arg=--use-angle=swiftshader --browser-arg=--enable-unsafe-swiftshader
 
+`--cpu-throttle N` divides the browser's CPU by N (Chrome DevTools throttling), which
+is how a starved main thread reaches the Compose web text input. At `--cpu-throttle 6`
+this check fails on every run with scrambled characters: that is app#105, a Compose
+Multiplatform defect (queued DOM edits are applied against a text the hidden input
+element has since rewritten), not an app defect. See docs/WEB_TEXT_INPUT_ORDER.md.
+
 Exits 0 when every check passes and writes screenshots to --out.
 """
 import argparse
@@ -159,6 +165,9 @@ def visit(browser, origin, scenario, args, log, check):
     """One fresh visitor: a new browser context, no cookies, no resize, no prior interaction."""
     context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
     page = context.new_page()
+    if args.cpu_throttle != 1:
+        context.new_cdp_session(page).send("Emulation.setCPUThrottlingRate", {"rate": args.cpu_throttle})
+        print(f"[{scenario}] CPU throttled {args.cpu_throttle}x")
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(origin + "/")
@@ -229,6 +238,8 @@ def main():
     parser.add_argument("--scenario", action="append", choices=SCENARIOS, help="Run only these; default: all")
     parser.add_argument("--type-delay", type=int, default=20, help="Milliseconds between typed keys")
     parser.add_argument("--settle", type=int, default=300, help="Milliseconds to wait after focusing a field before typing")
+    parser.add_argument("--cpu-throttle", type=int, default=1, help="Chrome DevTools CPU slowdown factor. 6 makes app#105 "
+                        "(typed characters arriving out of order) fail on every run; 1 is the real-world default")
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     args = parser.parse_args()
