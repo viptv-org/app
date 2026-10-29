@@ -9,6 +9,12 @@ import org.jetbrains.compose.resources.Font
 import org.viptv.app.resources.*
 
 @Composable
+internal fun viptvDisplayFamily(): FontFamily {
+    val bold = Font(Res.font.bricolage, FontWeight.ExtraBold)
+    return remember(bold) { FontFamily(bold) }
+}
+
+@Composable
 internal fun viptvTypography(): Typography {
     // Font() remembers its instance per resource, so the Typography and its
     // FontFamily stay identical across recompositions. Rebuilding them creates a
