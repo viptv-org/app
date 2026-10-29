@@ -118,9 +118,9 @@ characters in front of it. A rewrite that lands between the browser's native
 insert and the checkpoint also discards that insertion, which is how characters go
 missing rather than only moving.
 
-The DOM timeline captured on the app's Username field (`tools`-free instrumentation
-of the backing element: `beforeinput`/`input`/mutation records, throttle 20) shows
-the two signatures side by side — browser edits arrive as `characterData`
+The DOM timeline captured on the app's Username field (throwaway instrumentation of
+the backing element: `beforeinput`/`input`/mutation records, throttle 20) shows the two
+signatures side by side — browser edits arrive as `characterData`
 mutations, Compose's `textContent` rewrites as `childList 1/1` (one text node
 replaced):
 
