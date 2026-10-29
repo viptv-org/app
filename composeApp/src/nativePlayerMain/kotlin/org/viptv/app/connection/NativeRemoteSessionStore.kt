@@ -13,8 +13,8 @@ private const val LOCAL_CONNECTION = "local-mode-v1"
 private const val NAVIGATION_KEY = "navigation-v1"
 private val navigationCodec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-internal class NativeRemoteSessionStore(vaultFactory: () -> SecretStore = ::platformSecrets,
-    private val remembersNavigation: Boolean = false) : RemoteSessionStore {
+internal class NativeRemoteSessionStore(private val remembersNavigation: Boolean = false,
+    vaultFactory: () -> SecretStore = ::platformSecrets) : RemoteSessionStore {
     private val vault by lazy(vaultFactory)
     private val navigationGate = Mutex()
 
