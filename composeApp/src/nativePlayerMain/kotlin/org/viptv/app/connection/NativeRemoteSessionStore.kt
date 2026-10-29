@@ -13,7 +13,8 @@ private const val LOCAL_CONNECTION = "local-mode-v1"
 private const val NAVIGATION_KEY = "navigation-v1"
 private val navigationCodec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-internal class NativeRemoteSessionStore(vaultFactory: () -> SecretStore = ::platformSecrets) : RemoteSessionStore {
+internal class NativeRemoteSessionStore(vaultFactory: () -> SecretStore = ::platformSecrets,
+    private val remembersNavigation: Boolean = false) : RemoteSessionStore {
     private val vault by lazy(vaultFactory)
     private val navigationGate = Mutex()
 
@@ -37,19 +38,23 @@ internal class NativeRemoteSessionStore(vaultFactory: () -> SecretStore = ::plat
 
     override suspend fun clear() = withContext(Dispatchers.IO) {
         vault.remove(SESSION_KEY)
-        vault.remove(NAVIGATION_KEY)
+        if (remembersNavigation) vault.remove(NAVIGATION_KEY)
     }
 
-    override suspend fun navigation(profile: String): SavedNavigation? = withContext(Dispatchers.IO) {
-        navigationGate.withLock { readNavigationBook()[profile] }
+    override suspend fun navigation(profile: String): SavedNavigation? {
+        if (!remembersNavigation) return null
+        return withContext(Dispatchers.IO) { navigationGate.withLock { readNavigationBook()[profile] } }
     }
 
-    override suspend fun saveNavigation(profile: String, record: SavedNavigation) = withContext(Dispatchers.IO) {
-        navigationGate.withLock {
-            val profiles = readNavigationBook().toMutableMap()
-            if (profiles[profile] == record) return@withLock
-            profiles[profile] = record
-            vault.put(NAVIGATION_KEY, navigationCodec.encodeToString(SavedNavigationBook(profiles)))
+    override suspend fun saveNavigation(profile: String, record: SavedNavigation) {
+        if (!remembersNavigation) return
+        withContext(Dispatchers.IO) {
+            navigationGate.withLock {
+                val profiles = readNavigationBook().toMutableMap()
+                if (profiles[profile] == record) return@withLock
+                profiles[profile] = record
+                vault.put(NAVIGATION_KEY, navigationCodec.encodeToString(SavedNavigationBook(profiles)))
+            }
         }
     }
 
@@ -60,5 +65,3 @@ internal class NativeRemoteSessionStore(vaultFactory: () -> SecretStore = ::plat
             .orEmpty()
     } catch (_: Exception) { emptyMap() }
 }
-
-actual fun remoteSessionStore(): RemoteSessionStore = NativeRemoteSessionStore()

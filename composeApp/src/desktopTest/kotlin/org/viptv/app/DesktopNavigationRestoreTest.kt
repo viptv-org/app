@@ -105,6 +105,23 @@ class DesktopNavigationRestoreTest {
         override fun remove(key: String) { values.remove(key) }
     }
 
+    @Test fun onlyTheDesktopSessionStoreKeepsNavigationRecords() = runBlocking<Unit> {
+        val desktopVault = Vault()
+        NativeRemoteSessionStore({ desktopVault }, remembersNavigation = true)
+            .saveNavigation("default", SavedNavigation("Discover", BrowseQuery("movie", genre = "Drama")))
+        val reopened = NativeRemoteSessionStore({ desktopVault }, remembersNavigation = true).navigation("default")
+        assertEquals("Discover", reopened?.screen)
+        assertEquals("Drama", reopened?.browse?.genre)
+        NativeRemoteSessionStore({ desktopVault }, remembersNavigation = true).clear()
+        assertNull(desktopVault.values["navigation-v1"])
+
+        val androidVault = Vault()
+        val android = NativeRemoteSessionStore { androidVault }
+        android.saveNavigation("default", SavedNavigation("Discover", BrowseQuery("movie")))
+        assertNull(android.navigation("default"))
+        assertTrue(androidVault.values.isEmpty(), "Android TV and phone must not keep a navigation record")
+    }
+
     @Test fun localProfileReopensOnTheBrowseScreenAfterItIsChosen() = runBlocking<Unit> {
         val directory = Files.createTempDirectory("viptv-navigation-local-")
         val path = directory.resolve("local.sqlite").toString()

@@ -15,6 +15,11 @@ import kotlin.test.*
 
 class NativeProgressiveSourcesTest {
     private val card = Card(MediaIdentity("tt1234567", "movie", emptyList()), provider_id = "metadata", title = "Fixture film", badges = emptyList())
+    private val store = object : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = null
+        override suspend fun save(session: SavedRemoteSession) = Unit
+        override suspend fun clear() = Unit
+    }
     private class Fixture : AutoCloseable {
         val lateStarted = CompletableDeferred<Unit>()
         val releaseLate = CompletableDeferred<Unit>()
@@ -89,7 +94,7 @@ class NativeProgressiveSourcesTest {
 
     @Test fun controllerShowsNativePartialSourcesAndBackPreventsLateScreenMutation() = runBlocking<Unit> {
         Fixture().use { fixture ->
-            val controller = ApplicationController(this)
+            val controller = ApplicationController(this, store)
             controller.local = fixture.local
             controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
                 detail = DetailSnapshot(card, episodes = emptyList()), preferences = PreferencesSnapshot())
@@ -107,7 +112,7 @@ class NativeProgressiveSourcesTest {
     }
     @Test fun controllerCanSelectEarlyGrantAndCancelRemainingDiscoveryBeforePlayerHandoff() = runBlocking<Unit> {
         Fixture().use { fixture ->
-            val controller = ApplicationController(this)
+            val controller = ApplicationController(this, store)
             controller.local = fixture.local
             controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
                 detail = DetailSnapshot(card, episodes = emptyList()), preferences = PreferencesSnapshot())
@@ -130,7 +135,7 @@ class NativeProgressiveSourcesTest {
 
     @Test fun controllerRejectsPreviousTitleClickAndResolvesCurrentCandidateById() = runBlocking<Unit> {
         Fixture().use { fixture ->
-            val controller = ApplicationController(this)
+            val controller = ApplicationController(this, store)
             controller.local = fixture.local
             controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
                 detail = DetailSnapshot(card, episodes = emptyList()), preferences = PreferencesSnapshot())
