@@ -25,15 +25,18 @@ import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.state.RowSeeAll
 
 internal const val CONTINUE_ROW = "continue"
+internal const val MY_LIST_ROW = "favorites"
 
 @Composable
 internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean, modifier: Modifier,
     focus: (Card) -> Unit, open: (Card) -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false,
     play: (Card) -> Unit = open,
     gutter: Dp = 0.dp,
-    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
+    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {},
+    hover: (Card, Boolean) -> Unit = { _, _ -> }) {
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -44,7 +47,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
         else { if (compact) 240 else if (television) (384 * scale).toInt() else if (tablet) 300 else if (browser) 212 else 280 }
     val cards = row.cards.distinctBy(::cardLookupKey)
         .distinctBy { it.title.trim().lowercase() to it.metadata?.year }
-    val endCard = continueMore?.takeIf { row.id == CONTINUE_ROW }
+    val endCard = seeAllFor(row)
     var rowFocused by remember { mutableStateOf(false) }
     FollowNewFirstCard(list, cards.firstOrNull()?.let(::cardLookupKey), rowFocused)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
@@ -52,7 +55,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
             if (endCard != null && !television) {
                 Text("See all", Modifier.clip(RoundedCornerShape(6.dp))
-                    .pointerClickable(role = androidx.compose.ui.semantics.Role.Button, shape = RoundedCornerShape(6.dp), onClick = seeAll)
+                    .pointerClickable(role = androidx.compose.ui.semantics.Role.Button, shape = RoundedCornerShape(6.dp), onClick = { openSeeAll(endCard) })
                     .padding(horizontal = 6.dp, vertical = 4.dp),
                     color = Palette.secondary, fontSize = (if (tablet) 15f else 14f).sp, fontWeight = FontWeight.Medium)
                 if (!compact && cards.isNotEmpty()) Spacer(Modifier.width(12.dp))
@@ -81,6 +84,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                                 if (!television) scope.launch { bringIntoView.bringIntoView() }
                                 focus(card)
                             },
+                            onHover = { if (row.id == CONTINUE_ROW) hover(card, it) },
                             open = open, select = select, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
                             cornerRadius = if (television) 12.dp * scale else 8.dp,
                             focusWidth = if (television) 4.dp * scale else 3.dp,
@@ -88,9 +92,10 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                             watchedBadgeSize = if (television) 34.dp * scale else null)
                     }
                 }
-                if (endCard != null) item(key = SEE_ALL_KEY) {
+                if (endCard != null) item(key = seeAllKey(row.id)) {
                     val bringIntoView = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
-                    SeeAllCard(endCard, width, seeAll, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
+                    SeeAllCard(endCard, width, { openSeeAll(endCard) }, portrait = portrait,
+                        labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
                         cornerRadius = if (television) 12.dp * scale else 8.dp, focusWidth = if (television) 4.dp * scale else 3.dp,
                         showFocusOutline = showFocusOutline,
                         modifier = Modifier.bringIntoViewRequester(bringIntoView).onFocusChanged {

@@ -24,9 +24,10 @@ import org.viptv.app.components.MediaMetadata
 import org.viptv.engine.wire.Card
 
 internal const val HERO_ARTWORK_TAG = "hero-artwork"
+internal const val HERO_SUMMARY_TAG = "hero-summary"
 
 @Composable
-internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, carousel: HeroCarousel? = null, viewportHeight: Dp? = null) {
+internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, carousel: HeroCarousel? = null, viewportHeight: Dp? = null, label: String = "Featured") {
     val artHeight = viewportHeight?.takeIf { it < DesktopBreakpoints.heroShortViewport }
         ?.let { (it * DesktopBreakpoints.heroShortArtFraction).coerceAtMost(DesktopBreakpoints.heroShortArtMax) }
     val short = artHeight != null
@@ -37,7 +38,7 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
         if (maxWidth < rowMin) {
             Column(verticalArrangement = Arrangement.spacedBy(if (short) 14.dp else 22.dp)) {
                 HeroArtwork(card, Modifier.fillMaxWidth(), artHeight, carousel)
-                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel, short)
+                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel, short, label)
             }
         } else {
             val gap = if (short) 32.dp else 48.dp
@@ -48,7 +49,7 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
                 else DesktopBreakpoints.heroSummaryMax)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
-                FeaturedSummary(card, open, play, save, saved, Modifier.width(copyWidth), carousel, short)
+                FeaturedSummary(card, open, play, save, saved, Modifier.width(copyWidth), carousel, short, label)
                 HeroArtwork(card, Modifier.width(artWidth), artHeight, carousel)
             }
         }
@@ -66,9 +67,9 @@ private fun HeroArtwork(card: Card, modifier: Modifier, height: Dp?, carousel: H
 }
 
 @Composable
-private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?, short: Boolean) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(if (short) 12.dp else 14.dp)) {
-        Text(if (carousel != null && carousel.count > 1) "Featured · ${carousel.index + 1} of ${carousel.count}" else "Featured",
+private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?, short: Boolean, label: String) {
+    Column(modifier.testTag(HERO_SUMMARY_TAG), verticalArrangement = Arrangement.spacedBy(if (short) 12.dp else 14.dp)) {
+        Text(if (carousel != null && carousel.count > 1) "$label · ${carousel.index + 1} of ${carousel.count}" else label,
             fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
         if (card.logo != null) {
             AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,

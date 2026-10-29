@@ -5,6 +5,7 @@ package org.viptv.app.features.home
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.features.continuewatching.continueWatchingActivation
+import org.viptv.app.state.RowSeeAll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -54,21 +55,22 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
     rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
     onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open, state: LazyListState = rememberLazyListState(),
-    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
+    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val portrait = row.id != "continue"
     val activate = if (row.id == CONTINUE_ROW) continueWatchingActivation(play, open) else open
     val arrival = rememberTvContentArrival(row.state == RowState.READY)
     val cards = remember(row.cards) { row.cards.distinctBy(::cardLookupKey) }
-    val endCard = continueMore?.takeIf { row.id == CONTINUE_ROW }
+    val endCard = seeAllFor(row)
+    val endKey = seeAllKey(row.id)
     val trailing = if (appendError == null && more != null && (row.next_cursor != null || appending)) HOME_ROW_TRAILING else 0
 
     var lastFocusedIndex by rememberSaveable(row.id) { mutableIntStateOf(0) }
     var lastFocusedKey by rememberSaveable(row.id) { mutableStateOf<String?>(null) }
     val resumeIndex = cards.indexOfFirst { cardLookupKey(it) == lastFocusedKey }.takeIf { it >= 0 }
         ?: lastFocusedIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
-    val resumeSeeAll = endCard != null && lastFocusedKey == SEE_ALL_KEY
+    val resumeSeeAll = endCard != null && lastFocusedKey == endKey
     var focusedKey by remember(row.id) { mutableStateOf<Any?>(null) }
     FollowNewFirstCard(state, cards.firstOrNull()?.let(::cardLookupKey), focusedKey != null)
     val latestCards = rememberUpdatedState(cards)
@@ -76,7 +78,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     val recover = remember { FocusRequester() }
     LaunchedEffect(cards, endCard != null) {
         val lost = focusedKey ?: return@LaunchedEffect
-        if (cards.isEmpty() || cards.any { cardLookupKey(it) == lost } || lost == SEE_ALL_KEY && endCard != null) return@LaunchedEffect
+        if (cards.isEmpty() || cards.any { cardLookupKey(it) == lost } || lost == endKey && endCard != null) return@LaunchedEffect
         focusedKey = null
         repeat(30) { withFrameNanos { }; if (runCatching { recover.requestFocus() }.getOrDefault(false)) return@LaunchedEffect }
     }
@@ -97,7 +99,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
 
         LazyRow(state = state, modifier = arrival.focusRestorer(if (lastFocusedKey != null) recover else FocusRequester.Default).focusGroup().onFocusChanged {
                 if (!it.hasFocus && (latestCards.value.any { card -> cardLookupKey(card) == focusedKey } ||
-                        focusedKey == SEE_ALL_KEY && latestEndCard.value != null)) focusedKey = null
+                        focusedKey == endKey && latestEndCard.value != null)) focusedKey = null
             }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
             when (row.state) {
                 RowState.READY -> {
@@ -111,11 +113,12 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                             { lastFocusedIndex = index; lastFocusedKey = cardLookupKey(it); focusedKey = lastFocusedKey; focus(it) }, activate, showFocus, focusedCaptions = portrait,
                             onUp = up, artworkWidth = (if (portrait) 255.2f else 422.4f).dp * scale)
                     }
-                    if (endCard != null) item(key = SEE_ALL_KEY, contentType = "see-all") {
-                        TvSeeAllCard(endCard, scale, seeAll, Modifier
+                    if (endCard != null) item(key = endKey, contentType = "see-all") {
+                        TvSeeAllCard(endCard, scale, { openSeeAll(endCard) }, Modifier
                             .then(if (resume != null && resumeSeeAll) Modifier.focusRequester(resume) else Modifier)
                             .then(if (resumeSeeAll) Modifier.focusRequester(recover) else Modifier),
-                            focused = { lastFocusedIndex = cards.size; lastFocusedKey = SEE_ALL_KEY; focusedKey = SEE_ALL_KEY },
+                            portrait = portrait,
+                            focused = { lastFocusedIndex = cards.size; lastFocusedKey = endKey; focusedKey = endKey },
                             onUp = up)
                     }
                     if (appendError != null) item(key = "row-append", contentType = "failed") {

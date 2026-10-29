@@ -19,7 +19,9 @@ class ContinueWatchingListTest {
         withTimeout(5_000) { while (!condition()) delay(10) }.also { assertTrue(condition(), what) }
 
     @Test fun theEndCardAppearsOnlyWhenTheListHoldsMoreThanTwelve() = runBlocking<Unit> {
-        for ((total, expected) in listOf(5 to null, 12 to null, 13 to ContinueWatchingMore(13), 40 to ContinueWatchingMore(null))) {
+        val incomplete = RowSeeAll(Screen.ContinueWatching, "Continue Watching", "13 titles in progress", 13)
+        val complete = RowSeeAll(Screen.ContinueWatching, "Continue Watching", "Everything in progress")
+        for ((total, expected) in listOf(5 to null, 12 to null, 13 to incomplete, 40 to complete)) {
             ContinueWatchingHost(total).use { host ->
                 val controller = controller(host, shown = total)
                 controller.checkContinueWatching()
@@ -27,7 +29,7 @@ class ContinueWatchingListTest {
                     delay(100)
                     assertTrue(host.reads.isEmpty(), "a row of $total is the whole list: nothing to read")
                 } else until("$total: the list's first page landed") { controller.state.value.continueWatching != null }
-                assertEquals(expected, controller.state.value.continueWatchingMore(), "$total titles in progress")
+                assertEquals(expected, controller.state.value.rowSeeAll(controller.state.value.home!!.rows.single()), "$total titles in progress")
                 controller.checkContinueWatching(); delay(50)
                 assertTrue(host.reads.size <= 1, "${host.reads}")
             }
@@ -36,10 +38,11 @@ class ContinueWatchingListTest {
 
     @Test fun theLocalEngineAndOtherProfilesNeverShowTheEndCard() {
         val list = ContinueWatchingList("1", (1..40).map(::card), next = "24")
+        val row = home(12).rows.single()
         val state = ApplicationState(selectedProfile = "1", home = home(12), continueWatching = list)
-        assertEquals(ContinueWatchingMore(null), state.continueWatchingMore())
-        assertNull(state.copy(selectedProfile = "2").continueWatchingMore(), "another profile's list")
-        assertNull(state.copy(continueWatching = null).continueWatchingMore())
+        assertEquals(RowSeeAll(Screen.ContinueWatching, "Continue Watching", "Everything in progress"), state.rowSeeAll(row))
+        assertNull(state.copy(selectedProfile = "2").rowSeeAll(row), "another profile's list")
+        assertNull(state.copy(continueWatching = null).rowSeeAll(row))
     }
 
     @Test fun thePagePagesThroughFortyEntriesWithTheServerCursor() = runBlocking<Unit> {

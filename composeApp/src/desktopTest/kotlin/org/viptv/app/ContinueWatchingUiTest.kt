@@ -57,12 +57,12 @@ class ContinueWatchingUiTest {
 
     @Test fun homeEndsTheRowWithSeeAllOnlyWhenTheListHoldsMore() {
         for ((width, name) in listOf(390 to "phone", 1280 to "desktop")) {
-            for (more in listOf(ContinueWatchingMore(40), null)) {
+            for (more in listOf(RowSeeAll(Screen.ContinueWatching, "Continue Watching", "40 titles in progress", 40), null)) {
                 var opened = 0
                 val scene = ImageComposeScene(width, 900, Density(1f)) { ViptvTheme {
                     Box(Modifier.fillMaxSize().background(Palette.background)) {
                         HomeScreen(home(1), television = false, open = {}, retry = {}, busy = false,
-                            continueMore = more, seeAll = { opened++ })
+                            seeAllFor = { more }, openSeeAll = { opened++ })
                     }
                 } }
                 try {
@@ -90,7 +90,8 @@ class ContinueWatchingUiTest {
             focusManager = LocalFocusManager.current
             Column(Modifier.fillMaxSize().background(Palette.background)) {
                 TvHomeShelf(home(2).rows[0], 1f, first, up = null, focus = {}, open = {}, play = {},
-                    continueMore = ContinueWatchingMore(null), seeAll = { opened++ })
+                    seeAllFor = { RowSeeAll(Screen.ContinueWatching, "Continue Watching", "Everything in progress") },
+                    openSeeAll = { opened++ })
             }
         } }
         try {

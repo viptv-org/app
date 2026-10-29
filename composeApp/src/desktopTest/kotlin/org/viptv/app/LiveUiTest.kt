@@ -46,9 +46,9 @@ class LiveUiTest {
             }
             try {
                 frames(scene)
-                val labels = nodes(scene).filter { text(it).startsWith("TV source:") }
+                val labels = nodes(scene).filter { text(it).startsWith("Source:") }
                 assertEquals(sources.size > 1, labels.isNotEmpty())
-                if (sources.size > 1) assertTrue(labels.any { text(it) == "TV source: Playlist" })
+                if (sources.size > 1) assertTrue(labels.any { text(it) == "Source: Playlist" })
             } finally { scene.close() }
         }
     }
@@ -64,6 +64,43 @@ class LiveUiTest {
             try { frames(scene); assertTrue(nodes(scene).any { text(it) == "No favourite channels from Other feed." }) }
             finally { scene.close() }
         }
+    }
+    @Test fun groupAndFavouritesAreChipsThatApplyAtOnceAndClear() {
+        for (tv in listOf(false, true)) {
+            val groups = mutableListOf<String?>()
+            var favorites = 0
+            val channels = listOf(channel(), LiveChannel(Card(MediaIdentity("two", "live", emptyList()), provider_id = "m3u:1",
+                title = "Fixture sport", badges = emptyList()), category = "Sport", groupId = "sport"))
+            val scene = ImageComposeScene(if (tv) 1920 else 1200, if (tv) 1080 else 800, Density(1f)) {
+                ViptvTheme(tv) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    LiveScreen(channels, tv, null, null, {}, {}, groupLabels = mapOf("news" to "News", "sport" to "Sport"),
+                        groupChanged = { groups += it }, favoritesFilter = { favorites++ })
+                } }
+            }
+            try {
+                frames(scene)
+                val layout = if (tv) "TV" else "desktop"
+                assertTrue(nodes(scene).any { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it) == "Group: All" }, "$layout: the group is a chip")
+                assertFalse(nodes(scene).any { text(it) == "Clear" }, "$layout: nothing to clear yet")
+                open(scene, "Group: All")
+                pick(scene, "Sport")
+                assertEquals(listOf("sport"), groups, "$layout: a group pick applies at once")
+                assertTrue(clickable(scene, "Clear").config[SemanticsActions.OnClick].action!!.invoke())
+                frames(scene)
+                assertEquals(listOf("sport", null), groups, "$layout: Clear drops the group")
+                assertFalse(nodes(scene).any { it.config.getOrNull(SemanticsProperties.Role) == Role.Button && text(it) == "Clear" })
+                assertTrue(clickable(scene, "Favourites").config[SemanticsActions.OnClick].action!!.invoke())
+                assertEquals(1, favorites, "$layout: Favourites is a toggle chip")
+            } finally { scene.close() }
+        }
+    }
+    private fun open(scene: ImageComposeScene, label: String) {
+        val trigger = nodes(scene).single { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it) == label }
+        assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke()); frames(scene)
+    }
+    private fun pick(scene: ImageComposeScene, label: String) {
+        val row = nodes(scene).single { it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) && text(it).startsWith(label) }
+        assertTrue(row.config[SemanticsActions.OnClick].action!!.invoke()); frames(scene)
     }
     private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
