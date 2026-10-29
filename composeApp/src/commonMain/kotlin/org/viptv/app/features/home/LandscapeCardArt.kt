@@ -31,6 +31,7 @@ internal fun PosterInLandscape(
     poster: String,
     contentDescription: String?,
     modifier: Modifier = Modifier,
+    onSuccess: (() -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
 ) {
     Box(modifier.fillMaxSize().clipToBounds()) {
@@ -41,7 +42,7 @@ internal fun PosterInLandscape(
         AsyncImage(softFill, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
         Box(Modifier.matchParentSize().background(SoftFillScrim))
         AsyncImage(poster, contentDescription, Modifier.fillMaxHeight().aspectRatio(2f / 3).align(Alignment.Center),
-            contentScale = ContentScale.Crop, onError = onError)
+            contentScale = ContentScale.Crop, onSuccess = { onSuccess?.invoke() }, onError = onError)
     }
 }
 

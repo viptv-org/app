@@ -19,6 +19,7 @@ import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
 import org.viptv.app.features.continuewatching.ContinueWatchingScreen
+import org.viptv.app.features.home.ART_ATTEMPTS
 import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.images.ConfigureImageLoading
 import org.viptv.app.theme.Palette
@@ -64,6 +65,24 @@ class LibraryContinueArtworkTest {
         }
     }
 
+    @Test fun aPosterThatFailsOnceIsRetriedAndThenDrawn() = runBlocking {
+        withFakeArtwork(failFirst = 1) { art ->
+            val cards = listOf(art.card("Retried", poster = art.url("poster-retry"), landscape = null))
+            val shot = render(frames = 260) { LibraryScreen(cards, available = true, television = false, open = {}, history = {}, home = {}) }
+            assertTrue((art.paths["/poster-retry.png"] ?: 0) > 1, "a failed poster is asked again: ${art.paths}")
+            assertTrue(shot.count(PosterInk) > 300, "the retried poster is drawn instead of the no-art tile")
+        }
+    }
+
+    @Test fun aPosterThatKeepsFailingSettlesOnTheNoArtTile() = runBlocking {
+        withFakeArtwork(failFirst = 99) { art ->
+            val cards = listOf(art.card("Broken", poster = art.url("poster-broken"), landscape = null))
+            val shot = render(frames = 320) { LibraryScreen(cards, available = true, television = false, open = {}, history = {}, home = {}) }
+            assertEquals(ART_ATTEMPTS + 1, art.paths["/poster-broken.png"] ?: 0, "one request and $ART_ATTEMPTS retries: ${art.paths}")
+            assertEquals(0, shot.count(PosterInk), "a poster that never loads leaves the no-art tile")
+        }
+    }
+
     private class Artwork(val origin: String) {
         val paths = ConcurrentHashMap<String, Int>()
 
@@ -74,12 +93,18 @@ class LibraryContinueArtworkTest {
             title = title, badges = emptyList(), poster = poster, landscape = landscape)
     }
 
-    private suspend fun withFakeArtwork(block: suspend (Artwork) -> Unit) {
+    private suspend fun withFakeArtwork(failFirst: Int = 0, block: suspend (Artwork) -> Unit) {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val art = Artwork("http://127.0.0.1:${server.address.port}")
         server.createContext("/") { exchange ->
             val name = exchange.requestURI.path
-            art.paths[name] = (art.paths[name] ?: 0) + 1
+            val served = (art.paths[name] ?: 0) + 1
+            art.paths[name] = served
+            if (served <= failFirst) {
+                exchange.sendResponseHeaders(500, -1)
+                exchange.close()
+                return@createContext
+            }
             val body = png(if (name.startsWith("/still")) StillInk else PosterInk)
             exchange.responseHeaders.add("content-type", "image/png")
             exchange.sendResponseHeaders(200, body.size.toLong())
@@ -89,7 +114,7 @@ class LibraryContinueArtworkTest {
         try { block(art) } finally { server.stop(0) }
     }
 
-    private suspend fun render(content: @Composable () -> Unit): Shown {
+    private suspend fun render(frames: Int = 120, content: @Composable () -> Unit): Shown {
         val context = PlatformContext.INSTANCE
         val previous: ImageLoader? = runCatching { SingletonImageLoader.get(context) }.getOrNull()
         val scene = ImageComposeScene(WIDTH, HEIGHT, Density(1f)) {
@@ -102,7 +127,7 @@ class LibraryContinueArtworkTest {
         }
         try {
             var shown: Shown? = null
-            repeat(120) { frame ->
+            repeat(frames) { frame ->
                 scene.render(frame * 16_666_667L).use { image -> shown = Shown(Bitmap.makeFromImage(image)) }
                 delay(25)
             }
