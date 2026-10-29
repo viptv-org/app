@@ -72,7 +72,9 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
     val focus = remember { mutableStateOf(false) }
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
     // The episode a caught-up Continue Watching card waits for follows its coordinates (app#132).
-    val nextEpisode = LocalNextEpisodes.current?.get(card)
+    // Only a caught-up card is ever announced, so no other card pays for the key lookup.
+    val nextEpisodes = LocalNextEpisodes.current
+    val nextEpisode = remember(card, nextEpisodes) { if (card.isCaughtUp()) nextEpisodes[card] else null }
     val states = remember(card, nextEpisode) { TvCardStates.of(card, nextEpisode) }
     val description = remember(card, states) { cardDescription(card, states) }
     Column(modifier.width(artworkWidth ?: (if (portrait) 232 else 384).dp * scale)
@@ -160,7 +162,7 @@ private data class TvCardStates(
 ) {
     companion object {
         /** [nextEpisode] is the episode a caught-up Continue Watching card waits for, when announced. */
-        fun of(card: Card, nextEpisode: NextEpisode? = null): TvCardStates {
+        fun of(card: Card, nextEpisode: NextEpisode?): TvCardStates {
             val badges = card.badges.filter { !it.equals("Simkl", true) }
             val lower = badges.map { it.lowercase() }
             val watched = card.isWatched()
@@ -199,8 +201,7 @@ private data class TvCardStates(
                 artLabelFill = fill,
                 artLabelInk = ink,
                 watched = watched,
-                metaLabel = (returning ?: other)?.takeIf { it != label }
-                    ?: nextEpisode?.takeIf { card.isCaughtUp() }?.caughtUpNextCaption(),
+                metaLabel = (returning ?: other)?.takeIf { it != label } ?: nextEpisode?.caughtUpNextCaption(),
                 certification = card.metadata?.certification?.takeIf { it.isNotBlank() },
                 metaText = card.subtitle?.takeIf { it.isNotBlank() }
                     ?: card.identity.episode?.let { episode ->

@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import org.viptv.app.components.NextEpisodes
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.Card
@@ -59,7 +60,7 @@ data class ApplicationState(
      * continuation page `/api/bootstrap` carries and from every continuation page read. Keyed by
      * card, so Home's row, the See all page and TV's boards label the same card the same way.
      */
-    val continueNext: org.viptv.app.components.NextEpisodes? = null,
+    val continueNext: NextEpisodes = NextEpisodes.Empty,
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),
     val library: List<Card> = emptyList(),

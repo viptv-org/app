@@ -172,6 +172,7 @@ private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, obse
         val result = requireNotNull(owner.remote).bootstrap()
         if (!current(owner) || result.selected != owner.profile) return
         publishHome(result.home)
+        adoptContinuation(result.continuation)
         val state = mutable.value
         mutable.value = state.copy(profiles = result.profiles, profileManagement = result.profileManagement ?: state.profileManagement,
             preferences = result.preferences ?: state.preferences, policyRefreshNeeded = false)

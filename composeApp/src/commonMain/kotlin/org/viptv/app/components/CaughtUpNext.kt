@@ -17,7 +17,8 @@ import org.viptv.engine.wire.NextEpisode
 @Immutable
 class NextEpisodes(private val byKey: Map<String, NextEpisode>) {
     /** The episode [card] waits for, when the queue announced one for it. */
-    operator fun get(card: Card): NextEpisode? = byKey[cardLookupKey(card)]
+    operator fun get(card: Card): NextEpisode? =
+        if (byKey.isEmpty()) null else byKey[cardLookupKey(card)]
 
     /**
      * These facts with [entries]' announcements merged in: an entry that announces nothing clears
@@ -31,17 +32,9 @@ class NextEpisodes(private val byKey: Map<String, NextEpisode>) {
     }
 
     companion object {
+        /** A profile that knows nothing yet: a page's announcements replace these. */
         val Empty = NextEpisodes(emptyMap())
-
-        /** The facts [entries] announce, or null when none of them does. */
-        fun of(entries: List<ContinuationEntry>): NextEpisodes? =
-            entries.mapNotNull { entry -> entry.next_episode?.let { cardLookupKey(entry.card) to it } }
-                .takeIf { it.isNotEmpty() }?.let { NextEpisodes(it.toMap()) }
     }
 }
 
-/** [entries]' announcements over the facts already known; null only when neither knows any. */
-internal fun NextEpisodes?.announcing(entries: List<ContinuationEntry>): NextEpisodes? =
-    this?.announced(entries) ?: NextEpisodes.of(entries)
-
-internal val LocalNextEpisodes = compositionLocalOf<NextEpisodes?> { null }
+internal val LocalNextEpisodes = compositionLocalOf { NextEpisodes.Empty }

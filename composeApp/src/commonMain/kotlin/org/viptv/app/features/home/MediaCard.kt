@@ -95,8 +95,13 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     select: ((Card) -> Unit)? = null) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
-    // The next episode a caught-up Continue Watching card waits for (app#132).
-    val nextEpisode = LocalNextEpisodes.current?.get(card)
+    // The next episode a caught-up Continue Watching card waits for (app#132). Only a caught-up
+    // card is ever announced, so no other card pays for the key lookup.
+    val nextEpisodes = LocalNextEpisodes.current
+    val caughtUp = remember(card) { card.caughtUpCaption() }
+    val nextCaption = remember(card, caughtUp, nextEpisodes) {
+        caughtUp?.let { nextEpisodes[card]?.caughtUpNextCaption() }
+    }
     // Desktop pointer affordances (boards D3HomeHover / D3Context). `desktop` is
     // only true where the Compose Desktop chrome published the card actions, so
     // the TV D-pad path and touch taps keep their existing behaviour.
@@ -172,10 +177,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 overflow = TextOverflow.Ellipsis)
             // A caught-up Continue Watching card names the episode it finished, and under it the
             // episode it is waiting for, "S3 E5 coming soon" or its air date (app#132). The facts
-            // come per continuation entry, so the board reads them from the shell (local below).
-            val caughtUp = remember(card) { card.caughtUpCaption() }
+            // come per continuation entry, so the board reads them from the shell's local.
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-            if (caughtUp != null) nextEpisode?.caughtUpNextCaption()?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         if (actions != null) {
             menuAt?.let { at ->
