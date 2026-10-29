@@ -28,8 +28,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
     filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null) {
     val choose = calendarOpener(open, openEntry)
-    var selected by remember { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
-    val activeDay = selected?.takeIf { id -> days.any { it.id == id } }
+    var chosen by remember { mutableStateOf<String?>(null) }
+    val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
         ?: days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id
     val byDay = remember(entries) { entries.groupBy { it.day } }
     val visible = byDay[activeDay].orEmpty()
@@ -41,7 +41,6 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     val selectedRow = focused?.let { rowFocus.getOrPut(it.id) { FocusRequester() } }
     val rows = rememberLazyListState()
     LaunchedEffect(activeDay) {
-        selected = activeDay
         focusedId = null
         rows.scrollToItem(0)
     }
@@ -61,7 +60,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             days.forEach { day ->
                 TvAction(Modifier.height(64.dp * scale).focusProperties { if (selectedRow != null) down = selectedRow; if(controls)up=filters }, scale,
                     primary = activeDay == day.id, requester = if (activeDay == day.id) date else null,
-                    activate = { selected = day.id; focusedId = null }, cornerRadius = 32.dp * scale,
+                    activate = { chosen = day.id; focusedId = null }, cornerRadius = 32.dp * scale,
                     background = if(activeDay==day.id)Palette.raised else androidx.compose.ui.graphics.Color.Transparent, contentPadding = PaddingValues(horizontal = 26.dp * scale)) {
                     Text(day.label, color = if (it == Palette.background) it else Palette.secondary, fontSize = (26 * scale).sp,
                         lineHeight = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
