@@ -81,6 +81,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         detailPagingJob?.cancel(); detailPagingJob = null
         val current = ++generation
         mutable.value = mutable.value.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null)
+        fun settle() { if (generation == current) mutable.value = mutable.value.copy(starting = false, busy = false, sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning) }
         job = scope.launch {
             try { prior?.join(); operation() }
             catch (e: CancellationException) { throw e }
@@ -92,7 +93,10 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                     connection?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
                 } else if (generation == current) mutable.value = mutable.value.copy(error = failureMessage(e))
-            } finally { if (generation == current) mutable.value = mutable.value.copy(starting = false, busy = false, sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning) }
+            }
+        }.also { started ->
+            // A job cancelled before it is dispatched never enters its body, so completion, not a finally, clears busy.
+            started.invokeOnCompletion { settle() }
         }
     }}
 
