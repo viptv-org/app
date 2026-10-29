@@ -55,11 +55,6 @@ data class ApplicationState(
     val homeRowErrors: Map<String, String> = emptyMap(),
     /** The full Continue Watching list as far as it is loaded (app#114); Home's row shows only its start. */
     val continueWatching: ContinueWatchingList? = null,
-    /**
-     * The next episode each caught-up Continue Watching card is waiting for (app#132), from the
-     * continuation page `/api/bootstrap` carries and from every continuation page read. Keyed by
-     * card, so Home's row, the See all page and TV's boards label the same card the same way.
-     */
     val continueNext: NextEpisodes = NextEpisodes.Empty,
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),

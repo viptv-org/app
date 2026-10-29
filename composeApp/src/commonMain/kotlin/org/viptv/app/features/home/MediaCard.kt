@@ -95,8 +95,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     select: ((Card) -> Unit)? = null) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
-    // The next episode a caught-up Continue Watching card waits for (app#132). Only a caught-up
-    // card is ever announced, so no other card pays for the key lookup.
     val nextEpisodes = LocalNextEpisodes.current
     val caughtUp = remember(card) { card.caughtUpCaption() }
     val nextCaption = remember(card, caughtUp, nextEpisodes) {
@@ -175,9 +173,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             Spacer(Modifier.height(9.dp))
             Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, // Ellipsis in every state; basicMarquee already clips its own slice. (NAV-13)
                 overflow = TextOverflow.Ellipsis)
-            // A caught-up Continue Watching card names the episode it finished, and under it the
-            // episode it is waiting for, "S3 E5 coming soon" or its air date (app#132). The facts
-            // come per continuation entry, so the board reads them from the shell's local.
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }

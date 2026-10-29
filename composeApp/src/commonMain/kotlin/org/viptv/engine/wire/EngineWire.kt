@@ -86,11 +86,6 @@ data class ContinuationEntry(
     val record: PlaybackRecord,
     val status: ContinuationStatus,
     val previous_identity: MediaIdentity? = null,
-    /**
-     * The episode a caught-up entry is waiting for, when the metadata lists one that is not out
-     * yet: absent when the show is over, when the next one is already released (it is [card] then,
-     * status `Next`) and from payloads written before the field existed (backend#78).
-     */
     val next_episode: NextEpisode? = null,
 )
 

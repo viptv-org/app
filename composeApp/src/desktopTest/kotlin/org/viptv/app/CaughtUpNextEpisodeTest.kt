@@ -28,18 +28,6 @@ import java.io.File
 import java.time.Instant
 import kotlin.test.*
 
-/**
- * app#132: a caught-up Continue Watching card names two episodes. The one the viewer finished,
- * "S1 E1 · Watched" (app#149), and the one it is waiting for: "S1 E2 · Nov 4" once the server knows
- * the air date, "S2 E2 coming soon" while it does not, and nothing more when the queue announced no
- * next episode at all (the show is over, or the next one is out and is the up-next card — backend#61,
- * backend#78).
- *
- * The fixture is a fake host answering `/api/bootstrap` exactly as the backend does: Home's row
- * holds the cards, and the `continuation` page it was built from holds the entries, whose
- * `next_episode` is the fact a plain card cannot carry (core#14). Each card finishes an episode of
- * its own season, so a caption names exactly one card.
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class, InternalComposeUiApi::class)
 class CaughtUpNextEpisodeTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -51,7 +39,6 @@ class CaughtUpNextEpisodeTest {
     }
     private val scope = Scope("viptv:remote", "account", "1", 1)
     private val origin = MetadataOrigin("stremio", "addon:4", "c".repeat(32))
-    /** The announced episode airs at noon UTC on a fixed day, so no common zone shifts its date. */
     private val airdate = Instant.parse("2027-11-04T12:00:00Z").toEpochMilli()
 
     private fun show(id: String, title: String) = Card(MediaIdentity(id, "series", listOf(ExternalId("imdb", id))),
@@ -59,7 +46,6 @@ class CaughtUpNextEpisodeTest {
     private fun episode(series: Card, season: Long, number: Long) = series.copy(
         identity = MediaIdentity("${series.identity.id}:$season:$number", "series", emptyList(), EpisodeCoordinates("aired", season, number)),
         parent_identity = series.identity, title = series.title)
-    /** The card the queue keeps for a finished episode: watched, no progress bar, no caption of its own. */
     private fun caughtUp(series: Card, season: Long, number: Long) = episode(series, season, number).copy(badges = listOf("Watched"))
     private fun next(series: Card, season: Long, number: Long, releasedAt: Long? = null) =
         NextEpisode(identity = episode(series, season, number).identity, released_at_millis = releasedAt)
@@ -79,7 +65,6 @@ class CaughtUpNextEpisodeTest {
         entry(caughtUp(finished, 3, 1), null),
     )
 
-    /** `/api/bootstrap`: Home's Continue Watching row plus the continuation page the row was built from. */
     private val bootstrap = Json.encodeToString(buildJsonObject {
         put("contract_version", 3)
         putJsonObject("identity") {
@@ -91,12 +76,10 @@ class CaughtUpNextEpisodeTest {
                 title = "Continue Watching", provider_id = "library", state = RowState.READY,
                 cards = entries.map { it.card })), complete = true)))
         put("continuation", Json.encodeToJsonElement(ContinuationPage(scope, 1, entries, complete = true)))
-        // An empty library skips the post-bootstrap library read; these cards are all the test needs.
         put("library", buildJsonObject { put("cards", JsonArray(emptyList())); put("complete", true) })
         put("preferences", buildJsonObject {})
     })
 
-    /** `/api/profiles/1/continue`: the same entries the bootstrap carries, as the full list reads them. */
     private val continuePage = Json.encodeToString(ContinuationPage(scope, 1, entries, complete = true))
 
     private fun MockRequestHandleScope.json(text: String) =
@@ -108,7 +91,6 @@ class CaughtUpNextEpisodeTest {
             headersOf(HttpHeaders.ContentType, "application/json"))
     }
 
-    /** The real App shell over the fake host: the phone (390×844) or the TV (1920×1080). */
     private inner class Shell(val television: Boolean) : AutoCloseable {
         private val jobs = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         private val client = HttpClient(MockEngine { request -> fakeHost(request) }) { configureTransport() }
@@ -136,7 +118,6 @@ class CaughtUpNextEpisodeTest {
 
         fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
-        /** Every string a board draws or announces; a TV card says its whole label in one node. */
         fun labels(): List<String> = nodes().mapNotNull { node ->
             (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
                 node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }).joinToString(" ")
@@ -156,14 +137,11 @@ class CaughtUpNextEpisodeTest {
         }
     }
 
-    /** The one node a TV board draws [title]'s card in; the phone draws the title and each caption apart. */
     private fun Shell.tvCard(title: String): List<String> = labels().filter { it.contains(title) }
 
     @Test fun theHomeRowNamesTheNextEpisodeFromTheBootstrapsContinuationPage() {
         Shell(television = false).use { app ->
             app.until("Home's Continue Watching row") { app.labels().any { it.contains("Dated Finale") } }
-            // Home's row cards are plain cards; the facts come from the continuation page the
-            // bootstrap carries, which is what the server builds the row from.
             val card = assertNotNull(app.labels().firstOrNull { it.contains("Dated Finale") },
                 "the caught-up card is on Home's row: ${app.labels()}")
             assertTrue(card.contains("S1 E1 · Watched"), "the finished episode keeps its app#149 label: $card")
@@ -202,7 +180,6 @@ class CaughtUpNextEpisodeTest {
     @Test fun theTvBoardNamesTheNextEpisodeWhereItDrawsTheCoordinates() {
         Shell(television = true).use { app ->
             app.until("TV Home's Continue Watching shelf") { app.labels().any { it.contains("Dated Finale") } }
-            // A TV card is one accessibility node: title, coordinates, then its state words.
             val dated = app.tvCard("Dated Finale")
             assertTrue(dated.any { it.contains("S1 E1") }, "TV keeps the board's coordinate caption: $dated")
             assertTrue(dated.any { it.contains("S1 E2 · Nov 4") }, "the next episode and its day: $dated")

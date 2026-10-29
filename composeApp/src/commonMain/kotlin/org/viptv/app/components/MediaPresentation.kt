@@ -53,17 +53,11 @@ internal fun EpisodeCoordinates.caption(): String =
 /**
  * The label a caught-up Continue Watching card carries under its title: the finished episode and
  * the watched check, `S3 E4 · Watched` (app#132). Null for every other card, which keeps its own
- * caption; the next episode's line follows it when the queue announced one ([caughtUpNextCaption]).
+ * caption; the next episode's line needs facts the server does not send yet (backend#78).
  */
 internal fun Card.caughtUpCaption(): String? =
     identity.episode?.takeIf { isCaughtUp() }?.let { "${it.caption()} · $WATCHED_BADGE" }
 
-/**
- * The second line of a caught-up Continue Watching card (app#132): the episode the viewer is
- * waiting for, `S3 E5 coming soon`, or `S3 E5 · Nov 4` once the metadata gave its air date
- * (backend#78). Null when the announcement names no episode coordinates, so the card never shows a
- * line it cannot identify. The date is the server's release instant, formatted by the platform.
- */
 internal fun NextEpisode.caughtUpNextCaption(): String? = identity.episode?.let { episode ->
     released_at_millis?.let { "${episode.caption()} · ${airDateLabel(it)}" } ?: "${episode.caption()} coming soon"
 }

@@ -194,8 +194,6 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
-    // Home's row is the bootstrap's own continuation page: it names the next episode each caught-up
-    // card waits for (app#132), which the row's plain cards cannot carry.
     adoptContinuation(value.continuation)
     discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }

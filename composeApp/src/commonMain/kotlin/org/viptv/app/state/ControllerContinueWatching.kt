@@ -26,10 +26,6 @@ data class ContinueWatchingMore(val count: Int?)
 /** The Home check last made, so a Home revision reads the list once. */
 internal data class ContinueCheck(val profile: String, val home: Scope, val revision: Long)
 
-/**
- * A fresh bootstrap carries the continuation page Home's row was built from, so a refresh re-reads
- * the next episode each caught-up card waits for without a second request (app#132).
- */
 internal fun ApplicationController.adoptContinuation(page: ContinuationPage?) {
     if (page == null) return
     mutable.value = mutable.value.copy(continueNext = mutable.value.continueNext.announced(page.entries))
@@ -90,7 +86,6 @@ private suspend fun ApplicationController.reloadContinueWatching(remote: RemoteC
     if (connection !== remote || mutable.value.selectedProfile != profile) return
     val current = mutable.value.continueWatching?.takeIf { it.profile == profile }
     mutable.value = mutable.value.copy(continueWatching = current.refreshedBy(profile, page, limit),
-        // A refresh re-reads the next episode each caught-up card waits for (app#132).
         continueNext = mutable.value.continueNext.announced(page.entries))
 }
 
@@ -131,7 +126,6 @@ fun ApplicationController.continueWatchingMore() {
         val merged = (shown.cards + page.entries.map { it.card }).distinctBy(::cardLookupKey)
         // A page that adds nothing must not re-arm the same cursor forever.
         val next = page.next_cursor?.takeIf { merged.size > shown.cards.size && it != cursor }
-        // A later page merges its announcements over the ones the first page carried.
         mutable.value = mutable.value.copy(continueWatching = shown.copy(cards = merged, next = next),
             continueNext = mutable.value.continueNext.announced(page.entries))
     }

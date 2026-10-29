@@ -71,8 +71,6 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
     onUp: (() -> Unit)? = null, artworkWidth: androidx.compose.ui.unit.Dp? = null) {
     val focus = remember { mutableStateOf(false) }
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
-    // The episode a caught-up Continue Watching card waits for follows its coordinates (app#132).
-    // Only a caught-up card is ever announced, so no other card pays for the key lookup.
     val nextEpisodes = LocalNextEpisodes.current
     val nextEpisode = remember(card, nextEpisodes) { if (card.isCaughtUp()) nextEpisodes[card] else null }
     val states = remember(card, nextEpisode) { TvCardStates.of(card, nextEpisode) }
@@ -144,6 +142,7 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             CardFocusRing(focus, showFocus, scale, Modifier.matchParentSize())
             if (!portrait) CardPlayBadge(focus, showFocus, scale, Modifier.align(Alignment.Center))
         }
+        // The caption box holds one meta line; a third clips into the row below.
         if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().height(76.dp * scale)) {
             CardCaptions(card, states, focus, portrait, focusedCaptions, scale)
         }
@@ -161,7 +160,6 @@ private data class TvCardStates(
     val metaText: String?,
 ) {
     companion object {
-        /** [nextEpisode] is the episode a caught-up Continue Watching card waits for, when announced. */
         fun of(card: Card, nextEpisode: NextEpisode?): TvCardStates {
             val badges = card.badges.filter { !it.equals("Simkl", true) }
             val lower = badges.map { it.lowercase() }
