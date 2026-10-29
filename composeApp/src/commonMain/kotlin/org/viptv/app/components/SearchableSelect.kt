@@ -155,11 +155,13 @@ internal fun TextSelect(
 }
 
 @Composable
-internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier,
+    chipFocus: FocusRequester? = null) {
     val metrics = chipMetrics()
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
     Row(modifier.chipFrame(on, focused, metrics, shape)
+        .then(if (chipFocus == null) Modifier else Modifier.focusRequester(chipFocus))
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
         .pointerToggleable(on, role = Role.Switch, shape = shape, onValueChange = onChange)
         .padding(start = if (on) metrics.startInset - 2.dp else metrics.startInset, end = metrics.endInset),
