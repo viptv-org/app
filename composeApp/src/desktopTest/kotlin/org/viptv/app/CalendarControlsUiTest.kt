@@ -25,14 +25,14 @@ class CalendarControlsUiTest {
     @Test fun tvControlsAndWatchActionRemainWithinTheExistingRailsAndKeepEmptyDateSelectable(){
         var category="series";var shifted=0;var watched=0;var opened=0
         val scene=ImageComposeScene(1920,1080,Density(1f)){ViptvTheme(true){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry),true,{opened++},{},controls=true,categoryChanged={category=it},weekChanged={shifted=it},watch={watched++})}}}
-        try{frames(scene);click(scene,"Anime");assertEquals("anime",category);click(scene,"Next week");assertEquals(1,shifted);val action=clickable(scene,"Find S2 E4");assertTrue(action.boundsInRoot.left>=1240);action.config[SemanticsActions.OnClick].action!!.invoke();assertEquals(1,watched);assertEquals(0,opened);click(scene,"Tomorrow");frames(scene,20);assertTrue(nodes(scene).any{text(it)=="No releases for this day."});click(scene,"Today");frames(scene,40);assertTrue(nodes(scene).any{text(it)=="Find S2 E4"});capture(scene,"tv-calendar-controls")}finally{scene.close()}
+        try{frames(scene);click(scene,"Anime");assertEquals("anime",category);click(scene,"Next week");assertEquals(1,shifted);val action=clickable(scene,"Find S2 E4");assertTrue(action.boundsInRoot.left>=1240);action.config[SemanticsActions.OnClick].action!!.invoke();assertEquals(1,watched);assertEquals(0,opened);click(scene,"Tomorrow");await(scene,20,"Tomorrow's empty day"){nodes(scene).any{text(it)=="No releases for this day."}};click(scene,"Today");await(scene,40,"Today's release"){nodes(scene).any{text(it)=="Find S2 E4"}};capture(scene,"tv-calendar-controls")}finally{scene.close()}
     }
     @Test fun phoneAndDesktopPreserveEmptyDatesAndOfferExplicitEpisodeAction(){
         for(width in listOf(390,1200)){
             var watched=0
             val scene=ImageComposeScene(width,900,Density(1f)){ViptvTheme(false){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry),false,{},{},controls=true,watch={watched++})}}}
             try{frames(scene);assertTrue(nodes(scene).any{text(it).contains("Tomorrow")||text(it).contains("Fri")});click(scene,"Find S2 E4");assertEquals(1,watched);capture(scene,if(width==390)"phone-calendar-controls" else "desktop-calendar-controls");
-                if(width==390){val emptyDate=nodes(scene).single{text(it).contains("Fri")&&it.config.contains(SemanticsActions.OnClick)};emptyDate.config[SemanticsActions.OnClick].action!!.invoke()}else click(scene,"Tomorrow");frames(scene,150);assertTrue(nodes(scene).any{text(it)=="No releases for this day."});capture(scene,if(width==390)"phone-calendar-empty-day" else "desktop-calendar-empty-day")}finally{scene.close()}
+                if(width==390){val emptyDate=nodes(scene).single{text(it).contains("Fri")&&it.config.contains(SemanticsActions.OnClick)};emptyDate.config[SemanticsActions.OnClick].action!!.invoke()}else click(scene,"Tomorrow");await(scene,150,"Tomorrow's empty day"){nodes(scene).any{text(it)=="No releases for this day."}};capture(scene,if(width==390)"phone-calendar-empty-day" else "desktop-calendar-empty-day")}finally{scene.close()}
         }
     }
     @Test fun tvFocusReturnsToSelectedReleaseWhileLaterPagesArrive(){
@@ -41,6 +41,12 @@ class CalendarControlsUiTest {
         try{frames(scene);clickable(scene,"Today").config[SemanticsActions.RequestFocus].action!!.invoke();frames(scene,20);val row=nodes(scene).single{ text(it).contains("Scheduled series")&&it.config.contains(SemanticsActions.RequestFocus)&&it.config.contains(SemanticsActions.OnClick)};assertTrue(row.config[SemanticsActions.RequestFocus].action!!.invoke());frames(scene,40);entries.value=listOf(entry,entry.copy(id="second",card=card.copy(title="Later row")));frames(scene,60);assertTrue(nodes(scene).any{text(it).contains("Scheduled series")&&it.config.getOrNull(SemanticsProperties.Focused)==true});assertEquals("",selected)}finally{scene.close()}
     }
     private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(20){s.render((offset+it)*16_666_667L).close();Thread.sleep(3)}
+    private fun await(s:ImageComposeScene,offset:Int,what:String,condition:()->Boolean){
+        val deadline=System.nanoTime()+2_000_000_000L
+        var frame=offset
+        do{s.render(frame++*16_666_667L).close();if(condition())return;Thread.sleep(3)}while(System.nanoTime()<deadline)
+        fail("$what did not appear; texts="+nodes(s).map(::text).filter{it.isNotBlank()})
+    }
     private fun nodes(s:ImageComposeScene)=s.semanticsOwners.flatMap{flatten(it.rootSemanticsNode)}
     private fun flatten(n:SemanticsNode):List<SemanticsNode> = listOf(n)+n.children.flatMap(::flatten)
     private fun text(n:SemanticsNode)=n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" "){it.text}
