@@ -6,9 +6,7 @@ import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.state.*
 import kotlin.test.*
 
-/** app#20, app#45: browser Back and Forward take the app's own steps, through a fake session history. */
 class BrowserBackHistoryTest {
-    /** A browser tab: the page before the app, then the app's entries. go() answers later, as popstate does. */
     private class Tab : SessionHistory {
         val entries = mutableListOf<Int?>(null, null)
         var position = 1
@@ -18,7 +16,6 @@ class BrowserBackHistoryTest {
         override fun push(index: Int) { while (entries.size > position + 1) entries.removeAt(entries.lastIndex); entries += index; position++ }
         override fun replace(index: Int) { entries[position] = index }
         override fun go(delta: Int) { moves += delta }
-        /** The event loop: deliver the queued moves. Entry 0 is another site: reaching it leaves the app. */
         fun settle() {
             while (moves.isNotEmpty() && !left) {
                 val target = position + moves.removeFirst()
@@ -46,7 +43,6 @@ class BrowserBackHistoryTest {
             back::back, back::forward)
         init { tab.popstate = history::moved; history.start(); tab.settle() }
         val screen get() = controller.state.value.screen
-        /** The web build observes the app's state and tells the history. */
         fun app(action: ApplicationController.() -> Unit) { controller.action(); history.changed(); tab.settle() }
         fun pressBack() { tab.pressBack(); history.changed(); tab.settle() }
         fun pressForward() { tab.pressForward(); history.changed(); tab.settle() }
@@ -97,7 +93,6 @@ class BrowserBackHistoryTest {
         web.app { mutable.value = state.value.copy(settingsPage = SettingsPage("Add-ons", subpage = true)) }
         web.pressBack()
         assertEquals(Screen.Settings, web.screen); assertEquals(SettingsPage(), web.controller.state.value.settingsPage)
-        // A route's own step (a player panel, a sign-in step) wins over the screen history.
         var panelOpen = true
         web.back.routeBackChanged { panelOpen = false }
         web.pressBack()
@@ -109,7 +104,6 @@ class BrowserBackHistoryTest {
 
     @Test fun anEntryFromBeforeAReloadKeepsLeaving() {
         val tab = Tab()
-        // Two entries left by an earlier load of the app, then this load's first entry.
         tab.entries.clear(); tab.entries += listOf(null, null, null, null); tab.position = 3
         var backs = 0
         val history = BrowserBackHistory(tab, { false }, { false }, { backs++ }, {})

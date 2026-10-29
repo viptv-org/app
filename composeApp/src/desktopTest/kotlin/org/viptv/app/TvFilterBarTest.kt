@@ -33,12 +33,6 @@ import org.junit.Rule
 import java.io.File
 import kotlin.test.*
 
-/**
- * app#121: TV filters are the shared dropdown chips too. The chip's list opens as the
- * right panel, focus opens on the current option, a pick applies at once, and Back closes
- * only the panel and puts focus back on the chip. Set `VIPTV_TV_FILTER_CAPTURE_DIR` to save
- * the 1920 × 1080 renders used in the PR.
- */
 @OptIn(InternalComposeUiApi::class)
 class TvFilterBarTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -59,7 +53,6 @@ class TvFilterBarTest {
         discovery = FeatureAvailability("Available"), search = FeatureAvailability("Available"),
         filters = FeatureAvailability("Available"), calendar = FeatureAvailability("Unsupported"))
 
-    /** A fake Browse controller: every change lands in [query] at once, as the app's does. */
     private inner class Browse {
         var query by mutableStateOf(BrowseQuery("movie", "top", "c1"))
         val requests = mutableListOf<String>()
@@ -83,7 +76,6 @@ class TvFilterBarTest {
             assertFalse(it.has("Show results"), "no Show results step")
             it.capture("tv-browse-chips")
 
-            // The remote enters the row on its first chip and walks it left and right.
             it.focusChip("Catalog: Popular")
             it.press(Key.DirectionRight)
             assertEquals("Sort: Required", it.focusedChip(), "Right moves along the row")
@@ -92,7 +84,6 @@ class TvFilterBarTest {
             it.press(Key.DirectionLeft)
             assertEquals("Sort: Required", it.focusedChip(), "Left moves back")
 
-            // OK opens the right panel on the current option.
             it.press(Key.DirectionCenter)
             assertTrue(it.panel("Sort"), "OK opens the panel")
             assertEquals("Popular", it.focusedRow(), "a required sort opens on its first option")
@@ -102,7 +93,6 @@ class TvFilterBarTest {
             assertFalse(it.panel("Sort"), "a single pick closes the panel")
             assertEquals("Sort: New", it.focusedChip(), "focus returns to the chip that opened the panel")
 
-            // Reopening puts focus on the current option, and Back only closes the panel.
             it.press(Key.DirectionCenter)
             assertEquals("New", it.focusedRow(), "the panel opens on the current option")
             it.capture("tv-browse-panel-open")
@@ -111,7 +101,6 @@ class TvFilterBarTest {
             assertEquals("Sort: New", it.focusedChip(), "Back returns focus to the chip")
             assertEquals(listOf("sort=new"), browse.requests, "closing the panel changes nothing")
 
-            // A pick applies at once, the chip shows the value and keeps the focus.
             it.press(Key.DirectionRight)
             it.press(Key.DirectionCenter)
             assertEquals("Any", it.focusedRow(), "an unset genre opens on Any")
@@ -120,7 +109,6 @@ class TvFilterBarTest {
             assertEquals(listOf("sort=new", "genre=adventure"), browse.requests, "the genre applies at once")
             assertEquals("Genre: Adventure", it.focusedChip(), "the chip shows the value and keeps focus")
 
-            // Clear ends the row; pressing it resets the facets and leaves the remote on the row.
             for (step in 0 until it.triggers().size) it.press(Key.DirectionRight)
             assertEquals("Clear", it.focusedAction(), "Clear ends the chip row")
             it.press(Key.DirectionCenter)
@@ -151,7 +139,6 @@ class TvFilterBarTest {
             assertFalse(it.has("Filters") || it.has("Apply"), "no Filters button and no Apply step")
             it.capture("tv-mylist-chips")
 
-            // The list chip is My List for this profile, and it opens on the current list.
             it.focusChip("List: My List")
             it.press(Key.DirectionCenter)
             assertTrue(it.panel("List"))
@@ -192,7 +179,6 @@ class TvFilterBarTest {
         }
     }
 
-    /** The scene, its semantics helpers and the D-pad (which moves focus on a TV, not on desktop). */
     private class Page(content: @Composable () -> Unit) : AutoCloseable {
         private var focusManager: FocusManager? = null
         private var frame = 0L
@@ -213,19 +199,15 @@ class TvFilterBarTest {
         private fun rows() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) }
             .sortedBy { it.boundsInRoot.top }
         private fun rowLabel(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text.removeSuffix(" · unavailable")
-        /** The chip the remote rests on. An open panel is a second focus owner, so scope by role. */
         fun focusedChip() = nodes().single {
             it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList
         }.let(::text)
-        /** The action chip (Clear) the remote rests on. */
         fun focusedAction() = nodes().single {
             it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.getOrNull(SemanticsProperties.Role) == Role.Button
         }.let(::text)
-        /** The option the remote rests on inside the open panel. */
         fun focusedRow() = nodes().single {
             it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox)
         }.let(::rowLabel)
-        /** The TV panel is titled with the filter's name; the popover and the sheet are not used on TV. */
         fun panel(title: String) = nodes().any { it.config.contains(SemanticsProperties.Heading) && text(it) == title }
 
         private fun request(node: SemanticsNode) {
@@ -234,10 +216,7 @@ class TvFilterBarTest {
         fun focusChip(label: String) = request(nodes().single { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it) == label })
         fun focusRow(label: String) = request(rows().single { rowLabel(it) == label })
 
-        /**
-         * A D-pad press. ImageComposeScene only delivers keys to handlers, so a direction key
-         * that nothing consumed is moved by the focus manager, as the TV platform does.
-         */
+        // Desktop maps no arrow key to a focus move, so an unconsumed D-pad press has to drive the focus manager.
         fun press(key: Key) {
             val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown))
             scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))

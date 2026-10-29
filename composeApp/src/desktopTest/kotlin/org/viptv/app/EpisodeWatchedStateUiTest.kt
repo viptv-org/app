@@ -24,11 +24,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * The server marks the selected profile's finished episodes with a `Watched`
- * badge and part-way ones with `progress`. Phone, TV and web episode lists show
- * the AND-EPISODE-WATCHED-001 pill for the first and only the bar for the second.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class EpisodeWatchedStateUiTest {
     @get:Rule val uiThread = UiThreadRule()

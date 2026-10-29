@@ -12,7 +12,6 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.*
 
-/** Actual Rust/SQLite/UniFFI and native adapters; provider HTTP is the only replacement. */
 class NativeOriginPersistenceTest {
     private class Fixture : AutoCloseable {
         val directory = Files.createTempDirectory("viptv-native-origin-bridge-")

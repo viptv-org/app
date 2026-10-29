@@ -7,7 +7,6 @@ import org.viptv.app.state.autoplayTarget
 import org.viptv.engine.wire.SourceCandidate
 import kotlin.test.*
 
-/** SRC-BEST-MATCH-001 Source groups: membership from the ranking, headers over the visible rows. */
 class SourceGroupsTest {
     private fun row(id: String, provider: String = "addon:one", releaseType: String? = null) =
         SourceCandidate(id, provider, "Source $id", release_type = releaseType)
@@ -15,7 +14,6 @@ class SourceGroupsTest {
     private fun marked(rows: List<SourceListRow>) = rows.filter { it.bestMatch }.map { it.source.id }
 
     @Test fun sevenPassingRowsAndTwoCameraReleasesFormBothGroups() {
-        // Scenario 13.
         val ranked = (1..7).map { row("r$it") } + listOf(row("cam1", releaseType = "cam"), row("cam2", releaseType = "cam"))
         val groups = interimSourceGroups(ranked)
         assertEquals(listOf("r1", "r2", "r3", "r4", "r5"), groups.bestMatches)
@@ -28,14 +26,12 @@ class SourceGroupsTest {
     }
 
     @Test fun threePassingRowsShowOnlyTheBestMatchesHeader() {
-        // Scenario 14.
         val ranked = (1..3).map { row("r$it") }
         val rows = sourceListRows(ranked, interimSourceGroups(ranked))
         assertEquals(listOf(BEST_MATCHES_HEADER), headers(rows))
     }
 
     @Test fun onlyCameraReleasesShowNoHeaderAndNoMarker() {
-        // Scenario 15: the server still names the camera row as best_match_id today.
         val ranked = listOf(row("cam1", releaseType = "cam"), row("cam2", releaseType = "cam"))
         val groups = interimSourceGroups(ranked, bestMatchId = "cam1")
         assertEquals(SourceGroups(), groups)
@@ -44,7 +40,6 @@ class SourceGroupsTest {
     }
 
     @Test fun aFilterHidingEveryBestMatchHidesBothHeadersAndTheMarker() {
-        // Scenario 16: membership is computed before filters and survives them.
         val ranked = (1..5).map { row("r$it", "addon:one") } + listOf(row("x1", "addon:two"), row("x2", "addon:two"))
         val groups = interimSourceGroups(ranked)
         val filtered = sourceListRows(ranked.filter { it.provider_id == "addon:two" }, groups)

@@ -27,7 +27,6 @@ class PageRequestOwnershipTest {
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "default", localMode = true, preferences = PreferencesSnapshot())
         try {
             when (action) { "details" -> controller.open(card); "play" -> controller.playTitle(card); else -> controller.navigate(Screen.History) }
-            // A play tap reads its Details beside the open selector (app#140); pages read in [ApplicationController.job].
             val pending = requireNotNull(if (action == "play") controller.sourceDetailJob else controller.job)
             withTimeout(2000) { entered.await() }
             controller.navigate(Screen.Search); controller.navigate(Screen.Home)
@@ -36,7 +35,6 @@ class PageRequestOwnershipTest {
             controller.sourceDetailJob?.join()
             assertEquals(Screen.Home, controller.state.value.screen)
             assertNull(controller.state.value.detail); assertNull(controller.state.value.error)
-            // Play opens the selector on the tap (app#11); the retired read must not reopen it or find sources.
             if (action == "play") assertEquals(card, controller.state.value.sourceTitle) else assertNull(controller.state.value.sourceTitle)
             assertEquals(0, sourceCalls); assertEquals("default", controller.state.value.selectedProfile); assertFalse(controller.state.value.busy)
         } finally { release.complete(Unit); controller.job?.cancelAndJoin(); fixture.close(controller) }

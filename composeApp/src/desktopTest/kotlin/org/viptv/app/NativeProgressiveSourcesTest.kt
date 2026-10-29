@@ -13,7 +13,6 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.*
 
-/** Real Rust/SQLite/UniFFI grants and native adapter; only external provider IO is replaced. */
 class NativeProgressiveSourcesTest {
     private val card = Card(MediaIdentity("tt1234567", "movie", emptyList()), provider_id = "metadata", title = "Fixture film", badges = emptyList())
     private class Fixture : AutoCloseable {

@@ -10,7 +10,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/** The Home Genres chip offers the genres Browse offers and opens Browse filtered to one. */
 class HomeGenresTest {
     private val available = FeatureAvailability("Available")
     private fun genre(kind: ControlKind, vararg choices: Pair<String, String>) =
@@ -73,7 +72,6 @@ class HomeGenresTest {
             assertEquals("movie", synchronized(requests) { requests.single() }.parameters["type"])
             controller.loadHomeGenres()
             assertEquals(1, controlRequests(), "Home asks once per profile and Home revision")
-            // An add-on or provider change gives Home a new revision, and with it fresh genres.
             controller.mutable.value = controller.state.value.copy(home = home(2))
             controller.loadHomeGenres()
             withTimeout(5_000) { controller.state.first { it.homeGenres?.homeRevision == 2L } }

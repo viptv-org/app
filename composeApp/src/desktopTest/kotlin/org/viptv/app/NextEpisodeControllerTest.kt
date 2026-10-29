@@ -138,7 +138,6 @@ class NextEpisodeControllerTest {
         } finally { controller.cancelNextEpisode(); remote.close() }
     }
 
-    /** app#41: the end panel's Next and the Next button both leave through closePlayer; the ended episode stays watched. */
     @Test fun theEndRecordsTheEpisodeWatchedAndMovingOnDoesNotOverwriteIt() = runBlocking<Unit> {
         val saved = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
         val json = headersOf(HttpHeaders.ContentType, "application/json")

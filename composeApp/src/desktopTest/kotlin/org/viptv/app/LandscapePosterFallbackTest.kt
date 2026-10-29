@@ -37,15 +37,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#62: a landscape card with no `landscape` image falls back to its poster
- * instead of drawing a blank tile. The fixture is shaped like the owner's
- * Stremio-imported Continue Watching rows: `provider_id = "library"`, a poster
- * and no landscape.
- *
- * Set VIPTV_LANDSCAPE_FALLBACK_CAPTURE_DIR to write phone and TV renders of a
- * mixed Continue Watching row.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class LandscapePosterFallbackTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -98,7 +89,6 @@ class LandscapePosterFallbackTest {
         }
     }
 
-    /** Renders one card at the top-left and samples the centre of its [artWidth]-wide 16:9 art. */
     private suspend fun renderCenter(artWidth: Int, content: @Composable () -> Unit): Int {
         val width = artWidth + 80; val height = artWidth * 9 / 16 + 160
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(true) {
@@ -154,23 +144,15 @@ class LandscapePosterFallbackTest {
     }
 
     private companion object {
-        /** Art widths at scale 1: MediaCard(width = 240) and the TV landscape card. */
         const val PHONE_ART = 240
         const val TV_ART = 384
 
-        /** A distinct opaque colour per image URL, so pixels prove which image a card shows. */
         fun artColor(url: String) = (0xFF shl 24) or (url.hashCode() and 0x7F7F7F) or 0x202020
 
-        /** Every image request is answered with a solid [artColor] picture and recorded. */
         suspend fun withFakeArtwork(block: suspend (requested: Set<String>) -> Unit) = withLoader({ url, _ ->
             Bitmap().apply { allocN32Pixels(160, 240); erase(artColor(url)) }
         }, block)
 
-        /**
-         * `https://art.example/<name>` is answered with the bundled ui-preview picture
-         * of that name, decoded at the request's explicit size like Coil does (the TV
-         * card's soft fill is a 16 x 24 decode).
-         */
         suspend fun withPreviewArtwork(block: suspend () -> Unit) {
             val dir = File("src/commonMain/composeResources/files/ui-preview")
             withLoader({ url, size ->

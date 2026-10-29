@@ -8,11 +8,6 @@ import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import kotlin.test.*
 
-/**
- * app#123: a rate-limited sign-in answers 429 with `error_code: "rate_limited"` and the
- * `Retry-After` seconds (backend#59). The sign-in screen must show that window instead of
- * the generic 429 copy, while a wrong password stays an ordinary 401.
- */
 class RateLimitedSignInTest {
     private class Store : RemoteSessionStore {
         var saved: SavedRemoteSession? = null
@@ -77,7 +72,6 @@ class RateLimitedSignInTest {
         } finally { remote.close() }
     }
 
-    /** The sign-in screen renders `ApplicationState.error`, so the retry window must survive the controller. */
     @Test fun signInScreenShowsTheRetryWindow() = runBlocking {
         val client = limitedClient("/api/auth/device/login", "42")
         val controller = ApplicationController(this, Store(), remoteFactory = { origin, storage ->

@@ -37,12 +37,6 @@ import org.viptv.engine.wire.Card
 import java.io.File
 import kotlin.test.*
 
-/**
- * app#114 on screen: Home's Continue Watching row ends with "See all" when the full list holds
- * more, the Continue Watching page shows and pages that list and resumes a card, and on TV the
- * D-pad walks the row's end card, the page's grid, and back with focus where the viewer left it.
- * Set VIPTV_CONTINUE_CAPTURE_DIR to save the phone, desktop and TV renders.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class ContinueWatchingUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -65,7 +59,6 @@ class ContinueWatchingUiTest {
         for ((width, name) in listOf(390 to "phone", 1280 to "desktop")) {
             for (more in listOf(ContinueWatchingMore(40), null)) {
                 var opened = 0
-                // A short row, so its end is on screen; when the end card shows is the controller's rule.
                 val scene = ImageComposeScene(width, 900, Density(1f)) { ViptvTheme {
                     Box(Modifier.fillMaxSize().background(Palette.background)) {
                         HomeScreen(home(1), television = false, open = {}, retry = {}, busy = false,
@@ -81,7 +74,6 @@ class ContinueWatchingUiTest {
                     if (width == 390) capture(scene, "home-row-phone")
                     tap(scene, "See all Continue Watching, 40 titles")
                     assertEquals(1, opened, "$name: the end card opens the page")
-                    // The row title's link is the same action.
                     val link = nodes(scene).first { it.config.contains(SemanticsActions.OnClick) && label(it) == "See all" }
                     link.config[SemanticsActions.OnClick].action?.invoke()
                     assertEquals(2, opened, "$name: the title's See all opens the page")
@@ -133,7 +125,6 @@ class ContinueWatchingUiTest {
                 tap(scene, "Show 03")
                 assertEquals(listOf(card(3)), played, "$name: the card resumes that exact episode")
                 assertTrue(opened.isEmpty(), "$name: never a detour through Details")
-                // The viewer scrolls toward the end of the loaded cards.
                 val grid = nodes(scene).first { it.config.contains(SemanticsActions.ScrollToIndex) }
                 grid.config[SemanticsActions.ScrollToIndex].action?.invoke(24)
                 frames(scene)
@@ -157,7 +148,6 @@ class ContinueWatchingUiTest {
         }
     }
 
-    /** The real TV App shell over [ContinueWatchingHost]; the remote's D-pad is sent as key events. */
     private inner class TvApp(host: ContinueWatchingHost) : AutoCloseable {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val controller = ApplicationController(scope, host.sessionStore)
@@ -187,7 +177,7 @@ class ContinueWatchingUiTest {
             val deadline = System.nanoTime() + 10_000_000_000L
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what (focus: ${focused()})" }; frames(2) }
         }
-        /** A remote key. Desktop has no D-pad focus search, so an unconsumed arrow moves focus as Android TV would. */
+        // Desktop maps no arrow key to a focus move, so an unconsumed D-pad press has to drive the focus manager.
         fun press(key: Key, times: Int = 1) = repeat(times) {
             val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
             val direction = when (key) {
@@ -210,10 +200,7 @@ class ContinueWatchingUiTest {
         ContinueWatchingHost(40).use { host ->
             TvApp(host).use { app ->
                 app.frames()
-                // Home has no billboard here, so the Continue Watching shelf takes the opening focus.
                 app.focusOn("Show 01", "Home opens on the shelf")
-                // The shelf shows its 12 entries with the "See all" card off screen. Wait for Home's
-                // background read of the full list (which decides the card exists) before scrolling to it.
                 app.until("Home reads the full list") { app.state.continueWatching != null }
                 app.press(Key.DirectionRight, 12)
                 app.focusOn("See all Continue Watching", "Right past the 12th card")
@@ -222,22 +209,18 @@ class ContinueWatchingUiTest {
                 app.until("the page") { app.state.screen == Screen.ContinueWatching }
                 app.focusOn("Show 01", "the page opens on its first card")
                 capture(app.scene, "tv-page")
-                // A D-pad grid of four: Down goes to the card below, Right along the row.
                 app.press(Key.DirectionDown); app.focusOn("Show 05", "Down")
                 app.press(Key.DirectionRight); app.focusOn("Show 06", "Right")
                 app.press(Key.DirectionUp); app.focusOn("Show 02", "Up")
                 app.press(Key.DirectionUp); app.focusOn("Show 02", "Up from the first row stays in the grid")
-                // Deeper in, the next page loads with the server's cursor.
                 app.press(Key.DirectionDown, 5)
                 app.until("the second page") { app.state.continueWatching?.cards?.size == 40 }
                 assertTrue("24+24" in host.reads, "${host.reads}")
                 app.focusOn("Show 22", "five rows down")
-                // OK resumes exactly that episode.
                 app.press(Key.Enter)
                 app.until("the source selector") { app.state.screen == Screen.Sources }
                 assertEquals(card(22), app.state.sourceTitle)
                 app.frames(30)
-                // Back from the selector opens the title's page (app#140); Back there is the page the tap came from.
                 app.controller.backSources()
                 assertEquals(Screen.Details, app.state.screen)
                 app.controller.backDetails()

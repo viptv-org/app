@@ -11,7 +11,6 @@ import org.viptv.app.features.sources.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/** SRC-BEST-MATCH-001 phase 1: release facts on source cards and the device height sent to ranking. */
 class ReleaseFactsTest {
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -40,7 +39,6 @@ class ReleaseFactsTest {
         assertEquals(listOf("dv", "hdr10"), full.dynamic_range); assertEquals(listOf("dual"), full.audio_flags)
         assertEquals(42L, full.seeders); assertEquals("torrent", full.delivery)
         assertEquals(SourceCandidate("b", "addon:1", "B", quality_height = 1080), old.copy(detail = null))
-        // Malformed or "unknown" values are unknown, not errors.
         assertEquals(SourceCandidate("c", "addon:1", "C"), odd.copy(detail = null))
     }
 
@@ -76,7 +74,6 @@ class ReleaseFactsTest {
     @Test fun narrowRowsDropTrailingBadgesWhole() {
         assertEquals(listOf(0, 1, 2), sourceFactBadgesThatFit(listOf(40, 30, 50), 4, 128))
         assertEquals(listOf(0, 1), sourceFactBadgesThatFit(listOf(40, 30, 50), 4, 127))
-        // A later, narrower badge never jumps ahead of a dropped one.
         assertEquals(listOf(0), sourceFactBadgesThatFit(listOf(40, 90, 10), 4, 60))
         assertEquals(emptyList(), sourceFactBadgesThatFit(listOf(80), 4, 60))
     }

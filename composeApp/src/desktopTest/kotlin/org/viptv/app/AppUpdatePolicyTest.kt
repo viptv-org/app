@@ -67,7 +67,6 @@ class AppUpdatePolicyTest {
         assertFalse(backIgnoredWhileUpdating(null))
     }
 
-    /** app#146: the permission step must not let Back reach the page behind it; it leaves as Later. */
     @Test fun backOnThePermissionStepActsAsLater() {
         assertEquals(UpdatingBack.Ignored, updatingBack(UpdateStatus.Installing(feed)))
         assertEquals(UpdatingBack.Ignored, updatingBack(UpdateStatus.Installing(feed, confirming = true)))

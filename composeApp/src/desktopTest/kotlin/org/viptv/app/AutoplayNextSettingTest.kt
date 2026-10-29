@@ -13,11 +13,9 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/** app#65: Settings › Playback › Autoplay next episode, on by default, stored on this device. */
 @OptIn(ExperimentalComposeUiApi::class)
 class AutoplayNextSettingTest {
     @get:Rule val uiThread = UiThreadRule()
-    /** The platform store's stand-in: one string per record, as SharedPreferences, java.util.prefs and localStorage hold it. */
     private class MemoryStore(var raw: String? = null) : DeviceRecordStore {
         override fun read() = raw
         override fun write(value: String) { raw = value }
@@ -47,7 +45,6 @@ class AutoplayNextSettingTest {
             assertEquals(ToggleableState.Off, switch(scene).config[SemanticsProperties.ToggleableState])
             assertFalse(DevicePlaybackState(store).value.autoplayNext); assertTrue(saved.isEmpty(), "Not a profile preference")
         } finally { scene.close() }
-        // The phone's Subtitles & audio page doesn't carry it.
         val subtitles = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
             PhoneProfilePreferences("Subtitles & audio", PreferencesSnapshot(1, ProfilePreferences()), false, null, {}, {}, remember { DevicePlaybackState(store) })
         } }

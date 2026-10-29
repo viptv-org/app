@@ -38,7 +38,6 @@ class AvatarPickerUiTest {
             click(scene, "Previous"); frames(scene, 80)
             assertTrue(nodes(scene).any { text(it) == "Clay friends · 4 / 4" })
             assertEquals(listOf("Clay friends 46", "Clay friends 47", "Clay friends 48"), tiles(scene).map(::label))
-            // Another world starts on its first page.
             click(scene, "Moods"); frames(scene, 100)
             assertTrue(nodes(scene).any { text(it) == "Moods · 1 / 4" })
             assertEquals("Moods 1", label(tiles(scene).first()))
@@ -91,7 +90,6 @@ class AvatarPickerUiTest {
         val scene = picker(390, 844, Profile("new", "New", null, avatarStyle = "critters", avatarUrl = "https://avatars.example/seed.png"), AvatarPickerLayout.Phone)
         try {
             frames(scene)
-            // Character worlds hold one page each.
             assertTrue(nodes(scene).any { text(it) == "Disney favorites · 1 / 1" })
             assertEquals(14, tiles(scene).size)
             assertTrue(tiles(scene).none { it.config.getOrNull(SemanticsProperties.Selected) == true })
@@ -118,7 +116,6 @@ class AvatarPickerUiTest {
     }
     private fun SemanticsNode.parentOrSelfClickable(): SemanticsNode =
         if (config.contains(SemanticsActions.OnClick)) this else parent?.parentOrSelfClickable() ?: this
-    /** Writes a PNG for the PR when VIPTV_PROFILE_CAPTURE_DIR is set; lets the avatar images finish loading first. */
     private fun capture(scene: ImageComposeScene, name: String) {
         val path = System.getenv("VIPTV_PROFILE_CAPTURE_DIR") ?: return
         repeat(40) { scene.render((200 + it) * 16_666_667L).close(); Thread.sleep(50) }

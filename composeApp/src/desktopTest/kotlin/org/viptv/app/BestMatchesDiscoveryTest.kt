@@ -8,7 +8,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/** SRC-BEST-MATCH-001 through the controller: discovery ranks and groups rows as providers answer. */
 class BestMatchesDiscoveryTest {
     private val movie = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "fixture", title = "Movie", badges = emptyList())
     private fun row(id: String, height: Long, releaseType: String? = null) =
@@ -27,7 +26,6 @@ class BestMatchesDiscoveryTest {
                 publish(firstBatch + secondBatch)
                 return SourcesOutcome(firstBatch + secondBatch)
             }
-            /** A fake shared ranking: tallest first, camera releases last, membership like the engine's. */
             override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources {
                 rankingCalls += sources.map { it.id }
                 if (rankingFails && rankingCalls.size > 1) throw LocalFailure("ranking unavailable")
@@ -48,7 +46,6 @@ class BestMatchesDiscoveryTest {
         finally { fake.release.complete(Unit); controller.job?.cancelAndJoin(); fixture.close(controller) }
     }
 
-    /** Waits for discovery and for the playback it may have started. */
     private suspend fun settle(controller: ApplicationController) {
         while (true) { val job = controller.job ?: return; job.join(); if (controller.job === job) return }
     }

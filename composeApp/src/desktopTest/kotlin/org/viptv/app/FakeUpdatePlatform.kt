@@ -8,7 +8,6 @@ internal val FAKE_UPDATE_SHA = "ab".repeat(32)
 internal fun feedJson(code: Long, minimum: Long? = null) = """{"version_code":$code,"version_name":"0.1.$code","url":"viptv-$code.apk",""" +
     """"sha256":"$FAKE_UPDATE_SHA","size":100${minimum?.let { ",\"min_supported_version_code\":$it" } ?: ""}}"""
 
-/** Updater platform for desktop tests: the installed build is 1300, everything else is scripted. */
 internal class FakeUpdatePlatform(var feed: String) : AppUpdatePlatform {
     override val installedVersionCode = 1300L
     override val installedVersionName = "0.1.300+aaaaaaa"
@@ -17,7 +16,6 @@ internal class FakeUpdatePlatform(var feed: String) : AppUpdatePlatform {
     override var lastCheckMillis: Long? = null
     val fetched = mutableListOf<String>()
     var fetchFails = false
-    /** Each download call takes the next outcome; null succeeds. */
     val downloadOutcomes = ArrayDeque<Exception?>()
     var downloadGate: CompletableDeferred<Unit>? = null
     var downloads = 0
@@ -28,9 +26,7 @@ internal class FakeUpdatePlatform(var feed: String) : AppUpdatePlatform {
     var permissionOpened = 0
     val installs = mutableListOf<UpdateFeed>()
     var installResult: ((InstallResult) -> Unit)? = null
-    /** Holds the session write open, so a test can see the Updating screen mid-install. */
     var installGate: CompletableDeferred<Unit>? = null
-    /** Bytes the session write reports; null reports nothing. */
     var installProgress: Long? = 50L
     override var relaunchesAfterUpdate = true
 

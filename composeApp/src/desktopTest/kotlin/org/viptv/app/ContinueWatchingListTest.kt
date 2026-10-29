@@ -9,11 +9,6 @@ import org.viptv.engine.wire.ContinuationPage
 import org.viptv.engine.wire.Scope
 import kotlin.test.*
 
-/**
- * app#114: Home's Continue Watching row holds the server's first 12 entries. It ends with
- * "See all" only when the full list (`GET /api/profiles/:id/continue`) holds more, and the
- * Continue Watching page pages through that list with the server's cursor.
- */
 class ContinueWatchingListTest {
     private fun CoroutineScope.controller(host: ContinueWatchingHost, shown: Int, screen: Screen = Screen.Home) =
         ApplicationController(this, host.sessionStore).also {
@@ -33,7 +28,6 @@ class ContinueWatchingListTest {
                     assertTrue(host.reads.isEmpty(), "a row of $total is the whole list: nothing to read")
                 } else until("$total: the list's first page landed") { controller.state.value.continueWatching != null }
                 assertEquals(expected, controller.state.value.continueWatchingMore(), "$total titles in progress")
-                // One read per Home revision.
                 controller.checkContinueWatching(); delay(50)
                 assertTrue(host.reads.size <= 1, "${host.reads}")
             }
@@ -45,7 +39,6 @@ class ContinueWatchingListTest {
         val state = ApplicationState(selectedProfile = "1", home = home(12), continueWatching = list)
         assertEquals(ContinueWatchingMore(null), state.continueWatchingMore())
         assertNull(state.copy(selectedProfile = "2").continueWatchingMore(), "another profile's list")
-        // The local engine's row carries no Continue action to the full list, and the app never reads one there.
         assertNull(state.copy(continueWatching = null).continueWatchingMore())
     }
 
@@ -92,7 +85,6 @@ class ContinueWatchingListTest {
             assertEquals(Screen.Sources, state.screen, "the card opens its sources at once (app#11)")
             assertEquals(card(30), state.sourceTitle, "sources are for exactly that episode, not the series' first")
             assertEquals(Screen.ContinueWatching, state.detailReturnScreen)
-            // Back from the selector opens the title's page (app#140); Back there is the page the tap came from.
             assertEquals(Screen.Details, state.sourceReturnScreen)
             controller.navigateBack()
             assertEquals(Screen.Details, controller.state.value.screen, "Back from sources opens the title's Details")
@@ -111,7 +103,6 @@ class ContinueWatchingListTest {
             assertTrue(controller.state.value.systemBackStaysInApp(), "Android and TV Back stay in the app")
             controller.navigateBack()
             assertEquals(Screen.Home, controller.state.value.screen)
-            // Without history (a restored session), the page's parent is Home too.
             controller.mutable.value = controller.state.value.copy(screen = Screen.ContinueWatching, navBack = emptyList())
             controller.navigateBack()
             assertEquals(Screen.Home, controller.state.value.screen)
@@ -126,7 +117,6 @@ class ContinueWatchingListTest {
             until("the first page") { controller.state.value.continueWatching != null && !controller.state.value.busy }
             controller.continueWatchingMore()
             until("the second page") { controller.state.value.continueWatching?.cards?.size == 40 && !controller.state.value.busy }
-            // Another device finished the last title.
             host.count = 39
             val busy = mutableListOf<Boolean>()
             val watch = launch { controller.state.collect { busy += it.busy } }
@@ -135,7 +125,6 @@ class ContinueWatchingListTest {
             assertEquals((1..39).map(::card), controller.state.value.continueWatching?.cards, "the loaded pages re-read in one request")
             assertEquals("0+40", host.reads.last())
             assertFalse(busy.any { it }, "the cards never hide behind a loading state")
-            // The page's Home check for this revision is spent, so Home does not read the list again.
             controller.checkContinueWatching(); delay(50)
             assertEquals(3, host.reads.size)
         }

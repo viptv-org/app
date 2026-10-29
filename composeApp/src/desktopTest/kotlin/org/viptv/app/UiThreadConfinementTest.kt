@@ -14,7 +14,6 @@ import java.util.Collections
 import org.junit.Rule
 import kotlin.test.*
 
-/** app#27: scene tests must not race Compose's Swing-thread layout callbacks. */
 @OptIn(ExperimentalComposeUiApi::class)
 class UiThreadConfinementTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -31,8 +30,7 @@ class UiThreadConfinementTest {
                 Column {
                     Box(Modifier.offset(x = (tick % 7).dp).onLayoutRectChanged(0, 0) { callbackThreads += Thread.currentThread() }.size(1.dp))
                     repeat(300) { i -> if ((i + tick) % 3 != 0) Box(Modifier.offset(x = (tick % 7).dp).size(1.dp)) }
-                    // Placement outlasts the 16 ms after which Compose posts its
-                    // rect callbacks to the Swing event thread.
+                    // Placement outlasts the 16 ms Compose waits before posting rect callbacks to the Swing event thread.
                     Box(Modifier.layout { measurable, constraints ->
                         val placeable = measurable.measure(constraints)
                         layout(placeable.width, placeable.height) { if (tick > 0) Thread.sleep(25); placeable.place(0, tick % 5) }

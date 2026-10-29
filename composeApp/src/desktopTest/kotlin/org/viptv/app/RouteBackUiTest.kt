@@ -14,10 +14,6 @@ import org.viptv.app.theme.ViptvTheme
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#45: the route steps that desktop and browser Back (GlobalBack: Escape, the mouse button, browser
- * history) run before navigateBack, in the real screens.
- */
 @OptIn(ExperimentalComposeUiApi::class)
 class RouteBackUiTest {
     @get:Rule val uiThread = UiThreadRule()

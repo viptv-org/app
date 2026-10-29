@@ -12,7 +12,6 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.*
 
-/** Run actual native planning/projection; replace only addon HTTP. */
 class NativeSearchRecoveryTest {
     private class Fixture : AutoCloseable {
         val directory = Files.createTempDirectory("viptv-native-search-")
@@ -48,8 +47,6 @@ class NativeSearchRecoveryTest {
             try {
                 controller.search("fixture"); controller.job?.join()
                 assertNull(controller.state.value.error)
-                // One carousel per catalog: each provider answers Movies and Series
-                // separately, and a failed catalog never sinks the provider's row.
                 val rows = controller.state.value.searchRows
                 assertEquals(4, rows.size)
                 val partial = rows.single { it.title == "Mixed provider · Movies" }
@@ -77,8 +74,6 @@ class NativeSearchRecoveryTest {
             assertTrue(searchResultGroups(failed.rows).all { it.message != null })
             fixture.failAll = false
             val recovered = requireNotNull(fixture.local.searchResults("default", "fixture"))
-            // The fixture's series route always 503s and one provider is always
-            // offline; the healthy provider's movie catalog recovers alone.
             assertEquals(1, recovered.rows.sumOf { it.cards.size })
             assertEquals(failed.rows.map { it.id }, recovered.rows.map { it.id })
         }

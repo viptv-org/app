@@ -27,10 +27,6 @@ import org.viptv.app.theme.ViptvTheme
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#57, app#117: the shared searchable, virtualised dropdown chip, its text and toggle
- * chips, and its phone bottom sheet. The pages that use it are in `FilterBarPagesTest`.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SearchableSelectTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -201,7 +197,6 @@ class SearchableSelectTest {
         }
     }
 
-    /** Desktop and web (a pointer) unless [pointer] is false. */
     private class Ui(width: Int, height: Int, pointer: Boolean = true, content: @Composable () -> Unit) : AutoCloseable {
         private var frame = 0L
         val scene = ImageComposeScene(width, height, Density(1f)) {
@@ -216,7 +211,6 @@ class SearchableSelectTest {
         fun trigger(): String = nodes().single { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList }.let(::text)
         private fun options() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) }
             .sortedBy { it.boundsInRoot.top }
-        /** The labels of the composed option rows, top to bottom (each row's first text is its label). */
         private fun label(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text.removeSuffix(" · unavailable")
         fun rows(): List<String> = options().map(::label)
         fun row(label: String) = options().single { label(it) == label }
@@ -240,7 +234,6 @@ class SearchableSelectTest {
             assertTrue(row(label).config[SemanticsActions.OnClick].action!!.invoke())
             frames(30)
         }
-        /** 30 frames by default: the popover's exit animation must finish before "closed" is checked. */
         fun key(key: Key, frames: Int = 30) {
             scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
             frames(frames)

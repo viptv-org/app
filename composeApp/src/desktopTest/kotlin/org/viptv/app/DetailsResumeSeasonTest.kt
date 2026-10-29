@@ -22,15 +22,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Back from the source selector after a Continue Watching tap lands on the title's
- * Details on the continued episode's season, scrolled to that episode (app#40).
- *
- * The fixtures mirror the KMP dev host's real responses for a Stremio-imported
- * profile with Cinemeta (as in [ContinueWatchingPlayerEpisodesTest]): the Continue
- * Watching card is a `library` card with no metadata origin, and its episode is past
- * the first Details page, which holds the specials and most of season 1.
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class DetailsResumeSeasonTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -40,7 +31,6 @@ class DetailsResumeSeasonTest {
         override suspend fun clear() = Unit
     }
     private val show = "tt13293588"
-    /** Cinemeta's season index for the show: specials, then seasons 1-3. */
     private val seasons = listOf(0L to 4L, 1L to 23L, 2L to 24L, 3L to 14L)
     private val origin = """{"connection_id":"addon:21","incarnation":"${"c".repeat(32)}","provider_id":"stremio"}"""
     private val parentIdentity = """{"edition":null,"episode":null,"id":"$show","ids":[{"namespace":"imdb","value":"$show"},""" +
@@ -49,13 +39,11 @@ class DetailsResumeSeasonTest {
         """{"edition":null,"episode":{"episode":$episode,"order":"aired","season":$season},"id":"$show:$season:$episode","ids":[],"kind":"series"}"""
     private val all = seasons.flatMap { (season, count) -> (1L..count).map { season to it } }
 
-    /** A Cinemeta episode card exactly as `/api/meta` returns it: no progress of its own. */
     private fun metaEpisode(season: Long, episode: Long) = """{"badges":[],"category":"series","description":null,
         "identity":${episodeIdentity(season, episode)},"landscape":null,"logo":null,"metadata_origin":$origin,
         "parent_identity":$parentIdentity,"poster":null,"progress":null,"provider_id":"addon:21","subtitle":null,
         "title":"Episode $season-$episode"}"""
 
-    /** `/api/meta/series/<show>` paged like the host: a window over every episode, the season index on each page. */
     private fun metaPage(offset: Int, limit: Int): String {
         val window = all.drop(offset).take(limit)
         val next = (offset + window.size).takeIf { it < all.size }?.let { "\"$it\"" } ?: "null"
@@ -68,9 +56,6 @@ class DetailsResumeSeasonTest {
             "episodes":[${window.joinToString(",") { (s, e) -> metaEpisode(s, e) }}],"next_cursor":$next,"recommendations":[],"seasons":[$index]}"""
     }
 
-    /** A Continue Watching row card from `/api/bootstrap` for a Stremio-imported resume point.
-     * A [caughtUp] card is the one the queue keeps for a finished finale (`mark_finished`):
-     * watched, with no progress bar and no caption of its own (app#132). */
     private fun continueCard(season: Long, episode: Long, caughtUp: Boolean = false) = """{"badges":${if (caughtUp) "[\"Watched\"]" else "[]"},"description":null,"identity":${episodeIdentity(season, episode)},
         "landscape":null,"logo":null,"parent_identity":{"edition":null,"episode":null,"id":"$show","ids":[],"kind":"series"},
         "poster":null,"progress":${if (caughtUp) "null" else "0.42"},"provider_id":"library",
@@ -93,14 +78,12 @@ class DetailsResumeSeasonTest {
             synchronized(metaOffsets) { metaOffsets += offset }
             json(metaPage(offset, request.url.parameters["limit"]?.toInt() ?: 24))
         }
-        // The QA profile has no stream add-ons: discovery finishes with nothing.
         "/api/streams" -> json("""{"id":"job-1"}""")
         "/api/streams/job-1" -> json("""{"done":true,"events":[]}""")
         else -> if (request.url.encodedPath.endsWith("/source-ranking")) json("""{"streams":[]}""")
             else respond("{\"error\":\"not in this fixture\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
     }
 
-    /** The real phone App shell over the fake host, signed into the QA profile with its Continue Watching row. */
     private inner class PhoneApp(resume: Pair<Long, Long>, val capture: String? = null, caughtUp: Boolean = false) : AutoCloseable {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         private val client = HttpClient(MockEngine { request -> host(request, bootstrap(resume, caughtUp)) }) { configureTransport() }
@@ -139,7 +122,6 @@ class DetailsResumeSeasonTest {
             frames(30); dir.mkdirs()
             scene.render(frame++ * 16_666_667L).use { image -> image.encodeToData()!!.use { File(dir, "$name.png").writeBytes(it.bytes) } }
         }
-        /** Tap the Continue Watching card (Sources open), let the title's Details land behind it, then press Back. */
         fun continueThenBack() {
             controller.playTitle(continueCard)
             until("Details behind the selector") { controller.state.value.let { it.screen == Screen.Sources && it.detail != null && !it.findingSources } }
@@ -148,7 +130,6 @@ class DetailsResumeSeasonTest {
             frames()
             assertEquals(Screen.Details, controller.state.value.screen)
         }
-        /** Tap the Continue Watching card itself, as a viewer does. */
         fun tapContinueCard() {
             val node = nodes().firstOrNull { candidate -> candidate.config.contains(SemanticsActions.OnClick) &&
                 flatten(candidate).any { text(it).contains("Mushoku Tensei") } }
@@ -161,7 +142,6 @@ class DetailsResumeSeasonTest {
         }
     }
 
-    /** The episode row's top edge sits just under the phone's back bar: it is the first thing in the list. */
     private fun PhoneApp.assertEpisodeAtTop(label: String) {
         val episode = assertNotNull(node(label), "$label is composed: ${nodes().map(::text).filter { it.isNotBlank() }}")
         val top = episode.boundsInRoot.top / density
@@ -191,7 +171,6 @@ class DetailsResumeSeasonTest {
             app.continueThenBack()
             app.until("season 2's episodes") { app.node("8. Episode 2-8") != null }
             app.frames(20)
-            // Sources -> player -> Back -> Back: Details leave composition while the player shows.
             app.controller.mutable.value = app.controller.state.value.copy(screen = Screen.Player)
             app.frames()
             app.controller.mutable.value = app.controller.state.value.copy(screen = Screen.Sources)
@@ -204,8 +183,6 @@ class DetailsResumeSeasonTest {
     }
 
     @Test fun aCaughtUpCardIsLabelledAndOpensDetailsOnTheFinishedEpisode() {
-        // The show's finale (S3 has 14 episodes): nothing after it is released, so the queue keeps
-        // it, watched, instead of advancing (backend#61). Tapping it has nothing to play (app#132).
         PhoneApp(3L to 14L, caughtUp = true).use { app ->
             app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
             app.until("the caught-up label") { app.nodes().any { text(it).contains("S3 E14 · Watched") } }
@@ -220,8 +197,6 @@ class DetailsResumeSeasonTest {
             assertEquals(1, app.controller.state.value.detail!!.episodes
                 .count { it.identity.episode?.season == 3L && it.identity.episode?.episode == 14L },
                 "the finished episode came in through the Details pages")
-            // The finale is the season's last episode, so the list bottoms out on it instead of
-            // putting it first: it is on screen, and the list landed on its season (not season 1).
             val top = assertNotNull(app.node("14. Episode 3-14")).boundsInRoot.top / app.density
             assertTrue(top in 48f..800f, "the finished finale is on screen below the back bar, not at ${top}dp")
             assertTrue(app.nodes().none { text(it).contains(". Episode 1-") }, "the list landed on season 3")
@@ -232,7 +207,6 @@ class DetailsResumeSeasonTest {
     @Test fun detailsOpenedStraightFromAContinueWatchingCardLandOnTheEpisode() {
         PhoneApp(2L to 8L).use { app ->
             app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
-            // Desktop's preview Info opens Details for the Continue Watching card itself.
             app.controller.open(app.continueCard)
             app.until("season 2's episodes") { app.node("8. Episode 2-8") != null }
             app.frames(20)
@@ -241,13 +215,11 @@ class DetailsResumeSeasonTest {
     }
 
     @Test fun theHerosResumeOpensSourcesForTheContinuedEpisodeInTheDetailsScope() {
-        // The issue's repro (app#49): Continue Watching, Back to Details, then the hero's Resume.
         PhoneApp(2L to 20L).use { app ->
             app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
             app.continueThenBack()
             app.until("season 2's episodes") { app.node("20. Episode 2-20") != null }
             app.frames(20)
-            // The list landed on S2 E20; scroll back up to the hero.
             fun hero() = app.nodes().firstOrNull { it.config.contains(SemanticsActions.OnClick) && text(it).startsWith("Resume") }
             app.until("the hero") {
                 hero() != null || run { app.scene.sendPointerEvent(PointerEventType.Scroll,

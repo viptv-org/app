@@ -29,31 +29,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-/**
- * TV Search result rows run edge to edge (app#111, following app#63).
- *
- * The results pane sits beside the 520 dp keyboard column. It used to be inside
- * the page's trailing 96 dp gutter, so a row stopped 96 px short of the right
- * screen edge. The pane now bleeds past that gutter only: rows reach the screen
- * edge, the first card still rests on the results column (design Tv3Search puts
- * result posters at x=700 with 96 + 520 + 84), and the keyboard, its focus and
- * the search field keep their geometry.
- *
- * D-pad left/right uses Compose's own directional search, which
- * `ImageComposeScene` runs for `sendKeyEvent`; the fallback covers a scene that
- * does not consume the key.
- */
 class TvSearchEdgeUiTest {
     @get:Rule val uiThread = UiThreadRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private val screenWidth = 1920
 
-    /** TvSearchScreen: 96 dp page gutter + 520 dp keyboard column + 84 dp gap (design Tv3Search). */
     private val columnStart = 96f + 520f + 84f
     private val keyboardRight = 96f + 520f
 
-    /** TvSearchScreen draws `(212 * scale).toInt()` dp wide portrait posters at scale 1. */
     private val cardWidth = 212f
 
     private fun cards(count: Int = 14) = (1..count).map { index ->
@@ -140,11 +124,6 @@ class TvSearchEdgeUiTest {
         }
     }
 
-    /**
-     * The real TV Search preview screen: bundled artwork, top navigation and real
-     * grouping rather than fixture cards. Set VIPTV_SEARCH_CAPTURE_DIR to write
-     * the before/after PNGs.
-     */
     @Test fun previewResultsRunToTheRightScreenEdge() = ui {
         Fixture(screenWidth) {
             org.viptv.app.preview.UiPreview(television = true, screen = org.viptv.app.state.Screen.Search)
@@ -188,5 +167,4 @@ class TvSearchEdgeUiTest {
     private fun description(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString(" ")
 }
 
-/** Fixture scans whole trees, so the flatten helper lives outside the nested Fixture class. */
 private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

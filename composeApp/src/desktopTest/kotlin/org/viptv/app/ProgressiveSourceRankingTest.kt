@@ -8,12 +8,10 @@ import org.viptv.app.state.ProgressiveSourceRanking
 import org.viptv.engine.wire.SourceCandidate
 import kotlin.test.*
 
-/** SRC-BEST-MATCH-001 Progressive ranking: rows are ranked and grouped as they arrive. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProgressiveSourceRankingTest {
     private fun row(id: String, score: Int) = SourceCandidate(id, "addon:$id", "Source $id", quality_height = score.toLong())
 
-    /** A fake shared ranking: highest score first, the top two form Best matches. */
     private class FakeRanking(private val latency: Long = 0) {
         val calls = mutableListOf<Pair<Long, List<String>>>()
         var fail: (Int) -> Boolean = { false }
@@ -63,7 +61,8 @@ class ProgressiveSourceRankingTest {
         advanceTimeBy(50); ranking.arrived(listOf(row("a", 1), row("b", 2)))
         advanceTimeBy(50); ranking.arrived(listOf(row("a", 1), row("b", 2), row("c", 3)))
         advanceTimeBy(50); ranking.arrived(listOf(row("a", 1), row("b", 2), row("c", 3), row("d", 4)))
-        advanceTimeBy(5_000) // The worker lives in backgroundScope, which advanceUntilIdle ignores.
+        // The worker lives in backgroundScope, which advanceUntilIdle ignores.
+        advanceTimeBy(5_000)
         assertEquals(listOf(0L to listOf("a"), 300L to listOf("a", "b", "c", "d")), fake.calls,
             "At most one ranking request per 300 ms, and only the latest rows are ranked")
         assertEquals(listOf("d", "c", "b", "a"), shown.last().rows.map { it.id })
@@ -76,7 +75,8 @@ class ProgressiveSourceRankingTest {
         runCurrent()
         advanceTimeBy(400); ranking.arrived(listOf(row("a", 1), row("b", 2)))
         advanceTimeBy(400); ranking.arrived(listOf(row("a", 1), row("b", 2), row("c", 3)))
-        advanceTimeBy(5_000) // The worker lives in backgroundScope, which advanceUntilIdle ignores.
+        // The worker lives in backgroundScope, which advanceUntilIdle ignores.
+        advanceTimeBy(5_000)
         assertEquals(listOf(0L to listOf("a"), 1_000L to listOf("a", "b", "c")), fake.calls,
             "The next request waits for the one in flight and skips the superseded rows")
         assertEquals(listOf(listOf("a"), listOf("c", "b", "a")), shown.map { result -> result.rows.map { it.id } })

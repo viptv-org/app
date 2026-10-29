@@ -38,7 +38,6 @@ class PreferenceSettingsUiTest {
             preferences = TvSettingsPreferences(source = "Always ask"); error = null; busy = false; frames(scene, 40)
             assertFalse(nodes(scene).any { text(it) == "Retry settings" })
             assertTrue(nodes(scene).any { text(it).startsWith("Default source") && text(it).contains("Always ask") })
-            // A real connection hides the rows the server does not store; focus starts on the first stored one.
             assertFalse(nodes(scene).any { text(it).startsWith("Next episode button") || text(it).startsWith("Match frame rate") })
             assertEquals(true, nodes(scene).single { text(it).startsWith("Default source") && it.config.contains(SemanticsActions.OnClick) }
                 .config.getOrNull(SemanticsProperties.Focused))

@@ -6,8 +6,7 @@ import kotlin.test.assertEquals
 
 class MpvSubtitleColourTest {
     @Test fun profileColoursArePassedToMpvAsAarrggbb() {
-        // mpv(1): "Alpha is given with #AARRGGBB." Sending #RRGGBBAA put the
-        // alpha byte into red and rendered gold (#FFFFC107) as purple (#C107FF).
+        // mpv(1): alpha comes first, "#AARRGGBB".
         assertEquals("#FFFFC107", mpvSubtitleColour(0xFFFFC107.toInt()))
         assertEquals("#CC0000FF", mpvSubtitleColour(0xCC0000FF.toInt()))
         assertEquals("#80FF0000", mpvSubtitleColour(0x80FF0000.toInt()))

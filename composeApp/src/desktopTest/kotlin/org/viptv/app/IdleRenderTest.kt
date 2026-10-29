@@ -26,16 +26,6 @@ import org.viptv.app.state.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * app#95: an idle desktop window stops asking for frames. The desktop shell
- * (title bar and App) runs on Home with a rotating hero and on Search. The scene
- * is polled on wall-clock time and rendered only when something invalidated it,
- * as the desktop window's frame dispatcher does, and the frames are counted.
- *
- * The hero's per-pixel progress fill and slide dissolves were the only idle frame
- * source: ~6 frames/s at density 1 (12 at density 2), forever. The hero now
- * rotates while the viewer is present and holds still once they are idle.
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class IdleRenderTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -67,11 +57,6 @@ class IdleRenderTest {
             appLoader = SingletonImageLoader.get(context)
         }
         val start = System.nanoTime()
-        /**
-         * Runs [millis] of wall time, rendering whenever the scene asks for a frame,
-         * with the mouse nudged every 250 ms when [active]. The pointer stays in the gutter
-         * right of the hero, clear of cards and their hover previews. Returns the frame count.
-         */
         var nudge = 0
         fun run(millis: Long, active: Boolean = false): Int {
             var frames = 0
@@ -90,21 +75,18 @@ class IdleRenderTest {
         fun featured() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
             .flatMap { it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() }.single { it.startsWith("Featured ") }
         try {
-            // A present viewer still sees the hero rotate: past one 8 s slide, frames keep coming.
             val first = run(1_000, active = true).let { featured() }
             assertEquals("Featured 1 of 4", first)
             val rotating = run(9_000, active = true)
             assertEquals("Featured 2 of 4", featured(), "the hero advances while the viewer is present")
             assertTrue(rotating > 20, "the progress fill draws while rotating: $rotating frames")
 
-            // Idle: the hero holds its slide and the window stops drawing.
             run(4_000)
             val held = featured()
             val home = run(10_000)
             assertTrue(home < 10, "idle Home asked for $home frames in 10 s")
             assertEquals(held, featured(), "the hero holds its slide while the viewer is idle")
 
-            // Input resumes the rotation where it stopped.
             assertTrue(run(1_000, active = true) > 2, "input resumes the hero's progress")
 
             controller.navigate(Screen.Search)

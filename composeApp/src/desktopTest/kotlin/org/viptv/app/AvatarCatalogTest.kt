@@ -22,7 +22,6 @@ class AvatarCatalogTest {
     @Test fun choicesResolveToBundledFilesAndRejectPositionsOutsideTheirWorld() {
         assertEquals("files/avatars/avatar-catalog/critters-1.png", catalog.avatarPath("critters", 1))
         assertEquals("files/avatars/avatar-catalog/notionists-48.png", catalog.avatarPath("notionists", 48))
-        // Character worlds follow the catalog's own `local` paths, including curated replacements.
         assertEquals("files/avatars/avatar-characters/disney-6-curated.png", catalog.avatarPath("disney", 6))
         assertEquals("files/avatars/avatar-characters/villains-12.png", catalog.avatarPath("villains", 12))
         assertNull(catalog.avatarPath("critters", 0))
@@ -43,18 +42,13 @@ class AvatarCatalogTest {
         val remote = Profile("1", "Ann", null, avatarStyle = "clay", avatarChoice = 4, avatarUrl = "https://avatars.example/clay-4.png")
         assertEquals(AvatarPick("clay", 4), remote.avatarPick())
         assertEquals(AvatarPick("clay", 4), remote.copy(avatarId = "vynxc").avatarPick())
-        // Older payloads may carry a choice without the style: the backend default world applies.
         assertEquals(AvatarPick("critters", 7), Profile("1", "Ann", null, avatarChoice = 7).avatarPick())
     }
 
     @Test fun noPickShowsTheServerSeedOrTheLocalDefault() {
-        // Remote: the backend sends a random-seed URL when nothing was picked; that is not choice 1.
         assertNull(Profile("1", "Ann", null, avatarStyle = "critters", avatarUrl = "https://avatars.example/seed.png").avatarPick())
-        // Local engine profiles carry no URL; the client shows critters #1.
         assertEquals(AvatarPick("critters", 1), Profile("1", "Ann", null, avatarStyle = "critters").avatarPick())
-        // A legacy bundled id keeps rendering for existing profiles.
         assertNull(Profile("1", "Ann", null, avatarId = "zayne", avatarStyle = "critters").avatarPick())
-        // A server without catalog fields keeps the initial.
         assertNull(Profile("1", "Ann", null).avatarPick())
     }
 

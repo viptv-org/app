@@ -23,11 +23,7 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Opt-in: `VIPTV_STREMIO_REAL_FIXTURES=<dir>` with privately captured `preview.json` and
- * `review-*.json` server responses. Skipped otherwise. The files stay outside the repository and
- * this test only ever prints or asserts aggregate counts and timings, never names or handles.
- */
+// Opt-in via VIPTV_STREMIO_REAL_FIXTURES: the captures are private, so messages carry counts and geometry, never names or handles.
 @OptIn(ExperimentalComposeUiApi::class)
 class StremioImportRealFixtureTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -40,7 +36,6 @@ class StremioImportRealFixtureTest {
     private fun read(name: String) = directory!!.resolve(name).takeIf { it.isFile }?.readText()
     private fun record(text: String) = Json.parseToJsonElement(text).jsonObject
     private fun profile(text: String) = record(text).getValue("profile_id").jsonPrimitive.content
-    /** Captures expire after ten minutes; validate them as of one minute before their own expiry. */
     private fun capturedAt(text: String) = record(text).getValue("expires_at").jsonPrimitive.long * 1000 - 60_000
     private fun reviews() = listOf("review-none.json", "review-all.json").mapNotNull { name -> read(name)?.let { name to it } }
 
@@ -108,7 +103,6 @@ class StremioImportRealFixtureTest {
         }
         fun inside(stage: String) = nodes().forEach { node ->
             val left = node.positionInRoot.x; val right = left + node.size.width
-            // Geometry only: messages never include captured names.
             if (node.size.width > 0) assertTrue(left >= -.5f && right <= 390.5f, "$stage: a node overflows the phone width")
         }
         try {
@@ -119,7 +113,7 @@ class StremioImportRealFixtureTest {
             session.continueWithoutAddons(); frames(10)
             assertEquals(StremioImportStage.Items, session.state.value.stage)
             val selectable = review.items.count { it.selectable }
-            scrollTo(6) // item controls sit below the summary on a phone
+            scrollTo(6)
             assertTrue(has("$selectable review items included · 0 excluded · ${review.items.size} shown in this preview"))
             inside("real review")
             val timings = linkedMapOf<String, Long>()

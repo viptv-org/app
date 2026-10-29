@@ -3,16 +3,7 @@ package org.viptv.app
 import java.io.File
 import kotlin.test.*
 
-/**
- * App source may not reference a private dev host (app#113). The private
- * hostnames themselves are kept out of the repo, so this guard can't grep for
- * them directly: instead it scans source and fails on any hostname that isn't
- * on an allowlist of known public/placeholder hosts. URL origins
- * (`scheme://host`) are read from the whole file; bare `host/path` references
- * are read only from string literals so property access like `cards.size / 2`
- * is not mistaken for a hostname. Single labels and IP addresses are not
- * qualified hostnames and are allowed.
- */
+// App source may not name a private dev host, so any hostname outside the allowlist fails this scan.
 class NoPrivateHostsTest {
     private val scannedExtensions = setOf("kt", "kts", "xml", "js", "html")
     private val ipv4 = Regex("""\d{1,3}(?:\.\d{1,3}){3}""")
@@ -20,11 +11,9 @@ class NoPrivateHostsTest {
     private val quotedString = Regex(""""[^"\n]*"""")
     private val bareHostPath = Regex("""(?<![A-Za-z0-9./@-])([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]*[A-Za-z][A-Za-z0-9-]*)+)/""", RegexOption.IGNORE_CASE)
 
-    /** Reserved (RFC 2606) and placeholder top-level labels used by fixtures. */
     private val reservedTlds = setOf("example", "invalid", "test", "localhost", "local")
     private val reservedDomains = setOf("example.com", "example.org", "example.net")
 
-    /** Real external services the app legitimately talks to. */
     private val publicDomains = setOf(
         "tmdb.org", "fanart.tv", "thetvdb.com", "imgur.com",
         "metahub.space", "simkl.in", "media-amazon.com", "mozilla.net",
@@ -53,8 +42,8 @@ class NoPrivateHostsTest {
     }
 
     private fun allowed(host: String): Boolean {
-        if (!host.contains('.')) return true // single label: localhost, your-server, simkl, ...
-        if (ipv4.matches(host)) return true // IP address, not a hostname
+        if (!host.contains('.')) return true
+        if (ipv4.matches(host)) return true
         if (reservedTlds.any { host.endsWith(".$it") }) return true
         if (reservedDomains.any { host == it || host.endsWith(".$it") }) return true
         if (publicDomains.any { host == it || host.endsWith(".$it") }) return true

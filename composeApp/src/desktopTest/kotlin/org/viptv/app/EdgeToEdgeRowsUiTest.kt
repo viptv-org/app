@@ -23,12 +23,6 @@ import kotlin.math.abs
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Horizontal rows run edge to edge (app#63): the scrolling strip spans the whole
- * screen, its first card rests on the page gutter, a card runs under the right
- * screen edge instead of being clipped at the gutter, and the row's title and
- * arrows stay inset by the gutter.
- */
 @OptIn(ExperimentalComposeUiApi::class)
 class EdgeToEdgeRowsUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -92,7 +86,6 @@ class EdgeToEdgeRowsUiTest {
         val scene = scene(width, 1000) { HomeScreen(home("Page", 30), false, {}, {}) }
         try {
             frames(scene)
-            // 176 dp cards with 12 dp gaps from a 40 dp gutter: cards 1-7 sit wholly on screen, card 8 runs under the edge.
             press(scene, "Next items")
             assertNear(gutter.toFloat(), card(nodes(scene), "Page title 8")!!.positionInRoot.x, "a page forward lands the first unseen card on the gutter")
             repeat(6) { if (!disabled(arrow(nodes(scene), "Next items"))) press(scene, "Next items") }
@@ -109,7 +102,6 @@ class EdgeToEdgeRowsUiTest {
         val width = 390; val gutter = 16
         val categories = (1..12).map { "Category $it" }
         val scene = scene(width, 400) {
-            // LiveScreen's phone page: a Column padded by the gutter holding the chips.
             Column(Modifier.fillMaxSize().padding(horizontal = gutter.dp)) {
                 LiveFilters(categories, "All", {}, gutter = gutter.dp)
             }

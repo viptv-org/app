@@ -23,7 +23,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/** app#9: the phone player draws under a display cutout; its tappable controls stay inside the safe-drawing insets. */
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerCutoutInsetsUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -52,7 +51,6 @@ class PlayerCutoutInsetsUiTest {
         try {
             frames(scene); capture(scene, "phone-player-cutout-$side")
             assertControlsInside(scene, side)
-            // The player's black reaches the screen edge under the camera; no app-background margin.
             assertBlack(scene, if (side == "left") 4 else width - 5, height / 2)
         } finally { scene.close() }
     }
@@ -82,14 +80,12 @@ class PlayerCutoutInsetsUiTest {
         } finally { scene.close() }
     }
 
-    /** The root container behind the player paints the app background, as App does. */
     private fun scene(insets: WindowInsets, content: @Composable () -> Unit) = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
         Box(Modifier.fillMaxSize().background(Palette.background)) { content() }
     } }
 
     private fun assertControlsInside(scene: ImageComposeScene, side: String) {
         val safe = Rect(if (side == "left") cutout.toFloat() else 0f, 0f, if (side == "right") (width - cutout).toFloat() else width.toFloat(), (height - bottomBar).toFloat())
-        // The full-screen tap target (show/hide controls) and dismiss scrims are not controls.
         val controls = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) || it.config.contains(SemanticsActions.SetProgress) }
             .filter { it.boundsInWindow.width < width }
         assertTrue(controls.isNotEmpty())

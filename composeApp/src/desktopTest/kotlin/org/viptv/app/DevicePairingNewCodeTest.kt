@@ -10,12 +10,6 @@ import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import kotlin.test.*
 
-/**
- * app#129: "New code" asks the server for a fresh code and sends the `device_code` this screen
- * still holds, so the server expires the superseded one (backend#42). The first request of a
- * pairing sends none, a code issued by one server is never offered to another, and a redeemed
- * code is not offered again.
- */
 class DevicePairingNewCodeTest {
     private class FakeServer(private val approved: Boolean = false) {
         val bodies = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())

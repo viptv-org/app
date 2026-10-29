@@ -13,11 +13,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/**
- * app#44: the player's Audio & subtitles menu links to Settings > Subtitles & audio.
- * Playback waits behind Settings, paused, with its server lease kept; Back returns
- * to the player at the same position with the profile's new preferences applied.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerSettingsVisitTest {
     private val store = object : RemoteSessionStore {
@@ -28,14 +23,12 @@ class PlayerSettingsVisitTest {
     private val title = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "metadata", title = "Movie", badges = emptyList())
     private val source = SourceCandidate("opaque-stream", "addon:1", "Fixture")
 
-    /** A fake backend: each `POST /api/playback` opens lease-1, lease-2, …; preferences are stored by revision. */
     private class Server {
         val opens = mutableListOf<JsonObject>()
         val heartbeats = mutableListOf<String>()
         val released = mutableListOf<String>()
         var heartbeat: (String) -> HttpStatusCode = { HttpStatusCode.OK }
         var preferences = PreferencesSnapshot(revision = 3)
-        /** A server gateway conversion (HLS from [offsetSeconds]) instead of the source URL itself. */
         var gateway = false
         var offsetSeconds = 0.0
     }
@@ -95,7 +88,6 @@ class PlayerSettingsVisitTest {
         return controller
     }
 
-    /** Open the source and play to [positionMillis]. */
     private fun TestScope.play(controller: ApplicationController, positionMillis: Long = 754_000) {
         controller.playSource(source); runCurrent()
         val input = assertNotNull(controller.state.value.playback)
@@ -187,7 +179,6 @@ class PlayerSettingsVisitTest {
         assertNull(state.playback)
         assertFalse(state.settingsReturnsToPlayer)
         assertEquals(listOf("lease-1"), server.released, "Leaving for another page releases the lease")
-        // Settings opened the ordinary way afterwards is not a player visit.
         controller.navigate(Screen.Settings); runCurrent()
         controller.navigateBack(); runCurrent()
         assertEquals(Screen.Library, controller.state.value.screen)
@@ -198,7 +189,6 @@ class PlayerSettingsVisitTest {
         val controller = controller(server)
         play(controller)
         controller.openPlayerSettings(); runCurrent()
-        // Android: the app goes behind with Settings open; the lease lapses meanwhile.
         controller.suspendPlayback(); controller.appForeground(false)
         advanceTimeBy(5 * 60_000); runCurrent()
         server.heartbeat = { lease -> if (lease == "lease-1") HttpStatusCode.Gone else HttpStatusCode.OK }
@@ -229,7 +219,6 @@ class PlayerSettingsVisitTest {
         controller.navigateBack(); runCurrent()
         assertSame(input, controller.state.value.playback, "Size and colours are drawn by this device: no new lease")
         assertEquals(1, server.opens.size)
-        // The gateway's media starts at 600 s: title 801.5 s is 201.5 s into it.
         assertEquals(201_500L, input.positionMillis)
         assertEquals(1.25, input.preferences.subtitle_font_scale)
         controller.closePlayer()
@@ -243,7 +232,6 @@ class PlayerSettingsVisitTest {
         val current = assertNotNull(controller.state.value.preferences).preferences
         controller.updatePreferences(current.copy(preferred_audio_language = "ja")); runCurrent()
         controller.navigateBack(); runCurrent()
-        // The gateway picked its audio when the lease opened; it picks again from the new profile.
         assertEquals(2, server.opens.size)
         assertEquals(801.5, server.opens[1].getValue("position").jsonPrimitive.double)
         val state = controller.state.value
@@ -260,7 +248,6 @@ class PlayerSettingsVisitTest {
         val server = Server().apply { gateway = true }
         val controller = controller(server)
         play(controller)
-        // The player menu stores the pick in the profile; the stream already plays it.
         controller.rememberTrackChoice(org.viptv.app.player.PlaybackTrackKind.Audio, "ja"); runCurrent()
         assertEquals(org.viptv.app.player.canonicalLanguageTag("ja"), server.preferences.preferences.preferred_audio_language)
         controller.openPlayerSettings(); runCurrent()

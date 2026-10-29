@@ -25,7 +25,6 @@ class BrowserCaptionStyleTest {
         assertEquals("font-size:10.0vh;", browserCaptionDeclarations(preferences, 99f))
         assertEquals("font-size:2.5vh;", browserCaptionDeclarations(preferences, -1f))
     }
-    /** app#43: snapped lines (stacking and wrapping) whose lift stays about four default lines at every size. */
     @Test fun providerCuesSitOnSnappedLinesLiftedTheSameDistanceAtEverySize() {
         assertEquals(-5, providerCueLine(1f))
         assertEquals(-3, providerCueLine(2f))

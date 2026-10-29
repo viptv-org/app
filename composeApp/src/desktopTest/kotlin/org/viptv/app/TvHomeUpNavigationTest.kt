@@ -26,7 +26,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-/** Up from a lower Home row moves to the row above; only the first row returns to the billboard. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvHomeUpNavigationTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -41,7 +40,7 @@ class TvHomeUpNavigationTest {
         return node.config[SemanticsActions.RequestFocus].action?.invoke() ?: false
     }
     private var focusManager: androidx.compose.ui.focus.FocusManager? = null
-    /** Like Android: key handlers see the press first; an unconsumed D-pad press moves focus. */
+    // Desktop maps no arrow key to a focus move, so an unconsumed D-pad press has to drive the focus manager.
     private fun press(scene: ImageComposeScene, key: Key) {
         val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
         if (!consumed) requireNotNull(focusManager).moveFocus(when (key) {
@@ -57,7 +56,6 @@ class TvHomeUpNavigationTest {
         hero = Card(MediaIdentity("hero", "movie", emptyList()), provider_id = "fixture", title = "Hero title", badges = emptyList()),
         featured = emptyList(), rows = listOf(row("A"), row("B"), row("C"), row("D")), complete = true)
 
-    /** Returning to the billboard slides the rows down; the list must not lose height and clip them mid-slide. */
     @Test fun returningToTheBillboardSlidesRowsWithoutClippingThem() = onEdt {
         var frame = 0L
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {

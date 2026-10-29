@@ -130,7 +130,6 @@ class RemotePlaybackTest {
     private val nativeReady = """{"id":"lease","status":"ready","expires_at":1792562096,"renew_after_seconds":20,"error_code":null,"error":null,
         "delivery":{"kind":"native_torrent","live":false,"format":"original","position":12.5,"preferences":{"audio_language":null,"subtitle_language":null,"subtitles_enabled":false},"grant":{}}}"""
 
-    /** Android plays torrent sources with its own runtime: the native grant, never a server gateway. */
     @Test fun torrentGrantPlaysTheDevicesOwnRuntime() = runBlocking {
         val calls = mutableListOf<String>()
         var sent: JsonObject? = null
@@ -158,7 +157,6 @@ class RemotePlaybackTest {
         assertFalse(lease.reopensForSeek)
         lease.firstFrame(); lease.renew(); lease.close()
         assertEquals(listOf("negotiate", "acquire lease", "first_frame", "renew", "close"), torrents.events)
-        // The device reports frames and renews through its own runtime adapter.
         assertFalse(calls.any { it.endsWith("/first-frame") || it.endsWith("/heartbeat") })
         assertEquals("DELETE /api/playback/lease", calls.last())
         connection.close()
@@ -198,7 +196,6 @@ class RemotePlaybackTest {
         connection.close()
     }
 
-    /** A direct-only device given gateway media reports a playback failure, not a server-address error. */
     @Test fun gatewayDeliveryOnDirectDeviceIsAPlaybackFailure() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             respond(if (request.method == HttpMethod.Delete) "{}" else

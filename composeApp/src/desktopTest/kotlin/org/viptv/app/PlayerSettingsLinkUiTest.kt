@@ -26,11 +26,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#44: the Audio & subtitles menu ends with a link to Settings > Subtitles & audio on
- * phone, desktop/web and TV, and Back from that visit returns to the paused player by
- * every input. Set VIPTV_PLAYER_SETTINGS_CAPTURE_DIR to write the screenshots.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PlayerSettingsLinkUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -61,7 +56,6 @@ class PlayerSettingsLinkUiTest {
         }
     }
 
-    /** The settings row is the menu's last row: below every track and size choice. */
     private fun assertLastRow(scene: ImageComposeScene, choices: List<String>) {
         val link = assertNotNull(clickable(scene, PLAYER_SETTINGS_LINK), "The menu has no settings row").boundsInRoot
         for (choice in choices) {
@@ -118,7 +112,6 @@ class PlayerSettingsLinkUiTest {
             assertLastRow(scene, listOf("English · 5.1", "Spanish", "Extra large"))
             fun merged() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
             fun focused() = merged().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::label)
-            // D-pad Down from the last row of the subtitle list and of the size list reaches the settings row.
             for (last in listOf("Spanish", "Extra large")) {
                 val row = merged().first { label(it) == last && it.config.contains(SemanticsActions.RequestFocus) }
                 assertTrue(row.config[SemanticsActions.RequestFocus].action!!.invoke()); settle(scene)
@@ -133,7 +126,6 @@ class PlayerSettingsLinkUiTest {
         } finally { scene.close() }
     }
 
-    /** Settings rendered from the controller as App does, during a visit from the player. */
     private class Visit(width: Int, height: Int, browser: Boolean = false, television: Boolean = false, desktop: Boolean = false) : AutoCloseable {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, object : RemoteSessionStore {
@@ -151,7 +143,6 @@ class PlayerSettingsLinkUiTest {
                     desktop = desktop, entryBackChanged = { systemBack = it })
             } }
         }
-        /** The player paused at 14:02 with the visit open, as [openPlayerSettings] leaves it. */
         fun open() {
             controller.mutable.value = ApplicationState(screen = Screen.Player, selectedProfile = "1", localMode = true, playback = input,
                 preferences = PreferencesSnapshot(), navBack = listOf(Screen.Home))
@@ -195,7 +186,6 @@ class PlayerSettingsLinkUiTest {
                 assertTrue(shows(ui.scene, "Back to player"), "Wide layouts show the way back too")
                 if (route == "Back chevron") capture(ui.scene, "desktop-subtitles-settings-from-player")
                 when (route) {
-                    // DesktopTitleBar's Back chevron calls navigateBack.
                     "Back chevron" -> ui.controller.navigateBack()
                     "Escape" -> {
                         assertTrue(ui.scene.sendKeyEvent(KeyEvent(Key.Escape, KeyEventType.KeyDown)), "Escape is not handled")
@@ -229,7 +219,6 @@ class PlayerSettingsLinkUiTest {
             ui.open(); settle(ui.scene)
             assertTrue(shows(ui.scene, "Subtitles & audio"))
             capture(ui.scene, "tv-subtitles-settings-from-player")
-            // MainActivity's BackHandler runs the route's Back for the TV remote's Back key.
             val remoteBack = assertNotNull(ui.systemBack, "TV remote Back is not routed to the player")
             remoteBack(); settle(ui.scene)
             ui.assertBackInThePlayer("TV remote Back")

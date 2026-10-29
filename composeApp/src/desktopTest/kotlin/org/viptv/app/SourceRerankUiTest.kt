@@ -22,7 +22,6 @@ import org.viptv.engine.wire.SourceCandidate
 import org.junit.Rule
 import kotlin.test.*
 
-/** SRC-BEST-MATCH-001 Progressive ranking: a re-rank keeps focus and the scroll anchor on the same source. */
 class SourceRerankUiTest {
     @get:Rule val uiThread = UiThreadRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
@@ -42,7 +41,6 @@ class SourceRerankUiTest {
         fun focused() = nodes().single { it.config.getOrNull(SemanticsProperties.Focused) == true }
         fun header(label: String) = nodes().singleOrNull { it.config.contains(SemanticsProperties.Heading) && text(it) == label }
         fun focus(id: String) = assertTrue(row(id).config[SemanticsActions.RequestFocus].action!!.invoke())
-        /** A D-pad press: on desktop it only reaches key handlers, it does not move focus. */
         fun press(key: androidx.compose.ui.input.key.Key) {
             scene.sendKeyEvent(androidx.compose.ui.input.key.KeyEvent(key, androidx.compose.ui.input.key.KeyEventType.KeyDown))
             scene.sendKeyEvent(androidx.compose.ui.input.key.KeyEvent(key, androidx.compose.ui.input.key.KeyEventType.KeyUp))
@@ -54,7 +52,6 @@ class SourceRerankUiTest {
         assertTrue(kotlin.math.abs(expected - actual) <= 1.5f, "$what: expected $expected, got $actual")
 
     @Test fun tvFocusStaysOnTheSameSourceWhenBetterRowsPushItIntoAllSources() = ui {
-        // Scenario 18: focus on the fifth Best matches row when two better rows arrive.
         var list by mutableStateOf(ranked((1..8).map { "r$it" }))
         val info = (listOf("x1", "x2") + (1..8).map { "r$it" }).associateWith { TvSourceInfo(quality = "1080p") }
         Scene(1920, 1080, television = true) {
@@ -68,14 +65,11 @@ class SourceRerankUiTest {
             s.settle()
             assertTrue(s.text(s.focused()).contains("Source r5"), "Focus follows the source, not the index")
             near(before, s.row("r5").boundsInRoot.top, "The focused row keeps its on-screen position")
-            // r4, now the first All sources row, sits above the leading edge: the header
-            // scrolled away with the rows above the focused one, and the rows below follow.
             assertTrue(s.row("r6").boundsInRoot.top > s.row("r5").boundsInRoot.top)
         }
     }
 
     @Test fun tvBetterRowTakesFirstPlaceMarkerAndInitialFocusBeforeNavigation() = ui {
-        // Scenario 17.
         var list by mutableStateOf(ranked(listOf("a", "b", "c")))
         val info = listOf("x", "a", "b", "c").associateWith { TvSourceInfo(quality = "1080p") }
         Scene(1920, 1080, television = true) {
@@ -97,7 +91,6 @@ class SourceRerankUiTest {
     }
 
     @Test fun tvFocusStaysOnTheFirstRowOnceTheViewerHasPressedTheDpad() = ui {
-        // Step 4: after Down and Up back to the first row, a better arrival does not take focus.
         var list by mutableStateOf(ranked(listOf("a", "b", "c")))
         val info = listOf("x", "a", "b", "c").associateWith { TvSourceInfo(quality = "1080p") }
         Scene(1920, 1080, television = true) {
@@ -128,7 +121,6 @@ class SourceRerankUiTest {
     }
 
     @Test fun keyboardFocusCrossesHeadersAndStaysOnItsSourceAcrossARerank() = ui {
-        // Scenario 18 on a desktop keyboard list: Up/Down skip the header; a re-rank keeps focus and position.
         var list by mutableStateOf(ranked(listOf("a", "b", "c", "d", "e"), best = 3))
         var focusManager: androidx.compose.ui.focus.FocusManager? = null
         Scene(1440, 900, television = false) {
@@ -142,7 +134,6 @@ class SourceRerankUiTest {
             assertTrue(focusManager!!.moveFocus(androidx.compose.ui.focus.FocusDirection.Up)); s.settle()
             assertTrue(s.text(s.focused()).contains("Source c"), "Up crosses back to the last Best matches row")
             val before = s.row("c").boundsInRoot.bottom
-            // Enough later rows that the list can scroll to hold c in place.
             list = ranked(listOf("x1", "x2", "a", "b", "c", "d", "e") + (1..12).map { "z" + ('a' + it) }, best = 4)
             s.settle()
             assertTrue(s.text(s.focused()).contains("Source c"), "Focus stays on c, which now opens All sources")
@@ -163,7 +154,6 @@ class SourceRerankUiTest {
     }
 
     @Test fun phoneScrollAnchorKeepsItsPlaceWhenRowsArriveAbove() = ui {
-        // Scenario 19, viewer has scrolled.
         val ids = (1..20).map { "r" + it.toString().padStart(2, '0') }
         var list by mutableStateOf(ranked(ids))
         val chosen = mutableListOf<String>()
@@ -175,7 +165,6 @@ class SourceRerankUiTest {
             fun shown(id: String) = s.nodes().singleOrNull { it.config.contains(SemanticsActions.OnClick) && s.text(it).contains("Source $id") }
             s.scrollDown { shown("r01").let { it == null || it.boundsInRoot.top < top - 300 } }
             s.settle()
-            // The first row item starts at the list's top content padding.
             val anchor = ids.first { id -> shown(id)?.let { it.boundsInRoot.top >= top - 1 } == true }
             val before = s.row(anchor).boundsInRoot.bottom
             list = ranked(listOf("x1", "x2", "x3") + ids)
@@ -187,7 +176,6 @@ class SourceRerankUiTest {
     }
 
     @Test fun phoneListAtTheTopShowsTheNewBestRow() = ui {
-        // Scenario 19, viewer has not scrolled.
         val ids = (1..20).map { "r" + it.toString().padStart(2, '0') }
         var list by mutableStateOf(ranked(ids))
         Scene(390, 844, television = false) {

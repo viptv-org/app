@@ -22,12 +22,6 @@ import org.junit.Rule
 import java.io.File
 import kotlin.test.*
 
-/**
- * Every Details hero plays the episode its episode list lands on and marks (app#49):
- * the title's Continue Watching episode, else a loaded episode with partial progress.
- * An imported Continue Watching episode past the loaded pages plays in the Details'
- * scope, exactly as a Continue Watching tap would, never as S1 E1.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailsHeroResumeTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -38,15 +32,12 @@ class DetailsHeroResumeTest {
     private fun episode(season: Long, number: Long, progress: Double? = null) = series.copy(
         identity = MediaIdentity("$show:$season:$number", "series", emptyList(), EpisodeCoordinates("aired", season, number)),
         parent_identity = series.identity, title = "Episode $season-$number", progress = progress)
-    /** Home's Continue Watching card for S3 E5: an imported `library` card with no metadata scope. */
     private val resume = Card(MediaIdentity("$show:3:5", "series", emptyList(), EpisodeCoordinates("aired", 3, 5)),
         provider_id = "library", title = "Re: Zero", subtitle = "S3 E5 · 9m left", badges = emptyList(), progress = 0.4,
         parent_identity = MediaIdentity(show, "series", emptyList()))
-    /** The first Details page: season 1 only, with an older partly watched S1 E3, and the host's season index. */
     private val firstPage = DetailSnapshot(series, episodes = (1L..25L).map { episode(1, it, progress = if (it == 3L) 0.3 else null) },
         next_cursor = "25", seasons = listOf(EpisodeSeason(1, 25, 0), EpisodeSeason(2, 24, 25), EpisodeSeason(3, 16, 49)))
 
-    /** [card] is S3 E5 in the Details' own scope, as the source selector and player need it. */
     private fun assertScopedResume(card: Card?, layout: String) {
         assertNotNull(card, "$layout: the hero played something")
         assertEquals(resume.identity, card.identity, "$layout: the hero plays S3 E5, not ${card.identity.id}")
@@ -107,7 +98,6 @@ class DetailsHeroResumeTest {
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
         }
         suspend fun settle() { frames(); delay(200); frames() }
-        /** `VIPTV_DETAILS_HERO_CAPTURE_DIR` saves what the hero shows. */
         fun save(name: String) {
             val dir = System.getenv("VIPTV_DETAILS_HERO_CAPTURE_DIR")?.let(::File) ?: return
             dir.mkdirs()
@@ -127,7 +117,6 @@ class DetailsHeroResumeTest {
     @Test fun everyLayoutsHeroResumesTheContinuedEpisodeBeforeItsPageLoads() = onEdt {
         for (layout in layouts) layout.details().use { page ->
             page.settle()
-            // Season 3 is not loaded: the older S1 E3 on the first page must not take over.
             assertNull(page.clickable("Resume S1 E3"), "${layout.name}: the hero does not resume S1 E3")
             page.save("hero-resume-${layout.name}")
             page.click("Resume S3 E5")
@@ -148,7 +137,6 @@ class DetailsHeroResumeTest {
     }
 
     @Test fun aContinuedEpisodeWithoutProgressIsPlayedByName() = onEdt {
-        // A Calendar row's episode (app#46) names the episode Details land on but has no progress.
         val named = resume.copy(progress = null, subtitle = null)
         for (layout in layouts) layout.details(continuing = listOf(named)).use { page ->
             page.settle()

@@ -27,7 +27,6 @@ import org.viptv.app.state.*
 import org.junit.Rule
 import kotlin.test.*
 
-/** app#45: the desktop window's Escape and mouse Back/Forward take the app's one Back. */
 @OptIn(ExperimentalComposeUiApi::class, androidx.compose.ui.InternalComposeUiApi::class)
 class DesktopBackInputsTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -49,7 +48,6 @@ class DesktopBackInputsTest {
             val state by controller.state.collectAsState()
             DesktopBackInputs(back, state) {
                 Box(Modifier.fillMaxSize()) {
-                    // A focused control that keeps Escape for itself, as a text field or the player does.
                     if (fieldShown) Box(Modifier.size(40.dp).focusRequester(field).focusable().onKeyEvent { it.key == Key.Escape })
                     if (dialogOpen) Dialog(onDismissRequest = { dialogOpen = false }) { Text("Leave VIPTV?") }
                 }
@@ -57,7 +55,6 @@ class DesktopBackInputsTest {
         }
         private var frame = 0L
         fun render() = repeat(6) { scene.render(frame++ * 16_666_667L).close() }
-        /** ComposeSceneMediator: the scene first; Escape nothing took becomes the window's Back. */
         fun escape() {
             val consumed = scene.sendKeyEvent(KeyEvent(Key.Escape, KeyEventType.KeyDown))
             if (!consumed) input.backCompleted()

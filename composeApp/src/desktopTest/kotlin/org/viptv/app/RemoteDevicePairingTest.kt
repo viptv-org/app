@@ -52,7 +52,6 @@ class RemoteDevicePairingTest {
         } finally { remote.close() }
     }
 
-    /** app#102: the OAuth device-flow errors end the wait with their own copy; only `authorization_pending` keeps waiting. */
     @Test fun deniedAndExpiredCodesEndPollingWithTheirOwnMessages() = runBlocking {
         val answers = ArrayDeque(listOf(
             """{"error":"authorization_pending"}""", """{"error":"access_denied"}""",
@@ -77,10 +76,6 @@ class RemoteDevicePairingTest {
         } finally { remote.close() }
     }
 
-    /**
-     * app#129: a code request answers with a new `device_code`, so "New code" sends the one this
-     * screen still holds. The server then expires it (backend#42), and the first request sends none.
-     */
     @Test fun aNewCodeSendsThePreviousDeviceCodeAndTheFirstCodeSendsNone() = runBlocking {
         val bodies = mutableListOf<JsonObject>()
         val client = HttpClient(MockEngine { request ->

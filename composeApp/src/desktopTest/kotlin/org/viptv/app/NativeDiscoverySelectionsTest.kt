@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import kotlin.test.*
 
-/** Real Rust/SQLite/planning/projection bridge with only external add-on IO replaced. */
 class NativeDiscoverySelectionsTest {
     @Test fun explicitCatalogKeepsMultiValuesAndPagingInOneRequestWithoutMixingOwners() = runBlocking {
         val requests = mutableListOf<Pair<String, Map<String, List<String>>>>()

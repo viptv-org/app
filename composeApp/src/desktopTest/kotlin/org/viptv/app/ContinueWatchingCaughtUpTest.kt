@@ -30,15 +30,6 @@ import org.viptv.engine.wire.*
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * A Continue Watching entry for a show the viewer is caught up on: the last episode they finished,
- * which the queue keeps and marks watched while no later episode is released (app#132, backend#61).
- * The card is labelled with that episode and never opens the source picker for an episode that is
- * already watched: it opens the show's Details, whose episode list lands on the finished one.
- *
- * The next episode's line ("S3 E5 coming soon", or its air date) needs the server's next-episode
- * facts, which it does not send yet (backend#78), so a caught-up card carries one label here.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ContinueWatchingCaughtUpTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -48,9 +39,7 @@ class ContinueWatchingCaughtUpTest {
     private fun episode(number: Long) = series.copy(
         identity = MediaIdentity("tt38262097:1:$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
         parent_identity = series.identity, title = "Episode $number")
-    /** The finale the owner finished last: no later episode is released, so the queue keeps it. */
     private val finale = episode(12).copy(title = series.title, badges = listOf("Watched"))
-    /** Still in the middle of S1 E3: a normal resume card. */
     private val resume = episode(3).copy(title = series.title, subtitle = "S1 E3 · 9m left", progress = 0.6581)
     private val home = HomeSnapshot(
         scope = Scope("viptv:remote", "account", "1", 1), revision = 1,
@@ -58,24 +47,19 @@ class ContinueWatchingCaughtUpTest {
             state = RowState.READY, cards = listOf(finale, resume))),
         complete = true)
 
-    /** Home with one Continue Watching row holding just [cards], so every card composes at any width. */
     private fun rowOf(vararg cards: Card) = home.copy(rows = listOf(home.rows.single().copy(cards = cards.toList())))
 
     @Test fun theFinishedEpisodeOfACaughtUpShowIsCaughtUpAndLabelled() {
         assertTrue(finale.isCaughtUp(), "a watched finale with no caption and no progress is caught up")
         assertEquals("S1 E12 · Watched", finale.caughtUpCaption())
-        // The up-next case the server already advances (backend#61) names the next episode.
         assertFalse(finale.copy(subtitle = "S1 E12 · Chapter 12").isCaughtUp())
         assertNull(finale.copy(subtitle = "S1 E12 · Chapter 12").caughtUpCaption())
-        // A resume card keeps its progress and its caption.
         assertFalse(resume.isCaughtUp())
         assertNull(resume.caughtUpCaption())
-        // Only a series episode can be waiting for the next one: a finished movie is not.
         val movie = Card(MediaIdentity("tt0111161", "movie", emptyList()), provider_id = "addon:4",
             title = "A Movie", badges = listOf("Watched"))
         assertFalse(movie.isCaughtUp())
         assertNull(movie.caughtUpCaption())
-        // An episode with no season still names the episode.
         val unnumbered = finale.copy(identity = finale.identity.copy(episode = EpisodeCoordinates("aired", null, 7)))
         assertTrue(unnumbered.isCaughtUp())
         assertEquals("E7 · Watched", unnumbered.caughtUpCaption())
@@ -86,7 +70,6 @@ class ContinueWatchingCaughtUpTest {
     private fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
         node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }).joinToString(" ")
 
-    /** The card's own node: the boards merge a card's art, chip, check and captions into one. */
     private fun tap(scene: ImageComposeScene, card: Card) {
         val node = nodes(scene).first { it.config.contains(SemanticsActions.OnClick) && label(it).contains(card.title) }
         assertTrue(node.config[SemanticsActions.OnClick].action?.invoke() == true, "${card.title} is not activatable")
@@ -94,7 +77,6 @@ class ContinueWatchingCaughtUpTest {
 
     @Test fun phoneDesktopAndWebCatchUpCardsAreLabelledAndOpenDetails() = onEdt {
         for ((width, height) in listOf(390 to 900, 1280 to 900)) {
-            // A caught-up card: labelled with the episode it finished, and it opens the show's Details.
             val opened = mutableListOf<Card>(); val played = mutableListOf<Card>()
             val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
@@ -110,7 +92,6 @@ class ContinueWatchingCaughtUpTest {
                 assertEquals(listOf(finale), opened, "${width}dp: a caught-up card opens the show's Details")
                 assertTrue(played.isEmpty(), "${width}dp: nothing plays the watched finale: $played")
             } finally { scene.close() }
-            // The resume case is unchanged: the tap starts the episode the card names.
             val resumed = mutableListOf<Card>(); val resumedOpen = mutableListOf<Card>()
             val resumeScene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
@@ -174,7 +155,6 @@ class ContinueWatchingCaughtUpTest {
         } finally { scene.close() }
     }
 
-    /** The card drawn on its own: the caught-up label is the line under its title. */
     @Test fun theCardDrawsTheCaughtUpLabelUnderItsTitle() = onEdt {
         val scene = ImageComposeScene(300, 260, Density(1f)) { ViptvTheme {
             MediaCard(finale, 240, open = {}, select = {})

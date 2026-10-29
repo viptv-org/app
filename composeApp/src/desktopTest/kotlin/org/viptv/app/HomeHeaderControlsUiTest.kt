@@ -21,7 +21,6 @@ import org.viptv.engine.wire.MediaIdentity
 import org.junit.Rule
 import kotlin.test.*
 
-/** Phone and tablet chrome shows only controls that work: no placeholder dialogs (app#15). */
 @OptIn(ExperimentalComposeUiApi::class)
 class HomeHeaderControlsUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -86,7 +85,6 @@ class HomeHeaderControlsUiTest {
         val bare = scene(390, 844, null) { PhoneSettings(profile, 2, false, null, {}, {}, {}, {}) }
         try {
             frames(bare)
-            // A settings row merges its label with its subtitle ("Add-ons 2 installed").
             val labels = nodes(bare).map(::text)
             assertTrue(labels.any { it.startsWith("Add-ons") } && "Sign out" in labels, "$labels")
             for (hidden in listOf("Playback", "Subtitles & audio", "Watch on TV", "Account", "Help", "About VIPTV")) assertFalse(labels.any { it.startsWith(hidden) }, hidden)

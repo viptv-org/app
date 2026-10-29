@@ -27,11 +27,6 @@ import org.viptv.app.theme.ViptvTheme
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#59: on desktop and web a horizontal [FocusLazyRow] scrolls with the plain mouse
- * wheel and with click-drag; touch layouts and TV keep Foundation's scrolling, and a
- * rail inside a vertical page leaves the wheel to the page.
- */
 class PointerRowScrollTest {
     @get:Rule val uiThread = UiThreadRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
@@ -74,7 +69,6 @@ class PointerRowScrollTest {
         override fun close() = scene.close()
     }
 
-    /** Thirty 80 dp chips in a 400 dp row at the top of the window. */
     @Composable private fun Chips(state: LazyListState, wheel: Boolean? = null, clicked: ((Int) -> Unit)?) =
         FocusLazyRow(Modifier.fillMaxWidth().height(40.dp), state = state, contentPadding = PaddingValues(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp), wheelScrollsRow = wheel ?: !LocalVerticalPage.current) {
@@ -111,8 +105,6 @@ class PointerRowScrollTest {
 
     @Test fun touchLayoutsAndTvKeepFoundationScrolling() = ui {
         val tv = LazyListState()
-        // The TV theme turns the pointer layout off even when one is asked for. The chips take
-        // no clicks: on TV a press focuses a chip and focus anchoring scrolls it to the edge.
         Scene(pointer = true, television = true) { Chips(tv, clicked = null) }.use { s ->
             s.frames()
             s.wheel(Offset(200f, 20f))
@@ -130,7 +122,6 @@ class PointerRowScrollTest {
         }
     }
 
-    /** A poster rail in a vertical page leaves the wheel to the page; a chip row there opts in and takes it. */
     @Test fun aRailInAVerticalPageLeavesTheWheelToThePage() = ui {
         val page = LazyListState()
         val rail = LazyListState()

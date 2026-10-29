@@ -24,16 +24,6 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/**
- * app#94: the desktop billboard is stable for the life of the screen. Hovering a
- * hero button changes that button and nothing else, and a quiet Home rebuild
- * that comes back without artwork (the server's metadata pass has a deadline)
- * keeps the backdrop and logo the viewer is already looking at instead of
- * repainting the billboard as a flat block.
- *
- * The report's "first hover" caught the rebuild landing; the hover itself is
- * proven clean here, and the rebuild is replayed through the real controller.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DesktopHeroHoverTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -44,12 +34,10 @@ class DesktopHeroHoverTest {
         override suspend fun clear() = Unit
     }
 
-    // No avatar, so the fake bootstrap rebuild leaves the title bar bit-identical.
     private val profile = Profile("12", "Parent", null)
     private val billboard = PreviewData.hero
     private val shown = PreviewData.home.copy(hero = billboard, featured = listOf(billboard))
 
-    /** The same title after a rebuild whose metadata pass missed: no landscape, poster or logo. */
     private fun sparse(card: Card) = card.copy(landscape = null, poster = null, logo = null)
     private fun rebuilt() = shown.copy(revision = 8, hero = sparse(billboard), featured = listOf(sparse(billboard)))
 
@@ -67,7 +55,6 @@ class DesktopHeroHoverTest {
 
     private class Shell(val scene: ImageComposeScene) {
         private var frame = 0L
-        /** Renders past the state layers' short animations, so two looks at the same state are equal. */
         fun pixels(): Bitmap {
             repeat(40) { scene.render(frame++ * 16_666_667L).close() }
             return scene.render(frame++ * 16_666_667L).use { Bitmap.makeFromImage(it) }
@@ -83,7 +70,6 @@ class DesktopHeroHoverTest {
     }
 
     private fun shell(test: suspend (Shell, ApplicationController) -> Unit) = runBlocking {
-        // Revisions moved elsewhere, so the foreground check rebuilds Home.
         val moved = revisions + ("library" to "5")
         val client = HttpClient(MockEngine { request ->
             val body = when (request.url.encodedPath) {
@@ -108,12 +94,10 @@ class DesktopHeroHoverTest {
         finally { scene.close(); controller.disconnect(); scope.cancel(); remote.close() }
     }
 
-    /** Runs the quiet lane to its end; the test asserts what it published. */
     private suspend fun settle(controller: ApplicationController) {
         while (true) { val running = controller.quietJob ?: return; running.join(); if (controller.quietJob === running) return }
     }
 
-    /** Pixels that differ outside [except], allowing the control's own anti-aliased halo. */
     private fun changedPixels(before: Bitmap, after: Bitmap, except: Rect? = null): Int {
         var changed = 0
         for (x in 0 until before.width) for (y in 0 until before.height) {
@@ -123,7 +107,6 @@ class DesktopHeroHoverTest {
         return changed
     }
 
-    /** NAV-10: a blank artwork URL is no artwork, so it gets the branded billboard and never a flat fill. */
     @Test fun aBlankArtworkUrlPaintsTheBrandedBillboard() = runBlocking {
         fun capture(card: Card): Shell {
             val scene = ImageComposeScene(1200, 700, Density(1f)) {

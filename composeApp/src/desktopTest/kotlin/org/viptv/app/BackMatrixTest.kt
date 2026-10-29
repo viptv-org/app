@@ -6,11 +6,6 @@ import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.state.*
 import kotlin.test.*
 
-/**
- * app#45: the Back matrix (docs/BACK_MATRIX.md) at the controller. Every Back input ends in one of
- * two calls: Android and TV system Back ask [systemBackStaysInApp] and then call [navigateSystemBack],
- * as MainActivity does; desktop and browser call [navigateBack] when [canNavigateBack].
- */
 class BackMatrixTest {
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -27,7 +22,6 @@ class BackMatrixTest {
         } finally { scope.cancel() }
     }
 
-    /** MainActivity's BackHandler with no route step registered: navigateSystemBack(), or false when the activity leaves the app. */
     private fun ApplicationController.androidBack(): Boolean {
         if (!state.value.systemBackStaysInApp()) return false
         navigateSystemBack(); return true
@@ -54,19 +48,16 @@ class BackMatrixTest {
         for (page in pages) controller(signedIn(page)) { c ->
             assertTrue(c.androidBack(), "Android Back left the app from $page")
             assertEquals(Screen.Home, c.state.value.screen, "from $page")
-            // Back must not make the page Home's Back target: that would bounce between the two.
             assertEquals(emptyList(), c.state.value.navBack, "from $page")
         }
     }
 
     @Test fun homeBacksToProfilesOnAndroidButDesktopAndBrowserPopTheirHistory() {
-        // app#109 (D1 reversed): Android/TV Back on Home opens the profile picker.
         controller(signedIn(Screen.Home)) { c ->
             assertTrue(c.state.value.systemBackStaysInApp(), "Android/TV Back on Home must open Profiles")
             assertTrue(c.androidBack())
             assertEquals(Screen.Profiles, c.state.value.screen)
         }
-        // Desktop and browser keep Home's history pop via navigateBack.
         controller(signedIn(Screen.Home, navBack = listOf(Screen.Movies))) { c ->
             assertTrue(c.state.value.canNavigateBack())
             c.navigateBack()
@@ -83,7 +74,6 @@ class BackMatrixTest {
         controller(signedIn(Screen.Home)) { c ->
             assertTrue(c.androidBack(), "Android/TV Back on Home opens Profiles")
             assertEquals(Screen.Profiles, c.state.value.screen)
-            // Back there leaves the app: the handler is disabled, so the system handles it.
             assertFalse(c.state.value.systemBackStaysInApp(), "Back on the picker reached from Home leaves the app")
             assertFalse(c.state.value.canNavigateBack(), "no Home<->Profiles bounce")
             assertFalse(c.androidBack(), "the activity leaves, the app does not navigate")
@@ -92,7 +82,6 @@ class BackMatrixTest {
     }
 
     @Test fun profilesGoesBackToWhereTheViewerCameFromOnceAProfileIsChosen() {
-        // Switching profile from a page: back to it, on every input.
         controller(signedIn(Screen.Profiles, navBack = listOf(Screen.Settings))) { c ->
             assertTrue(c.androidBack(), "Android Back left the app from the profile switcher")
             assertEquals(Screen.Settings, c.state.value.screen)
@@ -102,7 +91,6 @@ class BackMatrixTest {
             assertEquals(Screen.Home, c.state.value.screen)
             assertEquals(emptyList(), c.state.value.navBack)
         }
-        // The first choice after sign-in is a root: the platform leaves the app.
         controller(ApplicationState(screen = Screen.Profiles, localMode = true)) { c ->
             assertFalse(c.state.value.systemBackStaysInApp())
             assertFalse(c.state.value.canNavigateBack())
@@ -127,7 +115,6 @@ class BackMatrixTest {
                 assertTrue(c.state.value.canNavigateBack())
                 assertTrue(c.androidBack(), "Android Back left the app from $screen")
                 assertEquals(Screen.Profiles, c.state.value.screen, "from $screen")
-                // The PIN pad and the editor are not history entries: Back from Profiles never reopens them.
                 assertEquals(listOf(Screen.Home), c.state.value.navBack, "from $screen")
             }
         }
@@ -138,7 +125,6 @@ class BackMatrixTest {
             assertFalse(c.state.value.systemBackStaysInApp())
             assertFalse(c.state.value.canNavigateBack())
         }
-        // D4: Android Back must not throw the one-time recovery codes away, nor open Home without a profile.
         controller(ApplicationState(screen = Screen.RecoveryCodes, recoveryKit = null)) { c ->
             assertTrue(c.androidBack())
             assertEquals(Screen.RecoveryCodes, c.state.value.screen)
@@ -147,7 +133,6 @@ class BackMatrixTest {
     }
 
     @Test fun overlaysAndSettingsLevelsStayAsTheyWere() {
-        // app#11: Sources -> its return screen; Details -> origin; Settings sub-page -> list (app#7).
         controller(signedIn(Screen.Sources).copy(sourceReturnScreen = Screen.Details)) { c ->
             assertTrue(c.androidBack()); assertEquals(Screen.Details, c.state.value.screen)
         }
