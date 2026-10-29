@@ -163,7 +163,7 @@ fun App(
                                         paging = state.screen == Screen.Details,
                                         // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
                                         playTap = state.playTapTitle != null,
-                                        retry = if (state.playTapTitle != null && state.detail == null) controller::retryDetails else null,
+                                        retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
                                         // The drawer over the page owns the keyboard: the dialog must not take its focus.
                                         closeFocusOnOpen = !(browser && showingSources))
                                     if (showingSources) {
