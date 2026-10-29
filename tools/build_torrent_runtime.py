@@ -3,14 +3,28 @@
 The revision is TORRENT_RUNTIME_REF. Sources come from a playback-gateway clone:
 VIPTV_PLAYBACK_GATEWAY, or the workspace's `playback-gateway` next to (or above) this
 repository. Needs Go >= 1.25 (GO, or a toolchain `go` can fetch) and the Android NDK.
+--abis builds only the listed ABIs; androidApp passes -Pviptv.abis through here and the
+default is every shipped ABI.
 Output: androidApp/build/generated/torrentRuntime/jniLibs/<abi>/*.so
 """
 from pathlib import Path
+import argparse
 import json
 import os
 import shutil
 import subprocess
 import tempfile
+
+# Every shipped Android ABI.
+ANDROID_ABIS = ["armeabi-v7a", "arm64-v8a", "x86_64"]
+parser = argparse.ArgumentParser()
+parser.add_argument("--abis", default=",".join(ANDROID_ABIS), help="comma-separated Android ABIs to build")
+args = parser.parse_args()
+abis = [abi.strip() for abi in args.abis.split(",") if abi.strip()]
+unknown = sorted(set(abis) - set(ANDROID_ABIS))
+if not abis or unknown:
+    parser.error(f"--abis: unknown ABI {', '.join(unknown) or '(empty)'}; supported: {', '.join(ANDROID_ABIS)}")
+abis = [abi for abi in ANDROID_ABIS if abi in abis]
 
 GO_TOOLCHAIN = "go1.25.11"
 root = Path(__file__).resolve().parents[1]
@@ -57,7 +71,8 @@ def ndk_home(env):
 
 
 LAYOUT = 2  # jniLibs + notice assets
-if stamp.exists() and json.loads(stamp.read_text()).get("revision") == revision and json.loads(stamp.read_text()).get("layout") == LAYOUT:
+stamped = json.loads(stamp.read_text()) if stamp.exists() else {}
+if stamped.get("revision") == revision and stamped.get("layout") == LAYOUT and stamped.get("abis") == abis:
     print("Torrent runtime", revision, "is up to date")
     raise SystemExit(0)
 
@@ -76,10 +91,12 @@ with tempfile.TemporaryDirectory(prefix="viptv-torrent-runtime-") as scratch:
         shipped = root / "androidApp/src/main/java/org/playbackgateway/runtime/NativeRuntime.java"
         if shipped.read_bytes() != (runtime / "platform/android/NativeRuntime.java").read_bytes():
             raise SystemExit("NativeRuntime.java differs from torrent-runtime " + revision)
-        subprocess.run(["python3", str(runtime / "scripts/build-native.py"), "android", "--output", str(artifacts)], env=env, check=True)
+        subprocess.run(["python3", str(runtime / "scripts/build-native.py"), "android", "--output", str(artifacts), "--abis", ",".join(abis)], env=env, check=True)
         built = json.loads((artifacts / "build.json").read_text())
         if built["revision"] != revision or built["dirty"]:
             raise SystemExit("Torrent runtime build is not the clean pinned revision")
+        if set(built.get("abis") or []) != set(abis):
+            raise SystemExit("Torrent runtime build ABIs differ from " + ",".join(abis))
         if output.exists():
             shutil.rmtree(output)
         for library in sorted((artifacts / "jni").glob("*/*.so")):
@@ -106,7 +123,7 @@ with tempfile.TemporaryDirectory(prefix="viptv-torrent-runtime-") as scratch:
                     target = notices / "licenses" / module["Path"] / path.relative_to(module["Dir"])
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(path, target)
-        stamp.write_text(json.dumps({"revision": revision, "layout": LAYOUT, "files": {
+        stamp.write_text(json.dumps({"revision": revision, "layout": LAYOUT, "abis": abis, "files": {
             str(p.relative_to(output)): p.stat().st_size for p in sorted(output.rglob("*.so"))}}, indent=2) + "\n")
     finally:
         subprocess.run(["git", "-C", str(repository), "worktree", "remove", "--force", str(checkout)], check=False)
