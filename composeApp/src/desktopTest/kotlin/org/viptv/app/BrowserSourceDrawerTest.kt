@@ -298,7 +298,6 @@ class BrowserSourceDrawerTest {
             detailsHeld = true
             app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
             app.controller.playTitle(app.continueCard)
-            // A Home play tap opens the selector first and reads the title beside it, so its Details dialog composes behind the drawer, still loading.
             app.until("the tap's drawer over its loading Details") { app.controller.state.value.let { state ->
                 state.screen == Screen.Sources && state.detailsPending() } && app.drawerPane != null && app.pane("Title details") != null }
             app.until("the drawer's Close button to take the focus") { app.focusedText() == "Close" }

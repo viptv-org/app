@@ -54,7 +54,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val focusManager = LocalFocusManager.current
-        // A window layer attaches a frame after this content, and a drawer over the page owns the keyboard until it closes: ask again until the button is placed.
+        // The window layer attaches a frame later, so retry until the button is placed.
         LaunchedEffect(closeFocusOnOpen) {
             if (!closeFocusOnOpen) { focusManager.clearFocus(force = true); return@LaunchedEffect }
             repeat(30) { if (closeFocus.requestPlacedFocus()) return@LaunchedEffect; withFrameNanos { } }
