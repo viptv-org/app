@@ -50,11 +50,12 @@ class CalendarControlsUiTest {
                 assertFalse(nodes(scene).any{text(it)=="Clear"},"nothing to clear yet")
                 open(scene,"Shows: All")
                 pick(scene,"Your shows")
-                assertTrue(nodes(scene).any{text(it)=="Library series"})
-                assertFalse(nodes(scene).any{text(it)=="Scheduled series"},"the source filter applies at once")
+                val layout=if(tv)"TV" else "desktop"
+                assertTrue(nodes(scene).any{text(it).contains("Library series")},"$layout: Your shows keeps the library release; texts="+nodes(scene).map(::text).filter(String::isNotBlank))
+                assertFalse(nodes(scene).any{text(it).contains("Scheduled series")},"$layout: the source filter applies at once; texts="+nodes(scene).map(::text).filter(String::isNotBlank))
                 click(scene,"Clear")
                 frames(scene,10)
-                assertTrue(nodes(scene).any{text(it)=="Scheduled series"},"Clear drops the source filter")
+                assertTrue(nodes(scene).any{text(it).contains("Scheduled series")},"$layout: Clear drops the source filter; texts="+nodes(scene).map(::text).filter(String::isNotBlank))
                 assertFalse(nodes(scene).any{it.config.getOrNull(SemanticsProperties.Role)==Role.Button&&text(it)=="Clear"})
             }finally{scene.close()}
         }
