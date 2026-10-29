@@ -59,7 +59,7 @@ search, streams and subtitles. Native source integrations use explicit mappings.
 
 Android playback now uses Media3 1.11.1 with the matching official FFmpeg audio
 extension preferred, hardware MediaCodec video and SurfaceView presentation.
-Desktop retains the pinned Kite presentation fork; Web uses HTML/HLS playback.
+Desktop uses the bundled libmpv runtime; Web uses HTML/HLS playback.
 
 KMP has five trending hero titles with eight-second decoded-artwork timers,
 transparent trimmed logos, available metadata, episode/time continuation captions,
@@ -157,7 +157,7 @@ Sources→Live. Unavailable Forward/Cast/Remote chrome actions are disabled inst
 of accepting clicks without an operation.
 
 A subsequent candidate preserves a source's optional required audio-only ordinal
-through local/direct playback into Media3 and Kite, maps it to actual player track
+through local/direct playback into Media3 and mpv, maps it to actual player track
 IDs, and keeps later manual choices. Missing/unsupported requirements fail rather
 than silently selecting another language. Gateway remux output is not assigned
 an input-file ordinal. This candidate passed 69 desktop checks, Android QA assembly,
@@ -168,8 +168,8 @@ existing user-facing services and the installed TV app are unchanged.
 
 Media3 rejects a required audio ordinal inside a multi-format adaptive audio group:
 its encoding order is not a verified equivalent of file audio-stream order. Normal
-manual track choices remain available. Single-format groups and Kite's demuxer
-track ordering are supported; adaptive-HLS language selection remains unqualified.
+manual track choices remain available. Single-format groups and mpv's file-order
+track list are supported; adaptive-HLS language selection remains unqualified.
 
 TV-web now rotates five host-selected featured titles after artwork composition,
 with eight-second timers, five indicators, retained Play focus and shelf/menu

@@ -17,20 +17,17 @@ Sources: [Compose Foundation window source](https://github.com/JetBrains/compose
 Android playback uses AndroidX Media3 1.11.1 with a native SurfaceView, HLS/DASH/progressive
 media, and the shared Compose controls. The platform adapter handles seeking, paused state,
 audio/embedded/provider subtitles, volume, speed, gateway timeline offsets and scoped content headers.
-Desktop retains the pinned Kite fork; browser playback remains HTML video/HLS.
+Desktop playback uses the bundled libmpv runtime ([desktop player](DESKTOP_MPV_2026_10_23.md));
+browser playback remains HTML video/HLS.
 
-On the physical Onn 4K Pro, Kite's hardware surface measured 48–56 FPS at the compositor
-on the public Mux 720p60 HLS sample. The integrated Media3 adapter and shared Compose controls
+On the physical Onn 4K Pro, the integrated Media3 adapter and shared Compose controls
 measured 60.00 FPS in all four fixed-720p samples and 60.00–60.01 FPS in four fixed-1080p60
 samples, with zero decoder-reported drops. Samples exclude screen recording; startup is
-excluded from steady playback metrics. Removing Android's unused Kite/FFmpeg dependency
-reduced the three-ABI QA APK from 126 MiB to 66 MiB before adding the audio extension (71 MiB with FFmpeg audio). These measurements qualify those H.264/AAC
+excluded from steady playback metrics. The three-ABI QA APK is 66 MiB before adding the
+audio extension (71 MiB with FFmpeg audio). These measurements qualify those H.264/AAC
 streams on this TV; other codecs and desktop remain separate qualifications.
-Kite's former copy-back path rendered only a few FPS and accumulated seconds of A/V lag;
-its preserved fork additionally supports AVC Annex-B transport-stream configuration.
 Sources: [Media3 surface guidance](https://developer.android.com/media/media3/ui/surface),
-[Media3 track selection](https://developer.android.com/media/media3/exoplayer/track-selection),
-[Kite source provenance](../native/kiteplayer/SOURCE.json).
+[Media3 track selection](https://developer.android.com/media/media3/exoplayer/track-selection).
 
 
 Android TV switches use `com.composables:composeunstyled-toggle-switch:2.10.0`.
