@@ -24,7 +24,7 @@ import org.viptv.app.player.PlayerFact
 import org.viptv.app.theme.ViptvTheme
 import java.awt.EventQueue
 import java.awt.GraphicsEnvironment
-import java.awt.InputEvent
+import java.awt.event.InputEvent
 import java.awt.Point
 import java.awt.Robot
 import java.awt.Window
@@ -96,7 +96,9 @@ class DesktopPlayerFirstClickTest {
     }
 
     private fun clickAt(window: Window, at: Offset) {
-        val point = SwingUtilities.convertPointToScreen(Point(at.x.toInt(), at.y.toInt()), window.contentPane)
+        val content = (window as? javax.swing.RootPaneContainer)?.contentPane ?: window
+        val point = Point(at.x.toInt(), at.y.toInt())
+        SwingUtilities.convertPointToScreen(point, content)
         val robot = Robot()
         robot.mouseMove(point.x, point.y)
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
