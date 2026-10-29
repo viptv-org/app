@@ -68,8 +68,14 @@ class TvDetailsFocusReturnTest {
 
     private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
 
-    /** The real TV App shell over a fake host serving [fixture]; a later Details page waits for [releasePage]. */
-    private inner class TvApp(val fixture: DetailSnapshot = detail, val holdDetails: Boolean = false, detailFailures: Int = 0) : AutoCloseable {
+    /**
+     * The real TV App shell over a fake host serving [fixture]. The title's later Details page
+     * answers at once unless the test is the one holding it ([holdPage]): a page the host parked
+     * without the test expecting it would surface as a timed-out wait somewhere else entirely.
+     */
+    private inner class TvApp(val fixture: DetailSnapshot = detail, val holdDetails: Boolean = false, detailFailures: Int = 0,
+        holdPage: Boolean = false) : AutoCloseable {
+        private val holdingPage = holdPage
         val releasePage = CompletableDeferred<Unit>()
         /** The title's first Details answer waits for this when [holdDetails] (app#140). */
         val releaseDetails = CompletableDeferred<Unit>()
@@ -77,8 +83,14 @@ class TvDetailsFocusReturnTest {
         private val failures = java.util.concurrent.atomic.AtomicInteger(detailFailures)
         val pageOffsets = java.util.concurrent.CopyOnWriteArrayList<String>()
         private suspend fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
+            // The first page, or any later page the test is not holding: the fixture's own episodes,
+            // so a page nobody asked for leaves the shelf as it was.
             "/api/meta/series/$show" -> request.url.parameters["offset"]?.takeIf { it != "0" }.let { offset ->
-                if (offset != null) { pageOffsets += offset; null }
+                if (offset != null) {
+                    pageOffsets += offset
+                    if (!holdingPage) json(Json.encodeToString(fixture))
+                    else { releasePage.await(); json(Json.encodeToString(secondPage)) }
+                }
                 else if (failures.getAndUpdate { left -> (left - 1).coerceAtLeast(0) } > 0)
                     respond("{\"error\":\"Title not found\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
                 else if (holdDetails) { releaseDetails.await(); json(Json.encodeToString(fixture)) }
@@ -88,12 +100,12 @@ class TvDetailsFocusReturnTest {
             "/api/streams" -> json("""{"id":"job-1"}""")
             "/api/streams/job-1" -> json("""{"done":true,"events":[]}""")
             else -> if (request.url.encodedPath.endsWith("/source-ranking")) json("""{"streams":[]}""")
-                else respond("{\"error\":\"not in this fixture\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+                // Answer, never park: the caller's failure names the request the fixture did not expect.
+                else respond("{\"error\":\"not in this fixture: ${request.url.toString().filter { it != '"' }}\"}",
+                    HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
         }
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        private val client = HttpClient(MockEngine { request ->
-            host(request) ?: run { releasePage.await(); json(Json.encodeToString(secondPage)) }
-        }) { configureTransport() }
+        private val client = HttpClient(MockEngine { request -> host(request) }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store)
         private var previousLoader: ImageLoader? = null
@@ -125,7 +137,23 @@ class TvDetailsFocusReturnTest {
             .map { text(it) + " " + it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString(" ") }
         fun until(what: String, condition: () -> Boolean) {
             val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what (focus: ${focused()})" }; frames(2) }
+            while (!condition()) {
+                check(System.nanoTime() < deadline) {
+                    "timed out waiting for $what (focus: ${focused()}; ${state.screen} detail=${state.detail != null} " +
+                        "error=${state.error} detailFailure=${state.detailFailure} finding=${state.findingSources} busy=${state.busy})"
+                }
+                frames(2)
+            }
+        }
+        /**
+         * The Details read the tap started has finished: it filled the title's page in, or it
+         * said why it did not (app#140). Waiting only for the page to be filled in reports a read
+         * that failed as a wait that timed out.
+         */
+        fun detailsSettled(what: String) {
+            until(what) { state.detail != null || state.detailFailure != null || state.error != null }
+            assertNull(state.detailFailure ?: state.error, "$what: the read reported a failure")
+            assertNotNull(state.detail, "$what: the read filled the title's page in")
         }
         /** A remote key. Desktop has no D-pad focus search, so an unconsumed arrow moves focus as Android TV would. */
         fun press(key: Key, times: Int = 1) = repeat(times) {
@@ -171,7 +199,7 @@ class TvDetailsFocusReturnTest {
             tapContinueWatching(title)
             until("the source selector") { state.screen == Screen.Sources }
             selectorTakesFocus()
-            until("the Details loading behind the selector") { state.detail != null }
+            detailsSettled("the Details loading behind the selector")
             assertEquals(Screen.Details, state.sourceReturnScreen, "Back from sources lands on the title's Details")
             controller.backSources()
             frames()
@@ -198,8 +226,15 @@ class TvDetailsFocusReturnTest {
             assertEquals(episode(number).identity, state.sourceTitle?.identity, "the selector is for episode $number")
             selectorTakesFocus()
         }
-        /** Discovery finds nothing, so the selector's empty panel takes focus away from Details. */
-        fun selectorTakesFocus() = until("the selector's focus") { focused().any { it.contains("Check again") } }
+        /**
+         * Discovery finds nothing, so the selector's empty panel takes focus away from Details.
+         * The panel only offers it once the tap's own work is done: until then the selector says
+         * it is still finding or opening sources and has nothing to focus.
+         */
+        fun selectorTakesFocus() {
+            until("the selector to finish its work") { !state.busy && !state.findingSources }
+            until("the selector's focus") { focused().any { it.contains("Check again") } }
+        }
         /** The selector plays a source; the player's Back closes onto the selector, whose Back returns to Details. */
         fun playThenBack() {
             controller.mutable.value = state.copy(screen = Screen.Player)
@@ -355,7 +390,7 @@ class TvDetailsFocusReturnTest {
             app.tapContinueWatching("S2 Episode 3")
             app.until("the source selector") { app.state.screen == Screen.Sources }
             app.selectorTakesFocus()
-            app.until("the Details loading behind the selector") { app.state.detail != null }
+            app.detailsSettled("the Details loading behind the selector")
             app.playThenBack()
             app.assertFocus("3. S2 Episode 3", "Back from the player, then Sources, after a Continue Watching tap")
         }
@@ -404,7 +439,7 @@ class TvDetailsFocusReturnTest {
     }
 
     @Test fun episodesPagingInAfterTheReturnDoNotMoveFocus() {
-        TvApp(pagedDetail).use { app ->
+        TvApp(pagedDetail, holdPage = true).use { app ->
             app.frames()
             app.openDetails()
             app.focusEpisode(7)
