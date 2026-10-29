@@ -163,7 +163,9 @@ fun App(
                                         paging = state.screen == Screen.Details,
                                         // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
                                         playTap = state.playTapTitle != null,
-                                        retry = if (state.playTapTitle != null && state.detail == null) controller::retryDetails else null)
+                                        retry = if (state.playTapTitle != null && state.detail == null) controller::retryDetails else null,
+                                        // The drawer is the window layer the viewer came for: the dialog must not take its focus.
+                                        closeFocusOnOpen = !(browser && showingSources))
                                     if (showingSources) {
                                         val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups) }
                                         // Over the Details dialog the drawer needs a window layer of its own.

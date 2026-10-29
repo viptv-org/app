@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +29,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -38,10 +40,9 @@ import org.viptv.app.components.IconButton
 
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
-    continuing: List<Card> = emptyList(), paging: Boolean = true) {
+    continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true) {
     InitialBrowserEscape(back)
     val closeFocus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { closeFocus.requestFocus() }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
@@ -52,6 +53,12 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     LandOnResume(seasonChoice, list, resume.takeIf { detail != null }.indexIn(selected?.episodes)?.let { episode ->
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        val focusManager = LocalFocusManager.current
+        // A window layer attaches a frame after this content, and a drawer over the page owns the keyboard until it closes: ask again until the button is placed.
+        LaunchedEffect(closeFocusOnOpen) {
+            if (!closeFocusOnOpen) { focusManager.clearFocus(force = true); return@LaunchedEffect }
+            repeat(30) { if (closeFocus.requestPlacedFocus()) return@LaunchedEffect; withFrameNanos { } }
+        }
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
             val compact = maxWidth < 640.dp
             val gutter = if (compact) 20.dp else 44.dp

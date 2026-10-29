@@ -80,12 +80,16 @@ class BrowserSourceDrawerTest {
     private val requests = mutableListOf<String>()
     private fun requested() = synchronized(requests) { requests.toList() }
 
+    @Volatile private var detailsHeld = false
+    private val releaseDetails = CompletableDeferred<Unit>()
+
     private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
-    private fun MockRequestHandleScope.host(request: HttpRequestData) = when (val path = request.url.encodedPath) {
+    private suspend fun MockRequestHandleScope.host(request: HttpRequestData) = when (val path = request.url.encodedPath) {
         "/api/bootstrap" -> json(bootstrap)
         "/api/meta/series/$show" -> {
             val offset = request.url.parameters["offset"]?.toInt() ?: 0
             synchronized(requests) { requests += "meta@$offset" }
+            if (detailsHeld) releaseDetails.await()
             json(metaPage(offset, request.url.parameters["limit"]?.toInt() ?: 24))
         }
         "/api/streams" -> { synchronized(requests) { requests += "streams" }; json("""{"id":"job-1"}""") }
@@ -133,6 +137,7 @@ class BrowserSourceDrawerTest {
         fun episodeRow(episode: String) = nodes().firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == episode } }
         fun episodeTops() = all.filter { it.first == 2L }.mapNotNull { (s, e) -> episodeRow("Episode $s-$e")?.let { "Episode $s-$e" to bounds(it).top } }.toMap()
         fun focused() = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }
+        fun focusedText() = focused()?.let(::text)
         fun key(key: Key) {
             scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); frames(2)
             scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)); frames()
@@ -177,6 +182,8 @@ class BrowserSourceDrawerTest {
             until("the episode's sources") { controller.state.value.let { it.screen == Screen.Sources && !it.findingSources && it.sources.size == 4 } }
             frames(20)
         }
+
+        val drawerPane get() = pane("Choose a source")
 
         override fun close() {
             scene.close(); controller.job?.cancel(); scope.cancel(); remote.close()
@@ -274,6 +281,38 @@ class BrowserSourceDrawerTest {
             app.assertDetailsUnchanged(before, metaBefore)
             app.chooseEpisode()
             app.assertDetailsUnderTheDrawer(before)
+        }
+    }
+
+    @Test fun theDetailsDialogOpensOnItsCloseButton() {
+        BrowserApp().use { app ->
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.controller.open(app.continueCard)
+            app.until("the Details dialog") { app.pane(title) != null }
+            app.until("its Close button to take the focus") { app.focusedText()?.contains("Close details") == true }
+        }
+    }
+
+    @Test fun aPlayTapsDetailsBehindTheDrawerKeepTheFocusInTheDrawerUntilItCloses() {
+        BrowserApp().use { app ->
+            detailsHeld = true
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.controller.playTitle(app.continueCard)
+            // A Home play tap opens the selector first and reads the title beside it, so its Details dialog composes behind the drawer, still loading.
+            app.until("the tap's drawer over its loading Details") { app.controller.state.value.let { state ->
+                state.screen == Screen.Sources && state.detailsPending() } && app.drawerPane != null && app.pane("Title details") != null }
+            app.until("the drawer's Close button to take the focus") { app.focusedText() == "Close" }
+            app.frames(30)
+            assertEquals("Close", app.focusedText(), "the loading Details dialog behind the drawer does not take its focus")
+
+            releaseDetails.complete(Unit)
+            app.until("the tap's Details to fill the page in") { app.controller.state.value.detail != null && app.pane(title) != null }
+            app.frames(30)
+            assertEquals("Close", app.focusedText(), "the page arriving behind the drawer does not take its focus")
+
+            app.key(Key.Escape)
+            app.until("the drawer to close") { app.drawerPane == null }
+            app.until("the Details dialog to take the focus back") { app.focusedText()?.contains("Close details") == true }
         }
     }
 
