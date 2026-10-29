@@ -15,7 +15,7 @@ class FilterPatternScanTest {
         "useSelect", "InlineChoiceLimit", "sourceFilterUsesSelect",
         "TvBrowseChrome", "TvCatalogsSheet", "TvFiltersPage", "TvFacetChoices", "TvFacetText", "tvAppliedChips",
         "TvLibraryHeader", "TvLibraryFilterSheet", "TvLibraryFilterField", "TvLibraryListPicker", "TvLibraryTypeFilters",
-        "TvLibraryControls", "TvSourcesFilters")
+        "TvLibraryControls", "TvSourcesFilters", "TvLiveFilters", "LiveSourceSelector")
 
     @Test fun theRetiredFilterComponentsAreGone() {
         assertTrue(root.isDirectory, "run from the composeApp module: ${root.absolutePath}")
@@ -27,7 +27,7 @@ class FilterPatternScanTest {
     }
 
     @Test fun noPageStillOpensAFiltersPanel() {
-        val pages = listOf("features/browse", "features/library", "features/sources")
+        val pages = listOf("features/browse", "features/library", "features/sources", "features/live", "features/calendar")
         val found = pages.flatMap { File(root, it).listFiles().orEmpty().toList() }
             .filter { Regex(""""Filters"|"Apply"|Show results""").containsMatchIn(it.readText()) }
             .map { it.name }
@@ -54,5 +54,20 @@ class FilterPatternScanTest {
         for ((name, bar) in pages) assertTrue(File(root, name).readText().contains(bar), "$name uses $bar")
         assertTrue(File(root, "features/library/TvLibraryScreen.kt").readText().contains("LibraryControls("),
             "My List before the server query uses the shared local controls too")
+    }
+
+    @Test fun liveAndCalendarBuildTheirFiltersFromTheSharedBar() {
+        val pages = mapOf(
+            "features/live/LiveScreen.kt" to "LiveFilters(",
+            "features/live/TvLiveScreen.kt" to "LiveFilters(",
+            "features/calendar/CalendarScreen.kt" to "CalendarControls(",
+            "features/calendar/TvCalendarScreen.kt" to "CalendarControls(")
+        for ((name, bar) in pages) assertTrue(File(root, name).readText().contains(bar), "$name uses $bar")
+        for (name in listOf("features/live/LiveFilters.kt", "features/calendar/CalendarControls.kt")) {
+            val text = File(root, name).readText()
+            assertTrue(text.contains("FilterBar("), "$name is the shared chip row")
+            assertFalse(Regex("""\bFilterChip\(|\bDropdownMenu\(|\bOutlinedButton\(|\bTextButton\(""").containsMatchIn(text),
+                "$name filters only through FilterBar")
+        }
     }
 }
