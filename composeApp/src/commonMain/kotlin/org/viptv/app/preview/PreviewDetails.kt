@@ -9,7 +9,6 @@ import org.viptv.app.resources.Res
 import org.viptv.app.state.Screen
 import org.viptv.engine.wire.*
 
-/** Isolated ZIP fixture; additional seasons intentionally exist only in this preview. */
 @Composable
 internal fun PreviewDetails(variant: String, go: (Screen) -> Unit, tablet: Boolean, browser: Boolean, desktop: Boolean) {
     val series = PreviewTvDetails.series.copy(item = PreviewTvDetails.series.item.copy(
@@ -20,7 +19,6 @@ internal fun PreviewDetails(variant: String, go: (Screen) -> Unit, tablet: Boole
         "SeriesSeasons" -> series.copy(episodes = series.episodes + series.episodes.take(2).map { episode ->
             episode.copy(identity = episode.identity.copy(episode = episode.identity.episode?.copy(season = 2)))
         })
-        // The movie with a "More like this" row long enough to scroll past the screen edge (app#63).
         "Related" -> PreviewData.detail.copy(recommendations = PreviewTvDetails.recommendations)
         else -> PreviewData.detail
     }

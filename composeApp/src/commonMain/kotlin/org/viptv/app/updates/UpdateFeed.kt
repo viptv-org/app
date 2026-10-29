@@ -6,10 +6,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-/**
- * One published Android build, as served at `<server origin>/updates/android/update.json`
- * (docs/APP_UPDATES.md). [url] is absolute after [parseUpdateFeed].
- */
 @Serializable
 data class UpdateFeed(
     @SerialName("version_code") val versionCode: Long,
@@ -21,28 +17,18 @@ data class UpdateFeed(
     @SerialName("min_supported_version_code") val minSupportedVersionCode: Long? = null,
 )
 
-/**
- * The feed could not be read: malformed JSON, a missing field or a value the app refuses.
- * [missing]: the server publishes no feed at all (404, or its web app's HTML page for unknown paths).
- */
 class UpdateFeedException(message: String, val missing: Boolean = false) : Exception(message)
 
-/** Where the app looks for updates: the build's override, else the signed-in server; null in local mode. */
 fun updateFeedUrl(serverOrigin: String?, override: String?): String? =
     override?.trim()?.takeIf { it.isNotEmpty() } ?: serverOrigin?.trim()?.trimEnd('/')?.takeIf { it.isNotEmpty() }
         ?.let { "$it$UPDATE_FEED_PATH" }
 
 const val UPDATE_FEED_PATH = "/updates/android/update.json"
 
-/** A sideloaded APK can be hundreds of megabytes; anything past this is a broken feed. */
 private const val MAX_APK_BYTES = 1L shl 30
 private val sha256Hex = Regex("[0-9a-fA-F]{64}")
 private val feedJson = Json { ignoreUnknownKeys = true }
 
-/**
- * Parses and validates [text] fetched from [feedUrl]. A relative `url` resolves against the
- * feed's address, so a server can publish the feed without knowing its public host.
- */
 fun parseUpdateFeed(text: String, feedUrl: String): UpdateFeed {
     if (!text.trimStart().startsWith("{")) throw UpdateFeedException("No update feed at $feedUrl", missing = true)
     val feed = try {
@@ -64,13 +50,10 @@ fun parseUpdateFeed(text: String, feedUrl: String): UpdateFeed {
     return feed.copy(url = absolute, sha256 = feed.sha256.lowercase())
 }
 
-/**
- * HTTPS only; plain HTTP is allowed for loopback, the local test feed behind `adb reverse`. The
- * host comes from a URL parser, so userinfo (`http://localhost@evil.example/`) cannot fake it.
- */
+// HTTPS only; plain HTTP is allowed for a loopback feed behind `adb reverse`.
 internal fun isAllowedUpdateUrl(url: String): Boolean {
     val parsed = try { Url(url) } catch (_: Exception) { return false }
-    // Ktor fills in defaults for strings that are not URLs; require the scheme to be really there.
+    // Ktor fills in defaults for strings that are not URLs: require the scheme to be really there.
     if (!url.lowercase().startsWith(parsed.protocol.name + "://") || parsed.host.isEmpty()) return false
     return when (parsed.protocol.name) {
         "https" -> true

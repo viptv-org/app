@@ -44,7 +44,6 @@ fun App(
     manageControllerLifecycle: Boolean = true,
     imageDiagnostics: ((String) -> Unit)? = null,
     entryBackChanged: ((() -> Unit)?) -> Unit = {},
-    /** Prefilled server address for native sign-in; browsers always use their own origin. */
     defaultServer: String = "",
 ) {
     org.viptv.app.images.ConfigureImageLoading(imageDiagnostics)
@@ -57,7 +56,6 @@ fun App(
     // A device sign-in link opens Add a device only once signed in with a profile chosen.
     LaunchedEffect(deviceLink, state.screen, state.starting) { controller.deliverDeviceCode() }
     DisposableEffect(controller, manageControllerLifecycle) { onDispose { if (manageControllerLifecycle) controller.disconnect() } }
-    // Desktop minimise/restore and window focus, browser tab visibility. Android's MainActivity installs this hook itself.
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     DisposableEffect(controller, lifecycle, manageControllerLifecycle) {
         val observer = controller.foregroundObserver()
@@ -76,27 +74,22 @@ fun App(
                     DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
                     TvSplash(controller::disconnect)
                 } else {
-                    // Restore-in-progress placeholder: never flash the login
-                    // screen while the browser session is being validated.
+                    // Restore-in-progress placeholder: never flash the login screen while the browser session is validated.
                     Box(Modifier.fillMaxSize().background(Palette.background))
                 }
                 return@BoxWithConstraints
             }
             val compact = maxWidth < 640.dp && !television
-            // Native phone and tablet layouts; fixed for the life of the app.
             val touch = !television && !browser && !desktopChrome
             val tablet = !compact && touch
-            // Only the phone header and the tablet hero carry Home's Genres chip.
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
                 state.homeGenres?.takeIf { showsGenreChip && it.profile == state.selectedProfile }?.let { HomeGenrePicker(it.choices, controller::browseGenre) }
             }
-            // A full Continue Watching row reads the whole list once per Home revision, so the row
-            // knows whether it ends with "See all" (app#114).
+            // A full Continue Watching row reads the whole list once per Home revision to know whether it ends with "See all".
             val continueRowSize = state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards?.size
             LaunchedEffect(state.selectedProfile, state.home?.scope, state.home?.revision, continueRowSize) { controller.checkContinueWatching() }
-            // The full Continue Watching list belongs to Home in every navigation bar.
             val navigationScreen = if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: defaultServer, state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
@@ -107,7 +100,7 @@ fun App(
                 Screen.Profiles -> Box(Modifier.fillMaxSize()) {
                     ProfilesScreen(state.profiles, state.busy, state.error, state.localMode || state.profileManagement?.canManage == true, state.managingProfiles, compact, desktopChrome,
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television,
-                        // The picker opened by Back from Home has no arrow: Back leaves the app (app#109).
+                        // The picker opened by Back from Home has no arrow: Back leaves the app.
                         back = if (state.selectedProfile != null && !state.profilesFromHome) controller::navigateBack else null)
                 }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
@@ -128,24 +121,20 @@ fun App(
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
                             if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen.let { if (it == Screen.ContinueWatching) Screen.Home else it } else navigationScreen, controller::navigate)
-                        // Phone and tablet only: TV, desktop and browser compose the page directly.
                         PullRefresh(touch, enabled = state.screen in PULL_REFRESH_SCREENS,
                             refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         when (state.screen) {
                             Screen.Home -> {
-                                // Phone, tablet, desktop and browser: the hero rotates while the viewer is
-                                // present, so an idle window draws nothing (app#95). TV keeps its own timer.
+                                // The hero rotates while the viewer is present, so an idle window draws nothing; TV keeps its own timer.
                                 if (!television) LaunchedEffect(controller) { controller.trackViewerPresence() }
                                 val viewerPresent = controller.viewerPresent
                                 val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
                                 summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent,
                                 continueMore = state.continueWatchingMore(), seeAll = { controller.navigate(Screen.ContinueWatching) }) }
-                                // Kept per profile on every layout, so Back from Continue Watching (and any page) finds the row and focus it left.
+                                // Kept per profile on every layout, so Back finds the row and focus it left.
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
-                            // W3Browse: the browser renders its board page; both use the
-                            // shared filter bar (app#117).
                             Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->
                                 if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
                                 else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
@@ -154,33 +143,25 @@ fun App(
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
                                     controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)
                             }
-                            // The details page stays composed while the sources sheet is
-                            // open, so nothing reloads or flashes behind it.
+                            // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
                                 Box(Modifier.fillMaxSize()) {
                                     val showingSources = state.screen == Screen.Sources
-                                    // The browser Details is a Dialog window floating above the page. It
-                                    // stays open under a drawer that returns to it, decided when the drawer
-                                    // opens: a drawer opened by a play tap keeps the title's page behind it,
-                                    // loading until the tap's read fills it in (app#140).
+                                    // The drawer decides when it opens whether it returns to the Details dialog behind it.
                                     val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
                                     if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
                                     if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
-                                        // A failed first load lands in state.error; the details page
-                                        // must show it instead of rendering blank (NAV-04). A play tap's
-                                        // own failed read is reported on its page (app#140).
+                                        // A failed first load lands in state.error, which the page must show instead of drawing blank.
                                         state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null },
                                         // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
                                         if (browser && showingSources) controller::backSources else controller::backDetails,
                                         controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
                                         defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
-                                        // A Calendar row's episode comes first: Details opened from it land on its season (app#46).
+                                        // A Calendar row's episode comes first: Details opened from it land on its season.
                                         continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
                                             state.continueWatching?.takeIf { it.profile == state.selectedProfile }?.cards.orEmpty(),
                                         paging = state.screen == Screen.Details,
-                                        // Back from a play tap's selector opened this page, or a tile named it: its
-                                        // episodes land on what is being continued (app#112). A failed read here is
-                                        // the tap's own, and Retry reads the title again (app#140).
+                                        // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
                                         playTap = state.playTapTitle != null,
                                         retry = if (state.playTapTitle != null && state.detail == null) controller::retryDetails else null)
                                     if (showingSources) {
@@ -217,22 +198,12 @@ fun App(
     }
 }
 
-/**
- * The full-screen player draws its video and black canvas under the display cutout and system bars, so the
- * root must not pad it with the app background; the player keeps its own controls inside the safe-drawing
- * insets. TV keeps the root padding unchanged.
- */
+// The player draws under the cutout and system bars, so the root must not pad it with the app background.
 internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
 
-/** Pages the quiet lane reloads in place. The sources sheet over Details does not refresh. */
 private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.ContinueWatching, Screen.Library, Screen.History, Screen.Details)
 
-/**
- * Reports real pointer input: a press, release or scroll, or a pointer that moved.
- * Compose re-sends the resting pointer as a synthetic move, enter or exit whenever
- * content changes under it; counting those let the hero's own redraws keep an idle
- * viewer "present" for ever (app#95).
- */
+// Compose re-sends the resting pointer as a synthetic move, so count only real presses, releases, scrolls and moves.
 internal suspend fun AwaitPointerEventScope.observeViewerInput(activity: () -> Unit) {
     var last: List<Offset>? = null
     while (true) {

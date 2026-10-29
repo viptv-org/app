@@ -30,7 +30,6 @@ internal object PreviewData {
             HomeRow(id = "new", title = "New this week", provider_id = "preview", state = RowState.READY, cards = posters)), complete = true)
     val genres = listOf("Action", "Comedy", "Drama", "Horror", "Science Fiction", "Thriller")
         .map { GenreChoice(it, BrowseQuery("movie", genre = it)) }
-    /** Server-shaped My List long enough to scroll: the `Library/Long` preview of the collapsing header (app#58). */
     val longLibrary = LibrarySnapshot(Scope("preview", "preview", "preview", 1), 1, org.viptv.app.connection.defaultLibraryQuery(),
         (0 until 48).map { index -> posters[index % posters.size].let { it.copy(identity = it.identity.copy(id = "saved-$index")) } }, complete = true,
         controls = listOf(QueryControl("type", "Type", ControlKind.SINGLECHOICE, true,
@@ -41,7 +40,6 @@ internal object PreviewData {
     val detail = DetailSnapshot(item = hero.copy(subtitle = "Movie · " + hero.subtitle), episodes = emptyList())
     val sources = listOf(SourceCandidate("source-1", "preview", "LordStreams", "WEB-DL · HEVC · 5.1 · 18.4 GB"),
         SourceCandidate("source-2", "preview", "Provider 2", "BluRay · HEVC · 5.1 · 22.1 GB"))
-    /** Five qualities from four add-ons: the web picker's Quality and Source dropdowns (app#59). */
     val filterSources = listOf(2160L to "Torrentio", 1080L to "Torrentio", 1080L to "Comet", 720L to "MediaFusion", 2160L to "Comet",
         1080L to "Orion", 480L to "Torrentio", 1080L to "MediaFusion", 2160L to "Torrentio", 720L to "Comet", 360L to "Orion", 1080L to "Torrentio")
         .mapIndexed { index, (height, addon) ->
@@ -49,7 +47,6 @@ internal object PreviewData {
                 "Oak.Street.2026.${height}p.WEB-DL.DDP5.1.H.265 · ${(4 + index * 1.7).toInt()} GB", quality_height = height,
                 presentation = SourcePresentation(provider_name = addon, source_id = addon.lowercase()))
         }
-    /** Three options per filter with long add-on names: chip rows that overflow a narrow window (app#59). */
     val chipSources = listOf(1080L to "Torrentio 4K RD+ | ElfHosted", 720L to "MediaFusion | ElfHosted Debrid", 1080L to "MediaFusion | ElfHosted Debrid")
         .mapIndexed { index, (height, addon) ->
             SourceCandidate("chip-${index + 1}", "addon:${addon.substringBefore(" ").lowercase()}", "${addon.substringBefore(" ")} ${height}p #${index + 1}",

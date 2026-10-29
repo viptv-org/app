@@ -1,6 +1,6 @@
 package org.viptv.app.player
 
-/** Queued transport intent is confirmed only by matching SDK status observations. */
+// Queued transport intent is confirmed only by matching SDK status observations.
 internal class PlaybackTransportGate {
     private var opened = false
     private var pendingPause: Boolean? = null

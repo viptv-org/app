@@ -40,7 +40,6 @@ import org.viptv.app.features.sources.TvSourcesScreen
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.*
 
-/** Explicit visual-review entry point. It never connects to an account or modifies a database. */
 @Composable
 fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, browser: Boolean = false,
     desktop: Boolean = false, screen: Screen? = null, navigate: ((Screen) -> Unit)? = null, searchTerm: String? = null,
@@ -64,8 +63,6 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
         if (tvDetailVariant == "LoadingThenReady") { kotlinx.coroutines.delay(3000); homeArrived = true }
     }
     val genres = HomeGenrePicker(PreviewData.genres) { go(Screen.Discover) }
-    // `Sources/Filters`: enough qualities and add-ons for the web Quality and Source dropdowns;
-    // `Sources/Chips`: three options each with long add-on names, chip rows that scroll (app#59).
     val previewSources = when (tvDetailVariant) {
         "Filters" -> PreviewData.filterSources
         "Chips" -> PreviewData.chipSources
@@ -112,7 +109,6 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                 loadingMore = tvDetailVariant in listOf("Loading", "LoadingEmpty"),
                                 groups = org.viptv.app.connection.interimSourceGroups(PreviewTvSources.sources))
                                 else if (browser) Box {
-                                    // As in the App: the drawer slides in over the Details dialog (app#60).
                                     PreviewDetails(tvDetailVariant, go, tablet, browser, desktop)
                                     org.viptv.app.features.sources.BrowserSourceDrawer({ go(Screen.Details) }) {
                                         SourcesScreen(PreviewData.hero, previewSources, false, null, {}, { go(Screen.Details) }, PreviewData.detail,
