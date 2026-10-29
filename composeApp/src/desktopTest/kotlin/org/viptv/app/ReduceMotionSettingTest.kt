@@ -95,9 +95,9 @@ class ReduceMotionSettingTest {
 
     private fun value(scene: ImageComposeScene) = description(scene).toFloat()
 
-    private fun description(scene: ImageComposeScene) = nodes(scene).firstNotNullOf {
-        it.config.getOrNull(SemanticsProperties.StateDescription)
-    }
+    private fun description(scene: ImageComposeScene): String =
+        nodes(scene).first { it.config.contains(SemanticsProperties.StateDescription) }
+            .config[SemanticsProperties.StateDescription]
 
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
