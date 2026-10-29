@@ -33,16 +33,6 @@ import org.viptv.app.components.TextButton
 
 private enum class DeviceApprovalStep { Restore, SignIn, Code, Confirm, Done, Denied }
 
-/**
- * The browser side of the TV sign-in approval flow. Renders the W3Device
- * family: sign in if needed, enter the code shown on the TV, confirm the
- * device, then the all-set screen. Approval is always explicit; nothing
- * here loads Home, profiles, or catalog metadata.
- *
- * Design deviations from the W3 boards, tracked explicitly:
- * - Codes are 8 digits (backend contract), not the boards' letters.
- * - No profile picker: the TV chooses its profile after approval.
- */
 @Composable
 internal fun DeviceApprovalPage(
     compact: Boolean,
@@ -58,8 +48,6 @@ internal fun DeviceApprovalPage(
     var parentError by remember { mutableStateOf<String?>(null) }
     var device by remember { mutableStateOf<DeviceApproval?>(null) }
 
-    // Account-only session restore: a browser that already holds a session
-    // goes straight to code entry; no Home or metadata is ever requested.
     LaunchedEffect(controller) {
         controller.reset()
         controller.restore {
@@ -107,7 +95,6 @@ internal fun DeviceApprovalPage(
         }
     }
 
-    // "Not you?" from W3DeviceMobile: drop the browser session, return to sign-in.
     fun notYou() {
         if (busy) return
         busy = true; error = null
@@ -191,7 +178,6 @@ internal fun DeviceError(text: String) {
     Text(text, color = Palette.danger, fontSize = 13.sp, textAlign = TextAlign.Center)
 }
 
-/** Primary button: cream background, dark text (W3 token `button.primary`). */
 @Composable
 internal fun DevicePrimaryButton(label: String, enabled: Boolean, busy: Boolean, onClick: () -> Unit) {
     Button(
@@ -211,7 +197,6 @@ internal fun DevicePrimaryButton(label: String, enabled: Boolean, busy: Boolean,
     }
 }
 
-/** Deny action: bare tertiary text link per W3DeviceConfirm. */
 @Composable
 internal fun DeviceSecondaryButton(label: String, onClick: () -> Unit) {
     TextButton(
@@ -221,7 +206,6 @@ internal fun DeviceSecondaryButton(label: String, onClick: () -> Unit) {
     ) { Text(label, fontWeight = FontWeight.Medium, fontSize = 15.sp) }
 }
 
-/** W3DeviceMobile footnote: "Signed in as {name} - Not you?". */
 @Composable
 private fun DeviceSessionFootnote(username: String, notYou: () -> Unit) {
     Row {
@@ -231,7 +215,6 @@ private fun DeviceSessionFootnote(username: String, notYou: () -> Unit) {
     }
 }
 
-/** W3DeviceConfirm device card: TV glyph, name, status dot, and code. */
 @Composable
 internal fun DeviceConfirmCard(device: DeviceApproval, code: String) {
     Row(
@@ -247,7 +230,6 @@ internal fun DeviceConfirmCard(device: DeviceApproval, code: String) {
             Text(device.deviceName, color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Text(code.chunked(4).joinToString("-"), color = Palette.secondary, fontSize = 13.sp)
         }
-        // Status: green dot + chip when pending, plain when approved.
         val pending = device.status == "pending"
         Box(
             Modifier.background(if (pending) Color(0x2934C979) else Color(0x14FFFFFF), RoundedCornerShape(10.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
@@ -312,7 +294,6 @@ private fun DeviceField(
     )
 }
 
-/** W3DeviceDone check tile: cream circle with a drawn check. */
 @Composable
 internal fun DeviceCheckTile() {
     Box(

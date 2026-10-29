@@ -48,12 +48,6 @@ import org.viptv.app.features.entry.TvEntryKeyboard
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
-/**
- * TV source-integration configuration as a full-screen settings page (the same
- * pattern as the TV sign-in fields): heading, entry field with the TV
- * keyboard, focusable provider rows, Save and Cancel. No dialogs; Back and
- * Cancel both return to the integration list.
- */
 @Composable
 internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Boolean, error: String?,
     back: () -> Unit, save: (JsonObject) -> Unit, scale: Float, profileName: String? = null, origin: String? = null) {
@@ -78,7 +72,6 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
         }, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
         Spacer(Modifier.height(24.dp * scale))
         Row(Modifier.fillMaxWidth()) {
-            // Left column: fields, the keyboard for the active one, the QR hint.
             org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.width(820.dp * scale).verticalScroll(rememberScrollState())) {
                 schema.credential_fields.forEach { field ->
                     val active = editingField == field.id
@@ -137,7 +130,6 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                 }
             } }
             Spacer(Modifier.width(84.dp * scale))
-            // Right column: providers, the actions and the write-only note.
             org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 if (schema.provider_choices.isNotEmpty()) {
                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
@@ -204,14 +196,10 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
     }
 }
 
-/** TV settings rows for each integration, following the settings section pattern. */
 @Composable
 internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
     retry: () -> Unit, configure: (SourceIntegrationSchema) -> Unit, remove: (SourceIntegrationSchema) -> Unit,
     scale: Float, first: FocusRequester? = null, left: FocusRequester? = null, profileName: String? = null) {
-    // Board Tv3SetSources: heading, then one 160px card per
-    // integration (icon tile, name, role, saved detail, status, actions) and a
-    // footer note. The card that a connection cannot use is dimmed, not hidden.
     Text("Source integrations", fontSize = (40 * scale).sp, letterSpacing = (-0.8f * scale).sp, fontWeight = FontWeight.Bold)
     Spacer(Modifier.height(34.dp * scale))
     if (error != null) {
@@ -222,8 +210,6 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
         }
         Spacer(Modifier.height(16.dp * scale))
     }
-    // A connection without integrations (local mode) shows the reason instead
-    // of a heading above nothing.
     if (error == null && snapshot.schemas.isEmpty()) {
         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
         Spacer(Modifier.height(16.dp * scale))
@@ -245,11 +231,6 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
         color = Palette.tertiary, fontSize = (22 * scale).sp)
 }
 
-/**
- * One integration card, board Tv3SetSources: positioned content, so nothing
- * stacks past the card edge. The status sits top-right, actions bottom-right,
- * the name/role column top-left, and the saved/needed line bottom-left.
- */
 @Composable
 private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Float, enabled: Boolean, alpha: Float,
     requester: FocusRequester?, left: FocusRequester? = null, configure: () -> Unit, remove: (() -> Unit)?) {
@@ -336,19 +317,12 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
     }
 }
 
-/** Role copy from the boards, keyed by plugin. */
 private fun sourceIntegrationRole(pluginId: String): String = when {
     pluginId.contains("xtream", true) -> "Live channels and guide"
     pluginId.contains("m3u", true) || pluginId.contains("playlist", true) -> "Live channels from a playlist"
     else -> "Movies and series"
 }
 
-/**
- * The saved/needed detail line, per board Tv3SetSources: the unavailable reason
- * when the server disables it, the saved summary when configured (field name +
- * the saved provider *count* — selections themselves are write-only), and the
- * needed fields otherwise.
- */
 private fun sourceIntegrationDetail(schema: SourceIntegrationSchema): String {
     if (!schema.runtime_enabled) return sourceIntegrationUnavailableReason(schema.plugin_id)
     if (schema.connection_id != null) {
@@ -365,7 +339,6 @@ private fun sourceIntegrationDetail(schema: SourceIntegrationSchema): String {
     }
 }
 
-/** The board's unavailable reason under the role line, by integration. */
 private fun sourceIntegrationUnavailableReason(pluginId: String): String = when {
     pluginId.contains("m3u", true) || pluginId.contains("playlist", true) -> "This server doesn’t accept playlists"
     pluginId.contains("xtream", true) -> "This server doesn’t accept Xtream accounts"
@@ -379,11 +352,6 @@ private fun sourceIntegrationIcon(pluginId: String) = when {
     else -> Lucide.Puzzle
 }
 
-/**
- * Board Tv3SourcesRemove: the remove confirmation as a TV dialog on the raised
- * surface — title, what is deleted from which profile, Cancel focused first and
- * Remove in the danger colour. Back dismisses it.
- */
 @Composable
 internal fun TvSourceRemoveConfirmation(schema: SourceIntegrationSchema, profileName: String?, busy: Boolean,
     scale: Float, confirm: () -> Unit, dismiss: () -> Unit) {

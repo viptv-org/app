@@ -22,12 +22,6 @@ import org.viptv.app.connection.selectionKey
 import org.viptv.app.connection.selections
 import org.viptv.engine.wire.QueryControl
 
-/**
- * The facets a Browse page filters by: the global set plus the selected catalog's own.
- * The catalog has its own chip when the provider lists catalogs, the page type is only a
- * filter on Discover ([showType]), a search box only exists inside a catalog, and a
- * control that allows no selection is dropped.
- */
 internal fun browseFacets(controls: DiscoveryControls?, query: BrowseQuery, showType: Boolean): List<QueryControl> {
     if (controls == null) return emptyList()
     val catalog = controls.selectedCatalog(query)
@@ -38,24 +32,15 @@ internal fun browseFacets(controls: DiscoveryControls?, query: BrowseQuery, show
         it.maximum_selections != 0L && !(peers && it.id == "catalog") }
 }
 
-/** What a facet currently holds: the page type for `type`, otherwise its non-blank selections. */
 internal fun BrowseQuery.facetValues(control: QueryControl): List<String> =
     if (control.id == "type") listOf(type) else selections(control.id).filter(String::isNotBlank)
 
-/** The facets with a value, which "Clear" resets; the page type is never counted. */
 internal fun appliedFacets(facets: List<QueryControl>, query: BrowseQuery): List<QueryControl> =
     facets.filter { it.id != "type" && query.facetValues(it).isNotEmpty() }
 
-/** "Clear" keeps the chosen catalog and drops every facet (`M3BrowseEmpty`). */
 internal fun clearedFilters(query: BrowseQuery): BrowseQuery =
     query.copy(skip = 0, genre = null, search = null, extras = emptyMap(), values = emptyList())
 
-/**
- * The Browse filter bar of every non-TV layout (phone, tablet, desktop, web): the catalog
- * chip ("Catalog: Popular"), a divider, one chip per facet, then [extra] chips (the local
- * Sort when the provider has none) and "Clear" while a facet is set. [catalogOpen] lets the
- * empty and error states open the catalog list.
- */
 @Composable
 internal fun BrowseFilterBar(controls: DiscoveryControls?, query: BrowseQuery, showType: Boolean,
     changed: (String, String) -> Unit, multipleChanged: (String, List<String>) -> Unit, applyQuery: (BrowseQuery) -> Unit,
@@ -71,7 +56,6 @@ internal fun BrowseFilterBar(controls: DiscoveryControls?, query: BrowseQuery, s
         }
         facets.forEach { control ->
             item(key = "facet:${control.id}") {
-                // The page type always has a value: no "Any" row.
                 QueryControlFilter(control, query.facetValues(control), { changed(control.id, it) }, { multipleChanged(control.id, it) },
                     impliedAny = control.id != "type")
             }
@@ -80,11 +64,6 @@ internal fun BrowseFilterBar(controls: DiscoveryControls?, query: BrowseQuery, s
     }
 }
 
-/**
- * The catalog chip (components.md section 2): it always has a value, so it is never filled
- * as a set filter. Each row names its source on the right, which also tells apart two
- * add-ons' "Popular".
- */
 @Composable
 private fun CatalogSelect(peers: List<DiscoveryCatalog>, catalog: DiscoveryCatalog?, open: MutableState<Boolean>, select: (DiscoveryCatalog) -> Unit) {
     val options = remember(peers) {

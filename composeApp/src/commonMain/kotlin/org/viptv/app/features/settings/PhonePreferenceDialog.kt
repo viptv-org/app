@@ -66,8 +66,7 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
     }
     val valid = if (language) phonePreferenceTag(entry) else entry.startsWith('#') &&
         (entry.length == 7 || field == PhonePreferenceField.BackgroundColour && entry.length == 9) && entry.drop(1).all { it.isDigit() && it in '0'..'9' || it.lowercaseChar() in 'a'..'f' }
-    // Material's text slot can shrink and scroll while its title/actions remain fixed.
-    // Apply IME padding inside this dialog's layout so the keyboard bounds that slot too.
+    // Material's text slot shrinks and scrolls while its title and actions stay fixed, so apply IME padding inside this dialog's layout.
     AlertDialog(onDismissRequest = { if (!busy) close() },
         modifier = Modifier.composed { windowInsetsPadding(keyboardInsets ?: WindowInsets.ime) }, title = { Text(title) },
         text = { org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.heightIn(max = 450.dp).verticalScroll(rememberScrollState()).selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {

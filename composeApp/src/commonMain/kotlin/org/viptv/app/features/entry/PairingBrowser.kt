@@ -20,7 +20,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
-/** Opening a browser never authenticates the device; server approval does. */
 @Composable
 internal fun PairingBrowser(display: DevicePairingDisplay?, busy: Boolean, error: String?, mobile: Boolean,
     back: () -> Unit, refresh: () -> Unit, changeServer: () -> Unit, autoOpen: Boolean = true) {

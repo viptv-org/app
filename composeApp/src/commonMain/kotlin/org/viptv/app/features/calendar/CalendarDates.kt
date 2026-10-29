@@ -18,7 +18,6 @@ import org.viptv.app.components.pointerClickable
 @Composable
 internal fun CalendarDates(days: List<CalendarDay>, entries: List<CalendarEntry>, selected: String?, phone: Boolean,
     scale: Float, gutter: Dp = 0.dp, choose: (String) -> Unit) {
-    // The strip runs under the page gutter to the screen edges (app#63).
     org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(if (phone) 8.dp else 20.dp * scale)) {
         days.forEach { day ->
             val active = selected == day.id

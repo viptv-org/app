@@ -30,17 +30,10 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.features.entry.TvEntryKeyboard
 import org.viptv.app.theme.Palette
 
-/**
- * Board Tv3AddonEntry: manual add-on entry as a full-screen TV page — eyebrow,
- * heading, the address field with the shared TV keyboard, the QR shortcut panel,
- * Install and Cancel as TvActions. Back and Cancel both close the page; there is
- * no Material dialog and no sidebar on this page.
- */
 @Composable
 internal fun TvAddonEntryPage(address: String, addressChange: (String) -> Unit, busy: Boolean, error: String?,
     scale: Float, placeholderQr: Boolean, back: () -> Unit, install: () -> Unit) {
-    // Backspace edits only while focus is inside the keyboard area; on Install or
-    // Cancel it must not silently delete address characters.
+    // Backspace edits only while focus is inside the keyboard area; on Install or Cancel it must not delete address characters.
     var keyboardActive by remember { mutableStateOf(true) }
     Box(Modifier.fillMaxSize().onPreviewKeyEvent {
         if (it.type != KeyEventType.KeyDown) false else when (it.key) {
@@ -62,9 +55,6 @@ internal fun TvAddonEntryPage(address: String, addressChange: (String) -> Unit, 
             lineHeight = (34.8f * scale).sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
         val shape = RoundedCornerShape(14.dp * scale)
         Row(Modifier.offset(96.dp * scale, 290.dp * scale).size(1060.dp * scale, 80.dp * scale)
-            // Expose the address as an editable field: a screen reader (and the
-            // UI test) can read and replace it even though typing goes through
-            // the on-screen TV keyboard.
             .semantics {
                 contentDescription = "Add-on address"
                 editableText = androidx.compose.ui.text.AnnotatedString(address)

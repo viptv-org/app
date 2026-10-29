@@ -24,6 +24,6 @@ internal suspend fun RemoteConnection.searchResults(term: String): SearchSnapsho
     Json { ignoreUnknownKeys = true }.decodeFromJsonElement<SearchSnapshot>(
         call("/api/search?query=${term.trim().encodeURLParameter()}"))
 } catch (failure: RemoteFailure) {
-    // Older QA servers predate grouped search. Preserve their existing search route.
+    // Older QA servers predate grouped search: a 404 means no results, not a failure.
     if (failure.status == 404) null else throw failure
 }

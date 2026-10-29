@@ -17,11 +17,8 @@ import org.viptv.app.theme.Palette
 internal fun HeroIndicators(count: Int, selected: Int, progress: HeroProgress, modifier: Modifier = Modifier, scale: Float = 1f) {
     if (count < 2) return
     val selectedWidth = 48.dp * scale
-    // One progress step per pixel of fill: the bar redraws only when it visibly moves.
     val fillPixels = with(LocalDensity.current) { selectedWidth.roundToPx() }
     SideEffect { progress.steps = fillPixels }
-    // The board exposes the indicator strip as "Featured 1 of 5"; the visible
-    // text stays hidden, but the remote/reader gets the position.
     Row(modifier.semantics { contentDescription = "Featured ${selected + 1} of $count" },
         horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         repeat(count) { index ->

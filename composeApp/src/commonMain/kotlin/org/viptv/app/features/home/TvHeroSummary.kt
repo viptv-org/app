@@ -22,13 +22,6 @@ import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
-/**
- * The logo only appears once its trimmed bitmap is ready, and then fades in.
- *
- * Drawing it the instant the painter reports success made the transparent title
- * art pop (and briefly show at an untrimmed size) while the home screen was still
- * settling on launch.
- */
 @Composable
 private fun HeroLogo(url: String, title: String, modifier: Modifier) {
     val painter = rememberAsyncImagePainter(org.viptv.app.images.rememberLogoRequest(url))

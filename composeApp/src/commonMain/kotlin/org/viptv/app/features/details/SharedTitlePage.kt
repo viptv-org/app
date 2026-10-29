@@ -22,7 +22,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
 
-/** W3TitlePage presentation. Routing requires a real public metadata contract. */
 @Composable
 internal fun SharedTitlePage(detail: DetailSnapshot, signIn: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize()) {

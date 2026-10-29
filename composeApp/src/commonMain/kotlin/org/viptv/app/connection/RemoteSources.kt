@@ -7,8 +7,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.engine.wire.SourcePresentation
 
-// The host's SDK producer can spend 10s resolving metadata plus 45s discovering
-// providers. Keep polling its incremental events through that bounded interval.
+// The host's SDK producer spends up to 10s on metadata plus 45s on providers: poll through that whole interval.
 internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate> = withTimeout(60_000) {
     val started = call("/api/streams", HttpMethod.Post, buildJsonObject {
         put("type", card.identity.kind); put("id", card.identity.id)
@@ -54,7 +53,7 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceC
         if (!completed) withContext(NonCancellable) {
             withTimeoutOrNull(2000) { try { call("/api/streams/$job", HttpMethod.Delete) }
                 catch (error: CancellationException) { throw error }
-                catch (_: Exception) { /* Discovery expiry is the fallback; grants remain independently scoped. */ } }
+                catch (_: Exception) { } }
         }
     }
 }
@@ -62,7 +61,6 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceC
 private fun JsonObject.text(key: String): String? = (get(key) as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
 private fun JsonObject.texts(key: String): List<String> = (get(key) as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.takeIf { value -> value.isString }?.content }
 
-/** Reads the optional SRC-BEST-MATCH-001 facts of one server stream card; a malformed or absent value stays unknown. */
 internal fun SourceCandidate.withReleaseFacts(card: JsonObject): SourceCandidate = copy(
     release_type = card.text("release_type")?.takeUnless { it == "unknown" },
     three_d = (card["three_d"] as? JsonPrimitive)?.booleanOrNull ?: false,

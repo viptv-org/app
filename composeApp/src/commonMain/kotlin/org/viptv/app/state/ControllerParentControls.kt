@@ -58,7 +58,6 @@ fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) 
             }
             remote.saveKidsPolicy(profile, policy)
             if (mutable.value.selectedProfile == profile) {
-                // Rebuild visible content under the newly authoritative policy.
                 val snapshot = remote.bootstrap()
                 if (connection === remote && generation == operation && mutable.value.selectedProfile == profile)
                     accept(snapshot, if (mutable.value.screen == Screen.Settings) Screen.Settings else Screen.Home, busy = true)
@@ -93,7 +92,6 @@ private suspend fun ApplicationController.parentRequest(notice: String? = null, 
     }
 }
 
-/** A policy write may succeed even if its response is lost: discard old visible authority first. */
 internal suspend fun ApplicationController.invalidatePolicyContent() {
     libraryHydration?.cancelAndJoin(); libraryHydration = null
     libraryImportRefresh?.cancelAndJoin(); libraryImportRefresh = null

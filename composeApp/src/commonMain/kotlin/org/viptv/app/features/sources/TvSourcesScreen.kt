@@ -51,14 +51,12 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     detail: DetailSnapshot? = null, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     checkedAddons: Int = 0, checkedProviders: Int = 0, checkAgain: () -> Unit = {}, manageAddons: () -> Unit = {},
     debridHelp: () -> Unit = {}, openingStage: String? = null, groups: SourceGroups = SourceGroups()) {
-    // The real details page stays composed behind this drawer.
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val scale = maxWidth / 1920.dp
             val rowFocus = remember { mutableMapOf<String, FocusRequester>() }
             var focusedSource by remember { mutableStateOf<String?>(null) }
-            // Any D-pad press or filter change in the drawer (SRC-BEST-MATCH-001 step 3).
             var navigated by remember { mutableStateOf(false) }
             val headerHeight = remember { SourceHeaderHeight() }
             val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -69,13 +67,9 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val rows = remember(visible, groups) { sourceListRows(visible, groups) }
             val finding = loadingMore || busy && sources.isEmpty()
             val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
-            // TVUI-03: nothing playable — the boards replace the chip rows and the
-            // result list with a designed state panel instead of one 22sp line.
             val torrentOnly = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders > 0
             val noSources = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders == 0
             val stateFocus = remember { FocusRequester() }
-            // Re-anchor to the top row (or the selected row) when a better row ranks
-            // first, until the viewer navigates (SRC-BEST-MATCH-001 step 3).
             LaunchedEffect(rows.firstOrNull()?.source?.id, error) {
                 if (rows.isEmpty()) return@LaunchedEffect
                 if (navigated) return@LaunchedEffect
@@ -96,9 +90,6 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     }
                 }
             }
-            // A state panel has no rows, so it owns the first focusable control and
-            // the remote never lands on an empty drawer. Row focus below is untouched:
-            // that effect returns early while `visible` is empty.
             LaunchedEffect(noSources, torrentOnly) {
                 if (!noSources && !torrentOnly) return@LaunchedEffect
                 withFrameNanos { }
@@ -127,15 +118,11 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary)
                 Spacer(Modifier.height(22.dp * scale))
                 if (noSources || torrentOnly) {
-                    // `Tv3SourcesEmpty` drops the panel 80 px below the sheet's own
-                    // 22 gap; `Tv3SourcesTorrent` puts the alert straight against it.
                     if (noSources) Spacer(Modifier.height(80.dp * scale))
                     if (torrentOnly) TvSourcesTorrentPanel(torrentOnlyProviders, scale, debridHelp, motion.dismiss, stateFocus)
                     else TvSourcesEmptyPanel(sourceHeading(title, detail), checkedAddons, checkedProviders, scale,
                         checkAgain, manageAddons, stateFocus)
                 } else {
-                    // The picker filters through the same dropdown chips as every layout (app#121):
-                    // Quality and Source open the right panel and return focus to their chip.
                     Box(Modifier.focusGroup().focusRequester(filterFocus)) {
                         CompositionLocalProvider(LocalTvScale provides scale) {
                             SourceFilters(sources, quality, provider,
@@ -146,8 +133,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 }
                 Spacer(Modifier.height(20.dp * scale))
 
-                // The status line under the list is drawn over it otherwise; the list
-                // needs its own trailing inset so the last source clears the footer.
+                // The list needs a trailing inset of the footer's height, else the status line draws over its last source.
                 KeepSourceListPosition(listState, rows, focusedSource.takeIf { navigated }, headerHeight, leading = if (error != null) 1 else 0)
                 LazyColumn(Modifier.weight(1f), state = listState,
                     verticalArrangement = Arrangement.spacedBy(10.dp * scale),
@@ -167,7 +153,6 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     }
                 }
 
-                // Only while add-ons answer or a stream opens: an idle picker has no status line.
                 if (!noSources && !torrentOnly && (loadingMore || busy)) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                     CircularProgressIndicator(Modifier.size(20.dp * scale), color = Palette.secondary, strokeWidth = 2.dp * scale)
                     Text(if (loadingMore || sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else openingStage ?: "Opening stream…",
@@ -182,7 +167,6 @@ private val DIRECTION_KEYS = setOf(Key.DirectionUp, Key.DirectionDown, Key.Direc
 
 private fun Int.counted(one: String, many: String): String = "$this ${if (this == 1) one else many}"
 
-/** Board subtitle clause "checked 3 add-ons and 8 providers"; null while the counts are unknown. */
 internal fun sourcesCheckedLine(addons: Int, providers: Int): String? = when {
     addons > 0 && providers > 0 -> "checked ${addons.counted("add-on", "add-ons")} and ${providers.counted("provider", "providers")}"
     providers > 0 -> "checked ${providers.counted("provider", "providers")}"
@@ -190,10 +174,8 @@ internal fun sourcesCheckedLine(addons: Int, providers: Int): String? = when {
     else -> null
 }
 
-/** Board subtitle clause "3 results this TV can’t play". */
 internal fun sourcesTorrentHeading(providers: Int): String = "${providers.counted("result", "results")} this TV can’t play"
 
-/** `Tv3SourcesEmpty` copy: "None of your 3 add-ons or 8 providers has <title> right now. …" */
 internal fun sourcesEmptyExplanation(titleName: String?, addons: Int, providers: Int): String {
     val checked = when {
         addons > 0 && providers > 0 -> "None of your ${addons.counted("add-on", "add-ons")} or ${providers.counted("provider", "providers")}"
@@ -205,15 +187,9 @@ internal fun sourcesEmptyExplanation(titleName: String?, addons: Int, providers:
     return "$checked has $subject right now. New releases often appear within a few days."
 }
 
-/** `Tv3SourcesTorrent` copy, verbatim apart from the live provider count. */
 internal fun sourcesTorrentExplanation(providers: Int): String =
     "${providers.counted("provider returned", "providers returned")} torrent links this device cannot stream directly. Add a debrid service (for example TorBox) to play them, or try another title."
 
-/**
- * `Tv3SourcesEmpty`: 88 px search circle, 40 px heading, 26 px explanation and the
- * board's two actions (280×72 / 300×72, r12, 26 px w700). Both actions are
- * [TvAction]s, so they keep the sheet's focus fill + `tvFocusOutline` ring.
- */
 @Composable
 internal fun TvSourcesEmptyPanel(titleName: String?, addons: Int, providers: Int, scale: Float,
     checkAgain: () -> Unit, manageAddons: () -> Unit, requester: FocusRequester) {
@@ -240,11 +216,6 @@ internal fun TvSourcesEmptyPanel(titleName: String?, addons: Int, providers: Int
     }
 }
 
-/**
- * `Tv3SourcesTorrent`: `role="alert"` panel — r16, `rgba(255,255,255,.07)`, padding
- * 26/28, 32 px info glyph, 26 px copy, "What’s a debrid service?" 400×72 and
- * "Back" 180×72.
- */
 @Composable
 internal fun TvSourcesTorrentPanel(providers: Int, scale: Float, debridHelp: () -> Unit, dismiss: () -> Unit,
     requester: FocusRequester) {

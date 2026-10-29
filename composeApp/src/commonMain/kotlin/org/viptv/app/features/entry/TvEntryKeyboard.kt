@@ -40,7 +40,6 @@ internal fun TvEntryKeyboard(scale: Float, initialSuffix: Boolean = false, onDel
             TvEntryKey(Modifier.width(104.dp * scale), scale, activate = { upper = !upper }) { Icon(Lucide.ArrowUp, "Shift", Modifier.size(28.dp * scale), it) }
             TvEntryKey(Modifier.width(104.dp * scale), scale, activate = { symbols = !symbols }) { Text(if (symbols) "abc" else "#+=", color = it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold) }
             TvEntryKey(Modifier.width(332.dp * scale), scale, activate = { input(" ") }) { Icon(Lucide.Space, "Space", Modifier.size(28.dp * scale), it) }
-            // Delete belongs on every entry keyboard; suffix keys stay email-only.
             if (onDelete != null) TvEntryKey(Modifier.width(104.dp * scale), scale, activate = onDelete) { Icon(Lucide.Delete, "Backspace", Modifier.size(28.dp * scale), it) }
             if (onClear != null) TvEntryKey(Modifier.width(160.dp * scale), scale, activate = onClear) { Text("Clear", color = it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold) }
             TvEntryKey(Modifier.width(218.dp * scale), scale, activate = { input(".com") }, suffix = true) { Text(".com", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold) }

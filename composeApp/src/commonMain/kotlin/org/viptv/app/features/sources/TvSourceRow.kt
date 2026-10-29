@@ -19,11 +19,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.components.pointerClickable
 
-/**
- * A TV source row. [header] is the group label this row opens (SRC-BEST-MATCH-001): it
- * sits inside the row's focus target, so the leading-edge focus scroll keeps it in view
- * when focus enters the group, while the D-pad never stops on it.
- */
 @Composable
 internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Float, requester: FocusRequester?,
     enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null, focusedSource: (String) -> Unit = {},

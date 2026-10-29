@@ -25,15 +25,6 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
-/**
- * TV Settings → Parental controls, to `Tv3SetParental`.
- *
- * The per-profile rating limit and the approved/blocked title list live in the
- * server's parental policy, which this TV screen is not given; the rows
- * therefore keep the board's geometry and copy and open the real editor
- * (Profiles → profile → Maturity rating / Profile lock) instead of pretending to
- * hold a value. No generic "not available" dialog is used.
- */
 @Composable
 internal fun TvParentalSettings(profile: Profile?, maturity: String?, pinAvailable: Boolean,
     scale: Float, first: FocusRequester, sidebar: FocusRequester, profiles: () -> Unit) {
@@ -85,16 +76,12 @@ private fun RatingRow(label: String, ratings: List<String>, maturity: String?, p
             }
             if (!pinAvailable) Text("Account policy", color = Palette.tertiary, fontSize = (20 * scale).sp)
         }
-        // The chips are board-shaped; selecting one opens the real editor rather
-        // than writing a value this screen does not own.
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
             ratings.forEach { rating ->
                 val selected = maturity?.contains(rating, ignoreCase = true) == true
                 var focused by remember { mutableStateOf(false) }
                 Row(Modifier.height(64.dp * scale)
                     .onFocusChanged { focused = it.isFocused }
-                    // Selected wears the accent, focused wears white: the two states
-                    // stay distinct without a ring.
                     .background(if (focused) Palette.text else if (selected) Palette.accent else Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp * scale))
                     .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = profiles, shape = RoundedCornerShape(32.dp * scale))
                     .padding(horizontal = 20.dp * scale), verticalAlignment = Alignment.CenterVertically) {

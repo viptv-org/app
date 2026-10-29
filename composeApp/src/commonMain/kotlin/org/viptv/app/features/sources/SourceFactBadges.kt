@@ -17,16 +17,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 
-/** Visual style of the release-fact badges: the quality badge's 0.16 fill of the row foreground. */
 internal class SourceBadgeStyle(val fontSize: TextUnit, val lineHeight: TextUnit, val radius: Dp, val horizontal: Dp, val vertical: Dp, val gap: Dp)
 
-/**
- * A source row's title line: the provider/release label, then release-fact
- * badges (SRC-BEST-MATCH-001), then an optional trailing tag such as Best match.
- * The label keeps the layout it has without badges; badges flow into the room
- * left on its last line, and trailing badges that do not fit are dropped whole,
- * so a row never grows, wraps a badge or overflows.
- */
 @Composable
 internal fun SourceTitleLine(label: String, labelStyle: TextStyle, foreground: Color, badges: List<String>, badgeStyle: SourceBadgeStyle,
     modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
@@ -47,7 +39,6 @@ internal fun SourceTitleLine(label: String, labelStyle: TextStyle, foreground: C
         val tail = measurables.firstOrNull { it.layoutId == "trailing" }?.measure(loose)
         val bounded = constraints.hasBoundedWidth
         val room = if (bounded) (constraints.maxWidth - (tail?.let { it.width + gap } ?: 0)).coerceAtLeast(0) else Constraints.Infinity
-        // The label fills its width, as it did as a weighted Row child; badges use the measured last-line end.
         val text = measurables.first { it.layoutId == "label" }.measure(if (bounded) Constraints.fixedWidth(room) else loose)
         val lines = measurer.measure(label, style, constraints = Constraints(maxWidth = room.coerceAtLeast(1)))
         val last = (lines.lineCount - 1).coerceAtLeast(0)
@@ -73,10 +64,6 @@ internal fun SourceTitleLine(label: String, labelStyle: TextStyle, foreground: C
     }
 }
 
-/**
- * The leading badges whose widths plus gaps fit in [room]; the first badge that
- * overflows ends the run, so a later narrower badge never jumps ahead of a dropped one.
- */
 internal fun sourceFactBadgesThatFit(widths: List<Int>, gap: Int, room: Int): List<Int> {
     var used = 0
     val shown = mutableListOf<Int>()

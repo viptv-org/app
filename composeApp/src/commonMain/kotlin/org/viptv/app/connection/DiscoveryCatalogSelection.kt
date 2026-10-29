@@ -3,7 +3,6 @@ package org.viptv.app.connection
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-/** A UI selection key; raw provider IDs and owners remain separate on the wire. */
 internal fun DiscoveryCatalog.selectionKey(): String =
     Json.encodeToString(listOf(connection_id ?: addon_id?.toString().orEmpty(), type, id))
 

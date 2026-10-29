@@ -33,12 +33,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.TextButton
 
-/**
- * TV History. The board export has no History screen, so this follows the TV
- * design vocabulary rather than the phone list: the page heading owns the top
- * inset, entries are 16:9 rows with the light focus fill and the 4 px ring, and
- * Clear history is a TV action with a confirmation dialog.
- */
 @Composable
 internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, open: (Card) -> Unit,
     clear: () -> Unit, back: () -> Unit = {}) {
@@ -75,8 +69,6 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
             if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             error?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }
             if (!busy && history.isEmpty() && error == null) {
-                // The Clear button is disabled here, so it cannot hold focus.
-                // Give the empty state a real action and focus it.
                 Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
                     Text("Nothing watched yet", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     Text("Titles you play show up here.", color = Palette.secondary, fontSize = (24 * scale).sp)
@@ -119,8 +111,6 @@ private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, requester: FocusRe
     val card = entry.entry.card
     val shape = RoundedCornerShape(16.dp * scale)
     Row(Modifier.fillMaxWidth().height(148.dp * scale).focusRequester(requester)
-        // No control sits left of a full-width row; LEFT must dead-end instead
-        // of jumping diagonally to Clear history.
         .focusProperties { this.left = FocusRequester.Cancel; this.right = FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused }
         .graphicsLayer { this.shape = shape; shadowElevation = if (focused) 24.dp.toPx() * scale else 0f; clip = false }

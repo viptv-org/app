@@ -44,7 +44,6 @@ internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(40.dp)) {
             if (card.poster != null) {
-                // Reference layout: portrait poster on the left column.
                 DetailArtwork(card, Modifier.weight(0.30f).aspectRatio(2f / 3).clip(RoundedCornerShape(12.dp)), portrait = true)
                 DetailSummary(card, play, Modifier.weight(0.58f), save, saved, playFromStart)
             } else {

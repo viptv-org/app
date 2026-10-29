@@ -38,8 +38,7 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             TvHeroSummary(it, scale)
         }
         Row(Modifier.offset(96.dp * scale, 648.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-            // The hero's leading edge dead-ends Left: the geometric search could
-            // otherwise wander to the profile avatar at the far end of the nav.
+            // The hero's leading edge dead-ends Left: geometric search would otherwise reach the profile avatar in the nav.
             TvAction(Modifier.width(220.dp * scale).height(72.dp * scale).focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel }, scale, ring = false,
                 primary = true, requester = first, activate = { play(presented) }, contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) {
                 Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(12.dp * scale))

@@ -6,7 +6,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.serialization.json.*
 
-/** A restricted profile with a configured PIN must be unlocked before it can act on the account. */
 internal suspend fun RemoteConnection.parentRestriction(failure: Throwable): Throwable {
     currentCoroutineContext().ensureActive()
     if (failure is RemoteFailure && failure.status == 403) {
@@ -20,10 +19,6 @@ internal suspend fun RemoteConnection.parentRestriction(failure: Throwable): Thr
     return failure
 }
 
-/**
- * The signed-in side of device sign-in: approve or deny a code another device shows, using this
- * connection's own session instead of a browser round trip. The server decides who may approve.
- */
 internal class RemoteDeviceApproval(private val remote: RemoteConnection) {
     suspend fun lookup(code: String): DeviceApproval = guarded {
         DeviceApprovalApi.parse(remote.call("/api/auth/device/lookup", HttpMethod.Post, body(code)).jsonObject, code)
@@ -44,7 +39,6 @@ internal class RemoteDeviceApproval(private val remote: RemoteConnection) {
         try { block() } catch (failure: RemoteFailure) { throw remote.parentRestriction(failure) }
 
     companion object {
-        /** Here a 403 is a profile restriction, unlike the browser page where it can mean another account's code. */
         fun message(failure: Throwable): String = when {
             failure is ParentAuthorizationRequired -> failure.message.orEmpty()
             failure is RemoteFailure && failure.status == 403 -> "This profile can’t add devices. Switch to a parent profile and try again."

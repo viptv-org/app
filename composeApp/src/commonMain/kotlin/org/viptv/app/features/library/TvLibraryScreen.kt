@@ -44,8 +44,6 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
         CompositionLocalProvider(LocalTvScale provides scale) {
             Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
                 .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
-                // TV filters are the shared dropdown chips (app#121); the group makes Up from the
-                // grid land on the first chip, and the panel puts focus back on its chip.
                 Box(Modifier.focusGroup().focusRequester(selectedFilter)) {
                     if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                     else LibraryControls(filter, { filter = it }, sort, { sort = it }, watchedAvailable = lastWatched.isNotEmpty())

@@ -10,7 +10,6 @@ import org.viptv.engine.wire.Card
 
 internal data class TvBillboardSelection(val card: Card, val portrait: Boolean)
 
-// Coalesce held-key input, but prepare images immediately while native scrolling runs.
 private const val SelectionSettleMillis = 220L
 private const val QuietPollMillis = 16L
 
@@ -19,15 +18,8 @@ internal fun rememberTvBillboardSelection(
     focused: State<Card?>,
     browsing: () -> Boolean,
     portrait: () -> Boolean,
-    /** Milliseconds since the last navigation key event; null when nothing was pressed yet. */
     quietForMillis: () -> Long?,
-    /** The pre-blurred soft-plane URL for a card, sized exactly as SoftArtwork requests it. */
     softArtwork: (Card) -> String? = { null },
-    /**
-     * True while a shelf or the rows column is animating. The swap waits for
-     * calm *and* stillness: the decode + crossfade + semantics diff must never
-     * land inside an animated frame — those are the 100 ms+ tail frames.
-     */
     motionBusy: () -> Boolean = { false },
     resolve: (Card) -> Card = { it },
     enrich: (Card) -> Unit = {},
@@ -38,14 +30,10 @@ internal fun rememberTvBillboardSelection(
     val card = raw?.let(resolve)
     LaunchedEffect(raw?.identity) {
         if (raw != null && (raw.logo == null || raw.description.isNullOrBlank())) {
-            // Metadata requests for intermediate held-key selections otherwise
-            // publish many Home updates during the active scroll animation.
             while (quietForMillis()?.let { it < settleMillis() } == true) delay(QuietPollMillis)
             enrich(raw)
         }
     }
-    // These reads stay inside this composable so a focus/row change never
-    // recomposes the whole home screen.
     val browsingNow = browsing()
     val portraitNow = portrait()
     var selected by remember { mutableStateOf<TvBillboardSelection?>(null) }

@@ -34,11 +34,9 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
         trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
-        // Read when the player opens: Settings replaces the player, so a change there is seen on return.
         autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion())
 }
 
-/** The player's Episodes list on every platform: the playing episode's season, in its exact metadata scope. */
 internal fun playerEpisodes(current: Card?, loaded: List<Card>): List<Card> {
     val coordinates = current?.identity?.episode ?: return emptyList()
     return phonePlaybackEpisodes(current, loaded)

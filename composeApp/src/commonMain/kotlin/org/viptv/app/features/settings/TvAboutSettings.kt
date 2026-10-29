@@ -23,13 +23,6 @@ import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
 import org.viptv.app.updates.*
 
-/**
- * TVUI-07: the board's About page. Every row opens content that exists in this
- * build — the build identity, the connection in use, the exact list a support
- * report would contain (this build has no report endpoint, so none is faked),
- * the app's data statement and the licence files bundled under
- * composeResources/files/licenses.
- */
 internal const val VIPTV_VERSION = "0.1.0-experiment"
 
 private enum class TvAboutPanel { Build, Connection, Diagnostics, Privacy, Licences }
@@ -37,7 +30,6 @@ private enum class TvAboutPanel { Build, Connection, Diagnostics, Privacy, Licen
 private data class AboutLicence(val file: String, val title: String)
 private data class AboutNotice(val title: String, val firstLine: String)
 
-/** Mirrors composeApp/src/commonMain/composeResources/files/licenses. */
 private val aboutLicences = listOf(
     AboutLicence("application.txt", "VIPTV application — GNU General Public License v2"),
     AboutLicence("onest.txt", "Onest font — SIL Open Font License 1.1"),
@@ -55,7 +47,6 @@ internal fun TvAboutSettings(local: Boolean, address: String?, profileName: Stri
         TvSettingsHeading("About", scale)
         TvSettingsRow("Version", updates?.versionName ?: VIPTV_VERSION, scale, requester = initial, left = sidebar) { panel = TvAboutPanel.Build }
         if (updater != null && updates != null) {
-            // One row whose label turns into "Install update", so TV focus stays put when a build is found.
             TvSettingsRow(updateActionLabel(updates.status), subtitle = updateStatusLabel(updates.status), scale = scale,
                 value = lastCheckLabel(updates.lastCheckMillis, updater.nowMillis()), left = sidebar, rowHeight = 112) { updater.settingsAction() }
         }
@@ -130,8 +121,6 @@ private fun TvAboutPanelContent(panel: TvAboutPanel, local: Boolean, address: St
                 scale, Palette.secondary)
         }
         TvAboutPanel.Licences -> {
-            // Read the bundled notices so the list only shows files that ship in
-            // this build; a missing resource is reported, never invented.
             var notices by remember { mutableStateOf<List<AboutNotice>?>(null) }
             LaunchedEffect(Unit) {
                 notices = aboutLicences.mapNotNull { licence ->
@@ -159,7 +148,6 @@ private fun TvAboutPanelContent(panel: TvAboutPanel, local: Boolean, address: St
     }
 }
 
-/** Same shell as TvLeaveConfirmation / TvSettingsChoiceDialog: dim page, TV type, D-pad Close. */
 @Composable
 private fun AboutDialogFrame(title: String, scale: Float, dismiss: () -> Unit, width: Dp = 880.dp,
     content: @Composable ColumnScope.() -> Unit) {

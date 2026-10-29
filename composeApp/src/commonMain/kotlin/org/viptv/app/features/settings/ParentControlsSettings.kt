@@ -13,7 +13,6 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
 
-/** Household PIN policy is distinct from native local profile PINs. */
 @Composable
 internal fun ParentControlsSettings(snapshot: ProfileManagement?, busy: Boolean, error: String?, notice: String?, saved: Long,
     load: () -> Unit, unlock: (String) -> Unit, pin: (String, String) -> Unit,

@@ -13,35 +13,19 @@ internal data class HeroCarousel(val card: Card?, val index: Int, val count: Int
 
 private const val SlideMillis = 8000L
 
-/**
- * How far the current slide is through its display interval.
- *
- * [fraction] only changes when the drawn fill would move by at least one pixel
- * ([steps] is the indicator's fill width in pixels), and the timer sleeps between
- * those steps instead of running a per-frame animation. On a software-rendered
- * TV, a per-vsync progress bar re-rasterised the whole window ~40 times a second.
- */
 @Stable
 internal class HeroProgress {
-    /** Drawn fill, a multiple of `1 / steps`. */
     var fraction by mutableFloatStateOf(0f)
         private set
-    /** Fill resolution; the indicator sets it to its own width in pixels. */
     var steps by mutableIntStateOf(100)
     private var elapsed = 0L
     private var owner: Any? = null
 
-    /** Restarts the interval when the slide changes; the same slide keeps its elapsed time. */
     fun bind(slide: Any?) {
         if (slide == owner) return
         owner = slide; elapsed = 0L; fraction = 0f
     }
 
-    /**
-     * Runs the rest of the interval, resuming from where a cancelled run stopped
-     * (at the last drawn step, so the bar never jumps backwards or forwards).
-     * Time comes from the frame clock, sampled once per step.
-     */
     suspend fun run(slide: Any?) {
         bind(slide)
         var last = withFrameMillis { it }
@@ -63,8 +47,6 @@ internal class HeroProgress {
 @Composable
 internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey: Any?): HeroCarousel {
     var index by remember(scopeKey) { mutableIntStateOf(0) }
-    // A refreshed Home can reorder or replace the featured cards. The hero keeps
-    // the card it shows while that card survives instead of jumping by index.
     var anchor by remember(scopeKey) { mutableStateOf<Any?>(null) }
     val anchored = anchor?.let { shown -> cards.indexOfFirst { org.viptv.app.connection.cardLookupKey(it) == shown }.takeIf { it >= 0 } }
     val active = if (cards.isEmpty()) 0 else anchored ?: (index % cards.size)

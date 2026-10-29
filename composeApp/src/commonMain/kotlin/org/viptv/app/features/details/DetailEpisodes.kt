@@ -3,7 +3,6 @@ package org.viptv.app.features.details
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.EpisodeSeason
 
-/** A provider can use the same title id for several numbered episodes. */
 internal fun episodeKey(card: Card): String = listOf(card.provider_id, card.identity.kind,
     card.identity.id, card.identity.episode?.order, card.identity.episode?.season,
     card.identity.episode?.episode, card.identity.edition).joinToString("|") { value ->
@@ -16,7 +15,6 @@ internal data class DetailSeason(val number: Long?, val episodes: List<Card>, va
     val nextOffset: Long? get() = if (total != null && offset != null && episodes.size < total) offset + episodes.size else null
 }
 
-/** Preserve unknown episode metadata; never guess a season from provider display text. */
 internal fun detailSeasons(episodes: List<Card>, index: List<EpisodeSeason> = emptyList()): List<DetailSeason> {
     val groups = episodes.distinctBy(::episodeKey).groupBy { it.identity.episode?.season }
     return (groups.keys + index.map { it.season }).distinct().sortedWith(compareBy({ it == null }, { it ?: 0L }))

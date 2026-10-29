@@ -52,13 +52,10 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val headerHeight = remember { SourceHeaderHeight() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        // The real details page stays composed behind this overlay. The scrim closes it on
-        // a click but never takes keyboard focus, which stays in the panel.
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.pointerClickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
             television -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.5f)
-            // The wider drawer is for web and desktop (app#60); the tablet keeps the design's 460.
             tablet -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().widthIn(max = 461.dp).fillMaxWidth()
             else -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(sourceDrawerWidth(maxWidth))
         }
@@ -73,8 +70,6 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                         fontWeight = FontWeight.Bold)
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
-                // A selector still finding its first sources says so, whether it is opening a
-                // stream or waiting for the Details a play tap needs (app#140).
                 val summary = when {
                     busy -> if (sources.isEmpty()) "Loading sources…" else openingStage ?: "Opening stream…"
                     sources.isEmpty() && loadingMore -> "Loading sources…"
@@ -105,11 +100,6 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     }
 }
 
-/**
- * The web/desktop drawer's width in a [window] that wide: room for source
- * titles, badges and release lines (owner, app#60), never narrower than the 460 the
- * design specified, and the whole window when that is narrower still.
- */
 internal fun sourceDrawerWidth(window: Dp): Dp = minOf(window, maxOf(460.dp, minOf(720.dp, window * 0.55f)))
 
 internal fun sourceSummary(sources: List<SourceCandidate>): String {

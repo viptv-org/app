@@ -8,11 +8,6 @@ data class DeviceApproval(val code: String, val deviceName: String, val status: 
     override fun toString() = "DeviceApproval(status=$status)"
 }
 
-/**
- * The browser side of the TV sign-in flow: account-only authentication,
- * then explicit approve or deny for a pairing code the TV generated.
- * The transport deliberately avoids Home/metadata bootstrap calls.
- */
 internal object DeviceApprovalApi {
     fun message(status: Int): String = when (status) {
         400 -> "That code isn't valid or has expired. Check your TV and try again."

@@ -11,7 +11,6 @@ import com.composables.icons.lucide.Server
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.DevicePairingDisplay
 
-/** Connects the supplied pairing layout to a cancellable, server-owned challenge. */
 @Composable
 internal fun TvRemotePairing(server: String, display: DevicePairingDisplay?, busy: Boolean, error: String?, scale: Float,
     serverChanged: (String) -> Unit, start: (String) -> Unit, cancel: () -> Unit, back: () -> Unit, email: () -> Unit) {

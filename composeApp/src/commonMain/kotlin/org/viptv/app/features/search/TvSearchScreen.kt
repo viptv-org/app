@@ -75,18 +75,12 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                     }
                 }
             }
-            // A restore target that vanished (results re-fetched while away) must not
-            // leave the page focusless: fall back to the keyboard after two frames.
             LaunchedEffect(restoreId) {
                 if (restoreId != null) {
                     withFrameNanos { }; withFrameNanos { }
                     if (!resultsHaveFocus) runCatching { keyboardFocus.requestFocus() }
                 }
             }
-            // The results pane ends beside the keyboard column, so only its trailing edge
-            // has page padding: bleeding that side runs the rows to the right screen edge
-            // while the first card stays on the results column and the pane keeps its
-            // distance from the keyboard (app#111).
             LazyColumn(Modifier.weight(1f).bleedHorizontally(left = 0.dp, right = gutter).onFocusChanged { resultsHaveFocus = it.hasFocus }, state = rows, sectionControlled = true, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = gutter)) {
                 if (busy && !hasResults && groups.none { it.message != null }) item { TvSearchLoading(scale) }
                 error?.let { item { Text(it, color = Palette.danger) } }

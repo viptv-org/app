@@ -29,7 +29,6 @@ import org.viptv.app.components.IconButton
 @Composable
 internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.SelectTrack) -> Unit,
     close: () -> Unit, phone: Boolean, size: Float, setSize: (Float) -> Unit, insets: WindowInsets,
-    /** The full Subtitles & audio settings; the menu ends with a row that opens them (app#44). */
     openSettings: (() -> Unit)? = null) {
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -41,14 +40,12 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
             .then(if (phone) Modifier.windowInsetsPadding(insets.endSheet()) else Modifier)
             .padding(if (phone) 20.dp else 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // NAV-07: the panel is dismissible on every size, not only on phone.
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Audio & subtitles", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 IconButton(close, Modifier.size(if (phone) 32.dp else 28.dp)) {
                     Icon(Lucide.X, "Close track selection", Modifier.size(if (phone) 18.dp else 16.dp))
                 }
             }
-            // The track lists scroll; the settings row below them always stays in view.
             Row(Modifier.fillMaxWidth().weight(1f, fill = false), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TrackColumn("Audio", tracks.audio, false, Modifier.weight(1f)) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, it)) }
                 TrackColumn("Subtitles", tracks.subtitles, true, Modifier.weight(1f)) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, it)) }
@@ -65,7 +62,6 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
     }
 }
 
-/** Language preferences, subtitle size, colours, background and foreign-only mode live in Settings. */
 @Composable
 private fun PlaybackSettingsLink(open: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
@@ -80,7 +76,6 @@ private fun PlaybackSettingsLink(open: () -> Unit) {
     }
 }
 
-/** The Audio & subtitles menu's last row on every player. */
 internal const val PLAYER_SETTINGS_LINK = "Subtitles & audio settings"
 
 @Composable
