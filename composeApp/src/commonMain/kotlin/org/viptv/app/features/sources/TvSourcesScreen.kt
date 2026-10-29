@@ -29,11 +29,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
+import kotlinx.coroutines.withTimeoutOrNull
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.SourceGroups
 import org.viptv.app.components.rememberTvDrawerMotion
 import org.viptv.app.components.rememberTvLoadingShimmer
+import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.app.theme.Palette
@@ -68,21 +70,25 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val torrentOnly = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders > 0
             val noSources = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders == 0
             val stateFocus = remember { FocusRequester() }
-            var autoFocused by remember { mutableStateOf<String?>(null) }
             LaunchedEffect(rows.firstOrNull()?.source?.id, error) {
                 if (rows.isEmpty()) return@LaunchedEffect
                 if (navigated) return@LaunchedEffect
                 val target = rows.find { it.source.id == selectedSource }?.source ?: rows.firstOrNull()?.source
                 if (target == null) { filterFocus.requestFocus(); return@LaunchedEffect }
-                autoFocused = target.id
                 val index = rows.indexOfFirst { it.source.id == target.id } + if (error != null) 1 else 0
                 val shown = listState.layoutInfo.visibleItemsInfo.any {
                     it.key == target.id && it.offset >= listState.layoutInfo.viewportStartOffset &&
                         it.offset + it.size <= listState.layoutInfo.viewportEndOffset
                 }
-                if (!shown) listState.scrollToItem(index)
-                withFrameNanos { }
-                rowFocus[target.id]?.requestFocus()
+                // scrollToItem remeasures now and throws while this frame's composition is still applying.
+                if (!shown) listState.requestScrollToItem(index)
+                withTimeoutOrNull(1500) {
+                    while (true) {
+                        val requester = rowFocus[target.id]
+                        if (requester != null && requester.requestPlacedFocus()) break
+                        withFrameNanos { }
+                    }
+                }
             }
             LaunchedEffect(noSources, torrentOnly) {
                 if (!noSources && !torrentOnly) return@LaunchedEffect

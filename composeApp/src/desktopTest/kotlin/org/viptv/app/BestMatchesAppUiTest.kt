@@ -85,12 +85,12 @@ class BestMatchesAppUiTest {
             save("during")
             release.complete(Unit)
             until("discovery to finish") { !controller.state.value.findingSources && controller.state.value.sources.size == FIRST.size + SECOND.size }
-            frames(20)
+            until("the marker to move to the better row") {
+                nodes().any { text(it).contains("Best match") && text(it).contains("Source k2160") }
+            }
             assertEquals(listOf("k2160", "b1080", "h1080", "s720", "a720"), controller.state.value.sourceGroups.bestMatches)
             assertEquals("k2160", controller.state.value.sourceGroups.bestMatchId)
             assertEquals("BEST MATCHES", headings().first())
-            assertTrue(nodes().any { text(it).contains("Best match") && text(it).contains("Source k2160") },
-                "The marker moved to the better row: " + nodes().map(::text).filter { it.contains("k2160") || it.contains("Best match") })
             save("after")
         } finally {
             release.complete(Unit)

@@ -117,9 +117,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             if (width > 0) {
                 val density = LocalDensity.current
                 CardArtwork(card, portrait, with(density) { width.dp.toPx().toInt() },
-                    with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() })
+                    with(density) { (width * (if (portrait) 1.5f else 0.5625f)).dp.toPx().toInt() }, labelScale.coerceAtLeast(1f))
             } else BoxWithConstraints(Modifier.matchParentSize()) {
-                CardArtwork(card, portrait, constraints.maxWidth, constraints.maxHeight)
+                CardArtwork(card, portrait, constraints.maxWidth, constraints.maxHeight, labelScale.coerceAtLeast(1f))
             }
             card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
                 val spoken = newEpisodesDescription(chip)
@@ -176,13 +176,19 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
 }
 
 @Composable
-private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int) {
-    when (val art = if (portrait) null else card.landscapeArt()) {
-        is LandscapeArt.Poster -> PosterInLandscape(
-            org.viptv.app.images.sizedArtwork(art.url, slotH * 2 / 3, slotH) ?: art.url, card.title)
-        else -> AsyncImage(org.viptv.app.images.sizedArtwork(
-            if (portrait) card.poster else (art as? LandscapeArt.Still)?.url, slotW, slotH),
-            card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int, labelScale: Float) {
+    val landscape = if (portrait) null else card.landscapeArt()
+    val url = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (landscape as? LandscapeArt.Still)?.url
+    // Keyed on what is drawn, so a slot reused for other art or the other orientation never keeps a stale failure.
+    var artFailed by remember(card.poster, card.landscape, portrait) { mutableStateOf(false) }
+    when {
+        artFailed -> MissingArtTile(card.title, labelScale)
+        url != null -> AsyncImage(org.viptv.app.images.sizedArtwork(url, slotW, slotH),
+            card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, onError = { artFailed = true })
+        landscape is LandscapeArt.Poster -> PosterInLandscape(
+            org.viptv.app.images.sizedArtwork(landscape.url, slotH * 2 / 3, slotH) ?: landscape.url, card.title,
+            onError = { artFailed = true })
+        else -> MissingArtTile(card.title, labelScale)
     }
 }
 
@@ -261,7 +267,7 @@ private fun CardPreview(card: Card, saved: Boolean,
             when (val art = card.landscapeArt()) {
                 is LandscapeArt.Still -> AsyncImage(art.url, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 is LandscapeArt.Poster -> PosterInLandscape(art.url, card.title)
-                LandscapeArt.None -> Unit
+                LandscapeArt.None -> MissingArtTile(card.title)
             }
             card.progress?.let { progress ->
                 Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(3.dp).background(Color.White.copy(alpha = .2f))) {
