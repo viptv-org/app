@@ -1,32 +1,38 @@
 package org.viptv.app.features.live
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.viptv.app.theme.Palette
-import org.viptv.app.components.Surface
-import org.viptv.app.components.edgeToEdgeScroll
+import org.viptv.app.components.FilterBar
+import org.viptv.app.components.SearchableSelect
+import org.viptv.app.components.SelectOption
+import org.viptv.app.components.ToggleSelect
 
+internal const val AllGroups = "All"
+
+// The controller keeps the group and the favourites filter mutually exclusive, so the toggle's off state is the group reset.
 @Composable
-internal fun LiveFilters(categories: List<String>, selected: String, choose: (String) -> Unit, scale: Float = 1f, labels: Map<String, String> = emptyMap(), favoritesSelected: Boolean = false, favorites: (() -> Unit)? = null,
-    gutter: Dp = 0.dp) {
-    org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-        (listOf("All") + categories).distinct().forEach { category ->
-            Surface(onClick = { choose(category) }, color = if (category == selected && !favoritesSelected) Palette.text else Palette.raised,
-                contentColor = if (category == selected && !favoritesSelected) Palette.background else Palette.text, shape = RoundedCornerShape(24.dp * scale)) {
-                Text(labels[category] ?: category, Modifier.padding(horizontal = 14.dp * scale, vertical = 7.dp * scale),
-                    fontSize = (14 * scale).sp, lineHeight = (18 * scale).sp)
-            }
+internal fun LiveFilters(groups: Map<String, String>, group: String?, chooseGroup: (String?) -> Unit,
+    favoritesOnly: Boolean, favorites: (() -> Unit)?, reset: () -> Unit,
+    sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null,
+    modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: Boolean = true) {
+    val groupOptions = remember(groups) { groups.map { (id, label) -> SelectOption(id, label) } }
+    val sourceOptions = remember(sources) { sources.map { (id, name) -> SelectOption(id, name) } }
+    val chooseSource: (String) -> Unit = { id -> sourceChanged?.invoke(id) }
+    FilterBar(modifier, gutter, bleed, clear = if (group != null || favoritesOnly) ({ reset() }) else null) {
+        if (groupOptions.isNotEmpty()) item(key = "group") {
+            SearchableSelect("Group", groupOptions, listOfNotNull(group), { chooseGroup(it.firstOrNull()) },
+                anyLabel = AllGroups, anyTrailing = groups.size.toString(), searchPlaceholder = "Search groups")
         }
-        if (favorites != null) Surface(onClick = favorites, color = if (favoritesSelected) Palette.text else Palette.raised,
-            contentColor = if (favoritesSelected) Palette.background else Palette.text, shape = RoundedCornerShape(24.dp * scale)) {
-            Text("Favourites", Modifier.padding(horizontal = 14.dp * scale, vertical = 7.dp * scale), fontSize = (14 * scale).sp, lineHeight = (18 * scale).sp)
+        if (sourceChanged != null && sourceOptions.size > 1) item(key = "source") {
+            SearchableSelect("Source", sourceOptions, listOfNotNull(selectedSource),
+                { ids -> ids.firstOrNull()?.let(chooseSource) }, anyLabel = null,
+                placeholder = "Choose", searchPlaceholder = "Search sources")
         }
-    } }
+        if (favorites != null) item(key = "favorites") {
+            ToggleSelect("Favourites", favoritesOnly, { on -> if (on) favorites?.invoke() else reset() })
+        }
+    }
 }

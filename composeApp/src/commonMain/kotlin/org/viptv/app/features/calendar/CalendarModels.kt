@@ -33,6 +33,9 @@ internal fun CalendarEntry.actionLabel(): String? {
 
 enum class CalendarFilter(val label: String) { All("All"), YourShows("Your shows") }
 
+internal const val CALENDAR_DEFAULT_TYPE = "series"
+internal const val CALENDAR_WEEK_LIMIT = 52
+
 internal fun calendarFilterOffered(entries: List<CalendarEntry>, sources: Set<CalendarSource>?): Boolean =
     sources?.containsAll(CalendarSource.entries) == true || (entries.any { it.library } && entries.any { !it.library })
 

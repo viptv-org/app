@@ -80,7 +80,7 @@ There are no horizontal lazy grids or staggered lazy grids in this source set.
 | `features/browse/TvBrowseChrome.kt` | LazyRow, LazyColumn, verticalScroll | Shared TV policy; native defaults outside TV mode. |
 | `features/browse/TvBrowseLoading.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
 | `features/browse/TvBrowseScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
-| `features/calendar/CalendarControls.kt` | horizontalScroll | Shared TV policy; native defaults outside TV mode. |
+| `features/calendar/CalendarControls.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/calendar/CalendarDates.kt` | horizontalScroll | Shared TV policy; native defaults outside TV mode. |
 | `features/calendar/CalendarScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/calendar/TvCalendarScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
@@ -115,10 +115,9 @@ There are no horizontal lazy grids or staggered lazy grids in this source set.
 | `features/library/LibraryScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
 | `features/library/LibraryTypeFilters.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/library/TvLibraryScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
-| `features/live/LiveFilters.kt` | horizontalScroll | Shared TV policy; native defaults outside TV mode. |
+| `features/live/LiveFilters.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/live/LiveGuide.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/live/LiveScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
-| `features/live/TvLiveFilters.kt` | horizontalScroll | Shared TV policy; native defaults outside TV mode. |
 | `features/live/TvLiveScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/player/PhoneEpisodePicker.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/player/PlaybackTrackPicker.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
