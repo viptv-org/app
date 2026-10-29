@@ -33,8 +33,6 @@ fun ApplicationController.toggleLiveFavorite(channel: String) {
             if (ownsLive(context, false)) {
                 liveFavoriteVersion++
                 val current = mutable.value.liveFavorites
-                // Sibling writes can return snapshots out of order. Only this
-                // mutation's channel is authoritative for this response.
                 mutable.value = mutable.value.copy(liveFavorites = if (channel in result) current + channel else current - channel, liveFavoriteError = null)
                 if (ownsLive(context) && mutable.value.liveFavoritesOnly && mutable.value.liveFavorites.isNotEmpty() &&
                     mutable.value.livePage?.channels?.none { it.id in mutable.value.liveFavorites } == true && mutable.value.livePage?.next_cursor != null)

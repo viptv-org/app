@@ -3,7 +3,6 @@ package org.viptv.app.state
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 
-/** Paging does not mark the page busy or replace its focus/navigation state. */
 fun ApplicationController.detailPage(offset: Long) {
     require(offset in 0..10_000)
     val previous = mutable.value.detail ?: return

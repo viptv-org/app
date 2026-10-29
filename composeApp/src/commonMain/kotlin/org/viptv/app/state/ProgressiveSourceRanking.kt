@@ -5,15 +5,6 @@ import kotlinx.coroutines.channels.Channel
 import org.viptv.app.connection.RankedSources
 import org.viptv.engine.wire.SourceCandidate
 
-/**
- * Ranks a discovery's rows as providers answer (SRC-BEST-MATCH-001, Progressive ranking).
- *
- * Each [arrived] call carries every row found so far. Rows are shown only at their ranked
- * positions, never in arrival order: the first arrival is ranked at once, later ones at
- * most once per [spacingMillis], with one request in flight and only the latest rows
- * ranked. When a ranking request fails, the rows already shown keep their order, later
- * rows append in arrival order without groups, and this discovery is not ranked again.
- */
 internal class ProgressiveSourceRanking(
     scope: CoroutineScope,
     private val rank: suspend (List<SourceCandidate>) -> RankedSources,
@@ -48,10 +39,6 @@ internal class ProgressiveSourceRanking(
         show(shown)
     }
 
-    /**
-     * Every row found so far, in arrival order. Callers publish one batch at a time
-     * (the remote poll loop, the native merge under its mutex, then the final list).
-     */
     fun arrived(rows: List<SourceCandidate>) {
         val ids = rows.map { it.id }
         if (ids == submitted) return
@@ -59,7 +46,6 @@ internal class ProgressiveSourceRanking(
         arrivals.trySend(rows)
     }
 
-    /** Ranks the last arrivals, then the final ranking, or null when ranking failed. */
     suspend fun finish(): RankedSources? {
         arrivals.close()
         worker.join()

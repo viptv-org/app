@@ -17,7 +17,6 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val freshness: Freshness = Freshness()) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
-    /** Outside [mutable]: signing in replaces the whole state, and a link can arrive before that. */
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
     internal var connection: RemoteConnection? = null
     internal var local: LocalConnection? = null
@@ -37,30 +36,17 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveFavoriteScope = 0L
     internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
-    /** The Home revision whose full Continue Watching list was last read (app#114). */
     internal var continueChecked: ContinueCheck? = null
     internal var libraryImportRefresh: Job? = null
-    /** The quiet calendar re-read while the server is still looking up library series (app#46). */
     internal var calendarReread: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null
-    /** How the controller opens a server playback lease; tests replace it. */
     internal var leaseOpener: PlaybackLeaseOpener = PlaybackLeaseOpener.Server
-    /** Playback held paused on return until its lease is confirmed or re-acquired. */
     internal var resumeAfterRenewal: org.viptv.app.player.PlaybackInput? = null
-    /** False while the app is behind (Android stop, minimised window, hidden tab). */
     internal val inFront = MutableStateFlow(true)
-    /**
-     * False once the viewer has been [Freshness.idle] (no key, remote, touch or pointer
-     * input): ambient motion such as the hero rotation holds still and the window stops
-     * drawing frames (app#95). Snapshot state, so composition reads it with no collector
-     * coroutine in between; written only when it changes, never per pointer event.
-     */
     internal var viewerPresent by androidx.compose.runtime.mutableStateOf(true)
-    /** Wakes [trackViewerPresence] when input returns after the viewer went idle. */
     internal val viewerReturned = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
-    /** Bumped to make a sleeping lease renewal run now: a return to the front or a held resume. */
     internal val leaseWake = MutableStateFlow(0L)
     internal var subtitleDiscovery: Job? = null
     internal var nextEpisodeJob: Job? = null
@@ -69,30 +55,24 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var playbackSeasonJob: Job? = null
     internal var playbackSeasonKey: PlaybackSeasonKey? = null
     internal var playbackSeasonGeneration = 0L
-    /** Details read beside source discovery for a Continue Watching episode (app#11). */
     internal var sourceDetailJob: Job? = null
     internal var pairingJob: Job? = null
     internal var pairingGeneration = 0L
-    /** The code this device last received, with the server that issued it (app#129). */
     internal var pairingCode: PairingCode? = null
     internal var stremioImport: StremioImportSession? = null
-    /** Set when the next playback open should start from the beginning instead of resuming. */
     internal var restartRequested = false
     internal var firstFrameSeen = false
     internal var frameAcknowledgment: Job? = null
     internal var lastProgress: PlayerFact.Progress? = null
     internal var backgroundPlayback: org.viptv.app.player.PlaybackInput? = null
     internal var completionSeen = false
-    /** The profile's server-chosen tracks when the player opened Settings (app#44). */
     internal var playerVisitTracks: ServerTracks? = null
     internal var progressSavedAt = TimeSource.Monotonic.markNow()
-    /** The background refresh lane: never [busy], never cancels [job]. */
     internal var quietJob: Job? = null
     internal var quietOwner: QuietOwner? = null
     internal var quietPending: QuietWork? = null
     internal var quietDetail = false
     internal var freshnessWatcher: Job? = null
-    /** The latest add-on operation on this device. The quiet lane waits for it instead of racing it. */
     internal var addonOperation: Job? = null
 
     internal fun run(operation: suspend () -> Unit) {
@@ -120,7 +100,6 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         }
     }}
 
-/** The message a failure shows the viewer; every surface that reports one words it here, as [run] does. */
 internal fun ApplicationController.failureMessage(error: Exception): String? = when (error) {
     is RemoteFailure -> error.message
     is LocalFailure -> error.message

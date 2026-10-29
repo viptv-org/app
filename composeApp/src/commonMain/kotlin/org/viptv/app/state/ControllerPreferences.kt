@@ -19,7 +19,6 @@ internal suspend fun ApplicationController.loadPreferences(owner: AddonOperation
     } catch (error: CancellationException) { throw error }
     catch (error: Exception) {
         owner?.requireCurrent(this)
-        // An expired session is not a preferences failure: never offer a retry that cannot work.
         if (error is RemoteFailure && error.status == 401) expireSession(remote, device)
         else if (ownsProfile(profile, remote, device))
             mutable.value = mutable.value.copy(preferencesError = if (error is RemoteFailure && error.status == 403) error.message
@@ -27,7 +26,6 @@ internal suspend fun ApplicationController.loadPreferences(owner: AddonOperation
     }
 }
 
-/** Preferences belong to one profile on one connection; a switch invalidates both. */
 internal fun ApplicationController.ownsProfile(profile: String, remote: RemoteConnection?, device: LocalConnection?): Boolean =
     mutable.value.selectedProfile == profile && connection === remote && local === device
 
@@ -40,29 +38,18 @@ fun ApplicationController.updatePreferences(preferences: ProfilePreferences) = r
     val snapshot = mutable.value.preferences ?: throw LocalFailure("Refresh profile preferences first.")
     val updated = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
         ?: requireNotNull(remote).updateProfilePreferences(profile, snapshot.revision, preferences)
-    // A switch that landed while the write was in flight owns the visible preferences.
     if (ownsProfile(profile, remote, device)) mutable.value = mutable.value.copy(preferences = updated, preferencesError = null)
 }
 
-/**
- * A picker choice is a profile preference, not a session setting: store it with
- * the same revision-checked write the settings screen uses. Read-side matching
- * canonicalises tags (`player/SubtitlePreference.kt:7`), so a stored tag
- * round-trips even when a renderer reports it in another form. Deliberately not
- * `run { }`: that cancels the current controller job and sets `busy`, which must
- * not happen while a player is open.
- */
+// Not `run {}`: it cancels the controller job and sets `busy`, which must not happen while a player is open.
 fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language: String?) {
     val snapshot = mutable.value.preferences ?: return
     val current = snapshot.preferences
     val tag = language?.takeIf(String::isNotBlank)?.let(::canonicalLanguageTag)
     val updated = when (kind) {
         PlaybackTrackKind.Audio -> current.copy(preferred_audio_language = tag)
-        // "When audio isn't …" is a standing rule; one manual pick or Off in the
-        // player overrides it for that playback only (PLAY-SUBTITLE-MODE-001).
         PlaybackTrackKind.Subtitle -> when {
             current.subtitleMode == "foreign" -> if (tag == null) current else current.copy(preferred_subtitle_language = tag)
-            // A profile without a stored mode keeps the legacy on/off it derives from.
             tag == null -> if (current.subtitle_mode == null) current.copy(subtitles_enabled = false) else current.withSubtitleMode("never")
             else -> current.copy(preferred_subtitle_language = tag).let {
                 if (it.subtitle_mode == null) it.copy(subtitles_enabled = true) else it.withSubtitleMode("always") }

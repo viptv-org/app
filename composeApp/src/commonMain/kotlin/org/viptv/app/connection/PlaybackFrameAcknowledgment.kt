@@ -6,7 +6,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 
-/** Recheck authority immediately before each idempotent dispatch, including retries. */
 internal suspend fun acknowledgePlaybackFrame(active: () -> Boolean, send: suspend () -> Unit) {
     repeat(3) { attempt ->
         if (!active()) return
@@ -20,7 +19,6 @@ internal suspend fun acknowledgePlaybackFrame(active: () -> Boolean, send: suspe
     }
 }
 
-/** A network drop, timeout or server-side 5xx: worth retrying the same request shortly. */
 internal fun Exception.transientFailure(): Boolean =
     (this is RemoteFailure && status in 500..599) || this is IOException || this is HttpRequestTimeoutException ||
         this is TimeoutCancellationException

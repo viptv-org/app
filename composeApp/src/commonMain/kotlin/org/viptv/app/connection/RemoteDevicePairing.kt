@@ -8,11 +8,6 @@ data class DevicePairingDisplay(val verificationUri: String, val qrUri: String, 
     override fun toString() = "DevicePairingDisplay(code=<redacted>, remainingSeconds=$remainingSeconds)"
 }
 
-/**
- * The server ended a pairing before approval, reported with the OAuth device-flow errors
- * (RFC 8628 section 3.5): `access_denied` when the account holder declined it, `expired_token`
- * when the code ran out. `authorization_pending` is never an ending.
- */
 class DevicePairingEnded(val reason: Reason) : Exception(when (reason) {
     Reason.Denied -> "Sign-in was declined. Request a new code."
     Reason.Expired -> DEVICE_PAIRING_EXPIRED_MESSAGE
@@ -26,15 +21,10 @@ internal class DevicePairingChallenge(val display: DevicePairingDisplay, interna
     override fun toString() = "DevicePairingChallenge(deviceCode=<redacted>)"
 }
 
-/** The server owns codes, approval and credentials; this adapter transports that contract. */
 internal class RemoteDevicePairing(
     private val send: suspend (String, JsonObject) -> HttpResponse,
     private val adopt: suspend (JsonObject) -> Bootstrap,
 ) {
-    /**
-     * Requests a code. [previousDeviceCode] is the `device_code` this screen still shows, so the
-     * server expires the code it replaces (backend#42); the first request sends none.
-     */
     suspend fun create(previousDeviceCode: String? = null): DevicePairingChallenge {
         val response = send("/api/auth/device/code", buildJsonObject {
             put("device_name", deviceDisplayName())

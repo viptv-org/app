@@ -24,7 +24,6 @@ private fun ApplicationController.accountEntry(origin: String, username: String,
         try {
             val kit = if (code == null) remote.registerAccount(username, requireNotNull(name), password)
                 else remote.recoverAccount(username, code, password)
-            // No bootstrap or metadata requests can discard the one-time codes.
             if (connection === remote && generation == owner) mutable.value = ApplicationState(
                 screen = Screen.RecoveryCodes, recoveryKit = kit, busy = true)
         } catch (failure: RemoteFailure) {
@@ -38,7 +37,6 @@ private fun ApplicationController.accountEntry(origin: String, username: String,
     }
 }
 
-/** Safe to retry: acknowledging codes only loads the existing session. */
 fun ApplicationController.finishAccountEntry() {
     if (mutable.value.busy || mutable.value.recoveryKit == null) return
     run {

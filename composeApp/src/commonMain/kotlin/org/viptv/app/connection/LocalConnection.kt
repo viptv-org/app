@@ -12,7 +12,6 @@ import org.viptv.engine.wire.HomeSnapshot
 interface LocalConnection : AutoCloseable {
     suspend fun createProfile(name: String): Profile
     suspend fun renameProfile(id: String, name: String, pin: String)
-    /** Saves a catalog pick: world [style] and 1-based [choice]. */
     suspend fun setProfileAvatar(id: String, style: String, choice: Int, pin: String)
     suspend fun deleteProfile(id: String, pin: String)
     suspend fun setProfilePin(id: String, oldPin: String, newPin: String)
@@ -21,20 +20,17 @@ interface LocalConnection : AutoCloseable {
     suspend fun refreshHome(profile: String): HomeSnapshot
     suspend fun addons(): List<IntegrationConnection>
     suspend fun installAddon(profile: String, manifestUrl: String): List<IntegrationConnection>
-    /** Completes when installation commits, independently of any subsequent inventory read. */
     suspend fun commitAddonInstallation(profile: String, manifestUrl: String) { installAddon(profile, manifestUrl) }
     suspend fun search(profile: String, term: String): CatalogPage
     suspend fun searchResults(profile: String, term: String): SearchSnapshot? = null
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
     suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = detail(profile, card, offset)
-    /** Providers that returned torrent links this connection cannot play are reported, not silently dropped. */
     suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): SourcesOutcome
     suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = LiveCatalogPage(reason = "Live TV is unavailable on this device.")
     suspend fun liveFavorites(profile: String): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
     suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
     suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = LiveGuideSnapshot(channel, reason = "The program guide is unavailable.")
     suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = throw LocalFailure("This live channel is unavailable.")
-    /** Without an on-device ranking the rows keep arrival order and form no Best matches group. */
     suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int? = null): RankedSources = RankedSources(sources)
     suspend fun openSource(id: String): PlaybackInput
     suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot

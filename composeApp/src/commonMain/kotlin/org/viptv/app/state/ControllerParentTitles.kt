@@ -18,7 +18,6 @@ fun ApplicationController.openParentTitles(profile: String) {
 }
 
 fun ApplicationController.closeParentTitles() {
-    // Cancel a late parent search before leaving its privileged screen.
     job?.cancel(); generation++
     mutable.value = mutable.value.copy(parentTitles = null, busy = false, error = null)
 }
