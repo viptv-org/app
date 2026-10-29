@@ -31,10 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.LocalNextEpisodes
 import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.WATCHED_BADGE
+import org.viptv.app.components.caughtUpNextCaption
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.isWatched
+import org.viptv.app.components.isCaughtUp
 import org.viptv.app.components.isCapabilityBadge
 import org.viptv.app.components.isNewEpisodesBadge
 import org.viptv.app.components.newEpisodesBadge
@@ -44,6 +47,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.NextEpisode
 import org.viptv.app.components.pointerClickable
 
 /**
@@ -67,7 +71,9 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
     onUp: (() -> Unit)? = null, artworkWidth: androidx.compose.ui.unit.Dp? = null) {
     val focus = remember { mutableStateOf(false) }
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
-    val states = remember(card) { TvCardStates.of(card) }
+    // The episode a caught-up Continue Watching card waits for follows its coordinates (app#132).
+    val nextEpisode = LocalNextEpisodes.current?.get(card)
+    val states = remember(card, nextEpisode) { TvCardStates.of(card, nextEpisode) }
     val description = remember(card, states) { cardDescription(card, states) }
     Column(modifier.width(artworkWidth ?: (if (portrait) 232 else 384).dp * scale)
         // One accessibility node per card. A TV shelf has hundreds of cards and
@@ -153,7 +159,8 @@ private data class TvCardStates(
     val metaText: String?,
 ) {
     companion object {
-        fun of(card: Card): TvCardStates {
+        /** [nextEpisode] is the episode a caught-up Continue Watching card waits for, when announced. */
+        fun of(card: Card, nextEpisode: NextEpisode? = null): TvCardStates {
             val badges = card.badges.filter { !it.equals("Simkl", true) }
             val lower = badges.map { it.lowercase() }
             val watched = card.isWatched()
@@ -192,7 +199,8 @@ private data class TvCardStates(
                 artLabelFill = fill,
                 artLabelInk = ink,
                 watched = watched,
-                metaLabel = (returning ?: other)?.takeIf { it != label },
+                metaLabel = (returning ?: other)?.takeIf { it != label }
+                    ?: nextEpisode?.takeIf { card.isCaughtUp() }?.caughtUpNextCaption(),
                 certification = card.metadata?.certification?.takeIf { it.isNotBlank() },
                 metaText = card.subtitle?.takeIf { it.isNotBlank() }
                     ?: card.identity.episode?.let { episode ->

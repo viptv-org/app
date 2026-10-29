@@ -1,6 +1,7 @@
 package org.viptv.app.state
 
 import kotlinx.coroutines.*
+import org.viptv.app.components.NextEpisodes
 import org.viptv.app.connection.*
 
 fun ApplicationController.restore(localDatabase: String? = null) = run {
@@ -193,7 +194,10 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
     mutable.value = ApplicationState(screen = screen ?: if (value.selected == null) Screen.Profiles else Screen.Home, busy = busy,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
-        plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
+        plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences,
+        // Home's row is the bootstrap's own continuation page: it names the next episode each
+        // caught-up card waits for (app#132), which the row's plain cards cannot carry.
+        continueNext = value.continuation?.entries?.let(NextEpisodes::of))
     discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }
     startLibraryImportRefresh(value.libraryImport)

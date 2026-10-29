@@ -3,6 +3,7 @@ package org.viptv.app.state
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.viptv.app.connection.*
+import org.viptv.app.components.announcing
 import org.viptv.app.features.home.CONTINUE_ROW
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.ContinuationPage
@@ -80,7 +81,9 @@ private suspend fun ApplicationController.reloadContinueWatching(remote: RemoteC
     val page = remote.continueWatching(profile, 0, limit)
     if (connection !== remote || mutable.value.selectedProfile != profile) return
     val current = mutable.value.continueWatching?.takeIf { it.profile == profile }
-    mutable.value = mutable.value.copy(continueWatching = current.refreshedBy(profile, page, limit))
+    mutable.value = mutable.value.copy(continueWatching = current.refreshedBy(profile, page, limit),
+        // Every read carries the next episode each caught-up card waits for (app#132).
+        continueNext = mutable.value.continueNext.announcing(page.entries))
 }
 
 /**
@@ -100,7 +103,8 @@ internal fun ApplicationController.loadContinueWatching(navigation: Long = navig
     runPage {
         val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
         val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
-        mutable.value = mutable.value.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE))
+        mutable.value = mutable.value.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
+            continueNext = mutable.value.continueNext.announcing(page.entries))
     }
 }
 
@@ -119,6 +123,7 @@ fun ApplicationController.continueWatchingMore() {
         val merged = (shown.cards + page.entries.map { it.card }).distinctBy(::cardLookupKey)
         // A page that adds nothing must not re-arm the same cursor forever.
         val next = page.next_cursor?.takeIf { merged.size > shown.cards.size && it != cursor }
-        mutable.value = mutable.value.copy(continueWatching = shown.copy(cards = merged, next = next))
+        mutable.value = mutable.value.copy(continueWatching = shown.copy(cards = merged, next = next),
+            continueNext = mutable.value.continueNext.announcing(page.entries))
     }
 }

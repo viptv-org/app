@@ -34,6 +34,12 @@ import org.viptv.engine.wire.Card
 data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null,
     val avatarStyle: String? = null, val avatarChoice: Int? = null, val avatarUrl: String? = null)
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null,
+    /**
+     * The continuation page Home's row was built from, entries and all: it carries the next
+     * episode a caught-up card waits for (app#132), which the row's plain cards cannot
+     * (backend#78). Null for the local engine and for servers that predate it.
+     */
+    val continuation: org.viptv.engine.wire.ContinuationPage? = null,
     /** Change tokens read before [home] was built; null for local and older servers. */
     val revisions: org.viptv.app.state.Revisions? = null)
 class RemoteFailure(val status: Int, message: String) : Exception(message)
@@ -166,6 +172,7 @@ class RemoteConnection(
             preferences = value["preferences"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
             libraryMembership = value["library_membership"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
             libraryImport = value["library_import"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
+            continuation = value["continuation"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
             revisions = parseRevisions(value["revisions"]))
     }
 

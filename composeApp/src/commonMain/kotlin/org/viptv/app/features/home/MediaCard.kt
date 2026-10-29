@@ -60,6 +60,8 @@ import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.cardChip
 import org.viptv.app.components.caughtUpCaption
+import org.viptv.app.components.caughtUpNextCaption
+import org.viptv.app.components.LocalNextEpisodes
 import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvBackdropBlur
@@ -93,6 +95,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     select: ((Card) -> Unit)? = null) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
+    // The next episode a caught-up Continue Watching card waits for (app#132).
+    val nextEpisode = LocalNextEpisodes.current?.get(card)
     // Desktop pointer affordances (boards D3HomeHover / D3Context). `desktop` is
     // only true where the Compose Desktop chrome published the card actions, so
     // the TV D-pad path and touch taps keep their existing behaviour.
@@ -166,9 +170,12 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             Spacer(Modifier.height(9.dp))
             Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, // Ellipsis in every state; basicMarquee already clips its own slice. (NAV-13)
                 overflow = TextOverflow.Ellipsis)
-            // A caught-up Continue Watching card names the episode it finished (app#132);
-            // the next episode's line waits for the server's next-episode facts (backend#78).
-            (card.subtitle ?: card.caughtUpCaption())?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            // A caught-up Continue Watching card names the episode it finished, and under it the
+            // episode it is waiting for, "S3 E5 coming soon" or its air date (app#132). The facts
+            // come per continuation entry, so the board reads them from the shell (local below).
+            val caughtUp = remember(card) { card.caughtUpCaption() }
+            (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            if (caughtUp != null) nextEpisode?.caughtUpNextCaption()?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         if (actions != null) {
             menuAt?.let { at ->
