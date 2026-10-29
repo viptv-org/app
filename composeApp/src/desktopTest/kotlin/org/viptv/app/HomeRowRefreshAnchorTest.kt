@@ -74,9 +74,11 @@ class HomeRowRefreshAnchorTest {
             frames(scene)
             assertTrue(focusCard(scene, "Popular title 1"), "the row card takes focus")
             frames(scene)
+            assertTrue(focusedCard(nodes(scene), "Popular title 1"), "the card holds focus")
             val parked = card(nodes(scene), "Popular title 1")!!.positionInRoot.x
             shown.value = home("top", "Popular", listOf(card("fresh", "New title")) + titles("Popular", 6), 7)
             frames(scene, 40)
+            assertTrue(focusedCard(nodes(scene), "Popular title 1"), "the refreshed row keeps its focused card focused")
             assertNear(parked, card(nodes(scene), "Popular title 1")!!.positionInRoot.x, "the focused card keeps its place")
         } finally { scene.close() }
     }
@@ -88,6 +90,10 @@ class HomeRowRefreshAnchorTest {
         val node = nodes(scene).firstOrNull { it.config.contains(SemanticsActions.RequestFocus) && texts(it).any { text -> text.contains(title) } }
             ?: return false
         return node.config[SemanticsActions.RequestFocus].action?.invoke() ?: false
+    }
+    private fun focusedCard(nodes: List<SemanticsNode>, title: String) = nodes.any {
+        it.config.getOrNull(SemanticsProperties.Focused) == true &&
+            (title in texts(it) || title in it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty())
     }
     private fun press(scene: ImageComposeScene, label: String) {
         val arrow = nodes(scene).first { it.config.contains(SemanticsActions.OnClick) && description(it).contains(label) }

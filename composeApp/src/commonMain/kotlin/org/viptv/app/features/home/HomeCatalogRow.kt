@@ -10,6 +10,7 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,6 +49,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     val cards = row.cards.distinctBy(::cardLookupKey)
         .distinctBy { it.title.trim().lowercase() to it.metadata?.year }
     val endCard = seeAllFor(row)
+    // onFocusChanged reports a card's focus only through a focus target in the row's chain: the focusGroup below.
     var rowFocused by remember { mutableStateOf(false) }
     FollowNewFirstCard(list, cards.firstOrNull()?.let(::cardLookupKey), rowFocused)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
@@ -72,7 +74,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
         }
         when (row.state) {
             RowState.EMPTY, RowState.FAILED -> Unit
-            RowState.READY -> LazyRow(Modifier.onFocusChanged { rowFocused = it.hasFocus }, state = list,
+            RowState.READY -> LazyRow(Modifier.onFocusChanged { rowFocused = it.hasFocus }.focusGroup(), state = list,
                 contentPadding = PaddingValues(horizontal = gutter),
                 horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(cards, key = ::cardLookupKey) { card ->
