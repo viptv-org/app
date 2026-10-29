@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -21,6 +22,8 @@ internal fun DesktopAppWindow(onCloseRequest: () -> Unit, title: String, state: 
     onPreviewKeyEvent: (KeyEvent) -> Boolean = { false }, content: @Composable FrameWindowScope.() -> Unit) {
     Window(onCloseRequest = onCloseRequest, title = title, state = state, undecorated = true,
         onPreviewKeyEvent = onPreviewKeyEvent) {
+        // A supporting window sits behind the pointer until it is activated; the activating press is consumed before Compose sees it.
+        LaunchedEffect(window) { window.toFront(); window.requestFocus() }
         DesktopWindowFrame(framed) { content() }
     }
 }

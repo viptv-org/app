@@ -124,7 +124,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     }
     LaunchedEffect(paused) { if (paused) visible = true }
     LaunchedEffect(visible, paused, interaction, buffering, phonePanel, showTracks, failed) {
-        if (visible && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
+        // Hiding before the first interaction swallows the click that reaches for the transport.
+        if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
     fun seek(value: Long) { if (input?.live != true) {
