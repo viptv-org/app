@@ -129,7 +129,6 @@ internal fun SearchableSelect(
     searchPlaceholder: String = "Search ${title.lowercase()}",
     highlighted: Boolean = anyLabel != null && selected.isNotEmpty(),
     open: MutableState<Boolean> = remember { mutableStateOf(false) },
-    /** A TV page's entry point: the requester its Up or page entry focuses this chip with. */
     chipFocus: FocusRequester? = null,
 ) {
     val distinct = remember(options) { options.distinctBy { it.id } }

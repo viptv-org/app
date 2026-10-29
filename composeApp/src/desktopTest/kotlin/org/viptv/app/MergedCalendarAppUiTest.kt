@@ -132,12 +132,10 @@ class MergedCalendarAppUiTest {
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
         }
 
-        /** The Calendar's Shows chip ("Shows: All", "Shows: Your shows"), or null when the page offers no filter. */
         fun showsTrigger() = nodes().firstOrNull {
             it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it).startsWith("Shows: ") }
         fun showsLabel(): String? = showsTrigger()?.let(::text)
 
-        /** The chip's rows: "All" and "Your shows", whichever container the layout opened them in. */
         private fun rows() = nodes().filter {
             it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) }
         private fun rowLabel(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty()
@@ -157,10 +155,8 @@ class MergedCalendarAppUiTest {
             it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList &&
                 it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::text)
 
-        /** Opens the Shows chip: a click on pointer layouts, OK on the remote. */
         fun openShows() {
             if (television) {
-                // A pick leaves the remote on the chip; otherwise Down enters the page from the rail and Up is the row.
                 if (focusedChip() == null) {
                     until("the remote's focus") { focusedText() != null }
                     press(Key.DirectionDown)
@@ -185,20 +181,15 @@ class MergedCalendarAppUiTest {
                     "; texts=" + nodes().map(::text).filter(String::isNotBlank) }
                 frames(2)
             }
-            // A TV panel opens on the current option, so the remote is already on a row.
             if (television) until("the panel to take focus") { rows().any { it.config.getOrNull(SemanticsProperties.Focused) == true } }
         }
 
-        /** Picks a Shows row and waits for the list to close: OK on the remote, a click elsewhere. */
         fun chooseShows(label: String) {
             openShows()
             if (television) {
-                // The D-pad walks the panel's focus stops from the current option to the wanted row.
                 require(rows().any { rowLabel(it) == label }) { "no $label row; rows=" + rows().map(::rowLabel) }
                 val moves = rows().indexOfFirst { rowLabel(it) == label } - rows().indexOfFirst { it.config.getOrNull(SemanticsProperties.Focused) == true }
                 repeat(abs(moves)) { press(if (moves > 0) Key.DirectionDown else Key.DirectionUp) }
-                // The panel is its own window and desktop maps no arrow key to a focus move, so a D-pad
-                // press can leave focus where it was; land on the row and let OK do the picking.
                 if (focusedRow() != label) request(rows().single { rowLabel(it) == label })
                 assertEquals(label, focusedRow(), "the remote reaches $label")
                 press(Key.DirectionCenter)
@@ -210,7 +201,7 @@ class MergedCalendarAppUiTest {
             until("the Shows list to close") { rows().isEmpty() }
         }
 
-        // Desktop maps no arrow key to a focus move, so an unconsumed D-pad press drives the focus manager.
+        // Desktop maps no arrow key to a focus move, so drive the focus manager.
         private fun press(key: Key) {
             val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown))
             scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
