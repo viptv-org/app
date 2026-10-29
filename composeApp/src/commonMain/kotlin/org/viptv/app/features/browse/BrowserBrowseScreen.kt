@@ -74,7 +74,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     val catalogOpen = remember { mutableStateOf(false) }
     val catalog = controls?.selectedCatalog(query)
     val chooseCatalog = { catalogOpen.value = true }
-    Column(Modifier.fillMaxSize().padding(horizontal = 32.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxSize().padding(start = 32.dp, end = 32.dp, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
         if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)

@@ -73,7 +73,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         val loading = busy || (loadedCards == null && home == null)
         val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
             controls?.controls?.any { it.id == "sort" } == true
-        Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = 24.dp),
+        Column(Modifier.fillMaxSize().padding(horizontal = gutter, top = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(screen.name, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             if (loading && controls == null) BrowseHeaderSkeleton()
