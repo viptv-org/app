@@ -18,19 +18,12 @@ internal data class MpvState(
     val sourceFps: Double = 0.0, val buffering: Boolean = false, val error: Int? = null,
 )
 
-/**
- * libmpv's 8-digit colour form is `#AARRGGBB` (mpv(1)), which matches the
- * profile preference Int. Sending `#RRGGBBAA` swaps alpha into the red
- * channel, so gold (`#FFFFC107`) renders as purple (`#C107FF`).
- */
+// libmpv's 8-digit colour form is #AARRGGBB; sending #RRGGBBAA swaps alpha into the red channel.
 internal fun mpvSubtitleColour(value: Int): String = "#%08X".format(value)
 
 internal class MpvSession(input: PlaybackInput) {
     val api = MpvNative.api
-    // The JVM's startup setlocale(LC_ALL, "") leaves the host's numeric locale
-    // in place, and libmpv refuses to create a client unless LC_NUMERIC is "C".
-    // Without this, desktop playback fails on every non-C locale (MpvNativeTest
-    // reproduced it under LANG=en_US.UTF-8).
+    // The JVM's startup setlocale leaves the host's numeric locale, and libmpv refuses a client unless LC_NUMERIC is "C".
     val handle = run { MpvLocale.requireNumericCLocale(); requireNotNull(api.mpv_create()) }
     private val dispatcher = Executors.newSingleThreadExecutor { r -> Thread(r, "mpv-control").apply { isDaemon = true } }.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)

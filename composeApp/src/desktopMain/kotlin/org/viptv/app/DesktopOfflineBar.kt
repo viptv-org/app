@@ -30,20 +30,9 @@ import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
-/**
- * The controller reports an unreachable server with this exact message
- * (`ApplicationController.run`, the transport-failure branch). DUI-04's brief
- * introduces `ApplicationState.offline` for this; until that field lands in the
- * shared state, the desktop chrome matches the message instead of inventing a
- * second connection probe.
- */
+// The controller reports an unreachable server with this exact message.
 internal const val ServerUnreachableMessage = "Could not reach your server. Check the connection and try again."
 
-/**
- * Board D3Offline: a 44 dp info bar over the content area that keeps the cached
- * Home rows usable while the server is unreachable. It is chrome, not a page, so
- * it lives in desktopMain and the 72 dp rail stays visible beside it.
- */
 @Composable
 internal fun DesktopOfflineBar(retry: () -> Unit, dismiss: () -> Unit, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth().height(44.dp).tvBackdropBlur(20.dp)

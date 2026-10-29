@@ -12,7 +12,7 @@ import javax.swing.SwingUtilities
 
 private val LocalMpvHost = staticCompositionLocalOf<MpvRenderHost?> { null }
 
-/** Keep raster rendering and destruction on the owning window's AWT recording thread. */
+// Keep raster rendering and destruction on the owning window's AWT recording thread.
 @Composable
 internal fun MpvWindow(window: Window, content: @Composable () -> Unit) {
     val host = remember(window) { MpvRenderHost(window) }

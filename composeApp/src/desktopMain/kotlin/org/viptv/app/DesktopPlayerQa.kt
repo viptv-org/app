@@ -16,7 +16,6 @@ import org.viptv.engine.wire.SubtitleCandidate
 import java.nio.file.Files
 import java.nio.file.Path
 
-/** Explicit diagnostic independent of account, storage and tracking; accepts owned local fixtures. */
 internal fun launchDesktopPlayerQa() = application {
     val state = rememberWindowState(width = 1280.dp, height = 720.dp)
     val controls = System.getenv("VIPTV_DESKTOP_QA_CONTROLS") == "1"

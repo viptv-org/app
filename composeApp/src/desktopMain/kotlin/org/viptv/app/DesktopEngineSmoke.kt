@@ -6,7 +6,6 @@ import kotlinx.serialization.json.*
 import uniffi.viptv_core.LocalEngine
 import uniffi.viptv_core.SecretStore
 
-/** Explicit packaging diagnostic; uses its own temporary database and never opens a user vault. */
 internal fun verifyPackagedLocalEngine() {
     val directory = Files.createTempDirectory("viptv-package-smoke-")
     try {

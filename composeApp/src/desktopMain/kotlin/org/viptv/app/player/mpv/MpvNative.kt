@@ -46,7 +46,7 @@ internal interface MpvNative : Library {
     }
 }
 
-/** One pinned, checksum-verified native runtime per platform; system libraries are QA-only. */
+// One pinned, checksum-verified native runtime per platform; system libraries are QA-only.
 internal object MpvRuntime {
     private var cached: String? = null
     private interface WindowsLoader : Library {
@@ -79,7 +79,7 @@ internal object MpvRuntime {
         val identity = MessageDigest.getInstance("SHA-256").digest(raw).joinToString("") { "%02x".format(it) }
         val target = Files.createDirectories(cacheRoot.resolve(identity))
         if (!Platform.isWindows()) Files.setPosixFilePermissions(target, PosixFilePermissions.fromString("rwx------"))
-        // Reuse immutable native bytes. In particular, Windows cannot delete a loaded DLL at exit.
+        // Reuse immutable native bytes: Windows cannot delete a loaded DLL at exit.
         FileChannel.open(target.resolve(".extract.lock"), CREATE, WRITE).use { channel ->
             val deadline = System.nanoTime() + 10_000_000_000L
             var lock = channel.tryLock()
@@ -124,7 +124,7 @@ internal object MpvRuntime {
 
 internal fun mpvCheck(code: Int) { check(code >= 0) { "mpv error $code" } }
 
-/** ABI layout from mpv/client.h; decode borrowed nodes before their owner advances. */
+// ABI layout from mpv/client.h; decode borrowed nodes before their owner advances.
 internal fun mpvNode(pointer: Pointer): JsonElement = when (pointer.getInt(8)) {
     1 -> JsonPrimitive(pointer.getPointer(0)?.getString(0, "UTF-8") ?: "")
     3 -> JsonPrimitive(pointer.getInt(0) != 0)
@@ -143,7 +143,6 @@ internal fun mpvNode(pointer: Pointer): JsonElement = when (pointer.getInt(8)) {
     else -> JsonNull
 }
 
-/** Stack-like ownership for native render parameter arrays and their scalar values. */
 internal class MpvParams : AutoCloseable {
     private val owned = mutableListOf<Memory>()
     private val params = mutableListOf<Pair<Int, Pointer>>()

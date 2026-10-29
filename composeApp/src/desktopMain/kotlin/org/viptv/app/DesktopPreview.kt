@@ -23,8 +23,6 @@ internal fun launchUiPreview() = application {
     val window = rememberWindowState(width = width.dp, height = height.dp)
     var screen by remember { mutableStateOf(runCatching { Screen.valueOf(System.getenv("VIPTV_UI_SCREEN") ?: "Home") }.getOrDefault(Screen.Home)) }
     var term by remember { mutableStateOf(if (screen == Screen.Search) "the w" else "") }
-    // The app's own window and frame (the Windows / Linux one), so the desktop
-    // preview shows what the app shows (app#92); the phone preview stays plain.
     DesktopAppWindow(::exitApplication, "VIPTV UI Preview", window, framed = !phone) {
         org.viptv.app.player.mpv.MpvWindow(this.window) {
         ViptvTheme(pointer = !phone) {
@@ -36,9 +34,6 @@ internal fun launchUiPreview() = application {
                         ::exitApplication, Modifier, back = if (screen != Screen.Home) { { screen = Screen.Home } } else null,
                         maximized = window.placement == WindowPlacement.Maximized)
                 }
-                // The hover preview and the right-click menu only render where the
-                // desktop chrome published card actions; the harness fakes them so
-                // D3HomeHover / D3Context stay reviewable without an account.
                 val previewActions = remember { CardActions(play = {}, toggleSave = {}, isSaved = { false }) }
                 if (phone) UiPreview(desktop = false, screen = screen, navigate = { screen = it }, searchTerm = term, search = { term = it }, tvDetailVariant = System.getenv("VIPTV_UI_VARIANT") ?: "Movie")
                 else CompositionLocalProvider(LocalCardActions provides previewActions) {
