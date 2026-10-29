@@ -8,7 +8,7 @@ internal sealed interface RequiredAudioChoice {
     data class Select(val id: Int) : RequiredAudioChoice
 }
 
-/** Provider ordinals count audio streams, including unsupported ones, before UI filtering. */
+// Provider ordinals count audio streams, including unsupported ones, before UI filtering.
 internal class RequiredAudioSelection(private val ordinal: Int?) {
     private var touched = false
     private var applied: Int? = null

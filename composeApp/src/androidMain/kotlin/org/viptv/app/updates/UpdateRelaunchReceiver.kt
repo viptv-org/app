@@ -4,11 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 
-/**
- * Android replaced this app with a newer build and sent `MY_PACKAGE_REPLACED` (app#139). Without a
- * receiver the viewer is dropped on the launcher; this reopens VIPTV, which then confirms the new
- * version briefly. The task is cleared so the app does not reopen on a stale page.
- */
 class UpdateRelaunchReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
@@ -20,15 +15,14 @@ class UpdateRelaunchReceiver : BroadcastReceiver() {
         try {
             application.startActivity(launch)
         } catch (_: RuntimeException) {
-            // A device that refuses to reopen the app falls back to the Updating screen's "open it again".
         }
     }
 
     companion object {
-        /** Read by `MainActivity` to show "Updated to …" once. */
+        // MainActivity reads this once to show "Updated to …".
         const val EXTRA_UPDATED_TO = "org.viptv.app.updates.UPDATED_TO"
 
-        /** The launcher activity in `androidApp`; used only where no launch intent resolves. */
+        // The launcher activity in androidApp; used only where no launch intent resolves.
         const val MAIN_ACTIVITY = "org.viptv.experiment.MainActivity"
 
         @Suppress("DEPRECATION")

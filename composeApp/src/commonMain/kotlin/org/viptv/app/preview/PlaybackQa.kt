@@ -10,7 +10,6 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 
-/** Isolated public-media QA. It has no account, provider, database or history connection. */
 @Composable
 fun PlaybackQa(close: () -> Unit = {}, canvasColor: Color = Color.Black) {
     val input = remember { PlaybackInput("public-flower-qa", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4") }

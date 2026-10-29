@@ -72,6 +72,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
         ?: lastFocusedIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
     val resumeSeeAll = endCard != null && lastFocusedKey == endKey
     var focusedKey by remember(row.id) { mutableStateOf<Any?>(null) }
+    FollowNewFirstCard(state, cards.firstOrNull()?.let(::cardLookupKey), focusedKey != null)
     val latestCards = rememberUpdatedState(cards)
     val latestEndCard = rememberUpdatedState(endCard)
     val recover = remember { FocusRequester() }

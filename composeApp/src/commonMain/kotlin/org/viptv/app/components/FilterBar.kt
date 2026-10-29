@@ -19,28 +19,14 @@ import org.viptv.engine.wire.Choice
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 
-/** Narrower than this on a touch screen is a phone: its chips open bottom sheets. */
+// Narrower than this on a touch screen is a phone: its chips open bottom sheets.
 private val PhoneWidth = 640.dp
 
-/**
- * The one filter pattern (app#117, components.md section 2): a single scrolling row of
- * dropdown chips at the top of a page, each opening the shared [SearchableSelect] list.
- * Picking applies at once; there is no "Filters" toggle, second panel or Apply button.
- * [clear], when given, ends the row with a "Clear" chip that resets every filter.
- *
- * The row decides the presentation for every chip in it ([LocalSelectPresentation]): a
- * phone-width touch layout gets bottom sheets, a TV (where focus is the only pointer) the
- * right panel, everything else the anchored popover. [gutter] is the side padding the first
- * chip rests on. With [bleed] the parent pads its content by [gutter] and the row scrolls out
- * under that padding to the screen edges; without it the row spans its parent and insets its
- * chips itself.
- */
 @Composable
 internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: Boolean = true, clear: (() -> Unit)? = null,
     content: LazyListScope.() -> Unit) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val phone = !LocalPointerHover.current && maxWidth + (if (bleed) gutter * 2 else 0.dp) < PhoneWidth
-        // TV filters keep the shared chips and open the list as the right panel (app#121).
         val tv = LocalTvFocusAnchoring.current
         val scale = LocalTvScale.current
         val presentation = when {
@@ -48,8 +34,7 @@ internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: 
             phone -> SelectPresentation.Sheet
             else -> SelectPresentation.Popover
         }
-        // The row is one focus group on TV: a panel closing lands back on its chip (the group's
-        // last focused child), and clearing re-enters the row instead of stranding the remote.
+        // The row is one focus group on TV: a closing panel lands back on its chip, and clearing re-enters the row.
         val row = remember { FocusRequester() }
         // A TV ring is drawn outside the chip; the scrolling row would clip it at either end.
         val reach = if (tv) tvRingReach(scale) else 0.dp
@@ -59,7 +44,6 @@ internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: 
                 .then(if (tv) Modifier.focusRequester(row).focusGroup() else Modifier),
                 contentPadding = PaddingValues(horizontal = gutter + reach),
                 horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
-                // A chip row pinned above a grid: the wheel over it scrolls it sideways (app#59).
                 wheelScrollsRow = true) {
                 content()
                 if (clear != null) item(key = "filter-bar:clear") {
@@ -71,25 +55,13 @@ internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: 
     }
 }
 
-/** The design's group divider: a 1 × 20 hairline between chip groups (the catalog or list | its filters). */
 @Composable
 internal fun FilterDivider() {
     Box(Modifier.padding(horizontal = 4.dp).size(width = 1.dp, height = 20.dp).background(Hairline))
 }
 
-/** A choice the provider itself offers as "Any": an empty value, or the label "Any". */
 private fun Choice.isAny() = value.isEmpty() || label.equals("Any", true)
 
-/**
- * One provider [QueryControl] as a filter chip. A single or multiple choice is the
- * [SearchableSelect] (several picks capped by `maximum_selections`), a toggle is
- * [ToggleSelect], and text, number and date controls are [TextSelect].
- *
- * A provider's empty-valued choice becomes the "Any" row; one labelled "Any" with a value
- * stays an ordinary row. Without either, an optional control gains "Any" when [impliedAny]
- * (Browse facets may be unset) and none when the value always exists (My List's Sort). An
- * unset required control reads "Genre: Required".
- */
 @Composable
 internal fun QueryControlFilter(control: QueryControl, selected: List<String>, changed: (String) -> Unit,
     multipleChanged: (List<String>) -> Unit, impliedAny: Boolean = true, highlighted: Boolean? = null) {

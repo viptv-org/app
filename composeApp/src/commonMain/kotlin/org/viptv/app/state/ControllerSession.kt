@@ -13,7 +13,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
         currentCoroutineContext().ensureActive()
         if (generation != operation || connection !== remote) return@run
         if (restored == null) { remote.close(); connection = null }
-        else accept(restored)
+        else { accept(restored); resumeNavigation() }
     } else {
         val savedConnection = try { sessionStore.savedConnection() }
         catch (error: CancellationException) { throw error }
@@ -27,6 +27,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
         if (savedConnection == SavedConnection.Local) {
             if (localDatabase == null) return@run
             accept(openLocalConnection(localDatabase))
+            resumeNavigation()
             return@run
         }
         val saved = (savedConnection as? SavedConnection.Remote)?.session ?: return@run
@@ -41,7 +42,10 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
         try {
             val restored = remote.restoreFromStore()
             currentCoroutineContext().ensureActive()
-            if (generation == operation && connection === remote) accept(restored)
+            if (generation == operation && connection === remote) {
+                accept(restored)
+                resumeNavigation()
+            }
         }
         catch (error: RemoteFailure) {
             currentCoroutineContext().ensureActive()

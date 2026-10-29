@@ -29,12 +29,6 @@ private const val FIRE_TV_PERMISSION =
     "On Fire TV, open Settings › My Fire TV › Developer options › Install unknown apps, turn on VIPTV, then come back."
 private const val PERMISSION_STEP = "Allow VIPTV to install apps in the screen that opens, then come back to finish the update."
 
-/**
- * The full-screen Updating screen (app#139): it covers the app from the moment the viewer chooses
- * Install until Android has replaced the process. While the APK is written into the installer
- * session it shows progress; while Android's confirmation is up, or the install permission is
- * missing, it stays behind that system screen and says what to do (docs/APP_UPDATES.md).
- */
 @Composable
 fun AppUpdating(updater: AppUpdater, television: Boolean) {
     val state by updater.state.collectAsState()
@@ -73,7 +67,6 @@ private fun PermissionScreen(updater: AppUpdater, status: UpdateStatus.NeedsPerm
         action = primary, act = act, later = updater::dismissPendingInstall)
 }
 
-/** The one layout behind both full-screen states: mark, title, what is happening, progress, what next. */
 @Composable
 private fun UpdatingLayout(television: Boolean, title: String, body: String, detail: String, fraction: Float?, percent: String?,
     showBar: Boolean = true, action: String? = null, act: (() -> Unit)? = null, later: (() -> Unit)? = null) {
@@ -138,8 +131,7 @@ private fun TvUpdating(title: String, body: String, detail: String, fraction: Fl
                             }
                         }
                     }
-                    // The permission step follows a press on Install; give the buttons a moment so that
-                    // press cannot also open the settings screen (as the update prompt does).
+                    // The permission step follows a press on Install: let the buttons settle so that press cannot also open settings.
                     LaunchedEffect(action) { delay(700); runCatching { first.requestFocus() } }
                 }
             }
@@ -147,7 +139,6 @@ private fun TvUpdating(title: String, body: String, detail: String, fraction: Fl
     }
 }
 
-/** The opaque page both layouts sit on: it takes every touch, so nothing behind it reacts. */
 @Composable
 private fun UpdatingSurface(modifier: Modifier, content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize().background(Palette.background).testTag("app-updating")) {
@@ -171,10 +162,6 @@ private fun Progress(fraction: Float?, percent: String?, height: androidx.compos
     }
 }
 
-/**
- * "Updated to 0.1.301+aaaaaaa" for a moment after Android reopened the replaced app (app#139). It
- * never blocks the page: a small raised bar at the bottom, and it goes away on its own.
- */
 @Composable
 fun AppUpdateNotice(updater: AppUpdater, television: Boolean) {
     val state by updater.state.collectAsState()

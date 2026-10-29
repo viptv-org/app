@@ -5,7 +5,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.viptv.app.state.*
 
-/** Uses a public playlist in its own native database; no VIPTV backend or guide fixtures. */
 internal suspend fun ApplicationController.prepareLocalLive(path: String, playlist: String) {
     useLocal(path)
     state.first { !it.busy && it.profiles.isNotEmpty() }

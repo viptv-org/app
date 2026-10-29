@@ -15,12 +15,10 @@ import org.viptv.app.updates.AppUpdater
 import org.viptv.app.updates.updateFeedUrl
 import org.viptv.app.updates.updateServerOrigin
 
-/** Activity recreation must not disconnect the account or recreate its navigation state. */
 class ApplicationModel : ViewModel() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val controller = ApplicationController(scope)
     private var started = false
-    /** Lives with the controller, so a rotation does not restart a check or a download. */
     var updater: AppUpdater? = null
         private set
     fun start(localDatabase: String, context: Context) {
@@ -31,7 +29,6 @@ class ApplicationModel : ViewModel() {
         }
         controller.restore(localDatabase)
     }
-    /** A return to the front checks for an app update (docs/APP_UPDATES.md), not while the session is restoring. */
     fun foregroundReturned() {
         val current = controller.state.value
         if (!current.starting) updater?.foreground(playing = current.screen == Screen.Player)

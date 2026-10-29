@@ -12,7 +12,6 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.state.Screen
 
-/** The phone header: the page title or wordmark, the profile menu and, on Home, the filter chips. */
 @Composable
 internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
     Column(Modifier.fillMaxWidth()) {

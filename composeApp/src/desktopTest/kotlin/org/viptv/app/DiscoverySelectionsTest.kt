@@ -22,9 +22,9 @@ class DiscoverySelectionsTest {
         val controls = controls(); val second = controls.catalogs[1]
         assertNull(controls.catalogSelection("top"))
         assertEquals(second, controls.catalogSelection(second.selectionKey()))
-        assertEquals("Top · Second add-on", second.displayName(controls.catalogs))
+        assertEquals("Top Movies · Second add-on", second.catalogTitle(controls.catalogs))
         val sameName = second.copy(connection_name = "First add-on")
-        assertEquals("Top · First add-on (2)", sameName.displayName(listOf(controls.catalogs[0], sameName)))
+        assertEquals("Top Movies · First add-on", sameName.catalogTitle(listOf(controls.catalogs[0], sameName)))
         val initial = BrowseQuery("movie", genre = "Drama").withDefaultCatalog(controls)
         assertEquals("addon:1", initial.connection_id); assertEquals("top", initial.catalog)
         assertEquals("Drama", initial.genre)

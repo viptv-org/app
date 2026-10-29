@@ -66,6 +66,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         val history = readCurrentPage(navigation) { local?.history(profile) ?: requireNotNull(connection).history(profile) } ?: return@runPage
         mutable.value = mutable.value.copy(history = history)
     }
+    rememberNavigation()
 }
 
 fun ApplicationController.backDetails() {
@@ -75,6 +76,7 @@ fun ApplicationController.backDetails() {
     val previous = mutable.value.detailHistory.lastOrNull()
     if (previous != null) mutable.value = mutable.value.copy(detail = previous, detailHistory = mutable.value.detailHistory.dropLast(1), busy = false, error = null)
     else { mutable.value = mutable.value.copy(busy = false); returnTo(mutable.value.detailReturnScreen) }
+    rememberNavigation()
 }
 
 fun ApplicationController.backSources() {
@@ -84,6 +86,7 @@ fun ApplicationController.backSources() {
     if (!awaitingTitle) cancelSourceDetail()
     mutable.value = state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false,
         error = state.error.takeIf { awaitingTitle })
+    rememberNavigation()
 }
 
 fun ApplicationController.navigateBack() {

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
@@ -35,7 +36,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     val byId = remember(visible) { visible.associateBy { it.id } }
     var focusedId by remember { mutableStateOf<String?>(null) }
     val focused = byId[focusedId] ?: visible.firstOrNull()
-    val date = remember { FocusRequester() }; val preview = remember { FocusRequester() }; val categories=remember{FocusRequester()}
+    val date = remember { FocusRequester() }; val preview = remember { FocusRequester() }; val filters=remember{FocusRequester()}
     val rowFocus = remember(activeDay) { mutableMapOf<String, FocusRequester>() }
     val selectedRow = focused?.let { rowFocus.getOrPut(it.id) { FocusRequester() } }
     val rows = rememberLazyListState()
@@ -46,15 +47,19 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     }
     BoxWithConstraints(Modifier.fillMaxSize().focusProperties { onEnter = { if (days.isNotEmpty()) date.requestFocus() } }.focusGroup()) {
         val scale = maxWidth / 1920.dp
-        if(controls)CalendarControls(type,week,true,scale,categoryChanged,weekChanged,
-            Modifier.offset(96.dp*scale,8.dp*scale),categories,date,days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
-            filter,filterChanged)
+        if(controls)Box(Modifier.offset(96.dp*scale,8.dp*scale).width(1728.dp*scale).focusGroup().focusRequester(filters)){
+            CompositionLocalProvider(LocalTvScale provides scale) {
+                CalendarControls(type,week,true,scale,categoryChanged,weekChanged,
+                    range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
+                    filter = filter, filterChanged = filterChanged)
+            }
+        }
         val railY=if(controls)90.dp*scale else 8.dp*scale
         val contentY=if(controls)200.dp*scale else 118.dp*scale
         Row(Modifier.offset(96.dp * scale, railY).focusProperties { onEnter = { date.requestFocus() } }.focusGroup(),
             horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
             days.forEach { day ->
-                TvAction(Modifier.height(64.dp * scale).focusProperties { if (selectedRow != null) down = selectedRow; if(controls)up=categories }, scale,
+                TvAction(Modifier.height(64.dp * scale).focusProperties { if (selectedRow != null) down = selectedRow; if(controls)up=filters }, scale,
                     primary = activeDay == day.id, requester = if (activeDay == day.id) date else null,
                     activate = { selected = day.id; focusedId = null }, cornerRadius = 32.dp * scale,
                     background = if(activeDay==day.id)Palette.raised else androidx.compose.ui.graphics.Color.Transparent, contentPadding = PaddingValues(horizontal = 26.dp * scale)) {

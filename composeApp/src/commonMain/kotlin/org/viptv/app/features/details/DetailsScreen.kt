@@ -27,7 +27,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     continuing: List<Card> = emptyList(),
     paging: Boolean = true,
     playTap: Boolean = false,
-    retry: (() -> Unit)? = null) {
+    retry: (() -> Unit)? = null,
+    closeFocusOnOpen: Boolean = true) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
             continuing = continuing, shown = paging, playTap = playTap, retry = retry)
@@ -39,7 +40,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         return
     }
     if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging, closeFocusOnOpen); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }

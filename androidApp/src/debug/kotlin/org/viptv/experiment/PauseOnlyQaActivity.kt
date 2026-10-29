@@ -6,7 +6,6 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
 
-/** Floating test Activity: parent is paused but remains visible/STARTED. */
 class PauseOnlyQaActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

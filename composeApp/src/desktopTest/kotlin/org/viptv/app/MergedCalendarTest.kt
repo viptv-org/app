@@ -15,6 +15,11 @@ import kotlin.test.*
 
 class MergedCalendarTest {
     @get:org.junit.Rule val clock = MergedCalendarWire.fixedClock()
+    private val store = object : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = null
+        override suspend fun save(session: SavedRemoteSession) = Unit
+        override suspend fun clear() = Unit
+    }
     @Test fun anOldServerResponseIsPublicAndOffersNoFilter() = runBlocking {
         val read = read(page(listOf(MergedCalendarWire.public("public-1", "Public show"))))
         val entry = read.entries.single()
@@ -223,7 +228,7 @@ class MergedCalendarTest {
 
     private fun controller(client: HttpClient, scope: CoroutineScope): Pair<ApplicationController, RemoteConnection> {
         val remote = RemoteConnection("https://fixture.example", client = client, browserMode = false)
-        return ApplicationController(scope).also {
+        return ApplicationController(scope, store).also {
             it.connection = remote
             it.mutable.value = ApplicationState(screen = Screen.Calendar, selectedProfile = "one", preferences = PreferencesSnapshot())
         } to remote

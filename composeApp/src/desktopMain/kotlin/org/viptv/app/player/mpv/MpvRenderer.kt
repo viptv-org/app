@@ -5,12 +5,7 @@ import com.sun.jna.ptr.PointerByReference
 import org.jetbrains.skia.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-/**
- * Compose's desktop delegate records a SkPicture on the AWT thread, without a
- * current GL context. Use mpv's portable raster output there; native decoding
- * can still use copy-back acceleration. Each immutable frame has explicit
- * ownership, independent of the Java heap's native-memory accounting.
- */
+// The desktop delegate records a SkPicture without a GL context, so use mpv's raster output.
 internal class MpvRenderer(private val session: MpvSession, private val host: MpvRenderHost, private val invalidate: () -> Unit) {
     private val api = session.api
     private var context: Pointer? = null

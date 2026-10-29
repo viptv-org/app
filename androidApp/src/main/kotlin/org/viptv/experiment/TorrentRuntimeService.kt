@@ -15,11 +15,6 @@ import org.json.JSONObject
 import org.playbackgateway.runtime.NativeRuntime
 import org.viptv.app.connection.TorrentRuntimeChannel
 
-/**
- * The only host of the shared torrent runtime: a non-exported, app-private
- * process (`:torrent_runtime`). One owner connects over a pipe pair; losing that
- * owner, or a runtime that cannot settle, ends the process and its media endpoints.
- */
 class TorrentRuntimeService : Service() {
     private val connected = AtomicBoolean()
     private val worker = Executors.newSingleThreadExecutor()

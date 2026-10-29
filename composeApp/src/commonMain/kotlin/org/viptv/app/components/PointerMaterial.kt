@@ -34,19 +34,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/*
- * Material 3's clickable components with the hand cursor (app#56).
- *
- * Each wrapper keeps Material's exact name, parameters and defaults and only adds
- * [handCursor] to the modifier when the control is enabled. A file opts in by
- * importing the wrapper by name (`import org.viptv.app.components.TextButton`):
- * an explicit import outranks the `androidx.compose.material3.*` star import, so
- * the call sites stay unchanged. On desktop and web the buttons also take the
- * design's hover fill (components.md §1). The source test fails when a file
- * calls one of these components without that import
- * (`PointerAffordanceTest.everyClickableInTheAppGoesThroughThePointerAffordances`).
- */
-
 @Composable
 fun Button(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
     shape: Shape = ButtonDefaults.shape, colors: ButtonColors = ButtonDefaults.buttonColors(),
@@ -124,7 +111,6 @@ fun DropdownMenuItem(text: @Composable () -> Unit, onClick: () -> Unit, modifier
     androidx.compose.material3.DropdownMenuItem(text, onClick, modifier.cursorIf(enabled), leadingIcon, trailingIcon, enabled,
         colors, contentPadding, interactionSource)
 
-/** The clickable `Surface(onClick = …)` overload. The plain Surface stays Material's. */
 @Composable
 fun Surface(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, shape: Shape = RectangleShape,
     color: Color = MaterialTheme.colorScheme.surface, contentColor: Color = contentColorFor(color),
@@ -142,11 +128,7 @@ fun Tab(selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, e
         selectedContentColor, unselectedContentColor, interactionSource)
 
 
-/**
- * On desktop and web the buttons above draw the design's hover fill themselves
- * ([HoverFill.container]), so Material's own hover state layer is switched off
- * there; press, focus and drag layers keep the surrounding configuration.
- */
+// Material's own hover layer is off on desktop and web, where the buttons draw the fill; press, focus and drag layers stay.
 @Composable
 private fun DesignHoverOnly(content: @Composable () -> Unit) {
     if (!LocalPointerHover.current) return content()

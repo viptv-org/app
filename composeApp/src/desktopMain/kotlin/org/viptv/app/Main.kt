@@ -37,7 +37,6 @@ private fun launchApplication() = application {
     val mac = remember { System.getProperty("os.name").startsWith("Mac") }
     DesktopAppWindow(::exitApplication, "VIPTV Experiment", windowState, framed = !mac,
         onPreviewKeyEvent = { event ->
-            // Ctrl/⌘+K is advertised in the title bar; it has to actually work.
             if (event.type == KeyEventType.KeyDown && (event.isCtrlPressed || event.isMetaPressed) && event.key == Key.K) {
                 runCatching { searchFocus.requestFocus() }
                 true
@@ -45,7 +44,6 @@ private fun launchApplication() = application {
         }) {
         val scope = rememberCoroutineScope()
         val controller = remember { ApplicationController(scope) }
-        // One Back for the chevron, Escape and the mouse buttons; a route's own step comes first.
         val globalBack = remember(controller) { GlobalBack(controller) }
         val base = remember { desktopDataDirectory() }
         LaunchedEffect(window) {
@@ -54,11 +52,7 @@ private fun launchApplication() = application {
         }
         val density = LocalDensity.current
         val maximized = windowState.placement == WindowPlacement.Maximized
-        // Compose reports the maximised bounds back into WindowState, so restoring
-        // to Floating alone leaves a screen-sized "floating" window. Keep the
-        // floating bounds and put them back once the placement has actually
-        // dropped, in a separate effect — setting size in the same click is
-        // swallowed while the window is still maximised.
+        // Restore the floating bounds in a separate effect: setting the size in the same click is swallowed while maximised.
         var restoreTo by remember { mutableStateOf<Pair<DpSize, DpOffset>?>(null) }
         LaunchedEffect(windowState.placement) {
             if (windowState.placement == WindowPlacement.Floating) {

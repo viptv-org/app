@@ -1,6 +1,7 @@
 package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.owner
 import androidx.compose.foundation.background
@@ -11,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
@@ -27,10 +30,16 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val carousel = rememberHeroCarousel(home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) }, heroRotates, home?.scope?.owner())
+        val continueRow = home?.rows?.firstOrNull { it.id == CONTINUE_ROW }
+        var hoveredContinue by remember(home?.scope?.owner()) { mutableStateOf<String?>(null) }
+        val preview = hoveredContinue?.let { key -> continueRow?.cards?.firstOrNull { cardLookupKey(it) == key } }
+        var heroFloor by remember(home?.scope?.owner()) { mutableIntStateOf(0) }
+        val density = LocalDensity.current
+        val carousel = rememberHeroCarousel(home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) }, heroRotates && preview == null, home?.scope?.owner())
         val compact = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else 1f
         val gutter = if (compact) 16.dp else if (television) 96.dp * scale else if (tablet) 32.dp else if (browser) 57.dp else 40.dp
+        val viewportHeight = maxHeight
         var focused by remember(home?.scope?.owner()) { mutableStateOf<Card?>(null) }
         LazyColumn(contentPadding = PaddingValues(bottom = if (compact) 96.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             if (error != null || (home == null && !busy)) item(key = "status") {
@@ -39,13 +48,17 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
             if (busy && home != null) item(key = "refreshing") {
                 LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
             }
-            val heroForSlot = carousel.card
+            // A preview replaces the featured hero and keeps its footprint, so the rows below never move under the pointer.
+            val heroForSlot = carousel.card?.let { preview ?: it }
             if (heroForSlot != null || (home == null && busy)) item(key = "hero") {
                 val hero = heroForSlot
-                Box(Modifier.fillMaxWidth()) {
+                Box(Modifier.fillMaxWidth().heightIn(min = if (preview == null) 0.dp else with(density) { heroFloor.toDp() })
+                    .onGloballyPositioned { if (preview == null) heroFloor = it.size.height }) {
                     if (!television && !tablet && !(compact && !desktopChrome)) hero?.landscape?.let { HomeBackdrop(it) }
                     Box(Modifier.padding(start = if (television || tablet) 0.dp else gutter, end = if (television || tablet) 0.dp else gutter, top = if (television || tablet || browser) 0.dp else 12.dp)) {
-                        if (hero != null) Hero(hero, compact && !desktopChrome, television, open, play, tablet, navigate, browser, save, saved(hero), carousel)
+                        if (hero != null) Hero(hero, compact && !desktopChrome, television, open, play, tablet, navigate, browser, save, saved(hero),
+                            if (preview == null) carousel else null, viewportHeight = viewportHeight,
+                            label = if (preview != null) continueRow?.title ?: "Continue watching" else "Featured")
                         else if (home == null && busy) Box(Modifier.fillMaxWidth().height(350.dp).clip(RoundedCornerShape(12.dp)).background(Palette.surface))
                     }
                 }
@@ -59,7 +72,11 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 }
                 items(visibleRows, key = { it.id }) { row ->
                     HomeCatalogRow(row, compact, television, Modifier,
-                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll)
+                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll,
+                        hover = { card, inside ->
+                            val key = cardLookupKey(card)
+                            hoveredContinue = if (inside) key else hoveredContinue?.takeIf { it != key }
+                        })
                 }
             }
         }

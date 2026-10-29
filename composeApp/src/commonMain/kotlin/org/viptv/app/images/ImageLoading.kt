@@ -13,20 +13,7 @@ import okio.Path
 
 internal expect fun imageCacheDirectory(context: PlatformContext): Path?
 
-/**
- * Installs the app's [ImageLoader] as Coil's singleton factory.
- *
- * [SingletonImageLoader.setSafe] is idempotent, so every composition may call
- * this: once the app's loader exists it does nothing. It refuses only when Coil
- * has already built its *default* loader, which happens the first time any
- * `AsyncImage` or `load` runs — a preview window or a desktop test JVM composes
- * a card before the app shell composes this. Replacing that default keeps
- * [PublicArtworkMapper] and the caches in play instead of throwing (app#134).
- *
- * Coil exposes no query for "a loader is already there", and calling
- * [SingletonImageLoader.get] to ask would build one, so the refusal is the only
- * signal. It is a plain [IllegalStateException] from `setSafe`.
- */
+// setSafe refuses once Coil has built its default loader; replacing that default is the only way in.
 @OptIn(DelicateCoilApi::class)
 @Composable
 internal fun ConfigureImageLoading(diagnostics: ((String) -> Unit)? = null) {
