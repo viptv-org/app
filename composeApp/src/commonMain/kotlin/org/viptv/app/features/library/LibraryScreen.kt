@@ -51,7 +51,8 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
             layout.visibleItemsInfo.filter { it.contentType == LIBRARY_CARD_TYPE }.maxOfOrNull { it.index }
                 ?.minus(layout.totalItemsCount - gridCards.size) ?: -1
         }
-        Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else 40.dp, top = if (phone) 8.dp else 24.dp)) {
+        Column(Modifier.fillMaxSize().padding(start = if (phone) 16.dp else 40.dp, end = if (phone) 16.dp else 40.dp,
+            top = if (phone) 8.dp else 24.dp)) {
             LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(176.dp), state = grid,
                 modifier = if (visible.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = if (visible.isEmpty()) 0.dp else if (phone) 96.dp else 24.dp),
