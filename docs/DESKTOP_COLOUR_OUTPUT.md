@@ -8,8 +8,8 @@ selected under the render API. The software context therefore does no colour con
 own: a PQ/HLG source reaches Skia with its code values read as sRGB, so everything above
 roughly 93 nits clips to white.
 
-`MpvColourOutput.mpvToneMapFilter` is applied to those sources: zscale to linear at a 100-nit
-nominal peak, BT.709 gamut, `tonemap=mobius`, BT.709/sRGB, 8-bit 4:2:0. Measured on this host
+`mpvToneMapFilter` (`MpvColourOutput.kt`) is applied to those sources: zscale to linear at a
+100-nit nominal peak, BT.709 gamut, `tonemap=mobius`, BT.709/sRGB, 8-bit 4:2:0. Measured on this host
 (mpv 0.37, libplacebo 6.338.2, software display) with a 0–10 000 nit PQ ramp: without the chain
 16 of 32 sampled columns are 255 and the gradient is gone; with it the ramp runs 0→216 and only
 plateaus above about 1 000 nits. Möbius leaves in-range values untouched, so an SDR source keeps
