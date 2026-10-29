@@ -293,7 +293,7 @@ class BrowserSourceDrawerTest {
         }
     }
 
-    @Test fun aPlayTapsLoadingDetailsBehindTheDrawerLeavesTheFocusInTheDrawer() {
+    @Test fun aPlayTapsDetailsBehindTheDrawerKeepTheFocusInTheDrawerUntilItCloses() {
         BrowserApp().use { app ->
             detailsHeld = true
             app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
@@ -309,6 +309,10 @@ class BrowserSourceDrawerTest {
             app.until("the tap's Details to fill the page in") { app.controller.state.value.detail != null && app.pane(title) != null }
             app.frames(30)
             assertEquals("Close", app.focusedText(), "the page arriving behind the drawer does not take its focus")
+
+            app.key(Key.Escape)
+            app.until("the drawer to close") { app.drawerPane == null }
+            app.until("the Details dialog to take the focus back") { app.focusedText()?.contains("Close details") == true }
         }
     }
 
