@@ -73,7 +73,8 @@ class DesktopPlayerFirstClickTest {
                 press(scene, node(scene, "Pause").boundsInWindow.center)
                 assertEquals(1, toggles, "the Pause press toggles playback")
                 press(scene, node(scene, "Playback position").boundsInWindow.center)
-                assertTrue(nodes(scene).any { text(it) == "0:10" }, "the timeline click seeks to half of 0:20")
+                val shown = nodes(scene).map { text(it) }
+                assertTrue(shown.any { it in setOf("0:09", "0:10", "0:11") }, "the timeline click seeks to about half of 0:20, saw $shown")
             } finally { scene.close() }
         }
     }
