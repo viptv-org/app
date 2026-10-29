@@ -80,12 +80,16 @@ class BrowserSourceDrawerTest {
     private val requests = mutableListOf<String>()
     private fun requested() = synchronized(requests) { requests.toList() }
 
+    private val detailsHeld = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val releaseDetails = CompletableDeferred<Unit>()
+
     private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
     private fun MockRequestHandleScope.host(request: HttpRequestData) = when (val path = request.url.encodedPath) {
         "/api/bootstrap" -> json(bootstrap)
         "/api/meta/series/$show" -> {
             val offset = request.url.parameters["offset"]?.toInt() ?: 0
             synchronized(requests) { requests += "meta@$offset" }
+            if (detailsHeld.get()) releaseDetails.await()
             json(metaPage(offset, request.url.parameters["limit"]?.toInt() ?: 24))
         }
         "/api/streams" -> { synchronized(requests) { requests += "streams" }; json("""{"id":"job-1"}""") }
@@ -177,6 +181,10 @@ class BrowserSourceDrawerTest {
             until("the episode's sources") { controller.state.value.let { it.screen == Screen.Sources && !it.findingSources && it.sources.size == 4 } }
             frames(20)
         }
+
+        val drawerPane get() = pane("Choose a source")
+        fun drawerClose() = bounds(drawerPane ?: return null).let { drawer -> nodes().firstOrNull { node ->
+            drawer.contains(bounds(node).center) && node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() == "Close" } }
 
         override fun close() {
             scene.close(); controller.job?.cancel(); scope.cancel(); remote.close()
@@ -274,6 +282,28 @@ class BrowserSourceDrawerTest {
             app.assertDetailsUnchanged(before, metaBefore)
             app.chooseEpisode()
             app.assertDetailsUnderTheDrawer(before)
+        }
+    }
+
+    @Test fun aPlayTapsDetailsLoadingBehindTheDrawerDoNotTakeTheDrawersFocus() {
+        BrowserApp().use { app ->
+            detailsHeld.set(true)
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.controller.playTitle(app.continueCard)
+            // A Home play tap opens the selector first and reads the title beside it, so its Details dialog is composed behind the drawer, loading.
+            app.until("the tap's drawer over its loading Details") { app.controller.state.value.let { state ->
+                state.screen == Screen.Sources && state.detailsPending() } && app.drawerPane != null && app.pane("Title details") != null }
+            val close = assertNotNull(app.drawerClose(), "the drawer's Close button is composed")
+            app.until("the drawer's Close button to take the focus") { app.focused()?.id == close.id }
+            app.frames(30)
+            assertEquals(close.id, assertNotNull(app.focused(), "focus stays on the drawer's Close button").id,
+                "the loading Details dialog behind the drawer does not take it")
+
+            releaseDetails.complete(Unit)
+            app.until("the tap's Details to fill the page in") { app.controller.state.value.detail != null && app.pane(title) != null }
+            app.frames(30)
+            assertEquals(close.id, assertNotNull(app.focused(), "focus stays on the drawer's Close button").id,
+                "the page arriving behind the drawer does not take it")
         }
     }
 
