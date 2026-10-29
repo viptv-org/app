@@ -25,7 +25,6 @@ import kotlinx.coroutines.delay
 import org.junit.Rule
 import kotlin.test.*
 
-/** D-pad geometry of the TV preference pages and the release-fact badges in source rows. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvPreferenceRowsUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -83,7 +82,6 @@ class TvPreferenceRowsUiTest {
         fun heightOf(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.maxOf { it.boundsInRoot.height }
         fun phone(candidate: SourceCandidate, width: Int) = ImageComposeScene(width, 400, Density(1f)) { ViptvTheme {
             Column(Modifier.width(width.dp)) { SourceRow(candidate, false, {}) } } }
-        // (candidate, width, at least this many badges shown)
         val cases = listOf(Triple(source, 320, 1), Triple(source, 390, 0), Triple(source.copy(label = "LordStreams"), 390, 2), Triple(source, 800, 4))
         for ((candidate, width, least) in cases) {
             val withBadges = phone(candidate, width)
@@ -92,7 +90,6 @@ class TvPreferenceRowsUiTest {
                 frames(withBadges); frames(without)
                 assertEquals(heightOf(without), heightOf(withBadges), "badges never add a line at $width")
                 val badges = unmerged(withBadges).filter { it.layoutInfo.isPlaced && text(it) in listOf("WEB-DL", "DV", "Dual audio", "3D") }
-                // Order is kept and only trailing badges drop; a one-line label that fills the row leaves room for none.
                 assertEquals(listOf("WEB-DL", "DV", "Dual audio", "3D").take(badges.size), badges.map(::text), "at $width")
                 assertTrue(badges.size >= least, "at $width ${candidate.label}: ${badges.map(::text)}")
                 assertTrue(badges.all { it.boundsInRoot.right <= width }, "no overflow at $width")
@@ -108,8 +105,6 @@ class TvPreferenceRowsUiTest {
         } finally { tv.close() }
     }
 
-    // Desktop scenes do not turn arrow keys into focus moves; the focus manager
-    // applies the same focusProperties (up/down/left) a D-pad press does.
     private var focusManager: FocusManager? = null
     private fun tvSettings(section: String, current: () -> TvSettingsPreferences = { TvSettingsPreferences() },
         change: (TvSettingsPreferences) -> Unit) = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
@@ -128,6 +123,7 @@ class TvPreferenceRowsUiTest {
         val now = focused(scene)?.let(::text).orEmpty()
         assertTrue(now.startsWith(label), "expected focus on $label, was '$now'")
     }
+    // Desktop maps no arrow key to a focus move, so an unconsumed D-pad press has to drive the focus manager.
     private suspend fun press(scene: ImageComposeScene, key: Key) {
         when (key) {
             Key.DirectionDown -> focusManager!!.moveFocus(FocusDirection.Down)

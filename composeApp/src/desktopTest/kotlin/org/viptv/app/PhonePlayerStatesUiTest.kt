@@ -29,11 +29,9 @@ class PhonePlayerStatesUiTest {
         } }
         try {
             frames(scene); capture(scene, "phone-player-scrubbing")
-            // Scrub the timeline slider: the preview position follows the thumb.
             val slider = nodes(scene).single { it.config.contains(SemanticsActions.SetProgress) }
             slider.config[SemanticsActions.SetProgress].action!!.invoke(0.5f)
             frames(scene, 20)
-            // Half of 3_132_000 ms = 26:06 shown while scrubbing.
             assertTrue(nodes(scene).any { text(it) == "26:06" })
             capture(scene, "phone-player-seek-indicator")
         } finally { scene.close() }
@@ -49,7 +47,6 @@ class PhonePlayerStatesUiTest {
             click(scene, "Lock"); frames(scene, 20)
             capture(scene, "phone-player-locked")
             val textClickable = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }
-            // While locked only the icon unlock button is interactive.
             assertTrue(textClickable.size <= 2)
             val unlock = nodes(scene).single {
                 it.config.getOrNull(SemanticsProperties.ContentDescription)?.any { it.contains("Unlock") } == true && it.config.contains(SemanticsActions.OnClick)
@@ -95,7 +92,6 @@ class PhonePlayerStatesUiTest {
         } }
         try {
             frames(scene)
-            // The buffering indicator (opening) shows before the first frame.
             capture(scene, "phone-player-buffering")
         } finally { scene.close() }
     }

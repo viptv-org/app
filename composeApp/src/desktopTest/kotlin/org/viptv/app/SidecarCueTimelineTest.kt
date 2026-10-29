@@ -25,7 +25,6 @@ class SidecarCueTimelineTest {
         assertEquals(emptyList(), timeline.cuesAt(500))
         assertEquals(listOf("top", "bottom"), timeline.cuesAt(250))
     }
-    /** app#43: Android stacks simultaneous cues newest on top, so the timeline must keep every line, oldest first. */
     @Test fun multiLineAndOverlappingCuesKeepEveryLineOldestFirst() {
         val twoLines = "Where are you going this late?\nHome, before it rains."
         val timeline = SidecarCueTimeline(listOf(SidecarCueGroup(6_000_000, 8_000_000, listOf("- Home.")),

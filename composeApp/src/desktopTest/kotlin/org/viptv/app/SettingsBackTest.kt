@@ -21,11 +21,9 @@ private object NoSavedSession : RemoteSessionStore {
     override suspend fun clear() = Unit
 }
 
-/** app#7: Back from a Settings sub-page returns to Settings, one level at a time. */
 @OptIn(ExperimentalComposeUiApi::class)
 class SettingsBackTest {
     @get:Rule val uiThread = UiThreadRule()
-    /** Phone-width Settings rendered from the controller, as App does. */
     private class Harness(browser: Boolean, start: ApplicationState, height: Int = 844) : AutoCloseable {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession).also { it.mutable.value = start }
@@ -47,7 +45,6 @@ class SettingsBackTest {
             val node = nodes().first { labelled(it, value) && it.config.contains(SemanticsActions.OnClick) }
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); render()
         }
-        /** The Settings list: its title and the profile switcher row only it shows. */
         fun atSettingsList() = controller.state.value.screen == Screen.Settings && shows("Settings") && shows("Switch profile")
         override fun close() { scene.close(); scope.cancel() }
     }
@@ -124,12 +121,10 @@ class SettingsBackTest {
     @Test fun wideSectionsAreNotSubPagesAndAPageLastsOneVisit() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession)
-        // A sidebar section on a wide layout: Back leaves Settings as it always did.
         controller.mutable.value = settings(navBack = listOf(Screen.Search)).copy(settingsPage = SettingsPage("Devices"))
         controller.navigateBack()
         assertEquals(Screen.Search, controller.state.value.screen)
         assertNull(controller.state.value.settingsPage, "Leaving Settings must forget its page")
-        // A page left behind by a direct screen change never outlives its visit.
         controller.mutable.value = controller.state.value.copy(screen = Screen.Search, settingsPage = SettingsPage("Add-ons", subpage = true))
         controller.navigate(Screen.Settings)
         assertNull(controller.state.value.settingsPage, "Settings must open at its entry section, not a stale sub-page")

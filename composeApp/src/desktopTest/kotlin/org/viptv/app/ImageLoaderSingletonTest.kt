@@ -25,37 +25,25 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import kotlin.test.*
 
-/**
- * app#134: Coil builds its default singleton image loader the first time any
- * `AsyncImage` composes, and `SingletonImageLoader.setSafe` then refuses a
- * factory for the rest of the JVM. A desktop test JVM renders cards long before
- * it renders a preview, so composing [UiPreview] must install the app's loader
- * over Coil's default instead of throwing "The singleton image loader has
- * already been created", and it must keep exactly one loader afterwards.
- */
+// Coil creates its default loader before any preview runs, so the preview must install the app's over it, not throw.
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ImageLoaderSingletonTest {
     @get:Rule val uiThread = UiThreadRule()
 
-    /** Public artwork, the shape [org.viptv.app.images.PublicArtworkMapper] proxies. */
     private val poster = "https://simkl.in/posters/20/204275190b49d24215_m.webp"
     private val card = Card(MediaIdentity("simkl:134:1", "movie", emptyList()), provider_id = "simkl",
         title = "Square One", poster = poster, badges = emptyList())
 
     @Test fun previewInstallsTheSharedImageLoaderAfterACardCreatedCoilsDefault() = runBlocking {
-        // Coil's default loader is what any card leaves behind in a test JVM.
         SingletonImageLoader.reset()
 
-        // 1. A card with artwork, as an earlier UI test in this JVM renders one.
         render { MediaCard(card, width = 240, open = {}) }
 
-        // 2. The preview installs the app's loader over Coil's default.
         render(television = true) { UiPreview(television = true, screen = Screen.Search) }
         val installed = SingletonImageLoader.get(PlatformContext.INSTANCE)
         val mapped = installed.components.map(poster, Options(PlatformContext.INSTANCE)).toString()
         assertEquals(publicArtworkUrl(poster), mapped, "the installed loader maps public artwork")
 
-        // 3. Screens and previews that compose afterwards reuse that loader.
         render(television = true) { UiPreview(television = true, screen = Screen.Home) }
         render { MediaCard(card, width = 240, open = {}) }
         assertSame(installed, SingletonImageLoader.get(PlatformContext.INSTANCE),

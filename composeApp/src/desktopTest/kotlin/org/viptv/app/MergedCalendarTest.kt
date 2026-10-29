@@ -13,12 +13,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/**
- * The merged calendar (app#46) against fake responses shaped like the documented
- * `/calendar` wire (backend PR #25, docs/SIMKL_V3.md): `source` per entry,
- * `episode_card` on library entries, page `sources`, and `refresh_after_millis`
- * only while library lookups are still running.
- */
 class MergedCalendarTest {
     @get:org.junit.Rule val clock = MergedCalendarWire.fixedClock()
     @Test fun anOldServerResponseIsPublicAndOffersNoFilter() = runBlocking {
@@ -66,7 +60,6 @@ class MergedCalendarTest {
 
     @Test fun anEpisodeWhoseParentSharesAnExternalIdOfTheSeriesIsKept() = runBlocking {
         val entry = MergedCalendarWire.library("lib-1", "Your series", 1, 2).let { json ->
-            // The row's series card is a Simkl title that lists the IMDb id the episode's parent uses.
             val card = buildJsonObject {
                 json.getValue("card").jsonObject.forEach { (key, value) -> put(key, value) }
                 put("identity", buildJsonObject { put("id", "simkl:tv:20"); put("kind", "series")
@@ -240,7 +233,6 @@ class MergedCalendarTest {
         MergedCalendarWire.page(entries, sources, refreshAfter)
 }
 
-/** Calendar responses in the documented wire shape, dated inside this week's window on a fixed clock. */
 internal object MergedCalendarWire {
     fun seriesId(title: String) = "imdb:tt${title.hashCode().toUInt() % 10_000_000u}"
     fun episodeId(title: String, season: Int, episode: Int) = "${seriesId(title)}:$season:$episode"
@@ -268,7 +260,6 @@ internal object MergedCalendarWire {
         })
     }
 
-    /** A public Simkl entry; without [source] it is an older server's entry. */
     fun public(id: String, title: String, source: String? = null, date: String = today(), poster: String? = null) = buildJsonObject {
         put("id", id); put("card", seriesJson(title, poster, "simkl")); put("date", date)
         put("episode_title", "Pilot"); put("season", 1); put("episode", 1); source?.let { put("source", it) }
@@ -280,16 +271,11 @@ internal object MergedCalendarWire {
         refreshAfter?.let { put("refresh_after_millis", it) }
     }.toString()
 
-    /**
-     * The calendar's "now" in these tests: a fixed day, at 20:40 in the default zone, when the
-     * fixtures' releases are partly aired (app#106). VIPTV_CALENDAR_TEST_NOW=HH:mm runs them at
-     * another time of day.
-     */
+    // The fixtures are dated around this fixed day; VIPTV_CALENDAR_TEST_NOW=HH:mm moves the time of day.
     private val now = java.time.LocalDate.of(2026, 10, 14)
         .atTime(System.getenv("VIPTV_CALENDAR_TEST_NOW")?.let(java.time.LocalTime::parse) ?: java.time.LocalTime.of(20, 40))
         .atZone(java.time.ZoneId.systemDefault())
 
-    /** Puts the calendar on the fixed [now] for each test, then the previous clock back. */
     fun fixedClock() = org.junit.rules.TestRule { base, _ -> object : org.junit.runners.model.Statement() {
         override fun evaluate() {
             val previous = calendarClock
@@ -303,7 +289,6 @@ internal object MergedCalendarWire {
     fun today(hour: Int = 20) = at(0, hour)
     fun yesterday() = at(-1, 20)
 
-    /** Today, or [days] days ending today. */
     fun window(days: Int = 1): CalendarWindow {
         val ids = (days - 1 downTo 0).map { requireNotNull(calendarLabel(at(-it.toLong(), 12))).day }
         return CalendarWindow(ids.first(), ids.last(), ids.mapIndexed { index, id -> CalendarDay(id, "D", "$index", if (index == ids.lastIndex) "Today" else "Day $index", id) })

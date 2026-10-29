@@ -183,7 +183,7 @@ class StremioImportUiTest {
         try {
             val probe = Probe(scene); probe.frames(12)
             session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); probe.frames(10)
-            probe.scrollList(6) // The item controls, below the summary on a phone
+            probe.scrollList(6)
             assertTrue(probe.has("1920 review items included · 0 excluded · 2000 shown in this preview"))
             val timings = linkedMapOf<String, Long>()
             fun timed(label: String, block: () -> Unit) { val start = System.nanoTime(); block(); timings[label] = (System.nanoTime() - start) / 1_000_000 }
@@ -287,7 +287,6 @@ class StremioImportUiTest {
         } finally { scene.close() }
     }
 
-    /** Dashboard parity: every row detail, add-on status, the connect draft, the recap and the locked retry. */
     @Test fun rowsDraftRecapRetryAndCompletionShowEveryExplanationAndDetail() {
         val none = mapOf("favorites_to_add" to 0, "progress_to_add" to 0, "progress_to_update" to 0, "existing_preserved" to 0, "already_imported" to 0)
         val items = listOf(
@@ -363,7 +362,6 @@ class StremioImportUiTest {
         } finally { scene.close() }
     }
 
-    /** The server keeps filling imported titles' Details cards after apply; the completion stage shows it without blocking. */
     @Test fun completionShowsAnAnimatedTitleDetailsBarAndKeepsEveryActionAvailable() {
         var status = StremioDetailsStatus(true, 0, 0)
         val transport = FakeStremioTransport()
@@ -446,7 +444,6 @@ class StremioImportUiTest {
         } finally { scene.close() }
     }
 
-    /** TV and desktop have no import entry; the `ImportDetails` preview renders the same completion stage there for review. */
     @Test fun importDetailsPreviewReachesTheCompletionStageOnTelevision() {
         val scene = ImageComposeScene(1920, 1080, Density(1f)) {
             org.viptv.app.preview.UiPreview(initialScreen = Screen.Settings, television = true, tvDetailVariant = "ImportDetails")
@@ -534,7 +531,6 @@ class StremioImportUiTest {
         fun clickableOrNull(label: String) = clickable(label, false)
         private fun clickableOrFail(label: String, button: Boolean) = clickable(label, button) ?: error("Missing action $label")
         fun textNode(value: String) = nodes().first { it.config.getOrNull(SemanticsProperties.Text)?.any { t -> t.text == value } == true }
-        /** Scrolls the import's lazy list, as a user would, so off-screen entries compose. */
         fun scrollToEnd() {
             repeat(3) { nodes().first { it.config.contains(SemanticsActions.ScrollBy) }.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 100_000f); frames(6) }
         }
@@ -551,7 +547,6 @@ class StremioImportUiTest {
         }
         fun progressOrNull() = nodes().firstOrNull { it.config.contains(SemanticsProperties.ProgressBarRangeInfo) }
         fun progress() = requireNotNull(progressOrNull()) { "Missing progress bar" }
-        /** The rendered colours across the middle of [node], to tell whether it is drawn differently between frames. */
         fun pixels(node: SemanticsNode): List<Int> = scene.render(frame++ * 16_666_667L).use { image ->
             val bitmap = org.jetbrains.skia.Bitmap.makeFromImage(image)
             val bounds = node.boundsInRoot

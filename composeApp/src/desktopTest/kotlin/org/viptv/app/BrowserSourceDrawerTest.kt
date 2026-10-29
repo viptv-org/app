@@ -27,15 +27,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * The web source drawer opens over the title's Details dialog instead of replacing it
- * (app#60). The real browser App shell at 1440x900 over a fake host shaped like the KMP
- * dev host (a Stremio-imported Cinemeta series, as in [DetailsResumeSeasonTest]): Details
- * open on the continued season (app#40), the viewer scrolls, picks an episode, and the
- * drawer slides in over the still-visible dialog. Closing it leaves the dialog exactly as
- * it was, with no Details refetch. With VIPTV_SOURCE_DRAWER_CAPTURE_DIR set it writes the
- * PR screenshots.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class BrowserSourceDrawerTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -80,7 +71,6 @@ class BrowserSourceDrawerTest {
                 "poster":null,"progress":0.42,"provider_id":"library","subtitle":"S2 E8 · 14m left","title":"$title"}],"id":"continue",
                 "message":null,"next_cursor":null,"provider_id":"library","state":"Ready","title":"Continue Watching"}]}}"""
 
-    /** Torrent-style source names with the long release lines that wrapped in the 460 dp drawer. */
     private val streams = (1..4).joinToString(",") { n ->
         """{"id":"s$n","name":"Torrentio ${if (n == 1) "4K" else "1080p"} RD+","quality_height":${if (n == 1) 2160 else 1080},
             "description":"Mushoku.Tensei.Jobless.Reincarnation.S02E10.Turning.Point.$n.1080p.CR.WEB-DL.DUAL.AAC2.0.H.264.MSubs-ToonsHub 👤 412 💾 1.4 GB ⚙️ ThePirateBay",
@@ -104,7 +94,6 @@ class BrowserSourceDrawerTest {
             else respond("{\"error\":\"not in this fixture\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
     }
 
-    /** The browser App shell at [width]x[height] dp over the fake host, signed into the QA profile. */
     private inner class BrowserApp(val width: Int = 1440, val height: Int = 900) : AutoCloseable {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         private val client = HttpClient(MockEngine { request -> host(request) }) { configureTransport() }
@@ -139,12 +128,9 @@ class BrowserSourceDrawerTest {
                 "${state.screen} busy=${state.busy} error=${state.error} episodes=${state.detail?.episodes?.size} requests=${requested()} " +
                     nodes().map(::text).filter { it.isNotBlank() }.take(40) } }; frames(2) }
         }
-        /** Bounds in dp, whatever the capture density. */
         fun bounds(node: SemanticsNode) = node.boundsInRoot.let { Rect(it.left / density, it.top / density, it.right / density, it.bottom / density) }
         fun pane(name: String) = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.PaneTitle) == name }
-        /** The Details dialog's episode row for [episode], merged with its number and description. */
         fun episodeRow(episode: String) = nodes().firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == episode } }
-        /** Where each composed Details episode row sits: the dialog's season and scroll position. */
         fun episodeTops() = all.filter { it.first == 2L }.mapNotNull { (s, e) -> episodeRow("Episode $s-$e")?.let { "Episode $s-$e" to bounds(it).top } }.toMap()
         fun focused() = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }
         fun key(key: Key) {
@@ -162,43 +148,28 @@ class BrowserSourceDrawerTest {
             scene.render(frame++ * 16_666_667L).use { image -> image.encodeToData()!!.use { File(dir, "$name.png").writeBytes(it.bytes) } }
         }
 
-        /** One wheel notch over the dialog's episode list. */
         fun scrollDialog() {
             scene.sendPointerEvent(PointerEventType.Scroll, Offset(500f * density, 600f * density), scrollDelta = Offset(0f, 1f))
         }
 
-        /** The dialog's row for [episode] when the dialog draws all of it, not just part of it at an edge. */
         fun shownRow(episode: String): SemanticsNode? {
             val dialog = pane(title)?.let(::bounds) ?: return null
             return episodeRow(episode)?.takeIf { row -> bounds(row).let { it.top >= dialog.top && it.bottom <= dialog.bottom } }
         }
 
-        /**
-         * Details open on S2 E8 (the Continue Watching episode), then the viewer scrolls the dialog
-         * down to S2 E12 and the list comes to rest there.
-         *
-         * The dialog lands on S2 E8 by itself once its episodes arrive (app#40), unless a scroll
-         * reaches the list first, in which case the app keeps the viewer's position — the landing is
-         * one-shot and stops for good. Both are correct, so this walks the list to a row the dialog
-         * draws in full instead of stopping at "S2 E10 is composed": a lazy list also composes the
-         * row just past its edge, and the row a test clicks must be one the scroll actually put on
-         * screen (app#142: stopping at a composed row left S2 E11/E12 outside the list).
-         */
+        // A lazy list also composes the row just past its edge, so only a row the scroll left fully on screen counts.
         fun openDetailsAndScroll() {
             until("Home") { nodes().any { text(it).contains("Continue Watching") } }
             controller.open(continueCard)
             until("season 2's episodes in the Details dialog") { episodeTops().isNotEmpty() && !controller.state.value.busy }
             until("the viewer's scroll to S2 E12") {
                 val shown = shownRow("Episode 2-12")
-                // A landing still under way can jump the list once, as it would for a viewer who
-                // scrolled a moment too early: only a row that is on screen now and after the next
-                // frames counts, so the tests never act on a position the app is about to change.
+                // The landing is one-shot and gives up once a scroll reaches the list, so a row has to hold for the next frames too.
                 if (shown == null) scrollDialog() else frames(8)
                 shown != null && shownRow("Episode 2-12") != null
             }
         }
 
-        /** The viewer picks S2 E10 in the dialog; its sources finish loading in the drawer. */
         fun chooseEpisode() {
             val row = assertNotNull(nodes().firstOrNull { it.config.contains(SemanticsActions.OnClick) && text(it).contains("Episode 2-10") },
                 "S2 E10 is clickable in the dialog: " + nodes().map(::text).filter { it.isNotBlank() })
@@ -247,7 +218,6 @@ class BrowserSourceDrawerTest {
             val first = assertNotNull(app.focused(), "focus starts in the drawer")
             assertEquals("Close", text(first), "on the drawer's Close button")
             assertTrue(app.bounds(drawer).contains(app.bounds(first).center))
-            // Keyboard focus walks the drawer only: the dialog under it is out of reach.
             repeat(12) {
                 app.key(Key.Tab)
                 val now = assertNotNull(app.focused(), "Tab focuses something")
@@ -282,9 +252,6 @@ class BrowserSourceDrawerTest {
             val metaBefore = requested().filter { it.startsWith("meta") }
             app.chooseEpisode()
             val streams = requested().count { it == "streams" }
-            // Over the dialog's episode list, left of the drawer: without the scrim this picks another
-            // episode. S2 E12 is the row openDetailsAndScroll scrolled fully into view, so the click
-            // lands on the list rather than on an edge row the list only composed (app#142).
             val under = assertNotNull(app.shownRow("Episode 2-12"), "S2 E12 is on screen under the scrim: ${app.episodeTops()}")
             val point = app.bounds(under).center.copy(x = 400f)
             assertTrue(point.x < app.bounds(app.pane("Choose a source")!!).left)
@@ -305,7 +272,6 @@ class BrowserSourceDrawerTest {
             assertTrue(close.config[SemanticsActions.OnClick].action!!.invoke())
             app.frames(20)
             app.assertDetailsUnchanged(before, metaBefore)
-            // The dialog under the drawer still answers: another episode opens the drawer again.
             app.chooseEpisode()
             app.assertDetailsUnderTheDrawer(before)
         }

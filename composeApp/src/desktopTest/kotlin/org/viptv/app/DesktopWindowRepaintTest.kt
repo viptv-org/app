@@ -25,16 +25,6 @@ import java.awt.Robot
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.*
 
-/**
- * app#92: in the real desktop window a hover must reach the *screen*, not only
- * the composition. The window was once made see-through behind Compose's back;
- * on Linux Skiko then presented only the first frame, so hover, like every later
- * repaint, never showed, while the scene tests (`DesktopShellHoverTest`) still
- * passed.
- *
- * Needs a display and moves the real mouse, so it is opt-in:
- * `VIPTV_DESKTOP_WINDOW_TEST=1`, for example under `Xvfb :93` with `DISPLAY=:93`.
- */
 class DesktopWindowRepaintTest {
     @Test fun aHoverInTheDesktopWindowReachesTheScreen() {
         assumeTrue("set VIPTV_DESKTOP_WINDOW_TEST=1 with a display",
@@ -50,17 +40,15 @@ class DesktopWindowRepaintTest {
                 val hovered by hover.collectIsHoveredAsState()
                 Box(Modifier.fillMaxSize().hoverable(hover).background(if (hovered) hoverColour else Color(0xFF0B0B0C)))
                 LaunchedEffect(Unit) {
-                    // Sample once, however often the window content is composed.
                     if (!started.compareAndSet(false, true)) return@LaunchedEffect
-                    // The first composition runs before the window is on screen.
                     while (!window.isShowing || window.width == 0) delay(50)
                     val bounds = Rectangle(window.locationOnScreen, window.size)
                     val centre = Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
                     withContext(Dispatchers.IO) {
                         fun look(x: Int, y: Int) { robot.mouseMove(x, y); Thread.sleep(1_000); seen += robot.getPixelColor(centre.x, centre.y) }
-                        look(bounds.x + bounds.width + 60, bounds.y + bounds.height + 60) // resting, mouse outside
-                        look(centre.x, centre.y)                                            // hovered
-                        look(bounds.x + bounds.width + 60, bounds.y + bounds.height + 60) // left again
+                        look(bounds.x + bounds.width + 60, bounds.y + bounds.height + 60)
+                        look(centre.x, centre.y)
+                        look(bounds.x + bounds.width + 60, bounds.y + bounds.height + 60)
                     }
                     exitApplication()
                 }

@@ -24,17 +24,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Deterministic, frame-by-frame capture of a shelf scroll.
- *
- * [ImageComposeScene] runs on a virtual clock, so the same frame index always
- * shows the same point of the 300 ms scroll animation. Comparing these captures
- * between two builds proves that a change to the scroll mechanism is
- * pixel-identical mid-animation, not just once it settles. The live TV catalog is
- * randomised per launch, so this is the only repeatable way to check it.
- *
- * Set VIPTV_SHELF_CAPTURE_DIR to write PNGs.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvShelfScrollVisualTest {
     @get:Rule val uiThread = UiThreadRule()

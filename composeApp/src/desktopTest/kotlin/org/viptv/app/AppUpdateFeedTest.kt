@@ -29,7 +29,6 @@ class AppUpdateFeedTest {
     }
 
     @Test fun aServerThatAnswersWithItsWebPageHasNoFeed() {
-        // The backend serves its web app's index.html for unknown paths.
         assertTrue(assertFailsWith<UpdateFeedException> { parseUpdateFeed("<!doctype html><html></html>", feedUrl) }.missing)
     }
 

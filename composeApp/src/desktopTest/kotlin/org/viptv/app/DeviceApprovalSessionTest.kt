@@ -204,7 +204,6 @@ class DeviceApprovalSessionTest {
             val retried = CompletableDeferred<Result<DeviceApproval>>()
             controller.unlockParent("012345") { result ->
                 result.getOrThrow()
-                // This is synchronous inside the PIN callback, matching the UI.
                 controller.lookup("00123456") { retried.complete(it) }
             }
             assertEquals("Living room", withTimeout(2_000) { retried.await() }.getOrThrow().deviceName)

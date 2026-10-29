@@ -91,7 +91,7 @@ class AccountEntryTest {
     @Test fun accountInputValidationMatchesExistingServerBoundaries() {
         assertTrue(validAccountUsername(" member@example "))
         assertFalse(validAccountUsername("member name")); assertFalse(validAccountUsername("用户"))
-        assertTrue(validNewPassword("密碼測試")) // Existing server checks UTF-8 bytes.
+        assertTrue(validNewPassword("密碼測試"))
         assertFalse(validNewPassword("short")); assertFalse(validNewPassword("a".repeat(257)))
         assertFailsWith<RemoteFailure> { recoveryKit(JsonObject(emptyMap()), false) }
     }

@@ -3,14 +3,6 @@ package org.viptv.app
 import java.io.File
 import kotlin.test.*
 
-/**
- * app#117 and app#121: the dropdown chip and its list are the one filter pattern on every
- * layout. This scan keeps the retired paths from coming back: the phone "Filters" toggle and
- * applied-chip strip, the button-and-menu and Apply-sheet filters, the web rail's segments and
- * chips, the source picker's chip rows, the old segments-or-dropdown rule, and TV's own
- * filter surface (`TvFiltersPage` with "Show results", the `TvLibrary*` sheet and fields) and
- * its two pill rows on the source picker.
- */
 class FilterPatternScanTest {
     private val root = File("src/commonMain/kotlin/org/viptv/app")
     private fun sources() = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
@@ -55,8 +47,6 @@ class FilterPatternScanTest {
     }
 
     @Test fun tvPagesBuildTheirFiltersFromTheSharedBar() {
-        // app#121: the TV pages compose the same bar as every other layout; the TV-only part
-        // is the presentation the bar picks, not a second filter surface.
         val pages = mapOf(
             "features/browse/TvBrowseScreen.kt" to "BrowseFilterBar(",
             "features/library/TvLibraryScreen.kt" to "LibraryFilterBar(",

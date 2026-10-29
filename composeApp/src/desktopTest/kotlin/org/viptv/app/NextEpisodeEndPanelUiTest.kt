@@ -33,10 +33,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#41: the end of a series episode opens the next-episode panel by itself, over the last frame;
- * the Next episode control during playback goes straight to the next episode.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class NextEpisodeEndPanelUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -45,7 +41,6 @@ class NextEpisodeEndPanelUiTest {
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
         metadata = CardMetadata(runtime_minutes = 52), provider_id = "addon:7", title = "Episode $number", badges = emptyList(),
         parent_identity = parent, metadata_origin = origin, description = "The crew regroups after the storm.")
-    /** A distinctive stand-in for the video's last frame, so pixels prove what is drawn over it. */
     private val frameColor = Color(0xFF2E7DB8)
 
     @Test fun phoneNextDuringPlaybackPlaysTheNextEpisodeWithoutOpeningThePanel() {
@@ -78,7 +73,6 @@ class NextEpisodeEndPanelUiTest {
             player.click("Watch credits"); player.frames(40)
             assertFalse(player.hasText("Up next"), "Dismissing keeps the last frame without the panel")
             player.frames(60); assertFalse(player.hasText("Up next"), "A dismissed end panel does not reopen by itself")
-            // Seeking back and reaching the end again offers it again.
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended"))
             assertTrue(player.hasText("Up next"))
             player.click("Next episode")
@@ -96,7 +90,6 @@ class NextEpisodeEndPanelUiTest {
             assertTrue(player.hasText("Next episode unavailable"))
             assertTrue(player.action("Next episode").config.contains(SemanticsProperties.Disabled))
             assertTrue(played.isEmpty())
-            // The controller asks again at the end; a next episode found then still gets its panel.
             player.next = episode(2); player.frames(60)
             assertTrue(player.hasText("Up next")); assertTrue(played.isEmpty())
         } finally { player.close() }
@@ -114,7 +107,6 @@ class NextEpisodeEndPanelUiTest {
             assertTrue(player.hasText("Up next")); assertTrue(player.hasText("25. Episode 25"))
             player.assertOverFrame(640, 200)
             player.capture("desktop-end-panel")
-            // A headless scene has no focused window, so give the panel's first action focus as the window would.
             player.action("Watch credits").config[SemanticsActions.RequestFocus].action!!.invoke(); player.frames()
             player.key(Key.Escape)
             assertFalse(player.hasText("Up next"), "Escape dismisses the panel")
@@ -144,7 +136,6 @@ class NextEpisodeEndPanelUiTest {
             assertFalse(player.hasText("Play next episode"), "Next during playback must not open the panel")
             player.facts(PlayerFact.Status("Ended")); player.frames(60)
             assertTrue(player.hasText("Play next episode")); assertTrue(player.hasText("25. Episode 25"))
-            // The frame stays full screen: no app background where the old shrunken frame ended.
             player.assertOverFrame(1800, 1000); player.assertOverFrame(60, 60)
             player.capture("tv-end-panel")
             player.back(); player.frames(100)
@@ -163,13 +154,10 @@ class NextEpisodeEndPanelUiTest {
             assertFalse(player.hasText("Play next episode"))
             assertTrue(player.nodes().none { player.label(it) == "Next episode" })
             assertTrue(played.isEmpty())
-            // The controller asks again at the end; a next episode found then still gets its panel.
             player.next = episode(2); player.frames(100)
             assertTrue(player.hasText("Play next episode")); assertTrue(played.isEmpty())
         } finally { player.close() }
     }
-
-    // app#65: with "Autoplay next episode" on, the end panel counts down 10 s and then plays the next episode.
 
     @Test fun phoneCountdownReachesZeroAndPlaysTheNextEpisodeOnce() {
         val played = mutableListOf<Card>()
@@ -194,7 +182,6 @@ class NextEpisodeEndPanelUiTest {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended"))
             player.seconds(10.5)
             assertEquals(listOf(episode(25)), played)
-            // The next end: pressing the counting action plays straight away, once.
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.seconds(1.2)
             player.click("Next episode in 9")
             assertEquals(listOf(episode(25), episode(25)), played)
@@ -224,12 +211,10 @@ class NextEpisodeEndPanelUiTest {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended"))
             player.click("Watch credits"); player.seconds(12.0)
             assertFalse(player.hasText("Up next")); assertTrue(played.isEmpty(), "Watch credits cancels")
-            // A tap on the panel, away from its actions: the panel stays, the countdown stops.
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); assertTrue(player.hasText("Next episode in 10"))
             player.press(420, 40); player.seconds(12.0)
             assertTrue(player.hasText("Up next")); assertTrue(player.hasText("Next episode")); assertTrue(played.isEmpty(), "A pointer press cancels")
             player.click("Watch credits")
-            // Escape (desktop/web keyboard Back), from the panel.
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended"))
             player.focus("Watch credits"); player.key(Key.Escape); player.seconds(12.0)
             assertFalse(player.hasText("Up next")); assertTrue(played.isEmpty(), "Escape cancels")
@@ -243,7 +228,6 @@ class NextEpisodeEndPanelUiTest {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended"))
             player.back(); player.seconds(12.0)
             assertFalse(player.hasText("Up next")); assertTrue(played.isEmpty(), "Back cancels")
-            // Seeking leaves the end: the countdown stops and doesn't restart for this panel.
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.seconds(2.0)
             player.facts(PlayerFact.Status("Playing")); player.seconds(12.0)
             assertTrue(played.isEmpty(), "Seeking cancels")
@@ -262,7 +246,6 @@ class NextEpisodeEndPanelUiTest {
             assertTrue(player.hasText("Play next episode"), "The panel stays, without the countdown")
             assertTrue(player.hasText("Nothing plays on its own."))
             player.back(); player.frames()
-            // Play/pause is handled by the player itself, before the panel sees it; it still cancels.
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
             player.focus("Next episode in 10"); player.key(Key.MediaPlayPause); player.seconds(12.0)
             assertTrue(played.isEmpty(), "Play/pause cancels"); assertTrue(player.hasText("Play next episode"))
@@ -281,7 +264,6 @@ class NextEpisodeEndPanelUiTest {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
             player.click("Keep watching credits"); player.seconds(12.0)
             assertFalse(player.hasText("Play next episode")); assertTrue(played.isEmpty(), "Keep watching credits cancels")
-            // Seeking leaves the end: the panel stays without its countdown.
             player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.seconds(1.0)
             player.facts(PlayerFact.Status("Playing")); player.seconds(12.0)
             assertTrue(played.isEmpty(), "Seeking cancels")
@@ -336,7 +318,6 @@ class NextEpisodeEndPanelUiTest {
         } finally { player.close() }
     }
 
-    /** app#41's tests run with the setting off, as before app#65; the countdown tests turn it on. */
     private inner class Player(val width: Int, val height: Int, phone: Boolean = false, television: Boolean = false, next: Card?,
         insets: WindowInsets = WindowInsets(0, 0, 0, 0), title: Card = episode(24), autoplay: Boolean = false, reduceMotion: Boolean = false,
         play: (Card) -> Unit) {
@@ -346,8 +327,6 @@ class NextEpisodeEndPanelUiTest {
         var closed = 0
         private var time = 0L
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(television = television) {
-            // The app background behind a transparent player canvas: the canvas punches through it to the
-            // video layer underneath, as on web. [composite] then lays the result over the last frame.
             Box(Modifier.fillMaxSize().background(Palette.background)) {
                 PlayerScreen(null, true, null, {}, {}, { closed++ }, title = title, phone = phone, television = television,
                     canvasColor = Color.Transparent, externalFacts = facts,
@@ -357,7 +336,6 @@ class NextEpisodeEndPanelUiTest {
             }
         } }
         fun frames(start: Int = 0) = repeat(16) { time = maxOf(time, start * 16_666_667L) + 16_666_667L; scene.render(time).close(); Thread.sleep(4) }
-        /** The test clock: frame time jumps by [value] seconds, then a few frames render 1 ms apart. */
         fun seconds(value: Double) {
             time += (value * 1_000_000_000).toLong()
             repeat(4) { time += 1_000_000; scene.render(time).close(); Thread.sleep(4) }
@@ -377,12 +355,10 @@ class NextEpisodeEndPanelUiTest {
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
         fun label(node: SemanticsNode) = text(node).ifEmpty { node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString().orEmpty() }
         fun hasText(value: String) = nodes().any { text(it) == value }
-        /** The countdown ring's reported share of time gone; null when no ring is drawn (reduced motion). */
         fun ring() = nodes().firstNotNullOfOrNull { node ->
             node.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.takeIf { it.range == 0f..1f }?.current }
         fun action(value: String) = nodes().single { label(it) == value && it.config.contains(SemanticsActions.OnClick) }
         fun click(value: String) { assertTrue(action(value).config[SemanticsActions.OnClick].action!!.invoke()); frames() }
-        /** The rendered player over the video layer showing [still], or the stand-in colour. */
         private fun composite(still: SkiaImage? = null): SkiaImage {
             val surface = Surface.makeRasterN32Premul(width, height)
             if (still == null) surface.canvas.clear(frameColor.toArgb()) else {
@@ -395,7 +371,6 @@ class NextEpisodeEndPanelUiTest {
             return surface.makeImageSnapshot()
         }
         private fun pixel(x: Int, y: Int) = composite().use { image -> Bitmap.makeFromImage(image).use { it.getColor(x, y) } }
-        /** The pixel is the last frame under a translucent scrim: never the app background, never opaque black. */
         fun assertOverFrame(x: Int, y: Int) {
             val color = pixel(x, y)
             assertNotEquals(Palette.background.toArgb(), color, "($x, $y) shows the app background instead of the frame")
@@ -410,7 +385,6 @@ class NextEpisodeEndPanelUiTest {
             actions.forEach { assertTrue(it.boundsInWindow.right <= width - rightInset && it.boundsInWindow.bottom <= height - bottomInset,
                 "${label(it)} at ${it.boundsInWindow} leaves the safe area") }
         }
-        /** Evidence: a real still stands in for the last frame. */
         fun capture(name: String) {
             val path = System.getenv("VIPTV_NEXT_EPISODE_CAPTURE_DIR") ?: return
             val still = SkiaImage.makeFromEncoded(File("src/commonMain/composeResources/files/ui-preview/player.jpg").readBytes())

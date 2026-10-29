@@ -22,12 +22,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * The source picker in the real App shell against a fake server whose providers answer in
- * two batches (SRC-BEST-MATCH-001 scenarios 13, 17 and 20). The ranking response has today's
- * server shape (no `best_match_ids`), so the group comes from the interim rule. With
- * VIPTV_BEST_MATCHES_CAPTURE_DIR set it writes the PR screenshots for phone and TV.
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BestMatchesAppUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -94,7 +88,6 @@ class BestMatchesAppUiTest {
             frames(20)
             assertEquals(listOf("k2160", "b1080", "h1080", "s720", "a720"), controller.state.value.sourceGroups.bestMatches)
             assertEquals("k2160", controller.state.value.sourceGroups.bestMatchId)
-            // All sources now opens at the sixth row, which may sit below the fold.
             assertEquals("BEST MATCHES", headings().first())
             assertTrue(nodes().any { text(it).contains("Best match") && text(it).contains("Source k2160") },
                 "The marker moved to the better row: " + nodes().map(::text).filter { it.contains("k2160") || it.contains("Best match") })
@@ -135,7 +128,6 @@ class BestMatchesAppUiTest {
             put("done", done)
         }.toString()
 
-        /** Today's server shape: ranked streams and `best_match_id`, camera releases last. */
         fun rank(request: String): String {
             val ids = Json.parseToJsonElement(request).jsonObject.getValue("ids").jsonArray.map { it.jsonPrimitive.content }
             val ranked = ids.map { ALL.getValue(it) }.sortedWith(compareBy<Stream> { it.releaseType == "cam" }

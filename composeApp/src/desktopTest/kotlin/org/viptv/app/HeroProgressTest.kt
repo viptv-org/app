@@ -15,7 +15,6 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HeroProgressTest {
-    /** Frame clock on virtual time; counts how often the timer asked for a frame. */
     private class Clock(val scope: TestScope) : MonotonicFrameClock {
         var frames = 0
         override suspend fun <R> withFrameNanos(onFrame: (Long) -> R): R {
@@ -54,7 +53,7 @@ class HeroProgressTest {
         first.cancel()
         val paused = progress.fraction
         assertTrue(paused in 0.35f..0.375f, "paused near 3 s: $paused")
-        advanceTimeBy(10_000) // browsing: no progress while paused
+        advanceTimeBy(10_000)
         assertEquals(paused, progress.fraction)
         val resumedAt = testScheduler.currentTime
         withContext(clock) { progress.run("a") }

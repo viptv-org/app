@@ -25,11 +25,6 @@ import kotlin.test.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 
-/**
- * The outside focus ring must follow the control's own shape and must not be clipped by the
- * scroll container it sits in: the TV filter chip (app#121) sits in the shared, scrolling
- * filter row.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvFocusRingShapeTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -38,7 +33,6 @@ class TvFocusRingShapeTest {
     private fun luminance(argb: Int) = ((argb shr 16 and 0xFF) + (argb shr 8 and 0xFF) + (argb and 0xFF)) / 3
 
     @Test fun tvFilterChipRingWrapsThePillAndIsNotClipped() = onEdt {
-        // A 1080p Android TV at 320 dpi: 960 dp wide, so the board scale is 0.5.
         val scale = .5f
         val scene = ImageComposeScene(800, 300, Density(2f)) { ViptvTheme(true) {
             Column(Modifier.fillMaxSize().background(Palette.background).padding(start = 40.dp, top = 40.dp)) {
@@ -62,7 +56,7 @@ class TvFocusRingShapeTest {
             val pill = chip.boundsInRoot
             val left = pill.left.toInt(); val top = pill.top.toInt(); val middle = pill.center.y.toInt()
             assertEquals(80, left, "the ring room must not move the first chip")
-            val ring = (4 * scale * 2).toInt() // 4 board px at scale, in device px
+            val ring = (4 * scale * 2).toInt()
             assertTrue(luminance(bitmap.getColor(left - ring / 2, middle)) > 200, "ring left of the first chip is clipped")
             assertTrue(luminance(bitmap.getColor(left - ring - 3, middle)) < 40, "ring reaches too far out")
             // The chip is a capsule; a ring with tighter corners paints its top-left box corner.

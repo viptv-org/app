@@ -9,7 +9,6 @@ import kotlinx.serialization.json.*
 import kotlin.test.*
 import org.viptv.app.connection.*
 
-/** Native transport v2 through the real core grant holder and a scripted runtime worker. */
 class NativeTorrentsTest {
     private class Store : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -57,7 +56,6 @@ class NativeTorrentsTest {
             error?.let { put("error", it) }
         })
     }
-    // The exact start body the app sent; the server then resumed it to 42 s.
     private val request = buildJsonObject {
         put("request_id", "0b7f6c38-6d1c-4a5e-9a51-3f3c1b2a9d10"); put("stream_id", "opaque-torrent")
         put("client", buildJsonObject {

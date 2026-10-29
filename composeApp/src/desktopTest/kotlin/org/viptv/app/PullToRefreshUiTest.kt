@@ -24,7 +24,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/** Pulling down at the top of a phone page shows the Material 3 indicator and rebuilds the page (app#1). */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class PullToRefreshUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -50,7 +49,6 @@ class PullToRefreshUiTest {
         put("home", Json.encodeToJsonElement(fresh)); put("integrations", JsonArray(emptyList()))
     }.toString()
 
-    /** One phone (or desktop/TV) App on a controller whose server holds the rebuild until [release]. */
     private inner class Fixture(scope: CoroutineScope, width: Int, private val height: Int, density: Float,
         television: Boolean = false, desktopChrome: Boolean = false,
         state: ApplicationState = ApplicationState(screen = Screen.Home, selectedProfile = "12", home = shown)) {
@@ -70,8 +68,8 @@ class PullToRefreshUiTest {
         private var previousLoader: ImageLoader? = null
         private var appLoader: ImageLoader? = null
         val scene = ImageComposeScene(width, height, Density(density)) {
+            // Coil's default loader may already exist in this JVM, where setSafe refuses a later factory.
             val context = LocalPlatformContext.current
-            // Earlier tests may already own Coil's singleton: give this App its own, as StartupShellUiTest does.
             remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
             App(television = television, desktopChrome = desktopChrome, providedController = controller, manageControllerLifecycle = false)
             appLoader = SingletonImageLoader.get(context)
@@ -84,7 +82,6 @@ class PullToRefreshUiTest {
         }
 
         suspend fun frames(count: Int = 16) = repeat(count) { scene.render(time.addAndGet(16_666_667L)).close(); delay(4) }
-        /** A finger drag straight down from near the top of the page. */
         suspend fun pull(distance: Float) {
             val start = Offset(center, height * 0.3f)
             var at = start
@@ -118,7 +115,6 @@ class PullToRefreshUiTest {
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
 
     @Test fun aPhonePullShowsTheIndicatorAndRebuildsHomeInPlace() = onEdt {
-        // A Pixel-class phone: 412 x 915 dp.
         val phone = Fixture(this, 1080, 2400, 2.625f)
         try {
             phone.frames()

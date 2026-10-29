@@ -12,7 +12,6 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.*
 
-/** Actual Rust planning/proof/grants; only add-on HTTP is replaced. */
 class NativePublicMetadataDelegationTest {
     private class Fixture : AutoCloseable {
         val directory = Files.createTempDirectory("viptv-native-public-metadata-")

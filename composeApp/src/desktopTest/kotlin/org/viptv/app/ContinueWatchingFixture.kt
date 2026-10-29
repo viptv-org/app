@@ -8,13 +8,7 @@ import org.viptv.app.connection.*
 import org.viptv.engine.wire.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-/**
- * A fake host whose profile "1" has [count] titles in progress, served by `GET /api/profiles/1/continue`
- * with the server's offset/limit paging and next cursor (backend `continuation/page.rs`). Source discovery
- * finds nothing, and Details are not in the fixture, so a resumed card stays on its source selector.
- */
 internal class ContinueWatchingHost(@Volatile var count: Int) : AutoCloseable {
-    /** Every list read, as `offset+limit`. */
     val reads = CopyOnWriteArrayList<String>()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -47,7 +41,6 @@ internal class ContinueWatchingHost(@Volatile var count: Int) : AutoCloseable {
     companion object {
         private val origin = MetadataOrigin("stremio", "addon:4", "c".repeat(32))
         private fun show(number: Int) = "tt%07d".format(number)
-        /** "Show 07" resuming at S1 E2: a scoped episode, so OK goes straight to its sources. */
         fun card(number: Int): Card {
             val series = MediaIdentity(show(number), "series", listOf(ExternalId("imdb", show(number))))
             return Card(MediaIdentity("${show(number)}:1:2", "series", emptyList(), EpisodeCoordinates("aired", 1, 2)),
@@ -59,7 +52,6 @@ internal class ContinueWatchingHost(@Volatile var count: Int) : AutoCloseable {
                 position_millis = 600_000, duration_millis = 1_500_000, updated_at_millis = 1_000_000L - number,
                 parent_identity = card.parent_identity, metadata_origin = card.metadata_origin), ContinuationStatus.RESUME)
         }
-        /** Home as the server builds it: the row holds the list's first [shown] entries (12 at most) and the `Continue` action. */
         fun home(shown: Int, hero: Card? = null) = HomeSnapshot(Scope("viptv:remote", "account", "1", 1), 1, hero = hero,
             rows = listOf(HomeRow(browse = HomeBrowseAction(HomeBrowseTarget.CONTINUE), id = "continue", title = "Continue Watching",
                 provider_id = "library", state = RowState.READY, cards = (1..minOf(shown, 12)).map(::card))),

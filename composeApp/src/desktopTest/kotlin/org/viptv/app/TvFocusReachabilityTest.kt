@@ -19,18 +19,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-/**
- * Proves that every TV screen has a focused control on arrival and that every
- * interactive element is a real focus target (it exposes RequestFocus and the
- * focus system accepts it).
- *
- * The D-pad *graph* on top of that is verified on the TV itself with
- * `tools/tv_focus_audit.py`: ImageComposeScene does not run Compose's
- * directional key search, so a synthetic key event would only test the harness.
- *
- * `VIPTV_FOCUS_AUDIT=1` prints the full report; `VIPTV_FOCUS_SCREENS=a,b` limits
- * the run.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvFocusReachabilityTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -77,7 +65,6 @@ class TvFocusReachabilityTest {
         return config.getOrNull(SemanticsProperties.Role) != null
     }
 
-    /** Text/description/role plus an occurrence index in reading order. */
     private fun identityMap(scene: ImageComposeScene): LinkedHashMap<String, SemanticsNode> {
         val nodes = semantics(scene).filter(::isInteractive)
             .sortedWith(compareBy({ it.boundsInRoot.top }, { it.boundsInRoot.left }))
@@ -113,9 +100,6 @@ class TvFocusReachabilityTest {
                 .map { (_, node) -> label(node) }
             val placed = linkedSetOf<String>()
             initial?.let { placed += it }
-            // Place focus on each control through the focus system. A control
-            // that cannot receive focus is not reachable by the remote, so this
-            // is the part that must hold for every screen.
             repeat(2) {
                 for ((key, node) in identityMap(scene)) {
                     val action = node.config.getOrNull(SemanticsActions.RequestFocus)?.action ?: continue
@@ -182,12 +166,6 @@ class TvFocusReachabilityTest {
         val exempt = setOf("splash", "signed-in", "home-loading", "sources-empty", "player")
         val noFocus = reports.filter { it.targets.isNotEmpty() && it.initialFocus == null && it.name !in exempt }
         assertTrue(noFocus.isEmpty(), "TV screens with no initial focus: ${noFocus.map { it.name }}")
-        // Programmatic RequestFocus can legitimately fail for a control inside
-        // an unopened menu or an off-screen lazy item, so placement is reported
-        // but not asserted. What must hold is that every clickable control
-        // exposes RequestFocus (i.e. it is a focus target) and that the screen
-        // arrives with focus somewhere. The D-pad graph itself is checked on the
-        // TV with tools/tv_focus_audit.py.
         val clickableNotFocusable = reports.filter { it.unrequestable.isNotEmpty() }
         assertTrue(clickableNotFocusable.isEmpty(), "Clickable-but-unfocusable controls: " +
             clickableNotFocusable.joinToString { "${it.name}(${it.unrequestable.size})" })

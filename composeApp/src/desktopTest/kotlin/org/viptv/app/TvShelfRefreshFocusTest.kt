@@ -27,7 +27,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-/** A background refresh replaces a shelf's cards; TV focus must survive it (HOME-ADDON-001). */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvShelfRefreshFocusTest {
     @get:Rule val uiThread = UiThreadRule()

@@ -24,11 +24,6 @@ import kotlin.math.abs
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * My List gives the grid the room (app#58): scrolling the list takes the large title and the
- * History card away with the content while the type chips and Filters stay pinned at the top.
- * Phone, tablet and the browser layout share this; TV keeps its own fixed header.
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class LibraryCollapsingHeaderUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -75,7 +70,6 @@ class LibraryCollapsingHeaderUiTest {
         }
 
         suspend fun frames(count: Int = 16) = repeat(count) { scene.render(time.addAndGet(16_666_667L)).close(); delay(4) }
-        /** A finger drag from the middle of the page; negative [distance] scrolls the list down. */
         suspend fun drag(distance: Float) {
             val start = Offset(center, height * if (distance < 0) 0.8f else 0.35f)
             var at = start
@@ -91,14 +85,12 @@ class LibraryCollapsingHeaderUiTest {
             scene.sendPointerEvent(PointerEventType.Release, at, type = PointerType.Touch, timeMillis = time.get() / 1_000_000)
             frames(60)
         }
-        /** A finger tap with no movement. */
         suspend fun tap(x: Float, y: Float) {
             scene.sendPointerEvent(PointerEventType.Press, Offset(x, y), type = PointerType.Touch, timeMillis = time.get() / 1_000_000)
             frames(2)
             scene.sendPointerEvent(PointerEventType.Release, Offset(x, y), type = PointerType.Touch, timeMillis = time.get() / 1_000_000)
             frames(10)
         }
-        /** Mouse-wheel notches over the grid; positive scrolls the list down. */
         suspend fun wheel(notches: Int) {
             val at = Offset(center, height * 0.7f)
             scene.sendPointerEvent(PointerEventType.Move, at, type = PointerType.Mouse)
@@ -119,7 +111,6 @@ class LibraryCollapsingHeaderUiTest {
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun node(label: String) = nodes().firstOrNull { text(it) == label }
         fun top(label: String) = assertNotNull(node(label), "$label on screen; texts=" + nodes().map(::text).filter(String::isNotBlank)).boundsInRoot.top
-        /** The History card counts as shown only while some of it is below the pinned filter bar. */
         fun historyShown(): Boolean {
             val history = nodes().firstOrNull { text(it).contains("Everything you've played") } ?: return false
             val bar = node("Type: All") ?: return false
@@ -145,13 +136,11 @@ class LibraryCollapsingHeaderUiTest {
             assertEquals(filters, phone.top("Type: All"), "the filter bar stays pinned")
             assertEquals(message, phone.top("Couldn't refresh My List"), "the error stays with the pinned controls")
             phone.capture("phone-scrolled")
-            // Empty space in the pinned controls covers scrolled cards; a tap there must not open one.
             val row = assertNotNull(phone.node("Type: All")).boundsInRoot
             phone.tap(row.left / 3f, row.center.y)
             assertEquals(Screen.Library, phone.controller.state.value.screen, "a tap on the pinned controls stays on My List")
             phone.drag(-900f)
             assertEquals(filters, phone.top("Type: All"), "the filter bar stays pinned while the grid keeps scrolling")
-            // Pulling down while the list is scrolled scrolls it back; only the very top refreshes.
             phone.drag(1000f)
             assertEquals(0, phone.bootstraps.get(), "no pull-to-refresh before the list is back at the top")
             repeat(4) { if (!phone.historyShown()) phone.drag(500f) }
@@ -178,7 +167,6 @@ class LibraryCollapsingHeaderUiTest {
             tablet.drag(-300f)
             assertEquals(pinned, tablet.top("Type: All"), "the filter bar stays pinned while the grid scrolls")
             assertNotEquals(cards, tablet.cardTops(), "the grid scrolled under the controls")
-            // Back at the very top the title returns too, so the controls sit where they started.
             repeat(6) { if (tablet.top("Type: All") != filters) tablet.drag(300f) }
             tablet.await("History returns") { tablet.historyShown() }
             assertEquals(filters, tablet.top("Type: All"))
@@ -221,7 +209,6 @@ class LibraryCollapsingHeaderUiTest {
         val tv = Fixture(this, 1920, 1080, 1f, television = true)
         try {
             tv.frames()
-            // The TV filters are the shared chip row (app#121); the row is the fixed header.
             tv.await("TV My List on screen") { tv.node("Type: All") != null }
             assertNull(tv.nodes().firstOrNull { text(it).contains("Everything you've played") }, "TV has no History card")
             val filters = tv.top("Type: All")

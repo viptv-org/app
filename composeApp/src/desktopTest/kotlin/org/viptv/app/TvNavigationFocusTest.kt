@@ -23,7 +23,6 @@ import org.viptv.app.theme.ViptvTheme
 import org.junit.Rule
 import kotlin.test.*
 
-/** The profile menu is the only remote path to Settings, so Right from the last tab must reach it. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvNavigationFocusTest {
     @get:Rule val uiThread = UiThreadRule()

@@ -6,7 +6,6 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.player.*
 import kotlin.test.*
 
-/** SRC-BEST-MATCH-001 and PLAY-SUBTITLE-MODE-001 settings: values, labels and wire compatibility. */
 class PlaybackPreferenceMappingTest {
     private val codec = Json { ignoreUnknownKeys = true }
 
@@ -87,7 +86,6 @@ class PlaybackPreferenceMappingTest {
         assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision",
             "Match frame rate"), tvPlaybackRows(actualPreferencesOnly = false))
         assertFalse("Start with subtitles" in tvPlaybackRows(false))
-        // Autoplay next episode is stored on the device, so a real connection shows it first (app#65).
         assertEquals(listOf("Autoplay next episode", "Default source", "Preferred quality", "HDR and Dolby Vision"),
             tvPlaybackRows(actualPreferencesOnly = true, deviceRows = true))
         assertEquals(listOf("Audio language", "Subtitles", "Subtitle language", "Subtitle size", "Subtitle background", "Subtitle colour"), tvSubtitleRows)
@@ -96,23 +94,16 @@ class PlaybackPreferenceMappingTest {
     @Test fun foreignAudioRuleFollowsTheSpecCases() {
         val tracks = listOf(SubtitleModeTrack("forced-en", "en", forced = true), SubtitleModeTrack("es", "spa"),
             SubtitleModeTrack("en", "eng"), SubtitleModeTrack("en2", "en-US"))
-        // English preferred (empty means English): English audio stays without subtitles.
         assertNull(subtitleModeChoice("foreign", null, "en", "eng", tracks))
         assertNull(subtitleModeChoice("foreign", "English", "en", "en-GB", tracks))
-        // Japanese audio is foreign: first non-forced English track.
         assertEquals("en", subtitleModeChoice("foreign", null, "en", "jpn", tracks)?.key)
         assertEquals("en", subtitleModeChoice("foreign", "en", "English", "ja", tracks)?.key)
-        // Unknown audio is not foreign.
         listOf(null, "", "und", "mul", "zxx").forEach { assertNull(subtitleModeChoice("foreign", null, "en", it, tracks), "audio $it") }
-        // No subtitle in the subtitle language selects nothing.
         assertNull(subtitleModeChoice("foreign", null, "de", "jpn", tracks))
-        // Empty subtitle preference: the only non-forced track, else nothing.
         assertEquals("es", subtitleModeChoice("foreign", null, null, "jpn", tracks.take(2))?.key)
         assertNull(subtitleModeChoice("foreign", null, null, "jpn", tracks))
-        // Always ignores the audio; never selects nothing.
         assertEquals("en", subtitleModeChoice("always", null, "en", "eng", tracks)?.key)
         assertNull(subtitleModeChoice("never", null, "en", "jpn", tracks))
-        // Switching audio re-decides: English -> Japanese -> English.
         assertEquals(listOf(false, true, false), listOf("en", "ja", "eng").map { audioIsForeign(it, "en") })
         assertTrue(audioIsForeign("eng", "fr"))
     }

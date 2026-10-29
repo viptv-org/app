@@ -22,11 +22,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * The whole phone flow in the real App shell, against a fake server: Home's Genres chip lists
- * the server's genres, choosing one opens Browse filtered to it, and Back returns to Home.
- * With VIPTV_GENRES_CAPTURE_DIR set it also writes the PR screenshots.
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class HomeGenresAppUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -57,9 +52,8 @@ class HomeGenresAppUiTest {
         var previousLoader: ImageLoader? = null
         var appLoader: ImageLoader? = null
         val scene = ImageComposeScene((390 * density).toInt(), (844 * density).toInt(), Density(density)) {
+            // Coil's default loader may already exist in this JVM, where setSafe refuses a later factory.
             val context = LocalPlatformContext.current
-            // App configures Coil's singleton loader; earlier component tests may already have
-            // created the default one (as in StartupShellUiTest).
             remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
             App(providedController = controller, manageControllerLifecycle = false)
             appLoader = SingletonImageLoader.get(context)

@@ -20,7 +20,6 @@ class PlaybackTimelineTest {
         val input = PlaybackInput("lease", "https://media.example/index.m3u8", durationMillis = 2_700_000)
         assertEquals(PlayerFact.Progress(2_400_000, 2_700_000),
             input.mediaProgress(720_000, 720_000, windowOffsetMillis = 1_680_000))
-        // The same sample stays on the same title clock when the playlist rolls.
         assertEquals(PlayerFact.Progress(2_400_000, 2_700_000),
             input.mediaProgress(714_000, 720_000, windowOffsetMillis = 1_686_000))
     }

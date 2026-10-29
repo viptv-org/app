@@ -24,11 +24,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * The merged Calendar in the real App shell, phone and TV, against fake `/api/calendar`
- * responses in the documented wire shape (backend PR #25). With VIPTV_CALENDAR_CAPTURE_DIR
- * set it writes the PR renders.
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class MergedCalendarAppUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -58,7 +53,6 @@ class MergedCalendarAppUiTest {
     private val metaOffsets = mutableListOf<Int>()
     private val slowHorses get() = MergedCalendarWire.seriesCard("Slow Horses").copy(poster = art("poster3.jpg"),
         landscape = art("landscape.jpg"), description = "Slow Horses, a scheduled series.")
-    /** Five seasons of six episodes, paged like the host: the first page ends before season 5. */
     private val allEpisodes = (1L..5L).flatMap { season -> (1L..6L).map { season to it } }
     private fun detailPage(offset: Int, limit: Int): String {
         val series = slowHorses
@@ -82,7 +76,6 @@ class MergedCalendarAppUiTest {
         val phone = !television && width < 640
         if (phone) s.showToday()
         s.until("the merged rows") { s.nodes().any { text(it).contains("Public premiere") } && s.nodes().any { text(it).contains("Slow Horses") } }
-        // TV's preview of the focused library row carries the mark too; count the rows themselves.
         assertEquals(2, s.nodes().count { marked(it) && text(it).contains("Chapter") }, "Both library rows are marked")
         assertFalse(s.nodes().any { marked(it) && text(it).contains("Public premiere") }, "Public rows are not")
         assertTrue(s.nodes().any { text(it) == "All" } && s.nodes().any { text(it) == "Your shows" })
@@ -95,19 +88,16 @@ class MergedCalendarAppUiTest {
         s.save("$name-calendar-your-shows")
         if (television) s.click("All")
         else {
-            // Leaving the Calendar forgets the choice: it comes back on All.
             s.controller.navigate(Screen.Library); s.frames(10); s.controller.navigate(Screen.Calendar)
             if (phone) s.showToday()
         }
         s.until("All again") { s.nodes().any { text(it).contains("Public premiere") } }
         if (!details) return@scene
-        // Choosing a library row opens its series' Details, through its episode.
         val row = s.nodes().first { text(it).contains("Slow Horses") && it.config.contains(SemanticsActions.OnClick) }
         row.config[SemanticsActions.OnClick].action!!.invoke()
         s.until("Details") { s.controller.state.value.screen == Screen.Details && s.controller.state.value.detail != null }
         assertEquals(MergedCalendarWire.episodeId("Slow Horses", 5, 3), s.controller.state.value.calendarEpisode?.identity?.id)
         assertEquals(MergedCalendarWire.seriesId("Slow Horses"), s.controller.state.value.detail?.item?.identity?.id)
-        // Details (app#40) land on the episode's season, past the first page, and load it.
         s.until("season 5's episodes") { s.nodes().any { text(it).contains("Episode 5-3") } }
         assertTrue(s.nodes().any { text(it).contains("Season 5") }, "Season 5 is selected")
         assertTrue(24 in synchronized(metaOffsets) { metaOffsets.toList() }, "Season 5 loads through Details paging: $metaOffsets")
@@ -129,10 +119,6 @@ class MergedCalendarAppUiTest {
             val deadline = System.nanoTime() + 10_000_000_000L
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
         }
-        /**
-         * A phone shows the week as one list from its first day, so today's rows can sit below
-         * the fold at 390x844. Choose today's date, as a viewer would, to bring them into view.
-         */
         fun showToday() {
             until("the calendar rows") { controller.state.value.calendarEntries.isNotEmpty() && !controller.state.value.busy }
             val today = controller.state.value.calendarDays.single { it.label == "Today" }
@@ -200,7 +186,6 @@ class MergedCalendarAppUiTest {
     private companion object {
         fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
-        /** A row carrying the Your show mark (rows merge their texts; the filter button says "Your shows"). */
         fun marked(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "Your show" }
     }
 }

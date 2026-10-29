@@ -22,16 +22,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Deterministic capture of the TV backdrop planes and the retained-visibility
- * gate. The artwork URLs are null on purpose (no network): the planes under
- * test are the gradient/mask/background draws and the visibility container,
- * which are exactly what the draw gates must not alter while visible and must
- * remove while at alpha 0. ImageComposeScene runs on a virtual clock, so the
- * frame indices land on the same point of the 450 ms plane swap every run.
- *
- * Set VIPTV_BACKDROP_CAPTURE_DIR to write PNGs.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvBackdropGateVisualTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -60,9 +50,9 @@ class TvBackdropGateVisualTest {
             render(8); delay(2)
             capture("backdrop-0-hero-settled")
             browsing.value = true
-            render(8) // ~128 ms into the 450 ms swap
+            render(8)
             capture("backdrop-1-mid-swap")
-            render(24) // past 450 ms
+            render(24)
             capture("backdrop-2-browse-settled")
             browsing.value = false
             render(8)

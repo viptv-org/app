@@ -30,18 +30,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-/**
- * Regression proof for the two reported shelf-focus defects.
- *
- * 1. After a long run to the right, walking back left must keep the focused card
- *    on screen — the first card used to end up outside the viewport ("focus moves
- *    off the screen to the left").
- * 2. Coming back Down from the billboard must resume at the card the viewer left,
- *    not flash it and then snap to the first card.
- *
- * The shelf is rendered at TV geometry and driven through the same focus system
- * the device uses, so the assertions are about real focus/scroll state.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvShelfFocusRegressionTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -67,14 +55,12 @@ class TvShelfFocusRegressionTest {
         scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
     }
 
-    /** Focus a card by its label through the semantics RequestFocus action. */
     private fun focusCard(scene: ImageComposeScene, label: String): Boolean {
         val node = nodes(scene).firstOrNull { text(it).contains(label) && it.config.contains(SemanticsActions.RequestFocus) }
             ?: return false
         return node.config[SemanticsActions.RequestFocus].action?.invoke() ?: false
     }
 
-    /** Composed cards ordered left→right; a LazyRow only composes what is near the viewport. */
     private fun visibleCards(scene: ImageComposeScene): List<SemanticsNode> =
         nodes(scene).filter { text(it).startsWith("Title ") && it.config.contains(SemanticsActions.RequestFocus) }
             .sortedBy { it.boundsInRoot.left }
@@ -100,13 +86,11 @@ class TvShelfFocusRegressionTest {
         try {
             render(8); delay(30)
             first.requestFocus(); render(4)
-            // Walk right like a remote: always step to the right-most composed card.
             repeat(24) {
                 val next = visibleCards(scene).lastOrNull() ?: return@repeat
                 if (text(next).startsWith("Title 18")) return@repeat
                 focusNode(next); render(5); delay(5)
             }
-            // Walk all the way back to the left the same way.
             repeat(30) {
                 render(5); delay(5)
                 val prev = visibleCards(scene).firstOrNull() ?: return@repeat
@@ -116,8 +100,6 @@ class TvShelfFocusRegressionTest {
             val node = focused(scene) ?: error("no focus after walking back")
             assertTrue(text(node).contains("Title 1"), "expected the first card focused, got '${text(node)}'")
             val bounds = node.boundsInRoot
-            // The reported defect: focus stayed on the first card but the card was
-            // outside the viewport (focus "off the screen to the left").
             assertTrue(bounds.left >= 90f, "first card left edge ${bounds.left} is outside the 96dp inset")
             assertTrue(bounds.right <= 910f, "first card right edge ${bounds.right} is outside the viewport")
         } finally { scene.close() }
@@ -144,7 +126,6 @@ class TvShelfFocusRegressionTest {
         try {
             render(8); delay(30)
             first.requestFocus(); render(4)
-            // The viewer focuses the third card, leaves to the billboard, comes back.
             assertTrue(focusCard(scene, "Title 3"), "Title 3 must be focusable")
             render(6); delay(10)
             hero.requestFocus(); render(4)

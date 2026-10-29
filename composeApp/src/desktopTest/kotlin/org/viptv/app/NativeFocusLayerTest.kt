@@ -21,13 +21,12 @@ import kotlin.test.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 
-/** Controls that draw the board's ring must not also get Material's focus layer (doubled TV focus ring). */
+// A control that draws the board's focus ring must not also get Material's focus layer: the two rings stack.
 @OptIn(ExperimentalComposeUiApi::class)
 class NativeFocusLayerTest {
     @get:Rule val uiThread = UiThreadRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
-    /** The control's centre pixel once it holds focus; the page is [Palette.background]. */
     private fun focusedCentre(control: @Composable (Modifier) -> Unit): Int {
         var pixel = 0
         onEdt {

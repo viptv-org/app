@@ -22,11 +22,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Canvas dictionary §A1 / Tv3CardStates / D3CardStates / M3Browse: a watched
- * title shows a check in the art's top-right corner, the art is not dimmed,
- * and the card announces "Watched" without another focus stop.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class WatchedBadgeUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -40,9 +35,9 @@ class WatchedBadgeUiTest {
         val resumed = card("tt3", listOf("Watched"), progress = 0.4)
         val scene = ImageComposeScene(720, 520, Density(1f)) { ViptvTheme {
             Row(Modifier.fillMaxSize().background(Palette.background).padding(24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                MediaCard(watched, width = 112, portrait = true, open = {})   // phone grid
+                MediaCard(watched, width = 112, portrait = true, open = {})
                 MediaCard(unseen, width = 112, portrait = true, open = {})
-                MediaCard(resumed, width = 176, portrait = true, open = {})   // desktop My List
+                MediaCard(resumed, width = 176, portrait = true, open = {})
             }
         } }
         try {
@@ -52,14 +47,11 @@ class WatchedBadgeUiTest {
             assertEquals(2, badges.size, "Exactly the two watched cards carry the check")
             assertFalse(unmerged(scene).any { text(it) == "Watched" }, "Watched is a check, never a text label on the art")
             assertTrue(unmerged(scene).any { text(it) == "4K" }, "Other art labels keep their slot")
-            // Phone 112 dp poster: the M3Browse 22/13/6 check, top-right.
             val phone = badges.minBy { it.boundsInRoot.left }.boundsInRoot
             assertBadge(phone, art = Rect(24f, 24f, 136f, 192f), diameter = 21f..22.5f)
-            // Desktop-sized poster: the D3CardStates 26 dp check.
             val desktop = badges.maxBy { it.boundsInRoot.left }.boundsInRoot
             val left = 24f + 112f + 16f + 112f + 16f
             assertBadge(desktop, art = Rect(left, 24f, left + 176f, 24f + 264f), diameter = 25.5f..26.5f)
-            // The card is one announcement: title and Watched together.
             assertTrue(merged(scene).any { description(it).contains("Title tt1") && description(it).contains("Watched") })
             assertFalse(merged(scene).any { description(it).contains("Title tt2") && description(it).contains("Watched") })
         } finally { scene.close() }
@@ -80,7 +72,6 @@ class WatchedBadgeUiTest {
             assertTrue(nodes.any { description(it).startsWith("Title tt1") && description(it).contains("Watched") },
                 "The TV card's single accessibility node must say Watched")
             assertFalse(nodes.any { description(it).startsWith("Title tt2") && description(it).contains("Watched") })
-            // One node per TV card: the check adds no node and no focus stop of its own.
             assertFalse(unmerged(scene).any { description(it) == "Watched" })
         } finally { scene.close() }
     }

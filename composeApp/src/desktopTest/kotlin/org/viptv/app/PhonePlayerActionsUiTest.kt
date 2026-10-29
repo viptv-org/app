@@ -131,12 +131,10 @@ class PhonePlayerActionsUiTest {
         try {
             frames(scene); assertTrue(facts.tryEmit(PlayerFact.Status("Ended"))); frames(scene, 20)
             assertTrue(nodes(scene).any { text(it) == "3. Episode 3" })
-            // A replaced next closes the pinned choice without dispatch; the end then offers the new one.
             next = episode(4); frames(scene, 40); assertEquals(0, played)
             assertFalse(nodes(scene).any { text(it) == "3. Episode 3" })
             frames(scene, 50)
             assertTrue(nodes(scene).any { text(it) == "4. Episode 4" })
-            // Replacing the playback owner closes its pending choice without dispatch.
             key = "new"; current = episode(40); next = episode(41); episodes = listOf(episode(40), episode(41)); frames(scene, 60)
             assertEquals(0, played); assertFalse(nodes(scene).any { text(it) == "Up next" })
             click(scene, "Episodes"); frames(scene, 80)

@@ -25,7 +25,6 @@ class PublicArtworkTest {
             "https://images.metahub.space.evil.example/logo").forEach { assertEquals(it, publicArtworkUrl(it)) }
     }
 
-    // app#115: the server's own wsrv.nl URLs are sized for the slot too, not passed through raw.
     @Test fun serverProxiedArtIsSizedForTheSlot() {
         val inner = "https://simkl.in/posters/20/204275190b49d24215_m.webp"
         val sized = Url(assertNotNull(sizedArtwork("https://wsrv.nl/?url=$inner&q=90", 341, 512)))
@@ -39,7 +38,6 @@ class PublicArtworkTest {
         assertEquals(inner, encoded.parameters["url"])
     }
 
-    // The server's own service choices survive the re-size; only the size becomes the slot's.
     @Test fun resizingServerProxiedArtKeepsTheServersParameters() {
         val inner = "https://image.tmdb.org/t/p/original/a.jpg"
         val sized = Url(assertNotNull(sizedArtwork("https://wsrv.nl/?url=$inner&w=200&h=300&dpr=2&blur=8&fit=contain&bg=black&output=png", 341, 512)))
@@ -50,12 +48,10 @@ class PublicArtworkTest {
         assertEquals("png", sized.parameters["output"])
         assertNull(sized.parameters["dpr"], "the slot size is already in device pixels")
         assertEquals(listOf("341"), sized.parameters.getAll("w"))
-        // A requested blur replaces the server's.
         assertEquals(listOf("12"), Url(assertNotNull(blurredArtwork("https://wsrv.nl/?url=$inner&blur=8", 1280, 720, 12)))
             .parameters.getAll("blur"))
     }
 
-    // An unencoded source with its own query string is not cut at its first `&`.
     @Test fun unencodedSourceQueryStringsStayWithTheSource() {
         val inner = "https://art.example/a.jpg?k=1&j=2"
         val sized = Url(assertNotNull(sizedArtwork("https://wsrv.nl/?url=$inner&blur=4&q=90", 341, 512)))
@@ -66,7 +62,6 @@ class PublicArtworkTest {
         assertEquals(inner, encoded.parameters["url"])
     }
 
-    // app#115: Simkl's 600 px `_w` fanart (and its other small sizes) become its 1920 px `medium`.
     @Test fun smallSimklSourcesAskForTheLargestSizeOfTheirShape() {
         fun inner(url: String) = Url(assertNotNull(sizedArtwork(url, 1280, 720))).parameters["url"]
         assertEquals("https://simkl.in/fanart/20/20178851e05e4c247e_medium.webp",
@@ -76,7 +71,6 @@ class PublicArtworkTest {
         assertEquals("https://simkl.in/posters/20/204275190b49d24215_m.webp",
             inner("https://simkl.in/posters/20/204275190b49d24215_c.webp"))
         assertEquals("https://simkl.in/episodes/12/abcdef_w.webp", inner("https://simkl.in/episodes/12/abcdef_m.webp"))
-        // Already the largest: unchanged. Simkl's `_w` poster is a 600 x 338 landscape crop, never a poster upgrade.
         assertEquals("https://simkl.in/posters/20/204275190b49d24215_m.webp",
             inner("https://simkl.in/posters/20/204275190b49d24215_m.webp"))
         assertEquals("https://simkl.in/posters/20/204275190b49d24215_w.webp",
@@ -90,7 +84,6 @@ class PublicArtworkTest {
         assertNull(sizedArtwork(" ", 341, 512))
     }
 
-    // app#80: a soft backdrop from server-proxied art really carries the service blur.
     @Test fun serverProxiedBackdropsAreBlurredByTheService() {
         val inner = "https://simkl.in/episodes/12/abcdef_w.webp"
         val blurred = Url(assertNotNull(blurredArtwork("https://wsrv.nl/?url=$inner", 1280, 720, blur = 12)))

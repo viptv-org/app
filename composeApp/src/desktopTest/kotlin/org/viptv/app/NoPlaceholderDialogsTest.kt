@@ -3,10 +3,6 @@ package org.viptv.app
 import java.io.File
 import kotlin.test.*
 
-/**
- * A control either works or is not shown (app#15). The old placeholder dialog read
- * "<feature> is not available in this experiment yet."; no app source may bring it back.
- */
 class NoPlaceholderDialogsTest {
     @Test fun noSourceShowsTheNotAvailableInThisExperimentDialog() {
         // Gradle runs desktop tests from the composeApp module directory.
