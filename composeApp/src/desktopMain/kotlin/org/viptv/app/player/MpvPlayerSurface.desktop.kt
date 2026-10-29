@@ -178,7 +178,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
             while (true) {
                 delay(2_000)
                 val value = session.state.value
-                input.diagnostics?.invoke("path=${renderer.path} drawn=${lastDrawn.get()} source_fps=${value.sourceFps} dropped=${value.dropped} hw=${value.hwdec} buffering=${value.buffering} position_ms=${value.positionMs}")
+                input.diagnostics?.invoke("path=${renderer.path} tone_map=${if (session.toneMapped) "on" else "off"} drawn=${lastDrawn.get()} source_fps=${value.sourceFps} dropped=${value.dropped} hw=${value.hwdec} buffering=${value.buffering} position_ms=${value.positionMs}")
             }
         }
         }

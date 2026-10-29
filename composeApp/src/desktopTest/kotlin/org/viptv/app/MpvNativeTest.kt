@@ -45,6 +45,18 @@ class MpvNativeTest {
         } finally { session.closeAfterRenderer(); withTimeout(5_000) { session.closed.await() } }
     }
 
+    @Test fun thePackagedRuntimeProvidesTheHdrToneMapChain() = runBlocking {
+        val session = MpvSession(PlaybackInput("owned", "about:blank"))
+        try {
+            session.command("vf", "set", mpvToneMapFilter)
+            val applied = session.api.mpv_get_property_string(session.handle, "vf")?.let { pointer ->
+                try { pointer.getString(0, "UTF-8") } finally { session.api.mpv_free(pointer) }
+            }
+            assertTrue(applied?.contains("zscale=t=linear:npl=100") == true, "$applied")
+            assertTrue(applied?.contains("tonemap=tonemap=mobius") == true, "$applied")
+        } finally { session.closeAfterRenderer(); withTimeout(5_000) { session.closed.await() } }
+    }
+
     @Test fun rejectHeaderFramingAndNativeStringTruncationBeforeOpeningMedia() {
         for (headers in listOf(mapOf("X-Invalid\u0000" to "x"), mapOf("X:Invalid" to "x"),
             mapOf("X-Test" to "value\r\nInjected: true"), mapOf("X-Test" to "value\u0000suffix"))) {
