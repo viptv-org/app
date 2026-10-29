@@ -21,17 +21,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
-/**
- * Android side of [AppUpdater]: plain HTTPS, APKs under `filesDir/updates`, and a
- * [PackageInstaller] session that asks the viewer to confirm. Android itself refuses an
- * APK signed with another key or with a lower version code, so app data and sign-in stay.
- */
 class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
     private val application = context.applicationContext
     private val preferences = application.getSharedPreferences("viptv.updates", Context.MODE_PRIVATE)
     internal val directory = File(application.filesDir, "updates")
     private val installAction = application.packageName + ".UPDATE_INSTALL_STATUS"
-    /** Set where the install starts, read by the status receiver on the main thread. */
+    // Set where the install starts; the status receiver reads it on the main thread.
     @Volatile private var pendingResult: ((InstallResult) -> Unit)? = null
     private var receiverRegistered = false
 
@@ -116,7 +111,7 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
 
     override fun canInstall(): Boolean = application.packageManager.canRequestPackageInstalls()
 
-    /** The app declares [UpdateRelaunchReceiver] for `MY_PACKAGE_REPLACED` (androidApp manifest). */
+    // androidApp's manifest declares UpdateRelaunchReceiver for MY_PACKAGE_REPLACED.
     override val relaunchesAfterUpdate: Boolean = true
 
     private fun permissionIntent() = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + application.packageName))
@@ -130,13 +125,13 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
 
     override suspend fun install(feed: UpdateFeed, progress: (bytes: Long) -> Unit, result: (InstallResult) -> Unit) {
         val apk = apkFile(feed)
-        // The file sat on disk since it was verified; check it again right before Android reads it.
+        // The file sat on disk since it was verified: check it again right before Android reads it.
         if (!hasVerifiedDownload(feed)) { apk.delete(); throw UpdateVerificationException("The downloaded update changed on disk") }
         registerReceiver()
         pendingResult = result
         withContext(Dispatchers.IO) {
             val installer = application.packageManager.packageInstaller
-            // A confirmation the viewer walked away from leaves its session open; start clean.
+            // A confirmation the viewer walked away from leaves its session open: start clean.
             installer.mySessions.forEach { runCatching { installer.abandonSession(it.sessionId) } }
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
                 setAppPackageName(application.packageName)
@@ -146,8 +141,6 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
             try {
                 installer.openSession(id).use { session ->
                     session.openWrite("base.apk", 0, apk.length()).use { output ->
-                        // The copy into the session can take a while on a slow device: report it for
-                        // the Updating screen (app#139).
                         var written = 0L
                         apk.inputStream().use { input ->
                             val buffer = ByteArray(64 * 1024)
