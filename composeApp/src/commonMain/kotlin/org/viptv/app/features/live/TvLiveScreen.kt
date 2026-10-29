@@ -15,6 +15,7 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.LocalTvScale
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -23,11 +24,11 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false,
     favoriteChanged: ((LiveChannel) -> Unit)? = null, favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null,
     sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null) {
-    var category by remember { mutableStateOf("All") }
-    LaunchedEffect(selectedSource) { category = "All" }
-    val categoryIds = if (groupLabels.isNotEmpty()) groupLabels.keys.toList() else categories
-    val activeCategory = category.takeIf { it == "All" || it in categoryIds } ?: "All"
-    val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || activeCategory == "All" || (it.groupId ?: it.category) == activeCategory) }
+    var category by remember { mutableStateOf(AllGroups) }
+    LaunchedEffect(selectedSource) { category = AllGroups }
+    val groups = if (groupLabels.isNotEmpty()) groupLabels else categories.distinct().associateWith { it }
+    val activeCategory = category.takeIf { it == AllGroups || it in groups } ?: AllGroups
+    val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || activeCategory == AllGroups || (it.groupId ?: it.category) == activeCategory) }
     var channel by remember { mutableStateOf(channels.firstOrNull()) }
     var program by remember { mutableStateOf<LiveProgram?>(null) }
     val first = remember { FocusRequester() }; val filter = remember { FocusRequester() }
@@ -44,14 +45,18 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     BoxWithConstraints(Modifier.fillMaxSize().focusProperties { onEnter = { if (visible.isNotEmpty()) first.requestFocus() else filter.requestFocus() } }.focusGroup()) {
         val scale = maxWidth / 1920.dp
         channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
-        TvLiveFilters(categoryIds, activeCategory, { category = it; groupChanged?.invoke(it.takeUnless { it == "All" }) }, scale, filter, if (visible.isNotEmpty()) first else null,
-            Modifier.offset(96.dp * scale, 380.dp * scale).width(1728.dp * scale), groupLabels,
-            favoritesSelected = favoritesOnly, favorites = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, busy = busy)
+        Box(Modifier.offset(96.dp * scale, 380.dp * scale).width(1728.dp * scale).focusGroup().focusRequester(filter)) {
+            CompositionLocalProvider(LocalTvScale provides scale) {
+                LiveFilters(groups, activeCategory.takeUnless { it == AllGroups }, { category = it ?: AllGroups; groupChanged?.invoke(it) },
+                    favoritesOnly, favoritesFilter, { category = AllGroups; groupChanged?.invoke(null) },
+                    sources, selectedSource, sourceChanged)
+            }
+        }
         Box(Modifier.offset(96.dp * scale, 460.dp * scale).width(1728.dp * scale)
             .height((maxHeight - 510.dp * scale).coerceAtLeast(0.dp))) {
             if (visible.isEmpty()) Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                 Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else "No channels are available for this profile.", color = Palette.secondary, fontSize = (24 * scale).sp)
-                TvAction(Modifier.height(64.dp * scale), scale, activate = if (favoritesOnly) ({ category = "All"; groupChanged?.invoke(null); Unit }) else manage, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                TvAction(Modifier.height(64.dp * scale), scale, activate = if (favoritesOnly) ({ category = AllGroups; groupChanged?.invoke(null); Unit }) else manage, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                     Text(if (favoritesOnly) "All channels" else "Manage add-ons", color = it, fontSize = (24 * scale).sp)
                 }
             } else if (hasGuide) {
