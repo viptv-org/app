@@ -141,6 +141,52 @@ class PlayerEpisodePickerUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun desktopPickerShowsTheSameDetailsCardsAndPlaysTheChosenEpisode() = withFakeArtwork { requested ->
+        var played: Card? = null
+        val scene = ImageComposeScene(1280, 720, Density(1f)) { ViptvTheme {
+            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = false,
+                tvExtras = TvPlaybackExtras(episodes = episodes), playEpisode = { played = it })
+        } }
+        val ui = Ui(scene)
+        try {
+            ui.frames(); ui.click("Episodes"); ui.frames()
+            val now = ui.row(4)
+            assertTrue("Now playing" in ui.text(now), ui.text(now))
+            assertEquals(true, now.config.getOrNull(SemanticsProperties.Selected))
+            assertEquals(0.12f, ui.progress(now)!!, 0.001f)
+            ui.assertArtwork(now, still(4))
+            ui.capture("desktop-player-episodes-open")
+            ui.scrollTo(0)
+            for (number in 1L..2L) {
+                val row = ui.row(number)
+                assertTrue("Watched" in ui.text(row), "E$number is watched: ${ui.text(row)}")
+                assertNull(ui.progress(row))
+            }
+            assertEquals(0.45f, ui.progress(ui.row(3))!!, 0.001f)
+            assertTrue(still(1) in requested && poster(1) !in requested, "landscape is the episode still: $requested")
+            assertTrue(poster(2) in requested, "a poster stands in when there is no still: $requested")
+            ui.scrollTo(4); ui.capture("desktop-player-episodes")
+            ui.click(ui.text(ui.row(5)))
+            assertEquals(episodes[4], played)
+        } finally { scene.close() }
+    }
+
+    @Test fun desktopMovieAndLiveHaveNoEpisodesControl() {
+        val movie = episode(1).copy(identity = MediaIdentity("film", "movie", emptyList()), parent_identity = null)
+        val channel = episode(1).copy(identity = MediaIdentity("channel-7", "channel", emptyList()), parent_identity = null)
+        listOf(movie, channel).forEach { title ->
+            val scene = ImageComposeScene(1280, 720, Density(1f)) { ViptvTheme {
+                PlayerScreen(null, true, null, {}, {}, {}, title = title, phone = false,
+                    tvExtras = TvPlaybackExtras(episodes = episodes), playEpisode = {})
+            } }
+            val ui = Ui(scene)
+            try {
+                ui.frames()
+                assertTrue(ui.nodes().none { ui.text(it) == "Episodes" }, "no Episodes control for ${title.identity.kind}")
+            } finally { scene.close() }
+        }
+    }
+
     private class Ui(val scene: ImageComposeScene) {
         var time = 0L
         fun frames() = repeat(16) { time += 16_666_667L; scene.render(time).close(); Thread.sleep(4) }
