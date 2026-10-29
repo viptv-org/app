@@ -52,8 +52,11 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     LandOnResume(seasonChoice, list, resume.takeIf { detail != null }.indexIn(selected?.episodes)?.let { episode ->
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        // The window layer attaches after this content's first frame: ask again on each frame until the button is placed.
-        LaunchedEffect(Unit) { if (focusOnOpen) repeat(30) { if (closeFocus.requestPlacedFocus()) return@LaunchedEffect; withFrameNanos { } } }
+        // The window layer attaches after this content's first frame, and only while no drawer covers it: ask again on each frame until the button is placed.
+        LaunchedEffect(focusOnOpen) {
+            if (!focusOnOpen) return@LaunchedEffect
+            repeat(30) { if (closeFocus.requestPlacedFocus()) return@LaunchedEffect; withFrameNanos { } }
+        }
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
             val compact = maxWidth < 640.dp
             val gutter = if (compact) 20.dp else 44.dp

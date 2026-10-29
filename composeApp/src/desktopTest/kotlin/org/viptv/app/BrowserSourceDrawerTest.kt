@@ -285,6 +285,15 @@ class BrowserSourceDrawerTest {
         }
     }
 
+    @Test fun theDetailsDialogOpensWithItsCloseButtonFocused() {
+        BrowserApp().use { app ->
+            app.until("Home") { app.nodes().any { text(it).contains("Continue Watching") } }
+            app.controller.open(app.continueCard)
+            app.until("the Details dialog") { app.pane(title) != null }
+            app.until("its Close button to take the focus") { app.focused()?.let(::text)?.contains("Close details") == true }
+        }
+    }
+
     @Test fun aPlayTapsDetailsLoadingBehindTheDrawerDoNotTakeTheDrawersFocus() {
         BrowserApp().use { app ->
             detailsHeld.set(true)
