@@ -70,13 +70,13 @@ class TvFilterBarTest {
             TvBrowseScreen(posters, false, {}, controls = controls, query = browse.query,
                 filterChanged = browse.changed, multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
-            assertEquals(listOf("Catalog: Popular", "Sort: Required", "Genre: Any", "Languages: Any", "Search: Any"), it.triggers(),
+            assertEquals(listOf("Catalog: Popular Movies", "Sort: Required", "Genre: Any", "Languages: Any", "Search: Any"), it.triggers(),
                 "one row of dropdown chips, the catalog first")
             assertFalse(it.has("Filters"), "no Filters chip")
             assertFalse(it.has("Show results"), "no Show results step")
             it.capture("tv-browse-chips")
 
-            it.focusChip("Catalog: Popular")
+            it.focusChip("Catalog: Popular Movies")
             it.press(Key.DirectionRight)
             assertEquals("Sort: Required", it.focusedChip(), "Right moves along the row")
             it.press(Key.DirectionRight)
@@ -114,7 +114,7 @@ class TvFilterBarTest {
             it.press(Key.DirectionCenter)
             assertEquals(BrowseQuery("movie", "top", "c1"), browse.query, "Clear drops every facet and keeps the catalog")
             assertFalse(it.has("Clear"), "nothing left to clear")
-            assertEquals("Catalog: Popular", it.focusedChip(), "the remote stays on the row after Clear")
+            assertEquals("Catalog: Popular Movies", it.focusedChip(), "the remote stays on the row after Clear")
         }
     }
 

@@ -22,6 +22,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import org.junit.Rule
+import kotlin.math.abs
 import kotlin.test.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -68,6 +69,23 @@ class TvShelfRefreshFocusTest {
             row.value = row.value.copy(cards = cards(9, 1, 2, 4, 5))
             render(8); delay(30); render(8)
             assertTrue(text(requireNotNull(focused(scene))).contains("Title 4"), "a surviving focused card keeps focus when cards are added")
+        } finally { scene.close() }
+    }
+
+    @Test fun aShelfAtItsStartShowsTheNewFirstCardAfterARefresh() = onEdt {
+        val hero = FocusRequester()
+        val row = mutableStateOf(HomeRow(id = "continue", title = "Continue Watching", provider_id = "library", state = RowState.READY, cards = cards(1, 2, 3)))
+        val scene = shelf(row, hero)
+        var frame = 0L
+        fun render(n: Int = 4) = repeat(n) { scene.render(frame++ * 16_666_667L).close() }
+        fun card(label: String) = nodes(scene).firstOrNull { text(it).startsWith(label) }
+        try {
+            render(8); delay(30)
+            val start = card("Title 1")!!.positionInRoot.x
+            row.value = row.value.copy(cards = cards(0, 1, 2, 3))
+            render(8); delay(30); render(8)
+            assertTrue(abs(start - card("Title 0")!!.positionInRoot.x) <= 1f, "the new first card takes the shelf's start")
+            assertTrue(card("Title 1")!!.positionInRoot.x > start + 1f, "the card it pushed right follows it")
         } finally { scene.close() }
     }
 
