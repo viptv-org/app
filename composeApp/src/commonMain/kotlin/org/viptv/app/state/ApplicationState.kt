@@ -79,6 +79,7 @@ data class ApplicationState(
     val detailReturnScreen: Screen = Screen.Home,
     val playTapTitle: Card? = null,
     val detailFailure: String? = null,
+    val detailRetryable: Boolean = true,
     val detail: DetailSnapshot? = null,
     val detailLoadingOffset: Long? = null,
     val detailPageError: String? = null,
