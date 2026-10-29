@@ -3,7 +3,7 @@ package org.viptv.app.features.settings
 import coil3.PlatformContext
 import kotlinx.browser.window
 
-/** localStorage throws when a browser blocks site data; a miss is not fatal. Display keeps the key it shipped with. */
+// localStorage throws when a browser blocks site data; a miss is not fatal. The Display key is the one it shipped with.
 private class BrowserDeviceRecordStore(private val key: String) : DeviceRecordStore {
     override fun read(): String? = runCatching { window.localStorage.getItem(key) }.getOrNull()
 

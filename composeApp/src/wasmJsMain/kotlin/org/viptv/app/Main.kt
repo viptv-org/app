@@ -39,7 +39,6 @@ fun main() {
     }
 }
 
-/** The /device route: TV sign-in approval with account-only authentication. */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun DeviceApprovalRoute() {
