@@ -15,7 +15,7 @@ internal data class MpvState(
     val status: String = "Opening", val volume: Float = 1f, val speed: Double = 1.0, val subtitleScale: Float = 1f,
     val audio: List<PlaybackTrack> = emptyList(), val subtitles: List<PlaybackTrack> = emptyList(),
     val width: Int = 0, val height: Int = 0, val hwdec: String = "no", val dropped: Long = 0,
-    val sourceFps: Double = 0.0, val buffering: Boolean = false, val error: Int? = null,
+    val sourceFps: Double = 0.0, val buffering: Boolean = false, val error: Int? = null, val transfer: String? = null,
 )
 
 // libmpv's 8-digit colour form is #AARRGGBB; sending #RRGGBBAA swaps alpha into the red channel.
@@ -34,6 +34,8 @@ internal class MpvSession(input: PlaybackInput) {
     @Volatile var presentationAllowed = false
     val closed = CompletableDeferred<Unit>()
     val rendererReady = CompletableDeferred<Unit>()
+    @Volatile private var toneMappedValue = false
+    val toneMapped: Boolean get() = toneMappedValue
 
     init {
         try {
@@ -113,7 +115,8 @@ internal class MpvSession(input: PlaybackInput) {
             when { error != null -> "Failed"; !loaded -> "Opening"; text("eof-reached") == "yes" -> "Ended"; buffering -> "Buffering"; text("pause") == "yes" -> "Paused"; else -> "Playing" },
             ((number("volume") ?: 100.0) / 100).toFloat(), number("speed") ?: 1.0, (number("sub-scale") ?: 1.0).toFloat(),
             list("audio"), list("sub"), number("video-params/w")?.toInt() ?: 0, number("video-params/h")?.toInt() ?: 0,
-            text("hwdec-current") ?: "no", number("frame-drop-count")?.toLong() ?: 0, number("container-fps") ?: 0.0, buffering, error)
+            text("hwdec-current") ?: "no", number("frame-drop-count")?.toLong() ?: 0, number("container-fps") ?: 0.0, buffering, error,
+            text("video-params/gamma"))
     }
     suspend fun command(vararg args: String) = withContext(dispatcher) {
         check(!closing.get()); require(args.none { '\u0000' in it })
@@ -127,6 +130,14 @@ internal class MpvSession(input: PlaybackInput) {
         if (input.positionMillis > 0) property("start", (input.positionMillis / 1000.0).toString())
         command("loadfile", input.uri, "replace")
         withTimeout(35_000) { state.first { it.loaded || it.error != null }.also { check(it.error == null) } }
+        toneMapHdrSource()
+    }
+
+    // video-params/gamma arrives with the first decoded frame, so decide before presentation is authorized.
+    private suspend fun toneMapHdrSource() {
+        if (text("video") == "no") return
+        val transfer = withTimeoutOrNull(3_000) { state.first { it.transfer != null || it.error != null }.transfer } ?: return
+        if (mpvNeedsToneMap(transfer)) toneMappedValue = runCatching { command("vf", "set", mpvToneMapFilter) }.isSuccess
     }
     suspend fun selectedAudio(): Int? = withContext(dispatcher) { number("aid")?.toInt() }
     fun closeAfterRenderer() {

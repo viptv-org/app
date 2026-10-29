@@ -22,6 +22,9 @@ Read the workspace `AGENTS.md` first.
 - `:composeApp:testAndroidHostTest` (Robolectric) when `androidMain` changes;
   `:androidApp:assembleDebug -Pviptv.abis=x86_64` when `androidApp/` changes.
 - Compose "LayoutNode not found in RectList" is a known flake: rerun that class alone.
+- `.github/workflows/app-checks.yml` runs the same three tasks on every PR into
+  `edge` and `main` and on pushes to `edge`; it clones `playback-gateway` for the
+  desktop torrent resource and uploads failed `desktopTest` reports.
 
 ## Wire types
 
