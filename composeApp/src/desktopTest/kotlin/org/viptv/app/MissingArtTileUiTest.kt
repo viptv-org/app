@@ -52,13 +52,13 @@ class MissingArtTileUiTest {
             withFakeArtwork { requested ->
                 val shown = render(artless, portrait)
                 assertTrue(requested.isEmpty(), "the $frame card has nothing to load: $requested")
-                val tile = shown.nodes.single { it.tag() == MISSING_ART_TAG }
-                val bounds = tile.boundsInRoot
+                val tile = shown.nodes.single { it.tag == MISSING_ART_TAG }
+                val bounds = tile.bounds
                 assertEquals(shown.art.width, bounds.width, 1.5f, "the tile fills the $frame art's width")
                 assertEquals(shown.art.height, bounds.height, 1.5f, "the tile fills the $frame art's height")
                 assertEquals(shown.art.center.x, bounds.center.x, 1.5f, "the tile is centred on the $frame art")
                 assertEquals(shown.art.center.y, bounds.center.y, 1.5f, "the tile is centred on the $frame art")
-                assertEquals(artless.title, tile.description(), "the art announces the title it now carries")
+                assertEquals(artless.title, tile.description, "the art announces the title it now carries")
                 val fill = Palette.raised.toArgb()
                 assertEquals(fill, shown.pixel(shown.art.center.x.toInt(), shown.art.bottom.toInt() - 2), "the $frame tile is a surface-2 block")
                 val bands = shown.inkBands(shown.art.deflate(12f), fill)
@@ -73,7 +73,7 @@ class MissingArtTileUiTest {
         withFakeArtwork { requested ->
             val shown = render(artless.copy(poster = "", landscape = "  "), portrait = false)
             assertTrue(requested.isEmpty(), "a blank URL is never loaded: $requested")
-            assertEquals(1, shown.nodes.count { it.tag() == MISSING_ART_TAG }, "a blank URL draws the tile")
+            assertEquals(1, shown.nodes.count { it.tag == MISSING_ART_TAG }, "a blank URL draws the tile")
         }
     }
 
@@ -84,7 +84,7 @@ class MissingArtTileUiTest {
             withFakeArtwork { requested ->
                 val shown = render(card, portrait = false)
                 assertTrue(requested.isNotEmpty(), "the $kind is loaded: $requested")
-                assertTrue(shown.nodes.none { it.tag() == MISSING_ART_TAG }, "the $kind replaces the tile")
+                assertTrue(shown.nodes.none { it.tag == MISSING_ART_TAG }, "the $kind replaces the tile")
             }
         }
     }
@@ -95,13 +95,13 @@ class MissingArtTileUiTest {
                 artless.copy(poster = posterUrl))) {
                 val shown = render(card, portrait = false)
                 assertTrue(requested.isNotEmpty(), "Coil tried the art: $requested")
-                assertEquals(1, shown.nodes.count { it.tag() == MISSING_ART_TAG },
+                assertEquals(1, shown.nodes.count { it.tag == MISSING_ART_TAG },
                     "a failed image leaves the tile, not an empty block")
             }
         }
     }
 
-    private class Shown(val art: Rect, val nodes: List<SemanticsNode>, private val pixels: Bitmap) {
+    private class Shown(val art: Rect, val nodes: List<Node>, private val pixels: Bitmap) {
         fun pixel(x: Int, y: Int) = pixels.getColor(x, y)
 
         fun inkBands(rect: Rect, fill: Int): List<Band> {
@@ -118,6 +118,8 @@ class MissingArtTileUiTest {
             }
         }
     }
+
+    private class Node(val bounds: Rect, val tag: String?, val description: String)
 
     private class Band(val width: Int) {
         override fun toString() = "$width px wide"
@@ -137,7 +139,9 @@ class MissingArtTileUiTest {
             repeat(20) { scene.render(it * 16_666_667L).close(); delay(10) }
             scene.render(1_000_000_000L).use { image ->
                 val pixels = Bitmap.makeFromImage(image)
+                // Read the bounds while the scene is open: closing it detaches the tree, and a detached node reports Rect.Zero.
                 val nodes = scene.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
+                    .map { Node(it.boundsInRoot, it.tag(), it.description()) }
                 return Shown(Rect(0f, 0f, ART.toFloat(), height.toFloat()), nodes, pixels)
             }
         } finally { scene.close() }
