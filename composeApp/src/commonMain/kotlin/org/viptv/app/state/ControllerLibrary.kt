@@ -1,6 +1,8 @@
 package org.viptv.app.state
 
 import org.viptv.app.connection.*
+import org.viptv.app.features.home.CONTINUE_ROW
+import org.viptv.app.features.home.MY_LIST_ROW
 import org.viptv.engine.wire.*
 
 fun ApplicationController.toggleFavorite(card: Card) = run {
@@ -46,11 +48,11 @@ internal fun ApplicationController.updateLibrary(cards: List<Card>, identities: 
     membership: LibraryMembershipSnapshot? = null) {
     val ordered = cards.sortedWith(compareByDescending<Card> { it.added_at_millis ?: Long.MIN_VALUE }.thenBy { it.title.lowercase() })
     val home = mutable.value.home?.let { snapshot ->
-        val existing = snapshot.rows.find { it.id == "favorites" && it.provider_id == "library" }
+        val existing = snapshot.rows.find { it.id == MY_LIST_ROW && it.provider_id == "library" }
         val row = existing?.copy(cards = ordered.take(12), state = if (ordered.isEmpty()) RowState.EMPTY else RowState.READY, next_cursor = null)
-            ?: HomeRow(id = "favorites", title = "My List", provider_id = "library", state = if (ordered.isEmpty()) RowState.EMPTY else RowState.READY, cards = ordered.take(12))
+            ?: HomeRow(id = MY_LIST_ROW, title = "My List", provider_id = "library", state = if (ordered.isEmpty()) RowState.EMPTY else RowState.READY, cards = ordered.take(12))
         val rows = if (existing != null) snapshot.rows.map { if (it === existing) row else it }
-            else snapshot.rows.toMutableList().apply { add(indexOfFirst { it.id != "continue" }.takeIf { it >= 0 } ?: size, row) }
+            else snapshot.rows.toMutableList().apply { add(indexOfFirst { it.id != CONTINUE_ROW }.takeIf { it >= 0 } ?: size, row) }
         snapshot.copy(rows = rows)
     }
     mutable.value = mutable.value.copy(library = ordered, home = home, favoriteKeys = (membership?.identities ?: identities).map { it.kind to it.id }.toSet(), libraryMembership = membership)
@@ -68,6 +70,6 @@ private fun ApplicationController.adoptFavoriteAssertions(authoritative: Card) {
         results = state.results.map(::adopt), searchRows = state.searchRows.map { it.copy(cards = it.cards.map(::adopt)) },
         browseCards = state.browseCards.map(::adopt), detail = state.detail?.let { it.copy(item = adopt(it.item)) },
         home = state.home?.let { home -> home.copy(hero = home.hero?.let(::adopt), featured = home.featured.map(::adopt),
-            rows = home.rows.map { row -> if (row.provider_id == "library" || row.id in setOf("favorites", "continue")) row
+            rows = home.rows.map { row -> if (row.provider_id == "library" || row.id in setOf(MY_LIST_ROW, CONTINUE_ROW)) row
                 else row.copy(cards = row.cards.map(::adopt)) }) })
 }

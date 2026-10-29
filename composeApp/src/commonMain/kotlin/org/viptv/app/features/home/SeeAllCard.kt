@@ -31,30 +31,28 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.FocusOutline
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerHovered
-import org.viptv.app.state.ContinueWatchingMore
+import org.viptv.app.state.RowSeeAll
+import org.viptv.app.state.titleCount
 import org.viptv.app.theme.Palette
 
-internal const val SEE_ALL_KEY = "continue:see-all"
+internal fun seeAllKey(rowId: String) = "$rowId:see-all"
 
-internal fun seeAllDescription(more: ContinueWatchingMore): String =
-    "See all Continue Watching" + (more.count?.let { ", $it ${if (it == 1) "title" else "titles"}" } ?: "")
-
-private fun seeAllCaption(more: ContinueWatchingMore): String =
-    more.count?.let { "$it ${if (it == 1) "title" else "titles"} in progress" } ?: "Everything in progress"
+internal fun seeAllDescription(seeAll: RowSeeAll): String =
+    "See all ${seeAll.title}" + (seeAll.count?.let { ", ${titleCount(it)}" } ?: "")
 
 @Composable
-internal fun SeeAllCard(more: ContinueWatchingMore, width: Int, open: () -> Unit, labelScale: Float = 1f,
+internal fun SeeAllCard(seeAll: RowSeeAll, width: Int, open: () -> Unit, portrait: Boolean = false, labelScale: Float = 1f,
     cornerRadius: Dp = 8.dp, focusWidth: Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier) {
     var focused by remember { mutableStateOf(false) }
     val interaction = remember { MutableInteractionSource() }
     val hovered = interaction.pointerHovered()
     val shape = RoundedCornerShape(cornerRadius)
-    val description = seeAllDescription(more)
+    val description = seeAllDescription(seeAll)
     Column(modifier.width(width.dp).hoverable(interaction)
         .onFocusChanged { focused = it.isFocused }
         .pointerClickable(interactionSource = interaction, indication = null, role = Role.Button) { open() }
         .clearAndSetSemantics { role = Role.Button; contentDescription = description; onClick { open(); true } }) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape)
+        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(shape)
             .background(if (hovered) Palette.raised else Palette.surface).border(1.dp, Palette.raised, shape),
             contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp * labelScale)) {
@@ -66,19 +64,20 @@ internal fun SeeAllCard(more: ContinueWatchingMore, width: Int, open: () -> Unit
             if (showFocusOutline) FocusOutline(focused, cornerRadius, focusWidth, Modifier.matchParentSize())
         }
         Spacer(Modifier.height(9.dp))
-        Text("Continue Watching", fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium,
+        Text(seeAll.title, fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(seeAllCaption(more), fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary,
+        Text(seeAll.caption, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
 @Composable
-internal fun TvSeeAllCard(more: ContinueWatchingMore, scale: Float, open: () -> Unit, modifier: Modifier = Modifier,
-    focused: () -> Unit = {}, onUp: (() -> Unit)? = null, artworkWidth: Dp = 422.4.dp * scale) {
+internal fun TvSeeAllCard(seeAll: RowSeeAll, scale: Float, open: () -> Unit, modifier: Modifier = Modifier,
+    portrait: Boolean = false, focused: () -> Unit = {}, onUp: (() -> Unit)? = null,
+    artworkWidth: Dp = (if (portrait) 255.2f else 422.4f).dp * scale) {
     val focus = remember { mutableStateOf(false) }
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
-    val description = seeAllDescription(more)
+    val description = seeAllDescription(seeAll)
     Column(modifier.width(artworkWidth)
         .onPreviewKeyEvent { event ->
             if (onUp != null && event.type == KeyEventType.KeyDown && event.key == Key.DirectionUp) { onUp(); true } else false
@@ -92,7 +91,7 @@ internal fun TvSeeAllCard(more: ContinueWatchingMore, scale: Float, open: () -> 
             set(SemanticsProperties.Focused, focus.value)
             onClick { open(); true }
         }) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(shape).background(Palette.surface), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                 Box(Modifier.size(72.dp * scale).background(Palette.text.copy(alpha = .12f), CircleShape), contentAlignment = Alignment.Center) {
                     Icon(Lucide.ArrowRight, null, Modifier.size(32.dp * scale), tint = Palette.text)
@@ -102,9 +101,9 @@ internal fun TvSeeAllCard(more: ContinueWatchingMore, scale: Float, open: () -> 
             FocusOutline(focus.value, 10.dp * scale, 3.dp * scale, Modifier.matchParentSize())
         }
         Column(Modifier.fillMaxWidth().height(76.dp * scale).padding(top = 14.dp * scale), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
-            Text("Continue Watching", fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp,
+            Text(seeAll.title, fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp,
                 color = if (focus.value) Palette.text else Palette.body, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(seeAllCaption(more), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary,
+            Text(seeAll.caption, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }

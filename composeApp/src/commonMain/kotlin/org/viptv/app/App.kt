@@ -140,7 +140,7 @@ fun App(
                                 val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
                                 summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent,
-                                continueMore = state.continueWatchingMore(), seeAll = { controller.navigate(Screen.ContinueWatching) }) }
+                                seeAllFor = { state.rowSeeAll(it) }, openSeeAll = { controller.navigate(it.screen) }) }
                                 // Kept per profile on every layout, so Back from Continue Watching (and any page) finds the row and focus it left.
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }

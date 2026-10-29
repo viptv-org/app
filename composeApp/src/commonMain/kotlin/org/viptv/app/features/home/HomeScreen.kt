@@ -1,6 +1,7 @@
 package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.owner
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,10 +20,10 @@ import org.viptv.engine.wire.*
 fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     summaryCards: Map<String, Card> = emptyMap(), enrichSummary: (Card) -> Unit = {},
     heroRotates: Boolean = true,
-    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
+    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
     if (television) {
         TvHomeScreen(home, open, play, retry, navigate, profile, summaryCards = summaryCards, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error, enrichSummary = enrichSummary,
-            continueMore = continueMore, seeAll = seeAll)
+            seeAllFor = seeAllFor, openSeeAll = openSeeAll)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -58,7 +59,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 }
                 items(visibleRows, key = { it.id }) { row ->
                     HomeCatalogRow(row, compact, television, Modifier,
-                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter, continueMore = continueMore, seeAll = seeAll)
+                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll)
                 }
             }
         }

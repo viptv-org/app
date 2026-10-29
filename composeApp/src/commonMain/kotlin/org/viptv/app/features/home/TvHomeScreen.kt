@@ -34,6 +34,7 @@ import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
 import org.viptv.app.connection.Profile
+import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.Screen
 import org.viptv.engine.wire.*
 
@@ -42,7 +43,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap(),
     enrichSummary: (Card) -> Unit = {},
-    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
+    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
     var browsing by rememberSaveable(home?.scope?.profile_id) { mutableStateOf(false) }
     val lastNavigation = remember { mutableStateOf<TimeMark?>(null) }
     val rapidNavigation = remember { mutableStateOf(false) }
@@ -235,7 +236,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 rowAlpha = alpha,
                                 onHeightChange = { if (it > measuredShelfHeight) measuredShelfHeight = it; if (index == 0) firstShelfHeight = it },
                                 play = play, state = shelfState,
-                                continueMore = continueMore, seeAll = seeAll)
+                                seeAllFor = seeAllFor, openSeeAll = openSeeAll)
                         }
                     }
                 }
