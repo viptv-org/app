@@ -20,6 +20,7 @@ fun ApplicationController.refresh() = run {
     // A replacement snapshot has fresh cursors, so no row keeps a stale page state.
     else {
         mutable.value = mutable.value.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap())
+        adoptContinuation(refreshed.continuation)
         freshness.homeBuilt(refreshed.revisions)
     }
 }

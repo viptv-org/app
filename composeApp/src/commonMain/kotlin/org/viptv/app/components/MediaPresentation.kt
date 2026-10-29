@@ -1,7 +1,9 @@
 package org.viptv.app.components
 
+import org.viptv.app.connection.airDateLabel
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.EpisodeCoordinates
+import org.viptv.engine.wire.NextEpisode
 import kotlin.math.roundToInt
 
 internal fun Card.metadataParts(): List<String> = metadata?.let { value -> buildList {
@@ -55,6 +57,10 @@ internal fun EpisodeCoordinates.caption(): String =
  */
 internal fun Card.caughtUpCaption(): String? =
     identity.episode?.takeIf { isCaughtUp() }?.let { "${it.caption()} · $WATCHED_BADGE" }
+
+internal fun NextEpisode.caughtUpNextCaption(): String? = identity.episode?.let { episode ->
+    released_at_millis?.let { "${episode.caption()} · ${airDateLabel(it)}" } ?: "${episode.caption()} coming soon"
+}
 
 /** The one label a phone/desktop/web card draws on its art: new episodes first. */
 internal fun Card.cardChip(): String? = newEpisodesBadge() ?: badges.firstOrNull { !it.equals("Simkl", true) && !it.equals(WATCHED_BADGE, true) }

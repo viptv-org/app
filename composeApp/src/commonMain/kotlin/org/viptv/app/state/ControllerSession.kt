@@ -194,6 +194,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
+    adoptContinuation(value.continuation)
     discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }
     startLibraryImportRefresh(value.libraryImport)

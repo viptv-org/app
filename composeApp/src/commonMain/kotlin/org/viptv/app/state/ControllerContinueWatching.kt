@@ -26,6 +26,11 @@ data class ContinueWatchingMore(val count: Int?)
 /** The Home check last made, so a Home revision reads the list once. */
 internal data class ContinueCheck(val profile: String, val home: Scope, val revision: Long)
 
+internal fun ApplicationController.adoptContinuation(page: ContinuationPage?) {
+    if (page == null) return
+    mutable.value = mutable.value.copy(continueNext = mutable.value.continueNext.announced(page.entries))
+}
+
 /** Home's Continue Watching row, when it leads to the full list. */
 internal fun HomeSnapshot.continueRow(): HomeRow? = rows.find { it.id == CONTINUE_ROW && it.opensContinueWatching() }
 
@@ -80,7 +85,8 @@ private suspend fun ApplicationController.reloadContinueWatching(remote: RemoteC
     val page = remote.continueWatching(profile, 0, limit)
     if (connection !== remote || mutable.value.selectedProfile != profile) return
     val current = mutable.value.continueWatching?.takeIf { it.profile == profile }
-    mutable.value = mutable.value.copy(continueWatching = current.refreshedBy(profile, page, limit))
+    mutable.value = mutable.value.copy(continueWatching = current.refreshedBy(profile, page, limit),
+        continueNext = mutable.value.continueNext.announced(page.entries))
 }
 
 /**
@@ -100,7 +106,8 @@ internal fun ApplicationController.loadContinueWatching(navigation: Long = navig
     runPage {
         val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
         val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
-        mutable.value = mutable.value.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE))
+        mutable.value = mutable.value.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
+            continueNext = mutable.value.continueNext.announced(page.entries))
     }
 }
 
@@ -119,6 +126,7 @@ fun ApplicationController.continueWatchingMore() {
         val merged = (shown.cards + page.entries.map { it.card }).distinctBy(::cardLookupKey)
         // A page that adds nothing must not re-arm the same cursor forever.
         val next = page.next_cursor?.takeIf { merged.size > shown.cards.size && it != cursor }
-        mutable.value = mutable.value.copy(continueWatching = shown.copy(cards = merged, next = next))
+        mutable.value = mutable.value.copy(continueWatching = shown.copy(cards = merged, next = next),
+            continueNext = mutable.value.continueNext.announced(page.entries))
     }
 }

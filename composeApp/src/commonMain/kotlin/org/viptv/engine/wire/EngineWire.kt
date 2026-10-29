@@ -86,6 +86,7 @@ data class ContinuationEntry(
     val record: PlaybackRecord,
     val status: ContinuationStatus,
     val previous_identity: MediaIdentity? = null,
+    val next_episode: NextEpisode? = null,
 )
 
 @Serializable
@@ -387,6 +388,13 @@ data class MetadataOrigin(
     val provider_id: String,
     val connection_id: String? = null,
     val incarnation: String? = null,
+)
+
+@Serializable
+@Immutable
+data class NextEpisode(
+    val identity: MediaIdentity,
+    val released_at_millis: Long? = null,
 )
 
 @Serializable

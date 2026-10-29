@@ -24,6 +24,7 @@ internal fun ApplicationController.startLibraryImportRefresh(initial: LibraryImp
                     val fresh = remote.bootstrap()
                     if (!ownsScope()) return@launch
                     mutable.value = mutable.value.copy(home = fresh.home ?: mutable.value.home)
+                    adoptContinuation(fresh.continuation)
                     fresh.library?.let { cards -> updateLibrary(cards, membership = fresh.libraryMembership) }
                     return@launch
                 }

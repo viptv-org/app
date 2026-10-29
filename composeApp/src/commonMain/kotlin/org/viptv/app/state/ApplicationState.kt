@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import org.viptv.app.components.NextEpisodes
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.Card
@@ -54,6 +55,7 @@ data class ApplicationState(
     val homeRowErrors: Map<String, String> = emptyMap(),
     /** The full Continue Watching list as far as it is loaded (app#114); Home's row shows only its start. */
     val continueWatching: ContinueWatchingList? = null,
+    val continueNext: NextEpisodes = NextEpisodes.Empty,
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),
     val library: List<Card> = emptyList(),
