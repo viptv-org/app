@@ -118,7 +118,7 @@ val buildTorrentRuntime by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_torrent_runtime.py", "--abis", selectedAbis.joinToString(","))
     inputs.property("abis", selectedAbis)
-    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_torrent_runtime.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_torrent_runtime.py"), rootProject.file("tools/playback_gateway.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
     outputs.dir(layout.buildDirectory.dir("generated/torrentRuntime"))
 }
 tasks.named("preBuild") { dependsOn(buildTorrentRuntime) }

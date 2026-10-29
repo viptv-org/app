@@ -15,6 +15,8 @@ import shutil
 import subprocess
 import tempfile
 
+import playback_gateway
+
 # Every shipped Android ABI.
 ANDROID_ABIS = ["armeabi-v7a", "arm64-v8a", "x86_64"]
 parser = argparse.ArgumentParser()
@@ -47,16 +49,6 @@ def go_binary(env):
     return str(Path(goroot) / "bin/go")
 
 
-def gateway_repository(env):
-    if env.get("VIPTV_PLAYBACK_GATEWAY"):
-        return Path(env["VIPTV_PLAYBACK_GATEWAY"])
-    for parent in root.parents:
-        candidate = parent / "playback-gateway"
-        if (candidate / ".git").exists():
-            return candidate
-    raise SystemExit("playback-gateway clone not found; set VIPTV_PLAYBACK_GATEWAY")
-
-
 def ndk_home(env):
     if env.get("ANDROID_NDK_HOME"):
         return env["ANDROID_NDK_HOME"]
@@ -77,7 +69,7 @@ if stamped.get("revision") == revision and stamped.get("layout") == LAYOUT and s
     raise SystemExit(0)
 
 env = os.environ.copy()
-repository = gateway_repository(env)
+repository = playback_gateway.repository(env)
 if subprocess.run(["git", "-C", str(repository), "cat-file", "-e", revision + "^{commit}"]).returncode != 0:
     subprocess.run(["git", "-C", str(repository), "fetch", "--quiet", "origin", revision], check=True)
 env.update(GO=go_binary(env), ANDROID_NDK_HOME=ndk_home(env))

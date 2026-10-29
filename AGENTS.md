@@ -12,7 +12,6 @@ Read the workspace `AGENTS.md` first.
 - A worktree needs `local.properties` and `git submodule update --init native/core`
   (`scripts/agents/claim.sh` does both). If `prepareKitePlayer` fails, copy
   `build/kiteplayer/maven` from the main clone.
-- Desktop builds in a worktree need `VIPTV_PLAYBACK_GATEWAY=<workspace>/playback-gateway`.
 - The first `desktopTest` in a fresh worktree builds the Rust engine (about 7 minutes).
 
 ## Checks

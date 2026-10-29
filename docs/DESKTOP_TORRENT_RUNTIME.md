@@ -7,7 +7,10 @@ and terminates its owned worker on failure and JVM exit. Media remains on the
 existing token-protected loopback endpoint and uses the existing grant bridge.
 
 `tools/build_desktop_torrent.py` builds the revision in `TORRENT_RUNTIME_REF` and
-ships dependency notices, checksums and protocol/clock metadata. Gradle includes
+ships dependency notices, checksums and protocol/clock metadata. Both torrent
+runtime builds read `playback-gateway` from `VIPTV_PLAYBACK_GATEWAY`, or else
+from the nearest `playback-gateway` next to or above the checkout, so a worktree
+needs no override. Gradle includes
 these resources in desktop packages. Linux and Windows use suspension-aware OS
 clocks; macOS is advertised only with a worker pin providing its matching clock.
 
