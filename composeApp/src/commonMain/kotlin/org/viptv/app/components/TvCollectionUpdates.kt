@@ -32,7 +32,6 @@ private class CollectionFocusNode(private val bounds: CollectionBounds) : Delega
     override fun onDetach() { if (bounds.node === this) bounds.node = null }
 }
 
-/** Re-anchor after paging/reordering, including a formerly clamped item, without restarting live scrolling. */
 @Composable
 internal fun Modifier.tvCollectionUpdates(
     state: ScrollableState,
@@ -51,9 +50,7 @@ internal fun Modifier.tvCollectionUpdates(
                 previous = current
                 if (old == null) return@collectLatest
                 val oldKeys = old.second.toMap()
-                // A new visible window is ordinary scrolling, not a content
-                // revision. Only count changes or changed keys at overlapping
-                // indices warrant an independent relocation request.
+                // A new visible window is ordinary scrolling, not a content revision.
                 if (old.first == current.first && current.second.none { (index, key) ->
                         index in oldKeys && oldKeys[index] != key
                     }) return@collectLatest
@@ -69,7 +66,7 @@ internal fun Modifier.tvCollectionUpdates(
                 if (abs(delta) <= .5f || delta > 0 && !state.canScrollForward || delta < 0 && !state.canScrollBackward) return@collectLatest
                 try { state.animateScrollBy(delta) }
                 catch (_: CancellationException) {
-                    // A new native focus/gesture mutation wins; keep observing later data changes.
+                    // A new native focus or gesture mutation wins; keep observing later data changes.
                     currentCoroutineContext().ensureActive()
                 }
             }

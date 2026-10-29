@@ -4,14 +4,12 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import android.view.Display
 
-/** Holds the application context so the display's supported modes can be read without an Activity. */
 object AndroidDisplayCapability {
     @Volatile internal var context: Context? = null
     fun attach(context: Context) { this.context = context.applicationContext }
 }
 
-// The largest mode the display supports, not the current one: a 4K TV can run
-// its UI at 1080p. Landscape: the short side is the height on a TV.
+// The largest mode the display supports, not the current one: a 4K TV can run its UI at 1080p. Landscape: the short side is the height.
 internal actual fun platformDisplayShortSide(): Int? {
     val context = AndroidDisplayCapability.context ?: return null
     return try {

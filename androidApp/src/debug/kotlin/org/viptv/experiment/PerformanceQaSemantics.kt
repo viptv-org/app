@@ -10,7 +10,6 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 
-/** Read the actual app composition. RootForTest is Compose's test inspection marker. */
 internal object PerformanceQaSemantics {
     private fun roots(view: View): List<SemanticsNode> = buildList {
         (view as? RootForTest)?.let { add(it.semanticsOwner.rootSemanticsNode) }

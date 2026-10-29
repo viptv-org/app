@@ -12,11 +12,6 @@ import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 import org.viptv.engine.wire.QueryValue
 
-/**
- * `#ui-preview/Movies/Filters` (desktop `VIPTV_UI_VARIANT=Filters`): the browser
- * Browse filter bar with a provider-sized Genre list, a small Sort and a capped
- * multi-choice filter (app#57, app#117). Picks change the preview's own query only.
- */
 @Composable
 internal fun PreviewBrowserFilters(screen: Screen, open: (Card) -> Unit) {
     var query by remember { mutableStateOf(BrowseQuery("movie", extras = mapOf("sort" to "popular"))) }

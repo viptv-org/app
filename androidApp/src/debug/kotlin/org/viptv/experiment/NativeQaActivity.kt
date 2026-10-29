@@ -12,7 +12,6 @@ import org.viptv.app.App
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 
-/** Temporary disposable-QA entry; removed before the normal APK build. */
 class NativeQaActivity : ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)

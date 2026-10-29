@@ -1,6 +1,6 @@
 package org.viptv.app.player
 
-/** Parsed provider cues stay on the original title clock, across rolling windows and seeks. */
+// Parsed provider cues stay on the original title clock across rolling windows and seeks.
 internal data class SidecarCueGroup<T>(val startUs: Long, val endUs: Long?, val cues: List<T>)
 
 internal class SidecarCueTimeline<T>(groups: List<SidecarCueGroup<T>>, private val replace: Boolean = false) {

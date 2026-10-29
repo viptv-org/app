@@ -15,7 +15,6 @@ import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.state.*
 
-/** QA-only source qualification in an isolated local profile; optional playback never uses account tracking. */
 class NativeSourceQaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

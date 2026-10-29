@@ -9,7 +9,7 @@ import androidx.compose.ui.viewinterop.HtmlElementView
 import kotlinx.browser.document
 import org.w3c.dom.HTMLInputElement
 
-/** Native editing avoids the canvas text-input mirror reordering rapid URL keystrokes. */
+// Native editing avoids the canvas text-input mirror reordering rapid URL keystrokes.
 @Composable
 internal actual fun AddonUrlField(state: TextFieldState, enabled: Boolean, modifier: Modifier, dismiss: (() -> Unit)?) {
     val currentDismiss by rememberUpdatedState(dismiss)

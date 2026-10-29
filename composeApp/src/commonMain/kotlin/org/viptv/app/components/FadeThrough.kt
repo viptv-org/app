@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-/** Short overlapping text transition; metadata enrichment keeps the same content identity. */
 @Composable
 internal fun <T> FadeThrough(target: T, modifier: Modifier = Modifier, contentKey: (T) -> Any? = { it }, content: @Composable (T) -> Unit) {
     androidx.compose.animation.core.updateTransition(target, label = "Billboard text")

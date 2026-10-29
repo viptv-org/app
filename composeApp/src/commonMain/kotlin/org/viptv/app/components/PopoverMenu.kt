@@ -36,19 +36,11 @@ import org.viptv.app.theme.Palette
 
 internal const val PopoverMenuItemIconTag = "PopoverMenuItem.icon"
 
-/** The popover card's width; content that cannot report an intrinsic width (a lazy list) sizes to it. */
+// Content that cannot report an intrinsic width (a lazy list) sizes to this.
 internal val PopoverMenuWidth = 260.dp
 
-/** Design token `line.hairline`: white at 0.07. */
 internal val Hairline = Color.White.copy(alpha = .07f)
 
-/**
- * The design system's anchored popover (components.md section 8): a surface-1 card with a
- * hairline border and radius 16, opened below the control it belongs to, with no scrim. Its
- * shadow elevation approximates the `shadow.popover` token. Dismissal (outside click, Back,
- * Escape) and keyboard focus come from [DropdownMenu]. [wash] tints the top of the card,
- * fading out over the first 88 dp.
- */
 @Composable
 internal fun PopoverMenu(
     expanded: Boolean,
@@ -72,10 +64,6 @@ internal fun PopoverMenu(
     )
 }
 
-/**
- * A popover row: an optional leading Lucide icon and a label, 44 tall. Hover, focus and press fill it with
- * surface-2; a press also applies the phone row scale (`pressed-scale-row`, 0.99).
- */
 @Composable
 internal fun PopoverMenuItem(label: String, icon: ImageVector? = null, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
@@ -96,7 +84,6 @@ internal fun PopoverMenuItem(label: String, icon: ImageVector? = null, onClick: 
     }
 }
 
-/** A hairline between groups of popover rows. */
 @Composable
 internal fun PopoverMenuDivider() {
     Box(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth().height(1.dp).background(Hairline))

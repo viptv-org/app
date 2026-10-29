@@ -78,7 +78,7 @@ internal object DesktopTorrentHost : TorrentRuntimeHost {
     }
 }
 
-/** These OS clocks include suspend; System.nanoTime is insufficient on Linux. */
+// These OS clocks include suspend; System.nanoTime is insufficient on Linux.
 internal object DesktopTorrentClock {
     private val library by lazy { NativeLibrary.getInstance(if (Platform.isWindows()) "kernel32" else Platform.C_LIBRARY_NAME) }
     fun millis(): Long = when {
@@ -102,7 +102,6 @@ internal object DesktopTorrentClock {
     }
 }
 
-/** The subprocess owns acquisition; only bounded JSON control crosses stdio. */
 internal class DesktopTorrentWorker(command: List<String>, readyTimeoutMillis: Long = 8_000, stderrLog: Path? = null) : TorrentRuntimePort {
     private val process = ProcessBuilder(command).redirectError(
         stderrLog?.let { ProcessBuilder.Redirect.to(Files.createFile(it).toFile()) }

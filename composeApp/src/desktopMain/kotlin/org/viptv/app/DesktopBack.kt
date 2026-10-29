@@ -11,11 +11,6 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import org.viptv.app.state.ApplicationState
 
-/**
- * The desktop window's Back beyond the title-bar chevron (docs/BACK_MATRIX.md): Escape that nothing
- * focused took (a text field, the player, an open dialog or menu all keep theirs), and the mouse's
- * Back and Forward buttons.
- */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun DesktopBackInputs(back: GlobalBack, state: ApplicationState, content: @Composable () -> Unit) {

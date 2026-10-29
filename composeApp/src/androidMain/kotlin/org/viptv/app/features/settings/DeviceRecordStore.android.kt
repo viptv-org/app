@@ -3,11 +3,7 @@ package org.viptv.app.features.settings
 import android.content.Context
 import coil3.PlatformContext
 
-/**
- * [PlatformContext] is the Android Context here, so a record needs no attach
- * hook at the Activity. `apply()` keeps the write off the frame the D-pad press
- * arrives on. Display keeps the file and key it shipped with.
- */
+// apply() keeps the write off the frame the D-pad press runs on.
 private class AndroidDeviceRecordStore(private val context: PlatformContext, private val file: String, private val key: String) : DeviceRecordStore {
     private val preferences get() = context.getSharedPreferences(file, Context.MODE_PRIVATE)
 

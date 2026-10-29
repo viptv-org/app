@@ -13,7 +13,6 @@ import org.viptv.app.player.*
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.engine.wire.SubtitleCandidate
 
-/** Dedicated emulator/local generated media only. Never uses accounts or provider services. */
 class SidecarPlaybackQaActivity : ComponentActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val commands = MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16)

@@ -23,10 +23,8 @@ import org.viptv.app.components.TvFocusColumn
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 
-/** The app's updater, where the platform has one (Android); Settings › About reads it. */
 val LocalAppUpdater = staticCompositionLocalOf<AppUpdater?> { null }
 
-/** Settings › About: the update state in one line. */
 fun updateStatusLabel(status: UpdateStatus): String = when (status) {
     UpdateStatus.Unchecked -> "Not checked yet"
     UpdateStatus.NoServer -> "Updates come from your server. Sign in to a server to get them."
@@ -40,7 +38,6 @@ fun updateStatusLabel(status: UpdateStatus): String = when (status) {
     is UpdateStatus.Failed -> status.message
 }
 
-/** Settings' update action: Install once a build is ready, Check for updates otherwise. */
 fun updateActionLabel(status: UpdateStatus): String = if (status.offeredFeed != null) "Install update" else "Check for updates"
 
 fun AppUpdater.settingsAction() {
@@ -52,10 +49,6 @@ fun AppUpdater.settingsAction() {
     }
 }
 
-/**
- * The app with updates: provides [LocalAppUpdater] for Settings › About and lays the update surfaces
- * over [content] where [promptAllowed]. Without an updater (debug QA packages) it is just [content].
- */
 @Composable
 fun AppWithUpdates(updater: AppUpdater?, television: Boolean, promptAllowed: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAppUpdater provides updater) {
@@ -63,7 +56,6 @@ fun AppWithUpdates(updater: AppUpdater?, television: Boolean, promptAllowed: Boo
             content()
             if (updater != null) {
                 AppUpdatePrompt(updater, television, promptAllowed)
-                // Once Install is chosen the full-screen Updating screen takes over (app#139).
                 AppUpdating(updater, television)
                 AppUpdateNotice(updater, television)
             }
@@ -71,12 +63,6 @@ fun AppWithUpdates(updater: AppUpdater?, television: Boolean, promptAllowed: Boo
     }
 }
 
-/**
- * "Update ready: Install" outside the player. [allowed] is false while the player (or sign-in)
- * is on screen. Phones and tablets get a banner that does not block the page; TV gets a small
- * D-pad dialog whose Back is Later. Choosing Install shows [AppUpdating] instead; an install that
- * fails comes back here as "Couldn't update VIPTV" with Try again · Later (app#139).
- */
 @Composable
 fun AppUpdatePrompt(updater: AppUpdater, television: Boolean, allowed: Boolean) {
     val state by updater.state.collectAsState()
@@ -122,7 +108,6 @@ private fun TvUpdatePrompt(title: String, body: String, primary: String, act: ()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val first = remember { FocusRequester() }
-        // A card in the top-right corner, under the profile button; the page stays visible around it.
         Popup(alignment = Alignment.TopEnd, onDismissRequest = later, properties = PopupProperties(focusable = true)) {
             TvFocusColumn(Modifier.padding(top = 96.dp * scale, end = 96.dp * scale)) {
                 Column(Modifier.width(760.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Color(0xFF202023))
@@ -140,8 +125,7 @@ private fun TvUpdatePrompt(title: String, body: String, primary: String, act: ()
                     }
                 }
             }
-            // The prompt can appear while the viewer is pressing OK on the page; give it a moment
-            // before a button takes focus so that press cannot start the install.
+            // The prompt can appear while OK is pressed: give its buttons a moment so that press cannot start the install.
             LaunchedEffect(primary) { delay(700); first.requestFocus() }
         }
     }

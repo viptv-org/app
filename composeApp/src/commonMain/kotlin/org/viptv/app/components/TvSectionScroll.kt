@@ -6,7 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/** Aligns whole sections without letting a descendant card's bounds hide the section heading. */
+// Aligns whole sections without letting a descendant card's bounds hide the section heading.
 internal class TvSectionScroll(private val state: LazyListState, private val scope: CoroutineScope) {
     private var motion: Job? = null
     private var target: Int? = null

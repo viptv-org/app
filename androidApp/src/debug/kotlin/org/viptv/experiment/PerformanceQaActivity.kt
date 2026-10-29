@@ -15,7 +15,6 @@ import kotlin.coroutines.resume
 import java.net.HttpURLConnection
 import java.net.URI
 
-/** Full application measurements on the named disposable Android TV AVD only. */
 class PerformanceQaActivity : MainActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var frames: PerformanceQaFrames
@@ -50,8 +49,6 @@ class PerformanceQaActivity : MainActivity() {
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Test driver finishes this Activity without killing its process, then
-        // verifies a genuinely new Activity/model with retained secure session.
         if (intent.getBooleanExtra("qa_finish", false)) finish()
     }
     private suspend fun await(predicate: () -> Boolean) = withTimeout(45_000) {

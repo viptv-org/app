@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import org.viptv.app.connection.AndroidTorrentRuntime
 import org.viptv.app.qa.TorrentColdQaScreen
 
-/** Included only by the explicitly opted-in, separate torrentqa package. */
 class TorrentColdQaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

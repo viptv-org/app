@@ -22,11 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipFile
 import kotlinx.serialization.json.*
 
-/**
- * Android hosts the shared torrent runtime (Go, JNI) in an app-private worker
- * process, so a stuck or killed runtime never takes Media3 or the UI with it.
- * The app module supplies that service, which owns the JNI class.
- */
 object AndroidTorrentRuntime {
     private var context: Context? = null
     private var service: Class<out Service>? = null
@@ -44,7 +39,7 @@ object AndroidTorrentRuntime {
         override fun connect(): TorrentRuntimePort = TorrentRuntimeWorker(requireNotNull(context), requireNotNull(service))
     }
 
-    /** The runtime ships for these process ABIs; Media3 must also reach its cleartext loopback endpoint. */
+    // The runtime ships for these process ABIs; Media3 must also reach its cleartext loopback endpoint.
     private fun supported(): Boolean = try {
         val app = requireNotNull(context).applicationInfo
         val abi = Build.SUPPORTED_ABIS.firstOrNull {
@@ -59,7 +54,7 @@ object AndroidTorrentRuntime {
 
 internal actual fun platformTorrentRuntime(): TorrentRuntimeHost? = AndroidTorrentRuntime.host()
 
-/** Length-prefixed frames carry control bodies outside Binder's small transaction buffer. */
+// Length-prefixed frames carry control bodies outside Binder's small transaction buffer.
 object TorrentRuntimeChannel {
     const val DESCRIPTOR = "org.viptv.app.private.TorrentRuntime"
     const val CONNECT = IBinder.FIRST_CALL_TRANSACTION
@@ -75,7 +70,7 @@ object TorrentRuntimeChannel {
     }
 }
 
-/** A bound, owned worker process; terminating it revokes every media endpoint it served. */
+// A bound, owned worker process; terminating it revokes every media endpoint it served.
 internal class TorrentRuntimeWorker(private val context: Context, service: Class<out Service>) : TorrentRuntimePort {
     private val connected = CountDownLatch(1)
     private val dead = CountDownLatch(1)
@@ -138,7 +133,7 @@ internal class TorrentRuntimeWorker(private val context: Context, service: Class
     override fun isAlive(): Boolean = !closed.get() && dead.count != 0L && binder?.isBinderAlive == true
     internal fun actualWorkerAlive(): Boolean = binder?.isBinderAlive == true
 
-    /** Only the PID returned by this private binding is ever killed. */
+    // Only the PID returned by this private binding is ever killed.
     override fun terminate() {
         if (!closed.compareAndSet(false, true)) return
         if (pid > 0 && pid != Process.myPid() && binder?.isBinderAlive == true) Process.killProcess(pid)

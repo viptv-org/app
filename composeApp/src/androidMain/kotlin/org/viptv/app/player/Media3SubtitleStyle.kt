@@ -10,8 +10,7 @@ import org.viptv.app.connection.ProfilePreferences
 internal fun SubtitleView.profileStyle(preferences: ProfilePreferences, scale: Float) {
     val foreground = runCatching { Color.parseColor(preferences.subtitle_text_color) }.getOrDefault(Color.WHITE)
     val background = runCatching { Color.parseColor(preferences.subtitle_background_color) }.getOrDefault(Color.TRANSPARENT)
-    // Default preferences preserve authored ASS/WebVTT styling. Explicit colour
-    // choices override embedded colours; positioning remains attached to each cue.
+    // Defaults keep authored ASS/WebVTT styling; explicit colours override embedded ones and positioning stays with each cue.
     setApplyEmbeddedStyles(foreground == Color.WHITE && background == Color.TRANSPARENT)
     setApplyEmbeddedFontSizes(scale == 1f)
     setStyle(CaptionStyleCompat(foreground, background, Color.TRANSPARENT, CaptionStyleCompat.EDGE_TYPE_NONE, Color.BLACK, null))
