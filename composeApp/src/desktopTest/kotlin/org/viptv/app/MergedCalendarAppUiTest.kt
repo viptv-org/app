@@ -3,6 +3,13 @@ package org.viptv.app
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import coil3.ImageLoader
@@ -21,10 +28,11 @@ import org.viptv.app.resources.Res
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import java.io.File
+import kotlin.math.abs
 import org.junit.Rule
 import kotlin.test.*
 
-@OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
+@OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class MergedCalendarAppUiTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val clock = MergedCalendarWire.fixedClock()
@@ -39,12 +47,15 @@ class MergedCalendarAppUiTest {
         MergedCalendarWire.library("lib-2", "The Pitt", 2, 7, date = MergedCalendarWire.today(22), poster = art("poster4.jpg"))),
         listOf("library"), null), "phone-library-only") { nodes ->
         assertEquals(2, nodes.count(::marked))
-        assertFalse(nodes.any { text(it) == "Your shows" }, "One source needs no filter")
+        assertFalse(nodes.any { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it).startsWith("Shows: ") },
+            "One source needs no filter")
+        assertFalse(nodes.any { text(it) == "Your shows" })
     }
 
     @Test fun phoneOldServerShowsThePublicScheduleUnmarked() = single(MergedCalendarWire.page(listOf(
         MergedCalendarWire.public("public-1", "Public show", poster = art("poster5.jpg"))), null, null), "phone-old-server") { nodes ->
         assertTrue(nodes.any { text(it).contains("Public show") })
+        assertFalse(nodes.any { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it).startsWith("Shows: ") })
         assertFalse(nodes.any { marked(it) || text(it) == "Your shows" })
     }
 
@@ -78,15 +89,15 @@ class MergedCalendarAppUiTest {
         s.until("the merged rows") { s.nodes().any { text(it).contains("Public premiere") } && s.nodes().any { text(it).contains("Slow Horses") } }
         assertEquals(2, s.nodes().count { marked(it) && text(it).contains("Chapter") }, "Both library rows are marked")
         assertFalse(s.nodes().any { marked(it) && text(it).contains("Public premiere") }, "Public rows are not")
-        assertTrue(s.nodes().any { text(it) == "All" } && s.nodes().any { text(it) == "Your shows" })
+        assertEquals("Shows: All", s.showsLabel(), "$name: the Shows chip is the filter")
+        if (television) assertTrue(s.showsTrigger()!!.config.contains(SemanticsActions.RequestFocus), "The remote reaches the filter")
         s.save("$name-calendar-all")
-        if (television) assertTrue(listOf("All", "Your shows").all { label -> s.nodes().any { text(it) == label &&
-            it.config.contains(SemanticsActions.RequestFocus) } }, "The remote reaches the filter")
-        s.click("Your shows")
+        s.chooseShows("Your shows")
         s.until("the Your shows filter") { s.nodes().none { text(it).contains("Public premiere") } }
         assertTrue(s.nodes().any { text(it).contains("Slow Horses") })
+        assertEquals("Shows: Your shows", s.showsLabel(), "$name: the chip shows the picked source")
         s.save("$name-calendar-your-shows")
-        if (television) s.click("All")
+        if (television) s.chooseShows("All")
         else {
             s.controller.navigate(Screen.Library); s.frames(10); s.controller.navigate(Screen.Calendar)
             if (phone) s.showToday()
@@ -111,7 +122,8 @@ class MergedCalendarAppUiTest {
         s.save(name)
     }
 
-    private class Scene(val scene: ImageComposeScene, val controller: ApplicationController, val capture: File?) {
+    private class Scene(val scene: ImageComposeScene, val controller: ApplicationController, val capture: File?, val television: Boolean,
+        val focusManager: FocusManager?) {
         var frame = 0L
         fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
@@ -119,6 +131,101 @@ class MergedCalendarAppUiTest {
             val deadline = System.nanoTime() + 10_000_000_000L
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
         }
+
+        /** The Calendar's Shows chip ("Shows: All", "Shows: Your shows"), or null when the page offers no filter. */
+        fun showsTrigger() = nodes().firstOrNull {
+            it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it).startsWith("Shows: ") }
+        fun showsLabel(): String? = showsTrigger()?.let(::text)
+
+        /** The chip's rows: "All" and "Your shows", whichever container the layout opened them in. */
+        private fun rows() = nodes().filter {
+            it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) }
+        private fun rowLabel(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty()
+            .firstOrNull()?.text?.removeSuffix(" · unavailable").orEmpty()
+
+        private fun focusedRow() = rows().firstOrNull {
+            it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::rowLabel)
+
+        private fun request(node: SemanticsNode) {
+            assertTrue(node.config[SemanticsActions.RequestFocus].action!!.invoke(), "a focus stop"); frames(10)
+        }
+
+        private fun focusedText() = nodes().firstOrNull {
+            it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::text)
+
+        private fun focusedChip() = nodes().firstOrNull {
+            it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList &&
+                it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::text)
+
+        /** Opens the Shows chip: a click on pointer layouts, OK on the remote. */
+        fun openShows() {
+            if (television) {
+                // A pick leaves the remote on the chip; otherwise Down enters the page from the rail and Up is the row.
+                if (focusedChip() == null) {
+                    until("the remote's focus") { focusedText() != null }
+                    press(Key.DirectionDown)
+                    until("the page") { focusedChip() != null || focusedText() == "Today" }
+                    if (focusedChip() == null) press(Key.DirectionUp)
+                    until("the chip row") { focusedChip() != null }
+                }
+                var guard = 0
+                while (focusedChip()?.startsWith("Shows: ") != true && guard++ < 8) press(Key.DirectionRight)
+                assertTrue(focusedChip()?.startsWith("Shows: ") == true,
+                    "the remote reaches the Shows chip; focused=" + focusedChip())
+                press(Key.DirectionCenter)
+            } else {
+                val chip = requireNotNull(showsTrigger()) { "no Shows chip; texts=" + nodes().map(::text).filter(String::isNotBlank) }
+                assertTrue(chip.config[SemanticsActions.OnClick].action!!.invoke(), "the chip opens its list")
+            }
+            frames(10)
+            val deadline = System.nanoTime() + 10_000_000_000L
+            while (rows().isEmpty()) {
+                check(System.nanoTime() < deadline) { "the Shows list did not open; focused=" +
+                    nodes().filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.map(::text) +
+                    "; texts=" + nodes().map(::text).filter(String::isNotBlank) }
+                frames(2)
+            }
+            // A TV panel opens on the current option, so the remote is already on a row.
+            if (television) until("the panel to take focus") { rows().any { it.config.getOrNull(SemanticsProperties.Focused) == true } }
+        }
+
+        /** Picks a Shows row and waits for the list to close: OK on the remote, a click elsewhere. */
+        fun chooseShows(label: String) {
+            openShows()
+            if (television) {
+                // The D-pad walks the panel's focus stops from the current option to the wanted row.
+                require(rows().any { rowLabel(it) == label }) { "no $label row; rows=" + rows().map(::rowLabel) }
+                val moves = rows().indexOfFirst { rowLabel(it) == label } - rows().indexOfFirst { it.config.getOrNull(SemanticsProperties.Focused) == true }
+                repeat(abs(moves)) { press(if (moves > 0) Key.DirectionDown else Key.DirectionUp) }
+                // The panel is its own window and desktop maps no arrow key to a focus move, so a D-pad
+                // press can leave focus where it was; land on the row and let OK do the picking.
+                if (focusedRow() != label) request(rows().single { rowLabel(it) == label })
+                assertEquals(label, focusedRow(), "the remote reaches $label")
+                press(Key.DirectionCenter)
+            } else {
+                val row = rows().single { rowLabel(it) == label }
+                assertTrue(row.config[SemanticsActions.OnClick].action!!.invoke(), "$label is a pick")
+            }
+            frames(10)
+            until("the Shows list to close") { rows().isEmpty() }
+        }
+
+        // Desktop maps no arrow key to a focus move, so an unconsumed D-pad press drives the focus manager.
+        private fun press(key: Key) {
+            val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown))
+            scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
+            frames(10)
+            if (!consumed && key in listOf(Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown)) {
+                focusManager!!.moveFocus(when (key) {
+                    Key.DirectionLeft -> FocusDirection.Left
+                    Key.DirectionRight -> FocusDirection.Right
+                    Key.DirectionUp -> FocusDirection.Up
+                    else -> FocusDirection.Down
+                })
+                frames(10)
+            }
+        }
+
         fun showToday() {
             until("the calendar rows") { controller.state.value.calendarEntries.isNotEmpty() && !controller.state.value.busy }
             val today = controller.state.value.calendarDays.single { it.label == "Today" }
@@ -126,10 +233,6 @@ class MergedCalendarAppUiTest {
             until("today's date") { date() != null }
             val date = requireNotNull(date())
             assertTrue(date.config[SemanticsActions.OnClick].action!!.invoke()); frames(40)
-        }
-        fun click(label: String) {
-            val node = nodes().first { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
-            assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); frames(10)
         }
         fun save(variant: String) {
             val dir = capture ?: return
@@ -168,15 +271,17 @@ class MergedCalendarAppUiTest {
         val density = if (capture != null && !television) 2f else 1f
         var previousLoader: ImageLoader? = null
         var appLoader: ImageLoader? = null
+        var focusManager: FocusManager? = null
         val scene = ImageComposeScene((width * density).toInt(), (height * density).toInt(), Density(density)) {
             val context = LocalPlatformContext.current
             remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
+            focusManager = LocalFocusManager.current
             App(television = television, browser = browser, desktopChrome = desktopChrome, providedController = controller, manageControllerLifecycle = false)
             appLoader = SingletonImageLoader.get(context)
         }
         try {
             controller.navigate(Screen.Calendar)
-            body(Scene(scene, controller, capture))
+            body(Scene(scene, controller, capture, television, focusManager))
         } finally {
             scene.close(); scope.cancel(); remote.close()
             appLoader?.shutdown(); previousLoader?.let { SingletonImageLoader.setUnsafe(it) }
