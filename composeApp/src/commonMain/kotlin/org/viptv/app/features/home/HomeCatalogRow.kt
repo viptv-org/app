@@ -33,7 +33,8 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     focus: (Card) -> Unit, open: (Card) -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false,
     play: (Card) -> Unit = open,
     gutter: Dp = 0.dp,
-    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
+    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {},
+    hover: (Card, Boolean) -> Unit = { _, _ -> }) {
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -79,6 +80,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                                 if (!television) scope.launch { bringIntoView.bringIntoView() }
                                 focus(card)
                             },
+                            onHover = { if (row.id == CONTINUE_ROW) hover(card, it) },
                             open = open, select = select, labelScale = if (television) scale * 22f / 14f else if (browser) 12f / 14f else 1f,
                             cornerRadius = if (television) 12.dp * scale else 8.dp,
                             focusWidth = if (television) 4.dp * scale else 3.dp,
