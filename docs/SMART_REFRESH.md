@@ -244,9 +244,9 @@ from "add-ons changed".
 
 - **Rows and cards.** These are already keyed by row id and `cardLookupKey`,
   so a surviving focused card keeps focus.
-- **Row start.** A row the viewer hasn't scrolled or focused shows a new first
-  card at its start; without it a `LazyRow` holds the previous first card at the
-  left edge and the new one sits off-screen to the left (`FollowNewFirstCard`).
+- **Row start.** A row at its start shows the new first card, unless the viewer
+  is in that row: it then keeps the card it was showing at its leading edge and
+  the new card waits to the left (`FollowNewFirstCard`).
 - **Removed focused card.** If the focused card disappears (for example, it
   was finished on another device), move to the nearest surviving card at the
   same index, then to the rail. `TvHomeShelf.lastFocusedIndex` already exists.
