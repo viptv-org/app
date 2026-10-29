@@ -41,6 +41,7 @@ internal fun launchDesktopPlayerQa() = application {
             diagnostics = probe::diagnostic)
     }
     Window(onCloseRequest = ::exitApplication, title = "VIPTV Desktop Playback QA", state = state) {
+        LaunchedEffect(window) { window.toFront(); window.requestFocus() }
         org.viptv.app.player.mpv.MpvWindow(window) {
         if (controls) org.viptv.app.theme.ViptvTheme {
             org.viptv.app.features.player.PlayerScreen(input, paused, null, { paused = !paused }, probe::observe, ::exitApplication)
