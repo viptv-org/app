@@ -8,22 +8,15 @@ import org.viptv.app.connection.*
 enum class StremioImportStage(val step: Int, val title: String) {
     Connect(1, "Connect Stremio"), Addons(2, "Choose add-ons"), Items(3, "Review items"), Confirm(4, "Confirm import"), Complete(0, "Import complete")
 }
-/** [label] is the dashboard status; [expectation] tells the user why it can take a while. */
 enum class StremioImportBusy(val label: String, val expectation: String) {
     Preview("Reading Stremio for a read-only preview…", "Large Stremio libraries can take up to a minute. Nothing is saved."),
     Review("Verifying metadata and preparing named items…", "This can take up to a minute for large libraries or many add-ons. Nothing is saved yet."),
     Apply("Saving the confirmed import…", "This can take up to a minute. Stay on this screen to see the result.")
 }
 
-/** Running: the server is still filling. Ready: it finished. Background: no longer followed here (cap or failures). */
 enum class StremioDetailsPhase { Running, Ready, Background }
-/**
- * After apply, the server gives imported titles their Details card; [total] is 0 until it has counted them.
- * [filled] (null from servers that do not report it) is how many looked-up titles actually gained a card.
- */
 data class StremioTitleDetails(val done: Int, val total: Int, val phase: StremioDetailsPhase, val filled: Int? = null)
 
-/** Never holds the Stremio password: the field owns it until [StremioImportSession.connect] drops it. */
 data class StremioImportState(
     val profileName: String,
     val restricted: Boolean,
@@ -34,9 +27,7 @@ data class StremioImportState(
     val addons: StremioAddonPreview? = null,
     val selectedAddons: Set<String> = emptySet(),
     val failedAddons: Set<String> = emptySet(),
-    /** Server category per failed add-on, when it sent one. */
     val failedReasons: Map<String, String> = emptyMap(),
-    /** Increments each time a verification names failed add-ons, so the screen can bring the first into view. */
     val failedReports: Int = 0,
     val review: StremioReview? = null,
     val excluded: Set<String> = emptySet(),
@@ -47,11 +38,8 @@ data class StremioImportState(
     val expired: Boolean = false,
     val busy: StremioImportBusy? = null,
     val error: String? = null,
-    /** Neutral, non-error status such as a stopped verification. */
     val notice: String? = null,
-    /** Increments when the draft is discarded so the form clears its fields and restores email focus. */
     val resets: Int = 0,
-    /** The title-details fill after a completed import; null when there is nothing to show. */
     val details: StremioTitleDetails? = null,
 ) {
     val connected: Boolean get() = addons != null || review != null
@@ -76,11 +64,6 @@ internal const val stremioReviewTimeoutCopy = "Stremio or the server took too lo
 internal const val stremioUnreachableCopy = "Could not reach the VIPTV server. Check your connection and try again."
 internal const val stremioReviewStoppedCopy = "Verification stopped. Your add-on choices are kept; change them or try again."
 
-/**
- * Fixed copy only; upstream diagnostics are never shown. A known `error_code` wins whatever the
- * HTTP status. Without one, preview/review failures say what happened (too slow, unreachable);
- * during apply the outcome is unknown, so the retry copy never implies nothing was saved.
- */
 internal fun stremioImportError(failure: Throwable, applying: Boolean, reviewing: Boolean = false): String {
     if (failure is StremioImportFailure) when (failure.code) {
         "stremio_credentials_invalid" -> return "Stremio sign-in failed. Check your details."
@@ -109,11 +92,6 @@ internal fun stremioImportError(failure: Throwable, applying: Boolean, reviewing
     return "Could not prepare the import. Check your details or add-on choices and try again."
 }
 
-/**
- * One guided import draft for one connection and profile. Every request bumps
- * [epoch]; responses from an older epoch, a disposed draft or a replaced owner
- * are ignored. Discarding cancels the request and deletes the server preview.
- */
 class StremioImportSession internal constructor(
     private val scope: CoroutineScope,
     private val transport: StremioImportTransport,
@@ -122,7 +100,6 @@ class StremioImportSession internal constructor(
     restricted: Boolean,
     private val now: () -> Long = ::epochMillis,
     internal val owned: () -> Boolean = { true },
-    /** The profile's library changed here (an applied import, then its filled cards): Home and My List look again. */
     internal val changed: () -> Unit = {},
     private val detailsPoll: Long = DETAILS_POLL_MILLIS,
     private val detailsLimit: Long = DETAILS_LIMIT_MILLIS,
@@ -151,7 +128,6 @@ class StremioImportSession internal constructor(
     fun setLibrary(value: Boolean) { if (idle() && !current.connected) mutable.value = current.copy(library = value) }
     fun setProgress(value: Boolean) { if (idle() && !current.connected) mutable.value = current.copy(progress = value) }
 
-    /** The password is only captured by this request; it is never stored in state. */
     fun connect(email: String, password: String) {
         val draft = current
         if (!idle() || !usable() || draft.connected || draft.completion != null || email.isBlank() || password.isEmpty()) return
@@ -188,7 +164,6 @@ class StremioImportSession internal constructor(
     }
 
     private fun canChooseAddons() = idle() && !current.expired && current.stage == StremioImportStage.Addons
-    /** Unticking a failed add-on clears its mark: it no longer blocks the next verification. */
     fun toggleAddon(id: String, selected: Boolean) {
         val addon = current.addons?.addons?.find { it.id == id } ?: return
         if (!canChooseAddons() || (selected && addon.status == "unavailable")) return
@@ -204,12 +179,10 @@ class StremioImportSession internal constructor(
     }
     fun clearAddons() { if (canChooseAddons()) mutable.value = current.copy(confirmed = false, notice = null, selectedAddons = emptySet(),
         failedAddons = emptySet(), failedReasons = emptyMap()) }
-    /** Keeps every other choice; the user presses Next again to re-verify without the failed add-ons. */
     fun uncheckFailedAddons() {
         if (canChooseAddons() && current.failedAddons.isNotEmpty()) mutable.value = current.copy(confirmed = false, notice = null,
             selectedAddons = current.selectedAddons - current.failedAddons, failedAddons = emptySet(), failedReasons = emptyMap())
     }
-    /** Skipping only limits this import; existing account add-ons are never removed. */
     fun continueWithoutAddons() {
         if (!canChooseAddons()) return
         mutable.value = current.copy(selectedAddons = emptySet(), failedAddons = emptySet(), failedReasons = emptyMap(), confirmed = false)
@@ -271,7 +244,6 @@ class StremioImportSession internal constructor(
         if (draft.stage == StremioImportStage.Confirm && idle() && !draft.expired && draft.hasScope) mutable.value = draft.copy(confirmed = value)
     }
 
-    /** Not cancellable once started. An uncertain outcome keeps the identical locked selection for retry. */
     fun apply() {
         val draft = current
         val review = draft.review ?: return
@@ -300,11 +272,6 @@ class StremioImportSession internal constructor(
         }
     }
 
-    /**
-     * The server keeps filling imported titles' Details cards after apply (about 45 s for 160 titles).
-     * Polls its counters without making the screen busy, until it finishes, the draft ends (leaving the
-     * screen, another preview, sign-out), [detailsLimit] passes or [DETAILS_FAILURES] reads fail in a row.
-     */
     private fun followDetails(request: Long) {
         details?.cancel()
         mutable.value = current.copy(details = StremioTitleDetails(0, 0, StremioDetailsPhase.Running))
@@ -323,7 +290,6 @@ class StremioImportSession internal constructor(
                 val shown = current.details ?: return@launch
                 when {
                     answer.isFailure -> if (++failures >= DETAILS_FAILURES) return@launch show(shown.done, shown.total, StremioDetailsPhase.Background)
-                    // An older server, or nothing was left to fill: no status to show.
                     status == null || (!status.running && status.total == 0) -> { mutable.value = current.copy(details = null); return@launch }
                     !status.running -> { show(status.done, status.total, StremioDetailsPhase.Ready, status.filled); changed(); return@launch }
                     else -> { failures = 0; show(status.done, status.total, StremioDetailsPhase.Running, status.filled) }
@@ -344,16 +310,11 @@ class StremioImportSession internal constructor(
             else -> return
         }
     }
-    /** "Back to Connect" keeps the draft; Next resumes it without asking for the password again. */
     fun resume() {
         val draft = current
         if (draft.stage == StremioImportStage.Connect && draft.connected && !draft.expired && idle())
             mutable.value = draft.copy(stage = if (draft.addons != null) StremioImportStage.Addons else StremioImportStage.Items)
     }
-    /**
-     * Cancels a pending preview (nothing to keep), stops a long metadata verification while keeping
-     * the add-on choices, or discards an unlocked draft. Never interrupts apply, which may commit.
-     */
     fun cancel() {
         val draft = current
         when {
@@ -380,7 +341,6 @@ class StremioImportSession internal constructor(
             library = draft.library, progress = draft.progress, resets = draft.resets + 1)
     }
 
-    /** Navigation away, profile/account replacement and sign-out end the draft for good. */
     fun dispose() {
         if (disposed) return
         disposed = true
@@ -396,7 +356,7 @@ class StremioImportSession internal constructor(
     private fun discardPreview() {
         val old = handle ?: return
         handle = null
-        // Start before a retiring connection closes; the outcome is never observed.
+        // Undispatched: the discard must start before the retiring connection closes, and its outcome is never observed.
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try { transport.discard(profileId, old) } catch (_: Throwable) { }
         }
@@ -419,8 +379,6 @@ class StremioImportSession internal constructor(
     }
 }
 
-/** Modest polling of in-memory counters; the bar animates between reads. */
 internal const val DETAILS_POLL_MILLIS = 2_000L
-/** Large imports keep filling on the server; past this the screen stops following and says so. */
 internal const val DETAILS_LIMIT_MILLIS = 5 * 60_000L
 internal const val DETAILS_FAILURES = 3

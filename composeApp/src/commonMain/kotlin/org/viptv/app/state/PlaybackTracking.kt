@@ -4,7 +4,6 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.PlaybackEvent
 import org.viptv.app.player.PlayerFact
 
-/** Serializes actual transport transitions and retires an attempt before its lease closes. */
 internal class PlaybackTracking(
     private val scope: CoroutineScope,
     private val emit: suspend (PlaybackEvent, Long, Long?, Boolean) -> Unit,

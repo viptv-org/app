@@ -5,7 +5,6 @@ import org.viptv.engine.wire.*
 
 private fun MediaIdentity.ordered() = copy(ids = ids.distinct().sortedWith(compareBy<ExternalId> { it.namespace }.thenBy { it.value }))
 
-/** UI identity preserves lookup lineage; display title, artwork and progress are not identity. */
 internal fun mediaLookupKey(identity: MediaIdentity, origin: MetadataOrigin?, provider: String? = null,
     parent: MediaIdentity? = null): String = buildJsonArray {
     add(Json.encodeToJsonElement(identity.ordered()))
@@ -17,7 +16,6 @@ internal fun mediaLookupKey(identity: MediaIdentity, origin: MetadataOrigin?, pr
 internal fun cardLookupKey(card: Card): String = mediaLookupKey(card.identity, card.metadata_origin, card.provider_id, card.parent_identity)
 internal fun libraryStatisticsKey(statistics: LibraryStatistics): String = mediaLookupKey(statistics.identity, statistics.metadata_origin)
 
-/** Assertions constrain an exact host-returned lookup; they never manufacture an alias. */
 internal fun sameLookupIdentity(first: MediaIdentity, second: MediaIdentity): Boolean = first.ordered() == second.ordered()
 
 internal fun LibraryMembershipSnapshot.containsCard(card: Card): Boolean {
@@ -37,6 +35,5 @@ internal fun savedCardsContain(cards: List<Card>, candidate: Card): Boolean {
         sameLookupIdentity(it.parent_identity ?: it.identity, identity) }
 }
 
-/** Keep GET selectors bounded and free of presentation-only artwork URLs. */
 internal fun Card.lookupSelector(): Card = Card(identity = identity, provider_id = provider_id,
     title = title, badges = emptyList(), parent_identity = parent_identity, metadata_origin = metadata_origin)

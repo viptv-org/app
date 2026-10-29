@@ -14,8 +14,7 @@ internal suspend fun RemoteConnection.subtitlesFor(card: Card): SubtitleSnapshot
     catch (error: RemoteFailure) {
         if (error.status != 400 || query.isEmpty()) throw error
         if (card.metadata_origin != null) throw RemoteFailure(422, "This server cannot preserve this subtitle title’s origin. Update the server and try again.")
-        // Older servers reject the new query fields. Their ordinary lookup is
-        // equivalent except for a Stremio opaque ID that resembles a Simkl ID.
+        // An older server's plain lookup is equivalent, except for a Stremio opaque id that resembles a Simkl id.
         if (origin["metadata_provider_id"]?.jsonPrimitive?.content == "stremio" && card.identity.id.startsWith("simkl:"))
             throw RemoteFailure(422, "This server cannot use this subtitle metadata origin.")
         call(path)

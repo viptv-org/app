@@ -11,8 +11,6 @@ import kotlin.time.Duration.Companion.seconds
 fun ApplicationController.playSource(source: SourceCandidate) = playSource(source, forceGateway = false)
 
 fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean) {
-    // A queued row click can outlive the title/discovery that rendered it.
-    // Resolve the current choice by ID; display/tracking must use its metadata.
     val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
     val restart = restartRequested
     restartRequested = false
@@ -46,10 +44,8 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
                 saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)
             }
         } else null,
-        // Local playback never asks the server for subtitles: a device-local store
-        // owns them, and a missing track must not fall through to a remote call it
-        // cannot make.
         subtitleContent = { id ->
+            // A device-local store owns its subtitles: a missing track is empty, never a remote call it cannot make.
             if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
             else requireNotNull(remote).subtitleContent(id).encodeToByteArray()
         })
@@ -65,7 +61,6 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     lastProgress=null
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
-    // A lease re-acquired during a player visit to Settings waits behind it (app#44).
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
     mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList())
     loadNextEpisode()
@@ -75,14 +70,12 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
             if (mutable.value.playback === input && mutable.value.selectedProfile == profile)
                 input.updateProviderSubtitles(snapshot.candidates)
         } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { /* Subtitle discovery cannot interrupt media playback. */ }
+        catch (_: Exception) { }
     }
 }
 
 fun ApplicationController.retrySource(source: SourceCandidate) {
     if (!completionSeen) saveProgress(false)
-    // R6: desktop/phone retry with the device engine on the direct URL; a live
-    // or IPTV retry is not a reason to open a server gateway.
     playSource(source)
 }
 
@@ -95,7 +88,6 @@ fun ApplicationController.pausePlayback() {
     if(paused && !completionSeen) saveProgress(false)
 }
 
-/** Keep the route and lease while the Activity is away; save the last renderer clock. */
 fun ApplicationController.suspendPlayback() {
     val state = mutable.value
     if (state.playback == null || state.paused || backgroundPlayback != null) return
@@ -132,8 +124,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
     if (fact is PlayerFact.Progress) {
         val finalBackgroundSample = backgroundPlayback === mutable.value.playback && backgroundPlayback != null && fact != lastProgress
         lastProgress=fact
-        // ON_STOP pauses the renderer synchronously after the Activity suspends
-        // the controller. Flush that final sample even if the 15s timer just ran.
+        // ON_STOP pauses the renderer after the controller suspends: flush this last sample even if the 15s timer just ran.
         if (finalBackgroundSample && !completionSeen) saveProgress(false, final = true)
         else if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
     }

@@ -46,9 +46,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
         catch (error: RemoteFailure) {
             currentCoroutineContext().ensureActive()
             if (generation != operation || connection !== remote) return@run
-            // Neither an expired saved session nor an unreachable server leaves a
-            // usable connection: release it before Connect so no token-bearing
-            // client survives the failed restore.
+            // Release the failed connection before Connect so no token-bearing client survives the restore.
             remote.close(); connection = null
             mutable.value = mutable.value.copy(error = if (error.status == 401) "Session expired. Sign in again." else error.message)
         }
@@ -80,7 +78,7 @@ fun ApplicationController.connect(origin: String, username: String, password: St
             if (sessionStore.savedConnection() == SavedConnection.Local) sessionStore.clear()
         } }
         catch (error: CancellationException) { throw error }
-        catch (_: Exception) { /* A usable in-memory remote session may outlive unavailable secure storage. */ }
+        catch (_: Exception) { }
         accept(bootstrap)
     }
 }
@@ -94,10 +92,9 @@ internal fun ApplicationController.startLocal(path: String) {
         priorRemote?.retire()
         try { withNativeSessionStoreLock { sessionStore.clear() } }
         catch (error: CancellationException) { throw error }
-        catch (_: Exception) { /* Local mode remains available when the OS vault is unavailable. */ }
+        catch (_: Exception) { }
         val bootstrap = openLocalConnection(path)
-        // Publishing Profiles clears busy. Finish the connection choice first,
-        // otherwise a quick profile selection can cancel its pending vault write.
+        // Finish the connection choice before publishing Profiles, or a quick profile selection cancels its pending vault write.
         try { withNativeSessionStoreLock { sessionStore.rememberLocalConnection() } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { localPersistenceWarning = "This connection could not be remembered. Choose local mode again after restarting." }
@@ -105,7 +102,6 @@ internal fun ApplicationController.startLocal(path: String) {
     }
 }
 
-/** A remembered local connection still opens Profiles, including its existing PIN gate. */
 private suspend fun ApplicationController.openLocalConnection(path: String): Bootstrap {
     val owner = generation
     var created: LocalConnection? = null
@@ -162,8 +158,6 @@ fun ApplicationController.signOut() = run {
     val remote = connection
     val device = local
     remote?.signOut()
-    // Revocation has completed even when navigation cancelled the caller while
-    // it was in flight. Retire only this session; a replacement keeps its state.
     remote?.close()
     if (connection === remote && local === device) {
         resetLiveRequests()
@@ -173,7 +167,6 @@ fun ApplicationController.signOut() = run {
     }
 }
 
-/** A background 401 is an expired session, not a load failure: report it and leave Connect usable. */
 internal fun ApplicationController.expireSession(remote: RemoteConnection?, device: LocalConnection?) {
     if (remote == null || connection !== remote || local !== device) return
     releaseRemotePlayback()
@@ -210,7 +203,6 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
                 updateLibrary(cards, membership = membership)
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            // An expired session is not an empty library: sign out with the shared message.
             if (error is RemoteFailure && error.status == 401) expireSession(remote, device)
         }
     }

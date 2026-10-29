@@ -5,11 +5,6 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 
-/**
- * The browser side of the TV sign-in approval flow. Uses account-only
- * authentication and talks to the /api/auth/device endpoints directly; it
- * never requests Home, catalog, or metadata snapshots.
- */
 internal class DeviceApprovalController(
     private val scope: CoroutineScope,
     private val connectionFactory: () -> RemoteConnection = {
@@ -40,12 +35,6 @@ internal class DeviceApprovalController(
 
     fun isBusy(): Boolean = job?.isActive == true
 
-    /**
-     * Account-only session restore: /api/auth/status tells us whether the
-     * browser already holds a session (and hands back a CSRF token); if
-     * authenticated, /api/auth/me supplies the username. No Home or
-     * metadata requests are involved.
-     */
     fun restore(onDone: () -> Unit) {
         if (isBusy()) return
         job = scope.launch {
@@ -72,7 +61,6 @@ internal class DeviceApprovalController(
         username = null
     }
 
-    /** Account-only sign-in: /api/auth/login sets the session cookie, and we keep only the CSRF token. */
     fun signIn(username: String, password: String, onDone: (String?) -> Unit) {
         if (isBusy()) return
         job = scope.launch {
@@ -138,13 +126,11 @@ internal class DeviceApprovalController(
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (failure: Exception) { Result.failure(failure) }
             currentCoroutineContext().ensureActive()
-            // A successful PIN can resume the already-requested action immediately.
             job = null
             onResult(result)
         }
     }
 
-    /** Failed revocation never pretends the browser session was signed out. */
     fun signOut(onFailure: (Throwable) -> Unit = {}, onDone: () -> Unit) {
         if (isBusy()) return
         job = scope.launch {

@@ -13,7 +13,6 @@ internal expect fun playbackClientFacts(): JsonObject
 internal class RemotePlaybackLease(val input: PlaybackInput, val renewSeconds: Long, private val remote: RemoteConnection, val gateway: Boolean = true, val reopensForSeek: Boolean = gateway,
     private val local: LocalTorrentPlayback? = null) {
     private val path = "/api/playback/${input.id.encodeURLPathPart()}"
-    // A native torrent reports frames to, and renews through, the device's own runtime.
     suspend fun firstFrame() { if (local != null) local.firstFrame() else if (gateway) remote.call("$path/first-frame", HttpMethod.Post, buildJsonObject {}) }
     suspend fun renew() { if (local != null) local.renew() else remote.call("$path/heartbeat", HttpMethod.Post) }
     suspend fun close() {
@@ -27,11 +26,8 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
     var playbackId: String? = null
     val negotiatedFacts = if (requiredAudioIndexSupported) clientFacts
         else JsonObject(clientFacts - "supports_required_audio_index")
-    // R6: a target whose own engine plays the URL must never take a server
-    // gateway lease — that lease is what posts first-frames and reopens on seek.
+    // A target whose own engine plays the URL must never take a server gateway lease.
     val directOnly = clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull == true
-    // A device with its own torrent runtime takes torrent sources as native grants
-    // (SRC-TORRENT-RUNTIME-002); without one the server can only offer a gateway.
     val native = torrents?.takeIf { directOnly && it.negotiate(this) }
     val request = buildJsonObject {
         put("request_id", requestId); put("stream_id", source.id)
@@ -40,8 +36,7 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
         put("position", (positionMillis ?: 0).coerceAtLeast(0) / 1000.0); put("resume", positionMillis == null)
     }
     try {
-        // Local torrent acquisition enforces its own 120-second startup budget with
-        // stage-specific copy; this outer bound only covers admission plus that budget.
+        // Local torrent acquisition keeps its own 120s budget: this bound only covers admission plus that budget.
         return withTimeout(if (native == null) 60_000 else 150_000) {
             var response = call("/api/playback", HttpMethod.Post, request).jsonObject
             playbackId = response.getValue("id").jsonPrimitive.content

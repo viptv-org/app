@@ -31,7 +31,6 @@ internal suspend fun RemoteConnection.createProfile(name: String) {
 internal suspend fun RemoteConnection.renameProfile(id: String, name: String) {
     call("/api/profiles/${id.encodeURLPathPart()}", HttpMethod.Patch, buildJsonObject { put("name", name.trim()) })
 }
-/** Saves a catalog pick; the server retires any legacy `avatar_id` and rejects a write naming both. */
 internal suspend fun RemoteConnection.setProfileAvatar(id: String, style: String, choice: Int) {
     call("/api/profiles/${id.encodeURLPathPart()}", HttpMethod.Patch, buildJsonObject { put("avatar_style", style); put("avatar_choice", choice) })
 }

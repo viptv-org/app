@@ -2,7 +2,6 @@ package org.viptv.app.connection
 
 import org.viptv.engine.wire.QueryValue
 
-/** Catalog extras and pagination belong to one catalog, even when its type is unchanged. */
 internal fun BrowseQuery.forCatalog(next: DiscoveryCatalog?): BrowseQuery =
     if (catalog == next?.id && connection_id == next?.connection_id) this
     else BrowseQuery(type, catalog = next?.id, connection_id = next?.connection_id)

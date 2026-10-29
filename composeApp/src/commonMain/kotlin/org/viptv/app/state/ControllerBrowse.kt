@@ -28,10 +28,6 @@ fun ApplicationController.browseSelections(id: String, values: List<String>) {
     run { loadBrowse(query) }
 }
 
-/**
- * Apply a whole draft query in one request (the TV filter page's "Show results").
- * Per-control apply still exists for the phone/desktop inline controls.
- */
 fun ApplicationController.applyBrowse(query: BrowseQuery) {
     if (query == mutable.value.browseQuery) return
     run { loadBrowse(query.copy(skip = 0)) }
@@ -51,8 +47,6 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
             error = ServerMessages.human(scoped.discovery.message, "Configure a browsing integration for this profile."))
         return
     }
-    // Simkl advertises only monthly files for a selected genre. A prior Today/
-    // This week choice cannot remain on the request after the genre changes.
     val scopedQuery = if (scoped.provider_id == "simkl") {
         val timeframe = scoped.controls.find { it.id == "timeframe" }
         val priorTimeframe = query.extras["timeframe"]

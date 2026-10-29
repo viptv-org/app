@@ -11,7 +11,6 @@ internal data class NextEpisodeKey(
     val remote: RemoteConnection?, val local: LocalConnection?, val homeScope: Scope?, val origin: MetadataOrigin? = null,
 )
 
-/** Optional background metadata never stops or replaces the current media. */
 fun ApplicationController.loadNextEpisode(force: Boolean = false) {
     val state = mutable.value
     val input = state.playback
@@ -46,8 +45,6 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
                             ?: NextEpisodeResult(ContinuationStatus.UNAVAILABLE)
                     }
                 } else {
-                    // Local hosts retain actual metadata identities and can page
-                    // their existing detail protocol without a new engine API.
                     var snapshot = detail
                     var candidate = loadedNextEpisode(card, snapshot)
                     var cursor = snapshot?.next_cursor?.toIntOrNull()
