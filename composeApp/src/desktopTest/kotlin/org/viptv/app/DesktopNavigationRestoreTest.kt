@@ -107,12 +107,12 @@ class DesktopNavigationRestoreTest {
 
     @Test fun onlyTheDesktopSessionStoreKeepsNavigationRecords() = runBlocking<Unit> {
         val desktopVault = Vault()
-        NativeRemoteSessionStore({ desktopVault }, remembersNavigation = true)
+        NativeRemoteSessionStore(remembersNavigation = true) { desktopVault }
             .saveNavigation("default", SavedNavigation("Discover", BrowseQuery("movie", genre = "Drama")))
-        val reopened = NativeRemoteSessionStore({ desktopVault }, remembersNavigation = true).navigation("default")
+        val reopened = NativeRemoteSessionStore(remembersNavigation = true) { desktopVault }.navigation("default")
         assertEquals("Discover", reopened?.screen)
         assertEquals("Drama", reopened?.browse?.genre)
-        NativeRemoteSessionStore({ desktopVault }, remembersNavigation = true).clear()
+        NativeRemoteSessionStore(remembersNavigation = true) { desktopVault }.clear()
         assertNull(desktopVault.values["navigation-v1"])
 
         val androidVault = Vault()

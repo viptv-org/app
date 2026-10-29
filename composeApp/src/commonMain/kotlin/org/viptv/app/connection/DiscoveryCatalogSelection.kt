@@ -38,9 +38,9 @@ internal fun DiscoveryCatalog.catalogSource(peers: List<DiscoveryCatalog>): Stri
 }
 
 private fun DiscoveryCatalog.typedTitle(): String {
-    val (label, words) = typeCopy(type)
+    val (label, typeWords) = typeCopy(type)
     val nameWords = wordsOf(name)
-    val saysType = nameWords.any { it in words } || wordsOf(label).all { it in nameWords }
+    val saysType = nameWords.any { it in typeWords } || wordsOf(label).all { it in nameWords }
     return if (saysType) name else "$name $label"
 }
 
@@ -56,8 +56,20 @@ private fun typeCopy(kind: String): Pair<String, List<String>> = when (kind.lowe
 private fun DiscoveryCatalog.addonName(): String = connection_name.orEmpty()
     .filterNot(Char::isISOControl).take(128).trim().ifEmpty { "Stremio addon" }
 
-private fun wordsOf(text: String): List<String> = text.split { !it.isLetterOrDigit() }
-    .filter { it.isNotEmpty() }.map { it.lowercase() }
+private fun words(text: String): List<String> = buildList {
+    var start = -1
+    for (index in text.indices) {
+        if (text[index].isLetterOrDigit()) {
+            if (start < 0) start = index
+        } else if (start >= 0) {
+            add(text.substring(start, index))
+            start = -1
+        }
+    }
+    if (start >= 0) add(text.substring(start))
+}
 
-private fun titleCase(kind: String): String = kind.split { !it.isLetterOrDigit() }
-    .filter { it.isNotEmpty() }.joinToString(" ") { it.take(1).uppercase() + it.drop(1) }
+private fun wordsOf(text: String): List<String> = words(text).map { it.lowercase() }
+
+private fun titleCase(kind: String): String = words(kind)
+    .joinToString(" ") { it.take(1).uppercase() + it.drop(1) }
