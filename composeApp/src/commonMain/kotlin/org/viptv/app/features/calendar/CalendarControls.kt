@@ -3,6 +3,7 @@ package org.viptv.app.features.calendar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,17 +21,16 @@ private const val YourShows = "your_shows"
 private val CalendarTypes = listOf(SelectOption("series", "TV"), SelectOption("anime", "Anime"), SelectOption("movie", "Movies"))
 private val CalendarSources = listOf(SelectOption(YourShows, CalendarFilter.YourShows.label))
 
-// A week is a relative step: it is actions in the row, not a chip whose list would tick a wrong "Current" row.
 @Composable
 internal fun CalendarControls(type: String, week: Int, television: Boolean, scale: Float,
     category: (String) -> Unit, shift: (Int) -> Unit, modifier: Modifier = Modifier, range: String? = null,
     filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {},
-    gutter: Dp = 0.dp, bleed: Boolean = true) {
+    gutter: Dp = 0.dp, bleed: Boolean = true, entry: FocusRequester? = null) {
     val changed = type != CALENDAR_DEFAULT_TYPE || filter == CalendarFilter.YourShows
     FilterBar(modifier, gutter, bleed, clear = if (changed) ({ category(CALENDAR_DEFAULT_TYPE); filterChanged(CalendarFilter.All) }) else null) {
         item(key = "type") {
             SearchableSelect("Type", CalendarTypes, listOf(type), { category(it.firstOrNull() ?: type) },
-                anyLabel = null, highlighted = type != CALENDAR_DEFAULT_TYPE)
+                anyLabel = null, highlighted = type != CALENDAR_DEFAULT_TYPE, chipFocus = entry)
         }
         if (filter != null) item(key = "source") {
             SearchableSelect("Shows", CalendarSources,

@@ -46,7 +46,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     val history = if (record && screen != previousScreen)
         mutable.value.copy(navBack = (mutable.value.navBack + recorded).takeLast(32), navForward = emptyList())
     else mutable.value
-    mutable.value = history.copy(screen = screen, error = null, settingsEntrySection = if (screen == Screen.Settings) mutable.value.settingsEntrySection else null,
+    mutable.value = history.copy(screen = screen, error = null, detailRetryable = true, settingsEntrySection = if (screen == Screen.Settings) mutable.value.settingsEntrySection else null,
         settingsReturnsToPlayer = playerVisit,
         settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) mutable.value.settingsPage else null)
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
@@ -74,7 +74,7 @@ fun ApplicationController.backDetails() {
     generation++
     job?.cancel()
     val previous = mutable.value.detailHistory.lastOrNull()
-    if (previous != null) mutable.value = mutable.value.copy(detail = previous, detailHistory = mutable.value.detailHistory.dropLast(1), busy = false, error = null)
+    if (previous != null) mutable.value = mutable.value.copy(detail = previous, detailHistory = mutable.value.detailHistory.dropLast(1), busy = false, error = null, detailRetryable = true)
     else { mutable.value = mutable.value.copy(busy = false); returnTo(mutable.value.detailReturnScreen) }
     rememberNavigation()
 }
@@ -85,7 +85,7 @@ fun ApplicationController.backSources() {
     generation++; job?.cancel()
     if (!awaitingTitle) cancelSourceDetail()
     mutable.value = state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false,
-        error = state.error.takeIf { awaitingTitle })
+        error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
     rememberNavigation()
 }
 

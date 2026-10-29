@@ -5,6 +5,7 @@ package org.viptv.app.components
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusTargetModifierNode
@@ -41,6 +42,7 @@ internal fun Modifier.tvCollectionUpdates(
     if (!LocalTvFocusAnchoring.current) return this
     val anchor = LocalBringIntoViewSpec.current as? LeadingFocusScroll ?: return this
     val bounds = remember(state) { CollectionBounds() }
+    val reduceMotion = rememberUpdatedState(LocalReducedMotion.current)
     LaunchedEffect(state, anchor) {
         var previous: Pair<Int, List<Pair<Int, Any>>>? = null
         snapshotFlow { revision() to state.isScrollInProgress }
@@ -64,7 +66,7 @@ internal fun Modifier.tvCollectionUpdates(
                     if (horizontal) rect.width else rect.height,
                     (if (horizontal) container.size.width else container.size.height).toFloat())
                 if (abs(delta) <= .5f || delta > 0 && !state.canScrollForward || delta < 0 && !state.canScrollBackward) return@collectLatest
-                try { state.animateScrollBy(delta) }
+                try { if (reduceMotion.value) state.scrollBy(delta) else state.animateScrollBy(delta) }
                 catch (_: CancellationException) {
                     // A new native focus or gesture mutation wins; keep observing later data changes.
                     currentCoroutineContext().ensureActive()

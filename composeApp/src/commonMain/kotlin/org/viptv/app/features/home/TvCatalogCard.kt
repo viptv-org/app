@@ -80,14 +80,16 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             val landscapeArt = if (portrait) null else card.landscapeArt()
             val still = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (landscapeArt as? LandscapeArt.Still)?.url
             // The initials fallback covers load failures too; key it on the art, so a reused slot never keeps a stale failure.
-            var artFailed by remember(card.poster, card.landscape) { mutableStateOf(false) }
-            when {
-                artFailed -> CardNoArtFallback(card, scale, portrait, shape)
-                still != null -> AsyncImage(still, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    onError = { artFailed = true })
-                landscapeArt is LandscapeArt.Poster -> PosterInLandscape(landscapeArt.url, card.title,
-                    onError = { artFailed = true })
-                else -> CardNoArtFallback(card, scale, portrait, shape)
+            val art = remember(card.poster, card.landscape) { ArtFailure() }
+            val attempt = art.retryAfterFailure()
+            Box(Modifier.fillMaxSize()) {
+                when {
+                    still != null -> key(attempt) { AsyncImage(still, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                        onSuccess = { art.failed = false }, onError = { art.failed = true }) }
+                    landscapeArt is LandscapeArt.Poster -> key(attempt) { PosterInLandscape(landscapeArt.url, card.title,
+                        onSuccess = { art.failed = false }, onError = { art.failed = true }) }
+                }
+                if (art.failed || still == null && landscapeArt !is LandscapeArt.Poster) CardNoArtFallback(card, scale, portrait, shape)
             }
             states.artLabel?.let { label ->
                 Text(label, Modifier.align(Alignment.TopStart).padding(10.dp * scale)

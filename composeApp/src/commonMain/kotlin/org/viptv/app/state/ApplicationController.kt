@@ -2,12 +2,15 @@ package org.viptv.app.state
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlayerFact
 import kotlinx.coroutines.sync.Mutex
+import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource
 
 class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore(),
@@ -21,8 +24,9 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var connection: RemoteConnection? = null
     internal var local: LocalConnection? = null
     internal var localPersistenceWarning: String? = null
-    internal var job: Job? = null
-    internal var generation = 0L
+    @Volatile internal var job: Job? = null
+    @Volatile internal var generation = 0L
+    private val runGate = SynchronizedObject()
     internal var navigationGeneration = 0L
     internal var pageRequestJob: Job? = null
     internal val progressGate = Mutex()
@@ -80,29 +84,44 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var addonOperation: Job? = null
 
     internal fun run(operation: suspend () -> Unit) {
-        val prior = job
-        prior?.cancel()
         detailPagingJob?.cancel(); detailPagingJob = null
-        val current = ++generation
-        mutable.value = mutable.value.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null)
-        fun settle() { if (generation == current) mutable.value = mutable.value.copy(starting = false, busy = false, sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning) }
-        job = scope.launch {
-            try { prior?.join(); operation() }
-            catch (e: CancellationException) { throw e }
-            catch (e: Exception) {
-                if (generation == current && e is RemoteFailure && e.status == 401 && local == null) {
-                    releaseRemotePlayback()
-                    resetLiveRequests()
-                    discardStremioImport()
-                    connection?.close(); connection = null
-                    mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                } else if (generation == current) mutable.value = mutable.value.copy(error = failureMessage(e))
+        val claimed = synchronized(runGate) {
+            val prior = job
+            val current = ++generation
+            mutable.value = mutable.value.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null, detailRetryable = true)
+            val started = scope.launch(start = CoroutineStart.LAZY) {
+                try { prior?.join(); operation() }
+                catch (e: CancellationException) { throw e }
+                catch (e: Exception) {
+                    if (generation == current && e is RemoteFailure && e.status == 401 && local == null) {
+                        releaseRemotePlayback()
+                        resetLiveRequests()
+                        discardStremioImport()
+                        connection?.close(); connection = null
+                        mutable.value = ApplicationState(error = "Session expired. Sign in again.")
+                    } else if (generation == current) mutable.value = mutable.value.copy(error = failureMessage(e),
+                        detailRetryable = e !is RemoteFailure || !e.metadataNotFound)
+                }
             }
-        }.also { started ->
-            // A job cancelled before it is dispatched never enters its body, so completion, not a finally, clears busy.
-            started.invokeOnCompletion { settle() }
+            job = started
+            RunClaim(prior, current, started)
         }
-    }}
+        claimed.prior?.cancel()
+        // A job cancelled before it is dispatched never enters its body, so completion, not a finally, clears busy.
+        claimed.job.invokeOnCompletion { settle(claimed.generation) }
+        claimed.job.start()
+    }
+
+    private fun settle(current: Long) {
+        synchronized(runGate) {
+            if (generation != current) return
+            mutable.value = mutable.value.copy(starting = false, busy = false, findingSources = false,
+                sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning)
+        }
+    }
+}
+
+private class RunClaim(val prior: Job?, val generation: Long, val job: Job)
 
 internal fun ApplicationController.failureMessage(error: Exception): String? = when (error) {
     is RemoteFailure -> error.message

@@ -113,7 +113,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         } else if (dashboardAddress != null) browserFallback = true else unavailable = "Account settings"
                     }, busy = busy, error = error.takeIf { accountRequested != null }, retry = accountRequested)
                     TvSettingsSection.Display -> {
-                        val display = rememberTvDisplayState()
+                        val display = LocalTvDisplayState.current ?: rememberTvDisplayState()
                         TvDisplaySettings(display.value, scale, first, sidebar,
                             { title, values, select -> choice = TvSettingsChoice(title, values, select) }, display::change)
                     }

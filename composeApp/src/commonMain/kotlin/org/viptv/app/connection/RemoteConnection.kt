@@ -30,7 +30,8 @@ data class Profile(val id: String, val name: String, val avatar: String?, val lo
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null,
     val continuation: org.viptv.engine.wire.ContinuationPage? = null,
     val revisions: org.viptv.app.state.Revisions? = null)
-class RemoteFailure(val status: Int, message: String) : Exception(message)
+class RemoteFailure(val status: Int, message: String, val code: String? = null) : Exception(message)
+internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && code == "metadata_not_found"
 
 private val nativeSessionGate = Mutex()
 internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
@@ -256,29 +257,39 @@ class RemoteConnection(
         decode(send(path, method, body, accessToken, csrf))
 
     private suspend fun decode(response: HttpResponse): JsonElement {
-        checkStatus(response)
-        return codec.parseToJsonElement(response.bodyAsText()).resolveRemoteImages(origin)
+        val body = response.bodyAsText()
+        checkStatus(response, body)
+        return codec.parseToJsonElement(body).resolveRemoteImages(origin)
     }
 
-    private suspend fun checkStatus(response: HttpResponse) {
+    private suspend fun checkStatus(response: HttpResponse, body: String? = null) {
         val status = response.status.value
         if (status in 200..299) return
-        throw RemoteFailure(status, when (status) {
-            401 -> "Sign in to continue."
-            403 -> "This action is not available for this profile."
-            429 -> tooManyRequestsMessage(response)
+        val text = body ?: run {
+            try { response.bodyAsText() }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { null }
+        }
+        val code = errorCode(text)
+        throw RemoteFailure(status, when {
+            status == 404 && code == "metadata_not_found" -> "This title is no longer available."
+            status == 401 -> "Sign in to continue."
+            status == 403 -> "This action is not available for this profile."
+            status == 429 -> tooManyRequestsMessage(response, code)
             else -> "The server could not complete this request."
-        })
+        }, code)
     }
 
-    private suspend fun tooManyRequestsMessage(response: HttpResponse): String {
+    private fun errorCode(body: String?): String? = body?.let {
+        try { codec.parseToJsonElement(it).jsonObject["error_code"]?.jsonPrimitive?.contentOrNull }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+    }
+
+    private fun tooManyRequestsMessage(response: HttpResponse, code: String?): String {
         val generic = "Too many requests. Please wait and try again."
         val seconds = response.headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull()?.takeIf { it > 0 }
             ?: return generic
-        val code = try {
-            codec.parseToJsonElement(response.bodyAsText()).jsonObject["error_code"]?.jsonPrimitive?.contentOrNull
-        } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { null }
         return if (code == "rate_limited") "Too many attempts. Try again in $seconds s." else generic
     }
 

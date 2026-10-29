@@ -6,7 +6,7 @@ The real Android app/controller recreation, Home/return, original clock and init
 
 The TV player has dedicated controls, buffering, seek preview, audio/subtitle,
 intro-skip, next-episode and source-error surfaces based on the supplied `Tv3Player`
-boards. Android uses Media3, desktop uses KitePlayer, and web uses its browser
+boards. Android uses Media3, desktop uses libmpv, and web uses its browser
 adapter. Renderer and interaction logic live in separate small files.
 
 Remote Left/Right previews a seek. OK commits it; Back cancels it. Up moves from

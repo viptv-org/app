@@ -21,6 +21,10 @@ import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
+import org.viptv.app.features.settings.LocalTvDisplayState
+import org.viptv.app.features.settings.rememberSystemReducedMotion
+import org.viptv.app.features.settings.rememberTvDisplayState
+import org.viptv.app.features.settings.reducedMotion
 import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.player.PlayerRoute
@@ -62,6 +66,9 @@ fun App(
         if (manageControllerLifecycle) lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }
+    val tvDisplay = rememberTvDisplayState()
+    val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
+    CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion) {
     ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
@@ -131,7 +138,7 @@ fun App(
                                 val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
                                 summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent,
-                                continueMore = state.continueWatchingMore(), seeAll = { controller.navigate(Screen.ContinueWatching) }) }
+                                seeAllFor = { state.rowSeeAll(it) }, openSeeAll = { controller.navigate(it.screen) }) }
                                 // Kept per profile on every layout, so Back finds the row and focus it left.
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
@@ -163,7 +170,7 @@ fun App(
                                         paging = state.screen == Screen.Details,
                                         // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
                                         playTap = state.playTapTitle != null,
-                                        retry = if (state.playTapTitle != null && state.detail == null) controller::retryDetails else null,
+                                        retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
                                         // The drawer over the page owns the keyboard: the dialog must not take its focus.
                                         closeFocusOnOpen = !(browser && showingSources))
                                     if (showingSources) {
@@ -197,6 +204,7 @@ fun App(
                 }
             }
         }
+    }
     }
 }
 

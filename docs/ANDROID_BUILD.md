@@ -9,6 +9,10 @@ Android targets of the ABIs you build (`x86_64-linux-android`,
 `aarch64-linux-android`, `armv7-linux-androideabi`), e.g.
 `RUSTUP_TOOLCHAIN=1.98`.
 
+`androidApp/src/main/java/org/playbackgateway/runtime/NativeRuntime.java` is a
+verbatim copy of `torrent-runtime/platform/android/NativeRuntime.java` at the
+pin; the torrent runtime build fails if the two differ.
+
 ## Shipped ABIs
 
 APKs package `armeabi-v7a`, `arm64-v8a` and `x86_64`. Without extra properties,

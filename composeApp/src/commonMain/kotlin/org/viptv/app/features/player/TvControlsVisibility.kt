@@ -10,13 +10,14 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import org.viptv.app.components.motionSpec
 
 @Composable
 internal fun TvControlsVisibility(visible: Boolean, content: @Composable BoxScope.() -> Unit) {
     val transition = remember { MutableTransitionState(false) }
     transition.targetState = visible
     AnimatedVisibility(visibleState = transition, modifier = Modifier.fillMaxSize(),
-        enter = fadeIn(tween(200)), exit = fadeOut(tween(300))) {
+        enter = fadeIn(motionSpec(tween(200))), exit = fadeOut(motionSpec(tween(300)))) {
         Box(Modifier.fillMaxSize(), content = content)
     }
 }

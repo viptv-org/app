@@ -11,12 +11,13 @@ import subprocess
 import tarfile
 import tempfile
 
+import playback_gateway
+
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--source", type=Path, default=os.getenv("VIPTV_TORRENT_CANDIDATE"))
 args = parser.parse_args()
 revision = (root / "TORRENT_RUNTIME_REF").read_text().strip()
-repository = Path(os.getenv("VIPTV_PLAYBACK_GATEWAY", root.parent / "playback-gateway"))
 system = platform.system()
 prefix = {"Linux": "linux", "Windows": "win32", "Darwin": "darwin"}[system]
 arch = "aarch64" if platform.machine().lower() in ("arm64", "aarch64") else "x86-64"
@@ -32,6 +33,7 @@ with tempfile.TemporaryDirectory(prefix="viptv-desktop-torrent-") as temporary:
         source = args.source.resolve()
         revision = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
     else:
+        repository = playback_gateway.repository()
         archive = subprocess.check_output(["git", "-C", str(repository), "archive", revision, "torrent-runtime", "LICENSE", "PROVENANCE.md"])
         with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
             tar.extractall(temporary, filter="data")

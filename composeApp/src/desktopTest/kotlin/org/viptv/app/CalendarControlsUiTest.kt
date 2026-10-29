@@ -25,14 +25,14 @@ class CalendarControlsUiTest {
     @Test fun tvControlsAndWatchActionRemainWithinTheExistingRailsAndKeepEmptyDateSelectable(){
         var category="series";var shifted=0;var watched=0;var opened=0
         val scene=ImageComposeScene(1920,1080,Density(1f)){ViptvTheme(true){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry),true,{opened++},{},controls=true,categoryChanged={category=it},weekChanged={shifted=it},watch={watched++})}}}
-        try{frames(scene);open(scene,"Type: TV");pick(scene,"Anime");assertEquals("anime",category);click(scene,"Next week");assertEquals(1,shifted);val action=clickable(scene,"Find S2 E4");assertTrue(action.boundsInRoot.left>=1240);action.config[SemanticsActions.OnClick].action!!.invoke();assertEquals(1,watched);assertEquals(0,opened);click(scene,"Tomorrow");frames(scene,20);assertTrue(nodes(scene).any{text(it)=="No releases for this day."});click(scene,"Today");frames(scene,40);assertTrue(nodes(scene).any{text(it)=="Find S2 E4"});capture(scene,"tv-calendar-controls")}finally{scene.close()}
+        try{frames(scene);open(scene,"Type: TV");pick(scene,"Anime");assertEquals("anime",category);click(scene,"Next week");assertEquals(1,shifted);val action=clickable(scene,"Find S2 E4");assertTrue(action.boundsInRoot.left>=1240);action.config[SemanticsActions.OnClick].action!!.invoke();assertEquals(1,watched);assertEquals(0,opened);click(scene,"Tomorrow");await(scene,20,"Tomorrow's empty day"){nodes(scene).any{text(it)=="No releases for this day."}};click(scene,"Today");await(scene,40,"Today's release"){nodes(scene).any{text(it)=="Find S2 E4"}};capture(scene,"tv-calendar-controls")}finally{scene.close()}
     }
     @Test fun phoneAndDesktopPreserveEmptyDatesAndOfferExplicitEpisodeAction(){
         for(width in listOf(390,1200)){
             var watched=0
             val scene=ImageComposeScene(width,900,Density(1f)){ViptvTheme(false){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry),false,{},{},controls=true,watch={watched++})}}}
             try{frames(scene);assertTrue(nodes(scene).any{text(it).contains("Tomorrow")||text(it).contains("Fri")});click(scene,"Find S2 E4");assertEquals(1,watched);capture(scene,if(width==390)"phone-calendar-controls" else "desktop-calendar-controls");
-                if(width==390){val emptyDate=nodes(scene).single{text(it).contains("Fri")&&it.config.contains(SemanticsActions.OnClick)};emptyDate.config[SemanticsActions.OnClick].action!!.invoke()}else click(scene,"Tomorrow");frames(scene,150);assertTrue(nodes(scene).any{text(it)=="No releases for this day."});capture(scene,if(width==390)"phone-calendar-empty-day" else "desktop-calendar-empty-day")}finally{scene.close()}
+                if(width==390){val emptyDate=nodes(scene).single{text(it).contains("Fri")&&it.config.contains(SemanticsActions.OnClick)};emptyDate.config[SemanticsActions.OnClick].action!!.invoke()}else click(scene,"Tomorrow");await(scene,150,"Tomorrow's empty day"){nodes(scene).any{text(it)=="No releases for this day."}};capture(scene,if(width==390)"phone-calendar-empty-day" else "desktop-calendar-empty-day")}finally{scene.close()}
         }
     }
     @Test fun tvFocusReturnsToSelectedReleaseWhileLaterPagesArrive(){
@@ -50,16 +50,23 @@ class CalendarControlsUiTest {
                 assertFalse(nodes(scene).any{text(it)=="Clear"},"nothing to clear yet")
                 open(scene,"Shows: All")
                 pick(scene,"Your shows")
-                assertTrue(nodes(scene).any{text(it)=="Library series"})
-                assertFalse(nodes(scene).any{text(it)=="Scheduled series"},"the source filter applies at once")
+                val layout=if(tv)"TV" else "desktop"
+                assertTrue(nodes(scene).any{text(it).contains("Library series")},"$layout: Your shows keeps the library release; texts="+nodes(scene).map(::text).filter(String::isNotBlank))
+                assertFalse(nodes(scene).any{text(it).contains("Scheduled series")},"$layout: the source filter applies at once; texts="+nodes(scene).map(::text).filter(String::isNotBlank))
                 click(scene,"Clear")
                 frames(scene,10)
-                assertTrue(nodes(scene).any{text(it)=="Scheduled series"},"Clear drops the source filter")
+                assertTrue(nodes(scene).any{text(it).contains("Scheduled series")},"$layout: Clear drops the source filter; texts="+nodes(scene).map(::text).filter(String::isNotBlank))
                 assertFalse(nodes(scene).any{it.config.getOrNull(SemanticsProperties.Role)==Role.Button&&text(it)=="Clear"})
             }finally{scene.close()}
         }
     }
     private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(20){s.render((offset+it)*16_666_667L).close();Thread.sleep(3)}
+    private fun await(s:ImageComposeScene,offset:Int,what:String,condition:()->Boolean){
+        val deadline=System.nanoTime()+2_000_000_000L
+        var frame=offset
+        do{s.render(frame++*16_666_667L).close();if(condition())return;Thread.sleep(3)}while(System.nanoTime()<deadline)
+        fail("$what did not appear; texts="+nodes(s).map(::text).filter{it.isNotBlank()})
+    }
     private fun nodes(s:ImageComposeScene)=s.semanticsOwners.flatMap{flatten(it.rootSemanticsNode)}
     private fun flatten(n:SemanticsNode):List<SemanticsNode> = listOf(n)+n.children.flatMap(::flatten)
     private fun text(n:SemanticsNode)=n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" "){it.text}

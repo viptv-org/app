@@ -31,6 +31,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+            implementation("org.jetbrains.kotlinx:atomicfu:0.28.0")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
             implementation("io.ktor:ktor-client-core:3.4.0")
             implementation("io.coil-kt.coil3:coil-compose:3.6.3")
@@ -128,7 +129,7 @@ tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsO
 val buildDesktopTorrent by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_desktop_torrent.py")
-    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_desktop_torrent.py"))
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_desktop_torrent.py"), rootProject.file("tools/playback_gateway.py"))
     inputs.property("candidate", providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orElse(""))
     providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orNull?.let {
         inputs.files(fileTree(it) { include("**/*.go", "go.mod", "go.sum") })

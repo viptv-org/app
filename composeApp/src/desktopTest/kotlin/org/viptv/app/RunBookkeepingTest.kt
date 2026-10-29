@@ -1,0 +1,57 @@
+package org.viptv.app
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.test.*
+import org.viptv.app.connection.*
+import org.viptv.app.state.*
+import java.util.concurrent.CountDownLatch
+import kotlin.concurrent.thread
+import kotlin.test.*
+
+class RunBookkeepingTest {
+    private val store = object : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = null
+        override suspend fun save(session: SavedRemoteSession) = Unit
+        override suspend fun clear() = Unit
+    }
+
+    @Test fun overlappingRunsFromBothThreadsAlwaysClearBusy() = runBlocking {
+        repeat(40) { round ->
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            val controller = ApplicationController(scope, store)
+            controller.mutable.value = ApplicationState(screen = Screen.Library, selectedProfile = "profile")
+            val together = CountDownLatch(1)
+            var backgroundFailure: Throwable? = null
+            try {
+                val background = thread {
+                    together.await()
+                    try { repeat(4) { controller.run { yield() } } }
+                    catch (error: Throwable) { backgroundFailure = error }
+                }
+                together.countDown()
+                repeat(4) { controller.run { yield() } }
+                background.join()
+                backgroundFailure?.let { throw it }
+                withTimeoutOrNull(10_000) { while (controller.state.value.busy) delay(1) }
+                assertFalse(controller.state.value.busy, "round $round: busy stayed true after both threads stopped running")
+            } finally {
+                scope.cancel()
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test fun aReplacedRunEndsTheFindingStateItHeld() = runTest {
+        val controller = ApplicationController(this, store)
+        controller.mutable.value = ApplicationState(screen = Screen.Sources, selectedProfile = "profile", findingSources = true)
+        val held = CompletableDeferred<Unit>()
+        controller.run { held.await() }
+        advanceUntilIdle()
+        controller.run { }
+        advanceUntilIdle()
+        assertFalse(controller.state.value.busy)
+        assertFalse(controller.state.value.findingSources, "the run that ended was the selector's last owner")
+        held.complete(Unit)
+        advanceUntilIdle()
+    }
+}

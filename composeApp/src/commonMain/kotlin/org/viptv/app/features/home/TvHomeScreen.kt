@@ -33,7 +33,9 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
+import org.viptv.app.components.motionSpec
 import org.viptv.app.connection.Profile
+import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.Screen
 import org.viptv.engine.wire.*
 
@@ -42,7 +44,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap(),
     enrichSummary: (Card) -> Unit = {},
-    continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
+    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
     var browsing by rememberSaveable(home?.scope?.profile_id) { mutableStateOf(false) }
     val lastNavigation = remember { mutableStateOf<TimeMark?>(null) }
     val rapidNavigation = remember { mutableStateOf(false) }
@@ -69,13 +71,14 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     }
     // Row fades read browsing/activeRow here: inside the LazyColumn item scope they recompose every visible shelf per focus move.
     val rowAlphas = remember(visibleRows) { mutableMapOf<String, androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>>() }
+    val rowFade = motionSpec<Float>(tween(200))
     LaunchedEffect(browsing, activeRow, rowAlphas) {
         if (rowAlphas.isEmpty()) return@LaunchedEffect
         kotlinx.coroutines.coroutineScope {
             visibleRows.forEachIndexed { index, row ->
                 val alpha = rowAlphas[row.id] ?: return@forEachIndexed
                 val target = if (browsing && index < activeRow) 0f else 1f
-                launch { alpha.animateTo(target, tween(200)) }
+                launch { alpha.animateTo(target, rowFade) }
             }
         }
     }
@@ -160,7 +163,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val firstHeight = if (firstShelfHeight > 0) with(density) { firstShelfHeight.toDp() }
             else (52f + firstArtHeight + if (firstShelf?.state == RowState.READY) 76f else 0f).dp * scale
         val targetTop = if (browsing) listTop else 824.dp * scale - (shelfSlot - firstHeight)
-        val top = animateDpAsState(targetTop, tween(450, easing = easing), label = "Billboard to rows")
+        val top = animateDpAsState(targetTop, motionSpec(tween(450, easing = easing)), label = "Billboard to rows")
         var heroTimerEnabled by remember(home?.scope?.owner()) { mutableStateOf(true) }
         LaunchedEffect(browsing) {
             if (browsing) heroTimerEnabled = false
@@ -235,7 +238,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 rowAlpha = alpha,
                                 onHeightChange = { if (it > measuredShelfHeight) measuredShelfHeight = it; if (index == 0) firstShelfHeight = it },
                                 play = play, state = shelfState,
-                                continueMore = continueMore, seeAll = seeAll)
+                                seeAllFor = seeAllFor, openSeeAll = openSeeAll)
                         }
                     }
                 }

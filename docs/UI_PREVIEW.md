@@ -24,7 +24,7 @@ corresponding supplied playback scene. The fixture's command acknowledgements
 are synthetic and confined to the preview. `BufferFast` reports ready after
 250 ms to exercise cancellation of the delayed buffering overlay.
 `Player --es ui_variant Native` instead
-uses the public Flower MP4 with real KitePlayer facts, without account/provider/
+uses the public Flower MP4 with real player facts, without account/provider/
 history operations. Its diagnostic output contains public-test status/position/
 track counts only. Temporary key-event diagnostics were removed.
 

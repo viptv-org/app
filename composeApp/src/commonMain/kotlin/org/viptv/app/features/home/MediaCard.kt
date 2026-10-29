@@ -182,15 +182,18 @@ private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int, l
     val landscape = if (portrait) null else card.landscapeArt()
     val url = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (landscape as? LandscapeArt.Still)?.url
     // Keyed on what is drawn, so a slot reused for other art or the other orientation never keeps a stale failure.
-    var artFailed by remember(card.poster, card.landscape, portrait) { mutableStateOf(false) }
-    when {
-        artFailed -> MissingArtTile(card.title, labelScale)
-        url != null -> AsyncImage(org.viptv.app.images.sizedArtwork(url, slotW, slotH),
-            card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, onError = { artFailed = true })
-        landscape is LandscapeArt.Poster -> PosterInLandscape(
-            org.viptv.app.images.sizedArtwork(landscape.url, slotH * 2 / 3, slotH) ?: landscape.url, card.title,
-            onError = { artFailed = true })
-        else -> MissingArtTile(card.title, labelScale)
+    val art = remember(card.poster, card.landscape, portrait) { ArtFailure() }
+    val attempt = art.retryAfterFailure()
+    Box(Modifier.fillMaxSize()) {
+        when {
+            url != null -> key(attempt) { AsyncImage(org.viptv.app.images.sizedArtwork(url, slotW, slotH),
+                card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                onSuccess = { art.failed = false }, onError = { art.failed = true }) }
+            landscape is LandscapeArt.Poster -> key(attempt) { PosterInLandscape(
+                org.viptv.app.images.sizedArtwork(landscape.url, slotH * 2 / 3, slotH) ?: landscape.url, card.title,
+                onSuccess = { art.failed = false }, onError = { art.failed = true }) }
+        }
+        if (art.failed || url == null && landscape !is LandscapeArt.Poster) MissingArtTile(card.title, labelScale)
     }
 }
 

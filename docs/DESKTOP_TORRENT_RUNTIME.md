@@ -7,7 +7,10 @@ and terminates its owned worker on failure and JVM exit. Media remains on the
 existing token-protected loopback endpoint and uses the existing grant bridge.
 
 `tools/build_desktop_torrent.py` builds the revision in `TORRENT_RUNTIME_REF` and
-ships dependency notices, checksums and protocol/clock metadata. Gradle includes
+ships dependency notices, checksums and protocol/clock metadata. Both torrent
+runtime builds read `playback-gateway` from `VIPTV_PLAYBACK_GATEWAY`, or else
+from the nearest `playback-gateway` next to or above the checkout, so a worktree
+needs no override. Gradle includes
 these resources in desktop packages. Linux and Windows use suspension-aware OS
 clocks; macOS is advertised only with a worker pin providing its matching clock.
 
@@ -23,10 +26,9 @@ an explicit benchmark specification. It creates no account or user vault. The
 renderer reports distinct drawn images; a changed playback position alone cannot
 complete the seek measurement. Ordinary playback does not install a frame sink.
 
-A verified torrent read can outlast KitePlayer's two-second quiescence deadline.
-Local-torrent seeks retry its documented non-mutating refusal at most three times,
-while preserving cancellation and other failure types. No source interrupt or
-unverified-byte workaround is used.
+A torrent read waits on peers rather than a server. Desktop seeks issue one
+absolute+exact mpv seek; there is no source interrupt and no path that reads
+unverified bytes.
 
 The strict Stremio performance gate is still failed; Android qualification and
 runtime pin promotion remain gated. See the sibling playback-gateway
