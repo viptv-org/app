@@ -5,7 +5,7 @@ This is the app-independent half of app#105: it drives the standalone Compose-on
 reproduction in `docs/upstream/compose-web-text-order` (one `BasicTextField`, no VIPTV
 code), so a failure here is a Compose Multiplatform defect rather than app behaviour.
 README there covers why the reproduction exists and what it shows; the diagnosis is in
-`docs/WEB_TEXT_INPUT_ORDER.md`.
+viptv-org/app#105.
 
 The page publishes Compose's own field value to `window.__typed`; the check compares
 that with the string it typed, and prints the DOM backing field as a cross-check.

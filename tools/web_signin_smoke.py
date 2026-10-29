@@ -34,7 +34,7 @@ Headed on a machine without a display or GPU:
 is how a starved main thread reaches the Compose web text input. At `--cpu-throttle 6`
 this check fails on every run with scrambled characters: that is app#105, a Compose
 Multiplatform defect (queued DOM edits are applied against a text the hidden input
-element has since rewritten), not an app defect. See docs/WEB_TEXT_INPUT_ORDER.md.
+element has since rewritten), not an app defect. See viptv-org/app#105.
 
 Exits 0 when every check passes and writes screenshots to --out.
 """
