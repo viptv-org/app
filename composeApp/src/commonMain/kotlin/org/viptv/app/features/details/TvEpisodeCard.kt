@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.ArtFailure
+import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -37,14 +39,16 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
             val art = card.landscape ?: card.poster
-            var artFailed by remember { mutableStateOf(false) }
-            if (art == null || artFailed) {
+            val artwork = remember(art) { ArtFailure() }
+            val attempt = artwork.retryAfterFailure()
+            if (art != null) key(attempt) { AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                onSuccess = { artwork.failed = false }, onError = { artwork.failed = true }) }
+            if (art == null || artwork.failed) {
                 Text(card.episodeArtLabel() ?: card.title, Modifier.align(Alignment.Center).padding(24.dp * scale),
                     color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
                     fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            } else AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                onError = { artFailed = true })
+            }
             card.episodeArtLabel()?.let { badge -> Text(badge, Modifier.align(Alignment.TopStart).padding(12.dp * scale)
                 .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.75f), RoundedCornerShape(4.dp * scale))
                 .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale), color = Palette.text,

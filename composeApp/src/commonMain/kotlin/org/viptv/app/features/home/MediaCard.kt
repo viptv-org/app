@@ -53,10 +53,12 @@ import com.composables.icons.lucide.Plus
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.ArtFailure
 import org.viptv.app.components.ArtWatchedBadge
 import org.viptv.app.components.HoverFill
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.pointerHovered
+import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.cardChip
 import org.viptv.app.components.caughtUpCaption
