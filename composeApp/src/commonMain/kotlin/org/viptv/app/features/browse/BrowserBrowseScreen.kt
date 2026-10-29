@@ -20,9 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.connection.BrowseQuery
-import org.viptv.app.connection.DiscoveryCatalog
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.connection.cardLookupKey
+import org.viptv.app.connection.catalogSource
+import org.viptv.app.connection.catalogTitle
 import org.viptv.app.connection.selections
 import org.viptv.app.connection.selectedCatalog
 import org.viptv.app.features.home.MediaCard
@@ -73,13 +74,16 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     val clearAll = { applyQuery(clearedFilters(query)) }
     val catalogOpen = remember { mutableStateOf(false) }
     val catalog = controls?.selectedCatalog(query)
+    val peers = controls?.catalogs.orEmpty()
+    val label = catalog?.catalogTitle(peers)
+    val source = catalog?.catalogSource(peers)
     val chooseCatalog = { catalogOpen.value = true }
     Column(Modifier.fillMaxSize().padding(start = 32.dp, end = 32.dp, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
         if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-        else if (error != null) BrowserBrowseFailure(error, catalog, chooseCatalog)
-        else if (cards.isEmpty()) BrowserBrowseEmpty(screen, catalog, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
+        else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog)
+        else if (cards.isEmpty()) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
         LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
             horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -100,7 +104,7 @@ private fun browserApplied(facets: List<QueryControl>, query: BrowseQuery): List
 }
 
 @Composable
-private fun BrowserBrowseEmpty(screen: Screen, catalog: DiscoveryCatalog?, count: Int, newest: BrowserAppliedChip?,
+private fun BrowserBrowseEmpty(screen: Screen, source: String?, count: Int, newest: BrowserAppliedChip?,
     query: BrowseQuery, clearAll: () -> Unit, changed: (String, String) -> Unit,
     multipleChanged: (String, List<String>) -> Unit, openCatalog: () -> Unit) {
     val noun = when (screen) {
@@ -111,26 +115,26 @@ private fun BrowserBrowseEmpty(screen: Screen, catalog: DiscoveryCatalog?, count
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Nothing matches these filters", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(catalog?.let { "${it.name} from ${it.connection_name ?: "your sources"} has no $noun with all $count filters. Removing the newest one usually helps." }
+        Text(source?.let { "$it has no $noun with all $count filters. Removing the newest one usually helps." }
             ?: "No $noun are available for these filters.", fontSize = 14.sp, color = Palette.secondary)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (newest != null) BrowserStateAction(if (newest.label.length > 24) "Remove filter" else "Remove “${newest.label}”", primary = true) {
                 if (newest.multiple) multipleChanged(newest.id, query.selections(newest.id) - newest.value) else changed(newest.id, "")
             }
             BrowserStateAction("Clear all filters", primary = false, onClick = clearAll)
-            if (catalog != null) BrowserStateAction("Choose another catalog", primary = false, onClick = openCatalog)
+            if (source != null) BrowserStateAction("Choose another catalog", primary = false, onClick = openCatalog)
         }
     }
 }
 
 @Composable
-private fun BrowserBrowseFailure(error: String, catalog: DiscoveryCatalog?, openCatalog: () -> Unit) {
+private fun BrowserBrowseFailure(error: String, title: String?, source: String?, openCatalog: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(catalog?.let { "Couldn’t load ${it.name}" } ?: "Couldn’t load this page", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text("${catalog?.connection_name ?: "The source"} didn’t answer. Your filters are kept.", fontSize = 14.sp, color = Palette.secondary)
+        Text(title?.let { "Couldn’t load $it" } ?: "Couldn’t load this page", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("${source?.takeIf(String::isNotBlank) ?: "The source"} didn’t answer. Your filters are kept.", fontSize = 14.sp, color = Palette.secondary)
         Text(error, fontSize = 13.sp, color = Palette.danger)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (catalog != null) BrowserStateAction("Choose another catalog", primary = true, onClick = openCatalog)
+            if (title != null) BrowserStateAction("Choose another catalog", primary = true, onClick = openCatalog)
         }
     }
 }

@@ -22,8 +22,9 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.connection.BrowseQuery
-import org.viptv.app.connection.DiscoveryCatalog
 import org.viptv.app.connection.DiscoveryControls
+import org.viptv.app.connection.catalogSource
+import org.viptv.app.connection.catalogTitle
 import org.viptv.app.connection.selectedCatalog
 import org.viptv.app.state.Screen
 import org.viptv.app.components.AutomaticPage
@@ -70,6 +71,9 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         val facets = remember(controls, query, screen) { browseFacets(controls, query, screen == Screen.Discover) }
         val applied = remember(facets, query) { appliedFacets(facets, query).size }
         val catalog = controls?.selectedCatalog(query)
+        val peers = controls?.catalogs.orEmpty()
+        val label = catalog?.catalogTitle(peers)
+        val source = catalog?.catalogSource(peers)
         val loading = busy || (loadedCards == null && home == null)
         val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
             controls?.controls?.any { it.id == "sort" } == true
@@ -86,9 +90,9 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
             if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
             val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
             val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
-            if (error != null && cards.isEmpty()) BrowseErrorState(catalog, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
+            if (error != null && cards.isEmpty()) BrowseErrorState(label, catalog?.connection_name, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
             else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Fixed(columns), Modifier.weight(1f))
-            else if (cards.isEmpty()) BrowseEmptyState(catalog, applied, Modifier.weight(1f)) { applyQuery(clearedFilters(query)) }
+            else if (cards.isEmpty()) BrowseEmptyState(source, applied, Modifier.weight(1f)) { applyQuery(clearedFilters(query)) }
             else LazyVerticalGrid(GridCells.Fixed(columns),
                 state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
                 verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
@@ -122,33 +126,31 @@ private fun BrowseSkeletonGrid(columns: GridCells, modifier: Modifier) {
 }
 
 @Composable
-private fun BrowseEmptyState(catalog: DiscoveryCatalog?, filters: Int, modifier: Modifier, clearAll: () -> Unit) {
+private fun BrowseEmptyState(source: String?, filters: Int, modifier: Modifier, clearAll: () -> Unit) {
     Column(modifier.fillMaxWidth().padding(top = 90.dp, start = 20.dp, end = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Lucide.Search, null, Modifier.size(30.dp))
         Text("Nothing matches", fontSize = 22.sp, lineHeight = 25.sp, letterSpacing = (-0.44).sp,
             fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-        Text(emptyBody(catalog, filters), color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp,
+        Text(emptyBody(source, filters), color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp,
             textAlign = TextAlign.Center)
         BoardAction("Clear all filters", primary = true, run = clearAll)
     }
 }
 
-private fun emptyBody(catalog: DiscoveryCatalog?, filters: Int): String {
-    val source = catalog?.let { it.name + (it.connection_name?.takeIf(String::isNotBlank)?.let { name -> " from $name" } ?: "") }
-    return if (source != null && filters > 0) "$source has no titles with all $filters filters. Removing the newest one usually helps."
+private fun emptyBody(source: String?, filters: Int): String =
+    if (source != null && filters > 0) "$source has no titles with all $filters filters. Removing the newest one usually helps."
     else "No titles match these filters. Removing the newest one usually helps."
-}
 
 @Composable
-private fun BrowseErrorState(catalog: DiscoveryCatalog?, error: String, modifier: Modifier,
+private fun BrowseErrorState(title: String?, source: String?, error: String, modifier: Modifier,
     retry: () -> Unit, chooseCatalog: (() -> Unit)?) {
     Column(modifier.fillMaxWidth().padding(top = 90.dp, start = 20.dp, end = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Lucide.CloudOff, null, Modifier.size(30.dp))
-        Text("Couldn’t load ${catalog?.name ?: "this catalog"}", fontSize = 22.sp, lineHeight = 25.sp,
+        Text("Couldn’t load ${title ?: "this catalog"}", fontSize = 22.sp, lineHeight = 25.sp,
             letterSpacing = (-0.44).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-        Text("${catalog?.connection_name?.takeIf(String::isNotBlank) ?: "Your source"} didn’t answer in time. Your filters are kept.",
+        Text("${source?.takeIf(String::isNotBlank) ?: "Your source"} didn’t answer in time. Your filters are kept.",
             color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
         BoardAction("Try again", primary = true, run = retry, icon = Lucide.RotateCw)
         chooseCatalog?.let { BoardAction("Choose another catalog", primary = false, run = it) }

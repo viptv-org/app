@@ -14,13 +14,18 @@ import kotlin.test.*
 
 class CalendarActionsTest {
     private val codec=Json { encodeDefaults=true }
+    private val store = object : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = null
+        override suspend fun save(session: SavedRemoteSession) = Unit
+        override suspend fun clear() = Unit
+    }
     private val origin=MetadataOrigin("simkl")
     private val parent=Card(MediaIdentity("simkl:tv:20","series",emptyList()),provider_id="simkl",title="Scheduled series",badges=emptyList(),metadata_origin=origin)
     private fun episode(id:String, season:Long=2, number:Long=4, order:String="aired", source:MetadataOrigin=origin)=parent.copy(identity=MediaIdentity(id,"series",emptyList(),EpisodeCoordinates(order,season,number)),parent_identity=parent.identity,title="Actual episode",metadata_origin=source)
     private fun entry()=CalendarEntry("release","2026-10-15","4 PM",parent,aired=true,season=2,episode=4,releaseDate="2026-10-15T16:00:00Z")
     private fun controller(client:HttpClient,scope:CoroutineScope):Pair<ApplicationController,RemoteConnection>{
         val remote=RemoteConnection("https://fixture.example",client=client,browserMode=false)
-        return ApplicationController(scope).also { it.connection=remote;it.mutable.value=ApplicationState(screen=Screen.Calendar,selectedProfile="one",preferences=PreferencesSnapshot()) } to remote
+        return ApplicationController(scope, store).also { it.connection=remote;it.mutable.value=ApplicationState(screen=Screen.Calendar,selectedProfile="one",preferences=PreferencesSnapshot()) } to remote
     }
     @Test fun resolvesOnlyActualScheduledCardUsingSeasonOffsetBeforeStartingSources()=runBlocking<Unit>{
         val target=episode("actual-provider-id");val offsets=mutableListOf<String?>();var requested:String?=null

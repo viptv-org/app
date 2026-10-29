@@ -36,6 +36,10 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveFavoriteScope = 0L
     internal var detailPagingJob: Job? = null
     internal var libraryHydration: Job? = null
+    internal var navigationSaveJob: Job? = null
+    internal var navigationRestoreJob: Job? = null
+    internal var rememberedNavigation: SavedNavigation? = null
+    internal var rememberedNavigationProfile: String? = null
     internal var continueChecked: ContinueCheck? = null
     internal var libraryImportRefresh: Job? = null
     internal var calendarReread: Job? = null

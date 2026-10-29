@@ -5,6 +5,7 @@ import org.viptv.engine.wire.LibraryQuery
 
 fun ApplicationController.libraryQuery(query: LibraryQuery) {
     mutable.value = mutable.value.copy(libraryQuery = query.copy(offset = 0))
+    rememberNavigation()
     run { loadLibraryPage(query.copy(offset = 0)) }
 }
 fun ApplicationController.libraryMore() = run {
