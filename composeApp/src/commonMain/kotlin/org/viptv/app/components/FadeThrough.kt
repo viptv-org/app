@@ -8,5 +8,5 @@ import androidx.compose.ui.Modifier
 @Composable
 internal fun <T> FadeThrough(target: T, modifier: Modifier = Modifier, contentKey: (T) -> Any? = { it }, content: @Composable (T) -> Unit) {
     androidx.compose.animation.core.updateTransition(target, label = "Billboard text")
-        .Crossfade(modifier, animationSpec = tween(160), contentKey = contentKey, content = content)
+        .Crossfade(modifier, animationSpec = motionSpec(tween(160)), contentKey = contentKey, content = content)
 }

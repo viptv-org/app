@@ -19,6 +19,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.LocalReducedMotion
 
 internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
 
@@ -42,6 +43,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val reduceMotion = LocalReducedMotion.current
     var focused by remember(shown) { mutableStateOf(shown.firstOrNull()) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
@@ -59,7 +61,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                     val index = days.takeWhile { it.id != day }.sumOf { preceding ->
                         shown.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 2 }
                     }
-                    list.animateScrollToItem(index)
+                    if (reduceMotion) list.scrollToItem(index) else list.animateScrollToItem(index)
                 }
             }
             error?.let { Text(it, color = Palette.danger) }

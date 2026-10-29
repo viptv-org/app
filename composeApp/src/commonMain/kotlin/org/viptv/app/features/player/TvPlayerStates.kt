@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.motionSpec
 import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.theme.Palette
 
@@ -26,8 +27,9 @@ internal fun BoxScope.TvSkipPrompt(skip: TvSkipRange, position: Long, scale: Flo
     val initial = remember { FocusRequester() }
     val arrival = remember(skip) { Animatable(0f) }
     val remaining = ((skip.endMillis - position).toDouble() / (skip.endMillis - skip.startMillis).coerceAtLeast(1)).toFloat().coerceIn(0f, 1f)
-    val rail by animateFloatAsState(remaining, tween(200, easing = LinearEasing), label = "intro remaining")
-    LaunchedEffect(skip) { arrival.animateTo(1f, tween(300, easing = CubicBezierEasing(.2f, 0f, 0f, 1f))) }
+    val rail by animateFloatAsState(remaining, motionSpec(tween(200, easing = LinearEasing)), label = "intro remaining")
+    val arrivalSpec = motionSpec<Float>(tween(300, easing = CubicBezierEasing(.2f, 0f, 0f, 1f)))
+    LaunchedEffect(skip) { arrival.animateTo(1f, arrivalSpec) }
     LaunchedEffect(skip) { initial.requestFocus() }
     Box(Modifier.align(Alignment.BottomEnd).padding(end = 96.dp * scale, bottom = 112.dp * scale).width(280.dp * scale).height(72.dp * scale)
         .graphicsLayer { alpha = arrival.value; translationY = 16.dp.toPx() * scale * (1f - arrival.value) }

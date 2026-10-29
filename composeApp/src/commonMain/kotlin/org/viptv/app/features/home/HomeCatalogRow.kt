@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.LocalReducedMotion
 
 internal const val CONTINUE_ROW = "continue"
 
@@ -37,6 +38,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val reduceMotion = LocalReducedMotion.current
     val portrait = row.id != "continue"
     val select = if (row.id == CONTINUE_ROW) continueWatchingActivation(play, open) else null
     val showFocusOutline = television || !compact && !browser
@@ -57,11 +59,17 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
             }
             if (!compact && !television && cards.isNotEmpty()) {
                 CarouselArrow(false, list.canScrollBackward) {
-                    scope.launch { list.animateScrollToItem(carouselPageTarget(list.layoutInfo, forward = false)) }
+                    scope.launch {
+                        val target = carouselPageTarget(list.layoutInfo, forward = false)
+                        if (reduceMotion) list.scrollToItem(target) else list.animateScrollToItem(target)
+                    }
                 }
                 Spacer(Modifier.width(8.dp))
                 CarouselArrow(true, list.canScrollForward) {
-                    scope.launch { list.animateScrollToItem(carouselPageTarget(list.layoutInfo, forward = true)) }
+                    scope.launch {
+                        val target = carouselPageTarget(list.layoutInfo, forward = true)
+                        if (reduceMotion) list.scrollToItem(target) else list.animateScrollToItem(target)
+                    }
                 }
             }
         }

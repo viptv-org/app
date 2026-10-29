@@ -7,7 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 // Aligns whole sections without letting a descendant card's bounds hide the section heading.
-internal class TvSectionScroll(private val state: LazyListState, private val scope: CoroutineScope) {
+internal class TvSectionScroll(private val state: LazyListState, private val scope: CoroutineScope, private val reduceMotion: () -> Boolean) {
     private var motion: Job? = null
     private var target: Int? = null
 
@@ -17,7 +17,9 @@ internal class TvSectionScroll(private val state: LazyListState, private val sco
         motion?.cancel()
         motion = scope.launch {
             // The native list resolves the item against current layout and owns frame scheduling.
-            if (index in 0 until state.layoutInfo.totalItemsCount) state.animateScrollToItem(index)
+            if (index in 0 until state.layoutInfo.totalItemsCount) {
+                if (reduceMotion()) state.scrollToItem(index) else state.animateScrollToItem(index)
+            }
             after?.invoke()
         }
     }
@@ -28,7 +30,8 @@ internal class TvSectionScroll(private val state: LazyListState, private val sco
 @Composable
 internal fun rememberTvSectionScroll(state: LazyListState): TvSectionScroll {
     val scope = rememberCoroutineScope()
-    val controller = remember(state, scope) { TvSectionScroll(state, scope) }
+    val reduceMotion = rememberUpdatedState(LocalReducedMotion.current)
+    val controller = remember(state, scope) { TvSectionScroll(state, scope) { reduceMotion.value } }
     DisposableEffect(controller) { onDispose { controller.cancel() } }
     return controller
 }
