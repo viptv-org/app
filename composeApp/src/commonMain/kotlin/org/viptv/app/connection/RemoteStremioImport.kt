@@ -94,6 +94,7 @@ internal class RemoteStremioImport(private val remote: RemoteConnection, private
     private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, review: Boolean, timeout: Long?): JsonElement? {
         val (status, text) = try { remote.exchange(path, method, body, timeout) }
         catch (error: CancellationException) {
+            // Our own cancellation propagates; a request-timeout cancellation inside the client does not.
             currentCoroutineContext().ensureActive()
             if (!error.isTimeout()) throw error
             throw StremioTransportFailure(true)

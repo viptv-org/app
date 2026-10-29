@@ -45,6 +45,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
             }
         } else null,
         subtitleContent = { id ->
+            // A device-local store owns its subtitles: a missing track is empty, never a remote call it cannot make.
             if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
             else requireNotNull(remote).subtitleContent(id).encodeToByteArray()
         })

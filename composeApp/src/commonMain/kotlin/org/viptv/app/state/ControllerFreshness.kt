@@ -111,6 +111,7 @@ private suspend fun ApplicationController.quietly(owner: QuietOwner, work: suspe
 
 private suspend fun ApplicationController.checkRevisions(owner: QuietOwner) {
     val remote = owner.remote ?: return freshness.unsupported()
+    // A check that outlived its session must not mark the next session's clock.
     val observed = try { remote.revisions(owner.profile) } finally { if (current(owner)) freshness.checkFinished() }
     if (!current(owner)) return
     if (observed == null) return freshness.unsupported()

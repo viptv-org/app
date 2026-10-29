@@ -196,6 +196,7 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
         }
         showSourceDetail(detail, card, target)
         if (mutable.value.screen != Screen.Sources) return@launch
+        // The controller's run, not the scope function: it cancels the job and sets `busy`.
         this@resolveSourceTarget.run { discoverSources(target) }
     }
 }
@@ -246,6 +247,7 @@ private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long)
         when (mutable.value.screen) {
             Screen.Sources -> if (card.metadata_origin != detail.item.metadata_origin) {
                 openSources(target, returnTo = Screen.Details, playTap = mutable.value.playTapTitle)
+                // The controller's run, not the scope function: it cancels the job and sets `busy`.
                 this@loadSourceDetail.run { discoverSources(target) }
             }
             Screen.Player -> { loadNextEpisode(); loadPlaybackSeason() }

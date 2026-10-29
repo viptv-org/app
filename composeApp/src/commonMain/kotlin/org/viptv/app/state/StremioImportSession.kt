@@ -356,6 +356,7 @@ class StremioImportSession internal constructor(
     private fun discardPreview() {
         val old = handle ?: return
         handle = null
+        // Undispatched: the discard must start before the retiring connection closes, and its outcome is never observed.
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try { transport.discard(profileId, old) } catch (_: Throwable) { }
         }

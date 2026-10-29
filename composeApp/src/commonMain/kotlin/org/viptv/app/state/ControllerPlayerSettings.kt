@@ -32,6 +32,7 @@ internal fun ApplicationController.returnToPlayer() {
     val reopen = input != null && preferences != null && source != null && remotePlayback?.gateway == true &&
         preferences.serverTracks() != (playerVisitTracks ?: input.preferences.serverTracks())
     playerVisitTracks = null
+    // Before the player recomposes: its renderer opens with these.
     if (!reopen && input != null && preferences != null) input.reopenAt(lastProgress?.positionMillis, preferences)
     mutable.value = state.copy(paused = true)
     navigate(Screen.Player, record = false)
