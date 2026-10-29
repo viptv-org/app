@@ -34,7 +34,8 @@ internal class MpvSession(input: PlaybackInput) {
     @Volatile var presentationAllowed = false
     val closed = CompletableDeferred<Unit>()
     val rendererReady = CompletableDeferred<Unit>()
-    @Volatile var toneMapped = false; private set
+    @Volatile private var toneMappedValue = false
+    val toneMapped: Boolean get() = toneMappedValue
 
     init {
         try {
@@ -136,7 +137,7 @@ internal class MpvSession(input: PlaybackInput) {
     private suspend fun toneMapHdrSource() {
         if (text("video") == "no") return
         val transfer = withTimeoutOrNull(3_000) { state.first { it.transfer != null || it.error != null }.transfer } ?: return
-        if (mpvNeedsToneMap(transfer)) toneMapped = runCatching { command("vf", "set", mpvToneMapFilter) }.isSuccess
+        if (mpvNeedsToneMap(transfer)) toneMappedValue = runCatching { command("vf", "set", mpvToneMapFilter) }.isSuccess
     }
     suspend fun selectedAudio(): Int? = withContext(dispatcher) { number("aid")?.toInt() }
     fun closeAfterRenderer() {
