@@ -8,7 +8,6 @@ import org.viptv.app.connection.AndroidAccountAuthorization
 
 private const val PROOF_URL = "https://viptv-browser-fixture.invalid/proof?state=a%2Bb%2520c"
 
-/** Private-emulator proof of normal platform dispatch, never a network request. */
 class BrowserLaunchQaActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -17,7 +16,6 @@ class BrowserLaunchQaActivity : Activity() {
     }
 }
 
-/** Receives only the reserved .invalid fixture host, without browser/accounts/services. */
 class BrowserLaunchReceiverQaActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

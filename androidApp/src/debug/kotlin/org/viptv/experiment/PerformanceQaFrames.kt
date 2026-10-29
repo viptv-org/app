@@ -8,7 +8,6 @@ import android.view.Window
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Passive platform metrics; no semantics scans or per-frame logging on the UI thread. */
 internal class PerformanceQaFrames(private val window: Window) {
     private val thread = HandlerThread("viptv-qa-frames").apply { start() }
     @Volatile var phase = "startup"

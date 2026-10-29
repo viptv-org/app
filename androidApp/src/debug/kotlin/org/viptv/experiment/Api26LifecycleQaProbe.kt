@@ -19,7 +19,6 @@ import java.net.HttpURLConnection
 import java.net.URI
 import kotlin.math.abs
 
-/** Exact API26 normal-mode qualification; the independent TV probe stays TV-only. */
 @UnstableApi
 class Api26LifecycleQaProbe : ViewModel() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)

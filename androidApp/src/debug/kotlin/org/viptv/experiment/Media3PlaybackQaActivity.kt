@@ -12,7 +12,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
-/** Public-media hardware baseline. No application accounts, history, or provider grants. */
 @UnstableApi
 class Media3PlaybackQaActivity : Activity() {
     private lateinit var player: ExoPlayer
