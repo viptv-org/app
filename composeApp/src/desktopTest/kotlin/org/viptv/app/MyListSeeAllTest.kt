@@ -77,8 +77,8 @@ class MyListSeeAllTest {
             val controller = ApplicationController(this, host.sessionStore)
             controller.connection = host.remote
             controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "1",
-                profiles = listOf(Profile("1", "QA", null)), home = home(listOf(myListRow((1..12).map(::savedCard))),
-                library = (1..30).map(::savedCard)), preferences = PreferencesSnapshot())
+                profiles = listOf(Profile("1", "QA", null)), home = home(listOf(myListRow((1..12).map(::savedCard)))),
+                library = (1..30).map(::savedCard), preferences = PreferencesSnapshot())
             val card = controller.state.value.rowSeeAll(controller.state.value.home!!.rows.single())
             assertEquals(seeAll(30), card)
             controller.navigate(card!!.screen)
