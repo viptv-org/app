@@ -8,6 +8,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
@@ -48,10 +49,15 @@ class DesktopShortWindowHomeTest {
     private fun text(node: SemanticsNode) =
         node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
 
+    private fun sceneNodes(scene: ImageComposeScene): List<SemanticsNode> =
+        scene.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
+
+    private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
+
     private inner class Shell(val scene: ImageComposeScene) {
         private var time = 0L
         fun frames(count: Int = 40) = repeat(count) { scene.render(time).close(); time += 16_666_667L }
-        fun nodes() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(merged = false) }
+        fun nodes() = sceneNodes(scene)
         fun title(label: String) = nodes().firstOrNull { text(it) == label }
         fun titles() = nodes().map { text(it) }.filter(String::isNotBlank)
         fun wheel(at: Offset, notches: Int = 1) {
