@@ -23,15 +23,6 @@ import com.composables.icons.lucide.Plus
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
-/**
- * Board Tv3AddonInstall: the install confirmation over the entry page, on the
- * raised surface with the board's title, identity row, account warning and
- * Install/Cancel TvActions. Back dismisses it.
- *
- * The identity row is built from the typed address because the manifest's own
- * name, version, catalog and type list needs a pre-install manifest preview the
- * connection API does not expose yet.
- */
 @Composable
 internal fun TvAddonInstallConfirm(address: String, profileName: String?, local: Boolean, busy: Boolean,
     scale: Float, confirm: () -> Unit, cancel: () -> Unit) {

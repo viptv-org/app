@@ -28,8 +28,6 @@ class StartupShellUiTest {
     private fun exerciseRecreation() {
         val scheduler = TestCoroutineScheduler()
         val dispatcher = StandardTestDispatcher(scheduler)
-        // Keep image/animation effect completions and scene disposal on the
-        // same explicit UI scheduler, rather than Unconfined IO return threads.
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null
@@ -49,8 +47,7 @@ class StartupShellUiTest {
         val scene = ImageComposeScene(1920, 1080, Density(1f), coroutineContext = dispatcher) {
             val context = LocalPlatformContext.current
             remember {
-                // Standalone component tests may already have created Coil's
-                // default loader. Give this full App its own process-like setup.
+                // Coil's default loader may already exist in this JVM, where setSafe refuses a later factory.
                 previousLoader = SingletonImageLoader.get(context)
                 SingletonImageLoader.reset()
             }

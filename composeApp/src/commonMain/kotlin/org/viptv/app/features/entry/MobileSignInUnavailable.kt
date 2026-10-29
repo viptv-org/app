@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 
-/** Unsupported authentication methods must not imply that an approval or code is pending. */
 @Composable
 internal fun MobileSignInUnavailable(step: SignInStep, back: () -> Unit, password: () -> Unit) {
     val title = when (step) {

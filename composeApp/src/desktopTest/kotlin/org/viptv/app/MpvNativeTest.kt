@@ -11,11 +11,7 @@ import kotlin.test.*
 class MpvNativeTest {
     @Test fun createsAClientEvenWhenTheProcessNumericLocaleIsNotC() {
         runBlocking {
-            // The JVM calls setlocale(LC_ALL, "") at startup, leaving a normal
-            // desktop locale such as en_US.UTF-8 in place; libmpv refuses to
-            // create a client in that state. Use any installed non-C locale to
-            // reproduce it deterministically instead of depending on the host's
-            // LANG, then prove session creation repairs LC_NUMERIC.
+            // The JVM starts with setlocale(LC_ALL, ""), where libmpv refuses to create a client.
             val original = MpvLocale.numericLocale()
             val pathological = listOf("C.utf8", "C.UTF-8", "en_US.utf8", "en_US.UTF-8")
                 .firstOrNull { MpvLocale.setNumericLocale(it) }

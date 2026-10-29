@@ -10,7 +10,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 
-/** Layout placeholders stay static so loading never competes with navigation for TV frames. */
 @Composable
 internal fun DetailLoadingLayout(television: Boolean, modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier.fillMaxSize().semantics { contentDescription = "Loading title details" }) {

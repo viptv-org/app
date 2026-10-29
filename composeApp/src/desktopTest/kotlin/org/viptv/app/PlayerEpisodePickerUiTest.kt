@@ -29,11 +29,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#42: the in-player Episodes picker shows the Details episode cards: the
- * episode still (landscape, else poster), the Watched pill for a finished
- * episode, the progress bar for a part-watched one, and a Now playing marker.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class PlayerEpisodePickerUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -48,7 +43,6 @@ class PlayerEpisodePickerUiTest {
             poster = poster, parent_identity = parent, metadata_origin = origin,
             description = "The crew regroups after the storm and plans the next crossing.")
 
-    /** Watched E1-E2 (E2 has only a poster), abandoned part-way E3, playing E4 (resumed), unwatched E5 (no art) and E6. */
     private val episodes = listOf(
         episode(1, listOf("Watched"), poster = poster(1)),
         episode(2, listOf("Watched"), landscape = null, poster = poster(2)),
@@ -128,7 +122,6 @@ class PlayerEpisodePickerUiTest {
             assertEquals(0.12f, ui.progress(now)!!, 0.001f)
             ui.assertArtwork(now, still(4))
             assertTrue(now.boundsInWindow.top + now.size.height <= 1080, "the playing card with every line fits on screen")
-            // Each card stays a D-pad focus target, as on the Details shelf.
             ui.focus(ui.row(5))
             assertEquals(true, ui.row(5).config.getOrNull(SemanticsProperties.Focused), "the next card takes focus")
             assertEquals(false, ui.row(4).config.getOrNull(SemanticsProperties.Focused))
@@ -155,20 +148,16 @@ class PlayerEpisodePickerUiTest {
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
         fun clickable() = nodes().filter { it.config.contains(SemanticsActions.OnClick) }
-        /** The episode's card: the clickable captioned "N. Episode N" (an art-less TV tile names it first). */
         fun row(number: Long) = clickable().single { Regex("""(^| )$number\. Episode $number( |$)""").containsMatchIn(text(it)) }
         fun click(label: String) {
             assertTrue(clickable().single { text(it) == label }.config[SemanticsActions.OnClick].action!!.invoke(), label); frames()
         }
-        /** The card's bar; Material's indicator is its own merged node inside the card. */
         fun progress(node: SemanticsNode) = flatten(node).firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.current }
         fun scrollTo(index: Int) {
             val list = nodes().single { it.config.contains(SemanticsActions.ScrollToIndex) }
             assertTrue(list.config[SemanticsActions.ScrollToIndex].action!!.invoke(index)); frames()
         }
-        /** Moves focus the way a D-pad step lands on a card (desktop maps no arrow keys to focus moves). */
         fun focus(node: SemanticsNode) { assertTrue(node.config[SemanticsActions.RequestFocus].action!!.invoke()); frames() }
-        /** The card's top-left corner shows the episode image the fake loader painted for [url]. */
         fun assertArtwork(card: SemanticsNode, url: String) {
             val bounds = card.boundsInWindow
             val x = bounds.left.toInt() + 24; val y = bounds.top.toInt() + 24
@@ -191,10 +180,8 @@ class PlayerEpisodePickerUiTest {
     }
 
     private companion object {
-        /** A distinct opaque colour per image URL, so pixels prove which image a card shows. */
         fun artColor(url: String) = (0xFF shl 24) or (url.hashCode() and 0x7F7F7F) or 0x202020
 
-        /** Every image request is answered with a solid [artColor] picture and recorded. */
         fun withFakeArtwork(block: (requested: Set<String>) -> Unit) {
             val requested = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
             val context = PlatformContext.INSTANCE

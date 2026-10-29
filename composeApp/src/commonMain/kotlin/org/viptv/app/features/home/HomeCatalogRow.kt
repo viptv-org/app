@@ -26,43 +26,28 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 import org.viptv.app.components.pointerClickable
 
-/** Home's Continue Watching row id. */
 internal const val CONTINUE_ROW = "continue"
 
 @Composable
 internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean, modifier: Modifier,
     focus: (Card) -> Unit, open: (Card) -> Unit, scale: Float = 1f, tablet: Boolean = false, browser: Boolean = false,
     play: (Card) -> Unit = open,
-    /** The page gutter: the title and arrows sit inside it, the cards scroll out to the screen edges. */
     gutter: Dp = 0.dp,
-    /** Continue Watching only: the full list holds more than the row, so the row ends with "See all" (app#114). */
     continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
-    // Home only composes rows with content; this guard keeps a direct caller
-    // from drawing a heading with no shelf under it.
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val portrait = row.id != "continue"
-    // A Continue Watching card resumes: tapping/clicking it opens that exact
-    // episode's (or movie's) sources. Info in the desktop preview still opens Details.
-    // The exception is a caught-up card, which has nothing to resume and opens
-    // the show's Details instead (app#132).
     val select = if (row.id == CONTINUE_ROW) continueWatchingActivation(play, open) else null
-    // Touch platforms (phone web/app) have no focus navigation; the swipe
-    // outline a focused card would show must not render during scrolling.
     val showFocusOutline = television || !compact && !browser
     val width = if (portrait) { if (compact) 112 else if (television) (240 * scale).toInt() else if (tablet) 164 else 176 }
         else { if (compact) 240 else if (television) (384 * scale).toInt() else if (tablet) 300 else if (browser) 212 else 280 }
-    // NAV-11: providers can return the same title under different ids/origins.
-    // Dedupe by identity first, then by title+year so a shelf never shows the
-    // same name twice.
     val cards = row.cards.distinctBy(::cardLookupKey)
         .distinctBy { it.title.trim().lowercase() to it.metadata?.year }
     val endCard = continueMore?.takeIf { row.id == CONTINUE_ROW }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically) {
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
-            // The row title's "See all" link, beside the arrows; the end card is the same action.
             if (endCard != null && !television) {
                 Text("See all", Modifier.clip(RoundedCornerShape(6.dp))
                     .pointerClickable(role = androidx.compose.ui.semantics.Role.Button, shape = RoundedCornerShape(6.dp), onClick = seeAll)
@@ -81,16 +66,12 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
             }
         }
         when (row.state) {
-            // Hidden rows never reach this composable; keep the switch exhaustive.
             RowState.EMPTY, RowState.FAILED -> Unit
             RowState.READY -> LazyRow(state = list,
                 contentPadding = PaddingValues(horizontal = gutter),
                 horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(cards, key = ::cardLookupKey) { card ->
-                    // Every platform, not just TV: a card that takes focus must be
-                    // scrolled into view. On web the browser focus could land on a
-                    // card that was fully outside the shelf viewport ("focus moves
-                    // off the screen to the left" after scrolling right and back).
+                    // Every platform scrolls a focused card into view: on web the browser focus can land outside the shelf viewport.
                     val bringIntoView = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
                     Box(Modifier.bringIntoViewRequester(bringIntoView)) {
                         MediaCard(card, width, portrait = portrait,
@@ -123,10 +104,6 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     }
 }
 
-/**
- * Arrow paging (app#63): the index of the card a ‹ › press brings to the gutter, one whole
- * screen of cards on or back. Scrolling to it stops at the row's true ends.
- */
 internal fun carouselPageTarget(info: LazyListLayoutInfo, forward: Boolean): Int {
     val visible = info.visibleItemsInfo
     if (visible.isEmpty()) return 0

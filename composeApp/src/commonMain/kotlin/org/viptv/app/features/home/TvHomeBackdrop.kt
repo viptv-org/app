@@ -31,24 +31,15 @@ internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = 
         Box(Modifier.fillMaxSize().graphicsLayer {
             alpha = 1f; translationY = -12.dp.toPx() * scale * motion.value
             clip = true; compositingStrategy = CompositingStrategy.Auto
-        // Once the browse plane has fully arrived, the hero plane is invisible:
-        // skipping its draw (fullscreen art + two fullscreen scrims) is
-        // pixel-identical to drawing it at alpha 0, and reads in the draw phase.
         }.drawWithContent { if (motion.value < 1f) drawContent() }) {
             BufferedArtwork(hero?.landscape ?: hero?.poster, Modifier.fillMaxSize(), onReady = heroReady)
-            // The scrim is transparent past 70 % of the width: draw only that part, with the
-            // stops rescaled to the narrower box (same pixels, 30 % less fill per frame).
             Box(Modifier.fillMaxHeight().fillMaxWidth(ScrimWidth).background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = .86f), (.36f / ScrimWidth) to Palette.background.copy(alpha = .4f), 1f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f), .45f to Color.Transparent, .8f to Palette.background.copy(alpha = .9f), 1f to Palette.background)))
         }
         Box(Modifier.fillMaxSize().graphicsLayer {
             alpha = motion.value; clip = true; compositingStrategy = CompositingStrategy.Auto
-        // While the hero is settled, the whole browsing plane sits at alpha 0;
-        // skip its draw entirely (pixel-identical to drawing it).
         }.drawWithContent { if (motion.value > 0f) drawContent() }.background(Palette.background)) {
-            // Keep both format planes mounted and retain their last artwork. The
-            // portrait plane dissolves over an opaque landscape base in either
-            // direction, without exposing the background or recreating painters.
+            // Keep both format planes mounted and retain their last artwork, so the dissolve never exposes the background or recreates painters.
             Box(Modifier.fillMaxWidth().height(620.dp * scale).drawWithContent { if (format.value < 1f) drawContent() }) {
                 BufferedArtwork(landscapeCard?.landscape ?: landscapeCard?.poster, Modifier.offset(760.dp * scale, 0.dp).size(1160.dp * scale, 620.dp * scale), BiasAlignment(.2f, -.5f))
                 Box(Modifier.offset(760.dp * scale, 0.dp).size(560.dp * scale, 620.dp * scale)

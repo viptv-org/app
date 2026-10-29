@@ -85,8 +85,6 @@ class RemoteSessionTest {
                 }
                 "/api/bootstrap" -> {
                     bootstrapCalls++
-                    // The proactive refresh must run before the first
-                    // bootstrap: a restored session never starts expired.
                     if (!refreshed) "{}" to HttpStatusCode.Unauthorized
                     else """{"identity":{"profiles":[],"profile_id":null},"home":null}""" to HttpStatusCode.OK
                 }

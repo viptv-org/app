@@ -31,11 +31,6 @@ import org.junit.Rule
 import java.io.File
 import kotlin.test.*
 
-/**
- * app#117: every filter on Movies (phone, tablet, web) and My List is a dropdown chip in one
- * bar, picking applies at once, and "Clear" resets everything. Set
- * `VIPTV_FILTER_CAPTURE_DIR` to save the closed and open renders used in the PR.
- */
 @OptIn(InternalComposeUiApi::class)
 class FilterBarPagesTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -56,7 +51,6 @@ class FilterBarPagesTest {
         discovery = FeatureAvailability("Available"), search = FeatureAvailability("Available"),
         filters = FeatureAvailability("Available"), calendar = FeatureAvailability("Unsupported"))
 
-    /** A fake Browse controller: every change lands in [query] at once, as the app's does. */
     private inner class Browse {
         var query by mutableStateOf(BrowseQuery("movie", "top", "c1"))
         val requests = mutableListOf<String>()
@@ -71,7 +65,6 @@ class FilterBarPagesTest {
             BrowseScreen(Screen.Movies, null, false, {}, posters, controls, browse.query, filterChanged = browse.changed,
                 multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
-            // The row scrolls: only the chips on screen are composed.
             assertEquals(listOf("Catalog: Popular", "Sort: Required", "Genre: Any"), it.triggers().take(3))
             assertFalse(it.has("Filters"), "no Filters toggle")
             assertFalse(it.has("Apply"), "no Apply button")
@@ -159,7 +152,6 @@ class FilterBarPagesTest {
                 LibraryScreen(posters, true, false, {}, {}, {}, library, query, { changes += it; query = it })
             }.use {
                 val all = listOf("List: My List", "Type: All", "Sort by: Last watched", "Status: Any", "Genre: Any")
-                // The phone row scrolls: only the chips on screen are composed.
                 assertEquals(if (name == "phone") all.take(2) else all, it.triggers().let { t -> if (name == "phone") t.take(2) else t }, name)
                 assertFalse(it.has("Filters") || it.has("Apply"), "$name: no Filters button or Apply")
                 it.capture("$name-mylist-closed")
@@ -202,7 +194,6 @@ class FilterBarPagesTest {
         private fun label(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text.removeSuffix(" · unavailable")
         fun options() = rows().map(::label)
         fun disabled(label: String) = rows().single { label(it) == label }.config.contains(SemanticsProperties.Disabled)
-        /** The bottom sheet is titled with the filter's name; the popover has no title. */
         fun sheet(title: String) = nodes().any { it.config.contains(SemanticsProperties.Heading) && text(it) == title }
 
         fun open(label: String) {

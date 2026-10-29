@@ -178,8 +178,6 @@ class HomeRecoveryUiTest {
             assertFalse(labels(scene).contains("Failed row"), "a failed row must not draw a heading")
             assertFalse(labels(scene).contains("Try again"), "a failed row must not draw a retry")
             capture(scene, "phone-home-hidden-empty-failed")
-            // The quiet lane rebuilds Home; a recovered row appears, a row that
-            // resolved to failed disappears, and a pending row keeps its skeleton.
             snapshot = home(listOf(ready, failed.copy(state = RowState.READY, cards = listOf(card.copy(title = "Recovered title"))), pending))
             frames(scene, 24)
             assertTrue(labels(scene).contains("Failed row"), "a row that loads appears on the next snapshot")
@@ -259,7 +257,7 @@ class HomeRecoveryUiTest {
     private fun focusedLabel(scene: ImageComposeScene): String? =
         nodes(scene).firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::text)?.takeIf { it.isNotBlank() }
     private var focusManager: androidx.compose.ui.focus.FocusManager? = null
-    /** Like Android: key handlers see the press first; an unconsumed D-pad press moves focus. */
+    // Desktop maps no arrow key to a focus move, so an unconsumed D-pad press has to drive the focus manager.
     private fun press(scene: ImageComposeScene, key: Key) {
         val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
         if (!consumed) requireNotNull(focusManager).moveFocus(when (key) {

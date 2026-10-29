@@ -29,8 +29,6 @@ internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?,
         ProfilePreferenceGuidance(action==TvProfileEditAction.Language,pinAvailable,editingCurrent,profile?.name,dismiss,openSettings)
         return
     }
-    // Tv3Pin is the family's only designed PIN surface, so the lock is entered on
-    // that keypad instead of a text field.
     if (action == TvProfileEditAction.Pin) { TvProfileLockDialog(profile, busy, scale, dismiss, setPin, pinAvailable); return }
     var name by remember { mutableStateOf(profile?.name.orEmpty()) }
     var currentPin by remember { mutableStateOf("") }
@@ -66,21 +64,12 @@ internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?,
     }, dismissButton = { if (editable) TextButton(onClick = dismiss) { Text("Cancel") } })
 }
 
-/**
- * Profile lock on `Tv3ProfileEdit`. The board only designs PIN entry as the
- * `Tv3Pin` page, so the lock is entered on that keypad (88×104 boxes, 136×76
- * keys) and the panel shell follows `TvLeaveConfirmation`, the family's dialog
- * shape. The authorize/valid predicates are the ones the text-field dialog used.
- */
 @Composable
 internal fun TvProfileLockDialog(profile: Profile?, busy: Boolean, scale: Float, dismiss: () -> Unit,
     setPin: (String, String) -> Unit, pinAvailable: Boolean = true) {
     var currentPin by remember { mutableStateOf("") }
     var newPin by remember { mutableStateOf("") }
     var currentEntered by remember { mutableStateOf(false) }
-    // Same predicates as the text-field dialog this replaced: 4–8 digits authorize a
-    // change and an empty new PIN removes the lock. The current PIN is confirmed with
-    // Continue, so a 5–8 digit PIN is not cut off after four digits.
     val authorized = !profile.requiresLocalPin(pinAvailable) || currentPin.length in 4..8
     val valid = newPin.length in 4..8 || (profile?.locked == true && newPin.isEmpty())
     val enteringCurrent = profile.requiresLocalPin(pinAvailable) && !currentEntered
@@ -113,8 +102,6 @@ internal fun TvProfileLockDialog(profile: Profile?, busy: Boolean, scale: Float,
                 TvPinDigits(pin, scale)
                 Spacer(Modifier.height(36.dp * scale))
                 TvPinKeys(pin, scale, busy, first, type, erase, submit = {
-                    // A validated PIN hands focus straight to Continue instead of
-                    // parking it on the keypad; the same handoff as a fresh PIN.
                     if (enteringCurrent) {
                         if (authorized) { currentEntered = true; runCatching { save.requestFocus() } }
                     } else { runCatching { save.requestFocus() } }

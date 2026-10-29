@@ -15,7 +15,6 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun RelatedTitles(cards: List<Card>, open: (Card) -> Unit, modifier: Modifier = Modifier, showHeading: Boolean = true,
-    /** The page gutter: the heading sits inside it, the cards scroll out to the edges (app#63). */
     gutter: Dp = 0.dp) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (showHeading) Text("More like this", Modifier.padding(horizontal = gutter), fontSize = 22.sp, fontWeight = FontWeight.SemiBold)

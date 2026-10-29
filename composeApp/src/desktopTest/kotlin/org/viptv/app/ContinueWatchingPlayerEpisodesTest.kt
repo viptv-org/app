@@ -20,15 +20,6 @@ import org.viptv.engine.wire.*
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Playback started from Continue Watching gets the same Episodes list and Next
- * episode as playback started from Details (app#10).
- *
- * The fixtures mirror the KMP dev host's real responses for a Stremio-imported
- * profile with Cinemeta: a Continue Watching row card is a `library` card with
- * no metadata origin, and its episode is past the first Details page (that page
- * holds the specials and most of season 1).
- */
 @OptIn(ExperimentalComposeUiApi::class)
 class ContinueWatchingPlayerEpisodesTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -38,7 +29,6 @@ class ContinueWatchingPlayerEpisodesTest {
         override suspend fun clear() = Unit
     }
     private val show = "tt13293588"
-    /** Cinemeta's season index for the show: specials, then seasons 1-3. */
     private val seasons = listOf(0L to 4L, 1L to 23L, 2L to 24L, 3L to 14L)
     private val origin = """{"connection_id":"addon:21","incarnation":"${"c".repeat(32)}","provider_id":"stremio"}"""
     private val parentIdentity = """{"edition":null,"episode":null,"id":"$show","ids":[{"namespace":"imdb","value":"$show"},""" +
@@ -47,17 +37,10 @@ class ContinueWatchingPlayerEpisodesTest {
         """{"edition":null,"episode":{"episode":$episode,"order":"aired","season":$season},"id":"$show:$season:$episode","ids":[],"kind":"series"}"""
     private val all = seasons.flatMap { (season, count) -> (1L..count).map { season to it } }
 
-    /**
-     * The profile's Stremio-imported watch state as the host reports it on each
-     * episode: finished ones carry the `Watched` badge, part-watched ones `progress`.
-     * S1 E1-E2 sit on the first Details page; S2 E18-E19 only arrive with the
-     * player's own season read.
-     */
     private val watched = setOf(1L to 1L, 2L to 18L)
     private val partly = mapOf((1L to 2L) to 0.4, (2L to 19L) to 0.62)
     private fun still(season: Long, episode: Long) = "https://episodes.metahub.space/$show/$season/$episode/w780.jpg"
 
-    /** A Cinemeta episode card exactly as `/api/meta` returns it. */
     private fun metaEpisode(season: Long, episode: Long) = """{"badges":[${if (season to episode in watched) "\"Watched\"" else ""}],
         "category":"series","description":null,
         "identity":${episodeIdentity(season, episode)},"landscape":"${still(season, episode)}","logo":null,"metadata_origin":$origin,
@@ -65,7 +48,6 @@ class ContinueWatchingPlayerEpisodesTest {
         "title":"Episode $season-$episode","view":{"badges":[],"compact_metadata_parts":[],"hero_badges":[],"hero_metadata_parts":[],
         "metadata_parts":["Series"],"progress":null,"saved":true,"tile_badge":null}}"""
 
-    /** `/api/meta/series/<show>` paged like the host: a window over every episode, the season index on each page. */
     private fun metaPage(offset: Int, limit: Int): String {
         val window = all.drop(offset).take(limit)
         val next = (offset + window.size).takeIf { it < all.size }?.let { "\"$it\"" } ?: "null"
@@ -78,7 +60,6 @@ class ContinueWatchingPlayerEpisodesTest {
             "episodes":[${window.joinToString(",") { (s, e) -> metaEpisode(s, e) }}],"next_cursor":$next,"recommendations":[],"seasons":[$index]}"""
     }
 
-    /** A Continue Watching row card from `/api/bootstrap` for a Stremio-imported resume point. */
     private fun continueCard(season: Long, episode: Long) = """{"badges":[],"description":null,"identity":${episodeIdentity(season, episode)},
         "landscape":null,"logo":null,"parent_identity":{"edition":null,"episode":null,"id":"$show","ids":[],"kind":"series"},
         "poster":"https://images.metahub.space/poster/small/$show/img","progress":0.0105,"provider_id":"library",
@@ -95,11 +76,6 @@ class ContinueWatchingPlayerEpisodesTest {
                 "message":null,"next_cursor":null,"provider_id":"library","state":"Ready","title":"Continue Watching",
                 "view":{"card_shape":"landscape"}}]}}"""
 
-    /**
-     * `/continue/next` as the host answers it: the following aired episode, or
-     * CaughtUp after the last one. A request without the metadata origin gets a
-     * card in the host's own `stremio` scope, as it does for a raw library card.
-     */
     private fun nextEpisode(body: JsonObject): String {
         val coordinates = body.getValue("identity").jsonObject.getValue("episode").jsonObject
         val here = coordinates.getValue("season").jsonPrimitive.long to coordinates.getValue("episode").jsonPrimitive.long
@@ -121,7 +97,6 @@ class ContinueWatchingPlayerEpisodesTest {
         fun close() { controller.job?.cancel(); controller.cancelNextEpisode(); controller.cancelPlaybackSeason(); remote.close() }
     }
 
-    /** Tap the Continue Watching card, let sources open, then start playing like a chosen source does. */
     private suspend fun CoroutineScope.playFromContinueWatching(resume: Pair<Long, Long>, bootstrapJson: String = bootstrap(resume)): Started {
         val client = HttpClient(MockEngine { request ->
             if (request.url.encodedPath == "/api/bootstrap") json(bootstrapJson) else host(request)
@@ -134,7 +109,6 @@ class ContinueWatchingPlayerEpisodesTest {
         val controller = ApplicationController(this, store); controller.connection = remote
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = boot.selected ?: "2", home = boot.home)
         controller.playTitle(card)
-        // Sources open on the tap; the title's Details arrive beside discovery (app#11).
         withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources || controller.state.value.busy ||
             controller.state.value.detail == null) delay(10) }
         controller.mutable.value = controller.state.value.copy(screen = Screen.Player,
@@ -159,7 +133,6 @@ class ContinueWatchingPlayerEpisodesTest {
             val pick = episodes.single { it.identity.id == "$show:2:22" }
             val played = phoneChoices(playing, episodes, state.nextEpisode, nextEnabled = true, pick = pick, capture = "cw-player-controls")
             assertEquals(listOf(pick, state.nextEpisode), played, "Episodes and Next episode hand over the exact cards")
-            // PlayerRoute's playEpisode: leave the player, then open sources for that episode.
             for (card in played) {
                 started.controller.closePlayer(); started.controller.chooseSource(card)
                 withTimeout(5_000) { while (started.controller.state.value.busy) delay(10) }
@@ -184,7 +157,6 @@ class ContinueWatchingPlayerEpisodesTest {
     }
 
     @Test fun anEpisodeAlreadyOnTheFirstDetailsPageListsOnlyItsSeason() = runBlocking<Unit> {
-        // S1 E3 is on the first page, which also holds the specials and S1 E1-E20 only.
         val started = playFromContinueWatching(1L to 3L)
         try {
             val state = started.state
@@ -232,12 +204,6 @@ class ContinueWatchingPlayerEpisodesTest {
         assertEquals(episodes, playerEpisodes(episodes[1], episodes.reversed()))
     }
 
-    /**
-     * Renders the phone controls for this state, checks which buttons are enabled,
-     * then picks [pick] from Episodes and, when enabled, presses Next episode.
-     * Returns the cards the player handed to `playEpisode`, in that order.
-     * `VIPTV_PHONE_PLAYER_CAPTURE_DIR` saves what the controls show.
-     */
     private fun phoneChoices(title: Card, episodes: List<Card>, next: Card?, nextEnabled: Boolean, pick: Card, capture: String): List<Card> {
         val played = mutableListOf<Card>()
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {

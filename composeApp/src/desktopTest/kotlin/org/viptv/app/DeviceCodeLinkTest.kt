@@ -46,7 +46,6 @@ class DeviceCodeLinkTest {
                 assertEquals(screen, controller.state.value.screen)
                 assertFalse(controller.deviceLink.value!!.delivered)
             }
-            // A new sign-in replaces the whole state; the pending link must survive that.
             controller.mutable.value = ApplicationState(screen = Screen.Home)
             controller.deliverDeviceCode()
             assertEquals(Screen.Settings, controller.state.value.screen)

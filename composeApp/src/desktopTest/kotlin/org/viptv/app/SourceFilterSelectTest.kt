@@ -20,17 +20,11 @@ import org.junit.Rule
 import java.io.File
 import kotlin.test.*
 
-/**
- * app#59, app#117, app#121: the source picker's Quality and Source filters are the shared
- * dropdown chips on every layout, TV included, whatever the number of options. Picking
- * filters exactly like the old chips did, and "Clear" resets both.
- */
 class SourceFilterSelectTest {
     @get:Rule val uiThread = UiThreadRule()
     private fun source(id: String, height: Long, provider: String) = SourceCandidate(id, "addon:$provider", "Stream $id",
         detail = "Release $id", quality_height = height, presentation = SourcePresentation(provider_name = provider, source_id = provider))
 
-    /** 4K ×2, 1080p ×3, 720p, 480p from two add-ons. */
     private val mixed = listOf(source("a1", 2160, "Torrentio"), source("a2", 1080, "Torrentio"), source("a3", 1080, "Comet"),
         source("a4", 720, "Comet"), source("a5", 2160, "Comet"), source("a6", 1080, "Torrentio"), source("a7", 480, "Torrentio"))
 
@@ -116,7 +110,6 @@ class SourceFilterSelectTest {
             .flatMap { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
         fun triggers() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList }.sortedBy { it.boundsInRoot.left }
         fun clickable(label: String) = nodes().any { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
-        /** The source rows on screen, top to bottom, by their release line ("Release a2" is "Stream a2"). */
         fun streams() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
             .filter { n -> text(n).matches(Regex("Release [a-z]\\d+")) }
             .sortedBy { it.boundsInRoot.top }.map { text(it).replace("Release", "Stream") }

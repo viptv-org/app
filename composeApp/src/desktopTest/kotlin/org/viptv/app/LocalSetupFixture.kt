@@ -8,7 +8,6 @@ import uniffi.viptv_core.SecretStore
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
-/** Real SQLite/configuration/vault bridge; only the provider directory IO is replaced. */
 internal class LocalSetupFixture {
     val directory = Files.createTempDirectory("viptv-local-entry-")
     val path = directory.resolve("local.sqlite").toString()

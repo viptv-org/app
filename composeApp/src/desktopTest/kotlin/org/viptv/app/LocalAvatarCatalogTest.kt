@@ -25,7 +25,6 @@ class LocalAvatarCatalogTest {
         try {
             local.engine.createProfile("kid", "Kid")
             suspend fun profile(id: String) = local.bootstrap().profiles.single { it.id == id }
-            // No pick yet: the engine sends the default world without a choice, shown as critters #1.
             assertEquals("critters", profile("kid").avatarStyle)
             assertNull(profile("kid").avatarChoice)
             assertEquals(AvatarPick("critters", 1), profile("kid").avatarPick())

@@ -23,7 +23,6 @@ import org.junit.Rule
 import java.io.File
 import kotlin.test.*
 
-/** app#64/app#139: the update prompt, the full-screen Updating screen and the update rows in Settings › About. */
 @OptIn(ExperimentalComposeUiApi::class)
 class AppUpdateUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -41,13 +40,11 @@ class AppUpdateUiTest {
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }.orEmpty()
         fun shows(value: String) = nodes().any { value in text(it) }
-        /** A Text inside a clickable merges into its parent; click the clickable ancestor of [value]. */
         fun clickContaining(value: String) {
             val node = nodes().first { it.config.contains(SemanticsActions.OnClick) && (value in text(it) ||
                 it.children.any { child -> value in text(child) }) }
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); render()
         }
-        /** docs/evidence renders, only when a capture directory is given. */
         fun capture(name: String) {
             val dir = System.getenv("VIPTV_UPDATE_CAPTURE_DIR") ?: return
             File(dir).mkdirs()
@@ -56,7 +53,6 @@ class AppUpdateUiTest {
         override fun close() = scene.close()
     }
 
-    /** The page behind the update surfaces: an opaque stand-in for Home. */
     @androidx.compose.runtime.Composable
     private fun Page() = Box(Modifier.fillMaxSize().background(Palette.background))
 
@@ -95,10 +91,6 @@ class AppUpdateUiTest {
         }
     }
 
-    /**
-     * MainActivity's BackHandler (app#139, app#146): the same [updatingBack] decision, with the page's
-     * own step behind it. True when the Updating screen took the press, so nothing behind it moved.
-     */
     private fun androidBack(): Boolean = when (updatingBack(updater.state.value.status)) {
         UpdatingBack.Ignored -> true
         UpdatingBack.Later -> { updater.dismissPendingInstall(); true }

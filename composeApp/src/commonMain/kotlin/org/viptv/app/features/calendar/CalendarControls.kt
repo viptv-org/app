@@ -13,10 +13,6 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 
-/**
- * A compact extension of the date rail; category and time remain separate choices.
- * [filter] is the All / Your shows choice, shown only when it is not null.
- */
 @Composable
 internal fun CalendarControls(type: String, week: Int, television: Boolean, scale: Float,
     category: (String) -> Unit, shift: (Int) -> Unit, modifier: Modifier = Modifier,

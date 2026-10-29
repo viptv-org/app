@@ -11,7 +11,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/** After apply the server fills imported titles' Details cards in the background; the completion stage follows it. */
 class StremioImportDetailsTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     @AfterTest fun close() = scope.cancel()

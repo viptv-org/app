@@ -23,15 +23,6 @@ import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.*
 import kotlin.test.*
 
-/**
- * app#92: the desktop chrome itself (title bar, rail, App, card actions: the
- * same [DesktopShell] the desktop window runs) answers hover on every control
- * the owner found dead: media cards, rail items, the rail footer, the title-bar
- * search and a row chevron. Hover changes paint only, never layout.
- *
- * The window half of the bug (a frame that never reached the screen) needs a
- * real window and display; see `DesktopWindowRepaintTest`.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DesktopShellHoverTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -71,7 +62,6 @@ class DesktopShellHoverTest {
         finally { scene.close(); controller.disconnect(); scope.cancel() }
     }
 
-    /** Empty rail space between History and the footer: nothing there reacts to the mouse. */
     private val rest = Offset(36f, 700f)
 
     private fun changedPixels(before: Bitmap, after: Bitmap, bounds: Rect): Int {
@@ -81,7 +71,6 @@ class DesktopShellHoverTest {
         return changed
     }
 
-    /** Hovering [name] repaints it, leaving restores it, and its bounds never move. */
     private fun Shell.assertNodeHoverRepaints(name: String, find: Shell.() -> SemanticsNode) {
         scene.sendPointerEvent(PointerEventType.Move, rest)
         val resting = find().boundsInRoot
@@ -103,12 +92,10 @@ class DesktopShellHoverTest {
         assertHoverRepaints("rail Settings") { it.startsWith("Settings|") }
     }
 
-    /** README colour table: hovered row `surface-2`; the selected `surface-3` row lifts to `surface-4`, never darker. */
     @Test fun railRowsHoverWithTheDesignRowTokens() = shell {
         fun fillOf(name: String, hovered: Boolean): Int {
             val row = clickable(name) { it.startsWith("$name|") }.boundsInRoot
             scene.sendPointerEvent(PointerEventType.Move, if (hovered) row.center else rest)
-            // Inside the rounded row, clear of its icon and label.
             return pixels().getColor(row.left.toInt() + 4, row.center.y.toInt())
         }
         fun argb(value: Long) = value.toInt()
@@ -124,8 +111,6 @@ class DesktopShellHoverTest {
     }
 
     @Test fun anEnabledRowChevronAnswersHover() = shell {
-        // "New this week" has more cards than fit, so its Next chevron is live
-        // (Continue Watching's fits, and a disabled chevron keeps no hover).
         assertNodeHoverRepaints("live Next items") {
             nodes().filter { it.config.contains(SemanticsActions.OnClick) && !it.config.contains(SemanticsProperties.Disabled) &&
                 it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().contains("Next items") }
@@ -151,7 +136,6 @@ class DesktopShellHoverTest {
 
     private fun Shell.windowButton(name: String) = clickable(name) { it.startsWith("$name|") }
 
-    /** The native window-button fill at rest under the pointer, read clear of the centre glyph. */
     private fun Shell.windowButtonFill(bounds: Rect, pressed: Boolean): Int {
         scene.sendPointerEvent(PointerEventType.Move, bounds.center)
         if (pressed) scene.sendPointerEvent(PointerEventType.Press, bounds.center)
@@ -168,8 +152,6 @@ class DesktopShellHoverTest {
         assertTrue(close, "$message: expected #${expected.toUInt().toString(16)}, got #${actual.toUInt().toString(16)}")
     }
 
-    // app#93: window buttons are native chrome, not TV controls — hover/press use the
-    // native colours and never the board's outside focus ring.
     @Test fun windowButtonsHoverWithTheNativeColours() = shell {
         val wash = Color.White.copy(alpha = .08f).compositeOver(Palette.background).toArgb()
         assertEquals(Color(0xFFE81123).toArgb(), windowButtonFill(windowButton("Close").boundsInRoot, pressed = false),
@@ -196,8 +178,6 @@ class DesktopShellHoverTest {
         assertTrue(minimise.config.contains(SemanticsActions.RequestFocus), "Minimise is keyboard-focusable")
         assertTrue(minimise.config[SemanticsActions.RequestFocus].action!!.invoke(), "Minimise takes focus")
         val after = pixels()
-        // The old 4 dp TV ring reached ~3 dp past the button on every side (and its
-        // top was cut off by the window edge). None of that paint may remain.
         val around = Rect((bounds.left - 8f).coerceAtLeast(0f), (bounds.top - 8f).coerceAtLeast(0f),
             1440f, bounds.bottom + 8f)
         assertEquals(0, changedPixels(before, after, around),

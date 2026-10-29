@@ -22,7 +22,6 @@ import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
-/** Tv3SetDisplay's four accent swatches, in board order. */
 private data class TvAccentChoice(val name: String, val color: Long)
 
 private val TvAccentChoices = listOf(
@@ -30,11 +29,6 @@ private val TvAccentChoices = listOf(
     TvAccentChoice("Mint", 0xFF62D9BC), TvAccentChoice("Periwinkle", 0xFFA3BCFF),
 )
 
-/**
- * Owns the Display record. The caller keeps it for as long as the section is
- * open; every change is written straight through, so leaving the page or a
- * power cut cannot lose a choice.
- */
 @Stable
 internal class TvDisplayState(initial: TvDisplayPreferences, private val store: DeviceRecordStore) {
     var value by mutableStateOf(initial)
@@ -53,7 +47,6 @@ internal fun rememberTvDisplayState(): TvDisplayState {
     return remember(store) { TvDisplayState(decodeTvDisplay(runCatching { store.read() }.getOrNull()), store) }
 }
 
-/** The Display setting's Reduce motion, resolved against the device's own setting. */
 @Composable
 internal fun rememberReducedMotion(): Boolean {
     val context = LocalPlatformContext.current
@@ -68,7 +61,6 @@ internal fun TvDisplaySettings(prefs: TvDisplayPreferences, scale: Float, initia
     choose: (String, List<String>, (String) -> Unit) -> Unit, change: (TvDisplayPreferences) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         TvSettingsHeading("Display", scale)
-        // Board order; the accent row carries the page's landing focus.
         TvDisplayAccentRow(prefs, scale, initial, sidebar, change)
         TvSettingsRow("Show ratings on cards", scale = scale, checked = prefs.ratings, left = sidebar) {
             change(prefs.copy(ratings = !prefs.ratings))
@@ -83,23 +75,12 @@ internal fun TvDisplaySettings(prefs: TvDisplayPreferences, scale: Float, initia
             choose("Screen saver", listOf("Off", "After 5 minutes", "After 10 minutes", "After 30 minutes")) {
                 change(prefs.copy(screenSaver = it)) }
         }
-        // The board draws no control on this row, so none is added; the row
-        // itself flips the persisted flag.
         TvSettingsRow("Fit to screen", "Use if the edges of the picture are cut off", scale, left = sidebar) {
             change(prefs.copy(fitToScreen = !prefs.fitToScreen))
         }
     }
 }
 
-/**
- * The accent row needs swatches where TvSettingsRow draws its value/switch, so
- * it repeats that row's focus treatment verbatim (ring outside the bounds,
- * light fill, shadow, TvFocusColumn clamp) instead of growing a second focus
- * style. Fold it into TvSettingsRow's trailing slot when that file is editable.
- *
- * OK cycles the swatches: per-swatch focus nodes would break the column clamp
- * and add four stops to the D-pad path.
- */
 @Composable
 private fun TvDisplayAccentRow(prefs: TvDisplayPreferences, scale: Float, requester: FocusRequester,
     left: FocusRequester, change: (TvDisplayPreferences) -> Unit) {
@@ -128,7 +109,6 @@ private fun TvDisplayAccentRow(prefs: TvDisplayPreferences, scale: Float, reques
             Text("Progress bars, marks and toggles", color = if (focused) Color(0xFF4A4945) else Palette.secondary,
                 fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Medium)
         }
-        // Paint only: the row stays the single focus target on this line.
         Row(horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {
             TvAccentChoices.forEach { choice ->
                 val marked = choice.color == prefs.accent

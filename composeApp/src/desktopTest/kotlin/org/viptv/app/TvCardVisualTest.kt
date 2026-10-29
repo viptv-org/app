@@ -22,12 +22,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Deterministic pixel capture of the TV catalog card. The live TV catalog is
- * randomised per launch, so a card rendered from a fixed fixture is the only
- * repeatable way to prove a rendering change is pixel-identical.
- * Set VIPTV_CARD_CAPTURE_DIR to write PNGs.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvCardVisualTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -62,11 +56,6 @@ class TvCardVisualTest {
         }
     }
 
-    /**
-     * The canvas dictionary §A1 matrix from Tv3CardStates: every state the wire
-     * can produce, rendered from a fixed fixture so a regression is a pixel diff
-     * instead of a hunt through the live catalog.
-     */
     @Test fun captureEveryCardState() = onEdt {
         val states = listOf(
             "full" to card(null),
@@ -105,7 +94,6 @@ class TvCardVisualTest {
         } finally { scene.close() }
     }
 
-    /** Continue Watching (landscape) with the new-episodes label, focused and not. */
     @Test fun captureContinueWatchingNewEpisodes() = onEdt {
         val model = card(null).copy(title = "Fixture Show", badges = listOf("+2"), subtitle = "S1 E2 · Chapter 2",
             identity = MediaIdentity("tt100:1:2", "series", emptyList(), episode = EpisodeCoordinates("aired", 1, 2)))

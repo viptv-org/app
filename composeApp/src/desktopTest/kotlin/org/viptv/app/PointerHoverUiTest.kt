@@ -28,12 +28,6 @@ import org.viptv.engine.wire.*
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#56: on desktop and web a hovered media card dims its art to 0.38, shows
- * the accent play disc and draws the inset 2 px ring (components.md §6 "Hover
- * (D)"). Continue Watching and My List are the two rows the owner hovered.
- * Touch keeps no hover visuals.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PointerHoverUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -85,7 +79,6 @@ class PointerHoverUiTest {
                     assertEquals(1, shown.size, "$where: hovering $title shows exactly one hover state")
                     assertTrue(bounds.contains(shown.single().boundsInRoot.center), "$where: the hover state is on $title")
                     assertEquals(1, hoverTags(scene, MEDIA_CARD_HOVER_RING_TAG).size, "$where: hovering $title draws the inset ring")
-                    // Leaving the card clears the dim, disc and ring.
                     scene.sendPointerEvent(PointerEventType.Move, Offset(1270f, 890f)); render()
                     assertTrue(hoverTags(scene).isEmpty(), "$where: the hover state clears when the mouse leaves $title")
                     assertTrue(hoverTags(scene, MEDIA_CARD_HOVER_RING_TAG).isEmpty(), "$where: the ring clears too")

@@ -24,7 +24,6 @@ import org.viptv.app.components.IconButton
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
     profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: Boolean = false,
-    /** Owned by Settings so Back from a sub-page lands on the list where the row was opened. */
     listState: LazyListState = rememberLazyListState()) {
     LazyColumn(Modifier.fillMaxSize(), listState, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -50,7 +49,6 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             }
         }
         notice?.let { item { Text(it, color = Palette.danger) } }
-        // A row appears only when it has somewhere to go; SettingsRoute supplies every handler.
         settingsGroup(listOfNotNull(
             preferences?.let { open -> { SettingsItem("Playback", Lucide.CirclePlay) { open("Playback") } } },
             preferences?.let { open -> { SettingsItem("Subtitles & audio", Lucide.Captions) { open("Subtitles & audio") } } }))
@@ -73,7 +71,6 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
     }
 }
 
-/** One rounded group of [rows] with hairlines between them; an empty group is left out. */
 private fun LazyListScope.settingsGroup(rows: List<@Composable () -> Unit>) {
     if (rows.isNotEmpty()) item {
         Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {

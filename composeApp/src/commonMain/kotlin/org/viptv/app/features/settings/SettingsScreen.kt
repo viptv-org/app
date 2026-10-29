@@ -23,15 +23,10 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
     tvParentalMaturity: String? = null, tvParentalPinAvailable: Boolean = true,
-    /** (compact, back, manageAddons): the import may open the Add-ons section from its first stage, as on the web. */
     stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null,
-    /** Signs in another device from this signed-in app; without it, "Watch on TV" points at the server's web page. */
     addDevice: (@Composable (Boolean) -> Unit)? = null,
-    /** Hoisted page state: the app's controller owns it so system Back can leave a sub-page. Without it the page is local. */
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
-    /** Settings was opened from the player at [initialSection]: that section is not a sub-page, and its Back returns to the player (app#44). */
     returnToPlayer: (() -> Unit)? = null,
-    /** This device's Playback record (Autoplay next episode, app#65); the phone and desktop pages get it through [sectionPreferences]. */
     tvDevicePlayback: DevicePlaybackState? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback)
@@ -46,22 +41,16 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     val show: (SettingsPage) -> Unit = pageChanged ?: { localPage = it }
     var leaving by remember { mutableStateOf(initialLeave) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    // The addon count must be known before the section opens; one eager
-    // load on composition, and section changes only refresh, not duplicate,
-    // the initial request.
     var addonsLoaded by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { addonsRequested?.invoke(); addonsLoaded = true }
     LaunchedEffect(section) { if (section == "Add-ons" && addonsLoaded) addonsRequested?.invoke() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
         val webAccount = devices != null && !compact
-        // A phone-width layout opens every section from the Settings list; wider layouts use a sidebar.
-        // Report the laid-out page so global Back knows whether a sub-page is open.
         val root = initialSection.takeIf { returnToPlayer != null }
         val shown = current.laidOut(compact, root)
         SideEffect { if (savedPage != shown) show(shown) }
         val open: (String?) -> Unit = { show(SettingsPage(it).laidOut(compact, root)) }
-        // The in-page arrow takes the same step as the app's global Back (navigateBack).
         val back: () -> Unit = {
             val parent = shown.parent()
             when {
@@ -70,7 +59,6 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                 else -> show(SettingsPage())
             }
         }
-        // The player's own section shows its way back on every layout, not only at phone width.
         val backLabel = if (returnToPlayer != null && section == root) "Back to player" else null
         Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = 57.dp, vertical = 32.dp) else Modifier)) {
             if (webAccount) { AccountSettingsSidebar(section ?: "Add-ons", profiles, stremioImport != null) { open(it) }; Spacer(Modifier.width(48.dp)) }

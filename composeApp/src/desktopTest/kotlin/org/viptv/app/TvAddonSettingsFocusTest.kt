@@ -25,11 +25,6 @@ import org.viptv.engine.wire.IntegrationConnection
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * The add-on list is lazy: rows below the screen are not composed. D-pad Down
- * must still walk every add-on to "Add an add-on", scrolling each into view,
- * and neither end may let focus fall to the sidebar.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvAddonSettingsFocusTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -68,7 +63,6 @@ class TvAddonSettingsFocusTest {
     }
     private fun assertVisible(node: SemanticsNode, label: String) {
         val bounds = node.boundsInRoot
-        // The 8 px focus ring must fit too, clear of the TV's bottom edge.
         assertTrue(bounds.top >= 8f && bounds.bottom <= 1080f - 8f && bounds.height > 0f, "$label is not fully on screen: $bounds")
     }
 
@@ -124,7 +118,6 @@ class TvAddonSettingsFocusTest {
         try {
             settle(scene)
             assertEquals(listOf("/api/addons/1/logo?v=ab12"), requested)
-            // The failed logo leaves the letter tile in place.
             assertTrue(nodes(scene).any { text(it).contains("A") && text(it).contains(name(1)) })
         } finally { scene.close() }
     }

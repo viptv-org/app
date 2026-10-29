@@ -32,11 +32,6 @@ import org.viptv.engine.wire.*
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * Activating a Continue Watching card goes straight to the source picker for
- * exactly that episode (or movie), on every platform: phone/tablet/web tap,
- * desktop click and TV D-pad OK. Other rows keep opening Details.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ContinueWatchingActivationTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -46,7 +41,6 @@ class ContinueWatchingActivationTest {
     private fun episode(number: Long) = series.copy(
         identity = MediaIdentity("tt38262097:1:$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
         parent_identity = series.identity, title = "Episode $number")
-    /** The bootstrap CW card for the owner's show: S1 E3 at 65 %. */
     private val resume = episode(3).copy(title = series.title, subtitle = "S1 E3 · 9m left", progress = 0.6581)
     private val movie = Card(MediaIdentity("tt0111161", "movie", emptyList()), provider_id = "addon:4",
         title = "A Movie", badges = emptyList(), progress = 0.4, metadata_origin = origin)
@@ -120,13 +114,11 @@ class ContinueWatchingActivationTest {
     }
 
     @Test fun playingTheResumeCardOpensSourcesForThatEpisodeNotTheFirstOne() = runBlocking<Unit> {
-        // The metadata window already holds E1-E5; E3 must be the source target.
         val detail = DetailSnapshot(series, episodes = (1L..5L).map(::episode), next_cursor = null)
         val paths = mutableListOf<String>()
         val client = HttpClient(MockEngine { request ->
             synchronized(paths) { paths += request.url.encodedPath }
             val expected = request.url.parameters["card"]?.let { Json.decodeFromString<Card>(it) }
-            // Host rule: the metadata expectation must name the title being looked up.
             if (request.url.encodedPath == "/api/meta/series/tt38262097" && expected?.identity != series.identity)
                 respond("{\"error\":\"Metadata expectation does not match lookup\"}", HttpStatusCode.BadRequest, headersOf(HttpHeaders.ContentType, "application/json"))
             else if (request.url.encodedPath == "/api/meta/series/tt38262097")
@@ -138,14 +130,12 @@ class ContinueWatchingActivationTest {
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "1", home = home)
         try {
             controller.playTitle(resume)
-            // The selector opens on the tap; the title's Details fill in behind it (app#11).
             withTimeout(5_000) { while (controller.state.value.screen != Screen.Sources || controller.state.value.detail == null) delay(10) }
             val state = controller.state.value
             assertEquals(resume.identity, state.sourceTitle?.identity, "sources are for S1 E3")
             assertEquals(series.identity, state.sourceTitle?.parent_identity)
             assertEquals(Screen.Details, state.sourceReturnScreen, "Back from sources lands on the title's Details")
             assertEquals(Screen.Home, state.detailReturnScreen, "and Back again returns Home")
-            // Discovery for this scoped episode runs beside the Details read, so either may reach the host first.
             assertTrue("/api/meta/series/tt38262097" in synchronized(paths) { paths.toList() })
         } finally { controller.job?.cancel(); remote.close() }
     }

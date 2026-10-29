@@ -44,20 +44,14 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     enrichSummary: (Card) -> Unit = {},
     continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
     var browsing by rememberSaveable(home?.scope?.profile_id) { mutableStateOf(false) }
-    // Timestamp of the last D-pad event: the billboard and prefetch wait for
-    // navigation to go quiet instead of thrashing artwork while a key repeats.
     val lastNavigation = remember { mutableStateOf<TimeMark?>(null) }
     val rapidNavigation = remember { mutableStateOf(false) }
     val quietForMillis = { lastNavigation.value?.elapsedNow()?.inWholeMilliseconds }
     val focused = remember(home?.scope?.profile_id) { mutableStateOf<Card?>(null) }
     var activeRow by rememberSaveable(home?.scope?.profile_id) { mutableIntStateOf(-1) }
-    // The row identity under focus. A quiet refresh can drop a failed row above
-    // or below the viewer; identity keeps the same shelf selected when indices move.
     var activeRowId by rememberSaveable(home?.scope?.profile_id) { mutableStateOf<String?>(null) }
     var heroFocusEpoch by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
     val firstCard = remember { FocusRequester() }; val playFocus = remember { FocusRequester() }
-    // Down from the billboard resumes the shelf at the card the viewer left, not
-    // at card 0 (which flashed the old card and then scrolled back to the start).
     val resumeShelf = remember { FocusRequester() }
     val restoreBrowsing = remember(home?.scope?.profile_id) { browsing }
     var measuredShelfHeight by remember(home?.scope?.profile_id) { mutableIntStateOf(0) }
@@ -67,17 +61,13 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     var initialShelfFocusClaimed by remember(home?.scope?.profile_id) { mutableStateOf(false) }
     var navigationAttached by remember { mutableStateOf(false) }
     val input = LocalInputModeManager.current
-    // Prepare adjacent shelves while keeping the painted viewport confined to one shelf.
     val rows = rememberLazyListState(cacheWindow = androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow(aheadFraction = 1f, behindFraction = 1f))
     val shelfStates = remember(home?.scope?.profile_id) { mutableMapOf<String, LazyListState>() }
     val sectionScroll = org.viptv.app.components.rememberTvSectionScroll(rows)
-    // Empty and failed rows are not part of Home; pending rows keep their skeletons.
     val visibleRows = remember(home?.rows) {
         home?.rows.orEmpty().filter { it.state == RowState.PENDING || (it.state == RowState.READY && it.cards.isNotEmpty()) }
     }
-    // Row fades are driven here, not from inside the LazyColumn item scope:
-    // reading browsing/activeRow there recomposes every visible shelf on each
-    // focus move. The alphas are only read inside graphicsLayer blocks.
+    // Row fades read browsing/activeRow here: inside the LazyColumn item scope they recompose every visible shelf per focus move.
     val rowAlphas = remember(visibleRows) { mutableMapOf<String, androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>>() }
     LaunchedEffect(browsing, activeRow, rowAlphas) {
         if (rowAlphas.isEmpty()) return@LaunchedEffect
@@ -100,7 +90,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     } ?: false
     LaunchedEffect(restoreBrowsing) {
         if (restoreBrowsing && visibleRows.isNotEmpty()) {
-            // Restore by identity: rows may have been added or hidden while away.
             val target = activeRowId?.let { id -> visibleRows.indexOfFirst { it.id == id } }
                 ?.takeIf { it >= 0 } ?: activeRow.coerceIn(visibleRows.indices)
             activeRow = target
@@ -116,24 +105,16 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         sectionScroll.focus(index)
     }
     LaunchedEffect(home?.scope?.profile_id, visibleRows.getOrNull(firstReadyRow)?.id, featured.isEmpty(), error) {
-        // The shelf claim is a fallback for a Home that has rows but no hero.
-        // A still-loading snapshot (rows first, hero later) must not steal the
-        // opening focus to Continue Watching.
         if (!initialShelfFocusClaimed && featured.isEmpty() && home?.complete == true && error == null && firstReadyRow >= 0) {
             rows.scrollToItem(firstReadyRow)
             initialShelfFocusClaimed = focusWhenPlaced(firstCard) { firstReadyAttached }
         }
     }
-    // If the shelf claimed focus only because the hero had not arrived yet, and
-    // the viewer has not pressed anything, the hero takes its focus back.
     LaunchedEffect(featured.isNotEmpty()) {
         if (featured.isNotEmpty() && initialShelfFocusClaimed && browsing && lastNavigation.value == null) {
             browsing = false; focused.value = null; activeRow = -1; activeRowId = null; heroFocusEpoch++
         }
     }
-    // While Home has no content at all there is no hero or shelf to focus, but
-    // the top navigation is already on screen. Focus it so the remote is never
-    // dead during the first load or a failed catalog refresh.
     LaunchedEffect(home == null && error == null) {
         if (home == null && error == null) { withFrameNanos { }; navigationFocusEpoch++ }
     }
@@ -147,10 +128,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         if (featured.isNotEmpty()) playFocus.requestFocus() else navigationFocusEpoch++
         sectionScroll.focus(0, force = true)
     }
-    // A quiet refresh can drop the row that held focus. Keep the same shelf when
-    // it survives at a new index; otherwise move deliberately to the row now in
-    // that slot, or back to the billboard when no shelf remains. Focus must never
-    // be left on a row that is no longer composed.
     LaunchedEffect(visibleRows.map { it.id }) {
         if (!browsing) return@LaunchedEffect
         val selected = activeRowId ?: return@LaunchedEffect
@@ -165,8 +142,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             activeRow = fallback
             activeRowId = visibleRows[fallback].id
             rows.scrollToItem(fallback)
-            // Let the removed shelf leave composition before asking its replacement
-            // for focus: the shared resume requester can still point at the old node.
+            // Let the removed shelf leave composition before focusing its replacement: the shared resume requester can still point at the old node.
             withFrameNanos { }
             focusWhenPlaced(resumeShelf) { rows.layoutInfo.visibleItemsInfo.any { it.index == fallback } }
         }
@@ -176,8 +152,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val scale = maxWidth / 1920.dp
         val viewport = maxWidth
         val easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-        // One complete shelf occupies the bottom slot. Short landscape shelves align
-        // within the same slot, so switching shape never exposes the next heading.
         val density = androidx.compose.ui.platform.LocalDensity.current
         val shelfSlot = maxOf((40 + 12 + 255.2f * 1.5f + 76).dp * scale, with(density) { measuredShelfHeight.toDp() })
         val listTop = (maxHeight - 24.dp * scale - shelfSlot).coerceAtLeast(0.dp)
@@ -194,8 +168,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         }
         val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope?.owner())
         val portraitSelection = { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" }
-        // The exact request the browse plane's SoftArtwork makes, so the settle
-        // swap finds it warm instead of popping in after the sharp art.
+        // The exact request the browse plane's SoftArtwork makes, so the settle swap finds it warm.
         val softPlane = remember(viewport, scale, density) {
             val wPx = with(density) { viewport.toPx().toInt() }
             val hPx = with(density) { (620.dp * scale).toPx().toInt() }
@@ -250,17 +223,11 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                             shelfStates[row.id] = shelfState
                             onDispose { shelfStates.remove(row.id) }
                         }
-                        // A row first composed above the active one starts faded,
-                        // exactly like animateFloatAsState's initial value. Stable
-                        // instances only: a focus move must not re-hand every shelf
-                        // a fresh modifier chain (the fade reads in the draw phase).
                         val alpha = rowAlphas.getOrPut(row.id) {
                             androidx.compose.animation.core.Animatable(if (browsing && index < activeRow) 0f else 1f)
                         }
                         Box(Modifier.fillMaxWidth().height(shelfSlot).onFocusChanged { if (it.hasFocus) enterRow(index) }.focusGroup(), contentAlignment = androidx.compose.ui.Alignment.BottomStart) {
                             TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
-                                // Only the first row returns to the billboard; Up from any
-                                // lower row moves to the row above.
                                 up = if (index == 0) ::returnHero else null,
                                 focus = { focused.value = it; enterRow(index) }, open, more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
                                 firstPlaced = { firstReadyAttached = true },

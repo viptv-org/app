@@ -33,11 +33,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#56: every pointer-clickable control shows the hand cursor, and a shaped
- * control's hover highlight stays inside its shape (no square highlight on a
- * rounded pill, the owner's Calendar report).
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PointerAffordanceTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -65,7 +60,6 @@ class PointerAffordanceTest {
         }
     }
 
-    /** Hovers [bounds] and checks its centre lights up while the corner just outside the rounding does not. */
     private fun assertHighlightStaysInsideTheShape(frames: Frames, bounds: Rect, what: String) {
         val corner = (bounds.left + 1).toInt() to (bounds.top + 1).toInt()
         val centre = bounds.center.x.toInt() to bounds.center.y.toInt()
@@ -115,11 +109,6 @@ class PointerAffordanceTest {
         } finally { scene.close() }
     }
 
-    /**
-     * New UI gets the hand cursor by default: a raw `clickable` / `selectable` /
-     * `toggleable`, or a Material clickable without the cursor wrapper import,
-     * fails here.
-     */
     @Test fun everyClickableInTheAppGoesThroughThePointerAffordances() {
         val roots = listOf("commonMain", "desktopMain", "wasmJsMain").map { File("src/$it/kotlin") }
         assertTrue(roots.first().isDirectory, "run from composeApp: ${File(".").absolutePath}")

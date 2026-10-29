@@ -30,12 +30,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import kotlin.test.*
 
-/**
- * app#115: the Movies/Series/Anime grid on a phone asked the image service for a
- * 64 x 64 poster (the grid passes `width = 0`), so Simkl art was a 5x upscale.
- * On Android the server delivers Simkl art direct (`https://simkl.in/...`), so
- * the card's request goes through wsrv.nl and must carry the card's pixel size.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SharpCatalogArtTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -45,7 +39,6 @@ class SharpCatalogArtTest {
         provider_id = "simkl", title = "Anime", badges = listOf("Simkl"), poster = poster)
 
     @Test fun phoneAnimeGridRequestsPostersAtTheCardsPixelSize() = runBlocking {
-        // A 393 dp phone at density 3: 16 dp gutters, three columns, 10 dp gaps.
         val cardPx = ((PHONE_DP - 2 * 16 - 2 * 10) / 3f * DENSITY).toInt()
         val requests = render { BrowseScreen(Screen.Anime, null, false, open = {}, loadedCards = listOf(anime)) }
         val (url, decode) = requests.entries.single { it.key.contains("simkl.in") }.toPair()
@@ -59,7 +52,6 @@ class SharpCatalogArtTest {
         assertTrue(decode >= cardPx, "Coil decodes at $decode px for a $cardPx px card")
     }
 
-    /** Renders [content] on a phone-sized scene; returns each requested URL with Coil's decode width. */
     private suspend fun render(content: @androidx.compose.runtime.Composable () -> Unit): Map<String, Int> {
         val requested = java.util.concurrent.ConcurrentHashMap<String, Int>()
         val context = PlatformContext.INSTANCE

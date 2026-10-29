@@ -34,20 +34,14 @@ import org.viptv.app.components.pointerHovered
 import org.viptv.app.state.ContinueWatchingMore
 import org.viptv.app.theme.Palette
 
-/** The key of the end card in Home's Continue Watching row (app#114). */
 internal const val SEE_ALL_KEY = "continue:see-all"
 
-/** What the end card says aloud: where it goes, and how many titles when the list is fully known. */
 internal fun seeAllDescription(more: ContinueWatchingMore): String =
     "See all Continue Watching" + (more.count?.let { ", $it ${if (it == 1) "title" else "titles"}" } ?: "")
 
 private fun seeAllCaption(more: ContinueWatchingMore): String =
     more.count?.let { "$it ${if (it == 1) "title" else "titles"} in progress" } ?: "Everything in progress"
 
-/**
- * Phone, tablet, desktop and web: the card that ends Home's Continue Watching row and opens the
- * full list. Same size as a Continue Watching card, with the pointer hover fill and hand cursor (app#56).
- */
 @Composable
 internal fun SeeAllCard(more: ContinueWatchingMore, width: Int, open: () -> Unit, labelScale: Float = 1f,
     cornerRadius: Dp = 8.dp, focusWidth: Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier) {
@@ -79,10 +73,6 @@ internal fun SeeAllCard(more: ContinueWatchingMore, width: Int, open: () -> Unit
     }
 }
 
-/**
- * TV: the D-pad end of the Continue Watching shelf. It matches a landscape [TvCatalogCard] (art,
- * focus ring, captions) and, like the shelf's cards, Up from the first shelf returns to the billboard.
- */
 @Composable
 internal fun TvSeeAllCard(more: ContinueWatchingMore, scale: Float, open: () -> Unit, modifier: Modifier = Modifier,
     focused: () -> Unit = {}, onUp: (() -> Unit)? = null, artworkWidth: Dp = 422.4.dp * scale) {

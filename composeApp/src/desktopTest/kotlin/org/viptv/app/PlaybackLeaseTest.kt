@@ -13,12 +13,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/**
- * The server forgets a playback lease 60 s after its last heartbeat and never
- * revives it (backend `gateway/playback.rs`: 410 `playback_expired`, later 404).
- * Leaving the app must not cost the viewer their place: a lost lease is
- * re-acquired for the same source at the last position.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackLeaseTest {
     private val store = object : RemoteSessionStore {
@@ -30,13 +24,10 @@ class PlaybackLeaseTest {
     private val source = SourceCandidate("opaque-stream", "addon:1", "Fixture")
     private val facts = buildJsonObject { put("platform", "android"); put("can_play_direct", true) }
 
-    /** One fake backend: each `POST /api/playback` opens lease-1, lease-2, … */
     private class Server {
         val opens = mutableListOf<JsonObject>()
         val heartbeats = mutableListOf<String>()
-        /** Status for a heartbeat on the given lease; throw for a network failure. */
         var heartbeat: (String) -> HttpStatusCode = { HttpStatusCode.OK }
-        /** Status for the given (1-based) open request. */
         var open: (Int) -> HttpStatusCode = { HttpStatusCode.OK }
     }
 
@@ -81,7 +72,6 @@ class PlaybackLeaseTest {
         return controller
     }
 
-    /** Open the source and play to [positionMillis]. */
     private fun TestScope.play(controller: ApplicationController, positionMillis: Long = 754_000) {
         controller.playSource(source); runCurrent()
         val input = assertNotNull(controller.state.value.playback)
@@ -89,9 +79,7 @@ class PlaybackLeaseTest {
         controller.observePlaybackFor(input, PlayerFact.Progress(positionMillis, 1_400_000)); runCurrent()
     }
 
-    /** Android: the Activity pauses the renderer, then the lifecycle reports the app behind. */
     private fun ApplicationController.leaveApp() { suspendPlayback(); appForeground(false) }
-    /** Android: onStart resumes the Activity's playback before the lifecycle reports the app in front. */
     private fun ApplicationController.returnToApp() { resumePlayback(); appForeground(true) }
 
     @Test fun anExpiredLeaseIsReacquiredForTheSameSourceAtTheLastPosition() = runTest {
@@ -112,7 +100,6 @@ class PlaybackLeaseTest {
         assertEquals("lease-2", state.playback?.id)
         assertEquals(754_000L, state.playback?.positionMillis)
         assertFalse(state.paused, "Playback that was playing keeps playing")
-        // The new lease is renewed like the first one.
         advanceTimeBy(20_001); runCurrent()
         assertEquals("lease-2", server.heartbeats.last())
         controller.closePlayer()
@@ -123,7 +110,6 @@ class PlaybackLeaseTest {
         val controller = controller(server)
         play(controller)
         val input = controller.state.value.playback
-        // Offline from the first heartbeat (20 s) until 45 s: the server lease would still be alive.
         server.heartbeat = { if (testScheduler.currentTime < 45_000) throw java.io.IOException("offline") else HttpStatusCode.OK }
         advanceTimeBy(55_000); runCurrent()
         assertEquals(1, server.opens.size, "An outage the lease outlives must not reopen the source")
@@ -139,7 +125,6 @@ class PlaybackLeaseTest {
         play(controller)
         val input = controller.state.value.playback
         advanceTimeBy(5_000)
-        // A translucent Activity: pause and resume without stop and start.
         controller.suspendPlayback(); advanceTimeBy(1_000)
         controller.resumePlayback(); runCurrent()
         assertEquals(listOf("lease-1"), server.heartbeats)
@@ -222,7 +207,6 @@ class PlaybackLeaseTest {
         val server = Server()
         val controller = controller(server)
         play(controller)
-        // Desktop minimise or a hidden browser tab: the player keeps playing.
         controller.appForeground(false)
         advanceTimeBy(60_001); runCurrent()
         assertEquals(listOf("lease-1", "lease-1", "lease-1"), server.heartbeats)

@@ -35,9 +35,7 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
     val color = if (focused) Palette.background else Palette.text
     val fallback = remember { FocusRequester() }
     val target = requester ?: fallback
-    // Up/Down stay inside this page's column; Left goes to the sidebar only
-    // when the caller says so. Without the clamp the geometric search jumps
-    // from the last row to the sidebar's last item.
+    // Without the clamp the geometric search jumps from the last row to the sidebar's last item.
     val (columnUp, columnDown) = rememberTvColumnItem(target)
     Row(Modifier.fillMaxWidth().height(rowHeight.dp * scale).focusRequester(target)
         .focusProperties {

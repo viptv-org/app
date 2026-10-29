@@ -3,12 +3,6 @@ package org.viptv.app
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 
-/**
- * Synthetic server responses shaped like a large real Stremio account: two dozen add-ons with
- * repeated names and manifests, unicode and punctuation in names, unavailable transports, the
- * add-on stage's legacy `summary`/`warnings`, and thousands of mostly-episode review rows with
- * explicit nulls. Every name and handle is invented.
- */
 internal object StremioSyntheticFixtures {
     private fun handle(prefix: String, index: Int) = "${prefix}_${index.toString().padStart(12, '0')}"
     private val addonNames = listOf("Cinemeta", "Synthetic Torrent", "Synthetic Torrent", "Synthetic Torrent TB", "MultiStream | Synthetic",
@@ -36,7 +30,6 @@ internal object StremioSyntheticFixtures {
         put("warnings", JsonArray(listOf(JsonPrimitive("Synthetic legacy warning"))))
     }.toString()
 
-    /** [rows] review rows: ~4% needs-review, ~9% My List titles, the rest dated or undated episode history. */
     fun reviewJson(rows: Int = 2_000, profile: String = "7", expires: Long = stremioExpiry(), revision: Int = 1): String {
         val shows = listOf("Synthetic Saga", "Ångström Chronicles", "Kitsu-Style Show: The Movie", "Long Title " + "Extended ".repeat(20),
             "Mystery [2019]", "Comedy | Night", "アニメ Synthetic", "Docu+ Series")

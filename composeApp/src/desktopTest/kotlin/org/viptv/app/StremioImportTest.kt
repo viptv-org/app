@@ -35,14 +35,12 @@ internal fun stremioReview(revision: Long = 1, profile: String = "2", expires: L
 internal val stremioCompletion = StremioCompletion("2", mapOf("favorites_added" to 2, "progress_added" to 0, "progress_updated" to 0,
     "existing_preserved" to 0, "already_imported" to 0, "needs_review" to 0, "skipped_items" to 0))
 
-/** Records every typed call; each result may suspend so tests control response timing. */
 internal class FakeStremioTransport : StremioImportTransport {
     val calls = mutableListOf<String>()
     val passwords = mutableListOf<String>()
     var preview: suspend () -> StremioPreview = { stremioAddons() }
     var review: suspend (List<String>, Long) -> StremioReview = { _, _ -> stremioReview(reviews.toLong()) }
     var apply: suspend () -> StremioCompletion = { stremioCompletion }
-    /** The server's title-details fill after apply; null is an older server without it. */
     var details: suspend () -> StremioDetailsStatus? = { null }
     val reviews get() = calls.count { it.startsWith("review") }
     override suspend fun preview(profile: String, email: String, password: String, library: Boolean, progress: Boolean): StremioPreview {
@@ -55,7 +53,6 @@ internal class FakeStremioTransport : StremioImportTransport {
         calls += "apply:$preview:$excluded:$revision"; return apply()
     }
     override suspend fun discard(profile: String, preview: String) { calls += "discard:$profile:$preview" }
-    /** Kept apart from [calls], whose last entry is the import's final request. */
     val detailsReads = java.util.concurrent.atomic.AtomicInteger()
     override suspend fun details(profile: String): StremioDetailsStatus? { assertEquals("2", profile); detailsReads.incrementAndGet(); return details() }
 }
@@ -441,7 +438,6 @@ class StremioImportTest {
         assertEquals("Could not read Stremio. Try again.", stremioImportError(StremioImportFailure(424, "stremio_source_unavailable"), false))
     }
 
-    // Wire contract: request bodies, device sessions and response validation.
     private class Store : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit
@@ -561,7 +557,6 @@ class StremioImportTest {
         } finally { remote.close() }
     }
 
-    // Long server work: per-request timeouts, honest copy for gateway pages and lost connections.
     private fun remote(engine: MockEngine, browser: Boolean = true, shared: Long? = null) = RemoteConnection("https://watch.example", Store(),
         HttpClient(engine) { if (shared == null) configureTransport() else install(HttpTimeout) { requestTimeoutMillis = shared; socketTimeoutMillis = shared } },
         browserMode = browser)

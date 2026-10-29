@@ -19,7 +19,6 @@ import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
-/** The profile-picture menu is one shared popover in the phone header and the browser top bar. */
 @OptIn(ExperimentalComposeUiApi::class)
 class ProfileMenuUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -56,7 +55,6 @@ class ProfileMenuUiTest {
         } finally { scene.close() }
     }
 
-    /** Writes the menu over the preview Home when VIPTV_PROFILE_MENU_CAPTURE_DIR is set (PR screenshots). */
     @Test fun captureTheMenuOverThePreviewHome() {
         val dir = System.getenv("VIPTV_PROFILE_MENU_CAPTURE_DIR") ?: return
         for (shot in listOf(Shot("phone", 780, 1688, 2f, false), Shot("browser", 1440, 900, 1f, true), Shot("browser-collapsed", 900, 700, 1f, true))) {
@@ -79,7 +77,6 @@ class ProfileMenuUiTest {
     }
     private data class Shot(val name: String, val w: Int, val h: Int, val density: Float, val browser: Boolean)
 
-    /** Opens the menu, checks header, icons and actions, then that each action closes it and navigates as before. */
     private fun checkMenu(width: Int, height: Int, header: @Composable ((Screen) -> Unit) -> Unit) {
         val navigated = mutableListOf<Screen>()
         val scene = scene(width, height) { header { navigated += it } }
@@ -106,7 +103,6 @@ class ProfileMenuUiTest {
     }
     private fun open(scene: ImageComposeScene) {
         frames(scene)
-        // Announced as "Profile menu" alone, not with the avatar's initial or artwork name.
         val trigger = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Profile menu") && text(it).isEmpty() }
         assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke())
         frames(scene, 40)

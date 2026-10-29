@@ -91,8 +91,6 @@ class MetadataOriginTransportTest {
                 path.startsWith("/api/meta/") -> {
                     operations += "detail"
                     assertEquals(origin, Json.decodeFromString<MetadataOrigin>(request.url.parameters["metadata_origin"]!!))
-                    // The lookup is the parent title, so its expectation is the parent
-                    // (the host answers an episode expectation with 400).
                     assertEquals("/api/meta/series/opaque-parent", path)
                     val expected = Json.decodeFromString<Card>(request.url.parameters["card"]!!)
                     assertEquals(origin, expected.metadata_origin); assertEquals(parent, expected.identity)

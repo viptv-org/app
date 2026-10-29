@@ -25,7 +25,6 @@ import org.viptv.app.components.IconButton
 internal fun PhonePlayerFailure(description: String, fallbackLabel: String?, retry: (() -> Unit)?, choose: (() -> Unit)?, close: () -> Unit,
     title: Card?, insets: WindowInsets) {
     val initial = remember { FocusRequester() }
-    // The scrim covers the cutout; the actions stay inside the safe insets.
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .8f)).windowInsetsPadding(insets)) {
         Row(Modifier.align(Alignment.TopStart).padding(start = 44.dp, end = 48.dp, top = 14.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {

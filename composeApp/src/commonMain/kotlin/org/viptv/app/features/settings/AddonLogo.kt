@@ -17,23 +17,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
-/**
- * Fetches an add-on logo's bytes from the server's authenticated logo route
- * (`IntegrationConnection.logo`). The server never hands out the add-on's own
- * logo address, which can carry its private configuration. Absent in local
- * mode, where rows keep their letter tiles.
- */
 internal fun interface AddonLogoSource {
     suspend fun load(path: String): ByteArray
 }
 
 internal val LocalAddonLogos = staticCompositionLocalOf<AddonLogoSource?> { null }
 
-/**
- * Logo bytes by server path. The path carries the add-on id and its logo
- * revision, so a changed manifest logo is a new entry. Failures are retried
- * after a minute instead of on every recomposition.
- */
 internal object AddonLogoCache {
     private const val LIMIT = 64
     private val gate = Mutex()
@@ -60,11 +49,6 @@ internal object AddonLogoCache {
     internal suspend fun clear() = gate.withLock { loaded.clear(); failed.clear() }
 }
 
-/**
- * An add-on's tile: [fallback] (the letter or puzzle tile) until the logo has
- * loaded and decoded, then the logo itself. Without a logo or a server it stays
- * on [fallback].
- */
 @Composable
 internal fun AddonLogoTile(logo: String?, modifier: Modifier, logoModifier: Modifier = Modifier,
     fallback: @Composable BoxScope.() -> Unit) {

@@ -17,9 +17,6 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun BoxScope.HomeBackdrop(artwork: String) {
     Box(Modifier.matchParentSize().clipToBounds()) {
-        // A backdrop is never shown sharp, so ask the image service for a blurred,
-        // screen-sized bitmap instead of running a 60 dp blur every frame. The
-        // runtime blur stays as the fallback for URLs the service cannot proxy.
         val blurred = org.viptv.app.images.blurredArtwork(artwork, 1280, 720, blur = 12)
         AsyncImage(blurred ?: artwork.takeIf { it.isNotBlank() }, null, Modifier.matchParentSize().let { base ->
             if (blurred != null) base.graphicsLayer { alpha = 0.45f; scaleX = 1.25f; scaleY = 1.25f }

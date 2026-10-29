@@ -72,13 +72,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 
-/**
- * DUI-04: the desktop chrome publishes the card actions once, so the hover
- * preview and the right-click menu reach the same Play / My List behaviour the
- * hero buttons use without threading two more lambdas through every row and
- * screen. TV and touch never provide it — that is also what keeps the desktop
- * pointer affordances off those paths.
- */
 internal class CardActions(
     val play: (Card) -> Unit,
     val toggleSave: (Card) -> Unit,
@@ -89,9 +82,7 @@ internal val LocalCardActions = compositionLocalOf<CardActions?> { null }
 
 @Composable
 fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit, labelScale: Float = 1f, cornerRadius: androidx.compose.ui.unit.Dp = 8.dp, focusWidth: androidx.compose.ui.unit.Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier,
-    /** TV screens pass the Tv3CardStates check (34 px × scale); others size it from the art. */
     watchedBadgeSize: Dp? = null,
-    /** Replaces Details as the card's primary activation (Continue Watching resumes). */
     select: ((Card) -> Unit)? = null) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
@@ -100,25 +91,17 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     val nextCaption = remember(card, caughtUp, nextEpisodes) {
         if (caughtUp != null) nextEpisodes[card]?.caughtUpNextCaption() else null
     }
-    // Desktop pointer affordances (boards D3HomeHover / D3Context). `desktop` is
-    // only true where the Compose Desktop chrome published the card actions, so
-    // the TV D-pad path and touch taps keep their existing behaviour.
     val desktop = actions != null
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
-    // app#56: the card's hover state (dim, play disc, ring) is for every pointer
-    // platform, desktop and web alike; the 450 ms preview stays desktop-only.
     val pointerHovered = hover.pointerHovered()
     val gap = with(LocalDensity.current) { 12.dp.roundToPx() }
     var previewOpen by remember { mutableStateOf(false) }
     var previewHovered by remember { mutableStateOf(false) }
     var menuAt by remember { mutableStateOf<IntOffset?>(null) }
     val saved = actions?.isSaved?.invoke(card) == true
-    // Continue Watching's primary activation can differ from Play (a caught-up card opens
-    // Details, app#132), so the preview's and the menu's Play follow the card's own tap.
     val activate = select ?: actions?.play ?: open
-    // The preview needs a deliberate hover, and it survives the 12 dp gap so the
-    // pointer can reach its own buttons.
+    // The preview survives the 12 dp gap, so the pointer can reach its own buttons.
     LaunchedEffect(desktop, hovered) { if (desktop && hovered) { delay(450); previewOpen = true } }
     LaunchedEffect(desktop, hovered, previewHovered, menuAt) {
         if (desktop && previewOpen && menuAt == null && !hovered && !previewHovered) {
@@ -131,10 +114,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
-            // app#115: a grid card passes width = 0 and fills its cell, so its art is
-            // sized from the laid-out slot instead of a 0 px (clamped to 64 px) guess.
-            // Fixed-width cards (Home and TV rows) keep the plain path: BoxWithConstraints
-            // is a subcomposition per card, which those long scrolling rows don't need.
             if (width > 0) {
                 val density = LocalDensity.current
                 CardArtwork(card, portrait, with(density) { width.dp.toPx().toInt() },
@@ -142,7 +121,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             } else BoxWithConstraints(Modifier.matchParentSize()) {
                 CardArtwork(card, portrait, constraints.maxWidth, constraints.maxHeight)
             }
-            // New episodes win the text label; Watched is the corner check below.
             card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
                 val spoken = newEpisodesDescription(chip)
                 Text(chip, Modifier.padding(horizontal = 6.dp, vertical = 3.dp).semantics { contentDescription = spoken }, color = Palette.background, fontSize = (10 * labelScale.coerceAtLeast(1f)).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -153,10 +131,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             }
             if (pointerHovered) CardHoverScrim(Modifier.matchParentSize())
             card.progress?.let { progress ->
-                // Thin continue-watching bar at the artwork's bottom edge,
-                // full width of the card — matching the supplied reference
-                // design. No thumb: the card progress bar is an indicator,
-                // not a draggable slider.
                 val p = progress.toFloat().coerceIn(0f, 1f)
                 Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(4.dp).drawBehind {
                     val bar = size.height
@@ -164,14 +138,13 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                     if (p > 0f) drawRoundRect(Palette.accent, cornerRadius = CornerRadius(bar / 2), size = Size(size.width * p, bar))
                 })
             }
-            // The hover ring is never a second ring: a focused card that draws its
-            // focus outline shows only that one.
+            // A focused card draws only its focus outline, never the hover ring as well.
             if (pointerHovered && !(focused && showFocusOutline)) CardHoverRing(cornerRadius, Modifier.matchParentSize())
             if (showFocusOutline) org.viptv.app.components.FocusOutline(focused, cornerRadius, focusWidth, Modifier.matchParentSize())
         }
         if (showLabels) {
             Spacer(Modifier.height(9.dp))
-            Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1, // Ellipsis in every state; basicMarquee already clips its own slice. (NAV-13)
+            Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1,
                 overflow = TextOverflow.Ellipsis)
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
@@ -187,7 +160,6 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                         onToggleSave = { menuAt = null; actions.toggleSave(card) })
                 }
             }
-            // Only one flyout is ever on screen; the menu wins over the preview.
             if (previewOpen && menuAt == null) {
                 Popup(popupPositionProvider = CardPreviewPosition(gap),
                     onDismissRequest = { previewOpen = false },
@@ -203,10 +175,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     }
 }
 
-/** The card's art, asked of the image service at the [slotW] x [slotH] px it is drawn into. */
 @Composable
 private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int) {
-    // app#62: a 16:9 card without a still centres its poster over a soft fill.
     when (val art = if (portrait) null else card.landscapeArt()) {
         is LandscapeArt.Poster -> PosterInLandscape(
             org.viptv.app.images.sizedArtwork(art.url, slotH * 2 / 3, slotH) ?: art.url, card.title)
@@ -216,14 +186,9 @@ private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int) {
     }
 }
 
-/** Test tags on a hovered card's dim + play disc and on its hover ring (app#56). */
 internal const val MEDIA_CARD_HOVER_TAG = "media-card-hover"
 internal const val MEDIA_CARD_HOVER_RING_TAG = "media-card-hover-ring"
 
-/**
- * components.md §6 "Hover (D)": the art dims (`scrim-card-hover`, black 0.38)
- * and a 48 dp accent play disc appears in its centre (`tile-hover-play-disc`).
- */
 @Composable
 private fun CardHoverScrim(modifier: Modifier) {
     Box(modifier.testTag(MEDIA_CARD_HOVER_TAG).background(HoverFill.cardScrim), contentAlignment = Alignment.Center) {
@@ -233,11 +198,6 @@ private fun CardHoverScrim(modifier: Modifier) {
     }
 }
 
-/**
- * The hover ring: `inset 0 0 0 2px #F4F2EE` (`focus-desktop-hover-card`). It is
- * drawn inside the art, so the card's clip never cuts it, and its outer edge
- * follows the card's corner radius.
- */
 @Composable
 private fun CardHoverRing(radius: Dp, modifier: Modifier) {
     Canvas(modifier.testTag(MEDIA_CARD_HOVER_RING_TAG)) {
@@ -248,14 +208,8 @@ private fun CardHoverRing(radius: Dp, modifier: Modifier) {
     }
 }
 
-/** `on-accent`: the play glyph on the accent disc. */
 private val OnAccent = Color(0xFF15130F)
 
-/**
- * Board D3Context: the right-click that opens a card's menu. Compose reports the
- * pressed button on the common `PointerEvent`, so this stays in commonMain and is
- * only installed where the desktop chrome published the card actions.
- */
 @Composable
 private fun Modifier.cardContextClick(enabled: Boolean, onClick: (IntOffset) -> Unit): Modifier {
     val current = rememberUpdatedState(onClick)
@@ -273,7 +227,6 @@ private fun Modifier.cardContextClick(enabled: Boolean, onClick: (IntOffset) -> 
     }
 }
 
-/** Opens the preview beside the hovered card and flips to its left at the window edge. */
 private class CardPreviewPosition(private val gapPx: Int) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize,
         layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
@@ -286,7 +239,6 @@ private class CardPreviewPosition(private val gapPx: Int) : PopupPositionProvide
     }
 }
 
-/** Anchors the menu on the pointer, clamped into the window like a native context menu. */
 private class CardMenuPosition(private val at: IntOffset) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize,
         layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset = IntOffset(
@@ -295,14 +247,11 @@ private class CardMenuPosition(private val at: IntOffset) : PopupPositionProvide
     )
 }
 
-/** D3HomeHover: the 360 dp preview that opens beside a hovered card. */
 @Composable
 private fun CardPreview(card: Card, saved: Boolean,
     onPlay: () -> Unit, onSave: () -> Unit, onInfo: () -> Unit, onHoverChanged: (Boolean) -> Unit) {
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
-    // The card keeps the flyout alive only while the pointer is on the card or on
-    // the flyout; this is the flyout's half of that handshake.
     LaunchedEffect(hovered) { onHoverChanged(hovered) }
     Column(Modifier.width(360.dp).hoverable(hover)
         .graphicsLayer { shape = RoundedCornerShape(12.dp); shadowElevation = 24.dp.toPx() }
@@ -326,8 +275,6 @@ private fun CardPreview(card: Card, saved: Boolean,
                 val previewPlayHovered by previewPlay.collectIsHoveredAsState()
                 var previewPlayFocused by remember { mutableStateOf(false) }
                 Row(Modifier.height(36.dp)
-                    // DUI-06: the flyout's light pill needs hover + keyboard
-                    // focus like the hero's Play button.
                     .onFocusChanged { previewPlayFocused = it.isFocused }
                     .tvFocusOutline(previewPlayFocused, 18.dp, darkGap = 2.dp, width = 2.dp)
                     .clip(CircleShape).background(if (previewPlayHovered) Color.White else Palette.text)
@@ -360,8 +307,7 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
     val hovered by interaction.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
     Box(Modifier.size(36.dp)
-        // DUI-06: board `Poster · hover` circle is `rgba(255,255,255,0.18)`; the
-        // ring is the shared focus outline, drawn before the clip so it shows.
+        // The ring is the shared focus outline, drawn before the clip so it shows.
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
         .background(if (hovered) Color.White.copy(alpha = .18f) else Color.Transparent, CircleShape)
@@ -371,7 +317,6 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
         contentAlignment = Alignment.Center) { glyph() }
 }
 
-/** D3Context: Play / More info / Add to My List on the card that was right-clicked. */
 @Composable
 private fun CardMenu(card: Card, saved: Boolean, onDismiss: () -> Unit,
     onPlay: () -> Unit, onInfo: () -> Unit, onToggleSave: () -> Unit) {
@@ -398,8 +343,7 @@ private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, acti
     val hovered by interaction.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(34.dp)
-        // DUI-06: the context menu is a focusable popup, so its rows must show
-        // where the keyboard is. Ring before the clip, otherwise it is cut.
+        // Draw the ring before the clip on the menu's rows, otherwise the clip cuts it.
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 6.dp, darkGap = 2.dp, width = 2.dp)
         .clip(RoundedCornerShape(6.dp))

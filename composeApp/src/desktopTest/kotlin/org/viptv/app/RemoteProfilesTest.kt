@@ -44,7 +44,6 @@ class RemoteProfilesTest {
         remote.unlockParent("1234")
         assertEquals(listOf("/api/profiles/1", "/api/profiles/1", "/api/parent/unlock"), writes.map { it.first })
         assertEquals(setOf("name"), writes[0].second.keys)
-        // A catalog pick alone: the server rejects a write naming the legacy avatar_id too.
         assertEquals(buildJsonObject { put("avatar_style", "disney"); put("avatar_choice", 6) }, writes[1].second)
         assertEquals(setOf("pin"), writes[2].second.keys)
         remote.close()

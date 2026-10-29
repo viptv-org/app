@@ -30,8 +30,7 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
     var firstPlaced by remember(profiles.firstOrNull()?.id, managing, local) { mutableStateOf(false) }
     LaunchedEffect(firstPlaced, managing, local, busy) {
         if (firstPlaced && !busy) {
-            // LazyRow composes its children during layout, after the parent effect.
-            // Wait for the enabled focus node to be attached before entering it.
+            // LazyRow composes its children during layout, after the parent effect; wait for the enabled focus node to be attached before entering it.
             withFrameNanos { }
             first.requestFocus()
         }

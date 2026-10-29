@@ -36,7 +36,6 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     var focusedId by remember { mutableStateOf<String?>(null) }
     val focused = byId[focusedId] ?: visible.firstOrNull()
     val date = remember { FocusRequester() }; val preview = remember { FocusRequester() }; val categories=remember{FocusRequester()}
-    // Allocate requesters for composed rows only, and retain them as pages arrive.
     val rowFocus = remember(activeDay) { mutableMapOf<String, FocusRequester>() }
     val selectedRow = focused?.let { rowFocus.getOrPut(it.id) { FocusRequester() } }
     val rows = rememberLazyListState()

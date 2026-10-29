@@ -23,7 +23,6 @@ internal fun DetailSections(selected: DetailSection, episodes: Boolean, related:
         when (it) { DetailSection.Episodes -> episodes; DetailSection.Related -> related; else -> true }
     }
     Column(modifier) {
-        // A tab row in the Details page: the wheel over it scrolls it sideways (app#59).
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), wheelScrollsRow = true) {
             items(sections) { section ->
                 Tab(selected == section, onClick = { select(section) },

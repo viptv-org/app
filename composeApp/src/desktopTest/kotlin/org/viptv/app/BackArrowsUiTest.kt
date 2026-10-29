@@ -17,10 +17,6 @@ import org.viptv.app.state.*
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#45: in the phone App shell, each page's back arrow takes the same step as Android Back
- * (MainActivity: the route's own step, else [navigateSystemBack] while [systemBackStaysInApp]).
- */
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BackArrowsUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -38,8 +34,8 @@ class BackArrowsUiTest {
         private var previousLoader: ImageLoader? = null
         private var appLoader: ImageLoader? = null
         val scene = ImageComposeScene(390, 844, Density(1f)) {
+            // Coil's default loader may already exist in this JVM, where setSafe refuses a later factory.
             val context = LocalPlatformContext.current
-            // App configures Coil's singleton loader; an earlier test may already have created the default one.
             remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
             App(providedController = controller, manageControllerLifecycle = false, entryBackChanged = { routeBack = it })
             appLoader = SingletonImageLoader.get(context)
@@ -55,7 +51,6 @@ class BackArrowsUiTest {
             assertNotNull(node, "no back arrow on ${controller.state.value.screen}").config[SemanticsActions.OnClick].action!!.invoke()
             render()
         }
-        /** MainActivity's BackHandler. */
         fun androidBack() {
             assertTrue(routeBack != null || controller.state.value.systemBackStaysInApp(), "Android Back left the app from ${controller.state.value.screen}")
             routeBack?.invoke() ?: controller.navigateSystemBack(); render()

@@ -14,10 +14,6 @@ import org.viptv.app.features.entry.ConnectScreen
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
 
-/**
- * app#55 / app#96: a fresh web visitor types a username and password and presses Enter, as on any
- * sign-in page. Enter used to do nothing, so no login request was ever made and the visitor was stuck.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class BrowserSignInSubmitTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -26,7 +22,6 @@ class BrowserSignInSubmitTest {
     private val logins = mutableListOf<Triple<String, String, String>>()
     private lateinit var scene: ImageComposeScene
 
-    /** Built inside the rule, on the Swing event thread (app#27). */
     @BeforeTest fun open() {
         scene = ImageComposeScene(1280, 800, Density(1f)) { ViptvTheme {
             ConnectScreen(browser = true, origin = origin, busy = false, error = null, local = null,

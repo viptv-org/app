@@ -123,7 +123,8 @@ class TvLeadingFocusTest {
                 assertTrue(sum in 253..257, "Dissolve darkened or flashed at frame $frame: $sum")
             }
             assertEquals(255, pixel() and 255)
-            ready = null // Loading retains the previous decoded bitmap.
+            // Loading keeps the previous decoded bitmap.
+            ready = null
             repeat(5) { assertEquals(255, pixel() and 255) }
         } finally { scene.close() }
     }
@@ -144,7 +145,6 @@ class TvLeadingFocusTest {
                 }
             }.use { f ->
                 f.settle(); assertEquals(org.viptv.app.features.details.ShelfFocus.Focused, shelf.request!!(org.viptv.app.features.details.ShelfLanding.Any)); f.settle()
-                // restore enters an episode; Up goes to its selected season.
                 f.press(Key.DirectionUp); f.settle()
                 f.press(Key.DirectionRight); f.settle()
                 f.scene.sendKeyEvent(KeyEvent(Key.Enter, KeyEventType.KeyDown))

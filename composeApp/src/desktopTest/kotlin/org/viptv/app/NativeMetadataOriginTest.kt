@@ -39,8 +39,6 @@ class NativeMetadataOriginTest {
                 val installed = Json.parseToJsonElement(local.engine.installAddon("default", "https://$host/manifest.json",
                     """{"id":"$host","name":"$host","version":"1","resources":["meta"],"types":["series"]}""")).jsonObject
                 val provider = installed.getValue("id").jsonPrimitive.content
-                // Obtain an origin through a real host projection. Its nonce is
-                // public provenance, not a credential or inferred connection.
                 val plan = Json.parseToJsonElement(local.engine.planDetail("default", "series", "tt1234567", provider)).jsonObject
                 val projected = local.json.decodeFromString<DetailSnapshot>(local.engine.projectDetail(plan.getValue("operation").jsonPrimitive.content,
                     """{"meta":{"id":"tt1234567","type":"series","name":"Origin fixture"}}""", 0u))

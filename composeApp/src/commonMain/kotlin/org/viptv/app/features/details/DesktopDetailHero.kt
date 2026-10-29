@@ -30,20 +30,12 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
-/**
- * Desktop title hero per reference board D3Title: ambient blurred backdrop,
- * left text column (logo art, meta line, synopsis, off-white play button with
- * progress underline, glass My List circle, source pill) and the framed 16:9
- * hero art on the right. Primary buttons are off-white; the accent stays on
- * progress, marks and toggles.
- */
 @Composable
 internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
     playFromStart: ((Card) -> Unit)? = null, chooseSource: (Card) -> Unit = play, sourceLabel: String? = null,
     resumeEpisode: Card? = null) {
     val art = card.landscape ?: card.poster
     Box(Modifier.fillMaxWidth()) {
-        // Ambient backdrop: heavily blurred art, faded into the ground.
         art?.let { url ->
             AsyncImage(url, null, Modifier.matchParentSize().blur(60.dp), contentScale = ContentScale.Crop)
         }
@@ -68,7 +60,6 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
     }
 }
 
-/** Logo art at source width with a text fallback; both lighten against the ambient fill. */
 @Composable
 private fun DesktopTitleArt(card: Card) {
     if (card.logo != null) {
@@ -89,7 +80,6 @@ private fun DesktopMetaLine(card: Card) {
         metadata?.genres?.takeIf { it.isNotEmpty() }?.joinToString(", "),
         metadata?.rating?.let { rating -> "IMDb ${kotlin.math.round(rating * 10) / 10.0}" },
     )
-    // Reference wraps whole items to the next line (flex-wrap), never glyphs.
     FlowRow(Modifier.wrapContentWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)) {
         parts.forEachIndexed { index, part ->
@@ -111,9 +101,6 @@ private fun DesktopMetaChip(value: String) {
 @Composable
 private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
     playFromStart: ((Card) -> Unit)?, chooseSource: (Card) -> Unit, sourceLabel: String?) {
-    // Resume mirrors the reference pill: the partially watched episode's
-    // coordinates, remaining minutes and a progress underline inside the button.
-    // An episode the viewer continues without progress (a Calendar row's) plays by name.
     val resumeCard = resumeEpisode ?: card.takeIf(::resuming)
     val progress = resumeCard?.progress
     val partway = resuming(resumeCard)
@@ -135,7 +122,6 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                         }
                     }
                 }
-                // Progress underline: filled portion of the remaining time.
                 if (partway) {
                     val fraction = progress!!.toFloat().coerceIn(0.02f, 0.98f)
                     Box(Modifier.width(250.dp).padding(horizontal = 15.dp).align(Alignment.BottomStart)
@@ -155,7 +141,6 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 }
             }
         }
-        // Source row: the current default-source behaviour; opens the source sheet for what Play plays.
         Row(Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
             .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(resumeCard ?: card) }.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

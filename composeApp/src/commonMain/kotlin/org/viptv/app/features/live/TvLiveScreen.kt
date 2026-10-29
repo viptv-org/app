@@ -43,7 +43,6 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize().focusProperties { onEnter = { if (visible.isNotEmpty()) first.requestFocus() else filter.requestFocus() } }.focusGroup()) {
         val scale = maxWidth / 1920.dp
-        // The shared TV navigation occupies the first 132 design pixels.
         channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
         TvLiveFilters(categoryIds, activeCategory, { category = it; groupChanged?.invoke(it.takeUnless { it == "All" }) }, scale, filter, if (visible.isNotEmpty()) first else null,
             Modifier.offset(96.dp * scale, 380.dp * scale).width(1728.dp * scale), groupLabels,
@@ -56,8 +55,6 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                     Text(if (favoritesOnly) "All channels" else "Manage add-ons", color = it, fontSize = (24 * scale).sp)
                 }
             } else if (hasGuide) {
-                // The guide replaces the channel list when guide data arrives; the
-                // list's focus goes with it, so the guide claims its first row.
                 LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
                 LiveGuide(visible, start!!, now, true, scale,
                 { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, filter, more = more, busy = busy)

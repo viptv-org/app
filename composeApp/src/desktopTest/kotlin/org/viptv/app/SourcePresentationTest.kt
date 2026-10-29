@@ -25,7 +25,7 @@ class SourcePresentationTest {
         val a = SourceCandidate("a", "addon-a", "1080p", presentation = SourcePresentation(provider_name = "Same"))
         val b = SourceCandidate("b", "addon-b", "1080p", presentation = SourcePresentation(provider_name = "Same"))
         assertNotEquals(a.sourceFilterId(), b.sourceFilterId())
-        assertNull(a.qualityLabel()) // release names are not trusted quality metadata
+        assertNull(a.qualityLabel())
         assertNull(a.formatLabel())
     }
 }

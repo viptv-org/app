@@ -18,12 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * app#102: a pairing the account holder declines ends the wait on the paired screen within one
- * poll, with "New code" still there to start again. The fake server answers the documented OAuth
- * device-flow errors (`authorization_pending`, then `access_denied`). With
- * VIPTV_PAIRING_DENIAL_CAPTURE_DIR set it writes the PR screenshots for TV and phone.
- */
 @OptIn(ExperimentalComposeUiApi::class)
 class DevicePairingDenialUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -31,7 +25,6 @@ class DevicePairingDenialUiTest {
     private class FakeServer {
         val codes = AtomicInteger(); val polls = AtomicInteger(); val pollsAfterDenial = AtomicInteger()
         val denied = AtomicBoolean()
-        /** Each `/api/auth/device/code` request body, so "New code" can be held to the carried code (app#129). */
         val codeBodies = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
         fun connection(origin: String, store: RemoteSessionStore) = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             val (body, status) = when (request.url.encodedPath) {

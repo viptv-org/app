@@ -23,9 +23,6 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
     CompositionLocalProvider(LocalLiveClock provides clock) {
         Box(Modifier.fillMaxSize()) {
             val empty = channels.isEmpty()
-            // When no channels render, the empty state inside LiveScreen carries
-            // the page reason or the load error; the top-left overlay must not
-            // draw a second message on top of it.
             val emptyReason = if (empty) state.livePage?.reason?.let { ServerMessages.human(it, ServerMessages.LIVE_REASON) } ?: state.error
                 else state.livePage?.takeIf { it.channels.isEmpty() }?.reason?.let { ServerMessages.human(it, ServerMessages.LIVE_REASON) }
             val guide = state.liveGuideChannel?.let(state.liveGuides::get)

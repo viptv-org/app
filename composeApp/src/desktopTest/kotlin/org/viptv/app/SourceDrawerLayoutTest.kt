@@ -18,11 +18,6 @@ import org.viptv.engine.wire.SourceCandidate
 import org.junit.Rule
 import kotlin.test.*
 
-/**
- * The source picker without its best-match footer hint on every layout, and the wider
- * web/desktop drawer (app#60): min(720 dp, 55 % of the window), never under 460 dp,
- * so a long release line wraps to fewer lines than in the old 460 dp drawer.
- */
 class SourceDrawerLayoutTest {
     @get:Rule val uiThread = UiThreadRule()
     private val title = Card(MediaIdentity("tt13293588", "movie", emptyList()), provider_id = "addon:21", title = "Oak Street", badges = emptyList())

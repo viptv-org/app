@@ -11,7 +11,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/** Phone pull-to-refresh forces the quiet lane's rebuild (app#1). */
 class PullToRefreshTest {
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -64,7 +63,6 @@ class PullToRefreshTest {
         }
         controller = controller(server, ApplicationState(screen = Screen.Home, selectedProfile = "12", home = shown,
             navBack = listOf(Screen.Library), searchTerm = "draft"))
-        // A check finished a moment ago: the automatic lane would coalesce and compare tokens here.
         controller.freshen(); controller.quietJob?.join()
         server.paths.clear()
         controller.pullToRefresh()

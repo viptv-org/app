@@ -100,7 +100,6 @@ class SourceDiscoveryControllerTest {
                     assertEquals(1L, query.getValue("episode").jsonPrimitive.long)
                     """{"id":"job"}"""
                 }
-                // Ranks exactly the rows it was sent, latest arrival first.
                 request.url.encodedPath.endsWith("/source-ranking") -> buildJsonObject {
                     val ids = Json.parseToJsonElement((request.body as TextContent).text).jsonObject.getValue("ids").jsonArray
                     put("streams", JsonArray(ids.reversed().map { id -> buildJsonObject { put("id", id) } }))
@@ -119,7 +118,6 @@ class SourceDiscoveryControllerTest {
             controller.chooseSource(title)
             pending.await()
             assertEquals(first, controller.state.value.sourceTitle)
-            // Rows show once ranked (SRC-BEST-MATCH-001), still before discovery finishes.
             withTimeout(5000) { controller.state.first { it.sources.isNotEmpty() } }
             assertEquals(listOf("early"), controller.state.value.sources.map { it.id })
             assertTrue(controller.state.value.findingSources)

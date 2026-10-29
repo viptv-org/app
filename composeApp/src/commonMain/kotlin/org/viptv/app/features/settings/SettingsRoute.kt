@@ -18,9 +18,6 @@ import org.viptv.app.connection.addonLogo
 @Composable
 internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
     desktop: Boolean = false, entryBackChanged: ((() -> Unit)?) -> Unit = {}) {
-    // Android's system Back (and the TV remote's): while a sub-page is open it takes the same step as
-    // the in-page arrow; on the Settings list the activity keeps its own behaviour. A visit from the
-    // player always routes Back here, so it returns to the player (app#44).
     val returnsToPlayer = state.settingsReturnsToPlayer
     val backStaysInSettings = state.parentTitles != null || state.settingsPage?.subpage == true || returnsToPlayer
     DisposableEffect(backStaysInSettings) {
@@ -33,8 +30,6 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     val remote = controller.connection.takeUnless { state.localMode }
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
-    // On a keyboard (desktop, browser) Escape is Back while the player waits, as Escape leaves the player.
-    // With a field or control focused, Escape first leaves it (unsaved text stays), then returns.
     val escapeReturns = returnsToPlayer && (desktop || browser) && !television
     val keyboard = remember { FocusRequester() }
     var pageFocused by remember { mutableStateOf(false) }
@@ -102,7 +97,6 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     }
 }
 
-/** IMP-001 targets browser builds and Android phones/tablets on a server; never TV, desktop or local mode. */
 internal fun stremioImportAvailable(state: ApplicationState, television: Boolean, desktop: Boolean) =
     !television && !desktop && !state.localMode
 
@@ -112,7 +106,6 @@ private fun StremioImportRoute(state: ApplicationState, controller: ApplicationC
     val profile = state.profiles.find { it.id == state.selectedProfile }
     val restricted = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.kids == true
     val remote = controller.connection
-    // A new connection, profile or restriction replaces the draft; leaving the section discards it.
     val session = remember(controller, remote, state.selectedProfile, restricted) { controller.openStremioImport(restricted) }
     DisposableEffect(session) { onDispose { session?.let(controller::closeStremioImport) } }
     StremioImportScreen(session, profile?.name, compact, back, manageAddons)

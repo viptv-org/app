@@ -36,13 +36,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
     playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}, playbackKey: Any? = input,
     nextEpisodeLoading: Boolean = false, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
-    /** The video and its scrims draw edge to edge, under a display cutout; tappable controls stay inside these insets. */
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
-    /** Facts from a preview or test harness rather than a mounted surface; never forwarded to [observe]. */
     externalFacts: Flow<PlayerFact> = emptyFlow(),
-    /** Opens the full Subtitles & audio settings from the Audio & subtitles menu (app#44). */
     openSettings: (() -> Unit)? = null,
-    /** Settings › Playback › Autoplay next episode: the end panel counts down and plays the next episode (app#65). */
     autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
@@ -72,7 +68,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var phonePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
     var nextChoice by remember(playbackKey) { mutableStateOf<Card?>(null) }
     var restorePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
-    // The player reports the end of the media; the next-episode panel opens once per end.
     var ended by remember(playbackKey) { mutableStateOf(false) }
     var endHandled by remember(playbackKey) { mutableStateOf(false) }
     val episodesFocus = remember { FocusRequester() }; val nextFocus = remember { FocusRequester() }
@@ -80,7 +75,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val next = tvExtras.nextEpisode.takeIf { input?.live != true }
     val seriesEpisode = input?.live != true && title?.identity?.episode != null
     val episodeTitle = phone && seriesEpisode
-    // Next during playback goes straight to the next episode; the panel belongs to the end.
     val playNext = { next?.let { playEpisode?.invoke(it) }; Unit }
     val nextEnabled = next != null && playEpisode != null
     val latestEpisodes by rememberUpdatedState(episodes)
@@ -90,7 +84,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val latestTitle by rememberUpdatedState(title)
     val latestClose by rememberUpdatedState(close)
     fun closePanel() { restorePanel = phonePanel; phonePanel = null; visible = true; interaction++ }
-    /** The viewer closed the panel: an end panel stays closed until the media ends again. */
     fun dismissPanel() { if (phonePanel == PhonePlaybackPanel.Next) endHandled = true; closePanel() }
     val phoneBack = {
         when { showTracks -> { showTracks = false; visible = true }
@@ -99,8 +92,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             else -> latestClose() }
     }
     val latestPhoneBack by rememberUpdatedState(phoneBack)
-    // Desktop and browser Back (mouse button, browser history): the Audio & subtitles menu or an open panel
-    // closes first, as Escape does; the player has no lock off a phone.
     val keyboardBack = {
         when { showTracks -> { showTracks = false; visible = true }
             phonePanel != null -> dismissPanel()
@@ -141,7 +132,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         seekTarget = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
         send(PlayerCommand.Seek(target))
     } }
-    /** Mirror a player fact into this screen's state. */
     fun applyFact(fact: PlayerFact) {
         when (fact) {
             is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
@@ -242,5 +232,4 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
 
 private enum class PhonePlaybackPanel { Episodes, Next }
 
-/** A side sheet's surface reaches the right screen edge; its content clears a cutout or bar there. */
 internal fun WindowInsets.endSheet(): WindowInsets = only(WindowInsetsSides.Vertical + WindowInsetsSides.End)

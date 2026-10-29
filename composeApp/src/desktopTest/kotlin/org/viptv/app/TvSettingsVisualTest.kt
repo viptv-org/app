@@ -14,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import kotlin.test.*
 
-/** Deterministic capture of the TV settings screens, for design comparison. */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvSettingsVisualTest {
     @get:Rule val uiThread = UiThreadRule()

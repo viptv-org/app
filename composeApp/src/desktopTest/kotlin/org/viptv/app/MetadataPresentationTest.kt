@@ -52,7 +52,6 @@ class NewEpisodesBadgeTest {
         assertEquals(listOf("4K"), card.presentationBadges())
         assertEquals("4K", show.copy(badges = listOf("Simkl", "4K")).cardChip())
         assertNull(show.cardChip())
-        // Watched is the corner check, never the text chip.
         assertNull(show.copy(badges = listOf("Watched")).cardChip())
         assertEquals("+1", show.copy(badges = listOf("Watched", "+1")).cardChip())
     }

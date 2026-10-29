@@ -93,7 +93,6 @@ class AppUpdaterTest {
         updater.foreground(false); advanceUntilIdle()
         updater.playingChanged(true); advanceUntilIdle()
         platform.downloadGate = null
-        // The viewer left the app from the player and came back to Home: the return reports it first.
         updater.foreground(playing = false); advanceUntilIdle()
         updater.playingChanged(false); advanceUntilIdle()
         assertIs<UpdateStatus.Ready>(updater.state.value.status)
@@ -225,7 +224,6 @@ class AppUpdaterTest {
         assertEquals(50, status.bytes)
         platform.installGate!!.complete(Unit); advanceUntilIdle()
         assertTrue(assertIs<UpdateStatus.Installing>(updater.state.value.status).confirming)
-        // Android's confirmation is gone and no result came back: Install works again.
         updater.foreground(playing = false); advanceUntilIdle()
         assertIs<UpdateStatus.Ready>(updater.state.value.status)
     }

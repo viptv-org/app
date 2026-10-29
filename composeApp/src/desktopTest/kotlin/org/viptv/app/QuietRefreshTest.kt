@@ -31,7 +31,6 @@ class QuietRefreshTest {
                 id = "top", title = "Top", provider_id = "addon:1", state = RowState.READY, cards = catalog, next_cursor = "2")),
         complete = true)
     private val shown = home(6, listOf(card("old")))
-    /** A Home with one catalog row per installed add-on. */
     private fun addonHome(revision: Long, vararg installed: Int) = home(revision, listOf(card("old"))).let { home ->
         home.copy(rows = home.rows.take(1) + installed.map { n ->
             HomeRow(id = "addon:$n", title = "Addon $n", provider_id = "addon:$n", state = RowState.READY, cards = listOf(card("a$n")))
@@ -69,12 +68,11 @@ class QuietRefreshTest {
         controller.freshness.homeBuilt(base)
         return controller
     }
-    /** Android stop, a change made elsewhere, then start and resume of the same return. */
     private suspend fun ApplicationController.returnAfter(elsewhere: () -> Unit) {
         appForeground(false); elsewhere()
         appForeground(true); freshen(); settle()
     }
-    /** The foreground watcher loops until stopped: stop it even when an assertion fails, or the test hangs. */
+    // The foreground watcher loops until stopped: stop it even when an assertion fails, or the test hangs.
     private suspend fun ApplicationController.whileForeground(body: suspend ApplicationController.() -> Unit) =
         try { body() } finally { appForeground(false); connection?.close() }
     private suspend fun ApplicationController.settle() { while (true) { val running = quietJob ?: return; running.join(); if (quietJob === running) return } }
@@ -367,7 +365,6 @@ class QuietRefreshTest {
             val browsed = listOf(card("b1"))
             controller(server, state = ApplicationState(screen = screen, selectedProfile = "12", home = addonHome(6, 1, 2),
                 addons = listOf(addon(1), addon(2)), enabledAddonIds = setOf("addon:1", "addon:2"), browseCards = browsed)).whileForeground {
-                // Elsewhere: add-on 2 removed, add-on 3 installed.
                 returnAfter { revisions = moved }
                 val now = state.value
                 assertEquals(listOf("addon:1", "addon:3"), now.addons.map { it.id }, "The add-on list on $screen is current")
@@ -421,12 +418,10 @@ class QuietRefreshTest {
         }
         controller(server, state = ApplicationState(screen = Screen.Settings, selectedProfile = "12", home = addonHome(6, 1, 2),
             addons = listOf(addon(1), addon(2)))).whileForeground {
-            // The viewer removes add-on 2 here while add-on 3 was installed elsewhere.
             try { removeAddonWhileReturning(removing, release, events) } finally { release.complete(Unit) }
         }
     }
 
-    /** Removes add-on 2 on this device; a return happens while the removal is in flight. */
     private suspend fun ApplicationController.removeAddonWhileReturning(removing: CompletableDeferred<Unit>, release: CompletableDeferred<Unit>,
         events: List<String>) {
         removeAddon("addon:2"); removing.await()
@@ -458,7 +453,6 @@ class QuietRefreshTest {
         assertSame(otherProfile, mergeHome(paged, otherProfile))
     }
 
-    /** The same title, but this rebuild missed the metadata deadline and came back without artwork. */
     private fun sparse() = card("c1").copy(title = "The End of Oak Street", subtitle = "2026 · Action")
     private val billboard = card("c1").copy(title = "The End of Oak Street", subtitle = "2026 · Action",
         landscape = "https://art.example/landscape.jpg", poster = "https://art.example/poster.jpg",
@@ -468,7 +462,6 @@ class QuietRefreshTest {
             rows = shown.rows.map { if (it.id == "top") it.copy(cards = listOf(billboard, card("c2"))) else it })
     }
 
-    /** app#94: the billboard the viewer is looking at keeps its artwork when a rebuild comes back sparse. */
     @Test fun aRebuildKeepsTheArtworkHomeIsAlreadyShowing() {
         val fresh = home(7, listOf(card("new")), catalog = listOf(sparse(), card("c2")))
         val merged = requireNotNull(mergeHome(withArtwork, fresh))

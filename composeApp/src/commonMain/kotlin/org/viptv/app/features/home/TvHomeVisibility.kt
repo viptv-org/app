@@ -35,15 +35,9 @@ internal fun TvHomeVisibility(visible: Boolean, scale: Float, offset: Int,
     val position = animateFloatAsState(if (visible) 0f else pixels.toFloat(), tween(duration, easing = easing), label = "Billboard departure")
     if (retain || mounted || visible) {
         Box(Modifier.fillMaxWidth().graphicsLayer { alpha = opacity.value; translationY = position.value }
-            // A retained-but-hidden plane (the hero while browsing) must not
-            // rasterize its subtree every frame: alpha 0 leaves every pixel
-            // untouched, so skipping the draw is pixel-identical. Read in the
-            // draw phase, so the gate itself never recomposes.
+            // A retained but hidden plane is skipped in the draw phase: alpha 0 leaves every pixel untouched, so the draw is pixel-identical.
             .drawWithContent { if (opacity.value > 0f) drawContent() }
-            // Hidden content must not stay in the accessibility tree or the
-            // focus graph. The visible case must NOT install a focus boundary:
-            // `focusProperties` on this non-focusable container made Up from the
-            // hero button a dead end, so the remote could not reach the nav.
+            // A visible plane installs no focus boundary: focusProperties on this non-focusable container dead-ends Up from the hero button.
             .then(if (visible) Modifier else Modifier.clearAndSetSemantics { }.focusProperties { canFocus = false })) { content() }
     }
 }
