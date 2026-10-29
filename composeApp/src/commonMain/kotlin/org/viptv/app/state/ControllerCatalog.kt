@@ -89,6 +89,7 @@ fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mut
 
 fun ApplicationController.search(term: String) {
     mutable.value = mutable.value.copy(searchTerm = term, results = emptyList(), searchRows = emptyList())
+    rememberNavigation()
     run {
         val operation = generation
         val profile = mutable.value.selectedProfile
@@ -141,6 +142,7 @@ fun ApplicationController.open(card: Card) {
         val profile = requireNotNull(mutable.value.selectedProfile)
         val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
         mutable.value = mutable.value.copy(detail = detail.withCardArt(card))
+        rememberNavigation()
     }
 }
 

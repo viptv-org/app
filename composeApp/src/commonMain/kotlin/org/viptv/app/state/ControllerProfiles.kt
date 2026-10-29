@@ -26,6 +26,7 @@ internal suspend fun ApplicationController.openProfile(id: String) {
     restartRequested = false
     accept(result)
     local?.let { mutable.value=mutable.value.copy(home=it.refreshHome(id)) }
+    resumeNavigation()
 }
 
 fun ApplicationController.manageProfiles() { mutable.value=mutable.value.copy(managingProfiles=true,error=null) }
