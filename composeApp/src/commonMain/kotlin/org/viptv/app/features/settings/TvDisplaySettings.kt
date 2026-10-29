@@ -47,13 +47,18 @@ internal fun rememberTvDisplayState(): TvDisplayState {
     return remember(store) { TvDisplayState(decodeTvDisplay(runCatching { store.read() }.getOrNull()), store) }
 }
 
+internal val LocalTvDisplayState = staticCompositionLocalOf<TvDisplayState?> { null }
+
+@Composable
+internal fun rememberSystemReducedMotion(): Boolean {
+    val context = LocalPlatformContext.current
+    return remember(context) { systemReducedMotion(context) }
+}
+
 @Composable
 internal fun rememberReducedMotion(): Boolean {
-    val context = LocalPlatformContext.current
-    return remember(context) {
-        val display = decodeTvDisplay(runCatching { deviceRecordStore(context, DeviceRecord.Display).read() }.getOrNull())
-        reducedMotion(display, systemReducedMotion(context))
-    }
+    val display = LocalTvDisplayState.current ?: rememberTvDisplayState()
+    return reducedMotion(display.value, rememberSystemReducedMotion())
 }
 
 @Composable

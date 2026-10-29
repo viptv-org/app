@@ -262,7 +262,8 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
 @Composable
 private fun SelectSheet(title: String, dismiss: () -> Unit, content: @Composable (Dp) -> Unit) {
     val rise = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { rise.animateTo(1f, tween(220)) }
+    val riseSpec = motionSpec<Float>(tween(220))
+    LaunchedEffect(Unit) { rise.animateTo(1f, riseSpec) }
     Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val height = maxHeight * .8f

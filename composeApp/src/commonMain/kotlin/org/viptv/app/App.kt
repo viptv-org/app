@@ -21,6 +21,10 @@ import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
+import org.viptv.app.features.settings.LocalTvDisplayState
+import org.viptv.app.features.settings.rememberSystemReducedMotion
+import org.viptv.app.features.settings.rememberTvDisplayState
+import org.viptv.app.features.settings.reducedMotion
 import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.player.PlayerRoute
@@ -62,6 +66,9 @@ fun App(
         if (manageControllerLifecycle) lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }
+    val tvDisplay = rememberTvDisplayState()
+    val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
+    CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion) {
     ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
@@ -197,6 +204,7 @@ fun App(
                 }
             }
         }
+    }
     }
 }
 

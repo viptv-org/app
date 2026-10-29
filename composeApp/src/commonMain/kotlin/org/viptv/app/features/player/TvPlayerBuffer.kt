@@ -14,13 +14,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.viptv.app.components.TvLoadingIndicator
+import org.viptv.app.components.motionSpec
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
 internal fun BoxScope.TvPlayerBuffer(title: Card?, extras: TvPlaybackExtras, scale: Float) {
     val opacity = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { delay(200); opacity.animateTo(1f, tween(300, easing = LinearOutSlowInEasing)) }
+    val fade = motionSpec<Float>(tween(300, easing = LinearOutSlowInEasing))
+    LaunchedEffect(Unit) { delay(200); opacity.animateTo(1f, fade) }
     if (opacity.value == 0f) return
     Box(Modifier.fillMaxSize().graphicsLayer { alpha = opacity.value }.background(Color.Black.copy(alpha = .55f)))
     Column(Modifier.align(Alignment.Center).graphicsLayer { alpha = opacity.value }, horizontalAlignment = Alignment.CenterHorizontally) {

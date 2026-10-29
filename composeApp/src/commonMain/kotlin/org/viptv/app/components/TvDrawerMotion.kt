@@ -12,12 +12,14 @@ internal fun rememberTvDrawerMotion(close: () -> Unit): TvDrawerMotion {
     val scope = rememberCoroutineScope()
     val currentClose by rememberUpdatedState(close)
     var closing by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { progress.animateTo(1f, tween(300, easing = CubicBezierEasing(0f, 0f, 0f, 1f))) }
+    val enter = motionSpec<Float>(tween(300, easing = CubicBezierEasing(0f, 0f, 0f, 1f)))
+    val exit = motionSpec<Float>(tween(200, easing = CubicBezierEasing(.3f, 0f, 1f, 1f)))
+    LaunchedEffect(Unit) { progress.animateTo(1f, enter) }
     return TvDrawerMotion(progress) {
         if (!closing) {
             closing = true
             scope.launch {
-                progress.animateTo(0f, tween(200, easing = CubicBezierEasing(.3f, 0f, 1f, 1f)))
+                progress.animateTo(0f, exit)
                 currentClose()
             }
         }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.motionSpec
 import org.viptv.engine.wire.Card
 
 private const val ScrimWidth = .7f
@@ -26,8 +27,8 @@ internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = 
         SideEffect { if (portrait) lastPortrait = card else lastLandscape = card }
         val portraitCard = if (portrait) card else lastPortrait
         val landscapeCard = if (portrait) lastLandscape else card
-        val format = animateFloatAsState(if (portrait) 1f else 0f, tween(180), label = "Artwork format")
-        val motion = animateFloatAsState(if (browsing) 1f else 0f, tween(220, easing = CubicBezierEasing(.2f, 0f, 0f, 1f)), label = "Hero artwork departure")
+        val format = animateFloatAsState(if (portrait) 1f else 0f, motionSpec(tween(180)), label = "Artwork format")
+        val motion = animateFloatAsState(if (browsing) 1f else 0f, motionSpec(tween(220, easing = CubicBezierEasing(.2f, 0f, 0f, 1f))), label = "Hero artwork departure")
         Box(Modifier.fillMaxSize().graphicsLayer {
             alpha = 1f; translationY = -12.dp.toPx() * scale * motion.value
             clip = true; compositingStrategy = CompositingStrategy.Auto

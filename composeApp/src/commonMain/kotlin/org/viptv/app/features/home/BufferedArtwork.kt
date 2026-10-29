@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.*
 import coil3.request.ImageRequest
+import org.viptv.app.components.motionSpec
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.filterNotNull
 
@@ -41,6 +42,7 @@ internal fun ArtworkDissolve(ready: LoadedArtwork?, modifier: Modifier, alignmen
     var shown by remember { mutableStateOf<LoadedArtwork?>(null) }
     var outgoing by remember { mutableStateOf<LoadedArtwork?>(null) }
     val fade = remember { Animatable(1f) }
+    val dissolve = motionSpec<Float>(tween(180))
     val latest by rememberUpdatedState(ready)
     val readyCallback by rememberUpdatedState(onReady)
     // Finish each short dissolve before taking the newest ready image: cancelling midway promotes a half-transparent image to opaque and flashes.
@@ -51,7 +53,7 @@ internal fun ArtworkDissolve(ready: LoadedArtwork?, modifier: Modifier, alignmen
                 fade.snapTo(if (outgoing == null) 1f else 0f)
                 shown = ready
                 readyCallback(ready.url)
-                fade.animateTo(1f, tween(180))
+                fade.animateTo(1f, dissolve)
                 outgoing = null
             }
         }
@@ -75,6 +77,7 @@ private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: A
     var shown by remember { mutableStateOf<LoadedArtwork?>(null) }
     var outgoing by remember { mutableStateOf<LoadedArtwork?>(null) }
     val fade = remember { Animatable(1f) }
+    val reveal = motionSpec<Float>(tween(200))
     LaunchedEffect(url, status) {
         if (url == null) { shown = null; outgoing = null; return@LaunchedEffect }
         if (status is AsyncImagePainter.State.Error) onError(url)
@@ -87,7 +90,7 @@ private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: A
         }
     }
     LaunchedEffect(shown) {
-        if (shown != null) { fade.animateTo(1f, tween(200)); outgoing = null }
+        if (shown != null) { fade.animateTo(1f, reveal); outgoing = null }
     }
     Box(modifier.then(size)) {
         // A true crossfade sends the outgoing plane out as the incoming one arrives: holding it at full alpha stacks both images and flashes.

@@ -33,6 +33,7 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
+import org.viptv.app.components.motionSpec
 import org.viptv.app.connection.Profile
 import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.Screen
@@ -70,13 +71,14 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     }
     // Row fades read browsing/activeRow here: inside the LazyColumn item scope they recompose every visible shelf per focus move.
     val rowAlphas = remember(visibleRows) { mutableMapOf<String, androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>>() }
+    val rowFade = motionSpec<Float>(tween(200))
     LaunchedEffect(browsing, activeRow, rowAlphas) {
         if (rowAlphas.isEmpty()) return@LaunchedEffect
         kotlinx.coroutines.coroutineScope {
             visibleRows.forEachIndexed { index, row ->
                 val alpha = rowAlphas[row.id] ?: return@forEachIndexed
                 val target = if (browsing && index < activeRow) 0f else 1f
-                launch { alpha.animateTo(target, tween(200)) }
+                launch { alpha.animateTo(target, rowFade) }
             }
         }
     }
@@ -161,7 +163,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val firstHeight = if (firstShelfHeight > 0) with(density) { firstShelfHeight.toDp() }
             else (52f + firstArtHeight + if (firstShelf?.state == RowState.READY) 76f else 0f).dp * scale
         val targetTop = if (browsing) listTop else 824.dp * scale - (shelfSlot - firstHeight)
-        val top = animateDpAsState(targetTop, tween(450, easing = easing), label = "Billboard to rows")
+        val top = animateDpAsState(targetTop, motionSpec(tween(450, easing = easing)), label = "Billboard to rows")
         var heroTimerEnabled by remember(home?.scope?.owner()) { mutableStateOf(true) }
         LaunchedEffect(browsing) {
             if (browsing) heroTimerEnabled = false

@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import org.viptv.app.components.TvMediaMetadata
+import org.viptv.app.components.motionSpec
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -27,7 +28,7 @@ private fun HeroLogo(url: String, title: String, modifier: Modifier) {
     val painter = rememberAsyncImagePainter(org.viptv.app.images.rememberLogoRequest(url))
     val state by painter.state.collectAsState()
     val ready = state is coil3.compose.AsyncImagePainter.State.Success
-    val alpha by animateFloatAsState(if (ready) 1f else 0f, tween(140), label = "Hero logo")
+    val alpha by animateFloatAsState(if (ready) 1f else 0f, motionSpec(tween(140)), label = "Hero logo")
     Image(painter, title, modifier.graphicsLayer { this.alpha = alpha }, contentScale = ContentScale.Fit, alignment = Alignment.BottomStart)
 }
 
