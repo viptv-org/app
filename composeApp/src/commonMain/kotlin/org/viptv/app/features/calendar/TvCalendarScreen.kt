@@ -48,7 +48,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val pageHeight = maxHeight
-        // The chip row stays outside the group below: that group's onEnter lands on today, and any focus request into it counts as an entry, so a row inside could never take the remote's focus (app#172).
+        // The chip row stays outside this group: a focus request into it counts as an entry and lands on today.
         if(controls)Box(Modifier.offset(96.dp*scale,8.dp*scale).width(1728.dp*scale).focusGroup()){
             CompositionLocalProvider(LocalTvScale provides scale) {
                 CalendarControls(type,week,true,scale,categoryChanged,weekChanged,

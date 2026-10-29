@@ -21,7 +21,6 @@ private const val YourShows = "your_shows"
 private val CalendarTypes = listOf(SelectOption("series", "TV"), SelectOption("anime", "Anime"), SelectOption("movie", "Movies"))
 private val CalendarSources = listOf(SelectOption(YourShows, CalendarFilter.YourShows.label))
 
-// A week is a relative step: it is actions in the row, not a chip whose list would tick a wrong "Current" row.
 @Composable
 internal fun CalendarControls(type: String, week: Int, television: Boolean, scale: Float,
     category: (String) -> Unit, shift: (Int) -> Unit, modifier: Modifier = Modifier, range: String? = null,
