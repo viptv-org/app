@@ -24,10 +24,6 @@ internal suspend fun ApplicationController.loadAddons(operation: AddonOperationO
     publishAddons(result)
 }
 
-/**
- * The add-on list and what derives from it. Browse state is dropped so the
- * next Browse entry loads controls for these add-ons, unless [keepBrowse].
- */
 internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrowse: Boolean = false) {
     val state = mutable.value
     mutable.value = state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
@@ -58,7 +54,6 @@ internal suspend fun ApplicationController.updateAddonHome(operation: AddonOpera
 
 fun ApplicationController.installAddon(url: String) = installAddon(url) {}
 
-/** Installation completion belongs to this operation and profile, before ancillary refreshes. */
 fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Unit) {
     if (mutable.value.busy) { completion(false); return }
     val device = local

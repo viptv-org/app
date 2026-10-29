@@ -25,17 +25,10 @@ import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
 
-/**
- * A profile card. [avatarStyle] + 1-based [avatarChoice] are the design catalog pick
- * (`avatarChoice` is null until one is made); [avatarUrl] is the server's image for
- * the profile (a random seed when nothing was picked); [avatarId] is a legacy
- * bundled avatar, sent only while there is no catalog pick.
- */
 data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null,
     val avatarStyle: String? = null, val avatarChoice: Int? = null, val avatarUrl: String? = null)
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null,
     val continuation: org.viptv.engine.wire.ContinuationPage? = null,
-    /** Change tokens read before [home] was built; null for local and older servers. */
     val revisions: org.viptv.app.state.Revisions? = null)
 class RemoteFailure(val status: Int, message: String) : Exception(message)
 
@@ -111,7 +104,6 @@ class RemoteConnection(
         return restoreSession { saved }
     }
 
-    /** A startup snapshot may predate a retiring controller's one-use rotation. */
     internal suspend fun restoreFromStore(): Bootstrap = restoreSession {
         val saved = try { (sessionStore.savedConnection() as? SavedConnection.Remote)?.session }
         catch (error: CancellationException) { throw error }
@@ -141,9 +133,7 @@ class RemoteConnection(
         val status = requestJson("/api/auth/status").jsonObject
         if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) return null
         csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
-        // Proactively rotate the access token so a restored session never
-        // starts with already-expired credentials (random mid-use logouts).
-        try { refreshBrowser() } catch (error: CancellationException) { throw error } catch (_: Exception) { /* status says authenticated; keep going on current cookies */ }
+        try { refreshBrowser() } catch (error: CancellationException) { throw error } catch (_: Exception) { }
         return bootstrap()
     }
 
@@ -177,12 +167,6 @@ class RemoteConnection(
     }
 
     suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
-    /**
-     * Details of [card]'s title. An episode card (Continue Watching, the player)
-     * looks up its parent, so the metadata expectation must describe that parent:
-     * the host rejects an episode expectation for a title lookup with 400
-     * "Metadata expectation does not match lookup".
-     */
     suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = (card.parent_identity ?: card.identity).let {
         detail(it.kind, it.id, offset, limit, card.provider_id, if (card.parent_identity == null) card else card.copy(identity = it, parent_identity = null))
     }
@@ -213,7 +197,6 @@ class RemoteConnection(
         response.bodyAsText()
     }
 
-    /** Raw bytes of an authenticated GET, such as an add-on logo. */
     internal suspend fun bytes(path: String): ByteArray = authenticatedResponse(path).let { response ->
         checkStatus(response)
         response.readRawBytes()
@@ -223,7 +206,6 @@ class RemoteConnection(
         return decode(authenticatedResponse(path, method, body))
     }
 
-    /** Account-only browser operations share refresh/retirement without a media bootstrap. */
     internal suspend fun accountCall(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonObject {
         check(browser && path.startsWith("/api/auth/"))
         val value = call(path, method, body).jsonObject
@@ -232,10 +214,6 @@ class RemoteConnection(
         return value
     }
 
-    /**
-     * Status and body without generic failure copy, for endpoints whose callers map fixed error codes.
-     * [timeoutMillis] replaces the shared request and socket timeouts for this one slow request only.
-     */
     internal suspend fun exchange(path: String, method: HttpMethod, body: JsonElement? = null, timeoutMillis: Long? = null): Pair<Int, String> =
         authenticatedResponse(path, method, body, timeoutMillis).let { it.status.value to it.bodyAsText() }
 
@@ -262,9 +240,6 @@ class RemoteConnection(
 
     private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?,
         timeoutMillis: Long? = null): HttpResponse {
-        // A retirement can happen while a rotation is finishing. That rotation
-        // already owns the gate; its request must complete, while ordinary new
-        // calls are rejected by their entry points.
         return client.request(origin + path) {
             this.method = method
             contentType(ContentType.Application.Json)
@@ -273,7 +248,6 @@ class RemoteConnection(
             access?.let { bearerAuth(it) }
             csrfValue?.let { header("x-csrf-token", it) }
             body?.let { setBody(it.toString()) }
-            // Overrides the HttpTimeout plugin defaults per request on OkHttp, Js and Darwin; connect stays shared.
             timeoutMillis?.let { limit -> timeout { requestTimeoutMillis = limit; socketTimeoutMillis = limit } }
         }
     }
@@ -297,11 +271,6 @@ class RemoteConnection(
         })
     }
 
-    /**
-     * The auth limiter answers `error_code: "rate_limited"` with the seconds it keeps refusing
-     * in `Retry-After` (backend#35, backend#59), so sign-in can show that window instead of a
-     * generic wait. A 429 from another limiter, or one without a positive hint, keeps the copy.
-     */
     private suspend fun tooManyRequestsMessage(response: HttpResponse): String {
         val generic = "Too many requests. Please wait and try again."
         val seconds = response.headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull()?.takeIf { it > 0 }
@@ -331,8 +300,7 @@ class RemoteConnection(
         }
     }
 
-    // Once sent, a rotation may already have consumed its one-use token. Navigation
-    // cancellation must wait until its replacement is installed and persisted.
+    // A sent rotation may already have consumed its one-use token: wait until its replacement is installed and persisted.
     private suspend fun refreshDevice() = withContext(NonCancellable) {
         try {
             withTimeout(20_000) {
@@ -343,14 +311,13 @@ class RemoteConnection(
                     accessToken = null; refreshToken = null
                     try { sessionStore.clear() }
                     catch (error: CancellationException) { throw error }
-                    catch (_: Exception) { /* The server has rejected this session. */ }
+                    catch (_: Exception) { }
                     throw RemoteFailure(401, "Sign in to continue.")
                 }
                 installDeviceTokens(decode(response).jsonObject)
             }
         } catch (error: TimeoutCancellationException) {
-            // A timeout is not navigation cancellation. Report it: the one-use token may
-            // already be consumed server-side, so the caller must not drop this silently.
+            // A timeout is not navigation cancellation: the one-use token may already be consumed, so report it.
             throw RemoteFailure(504, "Your server took too long to refresh this session. Try again.")
         }
     }
@@ -383,12 +350,11 @@ class RemoteConnection(
                         }
                         try { sessionStore.clear() }
                         catch (error: CancellationException) { throw error }
-                        catch (_: Exception) { /* Server revocation has already completed. */ }
+                        catch (_: Exception) { }
                         accessToken = null; refreshToken = null; csrf = null
                     }
                 } catch (error: TimeoutCancellationException) {
-                    // Never let a sign-out timeout masquerade as navigation cancellation:
-                    // the leave dialog would close with a live session and no message.
+                    // A sign-out timeout must not look like navigation cancellation: the dialog would close with a live session.
                     throw RemoteFailure(504, "Sign out did not finish. Check the connection and try again.")
                 }
             }
@@ -404,9 +370,7 @@ class RemoteConnection(
         if (retired) throw CancellationException("Connection retired")
     }
 
-    // Mark retirement immediately, then let an already-started one-use rotation
-    // finish before closing its client. New connections serialize credential
-    // installation with that rotation, so the replacement account always wins.
+    // Mark retirement first, then let an already-started rotation finish before closing: new connections serialize credential installation with it.
     fun close() {
         if (retired) return
         retired = true

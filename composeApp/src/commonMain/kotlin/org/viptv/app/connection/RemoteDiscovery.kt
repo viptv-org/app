@@ -35,20 +35,15 @@ internal suspend fun RemoteConnection.browse(query: BrowseQuery, controls: Disco
     return Json { ignoreUnknownKeys = true }.decodeFromJsonElement(call("/api/discover?" + params.entries.joinToString("&") { "${it.key}=${it.value.encodeURLParameter()}" }))
 }
 
-/** The catalog selector a Home row already carries; a client never interprets row ids. */
 internal data class HomeRowPageQuery(val type: String, val catalog: String, val connectionId: String?,
     val addonId: Long?, val values: List<QueryValue>) {
-    /** The local engine rejects catalog values without the connection they belong to. */
+    // The local engine rejects catalog values without the connection they belong to.
     fun browseQuery(skip: Int): BrowseQuery = BrowseQuery(type = type, catalog = catalog, connection_id = connectionId,
         skip = skip, values = values.takeIf { connectionId != null }.orEmpty())
 }
 
 private val rowIdentityKeys = setOf("type", "catalog", "connection_id", "addon_id")
 
-/**
- * Only catalog rows page in place; personal rows (continue/favorites) have no cursor producer.
- * Continue Watching's `Continue` action opens the full list instead ([opensContinueWatching]).
- */
 internal fun HomeRow.pageQuery(): HomeRowPageQuery? {
     val action = browse ?: return null
     if (action.target != HomeBrowseTarget.DISCOVER) return null
@@ -59,7 +54,6 @@ internal fun HomeRow.pageQuery(): HomeRowPageQuery? {
         action.query.filterNot { it.id in rowIdentityKeys })
 }
 
-/** One row page through the catalog cursor the app already owns: no controls round-trip. */
 internal suspend fun RemoteConnection.homeRowPage(row: HomeRow, cursor: String): CatalogPage {
     val query = row.pageQuery() ?: throw LocalFailure("This row cannot load more.")
     val parameters = mutableListOf("type=${query.type.encodeURLParameter()}",

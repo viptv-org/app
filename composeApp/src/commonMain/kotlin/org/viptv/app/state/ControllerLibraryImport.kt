@@ -4,7 +4,6 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.LibraryImportStatus
 
-/** Lightweight, bounded status reads; completed imports refresh Home once without changing routes. */
 internal fun ApplicationController.startLibraryImportRefresh(initial: LibraryImportStatus?) {
     libraryImportRefresh?.cancel()
     if (initial?.running != true || local != null) return
@@ -30,6 +29,6 @@ internal fun ApplicationController.startLibraryImportRefresh(initial: LibraryImp
                 }
             }
         } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { /* A later refresh retries; import status never blocks browsing. */ }
+        catch (_: Exception) { }
     }
 }

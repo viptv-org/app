@@ -11,7 +11,6 @@ fun ApplicationController.calendarCategory(type: String) {
     run { loadCalendar() }
 }
 
-/** Zero returns to this week and refreshes its release status. */
 fun ApplicationController.calendarWeek(change: Int) {
     if (change !in -1..1) return
     val week = if (change == 0) 0 else (mutable.value.calendarWeek + change).coerceIn(-52, 52)
@@ -46,22 +45,10 @@ internal suspend fun ApplicationController.loadCalendar() {
     }
 }
 
-/** The window a calendar read belongs to: a re-read publishes only while the viewer still looks at it. */
 private data class CalendarRequest(val remote: RemoteConnection, val profile: String?, val type: String, val week: Int, val window: CalendarWindow)
 
-/**
- * How long one visit to a window keeps re-reading while the server still reports
- * unfinished library lookups (its cold fetch stops at 12 s, an unfinished list is kept 15 s).
- */
 internal const val CALENDAR_REREAD_LIMIT_MILLIS = 120_000L
 
-/**
- * The server is still looking up library series, so the window can grow. Read it again
- * from the first page after [delayMillis], on the side: no busy cover, the shown rows stay
- * until the whole window has arrived, and a failure keeps them (an expired session still
- * goes to sign-in). It repeats while the server keeps sending the hint, for at most
- * [CALENDAR_REREAD_LIMIT_MILLIS]; another load, week, type, profile, screen or session ends it.
- */
 private fun ApplicationController.rereadCalendar(request: CalendarRequest, delayMillis: Long) {
     fun current() = connection === request.remote && mutable.value.let { state ->
         state.screen == Screen.Calendar && state.selectedProfile == request.profile &&
@@ -89,21 +76,13 @@ private fun ApplicationController.rereadCalendar(request: CalendarRequest, delay
     }
 }
 
-/**
- * A Calendar row was chosen. A library row opens its series' Details through the
- * episode it names, and records that episode so Details can land on its season
- * (app#40). Other rows open their title, as before.
- */
 fun ApplicationController.openCalendarEntry(entry: CalendarEntry) {
     val episode = entry.episodeCard.takeIf { entry.library }
     open(episode ?: entry.card)
     if (episode != null) mutable.value = mutable.value.copy(calendarEpisode = episode)
 }
 
-/** Schedule coordinates select only an actual host-returned episode, never a fabricated ID. */
 fun ApplicationController.watchCalendar(entry: CalendarEntry) {
-    // A library row already carries the playable episode: find its sources directly.
-    // Back from them lands on the episode's season in Details, as opening the row does.
     entry.episodeCard?.takeIf { entry.library }?.let { episode ->
         playTitle(episode)
         mutable.value = mutable.value.copy(calendarEpisode = episode)

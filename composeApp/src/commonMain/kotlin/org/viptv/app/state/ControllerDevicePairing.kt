@@ -4,10 +4,6 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import kotlin.time.TimeSource
 
-/**
- * A code this device holds: the `device_code` the server issued and the server that issued it, so a
- * code from one server is never offered to another (app#129).
- */
 internal data class PairingCode(val origin: String, val secret: String) {
     override fun toString() = "PairingCode(deviceCode=<redacted>)"
 }
@@ -30,8 +26,6 @@ fun ApplicationController.startDevicePairing(origin: String) {
         try {
             candidate = remoteFactory(origin, sessionStore)
             val transport = candidate.devicePairing(::active)
-            // "New code" replaces a code this screen may still show: the server expires that
-            // one when it receives the device_code here, so a photo of it stops working.
             val challenge = transport.create(pairingCode?.takeIf { it.origin == candidate.origin }?.secret)
             pairingCode = PairingCode(candidate.origin, challenge.secret)
             val started = TimeSource.Monotonic.markNow()

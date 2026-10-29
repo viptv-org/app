@@ -5,7 +5,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.viptv.app.connection.RemoteFailure
 
-/** Page navigation cancels only page-bound work; configuration refreshes may finish in the background. */
 internal fun ApplicationController.runPage(operation: suspend () -> Unit) {
     run(operation)
     val request = job
@@ -13,7 +12,6 @@ internal fun ApplicationController.runPage(operation: suspend () -> Unit) {
     request?.invokeOnCompletion { if (pageRequestJob === request) pageRequestJob = null }
 }
 
-/** A page read must not restore an abandoned route or start a retired Play action. */
 internal suspend fun <T : Any> ApplicationController.readCurrentPage(navigation: Long, read: suspend () -> T): T? {
     val owner = generation
     val device = local
@@ -30,8 +28,6 @@ internal suspend fun <T : Any> ApplicationController.readCurrentPage(navigation:
     } catch (error: CancellationException) { throw error }
     catch (error: Exception) {
         currentCoroutineContext().ensureActive()
-        // An actually expired current session still retires through run's central
-        // handler even if the user left the page that discovered the expiry.
         if (currentPage() || error is RemoteFailure && error.status == 401 && sameSession()) throw error
         return null
     }

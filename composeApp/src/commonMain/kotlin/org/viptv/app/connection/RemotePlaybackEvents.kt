@@ -20,7 +20,6 @@ internal data class TrackingReceipt(
     val deduplicated: Boolean = false,
 )
 
-/** One ordered event stream per actual playback attempt; provider selection stays on the server. */
 internal class RemotePlaybackEvents(
     private val remote: RemoteConnection,
     private val input: PlaybackInput,

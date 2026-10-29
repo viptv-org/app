@@ -2,7 +2,6 @@ package org.viptv.app.connection
 
 import kotlinx.serialization.json.*
 
-/** One-time account recovery material. Intentionally not serializable or logged. */
 class RecoveryKit internal constructor(val codes: List<String>, val recovered: Boolean) {
     override fun toString() = "RecoveryKit(redacted)"
 }

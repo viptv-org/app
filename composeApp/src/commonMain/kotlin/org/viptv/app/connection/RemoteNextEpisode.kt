@@ -19,7 +19,6 @@ internal fun Card.metadataOriginFields(): JsonObject = buildJsonObject {
     }
 }
 
-/** Resolve a real next episode without starting playback or manufacturing progress. */
 internal suspend fun RemoteConnection.nextEpisode(profile: String, card: Card): NextEpisodeResult {
     if (card.identity.kind != "series" || card.identity.episode == null || card.parent_identity == null)
         return NextEpisodeResult(ContinuationStatus.UNAVAILABLE)

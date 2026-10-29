@@ -11,13 +11,10 @@ fun ApplicationController.refresh() = run {
     val profile = mutable.value.selectedProfile
     val device = local
     val result = device?.bootstrap(profile) ?: requireNotNull(connection).bootstrap()
-    // Keep the last usable Home until the replacement finishes. Publishing a
-    // prepared local plan first erased cached rows and cleared busy on failure.
     val refreshed = if (profile != null && result.selected == profile && device != null)
         result.copy(home = device.refreshHome(profile)) else result
     currentCoroutineContext().ensureActive()
     if (mutable.value.screen == Screen.Home || refreshed.selected != profile) accept(refreshed, busy = true)
-    // A replacement snapshot has fresh cursors, so no row keeps a stale page state.
     else {
         mutable.value = mutable.value.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap())
         adoptContinuation(refreshed.continuation)
@@ -25,13 +22,8 @@ fun ApplicationController.refresh() = run {
     }
 }
 
-/** A row stops appending here, above the engine's 200-card catalog page cap. */
 private const val HOME_ROW_LIMIT = 240
 
-/**
- * Page one Home row through its own cursor. Cards append in place: the revision,
- * focus, scroll position and every other row are untouched.
- */
 fun ApplicationController.homeRowPage(rowId: String) {
     val home = mutable.value.home ?: return
     val row = home.rows.find { it.id == rowId } ?: return
@@ -64,7 +56,6 @@ fun ApplicationController.homeRowPage(rowId: String) {
             val loaded = mutable.value.home ?: return@launch
             val target = loaded.rows.find { it.id == rowId } ?: return@launch
             val merged = (target.cards + page.cards).distinctBy(::cardLookupKey).take(HOME_ROW_LIMIT)
-            // A page that repeats cards must not re-arm the same cursor forever.
             val next = if (merged.size > target.cards.size) advancedCursor(page.next_cursor, cursor) else null
             mutable.value = mutable.value.copy(home = loaded.copy(rows = loaded.rows.map {
                 if (it.id == rowId) it.copy(cards = merged, next_cursor = next,
@@ -79,8 +70,6 @@ fun ApplicationController.homeRowPage(rowId: String) {
                     homeRowErrors = mutable.value.homeRowErrors + (rowId to "Could not load more titles. Try again."))
             }
         } finally {
-            // Clear the busy flag whenever this snapshot is still the one on screen,
-            // even if Home is no longer the visible screen.
             val state = mutable.value
             if (rowId in state.homeRowBusy && state.home?.scope?.owner() == homeScope)
                 mutable.value = state.copy(homeRowBusy = state.homeRowBusy - rowId)
@@ -88,7 +77,6 @@ fun ApplicationController.homeRowPage(rowId: String) {
     }
 }
 
-/** A cursor that does not move forward would page the same cards forever. */
 private fun advancedCursor(next: String?, current: String): String? {
     next ?: return null
     if (next == current) return null
@@ -126,14 +114,8 @@ fun ApplicationController.search(term: String) {
     }
 }
 
-/** Cards whose feed row is sparse get their billboard fields from one detail fetch. */
 private val summaryRequested = mutableSetOf<String>()
 
-/**
- * Continue Watching rows can arrive with neither a logo nor a real description;
- * the billboard then shows a bare title. Fetch the title once and remember the
- * enriched card; [ApplicationState.summaryCards] is what the billboard reads.
- */
 fun ApplicationController.enrichSummary(card: Card) {
     val sparse = card.logo == null || card.description.isNullOrBlank()
     if (!sparse || !summaryRequested.add(card.identity.id)) return
@@ -162,27 +144,12 @@ fun ApplicationController.open(card: Card) {
     }
 }
 
-/** A sparse meta (no art fields at all) must not wipe the art the catalog card
- * already had — the details hero/backdrop would render a black page. */
+// A sparse meta must not wipe the art the card already has: the details hero would render a black page.
 internal fun org.viptv.engine.wire.DetailSnapshot.withCardArt(card: Card): org.viptv.engine.wire.DetailSnapshot {
     val merged = item.copy(landscape = item.landscape ?: card.landscape, poster = item.poster ?: card.poster, logo = item.logo ?: card.logo)
     return if (merged == item) this else copy(item = merged)
 }
 
-/**
- * Play from a row without opening the title page (Continue Watching, a Home hero).
- * The source selector opens on the tap in its finding-sources state; the title's
- * Details never hold up that screen change (app#11). Back from it always goes to the
- * title's Details, whether or not they have arrived: the page loads from the tap's own
- * read and Back again leaves for the page the tap came from (app#140).
- *
- * An episode card that carries its metadata scope already says exactly what to look
- * for, so its discovery starts right away and the Details load beside it
- * ([loadSourceDetail]). Any other card needs its Details to pick the target: a movie
- * or series its title card, and an imported `library` episode the producer scope
- * (and ids) that the host's source lookup uses from Details. Its discovery starts
- * when the Details arrive, on the already open selector.
- */
 fun ApplicationController.playTitle(card: Card) {
     if (card.unnumberedEpisode()) {
         mutable.value = mutable.value.copy(error = UNNUMBERED_EPISODE)
@@ -190,17 +157,11 @@ fun ApplicationController.playTitle(card: Card) {
     }
     val navigation = navigationGeneration
     val before = mutable.value
-    // Keep the page that sources should return to, so Back does not use an older
-    // visit's return target.
     val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: before.detailReturnScreen
-    // Details already loaded for this title stay behind the selector until the fresh
-    // copy replaces them; another title's Details must not.
     val keptDetail = before.detail?.takeIf { sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
     releaseRemotePlayback()
     mutable.value = mutable.value.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null)
-    // Back from the selector opens this title's Details, arrived or not (app#140); a tap
-    // that found them already loaded needs nothing read for it.
     openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null })
     if (card.identity.episode != null && card.metadata_origin != null) {
         loadSourceDetail(card, navigation)
@@ -210,18 +171,10 @@ fun ApplicationController.playTitle(card: Card) {
     resolveSourceTarget(card, navigation)
 }
 
-/** The title's Details arrived for [card]: Back from sources returns to them, and sources are for [target]. */
 private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire.DetailSnapshot, card: Card, target: Card) {
     mutable.value = mutable.value.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target)
 }
 
-/**
- * The Details a play tap needs to pick its source target (a movie, a series, an imported
- * episode) are read beside the open selector, and they decide what to look for. Back while
- * they are still on their way opens the title's page, which this read fills in with no
- * second request (app#140); a failure shows the page's own error there. On the selector
- * they start the discovery in their scope.
- */
 private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Long) {
     cancelSourceDetail()
     val profile = mutable.value.selectedProfile ?: return
@@ -232,8 +185,6 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
         connection === remote && local === device && mutable.value.screen in listOf(Screen.Sources, Screen.Details) &&
         mutable.value.sourceTitle?.let(::cardLookupKey) == selection
     sourceDetailJob = scope.launch {
-        // A play tap retires the page request it interrupts, as [run] does, so work for the page
-        // the viewer left cannot write over the selector before the tap's own read lands.
         job?.let { retired -> retired.cancel(); retired.join() }
         val detail = try { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
         catch (error: CancellationException) { throw error }
@@ -244,21 +195,13 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
             return@launch
         }
         showSourceDetail(detail, card, target)
-        // The viewer went Back to the title's page: filling it in was all that was left.
         if (mutable.value.screen != Screen.Sources) return@launch
-        // The controller's run, not the scope function on this coroutine.
         this@resolveSourceTarget.run { discoverSources(target) }
     }
 }
 
-/** A pending Details read took too long to show the title it is for (app#140). */
 private const val DETAILS_TIMEOUT = "Your server took too long to show this title. Try again."
 
-/**
- * A play tap's Details read failed. The title's page, which Back may already have opened,
- * shows the failure and offers its Retry (app#140); the selector reports it only when its
- * sources were waiting on those Details ([onSelector]), and the player never does (app#10).
- */
 private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
     if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
     val state = mutable.value
@@ -266,15 +209,10 @@ private fun ApplicationController.resolveFailed(error: Exception, remote: Remote
     when {
         state.screen == Screen.Details -> mutable.value = state.copy(error = message, findingSources = false, busy = false)
         onSelector && state.screen == Screen.Sources -> mutable.value = state.copy(error = message, findingSources = false, busy = false)
-        // Only the title's page reports a read whose sources were found without it.
         state.playTapTitle != null -> mutable.value = state.copy(detailFailure = message)
     }
 }
 
-/**
- * Retry the title page a play tap opened when its Details failed to arrive (app#140). The
- * retry is the same read that Back kept, so a retried page lands where the first would have.
- */
 fun ApplicationController.retryDetails() {
     val card = mutable.value.playTapTitle ?: return
     if (mutable.value.screen != Screen.Details) return
@@ -284,17 +222,6 @@ fun ApplicationController.retryDetails() {
     else resolveSourceTarget(card, navigation)
 }
 
-/**
- * The Details of a scoped episode whose sources are already being found. They fill
- * in without blocking the selector. When they arrive, Back from sources returns to
- * the title's Details, and the player gets the season and the next episode as it does
- * from Details (app#10). Discovery keeps running unless the episode's own metadata
- * scope turned out stale. A failed read changes nothing on the selector: sources do not
- * need it, and the discovery request itself reports an unreachable host or an expired
- * session. The one place it does change something is the title's page, which Back may
- * already have opened in its loading state (app#140): the read fills it in, or ends that
- * loading state with the page's own error.
- */
 private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long) {
     cancelSourceDetail()
     val profile = mutable.value.selectedProfile ?: return
@@ -312,20 +239,15 @@ private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long)
         if (detail == null) { if (current()) resolveFailed(LocalFailure(DETAILS_TIMEOUT), remote, device, onSelector = false); return@launch }
         if (!current()) return@launch
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
-            // Without the target, the selector cannot discover; on the player the host already
-            // accepted this episode's scope for its sources.
             if (current()) resolveFailed(error, remote, device, onSelector = true)
             return@launch
         }
         showSourceDetail(detail, card, target)
         when (mutable.value.screen) {
-            // The episode's integration moved on: find its sources again in the title's scope.
             Screen.Sources -> if (card.metadata_origin != detail.item.metadata_origin) {
                 openSources(target, returnTo = Screen.Details, playTap = mutable.value.playTapTitle)
-                // The controller's run, not the scope function on this coroutine.
                 this@loadSourceDetail.run { discoverSources(target) }
             }
-            // Playback that started first gets its season and next episode now.
             Screen.Player -> { loadNextEpisode(); loadPlaybackSeason() }
             else -> Unit
         }
@@ -338,16 +260,12 @@ internal fun ApplicationController.cancelSourceDetail() {
 
 private const val UNNUMBERED_EPISODE = "Choose a numbered episode from this title’s details."
 
-/** An episode card without a playable episode number. */
 private fun Card.unnumberedEpisode() = identity.episode?.episode?.let { it <= 0L } == true
 
-/** Start the next playback from position zero instead of resuming saved progress. */
 fun ApplicationController.playTitleFromStart(card: Card) {
     restartRequested = true
     playTitle(card)
 }
-
-/** Resolve a linked identity through the server; presentation uses only its returned card. */
 
 fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
     beginDetails()
@@ -363,8 +281,7 @@ fun ApplicationController.chooseSource(card: Card) {
         mutable.value = mutable.value.copy(error = UNNUMBERED_EPISODE)
         return
     }
-    // Detail heroes pass the series card, whereas episode shelves pass a concrete
-    // episode. Never send a title-level series to stream providers as S0E0.
+    // A title-level series must never reach stream providers as S0E0.
     if (card.identity.kind == "series" && card.identity.episode == null) {
         val detail = mutable.value.detail?.takeIf { it.item.identity == card.identity && it.item.provider_id == card.provider_id && it.item.metadata_origin == card.metadata_origin }
         if (detail == null) { playTitle(card); return }
@@ -379,19 +296,12 @@ fun ApplicationController.chooseSource(card: Card) {
     run { discoverSources(card) }
 }
 
-/** Show the source selector for [card] in its finding-sources state; [playTap] is the title a play tap opened it for (app#140). */
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null) {
     mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
         playTapTitle = playTap, detailFailure = null)
 }
 
-/**
- * Find [card]'s sources inside the current [run] operation, ranking and grouping them
- * as providers answer ([ProgressiveSourceRanking]). Best match autoplay plays the first
- * Best matches row once discovery finishes; a failed ranking leaves the picker as on
- * Always ask.
- */
 private suspend fun ApplicationController.discoverSources(card: Card) {
     val operation = generation
     try {
@@ -407,7 +317,6 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
             val outcome = try {
                 device?.sources(profile, card, ranking::arrived) ?: SourcesOutcome(requireNotNull(remote).sources(card, ranking::arrived))
             } catch (deadline: TimeoutCancellationException) {
-                // Rows found before the provider ceiling still take their ranked places.
                 ranking.finish(); throw deadline
             }
             ranking.arrived(outcome.candidates)
@@ -423,7 +332,6 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
     } finally { if (generation == operation) mutable.value = mutable.value.copy(findingSources = false) }
 }
 
-/** Best match autoplay plays the first Best matches row; an empty Best matches group plays nothing (app#110). */
 internal fun RankedSources.autoplayTarget(): org.viptv.engine.wire.SourceCandidate? =
     groups.bestMatches.firstOrNull()?.let { id -> rows.firstOrNull { it.id == id } }
 
@@ -440,13 +348,6 @@ internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapsh
     } else detail.episodes.find {
         it.identity == card.identity && (card.metadata_origin == null || it.metadata_origin == card.metadata_origin)
     }) ?: if (delegated || unscopedEpisodeOf(card, detail.item)) {
-        // The host validates this exact episode against the complete metadata document
-        // before returning a page. An off-page episode keeps its raw selector and uses
-        // the actual producer, just like an episode present in the returned page.
-        // A Continue Watching row names its episode under the library rather than a
-        // metadata provider, and that episode is often past the first page. It takes
-        // the scope of its own parent's details the same way, so the player gets that
-        // title's episodes and next episode.
         card.copy(provider_id = detail.item.provider_id, metadata_origin = detail.item.metadata_origin,
             parent_identity = detail.item.identity)
     } else card
@@ -458,14 +359,12 @@ internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapsh
     }
 }
 
-/** An episode card without a metadata origin whose parent is exactly the title [item] describes. */
 private fun unscopedEpisodeOf(card: Card, item: Card): Boolean {
     val parent = card.parent_identity ?: return false
     return card.metadata_origin == null && card.identity.kind == "series" && item.identity.episode == null &&
         parent.kind == item.identity.kind && parent.id == item.identity.id && parent.episode == null
 }
 
-/** Presentation may follow an already host-verified public lookup, never infer an alias. */
 private fun publicMetadataTransition(expected: Card, actual: Card): Boolean {
     if (expected.metadata_origin?.provider_id != "stremio" || actual.metadata_origin?.provider_id != "stremio" ||
         actual.provider_id != actual.metadata_origin.connection_id) return false
@@ -505,15 +404,11 @@ private fun compatiblePublicIdentity(expected: MediaIdentity, actual: MediaIdent
 }
 
 internal fun ApplicationController.beginDetails() {
-    // The page is the viewer's own now: a play tap's pending Details belong to the selector's page (app#140).
     cancelSourceDetail()
     val previous = mutable.value
     val origin = previous.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: previous.detailReturnScreen
     val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
-    // Details is entered directly (not through navigate()), so record the
-    // browser-style history here too; otherwise the desktop Back chevron has
-    // nothing to pop on a first-level details page.
     val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
         else (previous.navBack + previous.screen).takeLast(32)
     mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,

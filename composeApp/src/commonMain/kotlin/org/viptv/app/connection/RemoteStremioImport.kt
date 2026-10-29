@@ -11,7 +11,6 @@ import kotlinx.serialization.json.*
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-/** IMP-001 import previews. Every response is validated before any of it is shown. */
 data class StremioAddon(val id: String, val name: String, val resources: List<String>, val status: String, val reason: String? = null)
 data class StremioReviewItem(val id: String, val name: String, val type: String, val favoriteAction: String,
     val progressAction: String, val status: String, val counts: Map<String, Int>, val selectable: Boolean,
@@ -25,33 +24,14 @@ data class StremioReview(override val previewId: String, override val profileId:
     val summary: Map<String, Int>, val items: List<StremioReviewItem>, val addonsToAdd: Int, val revision: Long) : StremioPreview
 data class StremioCompletion(val profileId: String, val summary: Map<String, Int>, val alreadyCompleted: Boolean = false,
     val addonsAdded: Int? = null, val excludedItems: Int? = null)
-/**
- * The server's background run that gives imported titles their Details card: whether it is active,
- * titles looked up so far, titles it has found to fill (0 until it has listed them) and, when the
- * server reports it, how many looked-up titles actually gained a card.
- */
 data class StremioDetailsStatus(val running: Boolean, val done: Int, val total: Int, val filled: Int? = null)
 
-/**
- * Server refusal. Only the fixed `error_code` and validated add-on handles from the JSON body
- * survive, whatever the HTTP status (the backend may use 424 for add-on/source failures).
- */
 class StremioImportFailure(val status: Int, val code: String?, val failedAddons: List<String> = emptyList(),
-    /** Optional fixed category per failed add-on handle (`addon_unreachable`, …); unknown codes are kept as codes only. */
     val failedReasons: Map<String, String> = emptyMap()) : Exception("The import request was refused.")
-/** "Invalid review", "Invalid add-ons", "Replaced review" or "Invalid completion". */
 class StremioInvalidResponse(kind: String) : Exception(kind)
-/**
- * No usable import answer reached the client: a client timeout, a network failure, or a gateway
- * page (Cloudflare 502/524 HTML or text) instead of the server's JSON. During apply the outcome is unknown.
- */
 class StremioTransportFailure(val timedOut: Boolean) : Exception(if (timedOut) "The import request timed out." else "The server could not be reached.")
 
-/**
- * The server may verify metadata for ~34 s, remap through Simkl for ~25 s and back up before
- * applying; Cloudflare cuts origin requests at ~100 s. Only these requests get longer limits;
- * discard and every other endpoint keep the shared 15 s transport timeouts.
- */
+// The server can verify metadata for ~34s and remap for ~25s, and Cloudflare cuts origin requests at ~100s: only these requests get longer limits.
 internal data class StremioImportTimeouts(val preview: Long = 60_000, val review: Long = 95_000, val apply: Long = 95_000)
 
 internal val stremioPreviewKeys = listOf("source_items", "favorites_to_add", "progress_to_add", "progress_to_update",
@@ -65,14 +45,12 @@ internal interface StremioImportTransport {
     suspend fun review(profile: String, preview: String, addons: List<String>, expectedRevision: Long): StremioReview
     suspend fun apply(profile: String, preview: String, excluded: List<String>, revision: Long): StremioCompletion
     suspend fun discard(profile: String, preview: String)
-    /** Null when the server predates title-details progress. */
     suspend fun details(profile: String): StremioDetailsStatus? = null
 }
 
 @OptIn(ExperimentalTime::class)
 internal fun epochMillis(): Long = Clock.System.now().toEpochMilliseconds()
 
-/** One client for browser account sessions and native device sessions; the server decides add-on authority. */
 internal class RemoteStremioImport(private val remote: RemoteConnection, private val now: () -> Long = ::epochMillis,
     private val timeouts: StremioImportTimeouts = StremioImportTimeouts()) : StremioImportTransport {
     private fun root(profile: String) = "/api/profiles/${profile.encodeURLPathPart()}/imports/stremio"
@@ -105,7 +83,6 @@ internal class RemoteStremioImport(private val remote: RemoteConnection, private
         send("${root(profile)}/${preview.encodeURLPathPart()}", HttpMethod.Delete, null, review = false, timeout = null)
     }
 
-    /** One in-memory counter read; it never starts work on the server. */
     override suspend fun details(profile: String): StremioDetailsStatus? {
         val (status, text) = remote.exchange("/api/profiles/${profile.encodeURLPathPart()}/library/details", HttpMethod.Get)
         if (status == 404) return null
@@ -117,7 +94,6 @@ internal class RemoteStremioImport(private val remote: RemoteConnection, private
     private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, review: Boolean, timeout: Long?): JsonElement? {
         val (status, text) = try { remote.exchange(path, method, body, timeout) }
         catch (error: CancellationException) {
-            // Our own cancellation propagates; a request-timeout cancellation inside the client does not.
             currentCoroutineContext().ensureActive()
             if (!error.isTimeout()) throw error
             throw StremioTransportFailure(true)
@@ -138,7 +114,6 @@ internal class RemoteStremioImport(private val remote: RemoteConnection, private
 }
 
 private val timeoutStatuses = setOf(408, 504, 524)
-/** Gateway and proxy failures that carry no import JSON (Cloudflare replaces 502 bodies with its own page). */
 private val gatewayStatuses = timeoutStatuses + setOf(502, 503, 520, 521, 522, 523, 525, 526, 527, 530)
 private fun Throwable.isTimeout(): Boolean = this is HttpRequestTimeoutException || this is SocketTimeoutException ||
     (this !is ConnectTimeoutException && cause?.let { it !== this && it.isTimeout() } == true)
@@ -155,7 +130,6 @@ private fun safeName(value: String?) = value != null && value.isNotBlank() && va
 private fun safeHandles(value: JsonElement?): List<String> = (value as? JsonArray)?.takeIf { it.size <= 100 }
     ?.mapNotNull { it.text()?.takeIf(::stremioToken) }?.distinct().orEmpty()
 private val reasonShape = Regex("^[a-z][a-z0-9_]{0,63}$")
-/** Only code-shaped reasons for handles that were actually reported as failed. */
 private fun safeReasons(value: JsonElement?, failed: List<String>): Map<String, String> = (value as? JsonObject)
     ?.filterKeys { it in failed }?.mapNotNull { (id, reason) -> reason.text()?.takeIf(reasonShape::matches)?.let { id to it } }?.toMap().orEmpty()
 private fun counts(value: JsonElement?, keys: List<String>): Map<String, Int>? {

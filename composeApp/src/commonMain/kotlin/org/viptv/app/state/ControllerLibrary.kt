@@ -8,8 +8,7 @@ fun ApplicationController.toggleFavorite(card: Card) = run {
     libraryHydration?.cancel()
     libraryHydration?.join()
     if (mutable.value.favoriteKeys == null || card.metadata_origin != null && mutable.value.libraryMembership == null) loadLibrary()
-    // Respect the action shown to the user. A previously unverified catalog
-    // alias becoming known must not turn an Add action into a removal.
+    // A catalog alias that becomes known must not turn a shown Add action into a removal.
     val saved = mutable.value.isSaved(card)
     val favorite = if (saved) card.parent_identity?.let { card.copy(identity = it, parent_identity = null) } ?: card
         else if (card.metadata_origin != null || card.parent_identity != null || card.identity.episode != null)
@@ -57,7 +56,6 @@ internal fun ApplicationController.updateLibrary(cards: List<Card>, identities: 
     mutable.value = mutable.value.copy(library = ordered, home = home, favoriteKeys = (membership?.identities ?: identities).map { it.kind to it.id }.toSet(), libraryMembership = membership)
 }
 
-/** Upgrade current previews from the host response, never saved/history selectors. */
 private fun ApplicationController.adoptFavoriteAssertions(authoritative: Card) {
     if (authoritative.metadata_origin == null) return
     fun adopt(card: Card): Card = if (card.metadata_origin == authoritative.metadata_origin &&

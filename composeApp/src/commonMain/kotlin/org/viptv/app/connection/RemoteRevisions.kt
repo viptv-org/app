@@ -5,7 +5,6 @@ import io.ktor.http.encodeURLPathPart
 import kotlinx.serialization.json.*
 import org.viptv.app.state.Revisions
 
-/** One cheap DB-only read of the profile's change tokens. Null when the server predates them. */
 internal suspend fun RemoteConnection.revisions(profile: String): Revisions? {
     val (status, body) = exchange("/api/profiles/${profile.encodeURLPathPart()}/revisions", HttpMethod.Get)
     if (status == 404) return null
