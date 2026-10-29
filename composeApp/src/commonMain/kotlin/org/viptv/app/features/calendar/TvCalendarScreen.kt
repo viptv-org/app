@@ -42,7 +42,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     val rows = rememberLazyListState()
     LaunchedEffect(activeDay) {
         focusedId = null
-        rows.scrollToItem(0)
+        // scrollToItem remeasures now and throws while this frame's composition is still applying.
+        rows.requestScrollToItem(0)
     }
     BoxWithConstraints(Modifier.fillMaxSize().focusProperties { onEnter = { if (days.isNotEmpty()) date.requestFocus() } }.focusGroup()) {
         val scale = maxWidth / 1920.dp
