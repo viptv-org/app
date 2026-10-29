@@ -24,14 +24,12 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 
-/** The end panel. With [autoplay] the Next action counts down and plays at 0; any viewer action stops it (app#65). */
 @Composable
 internal fun PhoneNextEpisode(next: Card, play: () -> Unit, credits: () -> Unit, insets: WindowInsets,
     autoplay: Boolean = false, reduceMotion: Boolean = false) {
     val initial = remember { FocusRequester() }
     val countdown = rememberNextEpisodeCountdown(autoplay, play)
     Popup(onDismissRequest = credits, properties = PopupProperties(focusable = true)) {
-        // Escape on desktop/web dismisses it like Back, rather than leaving the player underneath.
         BoxWithConstraints(Modifier.fillMaxSize().cancelsCountdown(countdown)
             .onPreviewKeyEvent { it.key == Key.Escape && it.type == KeyEventType.KeyDown && run { credits(); true } }
             .background(Color.Black.copy(alpha = .35f)).windowInsetsPadding(insets)) {

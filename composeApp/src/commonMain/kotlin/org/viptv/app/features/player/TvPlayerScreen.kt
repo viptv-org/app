@@ -31,7 +31,6 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     previewFrame: String? = null, scene: TvPlayerScene = TvPlayerScene.Controls, initialFacts: List<PlayerFact> = emptyList(),
     externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
     playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
-    /** What shows where the video does not draw, as on the other players; black on every TV build. */
     canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
@@ -44,7 +43,6 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.back(latestClose)) scope.launch {
             withFrameNanos { }
             if (state.visible && !state.showTracks && !state.showNext && !state.showEpisodes) {
-                // The timeline is disabled for live content; never focus it there.
                 val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
                 if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.requestFocus() else audio.requestFocus()
             } else if (!state.showTracks && !state.showNext && !state.showEpisodes) root.requestFocus()
@@ -52,8 +50,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         Unit
     }
     DisposableEffect(state) { backChanged(back); onDispose { backChanged(null) } }
-    // A stream whose clock advances without ever presenting a frame is a black
-    // screen this TV cannot decode; surface it instead of playing nothing.
+    // A stream whose clock advances without a presented frame is a black screen this TV cannot decode; surface it instead of playing nothing.
     LaunchedEffect(state) { while (true) { delay(1000); state.checkFirstFrame() } }
     LaunchedEffect(externalFacts, state) { externalFacts.collect(state::observe) }
     LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, state.failed) {
@@ -65,7 +62,6 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     val skipActive = extras.skip?.let { state.position in it.startMillis until it.endMillis } == true && !state.visible
     LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive) {
         if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes) {
-            // The timeline is disabled for live content; never focus it there.
             val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
             if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.requestFocus() else audio.requestFocus()
         }
@@ -96,7 +92,6 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
     }.focusable()) {
         val scale = maxWidth / 1920.dp
-        // The video keeps its full frame, also behind the next-episode panel at the end.
         Box(Modifier.fillMaxSize()) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), {
@@ -106,9 +101,6 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.showNext) Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = .35f),
             .45f to Color.Black.copy(alpha = .55f), 1f to Color.Black.copy(alpha = .82f))))
         when {
-            // `undecodable` is the "clock runs, no picture" case: the TV opened a
-            // decoder it cannot display (unsupported Dolby Vision profile). Saying so
-            // is the only honest state; a black screen with a moving bar is not.
             state.failed || state.undecodable -> TvPlayerFailure(extras, state.position,
                 if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error,
                 scale, retry, chooseSources, close)

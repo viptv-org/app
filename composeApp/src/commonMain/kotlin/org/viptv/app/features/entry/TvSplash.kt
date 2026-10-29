@@ -33,8 +33,6 @@ internal fun TvSplash(changeConnection: (() -> Unit)? = null) {
         }
         TvStartupProgress(scale, Modifier.align(Alignment.TopCenter).padding(top = 600.dp * scale))
         if (changeConnection != null) {
-            // Keep safe startup usable while secure storage/auth/bootstrap are
-            // pending. Neither action nor status waits for the brand animation.
             val first = remember { FocusRequester() }
             var placed by remember { mutableStateOf(false) }
             TvRequestedFocus(first, placed, enabled = placed)

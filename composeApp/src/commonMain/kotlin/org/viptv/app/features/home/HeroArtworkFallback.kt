@@ -10,12 +10,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import org.viptv.app.theme.Palette
 
-/**
- * NAV-10: a hero must never render art-less. When a title has neither landscape
- * nor poster artwork, draw a deliberate branded backdrop (soft accent glow over
- * the raised surface) so the copy and buttons sit on a composed image instead of
- * a flat black rectangle.
- */
 @Composable
 internal fun HeroArtworkFallback(modifier: Modifier) {
     Box(modifier.background(Brush.verticalGradient(listOf(Palette.raised, Palette.background)))) {

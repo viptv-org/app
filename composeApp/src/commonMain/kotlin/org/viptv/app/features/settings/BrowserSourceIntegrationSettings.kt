@@ -36,11 +36,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.TextButton
 
-/**
- * W3SetSources: "Where movies, series and live channels come from." One card per
- * integration (icon tile, name, role, status, saved detail, actions) plus the
- * footer note; an integration the connection cannot use is dimmed, not hidden.
- */
 @Composable
 internal fun BrowserSourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
     retry: () -> Unit, profileName: String?, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit) {
@@ -142,14 +137,12 @@ private fun BrowserSourceAction(label: String, primary: Boolean, enabled: Boolea
     }
 }
 
-/** Role copy from the board, keyed by plugin (same convention as the TV page). */
 private fun browserSourceRole(pluginId: String): String = when {
     pluginId.contains("xtream", true) -> "Live channels and guide"
     pluginId.contains("m3u", true) || pluginId.contains("playlist", true) -> "Live channels from a playlist"
     else -> "Movies and series"
 }
 
-/** The saved/needed detail line: field names when unset, a summary when set. */
 private fun browserSourceDetail(schema: SourceIntegrationSchema): String {
     if (schema.connection_id != null) {
         val fields = schema.credential_fields.size.takeIf { it > 0 } ?: return "Saved for this profile"

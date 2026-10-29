@@ -39,13 +39,6 @@ internal fun TvProfileItem(name: String, locked: Boolean, size: Dp, scale: Float
     }
 }
 
-/**
- * Tv3Profiles focuses a tile with the board's *inset* ring, not the outline rows
- * use: `inset 0 0 0 4px #FFFFFF, inset 0 0 0 5px rgba(0,0,0,0.35)`. The 4 px white
- * ring sits on the tile edge and the 1 px dark hairline just inside it keeps the
- * ring readable over a bright avatar. Nothing is drawn outside the tile, so a
- * focused 200 px tile is still 200 px wide.
- */
 private fun Modifier.tvProfileTileRing(focused: Boolean, radius: Dp, scale: Float = 1f,
     width: Dp = 4.dp): Modifier = if (!focused) this else drawWithContent {
     drawContent()

@@ -37,8 +37,6 @@ internal fun MobileProfiles(
 ) {
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().height(62.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            // NAV-22: a picker opened from inside a session needs a visible way
-            // back to the content; the entry-time picker has none.
             back?.let { goBack ->
                 IconButton(onClick = goBack, modifier = Modifier.size(44.dp)) {
                     Icon(Lucide.ChevronLeft, "Back", Modifier.size(24.dp))

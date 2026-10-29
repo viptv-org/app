@@ -53,12 +53,6 @@ internal fun RecoveryCodesScreen(kit: RecoveryKit?, busy: Boolean, error: String
 }
 
 
-/**
- * TVU-15: no board exists for recovery codes on TV. This keeps the Tv3SignIn
- * idiom (96 px inset, 44/700 heading, 24 #B6B4AF body, bordered code card) and
- * gives the remote one focused Done action; the checkbox is replaced by a real
- * "Saved it" step so the action is reachable with the D-pad.
- */
 @Composable
 private fun TvRecoveryCodes(kit: RecoveryKit?, busy: Boolean, error: String?, saved: Boolean,
     setSaved: (Boolean) -> Unit, proceed: () -> Unit, signIn: () -> Unit) {

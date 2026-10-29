@@ -6,7 +6,6 @@ import org.viptv.app.player.*
 import kotlin.time.TimeSource
 import kotlin.time.Duration.Companion.seconds
 
-/** View state and remote interaction; playback position changes only through player observations. */
 internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, scene: TvPlayerScene) {
     val live = input?.live == true
     val commands = MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16)
@@ -23,7 +22,6 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var showTracks by mutableStateOf(scene == TvPlayerScene.Tracks)
     var showNext by mutableStateOf(scene == TvPlayerScene.Next)
     var showEpisodes by mutableStateOf(false)
-    /** The player reports the end of the media; the next-episode panel opens once per end. */
     var ended by mutableStateOf(false)
     var endHandled by mutableStateOf(false)
     var scrub by mutableStateOf<Long?>(if (scene == TvPlayerScene.Scrub) 1300000 else null)
@@ -33,25 +31,16 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var dismissTracks: (() -> Unit)? = null
     var interaction by mutableIntStateOf(0)
     var controlError by mutableStateOf<String?>(null)
-    /**
-     * Position advances but no frame has ever been presented: the device opened a
-     * decoder it cannot actually display (a Dolby Vision profile the TV's HEVC
-     * decoder reports as unsupported, for instance). Watching a black picture with
-     * a moving timeline is worse than saying so.
-     */
     var undecodable by mutableStateOf(false)
     private var lastPosition = position
     private var advancingTicks = 0
     init { initial.forEach(::observe) }
 
-    /** Called from a 1 s tick while the player is on screen. */
     fun checkFirstFrame() {
         if (hasPresented || failed || undecodable) return
         val moved = position != lastPosition
         lastPosition = position
-        // Audio/clock advancing for 6 consecutive ticks without a single presented
-        // frame means the video path is not producing pictures. A stalled clock is
-        // a slow start (a torrent waiting on peers), not an undecodable stream.
+        // Six ticks of advancing audio with no presented frame mean no pictures; a stalled clock is a slow start, not an undecodable stream.
         advancingTicks = if (moved && !buffering) advancingTicks + 1 else 0
         if (advancingTicks >= 6) undecodable = true
     }
@@ -77,9 +66,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
         }
     }
-    /** Close the next-episode panel; at the end it stays closed until the media ends again. */
     fun keepWatching() { showNext = false; visible = false; endHandled = true }
-    /** At the end of a series episode with a known next one, offer it once; a withdrawn next closes it. */
     fun offerNext(available: Boolean) {
         if (showNext && !available) showNext = false
         else if (ended && !endHandled && available && !live && !failed && !undecodable && !showNext) {

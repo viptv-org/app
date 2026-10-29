@@ -32,15 +32,12 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
         fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary) }
     if (state.scrub == null) Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 96.dp * scale, end = 96.dp * scale, bottom = 178.dp * scale),
         horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-        // Live content disables the timeline; pills must not target a disabled
-        // control, so they drop to the audio pill instead.
         val dur = state.duration
         val belowTimeline = if (state.live || dur == null || dur <= 0) audio else timeline
         if (extras.episodes.isNotEmpty() && playEpisode != null) TvPlayerPill("Episodes", Lucide.List, scale, belowTimeline) { state.showEpisodes = true }
         TvPlayerPill("Audio & subtitles", Lucide.Captions, scale, belowTimeline, audio) { state.showTracks = true; state.interaction++ }
         if (chooseSources != null) TvPlayerPill("Source" + (extras.sourceQuality?.let { " · $it" } ?: ""), Lucide.SlidersHorizontal, scale, belowTimeline, activate = chooseSources)
         Spacer(Modifier.weight(1f))
-        // Plays straight away; the next-episode panel opens only at the end.
         extras.nextEpisode?.let { next -> if (playEpisode != null) TvPlayerPill("Next episode", Lucide.SkipForward, scale, belowTimeline) { playEpisode(next) } }
     }
     TvPlaybackTimeline(state, extras, scale, timeline, audio, previewCommand, state.live || title?.identity?.kind in listOf("channel", "tv") && state.duration == null)

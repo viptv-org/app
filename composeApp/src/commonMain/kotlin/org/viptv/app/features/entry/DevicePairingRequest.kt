@@ -5,7 +5,6 @@ import androidx.compose.runtime.*
 import org.viptv.app.connection.validatedRemoteOrigin
 import org.viptv.app.components.TextButton
 
-/** One challenge lifecycle across native layouts; changing routes cancels polling. */
 @Composable
 internal fun DevicePairingRequest(server: String, serverChanged: (String) -> Unit,
     start: (String) -> Unit, cancel: () -> Unit, back: () -> Unit,

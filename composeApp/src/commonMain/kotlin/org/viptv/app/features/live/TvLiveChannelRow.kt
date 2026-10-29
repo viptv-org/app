@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
-/** Remote-sized fallback when a channel feed has no usable guide window. */
 @Composable
 internal fun TvLiveChannelRow(channel: LiveChannel, now: Int?, scale: Float, requester: FocusRequester?,
     up: FocusRequester?, focus: () -> Unit, watch: () -> Unit) {

@@ -31,5 +31,4 @@ internal fun TvSettingsPreferences.profilePreferences(base: ProfilePreferences =
         subtitleBackgroundColor.takeUnless { it == "#00000000" } ?: "#B3000000",
 ).let { if (it.subtitleMode == subtitleMode) it else it.withSubtitleMode(subtitleMode) }
 
-/** Display name of a TV audio choice as a language tag, for subtitle mode's `When audio isn’t …`; null is Original language. */
 internal fun TvSettingsPreferences.audioLanguageTag(): String? = languages[audioLanguage] ?: audioLanguage.takeUnless { it == "Original language" || it == "Original" }

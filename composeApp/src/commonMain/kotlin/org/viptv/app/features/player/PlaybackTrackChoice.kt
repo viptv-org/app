@@ -20,9 +20,6 @@ import org.viptv.app.components.pointerSelectable
 @Composable
 internal fun PlaybackTrackChoice(label: String, selected: Boolean, choose: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
-    // M3PlayerAudio: the current track is marked by a 0.1 white fill, a 16 dp
-    // check and bold text (NAV-07). Focus only adds the ring and never changes
-    // the row's shape or size (NAV-08).
     Row(Modifier.fillMaxWidth().height(40.dp).onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 8.dp, width = 2.dp)
         .background(if (selected) Color.White.copy(alpha = .1f) else Color.Transparent, RoundedCornerShape(8.dp))

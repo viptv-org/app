@@ -34,7 +34,6 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
     continuing: List<Card> = emptyList(), paging: Boolean = true) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
-    // The hero plays the episode the list lands on (app#49).
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail)
     val selected = seasonChoice.selected(seasons, resume)
@@ -46,11 +45,9 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
         }
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
         val episodesList = rememberLazyListState()
-        // The episode pane lists the season picker, then the season's episodes.
         LandOnResume(seasonChoice, episodesList, resume.indexIn(selected?.episodes)?.plus(1), selected)
         val paneWidth = maxWidth
         Row(Modifier.fillMaxSize()) {
-            // T3Title: fixed 560 px info pane at board width, proportional when narrower.
             Box(Modifier.fillMaxHeight().then(if (selected == null) Modifier.fillMaxWidth()
                 else Modifier.width(if (paneWidth >= 1100.dp) 560.dp else paneWidth * .5f))) {
                 detail?.item?.let { card ->

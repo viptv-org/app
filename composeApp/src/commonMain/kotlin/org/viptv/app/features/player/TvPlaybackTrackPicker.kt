@@ -30,7 +30,6 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: Float, send: (PlayerCommand) -> Unit,
     close: () -> Unit, initialSubtitle: Int? = null, dismissChanged: ((() -> Unit)?) -> Unit,
-    /** The full Subtitles & audio settings; the drawer ends with a row that opens them (app#44). */
     openSettings: (() -> Unit)? = null) {
     val initial = remember { FocusRequester() }
     val subtitleFocus = tracks.subtitles.find { it.id == initialSubtitle } ?: tracks.subtitles.find { it.selected }
@@ -63,7 +62,6 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                         }
                     }
                 }
-                // Down from any column's last row reaches it.
                 if (openSettings != null) TvAction(Modifier.width(520.dp * scale).height(64.dp * scale), scale, activate = openSettings,
                     background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
                     Box(Modifier.width(40.dp * scale)) { Icon(Lucide.Settings, null, Modifier.size(24.dp * scale), tint) }

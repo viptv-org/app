@@ -17,8 +17,6 @@ import org.viptv.app.theme.Palette
 internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences?, scale: Float, initial: FocusRequester,
     sidebar: FocusRequester, change: (TvSettingsPreferences) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit,
     unavailable: () -> Unit, actualPreferencesOnly: Boolean = false, devicePlayback: DevicePlaybackState? = null) {
-    // Only rows the server stores are shown on a real connection; the placeholder
-    // toggles stay in UI previews. Focus starts on the first visible row.
     val rows = tvPlaybackRows(actualPreferencesOnly, deviceRows = devicePlayback != null)
     val deviceHeight = remember { deviceMaxVideoHeight() }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
@@ -50,6 +48,5 @@ internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences?, sc
     }
 }
 
-/** `Auto` names this device's own resolution when known; fixed caps show as chosen. */
 internal fun tvQualityLabel(quality: String, deviceHeight: Int?): String =
     if (quality == "Auto" || quality == "Best available") autoQualityLabel(deviceHeight) else quality

@@ -20,7 +20,6 @@ import org.viptv.app.theme.Palette
 internal fun TvLiveFilters(categories: List<String>, selected: String, choose: (String) -> Unit, scale: Float,
     filter: FocusRequester, first: FocusRequester?, modifier: Modifier, labels: Map<String, String> = emptyMap(), favoritesSelected: Boolean = false, favorites: (() -> Unit)? = null,
     sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null, busy: Boolean = false) {
-    // Room for the pills' outside ring, which the scroll viewport would clip.
     val reach = tvRingReach(scale)
     org.viptv.app.components.TvFocusScroll(horizontal = true, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = reach)) { Row(modifier.tvRingRoom(reach, vertical = false).horizontalScroll(rememberScrollState()).padding(horizontal = reach)
         .focusProperties { onEnter = { filter.requestFocus() } }.focusGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {

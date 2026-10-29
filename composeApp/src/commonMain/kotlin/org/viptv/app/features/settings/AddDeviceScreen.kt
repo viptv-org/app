@@ -14,11 +14,6 @@ import org.viptv.app.features.entry.*
 
 private enum class AddDeviceStep { Code, Confirm, Done, Denied }
 
-/**
- * Signs in another device (a TV, usually) from an already signed-in app: enter the code it shows,
- * check it, approve. This replaces sending the user to the server's web page, where they may not be
- * signed in. Approval is always explicit and goes through the account this app already holds.
- */
 @Composable
 internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedCode: String? = null, linkConsumed: () -> Unit = {}) {
     val approval = remember(remote) { RemoteDeviceApproval(remote) }
@@ -52,7 +47,6 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
     }
     fun startOver() { code = ""; device = null; error = null; step = AddDeviceStep.Code }
 
-    // The TV's QR code opened the app with its code: skip typing and check it straight away.
     LaunchedEffect(linkedCode) {
         if (linkedCode != null) { code = linkedCode; device = null; error = null; step = AddDeviceStep.Code; linkConsumed(); lookup() }
     }
@@ -107,7 +101,6 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
                         else -> "Could not unlock parental controls. Try again."
                     }
                 } finally { busy = false }
-                // A successful PIN resumes the action the user already asked for.
                 if (unlocked) { val retry = parentAction; parentAction = null; retry?.invoke() }
             }
         })

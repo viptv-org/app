@@ -24,13 +24,9 @@ import org.viptv.app.components.IconButton
 
 @Composable
 fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null,
-    /** Home's Continue Watching cards: the one for this series names the episode Details open on (app#40). */
     continuing: List<Card> = emptyList(),
-    /** False while the page is composed behind the source selector; it pages again once it is shown. */
     paging: Boolean = true,
-    /** Back from a play tap's selector opened this page, whose content the viewer has not seen yet (app#140). */
     playTap: Boolean = false,
-    /** Reads the title again after a play tap's Details failed; absent when there is nothing to read (app#140). */
     retry: (() -> Unit)? = null) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
@@ -39,7 +35,6 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
     if (detail == null && !busy) {
-        // NAV-04: an initial-load failure used to compose nothing at all.
         DetailUnavailable(error, back, retry)
         return
     }
@@ -47,7 +42,6 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
-    // The hero plays the episode the list lands on (app#49).
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail)
     var section by remember(detail?.item?.identity) { mutableStateOf(
@@ -63,12 +57,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val gutter = if (phone) 16.dp else 40.dp
         val listState = rememberLazyListState()
         val desktop = !phone && !tablet
-        // The continued episode's place in the list below: progress, error, hero,
-        // section tabs (not on desktop), season picker, then the season's episodes.
         val episodesShown = detail != null && (!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())
         val resumeIndex = resume.takeIf { episodesShown }.indexIn(selected?.episodes)?.let { episode ->
             (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 + (if (desktop) 0 else 1) + 1 + episode }
-        // The phone's back bar floats over the list's top edge.
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
         val scrolled by remember(phone) { derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
@@ -78,8 +69,6 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             error?.let { item { Text(it, Modifier.padding(horizontal = gutter, vertical = if (phone) 64.dp else 0.dp), color = Palette.danger) } }
             detail?.let { value ->
-                // Desktop chrome renders its own back/forward in the title bar;
-                // phone/tablet keep the in-content affordances.
                 item {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode)
                     else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
@@ -134,7 +123,6 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
 }
 
 
-/** The partially watched episode whose coordinates, runtime and progress drive the hero Resume pill. */
 internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
     if (detail.item.identity.kind != "series") return null
     return detail.episodes.firstOrNull {
@@ -150,10 +138,6 @@ internal fun remainingMinutesLabel(card: Card): String? {
     return if (remaining > 0) "${remaining}m left" else "Almost done"
 }
 
-/**
- * Real resume state for the TV details hero: the episode it plays (the one the shelf lands
- * on, app#49), its label and time left. [continuing] is Home's Continue Watching cards.
- */
 internal fun detailExtras(detail: DetailSnapshot?, continuing: List<Card>): TvDetailExtras {
     if (detail == null) return TvDetailExtras()
     val resume = detailResume(detail, continuing).heroEpisode(detail) ?: detail.item.takeIf(::resuming)

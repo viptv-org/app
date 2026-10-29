@@ -43,13 +43,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerSelectable
 import org.viptv.app.components.TextButton
 
-/**
- * Full-catalog avatar picker (design ADM-004): world chips in catalog order, then
- * one page of the world's avatars with Previous/Next that wrap within the world.
- * Picking an avatar saves it at once. A locally locked profile first needs its
- * current PIN. On TV the grid takes D-pad focus and the caller restores focus
- * to "Change avatar" when this closes.
- */
 @Composable
 internal fun AvatarPicker(profile: Profile?, busy: Boolean, layout: AvatarPickerLayout, dismiss: () -> Unit,
     choose: (AvatarPick, String) -> Unit, pinAvailable: Boolean = true) {
@@ -81,14 +74,12 @@ private fun ColumnScope.AvatarCatalogPage(catalog: AvatarCatalog, profile: Profi
     var style by remember { mutableStateOf(saved?.style ?: catalog.worlds.first().style) }
     val world = catalog.world(style) ?: catalog.worlds.first()
     val paging = AvatarPaging(world.count, layout.pageSize)
-    // Reopening shows the page holding the saved choice; another world starts on its first page.
     var page by remember { mutableStateOf(saved?.let { paging.pageOf(it.choice) } ?: 0) }
     var pin by remember(profile?.id) { mutableStateOf("") }
     val needsPin = profile.requiresLocalPin(pinAvailable)
     val enabled = !busy && (!needsPin || pin.length in 4..8)
     val tiles = remember { List(layout.pageSize) { FocusRequester() } }
     val pinField = remember { FocusRequester() }
-    // On TV focus starts on the saved avatar, or on the PIN field while the tiles wait for it.
     var focusTile by remember { mutableStateOf(if (layout == AvatarPickerLayout.Television && !needsPin) saved?.let { (it.choice - 1) % layout.pageSize } ?: 0 else null) }
     if (layout == AvatarPickerLayout.Television && needsPin) LaunchedEffect(Unit) {
         repeat(60) { if (runCatching { pinField.requestFocus() }.getOrDefault(false)) return@LaunchedEffect; withFrameNanos { } }
@@ -100,7 +91,6 @@ private fun ColumnScope.AvatarCatalogPage(catalog: AvatarCatalog, profile: Profi
             withFrameNanos { }
         }
     }
-    // Paging with the D-pad moves focus to the first avatar of the new page.
     val turn: (Int) -> Unit = { next -> page = next; if (layout == AvatarPickerLayout.Television) focusTile = 0 }
 
     Text("${catalog.total} avatars. Pick a world, then pick your character.", Modifier.padding(top = metrics.gap / 2),
@@ -134,7 +124,6 @@ private fun WorldChips(worlds: List<AvatarWorld>, selected: String, layout: Avat
     select: (String) -> Unit) {
     val padding = Modifier.padding(vertical = metrics.gap)
     if (layout != AvatarPickerLayout.Desktop) {
-        // Phones and TVs scroll the chips sideways (one D-pad row) and keep the chosen world in view.
         val list = rememberLazyListState()
         val index = worlds.indexOfFirst { it.style == selected }.coerceAtLeast(0)
         LaunchedEffect(index) { list.animateScrollToItem(index) }
@@ -191,7 +180,6 @@ private fun PickerButton(label: String, layout: AvatarPickerLayout, metrics: Ava
     } else TextButton(activate, Modifier.heightIn(min = 44.dp), enabled = enabled) { Text(label, fontSize = metrics.body) }
 }
 
-/** Sizes of one picker layout; TV sizes are board pixels at 1920 wide, scaled to the window. */
 private data class AvatarPickerMetrics(val scale: Float, val panel: Dp, val padding: Dp, val radius: Dp, val gap: Dp,
     val tile: Dp, val tileRadius: Dp, val chip: Dp, val title: androidx.compose.ui.unit.TextUnit, val body: androidx.compose.ui.unit.TextUnit) {
     companion object {
@@ -212,17 +200,14 @@ private data class AvatarPickerMetrics(val scale: Float, val panel: Dp, val padd
     }
 }
 
-/** Picker layouts: three columns of 15 on phones, six columns of 18 on TV and desktop. */
 internal enum class AvatarPickerLayout(val columns: Int, val pageSize: Int) {
     Phone(3, 15), Desktop(6, 18), Television(6, 18)
 }
 
-/** Paging over a world of [count] avatars, [size] per page, wrapping at both ends. */
 internal data class AvatarPaging(val count: Int, val size: Int) {
     val pages = maxOf(1, (count + size - 1) / size)
     fun next(page: Int) = (page + 1) % pages
     fun previous(page: Int) = (page - 1 + pages) % pages
-    /** 1-based choices shown on [page]. */
     fun choices(page: Int): IntRange = (page * size + 1)..minOf(count, (page + 1) * size)
     fun pageOf(choice: Int) = ((choice - 1) / size).coerceIn(0, pages - 1)
 }

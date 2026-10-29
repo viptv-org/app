@@ -11,7 +11,6 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.DropdownMenuItem
 
-/** The host supplies only authorized, public connection names and opaque IDs. */
 @Composable
 internal fun LiveSourceSelector(sources: Map<String, String>, selected: String?, choose: (String) -> Unit,
     enabled: Boolean = true, television: Boolean = false, scale: Float = 1f) {

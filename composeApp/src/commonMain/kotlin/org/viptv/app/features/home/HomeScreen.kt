@@ -18,9 +18,7 @@ import org.viptv.engine.wire.*
 @Composable
 fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     summaryCards: Map<String, Card> = emptyMap(), enrichSummary: (Card) -> Unit = {},
-    /** False while the viewer is idle: the hero holds its slide and progress instead of drawing every step (app#95). */
     heroRotates: Boolean = true,
-    /** Continue Watching holds more than its row shows: the row ends with "See all", which calls [seeAll] (app#114). */
     continueMore: org.viptv.app.state.ContinueWatchingMore? = null, seeAll: () -> Unit = {}) {
     if (television) {
         TvHomeScreen(home, open, play, retry, navigate, profile, summaryCards = summaryCards, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error, enrichSummary = enrichSummary,
@@ -52,9 +50,6 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 }
             }
             if (home != null) {
-                // A shelf with nothing to show is not part of Home at all: no
-                // heading, no gap, no per-row retry. The quiet lane rebuilds the
-                // snapshot and a recovered row appears here once it has cards.
                 val visibleRows = home.rows.filter {
                     it.state == RowState.PENDING || (it.state == RowState.READY && it.cards.isNotEmpty())
                 }
@@ -62,8 +57,6 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                     HomeStatus(home, null, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
                 }
                 items(visibleRows, key = { it.id }) { row ->
-                    // The row bleeds to the screen edges; it insets its own title,
-                    // arrows and first card by the gutter (app#63).
                     HomeCatalogRow(row, compact, television, Modifier,
                         { focused = it }, open, scale, tablet, browser, play, gutter = gutter, continueMore = continueMore, seeAll = seeAll)
                 }

@@ -28,12 +28,6 @@ import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
-/**
- * TV Movies / Series / Anime: the same filter bar as every other layout (app#121) — the
- * catalog chip first, then one dropdown chip per facet, each opening its list as the right
- * panel — above a 7-column grid that appends pages. The top navigation owns the page heading,
- * so there is no in-page title.
- */
 @Composable
 internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Unit,
     controls: DiscoveryControls? = null, query: BrowseQuery = BrowseQuery("movie"),
@@ -47,7 +41,6 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     val chromeFocus = remember { FocusRequester() }
     val grid = rememberLazyGridState()
     LaunchedEffect(Unit) {
-        // A page without controls has no chrome to fall back to (discovery unavailable).
         runCatching {
             if (selected.isNotEmpty()) {
                 grid.scrollToItem(targetIndex)
@@ -59,12 +52,10 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     AutomaticPage(selected.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        // The shared chips size and open their right panel with the board's scale (app#121).
         CompositionLocalProvider(LocalTvScale provides scale) {
             Column(Modifier.fillMaxSize().padding(start = 96.dp * scale, top = 8.dp * scale)) {
                 if (controls != null) {
                     val catalogOpen = remember { mutableStateOf(false) }
-                    // One focus group, so grid Up and the page's onEnter land on the first chip.
                     Box(Modifier.focusGroup().focusRequester(chromeFocus).focusProperties { onEnter = { chromeFocus.requestFocus() } }) {
                         BrowseFilterBar(controls, query, showType = false, changed = filterChanged, multipleChanged = multipleChanged,
                             applyQuery = applyQuery, catalogOpen = catalogOpen)
@@ -94,7 +85,6 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                                     Modifier.tvGridItem(index).then(if (index == targetIndex) Modifier.focusRequester(first) else Modifier)
                                         .focusProperties {
                                             if (index < 7) up = chromeFocus
-                                            // Stop at the trailing row edge instead of jumping to the avatar.
                                             if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                                         },
                                     {}, open, focusedCaptions = true)
@@ -111,8 +101,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
 private fun TvBrowseStatus(scale: Float, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String,
     message: String, action: Pair<String, () -> Unit>?, focus: FocusRequester) {
     var attached by remember { mutableStateOf(false) }
-    // The action lambda is a fresh instance per recomposition; keying the claim
-    // on it re-stole focus on every reload. The label is the stable identity.
+    // Key the focus claim on the label: the action lambda is a fresh instance per recomposition.
     TvRequestedFocus(focus, action?.first, enabled = true)
     Column(Modifier.fillMaxWidth().padding(top = 96.dp * scale), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {

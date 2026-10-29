@@ -22,27 +22,18 @@ import androidx.compose.ui.unit.Dp
 import kotlin.math.ceil
 import org.viptv.engine.wire.Card
 
-/**
- * The end panel's autoplay (app#65): ten seconds, then the next episode plays through the
- * same path as its button. Time comes from the frame clock, so a test drives it with frame
- * times instead of sleeping. Once stopped (cancelled or expired) it never runs again.
- */
 @Stable
 internal class NextEpisodeCountdown(private val totalMillis: Long = 10_000) {
     private val totalSeconds = ceil(totalMillis / 1000.0).toInt()
-    /** Whole seconds left: "Next episode in 9". */
     var secondsLeft by mutableIntStateOf(totalSeconds)
         private set
-    /** 0 when it starts, 1 at expiry. Read it while drawing, so a tick redraws without recomposing. */
     var progress by mutableFloatStateOf(0f)
         private set
     var running by mutableStateOf(false)
         private set
-    /** The share of whole seconds gone, for assistive technology: it changes once a second, not every frame. */
     val elapsedShare: Float get() = 1f - secondsLeft.toFloat() / totalSeconds
     private var stopped = false
 
-    /** Any viewer action: the panel stays, autoplay doesn't come back for this end. */
     fun cancel() { stopped = true; running = false }
 
     suspend fun run(expire: () -> Unit) {
@@ -59,10 +50,6 @@ internal class NextEpisodeCountdown(private val totalMillis: Long = 10_000) {
     }
 }
 
-/**
- * One countdown per opened panel. [autoplay] is the setting while the media stays ended:
- * false from the start shows no countdown, and turning false (a seek leaves the end) cancels it.
- */
 @Composable
 internal fun rememberNextEpisodeCountdown(autoplay: Boolean, expire: () -> Unit): NextEpisodeCountdown {
     val countdown = remember { NextEpisodeCountdown() }
@@ -71,11 +58,9 @@ internal fun rememberNextEpisodeCountdown(autoplay: Boolean, expire: () -> Unit)
     return countdown
 }
 
-/** Only a series episode on demand counts down: never a movie, live media, or a finale (no next episode, no panel). */
 internal fun nextEpisodeAutoplays(enabled: Boolean, title: Card?, live: Boolean): Boolean =
     enabled && !live && title != null && title.identity.episode != null && title.identity.kind !in listOf("channel", "tv")
 
-/** Any key press or pointer press over the panel cancels; hover and focus placement don't. */
 internal fun Modifier.cancelsCountdown(countdown: NextEpisodeCountdown): Modifier =
     onPreviewKeyEvent { if (it.type == KeyEventType.KeyDown) countdown.cancel(); false }
         .pointerInput(countdown) {
@@ -84,12 +69,10 @@ internal fun Modifier.cancelsCountdown(countdown: NextEpisodeCountdown): Modifie
             }
         }
 
-/** A ring around [content] that empties as the countdown runs out; with reduced motion, or once stopped, only [content] shows. */
 @Composable
 internal fun NextEpisodeCountdownRing(countdown: NextEpisodeCountdown, color: Color, size: Dp, stroke: Dp, reduceMotion: Boolean,
     content: @Composable () -> Unit) {
     if (!countdown.running || reduceMotion) { content(); return }
-    // Read here so the semantics follow each second; the ring itself redraws every frame from [NextEpisodeCountdown.progress].
     val announced = countdown.elapsedShare
     Box(Modifier.size(size).semantics {
         progressBarRangeInfo = ProgressBarRangeInfo(announced, 0f..1f)

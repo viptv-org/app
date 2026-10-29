@@ -15,21 +15,13 @@ import org.viptv.engine.wire.Availability
 import org.viptv.engine.wire.LibraryQuery
 import org.viptv.engine.wire.LibrarySnapshot
 
-/** "Clear" on My List: the list stays, everything else returns to the default query. */
 internal fun LibraryQuery.reset(): LibraryQuery = defaultLibraryQuery().copy(source = source, limit = limit)
 
-/**
- * My List's filter bar on phone, tablet, desktop and web (app#117): the list chip when
- * there are several lists, a divider, then Type, Sort and every other control the list
- * offers, each a dropdown chip that applies at once. A chip is filled while its value
- * differs from the default, and "Clear" appears while any does.
- */
 @Composable
 internal fun LibraryFilterBar(snapshot: LibrarySnapshot, query: LibraryQuery, change: (LibraryQuery) -> Unit,
     modifier: Modifier = Modifier, gutter: Dp = 0.dp) {
     val values = query.values()
     val defaults = remember(query.source, query.limit) { query.reset().values() }
-    // Type first: it is the filter people reach for; the rest keep the list's own order.
     val controls = remember(snapshot.controls) {
         snapshot.controls.filter { it.id != "source" }.sortedBy { if (it.id == "type") 0 else 1 }
     }

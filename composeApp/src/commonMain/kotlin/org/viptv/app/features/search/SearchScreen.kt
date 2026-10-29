@@ -51,9 +51,6 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("All", "Movies", "Series", "Anime", "Channels").forEach { tab ->
-                // DUI-06: the chips are the desktop search page's only controls and
-                // had neither state. Board `Chip · hover` = white 6%; the ring is
-                // the shared 2/2 focus outline.
                 val interactions = remember { MutableInteractionSource() }
                 val hovered by interactions.collectIsHoveredAsState()
                 var focused by remember { mutableStateOf(false) }
@@ -73,7 +70,6 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
-            // The rows run to the screen edges (app#63); labels and first cards keep the gutter.
             LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {

@@ -44,13 +44,11 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     LaunchedEffect(Unit) { closeFocus.requestFocus() }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
-    // The hero plays the episode the list lands on (app#49).
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail)
     val selected = seasonChoice.selected(seasons, resume)
     AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
     val list = rememberLazyListState()
-    // The continued episode's place in the list: progress, error, hero and summary, season picker, episodes.
     LandOnResume(seasonChoice, list, resume.takeIf { detail != null }.indexIn(selected?.episodes)?.let { episode ->
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
     Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -58,7 +56,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
             val compact = maxWidth < 640.dp
             val gutter = if (compact) 20.dp else 44.dp
             Surface(Modifier.widthIn(max = 800.dp).fillMaxWidth().fillMaxHeight().onPreviewKeyEvent { event ->
-                    // One step per press: the key-down goes back, and neither half reaches the page's Back as well.
+                    // One step per press: the key-down goes back and neither half reaches the page's Back as well.
                     if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) back(); true } else false
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
                 color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {

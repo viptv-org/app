@@ -38,7 +38,6 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
         Text("These preferences apply to the current profile.", color = Palette.secondary)
         error?.let { Text(it, color = Palette.danger) }
         TextButton(retry, enabled = !busy) { Text("Refresh") }
-        // Stored on this device and applied at once, unlike the profile's preferences below.
         devicePlayback?.let { device ->
             Row(Modifier.pointerToggleable(device.value.autoplayNext, role = Role.Switch, shape = RoundedCornerShape(8.dp), onValueChange = device::setAutoplayNext),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {

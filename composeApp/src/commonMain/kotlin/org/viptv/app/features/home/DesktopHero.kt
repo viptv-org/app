@@ -22,22 +22,17 @@ import org.viptv.app.components.DesktopBreakpoints
 import org.viptv.app.components.MediaMetadata
 import org.viptv.engine.wire.Card
 
-/** Test identity of the desktop billboard's artwork; only a UI test reads it. */
 internal const val HERO_ARTWORK_TAG = "hero-artwork"
 
 @Composable
 internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, carousel: HeroCarousel? = null) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = if (browser) 57.dp else 28.dp, bottom = if (browser) 88.dp else 80.dp)) {
         if (maxWidth < DesktopBreakpoints.heroStackMax) {
-            // D3HomeNarrow: artwork full width, copy under it, 22px apart.
             Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
                 HeroArtwork(card, Modifier.fillMaxWidth(), carousel)
                 FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel)
             }
         } else {
-            // D3HomeCompact/Win/Mac/Ultra: copy left, artwork flush right. The old
-            // 0.45/0.55 weights were proportional, so the 2560 board rendered a
-            // 1370dp hero still instead of the specified 774dp.
             val gap = 48.dp
             val artWidth = (maxWidth * DesktopBreakpoints.heroArtFraction)
                 .coerceAtMost(DesktopBreakpoints.heroArtMax)
@@ -55,7 +50,7 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
 
 @Composable
 private fun HeroArtwork(card: Card, modifier: Modifier, carousel: HeroCarousel?) {
-    // A blank URL is no artwork at all: Decoding an empty string paints the flat fill NAV-10 forbids.
+    // A blank URL is no artwork at all: decoding an empty string paints a flat fill.
     val heroArt = (card.landscape ?: card.poster)?.takeIf { it.isNotBlank() }
     if (heroArt == null) HeroArtworkFallback(modifier.aspectRatio(16f / 9)) else BufferedArtwork(heroArt,
         modifier.aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)).background(Palette.surface).testTag(HERO_ARTWORK_TAG),
@@ -75,7 +70,6 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Un
         }
         MediaMetadata(card)
         card.description?.let {
-            // D3HomeWin clamps the synopsis to three lines *with* an ellipsis (NAV-16).
             Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = 3,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }

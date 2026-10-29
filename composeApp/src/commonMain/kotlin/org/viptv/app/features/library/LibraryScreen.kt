@@ -30,11 +30,6 @@ private const val LIBRARY_CONTROLS_KEY = "library:controls"
 private const val LIBRARY_HISTORY_KEY = "library:history"
 private const val LIBRARY_CARD_TYPE = "library:card"
 
-/**
- * Phone, tablet, desktop and browser My List. One grid scrolls everything: the large title and the
- * History card scroll away with the cards (fading as they go), while the filter bar (app#117) and the
- * busy/error line stay pinned as a sticky header (app#58). TV has its own screen.
- */
 @Composable
 fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, open: (Card) -> Unit,
     history: () -> Unit, home: () -> Unit, snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
@@ -48,24 +43,19 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val gridCards = visible.distinctBy(::cardLookupKey)
     val grid = rememberLazyGridState()
     val empty = libraryEmptyState(snapshot, query, available)
-    // Height of the pinned controls: History fades out as it slides under them.
     var pinned by remember { mutableIntStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         AutomaticPage(visible.size, busy, more) {
-            // Card position, not grid index: the header items come first.
             val layout = grid.layoutInfo
             layout.visibleItemsInfo.filter { it.contentType == LIBRARY_CARD_TYPE }.maxOfOrNull { it.index }
                 ?.minus(layout.totalItemsCount - gridCards.size) ?: -1
         }
         Column(Modifier.fillMaxSize().padding(horizontal = if (phone) 16.dp else 40.dp, vertical = if (phone) 8.dp else 24.dp)) {
-            // The grid stays the same composition when the list empties, so an open filter list survives.
-            // Empty, it only holds the header and the empty state takes the rest of the page.
             LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(176.dp), state = grid,
                 modifier = if (visible.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = if (visible.isEmpty()) 0.dp else if (phone) 96.dp else 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                // Header items add 8 dp below themselves: with the grid's 10 dp that keeps the 18 dp rhythm.
                 if (!phone) item(LIBRARY_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_TITLE_KEY) {
                     Text("My List", Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_TITLE_KEY) { 0 },
                         fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
@@ -73,7 +63,6 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                 stickyHeader(LIBRARY_CONTROLS_KEY, contentType = LIBRARY_CONTROLS_KEY) {
                     Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        // The filter bar is the sticky row (app#117). The grid clips at the gutter, so the bar does not bleed.
                         if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                         else LibraryControls(filter, { filter = it }, sort, { sort = it })
                         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
@@ -113,18 +102,10 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     }
 }
 
-/**
- * Fades a collapsing header item by the share of it still showing below [covered] pixels from the
- * grid's top. Driven by the scroll position alone, so there is no animation to reduce.
- */
 private fun Modifier.fadeAsCollapsed(grid: LazyGridState, key: Any, covered: () -> Int) = graphicsLayer {
     val item = grid.layoutInfo.visibleItemsInfo.firstOrNull { it.key == key }
     alpha = if (item == null || item.size.height == 0) 1f
         else ((item.offset.y + item.size.height - covered()).toFloat() / item.size.height).coerceIn(0f, 1f)
 }
 
-/**
- * The pinned controls float over cards (and the faded History card) that scrolled beneath them: a tap
- * on their empty space must not reach those. Scrolling still works because the grid is an ancestor.
- */
 private fun Modifier.blockTouchesBelow() = pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }

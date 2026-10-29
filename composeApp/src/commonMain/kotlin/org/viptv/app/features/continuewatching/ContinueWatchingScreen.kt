@@ -27,15 +27,8 @@ import org.viptv.engine.wire.Card
 
 private const val TITLE_KEY = "continue:title"
 private const val CARD_TYPE = "continue:card"
-/** The narrowest Continue Watching card a tablet, desktop or browser grid packs columns by. */
 private val MIN_CARD = 260.dp
 
-/**
- * Phone, tablet, desktop and browser: Continue Watching as a grid of the Home row's 16:9 cards,
- * with their progress bars and art fallbacks (app#62). It loads more as the viewer nears the
- * end. A card resumes ([play]); a caught-up card, which has nothing to resume, opens Details
- * instead (app#132), as the desktop preview's Info does ([open]).
- */
 @Composable
 internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
     more: (() -> Unit)?, retry: () -> Unit, back: () -> Unit, home: () -> Unit) {
@@ -49,7 +42,6 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
         val columns = if (phone) 2 else ((available + gap) / (MIN_CARD + gap)).toInt().coerceAtLeast(2)
         val cardWidth = ((available - gap * (columns - 1)) / columns).value.toInt()
         AutomaticPage(cards.size, page.busy, more) {
-            // Card position, not grid index: the heading comes first.
             val layout = grid.layoutInfo
             layout.visibleItemsInfo.filter { it.contentType == CARD_TYPE }.maxOfOrNull { it.index }
                 ?.minus(layout.totalItemsCount - cards.size) ?: -1

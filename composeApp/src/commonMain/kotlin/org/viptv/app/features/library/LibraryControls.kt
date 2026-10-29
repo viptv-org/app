@@ -9,11 +9,6 @@ import org.viptv.app.components.SelectOption
 private val LocalTypes = listOf("All", "Movies", "Series").map { SelectOption(it, it) }
 private val LocalSorts = listOf("Date added", "A–Z", "Z–A").map { SelectOption(it, it) }
 
-/**
- * My List before the server's list query is available: the same filter bar, with Type and
- * Sort applied to the cards on this device. [watchedAvailable] adds the local "Last watched"
- * sort TV keeps by default when it has watch history.
- */
 @Composable
 internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: String, setSort: (String) -> Unit,
     watchedAvailable: Boolean = false) {

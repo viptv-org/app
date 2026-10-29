@@ -25,7 +25,6 @@ import org.viptv.engine.wire.Card
 @Composable
 internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () -> Unit, keepWatching: () -> Unit,
     creditsLabel: String? = null, autoplay: Boolean = false, reduceMotion: Boolean = false,
-    /** The player's key-press count: keys it handles itself (play/pause) never reach the panel but still cancel. */
     interactions: Int = 0) {
     val initial = remember { FocusRequester() }
     val countdown = rememberNextEpisodeCountdown(autoplay, play)
@@ -65,7 +64,6 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
                     Text("Keep watching credits", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
                 }
             }
-            // The panel opens when the episode has ended, so no credits keep running behind it.
             Text(if (countdown.running) "Starts automatically. Press any button to cancel." else "Nothing plays on its own.", Modifier.padding(top = 6.dp * scale), color = Color(0xFF8F8D89),
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
         }

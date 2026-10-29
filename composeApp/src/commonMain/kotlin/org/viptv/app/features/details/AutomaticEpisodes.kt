@@ -3,7 +3,6 @@ package org.viptv.app.features.details
 import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 
-/** Fill the selected season in bounded pages; artwork remains viewport-lazy. */
 @Composable
 internal fun AutomaticEpisodes(season: DetailSeason?, legacyCursor: String?, busy: Boolean,
     load: (Long) -> Unit, enabled: Boolean = true, scopeKey: Any? = null) {

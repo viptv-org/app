@@ -28,7 +28,6 @@ import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Unit, modifier: Modifier = Modifier, tablet: Boolean = false,
-    /** The player's Episodes list marks the episode on screen; Details never sets it. */
     playing: Boolean = false) {
     Column(modifier.clip(RoundedCornerShape(8.dp)).pointerClickable(shape = RoundedCornerShape(8.dp)) { play(episode) }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (phone) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -52,7 +51,6 @@ private fun EpisodeCaption(episode: Card, modifier: Modifier, phone: Boolean, pl
         Text(label, fontSize = if (phone) 15.sp else 14.sp, fontWeight = FontWeight.SemiBold,
             maxLines = if (phone) 2 else 1, overflow = TextOverflow.Ellipsis)
         if (playing) Text(NOW_PLAYING, color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        // Wraps onto its own caption line, so neither it nor the number is ellipsized.
         if (episode.watchedEpisode()) EpisodeWatchedPill(television = false)
         episode.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
@@ -75,5 +73,4 @@ private fun EpisodeArtwork(episode: Card, modifier: Modifier) {
     }
 }
 
-/** The player's Episodes list marks the episode on screen with this. */
 internal const val NOW_PLAYING = "Now playing"

@@ -62,7 +62,6 @@ internal fun SettingsInformation(section: String, local: Boolean, address: Strin
     license?.let { key -> LicenseNotice(key) { license = null } }
 }
 
-/** Settings › About on phones and tablets: version, update state, last check and the update action. */
 @Composable
 private fun AppUpdateSettings(updater: AppUpdater) {
     val updates by updater.state.collectAsState()

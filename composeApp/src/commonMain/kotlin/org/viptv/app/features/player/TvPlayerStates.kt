@@ -40,15 +40,7 @@ internal fun BoxScope.TvSkipPrompt(skip: TvSkipRange, position: Long, scale: Flo
     }
 }
 
-/**
- * A secondary player control on the board's translucent-blur surface (rule R5).
- *
- * The blurred video is a layer *behind* [TvAction], not a modifier in its chain:
- * the focus ring is painted outside the control's own bounds, so any clip in
- * front of it would cut the ring, and [TvAction] still owns the focus/press fill
- * that covers the blur. Geometry, the focus requester and the column `down`
- * target stay exactly where the caller put them.
- */
+// The blurred video is a layer behind the action, not in its modifier chain: any clip in front of it cuts the focus ring.
 @Composable
 internal fun TvGlassAction(modifier: Modifier, scale: Float,
     requester: FocusRequester? = null, down: FocusRequester? = null, cornerRadius: Dp = 12.dp * scale,

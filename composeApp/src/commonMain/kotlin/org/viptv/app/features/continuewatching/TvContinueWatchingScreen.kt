@@ -21,24 +21,16 @@ import org.viptv.app.features.home.TvHomeSkeletonCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
-/** Four Continue Watching cards a row: the Home shelf's 16:9 cards, filling the 1728 px content width. */
 private const val COLUMNS = 4
 private const val GAP = 24f
 private const val CARD_WIDTH = (1728f - GAP * (COLUMNS - 1)) / COLUMNS
 
-/**
- * TV Continue Watching: a D-pad grid of the Home shelf's cards. OK resumes the card ([play]); a
- * caught-up card has nothing to resume, so it opens the show's Details ([open], app#132). Focus
- * starts on the first card and, back from Details, the source selector or the player, returns to
- * the card the viewer left (app#66). A card a refresh removes hands focus to the one now in its place.
- */
 @Composable
 internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
     more: (() -> Unit)?, retry: () -> Unit, home: () -> Unit) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val grid = rememberLazyGridState()
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
-    // Saved with the page (App keeps this route's state), so Back from Details or Sources finds them.
     var lastKey by rememberSaveable { mutableStateOf<String?>(null) }
     var lastIndex by rememberSaveable { mutableIntStateOf(0) }
     var focusedKey by remember { mutableStateOf<String?>(null) }
@@ -54,7 +46,6 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
         if (grid.layoutInfo.visibleItemsInfo.none { it.index == restoreIndex }) grid.scrollToItem(restoreIndex)
         claim(restore)
     }
-    // A quiet refresh dropped the focused card (finished elsewhere): focus the card now at its place.
     LaunchedEffect(cards) {
         val lost = focusedKey ?: return@LaunchedEffect
         if (cards.isEmpty() || cards.any { cardLookupKey(it) == lost }) return@LaunchedEffect
@@ -85,7 +76,6 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                 page.empty -> TvPageMessage(scale, "Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, action)
                 else -> LazyVerticalGrid(GridCells.Fixed(COLUMNS), Modifier.fillMaxWidth().weight(1f).focusGroup()
                     .onFocusChanged {
-                        // Leaving the grid forgets the card; a removed card keeps it for recovery.
                         if (!it.hasFocus && latestCards.value.any { card -> cardLookupKey(card) == focusedKey }) focusedKey = null
                     }, state = grid,
                     horizontalArrangement = Arrangement.spacedBy(GAP.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale),

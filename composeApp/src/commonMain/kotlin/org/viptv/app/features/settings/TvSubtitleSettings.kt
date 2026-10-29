@@ -27,7 +27,6 @@ import org.viptv.app.theme.Palette
 
 private val tvSubtitleColours = listOf("White" to 0xFFFFFFFF, "Yellow" to 0xFFFFE16B, "Blue" to 0xFF7AE0EC, "Green" to 0xFFB5EF98)
 
-/** PLAY-SUBTITLE-MODE-001 TV page: one vertical list moved with Up/Down, in this order. */
 internal val tvSubtitleRows = listOf("Audio language", "Subtitles", "Subtitle language", "Subtitle size", "Subtitle background", "Subtitle colour")
 
 internal fun tvSubtitleColourLabel(value: Long): String = tvSubtitleColours.firstOrNull { it.second == value }?.first ?: "Custom"
@@ -69,10 +68,8 @@ internal fun TvSubtitleSettings(prefs: TvSettingsPreferences?, scale: Float, ini
     }
 }
 
-/** Live style preview; a picture only, never a focus target. */
 @Composable
 private fun TvSubtitlePreview(prefs: TvSettingsPreferences?, scale: Float) {
-    // Sized from the earlier 720 px board preview, so text keeps its proportion.
     val ratio = 576f / 720f
     Box(Modifier.width(576.dp * scale).height(324.dp * scale).clip(RoundedCornerShape(14.dp * scale)).focusProperties { canFocus = false }) {
         AsyncImage(Res.getUri("files/entry/subtitle-preview.jpg"), "Subtitle style preview", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)

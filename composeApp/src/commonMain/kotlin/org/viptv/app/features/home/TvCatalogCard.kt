@@ -50,21 +50,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.NextEpisode
 import org.viptv.app.components.pointerClickable
 
-/**
- * The card's focus state is passed down instead of read here, so a focus move
- * only restarts the small leaves that actually change (ring, play badge,
- * caption colour) and never the artwork or the text nodes.
- *
- * The subtree is exposed to accessibility as one node: a TV shelf has hundreds
- * of cards, and every extra semantics node is walked again on each focus or
- * scroll change while an accessibility service is bound.
- *
- * Card *states* follow the canvas dictionary §A1 and Tv3CardStates: a label on
- * the art (New episode is light, Ended is dark, LIVE is red), Watched as a
- * corner check, Returning moves to the meta line, and the certification chip
- * sits next to the year/runtime/rating line. Missing art draws a dark tile with
- * the title's initials instead of an empty surface.
- */
 @Composable
 internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier: Modifier = Modifier,
     focused: (Card) -> Unit, open: (Card) -> Unit, showFocus: Boolean = true, focusedCaptions: Boolean = false,
@@ -76,14 +61,8 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
     val states = remember(card, nextEpisode) { TvCardStates.of(card, nextEpisode) }
     val description = remember(card, states) { cardDescription(card, states) }
     Column(modifier.width(artworkWidth ?: (if (portrait) 232 else 384).dp * scale)
-        // One accessibility node per card. A TV shelf has hundreds of cards and
-        // the TV has an accessibility service bound, so every extra node is
-        // walked again on each focus and scroll change. The focus state has to be
-        // restated here because clearing semantics also drops the focusable
-        // node's own properties.
+        // Clearing semantics also drops the focusable node's own properties, so the focus state is restated here.
         .onPreviewKeyEvent { event ->
-            // Every card in the first shelf row can return to the billboard, not
-            // just the left-most one (the old handler lived on index 0 only).
             if (onUp != null && event.type == androidx.compose.ui.input.key.KeyEventType.KeyDown &&
                 event.key == androidx.compose.ui.input.key.Key.DirectionUp) { onUp(); true } else false
         }
@@ -96,21 +75,11 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             set(SemanticsProperties.Focused, focus.value)
             onClick { open(card); true }
         }) {
-        // The surface fill is the no-art fallback, not just a loading colour: an
-        // AsyncImage with a null model draws no placeholder at all.
+        // The surface fill is the no-art fallback, not just a loading colour: an AsyncImage with a null model draws no placeholder.
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(shape).background(Palette.surface)) {
-            // Measured on the ONN: routing TV card art through the resizing proxy
-            // moved gpu p50 from 13.5 ms to 15.0-15.5 ms and missed vsyncs from
-            // 8.4 % to 11.2-12.0 %, so TV keeps the proxied WebP without custom
-            // sizing (see docs/TV_FRAME_BUDGET.md).
-            // app#62: a landscape card without a still shows its poster centred
-            // over a soft fill; only a card with no image takes the title tile.
             val landscapeArt = if (portrait) null else card.landscapeArt()
             val still = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (landscapeArt as? LandscapeArt.Still)?.url
-            // The initials fallback covers load *failures* too, not only blank URLs:
-            // a 404 from the art host used to leave a bare dark tile (the "no
-            // poster" Naruto card — the URL existed but the image never arrived).
-            // Keyed on the art, so a reused card slot never keeps a stale failure.
+            // The initials fallback covers load failures too; key it on the art, so a reused slot never keeps a stale failure.
             var artFailed by remember(card.poster, card.landscape) { mutableStateOf(false) }
             when {
                 artFailed -> CardNoArtFallback(card, scale, portrait, shape)
@@ -128,14 +97,11 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
                     fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            // The card's one accessibility node says "Watched" (cardDescription).
             if (states.watched) WatchedBadge(34.dp * scale, Modifier.align(Alignment.TopEnd), description = null)
             card.progress?.let {
                 TvWatchProgress(it, Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                     .padding(start = 3.dp * scale, end = 3.dp * scale, bottom = 3.dp * scale).height(5.dp * scale), scale)
             }
-            // Board "Logo" state: a wordmark replaces the text title and sits
-            // on the art instead of under it.
             if (!portrait && card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
                 Modifier.align(Alignment.BottomStart).padding(18.dp * scale).fillMaxWidth(.62f).height(56.dp * scale),
                 contentScale = ContentScale.Fit, alignment = Alignment.BottomStart)
@@ -149,7 +115,6 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
     }
 }
 
-/** Parsed, display-only card states; deliberately independent of focus. */
 private data class TvCardStates(
     val artLabel: String?,
     val artLabelFill: Color,
@@ -166,14 +131,9 @@ private data class TvCardStates(
             val watched = card.isWatched()
             val live = card.identity.kind.equals("channel", true) || card.identity.kind.equals("tv", true) ||
                 "live" in lower
-            // "+1", "+2" (or a provider's "New episode"): the count wins the art slot.
             val newEpisode = card.newEpisodesBadge()
             val ended = badges.firstOrNull { it.equals("Ended", true) }
             val returning = badges.firstOrNull { it.equals("Returning", true) }
-            // Only *state* labels belong on the artwork (board Tv3CardStates).
-            // Presentation badges (4K/HDR/5.1/CC/Dolby) are metadata, not art
-            // labels; they stay off the card entirely. Any other badge is a
-            // state label (New, Remastered, …) and takes the dark label slot.
             val other = badges.firstOrNull { badge ->
                 !isCapabilityBadge(badge) && !isNewEpisodesBadge(badge) && !badge.equals("New episode", true) && !badge.equals("Ended", true) &&
                     !badge.equals("Watched", true) && !badge.equals("Returning", true)
@@ -223,8 +183,6 @@ private fun cardDescription(card: Card, states: TvCardStates): String = buildStr
 
 @Composable
 private fun CardNoArtFallback(card: Card, scale: Float, portrait: Boolean, shape: RoundedCornerShape) {
-    // Board Tv3CardStates: "No art — title and year on a dark tile, same size."
-    // The title stacks at the bottom-left with the year directly under it.
     Box(Modifier.fillMaxSize().background(Color(0xFF1A1A1C), shape)) {
         Column(Modifier.align(Alignment.BottomStart).padding(14.dp * scale),
             verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
@@ -249,10 +207,7 @@ private fun CardFocusRing(focus: State<Boolean>, showFocus: Boolean, scale: Floa
 
 @Composable
 private fun CardPlayBadge(focus: State<Boolean>, showFocus: Boolean, scale: Float, modifier: Modifier) {
-    // Always composed, never drawn unfocused: adding or removing this overlay
-    // on focus invalidated the layout of the whole shelf for every key press,
-    // and drawing it at alpha 0 still paid a composited layer per card. The
-    // draw-phase read keeps focus moves from recomposing the badge as well.
+    // The badge stays composed and is gated in the draw phase: toggling it on focus re-lays-out the whole shelf.
     Box(modifier.size(72.dp * scale).drawWithContent { if (focus.value && showFocus) drawContent() }
         .background(Color.White.copy(alpha = 0.16f), CircleShape), contentAlignment = Alignment.Center) {
         Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(30.dp * scale))
@@ -261,21 +216,15 @@ private fun CardPlayBadge(focus: State<Boolean>, showFocus: Boolean, scale: Floa
 
 @Composable
 private fun CardCaptions(card: Card, states: TvCardStates, focus: State<Boolean>, portrait: Boolean, focusedCaptions: Boolean, scale: Float) {
-    // Portrait shelves only show the caption on the focused card. Keep the
-    // text composed and skip its draw while hidden, so focus changes never
-    // re-lay-out text and hidden captions cost no composited layer either.
-    // The colour read stays in composition; the visibility read is draw-phase.
+    // Keep the caption text composed and skip its draw while hidden, so focus changes never re-lay-out text.
     val focused = focus.value
     Column(Modifier.drawWithContent { if (!portrait || focus.value) drawContent() }
         .padding(top = 14.dp * scale), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
-        // Logo cards render the wordmark on the art, so the caption is meta
-        // only (board "Logo — no text title").
         if (portrait || card.logo == null) {
             Text(card.title, Modifier.fillMaxWidth(),
                 fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp, color = if (portrait || focused) Palette.text else Palette.body,
                 fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        // Board order: title, then meta value + cert chip on the second line.
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
             states.metaText?.let {
                 Text(it, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp,

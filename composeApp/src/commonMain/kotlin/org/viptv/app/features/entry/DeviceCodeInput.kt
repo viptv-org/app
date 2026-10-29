@@ -23,12 +23,6 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
-/**
- * The W3Device eight-slot code input: digits grouped in blocks of four
- * with a dash separator. A hidden single-line field captures input; the
- * next empty slot carries the cream focus ring from the design. Compact
- * slots are 34x39 per W3DeviceMobile.
- */
 @Composable
 internal fun DeviceCodeInput(
     code: String,

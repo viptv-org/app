@@ -29,7 +29,6 @@ import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFocus: () -> Unit, requester: FocusRequester?, up: FocusRequester,
-    /** The player's Episodes list marks the episode on screen; Details never sets it. */
     playing: Boolean = false) {
     var focused by remember { mutableStateOf(false) }
     Column(Modifier.width(448.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier).focusProperties { this.up = up }
@@ -37,8 +36,6 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { play(card) }) {
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
-            // A missing or failed episode still shows the episode identity tile,
-            // not a bare dark box (sparse metas ship no thumbnails at all).
             val art = card.landscape ?: card.poster
             var artFailed by remember { mutableStateOf(false) }
             if (art == null || artFailed) {

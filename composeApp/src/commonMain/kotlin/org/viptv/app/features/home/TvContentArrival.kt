@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 internal fun rememberTvContentArrival(ready: Boolean): Modifier {
-    // Already-loaded lazy items stay visible when they re-enter composition.
     val opacity = remember { Animatable(if (ready) 1f else 0f) }
     LaunchedEffect(ready) {
         if (ready) opacity.animateTo(1f, tween(200, easing = CubicBezierEasing(.2f, 0f, 0f, 1f)))

@@ -28,7 +28,6 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
         error?.let { Text(it, color = Palette.danger) }
         val value = draft
         if (value == null || error != null) TextButton(retry, enabled = !busy) { Text(if (value == null && error == null) "Load settings" else "Retry settings") }
-        // Stored on this device, so it shows and applies at once even while the profile's preferences can't load.
         if (section == "Playback" && devicePlayback != null) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Next episode", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             PhonePreferenceGroup {

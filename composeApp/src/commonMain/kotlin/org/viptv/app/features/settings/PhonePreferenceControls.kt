@@ -35,7 +35,6 @@ internal fun PhonePreferenceRow(label: String, value: String, enabled: Boolean, 
     }
 }
 
-/** A whole-row switch: the row is the touch target, the board switch shows the state. Its highlight follows the group's corners. */
 @Composable
 internal fun PhonePreferenceSwitchRow(label: String, description: String, checked: Boolean, change: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).pointerToggleable(checked, role = Role.Switch, shape = RoundedCornerShape(14.dp), onValueChange = change).padding(horizontal = 16.dp, vertical = 10.dp),
@@ -51,7 +50,6 @@ internal fun PhonePreferenceSwitchRow(label: String, description: String, checke
 @Composable
 internal fun PhonePreferenceDivider() = HorizontalDivider(color = Color.White.copy(alpha = .08f))
 
-/** Board switch: 45x26 track, 20 dp thumb, accent track when on (M3Set* boards). */
 @Composable
 internal fun PhoneSwitch(checked: Boolean, enabled: Boolean, change: ((Boolean) -> Unit)?) {
     val toggle = change?.let { report -> Modifier.pointerClickable(enabled = enabled, role = Role.Switch) { report(!checked) } } ?: Modifier
