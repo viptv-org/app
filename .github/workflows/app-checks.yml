@@ -1,0 +1,82 @@
+name: app checks
+on:
+  pull_request:
+    branches: [edge, main]
+  push:
+    branches: [edge]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: app-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+env:
+  LC_ALL: C
+  RUSTUP_TOOLCHAIN: 1.98.0
+jobs:
+  checks:
+    name: app checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Reclaim hosted Linux runner space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.25.11'
+          cache: false
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - name: Install native media dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config libmpv-dev mpv patchelf
+      - name: Install pinned Rust
+        shell: bash
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          rustup default 1.98.0
+          rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.konan
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'kotlin-js-store/**') }}
+          restore-keys: gradle-${{ runner.os }}-
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            build/rust
+          key: cargo-${{ runner.os }}-${{ hashFiles('native/core/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: Check out the pinned torrent worker source
+        shell: bash
+        run: |
+          git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
+          git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
+          echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
+      - name: Run checks
+        run: ./gradlew --max-workers=2 :composeApp:desktopTest :composeApp:compileAndroidMain :composeApp:compileKotlinWasmJs
+      - name: Upload failed test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-test-reports
+          path: |
+            composeApp/build/reports/tests/desktopTest
+            composeApp/build/test-results/desktopTest
+          if-no-files-found: ignore
+          retention-days: 14
