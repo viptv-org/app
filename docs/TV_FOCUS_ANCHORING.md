@@ -71,16 +71,13 @@ There are no horizontal lazy grids or staggered lazy grids in this source set.
 
 | Source | Scrolling collections | Disposition |
 |---|---|---|
+| `components/FilterBar.kt` | LazyRow | The one filter-chip row every filtered page composes; shared TV policy, native defaults outside TV mode. |
 | `components/HomeFilters.kt` | horizontalScroll | Shared TV policy; native defaults outside TV mode. |
 | `components/TvColumnFocus.kt` | verticalScroll | Shared TV policy; native defaults outside TV mode. |
-| `features/browse/BrowseScreen.kt` | LazyVerticalGrid, horizontalScroll, verticalScroll | Shared TV policy; native defaults outside TV mode. |
-| `features/browse/BrowserBrowseScreen.kt` | LazyVerticalGrid, verticalScroll | Shared TV policy; native defaults outside TV mode. |
-| `features/browse/DiscoveryFilters.kt` | horizontalScroll | Shared TV policy; native defaults outside TV mode. |
-| `features/browse/DiscoveryMultiChoiceSheet.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
-| `features/browse/TvBrowseChrome.kt` | LazyRow, LazyColumn, verticalScroll | Shared TV policy; native defaults outside TV mode. |
+| `features/browse/BrowseScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
+| `features/browse/BrowserBrowseScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
 | `features/browse/TvBrowseLoading.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
 | `features/browse/TvBrowseScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
-| `features/calendar/CalendarControls.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/calendar/CalendarDates.kt` | horizontalScroll | Shared TV policy; native defaults outside TV mode. |
 | `features/calendar/CalendarScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/calendar/TvCalendarScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
@@ -111,11 +108,8 @@ There are no horizontal lazy grids or staggered lazy grids in this source set.
 | `features/home/TvHomeLoading.kt` | horizontalScroll | Non-focusable loading artwork. |
 | `features/home/TvHomeScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/home/TvHomeShelf.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
-| `features/library/LibraryFilterSheet.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/library/LibraryScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
-| `features/library/LibraryTypeFilters.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/library/TvLibraryScreen.kt` | LazyVerticalGrid | Shared TV policy; native defaults outside TV mode. |
-| `features/live/LiveFilters.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/live/LiveGuide.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/live/LiveScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/live/TvLiveScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
@@ -144,9 +138,7 @@ There are no horizontal lazy grids or staggered lazy grids in this source set.
 | `features/settings/TvAddonSettings.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/settings/TvSettingsScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `features/settings/TvSourceIntegrationForm.kt` | verticalScroll | Shared TV policy; native defaults outside TV mode. |
-| `features/sources/SourceFilters.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/sources/SourcesScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
-| `features/sources/TvSourcesFilters.kt` | LazyRow | Shared TV policy; native defaults outside TV mode. |
 | `features/sources/TvSourcesScreen.kt` | LazyColumn | Shared TV policy; native defaults outside TV mode. |
 | `preview/PreviewNativeEntryFrame.kt` | verticalScroll | Preview; inherits TV mode. |
 
