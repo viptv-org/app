@@ -7,6 +7,7 @@ import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlayerFact
 import kotlinx.coroutines.sync.Mutex
@@ -88,7 +89,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         val claimed = synchronized(runGate) {
             val prior = job
             val current = ++generation
-            mutable.value = mutable.value.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null, detailRetryable = true)
+            updateState { it.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null, detailRetryable = true) }
             val started = scope.launch(start = CoroutineStart.LAZY) {
                 try { prior?.join(); operation() }
                 catch (e: CancellationException) { throw e }
@@ -99,8 +100,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                         discardStremioImport()
                         connection?.close(); connection = null
                         mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                    } else if (generation == current) mutable.value = mutable.value.copy(error = failureMessage(e),
-                        detailRetryable = e !is RemoteFailure || !e.metadataNotFound)
+                    } else if (generation == current) updateState { it.copy(error = failureMessage(e),
+                        detailRetryable = e !is RemoteFailure || !e.metadataNotFound) }
                 }
             }
             job = started
@@ -115,13 +116,18 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     private fun settle(current: Long) {
         synchronized(runGate) {
             if (generation != current) return
-            mutable.value = mutable.value.copy(starting = false, busy = false, findingSources = false,
-                sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning)
+            updateState { it.copy(starting = false, busy = false, findingSources = false,
+                sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning) }
         }
     }
 }
 
 private class RunClaim(val prior: Job?, val generation: Long, val job: Job)
+
+// A write built from a snapshot drops whatever another coroutine published in between, so every state change publishes atomically.
+internal fun ApplicationController.updateState(change: (ApplicationState) -> ApplicationState) {
+    mutable.update(change)
+}
 
 internal fun ApplicationController.failureMessage(error: Exception): String? = when (error) {
     is RemoteFailure -> error.message
