@@ -22,10 +22,7 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
 import kotlinx.coroutines.flow.first
 
-/**
- * Where a list page was left: the item the viewer opened there and where it sat. Back to the
- * page brings that item into view and, on a remote or the keyboard, puts focus on it.
- */
+/** Where a list page was left: the item opened there and where it sat. */
 @Stable
 internal class PageRestoreState internal constructor() {
     internal var lastKey by mutableStateOf<String?>(null)
