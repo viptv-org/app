@@ -1,5 +1,6 @@
 package org.viptv.app.features.home
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -58,12 +59,16 @@ import org.viptv.app.components.ArtWatchedBadge
 import org.viptv.app.components.HoverFill
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.pointerHovered
+import org.viptv.app.components.pressScale
+import org.viptv.app.components.responseSpec
 import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.cardChip
 import org.viptv.app.components.caughtUpCaption
 import org.viptv.app.components.caughtUpNextCaption
 import org.viptv.app.components.LocalNextEpisodes
+import org.viptv.app.components.Motion
+import org.viptv.app.components.hoverFill
 import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvBackdropBlur
@@ -96,8 +101,11 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     }
     val desktop = actions != null
     val hover = remember { MutableInteractionSource() }
+    val press = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
     val pointerHovered = hover.pointerHovered()
+    val hoverFade by animateFloatAsState(if (pointerHovered) 1f else 0f, responseSpec(), label = "Card hover")
+    val ringFade by animateFloatAsState(if (pointerHovered && !(focused && showFocusOutline)) 1f else 0f, responseSpec(), label = "Card hover ring")
     LaunchedEffect(hovered) { onHover(hovered) }
     val gap = with(LocalDensity.current) { 12.dp.roundToPx() }
     var previewOpen by remember { mutableStateOf(false) }
@@ -116,8 +124,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     Column(modifier.width(width.dp).hoverable(hover)
         .cardContextClick(desktop) { previewOpen = false; menuAt = it }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
-        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { (select ?: open)(card) }) {
-        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
+        .pointerClickable(interactionSource = press, indication = null) { (select ?: open)(card) }) {
+        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).pressScale(press, Motion.card)
+            .clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             if (width > 0) {
                 val density = LocalDensity.current
                 CardArtwork(card, portrait, with(density) { width.dp.toPx().toInt() },
@@ -133,7 +142,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 if (watchedBadgeSize != null) WatchedBadge(watchedBadgeSize, Modifier.align(Alignment.TopEnd))
                 else ArtWatchedBadge(Modifier.matchParentSize())
             }
-            if (pointerHovered) CardHoverScrim(Modifier.matchParentSize())
+            if (hoverFade > 0f) CardHoverScrim(Modifier.matchParentSize().graphicsLayer { alpha = hoverFade })
             card.progress?.let { progress ->
                 val p = progress.toFloat().coerceIn(0f, 1f)
                 Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(4.dp).drawBehind {
@@ -143,7 +152,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 })
             }
             // A focused card draws only its focus outline, never the hover ring as well.
-            if (pointerHovered && !(focused && showFocusOutline)) CardHoverRing(cornerRadius, Modifier.matchParentSize())
+            if (ringFade > 0f) CardHoverRing(cornerRadius, Modifier.matchParentSize().graphicsLayer { alpha = ringFade })
             if (showFocusOutline) org.viptv.app.components.FocusOutline(focused, cornerRadius, focusWidth, Modifier.matchParentSize())
         }
         if (showLabels) {
@@ -285,12 +294,11 @@ private fun CardPreview(card: Card, saved: Boolean,
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val previewPlay = remember { MutableInteractionSource() }
-                val previewPlayHovered by previewPlay.collectIsHoveredAsState()
                 var previewPlayFocused by remember { mutableStateOf(false) }
-                Row(Modifier.height(36.dp)
+                Row(Modifier.height(36.dp).pressScale(previewPlay, Motion.button)
                     .onFocusChanged { previewPlayFocused = it.isFocused }
                     .tvFocusOutline(previewPlayFocused, 18.dp, darkGap = 2.dp, width = 2.dp)
-                    .clip(CircleShape).background(if (previewPlayHovered) Color.White else Palette.text)
+                    .clip(CircleShape).background(hoverFill(previewPlay, Palette.text, Color.White))
                     .pointerClickable(interactionSource = previewPlay, indication = null,
                         onClickLabel = if (card.progress != null) "Resume" else "Play", onClick = onPlay, shape = CircleShape, hover = null)
                     .padding(horizontal = 14.dp),
@@ -317,13 +325,12 @@ private fun CardPreview(card: Card, saved: Boolean,
 @Composable
 private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    val hovered by interaction.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
-    Box(Modifier.size(36.dp)
+    Box(Modifier.size(36.dp).pressScale(interaction, Motion.button)
         // The ring is the shared focus outline, drawn before the clip so it shows.
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
-        .background(if (hovered) Color.White.copy(alpha = .18f) else Color.Transparent, CircleShape)
+        .background(hoverFill(interaction, Color.Transparent, Color.White.copy(alpha = .18f)), CircleShape)
         .clip(CircleShape).border(1.dp, Color.White.copy(alpha = .14f), CircleShape)
         .pointerClickable(interactionSource = interaction, indication = null,
             onClickLabel = label, onClick = action, shape = CircleShape, hover = null),
@@ -353,14 +360,13 @@ private fun CardMenu(card: Card, saved: Boolean, onDismiss: () -> Unit,
 @Composable
 private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, action: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    val hovered by interaction.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().height(34.dp)
+    Row(Modifier.fillMaxWidth().height(34.dp).pressScale(interaction, Motion.row)
         // Draw the ring before the clip on the menu's rows, otherwise the clip cuts it.
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 6.dp, darkGap = 2.dp, width = 2.dp)
         .clip(RoundedCornerShape(6.dp))
-        .background(if (hovered) Color.White.copy(alpha = .12f) else Color.Transparent)
+        .background(hoverFill(interaction, Color.Transparent, Color.White.copy(alpha = .12f)))
         .hoverable(interaction)
         .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, shape = RoundedCornerShape(6.dp), hover = null) { dismiss(); action() }
         .padding(horizontal = 10.dp),

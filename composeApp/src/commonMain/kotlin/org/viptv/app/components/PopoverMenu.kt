@@ -1,13 +1,10 @@
 package org.viptv.app.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -67,13 +63,11 @@ internal fun PopoverMenu(
 @Composable
 internal fun PopoverMenuItem(label: String, icon: ImageVector? = null, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    val hovered by interaction.collectIsHoveredAsState()
     val focused by interaction.collectIsFocusedAsState()
     val pressed by interaction.collectIsPressedAsState()
-    val active = hovered || focused || pressed
-    val fill by animateColorAsState(if (active) Palette.raised else Color.Transparent, tween(150), label = "Popover row fill")
-    val scale by animateFloatAsState(if (pressed) .99f else 1f, tween(150), label = "Popover row press")
-    Box(Modifier.padding(horizontal = 6.dp).fillMaxWidth().heightIn(min = 44.dp).scale(scale).clip(RoundedCornerShape(10.dp)).background(fill)
+    val active = interaction.pointerHovered() || focused || pressed
+    val fill by animateColorAsState(if (active) Palette.raised else Color.Transparent, responseSpec(), label = "Popover row fill")
+    Box(Modifier.padding(horizontal = 6.dp).fillMaxWidth().heightIn(min = 44.dp).pressScale(interaction, Motion.row).clip(RoundedCornerShape(10.dp)).background(fill)
         .pointerClickable(interaction, indication = null, role = Role.Button, onClick = onClick, shape = RoundedCornerShape(10.dp), hover = null)) {
         Row(Modifier.align(Alignment.CenterStart).padding(horizontal = 10.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
