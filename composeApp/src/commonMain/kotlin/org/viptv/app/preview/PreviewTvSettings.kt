@@ -45,6 +45,6 @@ internal fun PreviewTvSettings(variant: String, go: (Screen) -> Unit) {
         { go(Screen.Profiles) }, { go(Screen.Connect) }, PreviewData.profile, initialSection = section, prefs = prefs,
         change = { prefs = it }, addonInfo = info, account = TvAccountInfo("[name@email.com]", 3), initialLeave = variant == "SignOut", placeholderQr = true,
         sourceIntegrations = { first, sidebar, _ -> SourceIntegrationSettings(sources, false, null, {}, { _, _ -> }, {}, television = true, profileName = "vynxc", first = first, left = sidebar) },
-        parental = { first, sidebar, scale -> TvParentControlsSettings(parentalSnapshot, false, null, null, 0, {}, {}, { _, _ -> }, { _, _ -> }, {}, first, sidebar, scale) },
+        parental = { first, sidebar, scale -> TvParentControlsSettings(parentalSnapshot, emptyMap(), false, null, null, 0, {}, {}, { _, _ -> }, { _, _ -> }, { _, _, _ -> }, {}, first, sidebar, scale) },
         maturity = "Up to age 13", pinAvailable = true)
 }

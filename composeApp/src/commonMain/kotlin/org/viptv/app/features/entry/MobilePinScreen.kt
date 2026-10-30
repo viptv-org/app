@@ -36,7 +36,7 @@ private val keyLabels = listOf(
 @Composable
 internal fun MobilePinScreen(
     profile: Profile?, pin: String, busy: Boolean, error: String?,
-    digit: (String) -> Unit, erase: () -> Unit, submit: () -> Unit, back: () -> Unit,
+    digit: (String) -> Unit, erase: () -> Unit, submit: () -> Unit, back: () -> Unit, leaving: Boolean = false,
 ) {
     var forgot by remember { mutableStateOf(false) }
     org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -46,7 +46,7 @@ internal fun MobilePinScreen(
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 72.dp, 16.dp)
         Spacer(Modifier.height(40.dp))
-        Text(if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter ${profile?.name.orEmpty()}’s PIN", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(if (leaving) "Enter the PIN to leave ${profile?.name.orEmpty()}’s profile" else if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter ${profile?.name.orEmpty()}’s PIN", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             repeat(maxOf(4, pin.length)) { index ->

@@ -5,7 +5,7 @@ import org.viptv.app.connection.*
 fun ApplicationController.selectProfile(id: String) {
     if (mutable.value.busy) return
     if (mutable.value.profiles.any { it.id == id && it.locked }) {
-        updateState { next -> next.copy(screen = Screen.ProfilePin, profileToOpen = id, error = null) }
+        updateState { next -> next.copy(screen = Screen.ProfilePin, profileToOpen = id, leavePinFrom = null, error = null) }
         return
     }
     run { openProfile(id) }
@@ -13,16 +13,21 @@ fun ApplicationController.selectProfile(id: String) {
 
 fun ApplicationController.submitProfilePin(pin: String) = profileMutation {
     val id = mutable.value.profileToOpen ?: throw LocalFailure("Choose a profile first.")
+    if (mutable.value.leavePinFrom != null) {
+        if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
+        openProfile(id, pin)
+        return@profileMutation
+    }
     if (local != null) {
         if (!requireNotNull(local).verifyProfilePin(id, pin)) throw LocalFailure("Incorrect PIN or too many attempts. Try again later.")
     } else requireNotNull(connection).unlockParent(pin)
     openProfile(id)
 }
 
-internal suspend fun ApplicationController.openProfile(id: String) {
+internal suspend fun ApplicationController.openProfile(id: String, pin: String? = null) {
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
-    val result=local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)
+    val result = local?.bootstrap(id) ?: switchRemoteProfile(id, pin) ?: return
     restartRequested = false
     accept(result)
     local?.let { device ->
@@ -30,6 +35,24 @@ internal suspend fun ApplicationController.openProfile(id: String) {
         updateState { next -> next.copy(home = home) }
     }
     resumeNavigation()
+}
+
+private suspend fun ApplicationController.switchRemoteProfile(id: String, pin: String?): Bootstrap? {
+    val remote = requireNotNull(connection)
+    try {
+        return remote.selectProfile(id, pin)
+    } catch (failure: RemoteFailure) {
+        when {
+            failure.code == "leave_pin_required" -> {
+                updateState { next -> next.copy(screen = Screen.ProfilePin, profileToOpen = id,
+                    leavePinFrom = next.selectedProfile, error = null) }
+                return null
+            }
+            failure.code == "leave_pin_invalid" -> throw LocalFailure("That PIN was not accepted. Try again.")
+            failure.status == 429 -> throw LocalFailure("Too many PIN attempts. Try again in five minutes.")
+            else -> throw failure
+        }
+    }
 }
 
 fun ApplicationController.manageProfiles() { updateState { next -> next.copy(managingProfiles=true,error=null) } }

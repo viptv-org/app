@@ -162,8 +162,11 @@ class RemoteConnection(
             revisions = parseRevisions(value["revisions"]))
     }
 
-    suspend fun selectProfile(id: String): Bootstrap {
-        call("/api/auth/profile", HttpMethod.Post, buildJsonObject { put("profile_id", id) })
+    suspend fun selectProfile(id: String, pin: String? = null): Bootstrap {
+        call("/api/auth/profile", HttpMethod.Post, buildJsonObject {
+            put("profile_id", id)
+            pin?.let { put("pin", it) }
+        })
         return bootstrap()
     }
 

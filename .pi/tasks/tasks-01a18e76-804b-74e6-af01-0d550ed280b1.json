@@ -1,0 +1,53 @@
+{
+  "nextId": 5,
+  "tasks": [
+    {
+      "id": "1",
+      "subject": "Wire the new parental API in connection layer",
+      "description": "KidsPolicy ratings/unrated, kids GET, blocked titles, per-profile leave PIN, selectProfile with PIN.",
+      "status": "completed",
+      "activeForm": "Wiring the parental API",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1793391938858,
+      "updatedAt": 1793392037551
+    },
+    {
+      "id": "2",
+      "subject": "Add controller state and actions",
+      "description": "parentControls map, leave PIN save, blocked save/unblock, leave-PIN switch flow.",
+      "status": "in_progress",
+      "activeForm": "Adding controller state and actions",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1793391938967,
+      "updatedAt": 1793392037538
+    },
+    {
+      "id": "3",
+      "subject": "Build the parental UI on phone/TV",
+      "description": "Rating limits, unrated toggle, leave PIN dialog/rows, blocked titles section.",
+      "status": "pending",
+      "activeForm": "Building the parental UI",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1793391938968,
+      "updatedAt": 1793391938968
+    },
+    {
+      "id": "4",
+      "subject": "Write desktop and TV tests, run app checks",
+      "description": "Controller fake-host saves, leave-PIN switch test, TV D-pad test, update existing tests, run checks.",
+      "status": "pending",
+      "activeForm": "Writing tests and running checks",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1793391942886,
+      "updatedAt": 1793391942886
+    }
+  ]
+}
