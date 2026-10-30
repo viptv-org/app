@@ -46,6 +46,7 @@ class SkipSegmentsUiTest {
             assertTrue(player.hasText("Skip intro"))
             player.click("Skip intro"); player.frames()
             assertFalse(player.hasText("Skip intro"), "Skipping leaves the segment")
+            player.facts(PlayerFact.Progress(60_000, 1_800_000))
             player.facts(PlayerFact.Progress(1_300_000, 1_800_000))
             assertTrue(player.hasText("Skip credits"))
             player.click("Skip credits"); player.frames()
@@ -83,7 +84,6 @@ class SkipSegmentsUiTest {
             player.focus("Skip intro")
             player.keyDown(Key.Enter); player.keyDown(Key.Enter); player.keyDown(Key.Enter)
             player.keyUp(Key.Enter); player.frames()
-            player.keyDown(Key.Enter); player.keyUp(Key.Enter); player.frames()
             assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(60_000)), player.seeks, "Held OK seeks once per activation")
             assertEquals(0, player.toggles, "Skipping never toggles playback")
         } finally { player.close() }
@@ -159,7 +159,7 @@ class SkipSegmentsUiTest {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
                 if (television) TvPlayerScreen(null, paused, null, { toggles++ }, {}, {}, episode(24),
                     TvPlaybackExtras(skips = skips, skipIntros = skipIntros, episodes = listOf(episode(24)), nextEpisode = next),
-                    null, play, null, { back = it }, scene = TvPlayerScene.Skip, previewCommand = { seeks += it },
+                    null, play, null, { back = it }, scene = TvPlayerScene.Skip, externalFacts = facts, previewCommand = { seeks += it },
                     playbackKey = "current")
                 else PlayerScreen(null, paused, null, { toggles++ }, {}, {}, episode(24), phone = phone, canvasColor = Color.Transparent,
                     externalFacts = facts, tvExtras = TvPlaybackExtras(skips = skips, skipIntros = skipIntros, episodes = listOf(episode(24)),

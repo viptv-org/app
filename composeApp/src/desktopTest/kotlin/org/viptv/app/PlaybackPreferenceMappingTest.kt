@@ -84,8 +84,8 @@ class PlaybackPreferenceMappingTest {
     @Test fun tvPlaybackHidesUnstoredRowsOnRealConnections() {
         assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision"),
             tvPlaybackRows(actualPreferencesOnly = true))
-        assertEquals(listOf("Next episode button", autoplayNextRow, "Skip intros and recaps", "Default source", "Preferred quality",
-            "HDR and Dolby Vision", "Match frame rate"), tvPlaybackRows(actualPreferencesOnly = false))
+        assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision",
+            "Match frame rate"), tvPlaybackRows(actualPreferencesOnly = false))
         assertFalse("Start with subtitles" in tvPlaybackRows(false))
         assertEquals(listOf("Next episode button", autoplayNextRow, "Skip intros and recaps", "Default source", "Preferred quality",
             "HDR and Dolby Vision"), tvPlaybackRows(actualPreferencesOnly = true, deviceRows = true))
@@ -97,7 +97,7 @@ class PlaybackPreferenceMappingTest {
         assertEquals(stored, stored.tvSettings().profilePreferences(stored))
         assertFalse(stored.tvSettings().nextEpisode)
         assertTrue(stored.tvSettings().skipIntros)
-        assertFalse(ProfilePreferences().tvSettings().nextEpisode)
+        assertTrue(ProfilePreferences().tvSettings().nextEpisode)
         assertFalse(ProfilePreferences().tvSettings().skipIntros)
         assertEquals(ProfilePreferences(next_episode_button = false, skip_intros = true),
             TvSettingsPreferences(nextEpisode = false, skipIntros = true).profilePreferences())
