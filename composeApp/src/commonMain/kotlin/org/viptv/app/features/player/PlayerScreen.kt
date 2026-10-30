@@ -131,12 +131,12 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
-    fun seek(value: Long) { seekTo(value, reveal = true) }
     fun seekTo(value: Long, reveal: Boolean) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
         if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target)); interaction++; controlError = null }
     } }
+    fun seek(value: Long) { seekTo(value, reveal = true) }
     val skipped = remember(playbackKey) { mutableSetOf<TvSkipRange>() }
     fun skipSegment(range: TvSkipRange, automatic: Boolean) {
         if (seekTarget != null) return

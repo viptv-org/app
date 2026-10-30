@@ -151,10 +151,11 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
+    playbackSegmentsJob?.cancel()
     val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)
-    updateState { next -> next.copy(playback = null, screen = Screen.Sources, error = null, busy = false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false) }
     lastProgress=null
     afterPlayback(live)
 }
