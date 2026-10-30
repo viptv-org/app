@@ -130,8 +130,8 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
                 }
             }, enabled = !busy) { Text(when (selected.action) {
                 "approve" -> "Approve"
-                "block" -> "Block title"
-                "unblock" -> "Unblock title"
+                "block" -> "Block"
+                "unblock" -> "Unblock"
                 else -> "Remove approval"
             }) } },
             dismissButton = { TextButton({ choice = null }, enabled = !busy) { Text("Cancel") } })

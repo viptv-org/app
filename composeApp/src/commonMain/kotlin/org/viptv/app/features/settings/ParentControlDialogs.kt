@@ -103,6 +103,8 @@ internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinCon
     val parsed = age.toIntOrNull()
     val valid = parsed != null && parsed in 0..17 && (!enabled || pinConfigured)
     val editable = !busy && enabled
+    val first = remember { FocusRequester() }
+    LaunchedEffect(Unit) { withFrameNanos { }; first.requestFocus() }
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Restrictions for ${profile.name}") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -110,7 +112,8 @@ internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinCon
                 Switch(enabled, { enabled = it }, enabled = !busy && pinConfigured)
             }
             if (!pinConfigured) Text("Set a parent PIN before enabling kids restrictions.", color = Palette.secondary)
-            OutlinedTextField(age, { age = it.filter { c -> c in '0'..'9' }.take(2) }, label = { Text("Maximum age") },
+            OutlinedTextField(age, { age = it.filter { c -> c in '0'..'9' }.take(2) },
+                label = { Text("Maximum age") }, modifier = Modifier.focusRequester(first),
                 supportingText = { Text("Used for any kind without its own rating limit.") },
                 enabled = editable, singleLine = true, isError = enabled && (parsed == null || parsed !in 0..17),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
