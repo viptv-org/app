@@ -1,6 +1,5 @@
 package org.viptv.app.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -549,11 +548,10 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
     val interaction = remember { MutableInteractionSource() }
     val pointer = interaction.pointerHovered()
     LaunchedEffect(pointer) { if (pointer) hovered() }
-    val fill by animateColorAsState(if (active && enabled) Palette.raised else Color.Transparent, responseSpec(), label = "Choice row fill")
     val click = if (multiple) Modifier.pointerToggleable(checked, interaction, null, enabled, Role.Checkbox, RowShape, hover = null) { pick() }
     else Modifier.pointerSelectable(checked, interaction, null, enabled, Role.RadioButton, RowShape, hover = null, onClick = pick)
     Row(Modifier.padding(horizontal = 6.dp).fillMaxWidth().height(height).pressScale(interaction, Motion.row).clip(RowShape)
-        .background(fill).then(click).padding(horizontal = 10.dp),
+        .background(if (active && enabled) Palette.raised else Color.Transparent).then(click).padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         ChoiceMark(checked, multiple, enabled, onLight = false,
             box = 18.dp, mark = 16.dp, radius = 4.dp, border = 1.5.dp, glyph = 12.dp)
