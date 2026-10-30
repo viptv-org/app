@@ -23,7 +23,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
 internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean) {
     progressJob?.join()
     val stopping = releaseRemotePlayback()
-    updateState { next -> next.copy(playback = null, presentation = null, findingSources = false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = false) }
     stopping?.join()
     val store = local
     val remote = connection
@@ -64,6 +64,13 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
     updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList()) }
     loadNextEpisode()
+    playbackSegmentsJob?.cancel()
+    playbackSegmentsJob = scope.launch {
+        val segments = try { withTimeoutOrNull(8_000) { lease?.segments() } ?: emptyList() }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { emptyList() }
+        if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = segments) }
+    }
     subtitleDiscovery = scope.launch {
         try {
             val snapshot = store?.subtitles(profile, card) ?: requireNotNull(remote).subtitles(card)
@@ -144,10 +151,11 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
+    playbackSegmentsJob?.cancel()
     val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)
-    updateState { next -> next.copy(playback = null, screen = Screen.Sources, error = null, busy = false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false) }
     lastProgress=null
     afterPlayback(live)
 }

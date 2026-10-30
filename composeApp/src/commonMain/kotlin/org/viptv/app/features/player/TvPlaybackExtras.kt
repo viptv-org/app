@@ -7,14 +7,23 @@ data class TvPlaybackExtras(
     val sourceQuality: String? = null,
     val endTime: String? = null,
     val bufferLabel: String? = null,
-    val skip: TvSkipRange? = null,
+    val skips: List<TvSkipRange> = emptyList(),
     val nextEpisode: Card? = null,
     val episodes: List<Card> = emptyList(),
     val thumbnails: List<TvScrubThumbnail> = emptyList(),
     val fallbackLabel: String? = null,
     val failureDescription: String? = null,
     val creditsLabel: String? = null,
+    val skipIntros: Boolean = false,
 )
-data class TvSkipRange(val startMillis: Long, val endMillis: Long, val label: String = "Skip intro")
+data class TvSkipRange(val startMillis: Long, val endMillis: Long, val kind: TvSkipKind = TvSkipKind.Intro) {
+    val label: String get() = when (kind) {
+        TvSkipKind.Intro -> "Skip intro"
+        TvSkipKind.Recap -> "Skip recap"
+        TvSkipKind.Credits -> "Skip credits"
+    }
+    val automatic: Boolean get() = kind != TvSkipKind.Credits
+}
+enum class TvSkipKind { Intro, Recap, Credits }
 data class TvScrubThumbnail(val startMillis: Long, val endMillis: Long, val image: String)
 internal enum class TvPlayerScene { Controls, Buffer, Scrub, Tracks, Skip, Next, Error }
