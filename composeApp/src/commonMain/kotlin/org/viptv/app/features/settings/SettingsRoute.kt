@@ -89,7 +89,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         tvParental = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
             if (state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
                 controller::closeParentTitles, controller::searchParentTitles, controller::refreshApprovedTitles,
-                controller::approveParentTitle, controller::revokeParentTitle)
+                controller::approveParentTitle, controller::revokeParentTitle, first)
             else TvParentControlsSettings(state.parentSettings, state.busy, state.error, state.parentSettingsNotice,
                 state.parentSettingsSaved, controller::refreshParentControls, controller::unlockParentControls,
                 controller::changeParentPin, controller::changeKidsPolicy, controller::openParentTitles, first, sidebar, scale)

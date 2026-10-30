@@ -27,7 +27,7 @@ class ParentTitlesTest {
         }
     }
 
-    @Test fun nativeSessionsApproveTitlesThroughFakeHost() = runBlocking<Unit> {
+    @Test fun nativeSessionsApproveAndRevokeTitlesThroughFakeHost() = runBlocking<Unit> {
         val row = ParentTitleRow("addon-7", "My addon", "stremio", 7, items = listOf(ParentTitleItem(card(), true)))
         val writes = mutableListOf<Pair<String, JsonObject>>()
         val controller = controller(this, browser = false) { request ->
@@ -37,7 +37,7 @@ class ParentTitlesTest {
                     writes += request.url.encodedPath to Json.parseToJsonElement((request.body as TextContent).text).jsonObject
                     "{\"approved\":true}"
                 }
-                else -> "{\"items\":[]}"
+                else -> "{\"items\":[{\"id\":\"tt123\",\"type\":\"movie\",\"name\":\"A title\"}]}"
             }
             respond(result, headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
@@ -45,8 +45,11 @@ class ParentTitlesTest {
             controller.openParentTitles("2"); controller.job!!.join()
             controller.searchParentTitles("A title"); controller.job!!.join()
             controller.approveParentTitle(row.id, row.items.single().card); controller.job!!.join()
-            assertEquals(listOf("/api/profiles/2/approvals"), writes.map { it.first })
-            assertEquals(true, writes.single().second["approved"]!!.jsonPrimitive.boolean)
+            controller.revokeParentTitle(controller.state.value.parentTitles!!.approved.single()); controller.job!!.join()
+            assertEquals(listOf("/api/profiles/2/approvals", "/api/profiles/2/approvals"), writes.map { it.first })
+            assertEquals(true, writes[0].second["approved"]!!.jsonPrimitive.boolean)
+            assertEquals(false, writes[1].second["approved"]!!.jsonPrimitive.boolean)
+            assertEquals("tt123", writes[1].second["id"]!!.jsonPrimitive.content)
             assertNull(controller.state.value.error)
         } finally { controller.connection?.close() }
     }

@@ -22,6 +22,10 @@ internal fun TvParentControlsSettings(snapshot: ProfileManagement?, busy: Boolea
     var editing by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(saved) { pinMode = null; editing = null }
+    // The page also re-enters composition when the approved-titles page closes, and that removal drops focus.
+    LaunchedEffect(snapshot != null) {
+        if (snapshot != null) { withFrameNanos { }; runCatching { first.requestFocus() } }
+    }
     TvFocusColumn(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
             TvSettingsHeading("Parental controls", scale,
