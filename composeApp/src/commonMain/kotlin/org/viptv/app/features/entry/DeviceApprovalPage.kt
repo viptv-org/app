@@ -20,6 +20,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ScanQrCode
 import org.viptv.app.connection.DeviceApproval
 import org.viptv.app.connection.DeviceApprovalApi
 import org.viptv.app.connection.RemoteFailure
@@ -212,6 +214,26 @@ private fun DeviceSessionFootnote(username: String, notYou: () -> Unit) {
         Text("Signed in as $username - ", color = Palette.tertiary, fontSize = 13.sp)
         Text("Not you?", color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.pointerClickable(onClick = notYou))
+    }
+}
+
+@Composable
+internal fun DeviceScanButton(enabled: Boolean, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0x1FFFFFFF),
+            contentColor = Palette.text,
+            disabledContainerColor = Color(0x14FFFFFF),
+            disabledContentColor = Palette.tertiary,
+        ),
+        modifier = Modifier.fillMaxWidth().height(50.dp),
+    ) {
+        Icon(Lucide.ScanQrCode, null, Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Scan the code on your TV", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
     }
 }
 

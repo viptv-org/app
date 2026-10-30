@@ -25,6 +25,8 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
     var error by remember { mutableStateOf<String?>(null) }
     var parentAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var parentError by remember { mutableStateOf<String?>(null) }
+    var scanning by remember { mutableStateOf(false) }
+    val scanAvailable = rememberPairingScannerAvailable()
 
     fun perform(action: suspend () -> Unit, done: () -> Unit) {
         if (busy) return
@@ -46,6 +48,12 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
         step = if (approve) AddDeviceStep.Done else AddDeviceStep.Denied
     }
     fun startOver() { code = ""; device = null; error = null; step = AddDeviceStep.Code }
+    fun scanned(payload: String) {
+        scanning = false
+        val read = PairingQrPayload.code(payload, remote.origin)
+        if (read == null) { error = "That isn't a VIPTV sign-in code. Try the code on your TV." }
+        else { code = read; error = null; lookup() }
+    }
 
     LaunchedEffect(linkedCode) {
         if (linkedCode != null) { code = linkedCode; device = null; error = null; step = AddDeviceStep.Code; linkConsumed(); lookup() }
@@ -59,7 +67,9 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
                 DeviceTile()
                 DeviceTitle("Add a device", compact)
                 DeviceSubtitle("Open VIPTV on the other device, choose Sign in, then enter the code it shows.", compact)
-                DeviceCodeInput(code, { code = it; error = null }, ::lookup, error != null, !busy, compact)
+                if (scanAvailable) DeviceScanButton(!busy) { error = null; scanning = true }
+                // A phone that can scan opens on the scan button instead of a keyboard over it.
+                DeviceCodeInput(code, { code = it; error = null }, ::lookup, error != null, !busy, compact, autofocus = !scanAvailable)
                 error?.let { DeviceError(it) }
                 DevicePrimaryButton("Continue", code.length == 8 && !busy, busy, ::lookup)
             }
@@ -86,6 +96,7 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
             }
         }
     } }
+    if (scanning) PairingScanner(onPayload = ::scanned, dismiss = { scanning = false })
     if (parentAction != null) ParentPinDialog("unlock", configured = true, busy = busy, failure = parentError,
         dismiss = { if (!busy) { parentAction = null; parentError = null } }, submit = { pin, _ ->
             busy = true; parentError = null
