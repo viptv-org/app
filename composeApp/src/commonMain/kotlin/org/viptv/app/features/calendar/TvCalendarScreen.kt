@@ -8,12 +8,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.LocalTvScale
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.PageRestoreState
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.theme.Palette
@@ -26,9 +31,10 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     manage: () -> Unit, actions: Map<String, TvCalendarAction> = emptyMap(), watch: (Card) -> Unit = open, available: Boolean = true, busy: Boolean = false, error: String? = null,
     type: String = "series", week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
-    filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null) {
+    filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null,
+    restore: PageRestoreState = rememberPageRestore("calendar")) {
     val choose = calendarOpener(open, openEntry)
-    var chosen by remember { mutableStateOf<String?>(null) }
+    var chosen by rememberSaveable { mutableStateOf<String?>(null) }
     val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
         ?: days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id
     val byDay = remember(entries) { entries.groupBy { it.day } }
@@ -40,11 +46,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     val rowFocus = remember(activeDay) { mutableMapOf<String, FocusRequester>() }
     val selectedRow = focused?.let { rowFocus.getOrPut(it.id) { FocusRequester() } }
     val rows = rememberLazyListState()
-    LaunchedEffect(activeDay) {
-        focusedId = null
-        // scrollToItem remeasures now and throws while this frame's composition is still applying.
-        rows.requestScrollToItem(0)
-    }
+    val anchored = restore.landing(visible.size) { visible[it].id }
+    PageRestore(rows, restore, claimOnEntry = restore.lastKey != null, target = { restore.landing(visible.size) { visible[it].id } })
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val pageHeight = maxHeight
@@ -64,7 +67,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             days.forEach { day ->
                 TvAction(Modifier.height(64.dp * scale).focusProperties { if (selectedRow != null) down = selectedRow; if(controls)up=typeChip }, scale,
                     primary = activeDay == day.id, requester = if (activeDay == day.id) date else null,
-                    activate = { chosen = day.id; focusedId = null }, cornerRadius = 32.dp * scale,
+                    activate = { chosen = day.id; focusedId = null; rows.requestScrollToItem(0) }, cornerRadius = 32.dp * scale,
                     background = if(activeDay==day.id)Palette.raised else androidx.compose.ui.graphics.Color.Transparent, contentPadding = PaddingValues(horizontal = 26.dp * scale)) {
                     Text(day.label, color = if (it == Palette.background) it else Palette.secondary, fontSize = (26 * scale).sp,
                         lineHeight = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
@@ -76,7 +79,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
             itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                 TvCalendarRow(entry, scale, focused?.id == entry.id, rowFocus.getOrPut(entry.id) { FocusRequester() },
-                    if (index == 0) date else null, preview, { focusedId = entry.id }, { choose(entry) })
+                    if (index == 0) date else null, preview, { focusedId = entry.id }, { restore.mark(entry.id, index); choose(entry) },
+                    modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { message -> item { Text(message, color = Palette.danger) } }

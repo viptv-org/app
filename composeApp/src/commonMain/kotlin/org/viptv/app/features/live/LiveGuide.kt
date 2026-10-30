@@ -3,8 +3,8 @@ package org.viptv.app.features.live
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -21,24 +21,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.PageRestoreState
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, television: Boolean, scale: Float,
     select: (LiveChannel, LiveProgram?) -> Unit, watch: (LiveChannel) -> Unit,
-    first: FocusRequester? = null, up: FocusRequester? = null, more: (() -> Unit)? = null, busy: Boolean = false) {
+    first: FocusRequester? = null, up: FocusRequester? = null, more: (() -> Unit)? = null, busy: Boolean = false,
+    restore: PageRestoreState = rememberPageRestore("live")) {
     val rows = rememberLazyListState()
     AutomaticPage(channels.size, busy, more) { rows.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+    val anchored = restore.landing(channels.size) { channels[it].key() }
+    PageRestore(rows, restore, claimOnEntry = television, target = { restore.landing(channels.size) { channels[it].key() } })
     val span = if (television) 120 else 150
     BoxWithConstraints(Modifier.fillMaxWidth().clipToBounds()) {
         val channelWidth = if (television) 300.dp * scale else 192.dp
         val gap = (if (television) 28 else 8).dp * scale
         val unit = (maxWidth - channelWidth - gap + if (television) 4.dp * scale else 0.dp) / span
-        val initialProgram = channels.firstOrNull()?.let { channel ->
-            val visible = channel.programs.filter { it.end > start && it.start < start + span }
-            visible.find { now != null && now in it.start until it.end } ?: visible.firstOrNull()
-        }
+        val firstChannel = channels.firstOrNull()
+        val initialProgram = firstChannel?.initialProgram(start, span, now)
         val rowHeight = if (television) 72.dp * scale else 56.dp
         val headerHeight = (if (television) 44 else 34).dp * scale
         val spacing = (if (television) 8 else 6).dp * scale
@@ -54,14 +59,20 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                 }
             }
             LazyColumn(state = rows, verticalArrangement = Arrangement.spacedBy(spacing)) {
-                items(channels, key = { it.card.provider_id + ":" + it.card.identity.id }) { channel ->
+                itemsIndexed(channels, key = { _, channel -> channel.key() }) { index, channel ->
+                    val key = channel.key()
+                    val row = anchored == index
+                    val initial = channel.initialProgram(start, span, now)
                     Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                         if (television) TvLiveChannelLabel(channel, scale,
-                            if (channel == channels.firstOrNull() && initialProgram == null) first else null,
-                            if (channel == channels.firstOrNull()) up else null, { select(channel, channel.current(now)) }, { watch(channel) })
+                            if (channel == firstChannel && initialProgram == null) first else null,
+                            if (channel == firstChannel) up else null,
+                            Modifier.pageAnchor(restore, key, index, row && initial == null),
+                            { restore.mark(key, index); select(channel, channel.current(now)) },
+                            { restore.mark(key, index); watch(channel) })
                         else
                         Row(Modifier.width(channelWidth).height(rowHeight).clip(RoundedCornerShape(8.dp * scale))
-                            .background(Palette.surface).pointerClickable(shape = RoundedCornerShape(8.dp * scale)) { watch(channel) }.padding(horizontal = (if (television) 18 else 12).dp * scale),
+                            .background(Palette.surface).pointerClickable(shape = RoundedCornerShape(8.dp * scale)) { restore.mark(key, index); watch(channel) }.padding(horizontal = (if (television) 18 else 12).dp * scale),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                             channel.number?.let { Text(it, fontSize = (if (television) 20 * scale else 12f).sp, color = Palette.secondary) }
                             Text(channel.card.title, fontSize = (if (television) 26 * scale else 14f).sp, fontWeight = FontWeight.Bold)
@@ -74,9 +85,11 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                                     key(program.id) {
                                         LiveProgramCell(program, now, start, television, scale,
                                             Modifier.offset(x = unit * (begin - start)).width((unit * (end - begin) - programGap).coerceAtLeast(1.dp)).fillMaxHeight()
-                                                .then(if (first != null && channel == channels.firstOrNull() && program == initialProgram) Modifier.focusRequester(first) else Modifier)
-                                                .focusProperties { if (up != null && channel == channels.firstOrNull()) this.up = up },
-                                            { select(channel, program) }, { if (television) watch(channel) else select(channel, program) })
+                                                .then(if (first != null && channel == firstChannel && program == initialProgram) Modifier.focusRequester(first) else Modifier)
+                                                .focusProperties { if (up != null && channel == firstChannel) this.up = up }
+                                                .pageAnchor(restore, key, index, row && program == initial),
+                                            { restore.mark(key, index); select(channel, program) },
+                                            { restore.mark(key, index); if (television) watch(channel) else select(channel, program) })
                                     }
                                 }
                             }

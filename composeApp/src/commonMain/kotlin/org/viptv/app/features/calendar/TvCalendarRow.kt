@@ -19,8 +19,8 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean, first: FocusRequester?, up: FocusRequester?, right: FocusRequester,
-    focus: () -> Unit, open: () -> Unit) {
-    TvAction(Modifier.fillMaxWidth().height(132.dp * scale).onFocusChanged { if (it.isFocused) focus() }
+    focus: () -> Unit, open: () -> Unit, modifier: Modifier = Modifier) {
+    TvAction(modifier.fillMaxWidth().height(132.dp * scale).onFocusChanged { if (it.isFocused) focus() }
         .focusProperties { if (up != null) this.up = up; this.right = right }, scale, primary = selected, requester = first, activate = open,
         background = Color.White.copy(alpha = .06f), cornerRadius = 18.dp * scale, arrangement = Arrangement.Start,
         contentPadding = PaddingValues(horizontal = 28.dp * scale)) { color ->

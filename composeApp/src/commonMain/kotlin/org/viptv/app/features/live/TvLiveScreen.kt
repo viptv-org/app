@@ -12,6 +12,10 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.PageRestoreState
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.AutomaticPage
@@ -23,7 +27,8 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     manage: () -> Unit, categories: List<String> = channels.mapNotNull { it.category }.distinct(), groupLabels: Map<String, String> = emptyMap(),
     groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false,
     favoriteChanged: ((LiveChannel) -> Unit)? = null, favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null,
-    sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null) {
+    sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null,
+    restore: PageRestoreState = rememberPageRestore("live")) {
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
     val groups = if (groupLabels.isNotEmpty()) groupLabels else categories.distinct().associateWith { it }
@@ -42,6 +47,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         channel?.let(guideRequested)
     }
     val channelList = rememberLazyListState()
+    val anchored = restore.landing(visible.size) { visible[it].key() }
     AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
@@ -57,15 +63,18 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                         Text(if (favoritesOnly) "All channels" else "Manage add-ons", color = it, fontSize = (24 * scale).sp)
                     }
                 } else if (hasGuide) {
-                    LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
                     LiveGuide(visible, start!!, now, true, scale,
-                    { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, chip.takeIf { hasFilters }, more = more, busy = busy)
+                    { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, chip.takeIf { hasFilters }, more = more, busy = busy, restore = restore)
                 }
-                else LazyColumn(Modifier.tvRingRoom(tvRingReach(scale), horizontal = false), state = channelList,
-                    contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-                    itemsIndexed(visible, key = { _, item -> item.card.provider_id + ":" + item.card.identity.id }) { index, item ->
-                        TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) chip.takeIf { hasFilters } else null,
-                            { channel = item; program = item.current(now); guideRequested(item) }, { watch(item) })
+                else {
+                    PageRestore(channelList, restore, claimOnEntry = true, target = { restore.landing(visible.size) { visible[it].key() } })
+                    LazyColumn(Modifier.tvRingRoom(tvRingReach(scale), horizontal = false), state = channelList,
+                        contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+                        itemsIndexed(visible, key = { _, item -> item.key() }) { index, item ->
+                            TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) chip.takeIf { hasFilters } else null,
+                                { channel = item; program = item.current(now); guideRequested(item) }, { restore.mark(item.key(), index); watch(item) },
+                                modifier = Modifier.pageAnchor(restore, item.key(), index, target = anchored == index))
+                        }
                     }
                 }
             }
