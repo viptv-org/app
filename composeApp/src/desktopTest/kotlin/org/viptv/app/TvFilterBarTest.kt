@@ -12,6 +12,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import org.viptv.app.connection.BrowseQuery
@@ -179,9 +180,37 @@ class TvFilterBarTest {
         }
     }
 
+    @Test fun tvGenrePanelTakesFocusBackWhenTheKeyboardCloses() {
+        val browse = Browse()
+        Page {
+            TvBrowseScreen(posters, false, {}, controls = controls, query = browse.query,
+                filterChanged = browse.changed, multipleChanged = browse.multiple, applyQuery = browse.apply)
+        }.use {
+            it.focusChip("Catalog: Popular Movies")
+            it.press(Key.DirectionRight)
+            it.press(Key.DirectionRight)
+            assertEquals("Genre: Any", it.focusedChip())
+            it.press(Key.DirectionCenter)
+            assertTrue(it.panel("Genre"))
+            assertEquals("Any", it.focusedRow(), "the panel opens on the current genre")
+            it.focusSearch()
+            assertTrue(it.focusedSearch(), "the search field takes the focus")
+
+            it.keyboardOpens()
+            it.keyboardCloses()
+
+            assertTrue(it.focusedSearch(), "the field takes focus back when the keyboard closes")
+            it.down()
+            assertEquals("Any", it.focusedRow(), "Down from the field reaches the first row")
+            assertTrue(it.panel("Genre"), "the panel stays open")
+        }
+    }
+
     private class Page(content: @Composable () -> Unit) : AutoCloseable {
         private var focusManager: FocusManager? = null
         private var frame = 0L
+        private val windowInfo = ImageComposeScene::class.java.getDeclaredField("_windowInfo").apply { isAccessible = true }
+        private val layer = ImageComposeScene::class.java.getDeclaredField("scene").apply { isAccessible = true }
         val scene = ImageComposeScene(1920, 1080, Density(1f)) {
             ViptvTheme(television = true) {
                 focusManager = LocalFocusManager.current
@@ -208,6 +237,23 @@ class TvFilterBarTest {
         fun focusedRow() = nodes().single {
             it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox)
         }.let(::rowLabel)
+        fun focusedSearch() = nodes().singleOrNull { it.config.contains(SemanticsActions.SetText) }
+            ?.config?.getOrNull(SemanticsProperties.Focused) == true
+        fun focusSearch() {
+            nodes().single { it.config.contains(SemanticsActions.SetText) }.config[SemanticsActions.RequestFocus].action!!.invoke()
+            frames()
+        }
+        private fun composeScene() = layer.get(scene) as ComposeScene
+        private fun windowFocused(focused: Boolean) {
+            val info = windowInfo.get(scene)
+            info.javaClass.getMethod("setWindowFocused", Boolean::class.javaPrimitiveType).invoke(info, focused)
+            frames()
+        }
+        // A fullscreen keyboard takes the window focus, and Compose releases its focus when the view loses it.
+        fun keyboardOpens() { windowFocused(false); composeScene().focusManager.releaseFocus(); frames() }
+        fun keyboardCloses() { windowFocused(true); frames(30) }
+        // Desktop fields leave D-pad Down to the focus manager; the TV build moves focus from the field itself.
+        fun down() { composeScene().focusManager.takeFocus(FocusDirection.Down); frames() }
         fun panel(title: String) = nodes().any { it.config.contains(SemanticsProperties.Heading) && text(it) == title }
 
         private fun request(node: SemanticsNode) {
@@ -238,4 +284,5 @@ class TvFilterBarTest {
         } }
         override fun close() = scene.close()
     }
+
 }
