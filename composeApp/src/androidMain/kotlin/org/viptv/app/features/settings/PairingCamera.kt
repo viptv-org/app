@@ -38,8 +38,10 @@ internal fun QrCamera(modifier: Modifier, onPayload: (String) -> Unit) {
         val mainExecutor = Executor { command -> Handler(Looper.getMainLooper()).post(command) }
         val ready = ProcessCameraProvider.getInstance(context)
         var provider: ProcessCameraProvider? = null
+        var disposed = false
         val scanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build())
         ready.addListener({
+            if (disposed) return@addListener
             val camera = try { ready.get() } catch (_: Exception) { null } ?: return@addListener
             provider = camera
             val analysis = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
@@ -48,6 +50,7 @@ internal fun QrCamera(modifier: Modifier, onPayload: (String) -> Unit) {
             try { camera.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, usesPreview, analysis) } catch (_: Exception) { }
         }, mainExecutor)
         onDispose {
+            disposed = true
             ready.cancel(true)
             provider?.unbindAll()
             scanner.close()
@@ -60,7 +63,9 @@ internal fun QrCamera(modifier: Modifier, onPayload: (String) -> Unit) {
 private fun read(image: ImageProxy, scanner: BarcodeScanner, delivering: AtomicBoolean, onPayload: (String) -> Unit) {
     val media = image.image
     if (media == null || delivering.get()) { image.close(); return }
-    scanner.process(InputImage.fromMediaImage(media, image.imageInfo.rotationDegrees))
+    val task = try { scanner.process(InputImage.fromMediaImage(media, image.imageInfo.rotationDegrees)) }
+    catch (_: Exception) { image.close(); return }
+    task
         .addOnSuccessListener { codes ->
             val payload = codes.firstNotNullOfOrNull { it.rawValue } ?: return@addOnSuccessListener
             if (delivering.compareAndSet(false, true)) onPayload(payload)
