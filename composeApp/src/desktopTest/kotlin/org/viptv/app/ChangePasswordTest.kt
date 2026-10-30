@@ -118,6 +118,10 @@ class ChangePasswordTest {
             if (present) {
                 probe.click("Password")
                 assertTrue(probe.has("Change password"), probe.texts().toString())
+                probe.click("Cancel")
+                probe.frames()
+                assertFalse(probe.has("Change password"), "Cancel leaves the page without changing anything")
+                assertTrue(probe.hasPrefix("Password"), "the row stays in the Account group")
             }
         } finally { scene.close(); scope.cancel(); remote.close() }
     }

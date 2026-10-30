@@ -88,7 +88,9 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         installWithCompletion = installWithCompletion)
                     section == "Parental controls" && parental != null -> SettingsDetailContent(compact, parentalBack ?: back, content = parental)
                     section == "Account" && account != null -> SettingsDetailContent(compact, back, content = account)
-                    section == "Password" && password != null -> SettingsDetailContent(compact, back) { password(back) }
+                    section == "Password" && password != null -> SettingsDetailContent(compact, back) {
+                        password(if (compact) back else ({ open("Account") }))
+                    }
                     section == "Household PIN" && householdPin != null -> SettingsDetailContent(compact, back, content = householdPin)
                     section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {
