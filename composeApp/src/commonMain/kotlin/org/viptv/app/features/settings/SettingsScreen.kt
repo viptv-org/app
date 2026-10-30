@@ -92,7 +92,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     }
                     section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) }
                     section in listOf("Help", "About", "Watch on TV") -> SettingsDetailContent(compact, back) {
-                        SettingsInformation(requireNotNull(section), local, serverAddress, profile?.name, profiles) { leaving = true }
+                        SettingsInformation(requireNotNull(section), local, serverAddress) { leaving = true }
                     }
                 }
             }
