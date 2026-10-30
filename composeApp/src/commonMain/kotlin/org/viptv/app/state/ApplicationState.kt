@@ -30,6 +30,8 @@ data class ApplicationState(
     val simkl: SimklLinkStatus? = null,
     val accountDevices: AccountDevices? = null,
     val accountIdentity: AccountIdentity? = null,
+    val passwordChangeAvailable: Boolean = false,
+    val passwordChangeNotice: String? = null,
     val profileManagement: ProfileManagement? = null,
     val parentSettings: ProfileManagement? = null,
     val parentTitles: ParentTitlesState? = null,

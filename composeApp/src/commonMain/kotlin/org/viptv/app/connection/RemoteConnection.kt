@@ -208,9 +208,9 @@ class RemoteConnection(
     }
 
     internal suspend fun accountCall(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonObject {
-        check(browser && path.startsWith("/api/auth/"))
+        check(accountManagementEnabled && path.startsWith("/api/auth/"))
         val value = call(path, method, body).jsonObject
-        if (path in setOf("/api/auth/status", "/api/auth/me", "/api/auth/login", "/api/auth/refresh"))
+        if (path in setOf("/api/auth/status", "/api/auth/me", "/api/auth/login", "/api/auth/refresh", "/api/auth/password"))
             csrf = value["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
         return value
     }
