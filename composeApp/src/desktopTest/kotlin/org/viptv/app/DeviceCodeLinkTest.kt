@@ -49,7 +49,7 @@ class DeviceCodeLinkTest {
             controller.mutable.value = ApplicationState(screen = Screen.Home)
             controller.deliverDeviceCode()
             assertEquals(Screen.Settings, controller.state.value.screen)
-            assertEquals("Watch on TV", controller.state.value.settingsEntrySection)
+            assertEquals("Add a device", controller.state.value.settingsEntrySection)
             assertTrue(controller.deviceLink.value!!.delivered)
             controller.deliverDeviceCode()
             assertEquals(1, controller.state.value.navBack.count { it == Screen.Home }, "Delivery happens once")

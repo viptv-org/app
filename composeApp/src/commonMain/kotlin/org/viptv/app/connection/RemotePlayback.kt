@@ -14,6 +14,7 @@ internal class RemotePlaybackLease(val input: PlaybackInput, val renewSeconds: L
     private val local: LocalTorrentPlayback? = null) {
     private val path = "/api/playback/${input.id.encodeURLPathPart()}"
     suspend fun firstFrame() { if (local != null) local.firstFrame() else if (gateway) remote.call("$path/first-frame", HttpMethod.Post, buildJsonObject {}) }
+    suspend fun segments(): List<org.viptv.app.features.player.TvSkipRange> = remote.playbackSegments(input.id)
     suspend fun renew() { if (local != null) local.renew() else remote.call("$path/heartbeat", HttpMethod.Post) }
     suspend fun close() {
         try { local?.close() } finally { remote.call(path, HttpMethod.Delete) }

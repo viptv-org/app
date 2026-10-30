@@ -32,6 +32,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var interaction by mutableIntStateOf(0)
     var controlError by mutableStateOf<String?>(null)
     var undecodable by mutableStateOf(false)
+    private val skipped = mutableSetOf<TvSkipRange>()
     private var lastPosition = position
     private var advancingTicks = 0
     init { initial.forEach(::observe) }
@@ -67,9 +68,9 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
         }
     }
     fun keepWatching() { showNext = false; visible = false; endHandled = true }
-    fun offerNext(available: Boolean) {
+    fun offerNext(available: Boolean, creditsReached: Boolean = false) {
         if (showNext && !available) showNext = false
-        else if (ended && !endHandled && available && !live && !failed && !undecodable && !showNext) {
+        else if ((ended || creditsReached) && !endHandled && available && !live && !failed && !undecodable && !showNext) {
             showTracks = false; showEpisodes = false; scrub = null; showNext = true
         }
     }
@@ -91,6 +92,11 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     }
     fun commit(preview: ((PlayerCommand) -> Unit)?) {
         scrub?.let { send(PlayerCommand.Seek(it), preview) }; scrub = null
+    }
+    fun skip(range: TvSkipRange, automatic: Boolean, preview: ((PlayerCommand) -> Unit)? = null) {
+        if (seekTarget != null) return
+        if (!skipped.add(range) && automatic) return
+        send(PlayerCommand.Seek(range.endMillis), preview)
     }
     fun back(close: () -> Unit): Boolean {
         when {
