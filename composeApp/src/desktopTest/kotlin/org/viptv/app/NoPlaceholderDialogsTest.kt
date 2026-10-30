@@ -13,7 +13,7 @@ class NoPlaceholderDialogsTest {
     }
 
     @Test fun noSettingsSectionFallsBackToAMissingConnectionNotice() {
-        offenders("""\$section is not available on this connection yet""")
+        offenders("""[${'$'}]section is not available on this connection yet""")
     }
 
     private fun offenders(expression: String) {
