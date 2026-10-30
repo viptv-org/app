@@ -1,7 +1,7 @@
 package org.viptv.app.features.settings
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,9 +65,10 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
 
 internal fun signOutLabel(local: Boolean) = if (local) "Change connection" else "Sign out"
 
-internal enum class SettingsLayout(val groupLabelSize: TextUnit, val groupLabelTracking: Float, val groupLabelPadding: PaddingValues) {
-    Phone(11.sp, .08f, PaddingValues(horizontal = 16.dp)),
-    Tablet(11.sp, .08f, PaddingValues(horizontal = 16.dp, vertical = 12.dp)),
-    Desktop(12.sp, .06f, PaddingValues(horizontal = 12.dp, vertical = 8.dp)),
-    Web(12.sp, 0f, PaddingValues(horizontal = 16.dp, vertical = 12.dp)),
+internal enum class SettingsLayout(val groupLabelSize: TextUnit, val groupLabelTracking: Float,
+    val groupLabelHorizontal: Dp, val groupLabelAbove: Dp, val groupLabelBelow: Dp) {
+    Phone(11.sp, .08f, 16.dp, groupLabelAbove = 2.dp, groupLabelBelow = 8.dp),
+    Tablet(11.sp, .08f, 16.dp, groupLabelAbove = 16.dp, groupLabelBelow = 12.dp),
+    Desktop(12.sp, .06f, 12.dp, groupLabelAbove = 8.dp, groupLabelBelow = 8.dp),
+    Web(12.sp, 0f, 16.dp, groupLabelAbove = 12.dp, groupLabelBelow = 12.dp),
 }

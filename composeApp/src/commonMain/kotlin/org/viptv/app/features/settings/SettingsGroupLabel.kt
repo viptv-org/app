@@ -12,8 +12,10 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun SettingsGroupLabel(label: String, layout: SettingsLayout, modifier: Modifier = Modifier) {
-    Text(label.uppercase(), modifier.padding(layout.groupLabelPadding).semantics(mergeDescendants = true) { heading() },
+internal fun SettingsGroupLabel(label: String, layout: SettingsLayout) {
+    Text(label.uppercase(), Modifier.padding(start = layout.groupLabelHorizontal, end = layout.groupLabelHorizontal,
+            top = layout.groupLabelAbove, bottom = layout.groupLabelBelow)
+            .semantics(mergeDescendants = true) { heading() },
         color = Palette.tertiary, fontSize = layout.groupLabelSize, lineHeight = (layout.groupLabelSize.value * 1.4f).sp,
         letterSpacing = (layout.groupLabelSize.value * layout.groupLabelTracking).sp, fontWeight = FontWeight.Bold)
 }

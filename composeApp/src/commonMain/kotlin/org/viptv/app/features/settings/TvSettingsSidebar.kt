@@ -32,11 +32,11 @@ internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, reques
         TvFocusScroll(horizontal = false) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                 tvSettingsGroups().forEach { (group, sections) ->
-                    Spacer(Modifier.height(24.dp * scale))
+                    Spacer(Modifier.height(8.dp * scale))
                     Text(group.label.uppercase(), Modifier.padding(start = 96.dp * scale).semantics(mergeDescendants = true) { heading() },
                         color = Palette.tertiary, fontSize = (18 * scale).sp, lineHeight = (25 * scale).sp,
                         letterSpacing = (1.44f * scale).sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp * scale))
+                    Spacer(Modifier.height(24.dp * scale))
                     sections.forEach { section ->
                         var focused by remember { mutableStateOf(false) }
                         val highlighted = focused && !modal

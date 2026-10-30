@@ -66,7 +66,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
         settingsSections(available).forEach { section ->
             item(key = section.key) {
                 Column {
-                    SettingsGroupLabel(section.group.label, SettingsLayout.Phone, Modifier.padding(top = 20.dp, bottom = 8.dp))
+                    SettingsGroupLabel(section.group.label, SettingsLayout.Phone)
                     Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
                         Column {
                             section.rows.forEachIndexed { index, row ->
