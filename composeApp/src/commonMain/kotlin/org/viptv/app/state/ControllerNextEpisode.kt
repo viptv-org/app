@@ -33,7 +33,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
         mutable.value.selectedProfile == profile && mutable.value.sourceTitle?.identity == card.identity &&
         mutable.value.sourceTitle?.metadata_origin == key.origin && mutable.value.sourceTitle?.parent_identity == parent && mutable.value.sourceTitle?.provider_id == card.provider_id &&
         mutable.value.home?.scope?.owner() == key.homeScope && connection === key.remote && local === key.local
-    mutable.value = mutable.value.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.PENDING, nextEpisodeLoading = true)
+    updateState { next -> next.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.PENDING, nextEpisodeLoading = true) }
     nextEpisodeJob = scope.launch {
         try {
             val resolved = withTimeoutOrNull(12_000) {
@@ -68,16 +68,16 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
             }
             if (!current()) return@launch
             val next = resolved?.item?.takeIf { resolved.status == ContinuationStatus.NEXT && validNextEpisode(card, it) }
-            mutable.value = mutable.value.copy(nextEpisode = next,
-                nextEpisodeStatus = if (resolved == null || (resolved.status == ContinuationStatus.NEXT && next == null)) ContinuationStatus.UNAVAILABLE else resolved.status)
+            updateState { latest -> latest.copy(nextEpisode = next,
+                nextEpisodeStatus = if (resolved == null || (resolved.status == ContinuationStatus.NEXT && next == null)) ContinuationStatus.UNAVAILABLE else resolved.status) }
         } catch (error: CancellationException) {
-            if (current()) mutable.value = mutable.value.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.UNAVAILABLE)
+            if (current()) updateState { next -> next.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.UNAVAILABLE) }
             throw error
         }
         catch (_: Exception) {
-            if (current()) mutable.value = mutable.value.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.UNAVAILABLE)
+            if (current()) updateState { next -> next.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.UNAVAILABLE) }
         } finally {
-            if (current()) mutable.value = mutable.value.copy(nextEpisodeLoading = false)
+            if (current()) updateState { next -> next.copy(nextEpisodeLoading = false) }
         }
     }
 }
@@ -85,7 +85,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
 internal fun ApplicationController.cancelNextEpisode() {
     nextEpisodeGeneration++
     nextEpisodeJob?.cancel(); nextEpisodeJob = null; nextEpisodeKey = null
-    mutable.value = mutable.value.copy(nextEpisode = null, nextEpisodeStatus = null, nextEpisodeLoading = false)
+    updateState { next -> next.copy(nextEpisode = null, nextEpisodeStatus = null, nextEpisodeLoading = false) }
 }
 
 internal fun loadedNextEpisode(card: Card, detail: DetailSnapshot?): Card? {

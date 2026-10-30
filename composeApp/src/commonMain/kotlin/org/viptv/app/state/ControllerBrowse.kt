@@ -7,7 +7,7 @@ fun ApplicationController.browseFilter(id: String, value: String) {
     val prior = mutable.value.browseQuery
     val catalog = if (id == "catalog") mutable.value.browseControls?.catalogSelection(value) else null
     if (id == "catalog" && value.isNotBlank() && catalog == null) {
-        mutable.value = mutable.value.copy(error = "This catalog is no longer available. Choose another.")
+        updateState { next -> next.copy(error = "This catalog is no longer available. Choose another.") }
         return
     }
     val query = when (id) {
@@ -44,8 +44,8 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
     val controls = if (mutable.value.browseQuery.type == query.type && mutable.value.browseQuery.genre == query.genre) mutable.value.browseControls else null
     val scoped = controls ?: (local?.discoveryControls(profile, query.type) ?: requireNotNull(connection).discoveryControls(query.type, query.genre))
     if (scoped.discovery.availability != "Available") {
-        mutable.value = mutable.value.copy(browseQuery = query, browseControls = scoped, browseCards = emptyList(), browseNext = null,
-            error = ServerMessages.human(scoped.discovery.message, "Configure a browsing integration for this profile."))
+        updateState { next -> next.copy(browseQuery = query, browseControls = scoped, browseCards = emptyList(), browseNext = null,
+            error = ServerMessages.human(scoped.discovery.message, "Configure a browsing integration for this profile.")) }
         return
     }
     val scopedQuery = if (scoped.provider_id == "simkl") {
@@ -56,15 +56,15 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
         else query
     } else query
     val selected = scopedQuery.withDefaultCatalog(scoped)
-    mutable.value = mutable.value.copy(browseQuery = selected, browseControls = scoped,
-        browseCards = if (append) mutable.value.browseCards else emptyList(), browseNext = if (append) mutable.value.browseNext else null)
+    updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
+        browseCards = if (append) next.browseCards else emptyList(), browseNext = if (append) next.browseNext else null) }
     val required = scoped.missingRequired(selected)
     if (required.isNotEmpty()) {
-        mutable.value = mutable.value.copy(error = "Choose the required filters: ${required.joinToString()}.")
+        updateState { next -> next.copy(error = "Choose the required filters: ${required.joinToString()}.") }
         return
     }
     val page = local?.browse(profile, selected) ?: requireNotNull(connection).browse(selected, scoped)
-    mutable.value = mutable.value.copy(browseQuery = selected, browseControls = scoped,
-        browseCards = ((if (append) mutable.value.browseCards else emptyList()) + page.cards).distinctBy(::cardLookupKey),
-        browseNext = page.next_cursor)
+    updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
+        browseCards = ((if (append) next.browseCards else emptyList()) + page.cards).distinctBy(::cardLookupKey),
+        browseNext = page.next_cursor) }
 }

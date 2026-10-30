@@ -16,7 +16,7 @@ fun ApplicationController.refresh() = run {
     currentCoroutineContext().ensureActive()
     if (mutable.value.screen == Screen.Home || refreshed.selected != profile) accept(refreshed, busy = true)
     else {
-        mutable.value = mutable.value.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap())
+        updateState { it.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap()) }
         adoptContinuation(refreshed.continuation)
         freshness.homeBuilt(refreshed.revisions)
     }
@@ -32,8 +32,10 @@ fun ApplicationController.homeRowPage(rowId: String) {
     val profile = mutable.value.selectedProfile ?: return
     val query = row.pageQuery() ?: return
     if (row.cards.size >= HOME_ROW_LIMIT) {
-        mutable.value = mutable.value.copy(home = home.copy(rows = home.rows.map {
-            if (it.id == rowId) it.copy(next_cursor = null) else it }))
+        updateState { state ->
+            val shown = state.home ?: return@updateState state
+            state.copy(home = shown.copy(rows = shown.rows.map { row -> if (row.id == rowId) row.copy(next_cursor = null) else row }))
+        }
         return
     }
     val remote = connection
@@ -43,8 +45,7 @@ fun ApplicationController.homeRowPage(rowId: String) {
     fun current() = generation == operation && mutable.value.screen == Screen.Home &&
         mutable.value.selectedProfile == profile && mutable.value.home?.scope?.owner() == homeScope &&
         connection === remote && local === device
-    mutable.value = mutable.value.copy(homeRowBusy = mutable.value.homeRowBusy + rowId,
-        homeRowErrors = mutable.value.homeRowErrors - rowId)
+    updateState { it.copy(homeRowBusy = it.homeRowBusy + rowId, homeRowErrors = it.homeRowErrors - rowId) }
     scope.launch {
         try {
             val page = when {
@@ -57,22 +58,26 @@ fun ApplicationController.homeRowPage(rowId: String) {
             val target = loaded.rows.find { it.id == rowId } ?: return@launch
             val merged = (target.cards + page.cards).distinctBy(::cardLookupKey).take(HOME_ROW_LIMIT)
             val next = if (merged.size > target.cards.size) advancedCursor(page.next_cursor, cursor) else null
-            mutable.value = mutable.value.copy(home = loaded.copy(rows = loaded.rows.map {
-                if (it.id == rowId) it.copy(cards = merged, next_cursor = next,
-                    state = if (merged.isEmpty()) RowState.EMPTY else RowState.READY) else it }))
+            updateState { state ->
+                val home = state.home ?: return@updateState state
+                state.copy(home = home.copy(rows = home.rows.map { row ->
+                    if (row.id == rowId) row.copy(cards = merged, next_cursor = next,
+                        state = if (merged.isEmpty()) RowState.EMPTY else RowState.READY) else row }))
+            }
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
             if (current()) {
                 if (error is RemoteFailure && error.status == 401 && device == null) {
                     releaseRemotePlayback(); remote?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                } else mutable.value = mutable.value.copy(
-                    homeRowErrors = mutable.value.homeRowErrors + (rowId to "Could not load more titles. Try again."))
+                } else updateState { it.copy(
+                    homeRowErrors = it.homeRowErrors + (rowId to "Could not load more titles. Try again.")) }
             }
         } finally {
-            val state = mutable.value
-            if (rowId in state.homeRowBusy && state.home?.scope?.owner() == homeScope)
-                mutable.value = state.copy(homeRowBusy = state.homeRowBusy - rowId)
+            updateState { state ->
+                if (rowId in state.homeRowBusy && state.home?.scope?.owner() == homeScope)
+                    state.copy(homeRowBusy = state.homeRowBusy - rowId) else state
+            }
         }
     }
 }
@@ -88,7 +93,7 @@ private fun advancedCursor(next: String?, current: String): String? {
 fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mutable.value.searchTerm))
 
 fun ApplicationController.search(term: String) {
-    mutable.value = mutable.value.copy(searchTerm = term, results = emptyList(), searchRows = emptyList())
+    updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
     rememberNavigation()
     run {
         val operation = generation
@@ -110,7 +115,7 @@ fun ApplicationController.search(term: String) {
         }
         if (generation == operation && mutable.value.searchTerm == term &&
             mutable.value.selectedProfile == profile && connection === remote && local === device) {
-            mutable.value = mutable.value.copy(results = cards, searchRows = grouped?.rows.orEmpty())
+            updateState { it.copy(results = cards, searchRows = grouped?.rows.orEmpty()) }
         }
     }
 }
@@ -131,7 +136,7 @@ fun ApplicationController.enrichSummary(card: Card) {
             poster = card.poster ?: richer.poster,
             metadata = card.metadata ?: richer.metadata,
         )
-        if (merged != card) mutable.value = mutable.value.copy(summaryCards = mutable.value.summaryCards + (card.identity.id to merged))
+        if (merged != card) updateState { it.copy(summaryCards = it.summaryCards + (card.identity.id to merged)) }
     }
 }
 
@@ -141,7 +146,7 @@ fun ApplicationController.open(card: Card) {
     runPage {
         val profile = requireNotNull(mutable.value.selectedProfile)
         val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-        mutable.value = mutable.value.copy(detail = detail.withCardArt(card))
+        updateState { it.copy(detail = detail.withCardArt(card)) }
         rememberNavigation()
     }
 }
@@ -154,7 +159,7 @@ internal fun org.viptv.engine.wire.DetailSnapshot.withCardArt(card: Card): org.v
 
 fun ApplicationController.playTitle(card: Card) {
     if (card.unnumberedEpisode()) {
-        mutable.value = mutable.value.copy(error = UNNUMBERED_EPISODE)
+        updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
     }
     val navigation = navigationGeneration
@@ -163,7 +168,7 @@ fun ApplicationController.playTitle(card: Card) {
         ?: before.detailReturnScreen
     val keptDetail = before.detail?.takeIf { sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
     releaseRemotePlayback()
-    mutable.value = mutable.value.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null)
+    updateState { it.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null) }
     openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null })
     if (card.identity.episode != null && card.metadata_origin != null) {
         loadSourceDetail(card, navigation)
@@ -174,7 +179,7 @@ fun ApplicationController.playTitle(card: Card) {
 }
 
 private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire.DetailSnapshot, card: Card, target: Card) {
-    mutable.value = mutable.value.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target)
+    updateState { it.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target) }
 }
 
 private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Long) {
@@ -207,13 +212,15 @@ private const val DETAILS_TIMEOUT = "Your server took too long to show this titl
 
 private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
     if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
-    val state = mutable.value
     val message = failureMessage(error)
     val retryable = error !is RemoteFailure || !error.metadataNotFound
-    when {
-        state.screen == Screen.Details -> mutable.value = state.copy(error = message, findingSources = false, busy = false, detailRetryable = retryable)
-        onSelector && state.screen == Screen.Sources -> mutable.value = state.copy(error = message, findingSources = false, busy = false, detailRetryable = retryable)
-        state.playTapTitle != null -> mutable.value = state.copy(detailFailure = message, detailRetryable = retryable)
+    updateState { state ->
+        when {
+            state.screen == Screen.Details -> state.copy(error = message, findingSources = false, busy = false, detailRetryable = retryable)
+            onSelector && state.screen == Screen.Sources -> state.copy(error = message, findingSources = false, busy = false, detailRetryable = retryable)
+            state.playTapTitle != null -> state.copy(detailFailure = message, detailRetryable = retryable)
+            else -> state
+        }
     }
 }
 
@@ -221,7 +228,7 @@ fun ApplicationController.retryDetails() {
     val card = mutable.value.playTapTitle ?: return
     if (mutable.value.screen != Screen.Details) return
     val navigation = navigationGeneration
-    mutable.value = mutable.value.copy(error = null, detailFailure = null, detailPageError = null, detailRetryable = true)
+    updateState { it.copy(error = null, detailFailure = null, detailPageError = null, detailRetryable = true) }
     if (card.identity.episode != null && card.metadata_origin != null) loadSourceDetail(card, navigation)
     else resolveSourceTarget(card, navigation)
 }
@@ -277,13 +284,13 @@ fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
     val navigation = navigationGeneration
     runPage {
         val detail = readCurrentPage(navigation) { requireNotNull(connection).detail(kind, id) } ?: return@runPage
-        mutable.value = mutable.value.copy(detail = detail)
+        updateState { it.copy(detail = detail) }
     }
 }
 
 fun ApplicationController.chooseSource(card: Card) {
     if (card.unnumberedEpisode()) {
-        mutable.value = mutable.value.copy(error = UNNUMBERED_EPISODE)
+        updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
     }
     // A title-level series must never reach stream providers as S0E0.
@@ -291,7 +298,7 @@ fun ApplicationController.chooseSource(card: Card) {
         val detail = mutable.value.detail?.takeIf { it.item.identity == card.identity && it.item.provider_id == card.provider_id && it.item.metadata_origin == card.metadata_origin }
         if (detail == null) { playTitle(card); return }
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
-            mutable.value = mutable.value.copy(error = error.message); return
+            updateState { it.copy(error = error.message) }; return
         }
         chooseSource(target); return
     }
@@ -302,9 +309,9 @@ fun ApplicationController.chooseSource(card: Card) {
 }
 
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null) {
-    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
+    updateState { it.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
-        playTapTitle = playTap, detailFailure = null, detailRetryable = true)
+        playTapTitle = playTap, detailFailure = null, detailRetryable = true) }
 }
 
 private suspend fun ApplicationController.discoverSources(card: Card) {
@@ -318,7 +325,7 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
         coroutineScope {
             val ranking = ProgressiveSourceRanking(this,
                 rank = { rows -> device?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
-                show = { ranked -> if (generation == operation) mutable.value = mutable.value.copy(sources = ranked.rows, sourceGroups = ranked.groups) })
+                show = { ranked -> if (generation == operation) updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups) } })
             val outcome = try {
                 device?.sources(profile, card, ranking::arrived) ?: SourcesOutcome(requireNotNull(remote).sources(card, ranking::arrived))
             } catch (deadline: TimeoutCancellationException) {
@@ -327,14 +334,14 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
             ranking.arrived(outcome.candidates)
             val ranked = ranking.finish()
             if (generation != operation) return@coroutineScope
-            mutable.value = mutable.value.copy(torrentOnlySources = outcome.torrentOnlyProviders)
+            updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders) }
             if (mutable.value.preferences?.preferences?.source_selection == "best") ranked?.autoplayTarget()?.let { playSource(it) }
         }
     } catch (_: TimeoutCancellationException) {
         throw LocalFailure(if (mutable.value.sources.isNotEmpty())
             "Some providers did not finish within a minute. Available sources are ready to play."
         else "Providers did not respond within a minute. Try again.")
-    } finally { if (generation == operation) mutable.value = mutable.value.copy(findingSources = false) }
+    } finally { if (generation == operation) updateState { it.copy(findingSources = false) } }
 }
 
 internal fun RankedSources.autoplayTarget(): org.viptv.engine.wire.SourceCandidate? =
@@ -410,13 +417,14 @@ private fun compatiblePublicIdentity(expected: MediaIdentity, actual: MediaIdent
 
 internal fun ApplicationController.beginDetails() {
     cancelSourceDetail()
-    val previous = mutable.value
-    val origin = previous.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
-        ?: previous.detailReturnScreen
-    val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
-    val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
-        else (previous.navBack + previous.screen).takeLast(32)
-    mutable.value = previous.copy(detailReturnScreen = origin, detailHistory = history,
-        navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
-        screen = Screen.Details, detail = null, calendarEpisode = null)
+    updateState { previous ->
+        val origin = previous.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
+            ?: previous.detailReturnScreen
+        val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
+        val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
+            else (previous.navBack + previous.screen).takeLast(32)
+        previous.copy(detailReturnScreen = origin, detailHistory = history,
+            navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
+            screen = Screen.Details, detail = null, calendarEpisode = null)
+    }
 }

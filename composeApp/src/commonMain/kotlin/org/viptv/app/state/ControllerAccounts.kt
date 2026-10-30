@@ -8,7 +8,7 @@ private suspend fun ApplicationController.loadAccountIdentity() {
     val remote = requireNotNull(connection)
     val owner = generation
     val identity = remote.accountIdentity()
-    if (connection === remote && generation == owner) mutable.value = mutable.value.copy(accountIdentity = identity)
+    if (connection === remote && generation == owner) updateState { next -> next.copy(accountIdentity = identity) }
 }
 
 fun ApplicationController.refreshAccounts() = run {
@@ -19,7 +19,7 @@ fun ApplicationController.refreshAccounts() = run {
         val profile = requireNotNull(mutable.value.selectedProfile)
         val status = remote.simklStatus(profile)
         if (connection === remote && generation == owner && mutable.value.selectedProfile == profile)
-            mutable.value = mutable.value.copy(simkl = status)
+            updateState { next -> next.copy(simkl = status) }
     }
 }
 fun ApplicationController.linkSimkl() = run {
@@ -30,5 +30,6 @@ fun ApplicationController.unlinkSimkl() = run {
     if (browserOrigin() == null) throw LocalFailure("Manage linked accounts through the server web dashboard.")
     val profile = requireNotNull(mutable.value.selectedProfile)
     requireNotNull(connection).unlinkSimkl(profile)
-    mutable.value = mutable.value.copy(simkl = requireNotNull(connection).simklStatus(profile))
+    val status = requireNotNull(connection).simklStatus(profile)
+    updateState { next -> next.copy(simkl = status) }
 }

@@ -19,7 +19,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
         catch (error: CancellationException) { throw error }
         catch (_: Exception) {
             currentCoroutineContext().ensureActive()
-            if (generation == operation) mutable.value = mutable.value.copy(error = "Your saved connection could not be read from secure storage. Choose a connection to continue.")
+            if (generation == operation) updateState { next -> next.copy(error = "Your saved connection could not be read from secure storage. Choose a connection to continue.") }
             null
         }
         currentCoroutineContext().ensureActive()
@@ -52,7 +52,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
             if (generation != operation || connection !== remote) return@run
             // Release the failed connection before Connect so no token-bearing client survives the restore.
             remote.close(); connection = null
-            mutable.value = mutable.value.copy(error = if (error.status == 401) "Session expired. Sign in again." else error.message)
+            updateState { next -> next.copy(error = if (error.status == 401) "Session expired. Sign in again." else error.message) }
         }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
