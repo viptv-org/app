@@ -49,6 +49,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         else state
         history.copy(screen = screen, error = null, detailRetryable = true,
             settingsEntrySection = if (screen == Screen.Settings) state.settingsEntrySection else null,
+            liveSetupReturnFocus = state.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
             settingsReturnsToPlayer = playerVisit,
             settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) state.settingsPage else null)
     }

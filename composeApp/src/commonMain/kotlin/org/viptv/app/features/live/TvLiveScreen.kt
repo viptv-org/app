@@ -23,7 +23,9 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     manage: () -> Unit, categories: List<String> = channels.mapNotNull { it.category }.distinct(), groupLabels: Map<String, String> = emptyMap(),
     groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false,
     favoriteChanged: ((LiveChannel) -> Unit)? = null, favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null,
-    sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null) {
+    sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null,
+    spread: LiveSpread = LiveSpread.Channels, noChannelsReason: String? = null, noChannelsRetry: (() -> Unit)? = null,
+    sourceIntegrations: (() -> Unit)? = null) {
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
     val groups = if (groupLabels.isNotEmpty()) groupLabels else categories.distinct().associateWith { it }
@@ -33,7 +35,8 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     var program by remember { mutableStateOf<LiveProgram?>(null) }
     val first = remember { FocusRequester() }; val chip = remember { FocusRequester() }
     val hasGuide = start != null && visible.any { channel -> channel.programs.any { it.end > start && it.start < start + 120 } }
-    val hasFilters = groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
+    val chipsOnly = spread.showsChannelRows()
+    val hasFilters = if (chipsOnly) sourceChanged != null && sources.size > 1 else groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
     LaunchedEffect(activeCategory, favoritesOnly, channels) {
         category = activeCategory
         channel = visible.find { it.card.provider_id == channel?.card?.provider_id && it.card.identity == channel?.card?.identity }
@@ -46,6 +49,19 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val pageHeight = maxHeight
+        if (chipsOnly) {
+            Column(Modifier.fillMaxSize().padding(start = 96.dp * scale, end = 96.dp * scale, top = if (hasFilters) 24.dp * scale else 60.dp * scale),
+                verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                if (hasFilters) Box(Modifier.fillMaxWidth().focusGroup()) {
+                    CompositionLocalProvider(LocalTvScale provides scale) {
+                        LiveFilters(emptyMap(), null, { _ -> }, false, null, {}, sources, selectedSource, sourceChanged, entry = chip)
+                    }
+                }
+                if (spread == LiveSpread.Loading) LiveChannelSkeletons(true, scale, false)
+                else LiveNoChannels(true, scale, false, noChannelsReason, noChannelsRetry, sourceIntegrations)
+            }
+            return@BoxWithConstraints
+        }
         // The chip row stays outside the group below: that group's onEnter lands on the guide, and any focus request into it counts as an entry, so a chip inside could never take the remote's focus.
         Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (visible.isNotEmpty()) first.requestFocus() else if (hasFilters) chip.requestFocus() } }.focusGroup()) {
             channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
