@@ -51,7 +51,7 @@ internal fun PhoneEpisodePicker(current: Card?, episodes: List<Card>, choose: (C
                 }
                 BoxWithConstraints(Modifier.weight(1f)) {
                     val wide = maxWidth >= 360.dp
-                    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp), topEdgeFade = false) {
                         itemsIndexed(episodes, key = { _, card -> cardLookupKey(card) }) { position, card ->
                             val active = current != null && cardLookupKey(card) == cardLookupKey(current)
                             DetailEpisodeCard(card, phone = wide, play = {

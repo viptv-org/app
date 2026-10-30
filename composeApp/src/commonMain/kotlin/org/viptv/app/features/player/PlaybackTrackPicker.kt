@@ -85,7 +85,7 @@ private fun TrackColumn(label: String, tracks: List<PlaybackTrack>, subtitles: B
         Text(label, Modifier.padding(horizontal = 12.dp), fontSize = 12.sp, color = Palette.secondary)
         if (tracks.isEmpty()) Text(if (subtitles) "No subtitle tracks available" else "No audio tracks available",
             Modifier.padding(12.dp), fontSize = 12.sp, color = Palette.secondary)
-        LazyColumn {
+        LazyColumn(topEdgeFade = false) {
             if (subtitles && tracks.isNotEmpty()) item { PlaybackTrackChoice("Off", tracks.none { it.selected }) { select(null) } }
             items(tracks, key = { it.id }) { track -> PlaybackTrackChoice(track.label, track.selected) { select(track.id) } }
         }
