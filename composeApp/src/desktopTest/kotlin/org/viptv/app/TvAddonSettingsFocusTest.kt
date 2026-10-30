@@ -138,7 +138,7 @@ class TvAddonSettingsFocusTest {
         try {
             settle(scene)
             repeat(20) { if (text(row()).startsWith("A ")) settle(scene) }
-            assertEquals("${name(1)} Sources", text(row()), "the letter tile gives way to the logo")
+            assertEquals("${name(1)} Streams", text(row()), "the letter tile gives way to the logo")
         } finally { scene.close() }
     }
 }

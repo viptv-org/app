@@ -35,7 +35,7 @@ internal fun AddonFilterControls(query: String, queryChange: (String) -> Unit, p
                 })
             }
         }
-        Text(if (query.isNotBlank() || provides != null) "Showing $shown of $total add-ons" else "$total add-ons",
+        Text(if (query.isNotBlank() || provides != null) "Showing $shown of $total add-ons" else "$total installed",
             Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 13.sp, color = Palette.secondary)
     }
 }
