@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import kotlinx.coroutines.CancellationException
 import org.viptv.app.connection.*
 
 fun ApplicationController.refreshProfilePage() = run {
@@ -9,7 +10,7 @@ fun ApplicationController.refreshProfilePage() = run {
     loadPreferences()
     if (remote != null) {
         val management = remote.profileManagement()
-        val approvals = if (management.profiles.any { it.id == profile && it.kids }) remote.approvedTitles(profile).size else null
+        val approvals = if (management.profiles.any { it.id == profile && it.kids }) remote.approvalCount(profile) else null
         if (connection === remote && generation == owner && mutable.value.selectedProfile == profile)
             updateState { next -> next.copy(profiles = management.cards(), profileManagement = management,
                 parentSettings = management, profileApprovals = approvals) }
@@ -50,14 +51,15 @@ fun ApplicationController.saveProfileKids(enabled: Boolean, maxAge: Int, pin: St
     }
     val owner = generation
     val page = mutable.value.settingsPage
+    val saved = mutable.value.profilePageSaved
     if (mutable.value.selectedProfile == id) invalidatePolicyContent()
     remote.saveKidsPolicy(id, KidsPolicy(enabled, maxAge))
-    val approvals = if (enabled) remote.approvedTitles(id).size else null
+    val approvals = if (enabled) remote.approvalCount(id) else null
     val snapshot = remote.bootstrap()
     if (connection === remote && generation == owner) {
         accept(snapshot, screen = Screen.Settings)
         updateState { next -> next.copy(settingsPage = page, selectedProfile = id, profileApprovals = approvals,
-            profilePageSaved = next.profilePageSaved + 1) }
+            profilePageSaved = saved + 1) }
     }
 }
 
@@ -80,3 +82,6 @@ private suspend fun ApplicationController.finishProfilePageSave() {
         updateState { current -> current.copy(profiles = next.profiles, profileManagement = next.profileManagement,
             profilePageSaved = current.profilePageSaved + 1) }
 }
+
+private suspend fun RemoteConnection.approvalCount(profile: String): Int? =
+    try { approvedTitles(profile).size } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }

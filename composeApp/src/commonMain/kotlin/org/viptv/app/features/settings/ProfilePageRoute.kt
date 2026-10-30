@@ -2,27 +2,29 @@ package org.viptv.app.features.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
 import org.viptv.app.connection.ProfilePreferences
-import org.viptv.app.state.ApplicationController
-import org.viptv.app.state.ApplicationState
 import org.viptv.app.state.*
 
 @Composable
 internal fun ProfilePageRoute(state: ApplicationState, controller: ApplicationController, layout: SettingsLayout) {
     val values = profilePageValues(state)
-    LaunchedEffect(state.selectedProfile, state.parentTitles == null) { if (state.selectedProfile != null) controller.refreshProfilePage() }
+    LaunchedEffect(state.selectedProfile, state.parentTitles) {
+        if (state.selectedProfile != null && state.parentTitles == null) controller.refreshProfilePage()
+    }
     ProfileSettingsPage(values, state.busy, state.error, state.profilePageSaved,
-        profilePageActions(controller, values, parentalControls = { controller.showSettingsPage(org.viptv.app.state.SettingsPage("Parental controls")) },
-            language = { controller.showSettingsPage(org.viptv.app.state.SettingsPage("Subtitles & audio")) }),
+        profilePageActions(controller, values, parentalControls = { controller.showSettingsPage(SettingsPage("Parental controls")) },
+            language = { controller.showSettingsPage(SettingsPage("Subtitles & audio")) }),
         layout)
 }
 
 @Composable
 internal fun TvProfilePageRoute(state: ApplicationState, controller: ApplicationController, scale: Float,
-    first: androidx.compose.ui.focus.FocusRequester, sidebar: androidx.compose.ui.focus.FocusRequester,
-    openSection: (TvSettingsSection) -> Unit) {
+    first: FocusRequester, sidebar: FocusRequester, openSection: (TvSettingsSection) -> Unit) {
     val values = profilePageValues(state)
-    LaunchedEffect(state.selectedProfile, state.parentTitles == null) { if (state.selectedProfile != null) controller.refreshProfilePage() }
+    LaunchedEffect(state.selectedProfile, state.parentTitles) {
+        if (state.selectedProfile != null && state.parentTitles == null) controller.refreshProfilePage()
+    }
     TvProfileSettingsPage(values, state.busy, state.error, state.profilePageSaved,
         profilePageActions(controller, values, parentalControls = { openSection(TvSettingsSection.Parental) },
             language = { openSection(TvSettingsSection.Subtitles) }),

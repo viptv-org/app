@@ -107,7 +107,6 @@ internal class ProfileDialogs {
 internal fun rememberProfileDialogs(profileId: String, saved: Long): ProfileDialogs {
     val dialogs = remember(profileId) { ProfileDialogs() }
     val seen = remember(profileId) { mutableStateOf(saved) }
-    // A save that lands closes the dialog that asked for it; a failure leaves it open with the error line.
     SideEffect {
         if (seen.value != saved) {
             seen.value = saved
@@ -146,7 +145,7 @@ internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, erro
                         SettingsDividerLine()
                         ProfileRow("Approved titles", note = "Only these titles show in the kids library",
                             value = values.approvedTitles?.toString() ?: "—",
-                            enabled = !busy && values.approvedTitles != null) { actions.approvedTitles() }
+                            enabled = !busy) { actions.approvedTitles() }
                     }
                 }
                 SettingsDividerLine()
