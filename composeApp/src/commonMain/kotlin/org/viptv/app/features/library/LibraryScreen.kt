@@ -45,6 +45,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val visible = if (snapshot != null) cards else when (sort) { "Date added" -> filtered.sortedByDescending { it.added_at_millis ?: Long.MIN_VALUE }; "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
     val gridCards = visible.distinctBy(::cardLookupKey)
     val grid = rememberLazyGridState()
+    val scrolled = remember(grid) { derivedStateOf { grid.canScrollBackward } }.value
     val empty = libraryEmptyState(snapshot, query, available)
     var pinned by remember { mutableIntStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -74,7 +75,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                             (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
                         }
-                        if (LocalBarsFadeContent.current && grid.canScrollBackward) ScrollEdgeFade(ScrollEdge.Top)
+                        if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
                     }
                 }
                 item(LIBRARY_HISTORY_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_HISTORY_KEY) {

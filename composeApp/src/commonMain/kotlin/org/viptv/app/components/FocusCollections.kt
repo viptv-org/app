@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn as FoundationLazyColumn
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid as FoundationLazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
@@ -26,8 +27,13 @@ private fun Modifier.pageEdgeFades(top: Boolean, bottom: Boolean): Modifier = wh
     else -> this
 }
 
-private fun Modifier.pageEdgeFades(state: ScrollableState, fadeTop: Boolean, fadeBottom: Boolean): Modifier =
-    pageEdgeFades(fadeTop && state.canScrollBackward, fadeBottom && state.canScrollForward)
+// Derived so scrolling recomposes the page only when an edge starts or stops fading.
+@Composable
+private fun Modifier.pageEdgeFades(state: ScrollableState, top: Boolean, bottom: Boolean): Modifier {
+    val backward = remember(state) { derivedStateOf { state.canScrollBackward } }.value
+    val forward = remember(state) { derivedStateOf { state.canScrollForward } }.value
+    return pageEdgeFades(top && backward, bottom && forward)
+}
 
 // Only the page's own list draws the fades; a list nested inside one keeps its edges.
 @Composable
@@ -101,10 +107,10 @@ internal fun FocusLazyVerticalGrid(
     val bottomBar = pageFadesUnderBottomBar()
     DisposableEffect(focus) { onDispose { focus?.cancel() } }
     TvFocusScroll(contentPadding = contentPadding, reverseLayout = reverseLayout) {
-        val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
-            state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
-        }.pageEdgeFades(state, topEdgeFade, bottomBar)
         CompositionLocalProvider(LocalTvGridFocus provides focus, LocalVerticalPage provides true) {
+            val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
+                state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
+            }.pageEdgeFades(state, topEdgeFade, bottomBar)
             FoundationLazyVerticalGrid(columns, anchored,
                 state, contentPadding, reverseLayout, verticalArrangement, horizontalArrangement, flingBehavior, userScrollEnabled, content = content)
         }
