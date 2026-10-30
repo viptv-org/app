@@ -68,6 +68,17 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
 }
 
 @Composable
+internal fun TvSettingsDisabledRow(label: String, note: String, scale: Float) {
+    Row(Modifier.fillMaxWidth().height(96.dp * scale).padding(horizontal = 28.dp * scale)
+        .semantics(mergeDescendants = true) { disabled() }, verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
+            Text(label, color = Palette.tertiary, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)
+            Text(note, color = Palette.tertiary, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
 internal fun TvSettingsSwitch(checked: Boolean, scale: Float) {
     UnstyledSwitch(checked, onCheckedChange = null) {
         Track(Modifier.size(68.dp * scale, 38.dp * scale).background(if (checked) Palette.accent else Color(0xFF494949), CircleShape)

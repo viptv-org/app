@@ -22,9 +22,11 @@ import org.viptv.app.components.IconButton
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
     profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: (() -> Unit)? = null,
+    householdPin: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null,
     listState: LazyListState = rememberLazyListState()) {
     val available = availableRows(parental != null, stremioImport != null, preferences != null, account != null,
-        devices != null, addDevice != null, watchOnTv = information != null, information = information != null)
+        devices != null, addDevice != null, watchOnTv = information != null, information = information != null,
+        householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null)
     val open: (SettingsRow) -> Unit = { row ->
         when (row) {
             SettingsRow.ParentalControls -> parental?.invoke()
@@ -32,9 +34,11 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             SettingsRow.Playback, SettingsRow.SubtitlesAudio -> preferences?.invoke(row.key)
             SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help -> information?.invoke(row.key)
             SettingsRow.Account -> account?.invoke()
+            SettingsRow.HouseholdPin -> householdPin?.invoke()
             SettingsRow.Devices -> devices?.invoke()
             SettingsRow.AddDevice -> addDevice?.invoke()
             SettingsRow.Addons -> addons()
+            SettingsRow.SourceIntegrations -> sourceIntegrations?.invoke()
             SettingsRow.SignOut -> leave()
             else -> Unit
         }

@@ -46,6 +46,7 @@ data class ApplicationState(
     val homeRowBusy: Set<String> = emptySet(),
     val homeRowErrors: Map<String, String> = emptyMap(),
     val continueWatching: ContinueWatchingList? = null,
+    val continueUndo: ContinueUndo? = null,
     val continueNext: NextEpisodes = NextEpisodes.Empty,
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),

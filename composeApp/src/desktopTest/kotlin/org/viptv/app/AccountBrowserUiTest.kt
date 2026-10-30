@@ -24,13 +24,13 @@ class AccountBrowserUiTest {
         val scene = ImageComposeScene(1920, 1080, Density(1f)) {
             ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
                 TvSettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, null,
-                    initialSection = TvSettingsSection.Account, account = TvAccountInfo(username = "fixture"),
+                    initialSection = TvSettingsSection.Account, account = TvAccountInfo("Fixture", "fixture", "member"),
                     accountDashboard = { attempts++; throw LocalFailure("No browser") }, dashboardAddress = address)
             } }
         }
         try {
             frames(scene, 0)
-            nodes(scene).single { text(it).startsWith("Username") && it.config.contains(SemanticsActions.OnClick) }
+            nodes(scene).single { text(it).startsWith("Devices & sessions") && it.config.contains(SemanticsActions.OnClick) }
                 .config[SemanticsActions.OnClick].action!!.invoke()
             frames(scene, 20)
             assertEquals(1, attempts)
