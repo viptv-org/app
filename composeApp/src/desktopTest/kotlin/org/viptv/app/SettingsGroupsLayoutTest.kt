@@ -99,7 +99,7 @@ class SettingsGroupsLayoutTest {
                 householdPin = { Text("household pin page") },
                 sourceIntegrations = { _, _, _ -> Text("source integrations page") },
                 devices = if (layout.devices) ({ _, _ -> }) else null,
-                desktop = layout.desktop)
+                desktop = layout.desktop, browser = layout.web)
         } }
     }
 

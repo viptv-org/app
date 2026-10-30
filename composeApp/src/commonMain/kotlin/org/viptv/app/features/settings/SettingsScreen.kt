@@ -20,7 +20,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     tvPreferences: TvSettingsPreferences? = null, changeTvPreferences: ((TvSettingsPreferences) -> Unit)? = null,
     serverAddress: String? = null,
     tvAccount: TvAccountInfo? = null, accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
-    householdPin: (@Composable () -> Unit)? = null,
+    householdPin: (@Composable () -> Unit)? = null, householdPinNote: String? = null, accountAccessRequested: (() -> Unit)? = null,
     parentalBack: (() -> Unit)? = null, parental: (@Composable () -> Unit)? = null, tvParental: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
     preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
@@ -31,7 +31,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
     returnToPlayer: (() -> Unit)? = null,
     tvDevicePlayback: DevicePlaybackState? = null,
-    desktop: Boolean = false, editProfile: (() -> Unit)? = null) {
+    desktop: Boolean = false, editProfile: (() -> Unit)? = null, browser: Boolean = false) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
             editProfile = editProfile)
@@ -47,20 +47,22 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     var leaving by remember { mutableStateOf(initialLeave) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var addonsLoaded by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { accountAccessRequested?.invoke() }
     LaunchedEffect(Unit) { addonsRequested?.invoke(); addonsLoaded = true }
     LaunchedEffect(section) { if (section == "Add-ons" && addonsLoaded) addonsRequested?.invoke() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
-        val webAccount = devices != null && !compact
+        val webAccount = browser && devices != null && !compact
         val layout = when {
             compact -> SettingsLayout.Phone
             webAccount -> SettingsLayout.Web
             desktop -> SettingsLayout.Desktop
             else -> SettingsLayout.Tablet
         }
+        val disabledRows: Map<SettingsRow, String> = householdPinNote?.let { mapOf(SettingsRow.HouseholdPin to it) }.orEmpty()
         val rows = availableRows(parental != null, stremioImport != null, preferences != null || sectionPreferences != null,
             account != null, devices != null, addDevice != null, watchOnTv = layout == SettingsLayout.Tablet, information = true,
-            householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null)
+            householdPin = householdPin != null || disabledRows.isNotEmpty(), sourceIntegrations = sourceIntegrations != null)
         val root = initialSection.takeIf { returnToPlayer != null }
         val shown = current.laidOut(compact, root)
         SideEffect { if (savedPage != shown) show(shown) }
@@ -76,12 +78,12 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
         val backLabel = if (returnToPlayer != null && section == root) "Back to player" else null
         Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = 57.dp, vertical = 32.dp) else Modifier)) {
             if (webAccount) {
-                AccountSettingsSidebar(section ?: SettingsRow.Addons.key, profile, settingsSections(rows), local, profiles, { open(it) }, { leaving = true }); Spacer(Modifier.width(48.dp))
-            } else if (!compact) SettingsSidebar(section ?: SettingsRow.Addons.key, profile, layout, settingsSections(rows), local, profiles, { open(it) }, { leaving = true })
+                AccountSettingsSidebar(section ?: SettingsRow.Addons.key, profile, settingsSections(rows), local, profiles, { open(it) }, { leaving = true }, disabledRows); Spacer(Modifier.width(48.dp))
+            } else if (!compact) SettingsSidebar(section ?: SettingsRow.Addons.key, profile, layout, settingsSections(rows), local, profiles, { open(it) }, { leaving = true }, disabledRows)
             Box(Modifier.weight(1f, fill = !webAccount).then(if (webAccount) Modifier.widthIn(max = 760.dp) else Modifier)) {
                 when {
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
-                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, listState = listState)
+                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, listState = listState, disabledRows = disabledRows)
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null,
                         installWithCompletion = installWithCompletion)

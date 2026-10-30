@@ -44,8 +44,20 @@ class RemoteConnection(
 ) {
     private val codec = Json { ignoreUnknownKeys = true }
     private val browser = browserMode
-    internal val accountManagementEnabled: Boolean get() = browser
+    internal val browserSession: Boolean get() = browser
+    internal var accountManagementEnabled: Boolean = browser
+        private set
+    internal var accountOwner = false
+        private set
+    internal var accountAccessRead = false
+        private set
     internal val accountDashboardUrl: String get() = origin + "/"
+
+    internal fun recordAccountAccess(manageAccount: Boolean?, owner: Boolean) {
+        accountAccessRead = true
+        manageAccount?.let { accountManagementEnabled = it }
+        accountOwner = owner
+    }
     internal val origin = validatedRemoteOrigin(rawOrigin)
     private val client = client ?: platformClient()
     private var csrf: String? = null

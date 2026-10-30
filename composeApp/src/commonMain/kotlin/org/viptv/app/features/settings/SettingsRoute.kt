@@ -28,6 +28,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     val devicePlayback = rememberDevicePlaybackState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
+    val manageAccount = remote != null && state.manageAccount
+    val ownsHousehold = manageAccount && state.accountOwner
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
     val escapeReturns = returnsToPlayer && (desktop || browser) && !television
@@ -44,13 +46,15 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
-        desktop = desktop,
+        desktop = desktop, browser = browser,
         editProfile = state.selectedProfile?.let { id -> { controller.editProfile(id) } },
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
-        householdPin = if (!state.localMode) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
+        accountAccessRequested = if (remote != null) controller::refreshAccountAccess else null,
+        householdPin = if (ownsHousehold) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
+        householdPinNote = if (manageAccount && !state.accountOwner) householdPinOwnerOnly else null,
         account = controller.connection.takeUnless { state.localMode }?.let { remote -> {
             AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account, state.busy, state.error,
                 controller::refreshAccounts) {
@@ -73,7 +77,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             else ProfilePreferencesSettings(state.preferences, state.busy, state.preferencesError ?: state.error,
                 controller::refreshPreferences, controller::updatePreferences, devicePlayback)
         },
-        devices = if (browser && !state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
+        devices = if (manageAccount) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null) }) else null,
         addDevice = controller.connection.takeUnless { state.localMode }?.let { remote -> { compact: Boolean -> AddDeviceScreen(remote, compact, deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode) } },
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->

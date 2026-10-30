@@ -23,7 +23,7 @@ import org.viptv.app.components.IconButton
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
     profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: (() -> Unit)? = null,
     householdPin: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null,
-    listState: LazyListState = rememberLazyListState()) {
+    listState: LazyListState = rememberLazyListState(), disabledRows: Map<SettingsRow, String> = emptyMap()) {
     val available = availableRows(parental != null, stremioImport != null, preferences != null, account != null,
         devices != null, addDevice != null, watchOnTv = information != null, information = information != null,
         householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null)
@@ -76,7 +76,9 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                             section.rows.forEachIndexed { index, row ->
                                 if (index > 0) SettingsDivider()
                                 val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
+                                val note = disabledRows[row]
                                 if (row == SettingsRow.SignOut) SettingsDangerItem(label, row.icon) { open(row) }
+                                else if (note != null) SettingsDisabledItem(label, row.icon, note)
                                 else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local, addDevice != null), action = { open(row) })
                             }
                         }

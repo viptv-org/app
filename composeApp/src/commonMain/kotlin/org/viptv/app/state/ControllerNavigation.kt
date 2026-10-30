@@ -59,7 +59,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     else if (screen == Screen.Home) freshen()
     if (screen != Screen.Live) liveGuideJob?.cancel()
     if (screen == Screen.Live) run { loadLive(LiveQuery()) }
-    if (screen == Screen.Settings && connection?.accountManagementEnabled != true) refreshAddons()
+    if (screen == Screen.Settings && connection?.browserSession != true) refreshAddons()
     if (screen == Screen.Library) run { loadLibraryPage() }
     if (screen == Screen.ContinueWatching) loadContinueWatching(navigation)
     if (screen == Screen.Calendar && connection != null) run { loadCalendar() }
