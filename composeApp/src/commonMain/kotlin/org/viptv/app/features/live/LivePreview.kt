@@ -25,7 +25,7 @@ import org.viptv.app.components.Button
 
 @Composable
 internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, phone: Boolean, television: Boolean,
-    scale: Float, watch: () -> Unit, favourite: () -> Unit, guide: (() -> Unit)? = null) {
+    scale: Float, watch: () -> Unit, favourite: (() -> Unit)?, guide: (() -> Unit)? = null) {
     val art = program?.artwork ?: channel.card.landscape ?: channel.card.poster
     if (phone) {
         Box(Modifier.fillMaxWidth().height(196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
@@ -59,9 +59,9 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Watch")
                 }
-                Button(favourite, enabled = !channel.favoritePending, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
+                favourite?.let { save -> Button(save, enabled = !channel.favoritePending, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
                     Icon(Lucide.Star, null, Modifier.size(16.dp), tint = if (channel.favorite) Palette.accent else Palette.text); Spacer(Modifier.width(8.dp)); Text(if (channel.favorite) "Favourited" else "Favourite")
-                }
+                } }
                 if (guide != null) Button(guide, shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
                     Icon(Lucide.LayoutGrid, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Full guide")

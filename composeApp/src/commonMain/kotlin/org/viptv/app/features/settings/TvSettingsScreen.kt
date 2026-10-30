@@ -40,7 +40,6 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
-    var unavailable by remember { mutableStateOf<String?>(null) }
     var browserFallback by remember { mutableStateOf(false) }
     var installing by remember { mutableStateOf(false) }
     var confirming by remember { mutableStateOf(false) }
@@ -51,15 +50,21 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     var address by remember { mutableStateOf("") }
     val preferenceSection = section in listOf(TvSettingsSection.Playback, TvSettingsSection.Subtitles)
     val failedPreferences = preferenceSection && prefs == null && preferencesError != null && retryPreferences != null
+    val missingPreferences = preferenceSection && (prefs == null || change == null) && !failedPreferences
     val missingAccount = section == TvSettingsSection.Account && !local && account == null && accountRequested != null
+    val openAccount: (() -> Unit)? = when {
+        local -> ({ leaving = true })
+        else -> accountDashboard?.let { dashboard -> { try { dashboard() } catch (_: Exception) { if (dashboardAddress != null) browserFallback = true } } }
+            ?: dashboardAddress?.let { { browserFallback = true } }
+    }
     LaunchedEffect(section, local) { if (section == TvSettingsSection.Account && !local) accountRequested?.invoke() }
     val sidebar = remember { FocusRequester() }; val first = remember { FocusRequester() }
     CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(lineHeightStyle =
         LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None, LineHeightStyle.Mode.Fixed))) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val scale = maxWidth / 1920.dp
-        org.viptv.app.components.TvRequestedFocus(first, listOf(section, failedPreferences, missingAccount, installing),
-            enabled = !installing && !leaving && (!(failedPreferences || missingAccount) || !busy))
+        org.viptv.app.components.TvRequestedFocus(first, listOf(section, failedPreferences, missingPreferences, missingAccount, installing),
+            enabled = !installing && !leaving && (!(failedPreferences || missingPreferences || missingAccount) || !busy))
         if (installing) {
             TvAddonEntryPage(address, { address = it }, installBusy, error, scale, placeholderQr,
                 back = { if (!installBusy) { installGeneration++; confirming = false; installing = false } },
@@ -83,21 +88,28 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                 },
                 cancel = { if (!installBusy) { installGeneration++; confirming = false } })
         } else Row(Modifier.fillMaxSize()) {
-            TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || unavailable != null || browserFallback) {
+            TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || browserFallback) {
                 if (it == TvSettingsSection.Profiles) profiles() else section = it
             }
             // Add-ons owns a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
-                    { installing = true }, { unavailable = "Add-on management" }, placeholderQr)
+                    { installing = true }, placeholderQr)
             }
             else org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
+                else if (missingPreferences) TvPreferencesMissing(section, busy, scale, first, sidebar, retryPreferences)
                 else when (section) {
-                    TvSettingsSection.Playback -> TvPlaybackSettings(profile?.name, prefs, scale, first, sidebar, { change?.invoke(it) },
-                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Playback preferences" }, actualPreferencesOnly, devicePlayback)
-                    TvSettingsSection.Subtitles -> TvSubtitleSettings(prefs, scale, first, sidebar, { change?.invoke(it) },
-                        { title, values, select -> choice = TvSettingsChoice(title, values, select) }, { unavailable = "Subtitle preferences" }, actualPreferencesOnly)
+                    TvSettingsSection.Playback -> {
+                        val active = requireNotNull(change)
+                        TvPlaybackSettings(profile?.name, requireNotNull(prefs), scale, first, sidebar, active,
+                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, actualPreferencesOnly, devicePlayback)
+                    }
+                    TvSettingsSection.Subtitles -> {
+                        val active = requireNotNull(change)
+                        TvSubtitleSettings(requireNotNull(prefs), scale, first, sidebar, active,
+                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, actualPreferencesOnly)
+                    }
                     TvSettingsSection.Addons -> { } // handled above: the add-on list scrolls itself
                     TvSettingsSection.Sources -> if (sourceIntegrations != null) sourceIntegrations(first, sidebar, scale) else {
                         Text("Source integrations", fontSize = (40 * scale).sp)
@@ -106,12 +118,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     }
                     TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else
                         TvParentalSettings(profile, maturity, pinAvailable, scale, first, sidebar, profiles)
-                    TvSettingsSection.Account -> TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, {
-                        if (local) leaving = true
-                        else if (accountDashboard != null) try { accountDashboard() } catch (_: Exception) {
-                            if (dashboardAddress != null) browserFallback = true else unavailable = "Account settings"
-                        } else if (dashboardAddress != null) browserFallback = true else unavailable = "Account settings"
-                    }, busy = busy, error = error.takeIf { accountRequested != null }, retry = accountRequested)
+                    TvSettingsSection.Account -> TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, openAccount,
+                        busy = busy, error = error.takeIf { accountRequested != null }, retry = accountRequested)
                     TvSettingsSection.Display -> {
                         val display = LocalTvDisplayState.current ?: rememberTvDisplayState()
                         TvDisplaySettings(display.value, scale, first, sidebar,
@@ -119,11 +127,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     }
                     TvSettingsSection.About -> TvAboutSettings(local, dashboardAddress, profile?.name, addons.size, enabled.size,
                         error, notice, scale, first, sidebar, openDashboard = accountDashboard)
-                    else -> {
-                        Text(section.label, fontSize = (40 * scale).sp)
-                        Spacer(Modifier.height(48.dp * scale))
-                        TvSettingsRow("Open Profiles", scale = scale, requester = first, left = sidebar) { unavailable = section.label }
-                    }
+                    TvSettingsSection.Profiles -> { }
                 }
                 if (preferenceSection && preferencesError != null && !failedPreferences) {
                     Text(preferencesError, Modifier.padding(top = 20.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp)
@@ -136,13 +140,6 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
         }
         if (leaving) TvLeaveConfirmation(local, scale, { leaving = false; leave() }, { leaving = false })
         choice?.let { TvSettingsChoiceDialog(it, scale) { choice = null } }
-        unavailable?.let { label ->
-            val ok = remember { FocusRequester() }
-            AlertDialog(onDismissRequest = { unavailable = null }, title = { Text(label) },
-                text = { Text("$label is not available on this connection yet.") },
-                confirmButton = { TextButton(onClick = { unavailable = null }, modifier = Modifier.focusRequester(ok)) { Text("OK") } })
-            LaunchedEffect(Unit) { withFrameNanos { }; runCatching { ok.requestFocus() } }
-        }
         if (browserFallback) {
             val close = remember { FocusRequester() }
             AlertDialog(onDismissRequest = { browserFallback = false }, title = { Text("Open server dashboard") },

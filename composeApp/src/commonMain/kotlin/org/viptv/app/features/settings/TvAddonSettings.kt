@@ -32,7 +32,7 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<String>, local: Boolean, busy: Boolean,
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
-    install: () -> Unit, unavailable: () -> Unit, placeholderQr: Boolean = false) {
+    install: () -> Unit, placeholderQr: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         TvSettingsHeading("Add-ons", scale)
         Row(horizontalArrangement = Arrangement.spacedBy(60.dp * scale)) {

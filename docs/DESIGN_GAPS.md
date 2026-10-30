@@ -15,7 +15,7 @@
 | GAP-011 | Avatar picker | The current edit board has Change avatar but no selection sheet | Resolved (app#8): `features/entry/AvatarPicker.kt` follows design ADM-004 with the bundled 624-avatar catalog (`AvatarCatalog.kt`, design pin in `AVATAR_CATALOG_REF`): world chips, 15 per page on phones and 18 on TV/desktop, wrapping Previous/Next, check badge on the saved pick. Captures `docs/evidence/2026-10-26-avatar-picker/` (phone, desktop, TV) |
 | GAP-012 | Secure-storage warning for remote sessions | The current Settings boards do not show a failed OS-vault state | Provisional warning in `features/settings/SettingsScreen.kt` when a native device session can only live in memory |
 | GAP-013 | Linux desktop window controls | The current desktop ZIP shows Windows and macOS chrome, with no Linux board | Provisional Linux variant follows the Windows control placement in `desktopMain/DesktopTitleBar.kt`; capture `docs/evidence/desktop-titlebar-linux.png` |
-| GAP-019 | Unavailable channel favourites and calendar filters | Normal connections currently lack the save/filter operations | Provisional notices in `features/live/LiveScreen.kt`; the phone header's calendar filter button was removed until filtering exists (app#15); preview guide/calendar captures cover the surrounding layouts |
+| GAP-019 | Unavailable channel favourites and calendar filters | Normal connections currently lack the save/filter operations | The favourite star and filter are hidden when the connection cannot save favourites (app#32); the phone header's calendar filter button was removed until filtering exists (app#15); preview guide/calendar captures cover the surrounding layouts |
 | GAP-018 | Confirming a 5–8 digit TV PIN | The supplied TV keypad has four slots and no confirmation key | Provisional OK key in `features/entry/TvPinScreen.kt`; `docs/evidence/android-tv-pin-preview.png` records preview input |
 | GAP-017 | Phone settings capability notices | Notifications, pairing and help retain unavailable states | Resolved: every row in `features/settings/PhoneSettings.kt` opens a real page, and a row without a handler is hidden instead of showing a notice (app#15) |
 | GAP-016 | Unavailable header capabilities | Casting, TV remote control and provider genre controls lack connected contracts | Phone and tablet Cast/Remote buttons removed until they work (app#15); the Home Genres chip lists the discovery controls' genres and opens Browse filtered to one; desktop Cast/Remote/Forward buttons are disabled when no operation exists |
@@ -37,10 +37,11 @@ provisional; supplied normal-state boards still await full parity review.
 ### GAP-021 — TV entry controls beyond the supplied board
 
 `TvPasswordPanel` adds Delete character and Use another server actions. The ZIP
-keyboard lacks a deletion key and assumes a fixed server. The welcome footer
-omits “No profiles or sync” because local profiles are an agreed app requirement.
+keyboard lacks a deletion key and assumes a fixed server. Password recovery needs
+the email code flow, so TV does not show it. The welcome footer omits “No profiles
+or sync” because local profiles are an agreed app requirement.
 Phone/browser device pairing is connected to the server-owned challenge flow.
-Email entry remains unfinished. Native IPTV entry now saves provider credentials through the profile-local engine; its added states are in GAP-056.
+TV signs in by pairing or password; there is no email option because no email code exists. Native IPTV entry now saves provider credentials through the profile-local engine; its added states are in GAP-056.
 
 ### GAP-022 — TV title/source capabilities without connected contracts
 
@@ -65,10 +66,10 @@ supplied full source-failure screen. Both need a supplied design review.
 `TvSettingsScreen` supplies a manual add-on-address dialog. The TV ZIP shows the
 entry controls but no matching option-list/address-entry boards. Account,
 Display, Parental controls and About also lack complete supplied panel designs.
-Missing account data, unavailable playback/subtitle preference contracts and
-unavailable add-on pairing have explicit provisional states. The supplied
-Playback/Subtitles/Add-ons/Sign-out boards remain incomplete until their connected
-behavior and final visual review are qualified.
+Playback and Subtitle rows appear only once their preferences have loaded, with a
+loading/unavailable line and Retry otherwise; Add-on pairing keeps its own
+provisional state. The supplied Playback/Subtitles/Add-ons/Sign-out boards remain
+incomplete until their connected behavior and final visual review are qualified.
 
 ### GAP-025 — TV My List sort options and empty/unavailable states
 
@@ -128,27 +129,13 @@ are provisional. These states need design review.
 Delete character and Use another server are additional entry controls beyond
 `Tv3SignInPassword`. The custom-server dialog, long-field ellipsis and loading/
 error states lack matching supplied boards. These surfaces remain provisional.
-The provided alternative entry boards are present designs, with parity still under review. Email delivery remains unfinished.
-
-### GAP-033 — TV email-entry deletion and unavailable-code state
-
-`TvEmailSignIn` adds a remote Delete character action, a bounded long-email state
-and an unavailable-code dialog beyond the populated `Tv3SignInEmail` board.
-These extra surfaces need design review. The supplied code-entry/phone boards
-exist and remain unfinished; no successful email delivery is implied.
+The provided alternative entry boards are present designs, with parity still under review.
 
 ### GAP-034 — TV IPTV M3U/input states
 
 The supplied IPTV board shows Xtream fields and an M3U entry tab, but no expanded
 M3U form, field-input dialog or missing-service state. `TvIptvSignIn` supplies
 those provisional surfaces. Native submission now configures the chosen local profile using the encrypted engine vault. The replacement storage copy and profile-selection/error variants are recorded in GAP-056.
-
-### GAP-035 — TV email-code unavailable states
-
-`TvEmailCode` supplies verification/resend-unavailable notices absent from the
-populated `Tv3SignInCode` board. These provisional dialogs need design review.
-The normal email flow does not invent a sent session; the code screen is currently
-reachable through the isolated preview with explicit fixture challenge data.
 
 ### GAP-036 — TV catalog loading and empty states
 
