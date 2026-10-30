@@ -23,9 +23,12 @@ import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.LocalBarsFadeContent
+import org.viptv.app.components.PageRestore
 import org.viptv.app.components.ScrollEdge
 import org.viptv.app.components.ScrollEdgeFade
 import org.viptv.app.components.ServerMessages
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
@@ -52,11 +55,15 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val visible = if (snapshot != null) cards else when (sort) { "Date added" -> filtered.sortedByDescending { it.added_at_millis ?: Long.MIN_VALUE }; "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
     val gridCards = visible.distinctBy(::cardLookupKey)
     val grid = rememberLazyGridState()
+    val restore = rememberPageRestore("library")
+    val anchored = restore.anchor(gridCards.size) { cardLookupKey(gridCards[it]) }
     val scrolled = remember(grid) { derivedStateOf { grid.canScrollBackward } }.value
     val empty = libraryEmptyState(snapshot, query, available)
     var pinned by remember { mutableIntStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
+        val cardsAfter = if (phone) 2 else 3
+        PageRestore(grid, restore, target = { restore.anchor(gridCards.size) { cardLookupKey(gridCards[it]) }?.plus(cardsAfter) })
         AutomaticPage(visible.size, busy, more) {
             val layout = grid.layoutInfo
             layout.visibleItemsInfo.filter { it.contentType == LIBRARY_CARD_TYPE }.maxOfOrNull { it.index }
@@ -100,8 +107,11 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                             }
                         }
                     }
-                    items(gridCards, key = ::cardLookupKey, contentType = { LIBRARY_CARD_TYPE }) {
-                        MediaCard(it, if (phone) 112 else 176, portrait = true, showLabels = !phone, open = open)
+                    itemsIndexed(gridCards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> LIBRARY_CARD_TYPE }) { index, card ->
+                        val key = cardLookupKey(card)
+                        MediaCard(card, if (phone) 112 else 176, portrait = true, showLabels = !phone,
+                            open = { restore.mark(key, index); open(it) },
+                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
                     }
                 }
             }

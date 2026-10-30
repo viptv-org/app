@@ -2,12 +2,14 @@ package org.viptv.app.state
 
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.calendar.CALENDAR_TYPE_ALL
 import org.viptv.app.features.calendar.CALENDAR_WEEK_LIMIT
 import org.viptv.app.features.calendar.CalendarEntry
+import org.viptv.app.features.calendar.CalendarTypeRequests
 import org.viptv.engine.wire.*
 
 fun ApplicationController.calendarCategory(type: String) {
-    if (type !in listOf("series", "anime", "movie") || mutable.value.calendarType == type) return
+    if (type != CALENDAR_TYPE_ALL && type !in CalendarTypeRequests || mutable.value.calendarType == type) return
     updateState { next -> next.copy(calendarType = type) }
     run { loadCalendar() }
 }
@@ -29,7 +31,7 @@ internal suspend fun ApplicationController.loadCalendar() {
     updateState { state -> state.copy(calendarDays = window.days, calendarEntries = emptyList(), calendarSources = null, calendarAvailable = true) }
     val context=currentCoroutineContext()
     try {
-        val read = remote.calendar(window, state.calendarType) { entries ->
+        val read = calendarRead(remote, window, state.calendarType) { entries ->
             context.ensureActive()
             if (generation != operation || connection !== remote || mutable.value.selectedProfile != profile ||
                 mutable.value.screen != Screen.Calendar) throw CancellationException("Calendar changed")
@@ -45,6 +47,10 @@ internal suspend fun ApplicationController.loadCalendar() {
         if (generation == operation) updateState { next -> next.copy(calendarEntries = emptyList(), calendarAvailable = false) }
     }
 }
+
+private suspend fun calendarRead(remote: RemoteConnection, window: CalendarWindow, type: String,
+    onPage: (List<CalendarEntry>) -> Unit = {}): CalendarRead =
+    if (type == CALENDAR_TYPE_ALL) remote.calendarAll(window, onPage) else remote.calendar(window, type, onPage)
 
 private data class CalendarRequest(val remote: RemoteConnection, val profile: String?, val type: String, val week: Int, val window: CalendarWindow)
 
@@ -64,7 +70,7 @@ private fun ApplicationController.rereadCalendar(request: CalendarRequest, delay
             if (started.elapsedNow().inWholeMilliseconds + pause > CALENDAR_REREAD_LIMIT_MILLIS) return@launch
             delay(pause)
             if (!current() || job?.isActive == true) return@launch
-            val read = try { request.remote.calendar(request.window, request.type) }
+            val read = try { calendarRead(request.remote, request.window, request.type) }
                 catch (error: CancellationException) { throw error }
                 catch (error: Exception) {
                     if (error is RemoteFailure && error.status == 401 && current()) expireSession(request.remote, null)
