@@ -40,6 +40,9 @@ class ChangePasswordTest {
     }
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
     private val changedFixture = """{"session_id":"session","csrf_token":"next-csrf","expires_in":900}"""
+    private val CURRENT = 0
+    private val NEW = 1
+    private val CONFIRM = 2
 
     @Test fun theRouteProbeOnlyAsksWhetherTheServerHasTheEndpoint() = runBlocking {
         val methods = mutableListOf<HttpMethod>()
@@ -128,13 +131,13 @@ class ChangePasswordTest {
         val scene = page(remote)
         val probe = Probe(scene)
         try {
-            probe.type("Current password", "current-password-1")
-            probe.type("New password", "next-password-12")
-            probe.type("Confirm new password", "next-password-12")
+            probe.type(CURRENT, "current-password-1")
+            probe.type(NEW, "next-password-12")
+            probe.type(CONFIRM, "next-password-12")
             probe.click("Change password")
             probe.await("the wrong-current-password line") { probe.has(passwordIncorrectMessage) }
             assertTrue(probe.isDisabled("Change password"), "the cleared current field leaves nothing to submit")
-            probe.type("Current password", "current-password-2")
+            probe.type(CURRENT, "current-password-2")
             probe.click("Change password")
             assertEquals(2, bodies.size)
             assertEquals("next-password-12", bodies.last()["new_password"]?.jsonPrimitive?.content, "the new password stays typed")
@@ -150,9 +153,9 @@ class ChangePasswordTest {
         val scene = page(remote)
         val probe = Probe(scene)
         try {
-            probe.type("Current password", "current-password-1")
-            probe.type("New password", "next-password-12")
-            probe.type("Confirm new password", "next-password-13")
+            probe.type(CURRENT, "current-password-1")
+            probe.type(NEW, "next-password-12")
+            probe.type(CONFIRM, "next-password-13")
             probe.frames()
             assertTrue(probe.has(passwordMismatchMessage))
             assertTrue(probe.isDisabled("Change password"), "a mismatch disables the action")
@@ -161,16 +164,19 @@ class ChangePasswordTest {
     }
 
     @Test fun tooManyAttemptsAsksTheViewerToWait() {
+        val limited = Headers.build {
+            append(HttpHeaders.ContentType, "application/json")
+            append(HttpHeaders.RetryAfter, "60")
+        }
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine {
-            respond("""{"error_code":"rate_limited"}""", HttpStatusCode.TooManyRequests,
-                headersOf(HttpHeaders.ContentType, listOf("application/json"), HttpHeaders.RetryAfter, listOf("60")))
+            respond("""{"error_code":"rate_limited"}""", HttpStatusCode.TooManyRequests, limited)
         }) { configureTransport() }, browserMode = true)
         val scene = page(remote)
         val probe = Probe(scene)
         try {
-            probe.type("Current password", "current-password-1")
-            probe.type("New password", "next-password-12")
-            probe.type("Confirm new password", "next-password-12")
+            probe.type(CURRENT, "current-password-1")
+            probe.type(NEW, "next-password-12")
+            probe.type(CONFIRM, "next-password-12")
             probe.click("Change password")
             probe.await("the rate-limit line") { probe.has(passwordRateLimitedMessage) }
         } finally { scene.close(); remote.close() }
@@ -186,9 +192,9 @@ class ChangePasswordTest {
         val scene = page(remote, onChanged = { changed.incrementAndGet() }, onBack = { back.incrementAndGet() })
         val probe = Probe(scene)
         try {
-            probe.type("Current password", "current-password-1")
-            probe.type("New password", "next-password-12")
-            probe.type("Confirm new password", "next-password-12")
+            probe.type(CURRENT, "current-password-1")
+            probe.type(NEW, "next-password-12")
+            probe.type(CONFIRM, "next-password-12")
             probe.click("Change password")
             probe.await("the failure line") { probe.has(passwordFailedMessage) }
             assertEquals(0, changed.get(), "a failed change never reports success")
@@ -207,9 +213,9 @@ class ChangePasswordTest {
         val scene = page(remote, onChanged = { changed++ })
         val probe = Probe(scene)
         try {
-            probe.type("Current password", "current-password-1")
-            probe.type("New password", "next-password-12")
-            probe.type("Confirm new password", "next-password-12")
+            probe.type(CURRENT, "current-password-1")
+            probe.type(NEW, "next-password-12")
+            probe.type(CONFIRM, "next-password-12")
             probe.click("Change password")
             probe.await("the page to close") { changed == 1 }
             assertEquals("current-password-1", bodies.single()["current_password"]?.jsonPrimitive?.content)
@@ -244,16 +250,13 @@ class ChangePasswordTest {
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
             frames()
         }
-        private fun field(label: String) = nodes().firstOrNull { node ->
-            node.config.contains(SemanticsActions.SetText) && nodes(node).any { child ->
-                child.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == label } }
-        }
-        fun type(label: String, value: String) {
-            val node = assertNotNull(field(label), "No field \"$label\": ${texts()}")
+        private fun fields() = nodes().filter { it.config.contains(SemanticsActions.SetText) }
+        fun type(index: Int, value: String) {
+            val node = assertNotNull(fields().getOrNull(index), "No field $index: ${texts()}")
             node.config.getOrNull(SemanticsActions.RequestFocus)?.action?.invoke()
             frames(4)
-            val focused = assertNotNull(field(label))
-            assertTrue(focused.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString(value)), "cannot type into \"$label\"")
+            val field = assertNotNull(fields().getOrNull(index))
+            assertTrue(field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString(value)), "cannot type into field $index")
             frames(4)
         }
         fun await(what: String, condition: () -> Boolean) {
