@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,15 +21,21 @@ internal class HomeGenrePicker(val choices: List<GenreChoice>, val choose: (Genr
 
 internal val LocalHomeGenres = compositionLocalOf<HomeGenrePicker?> { null }
 
+internal val homeTabs = listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series, "Anime" to Screen.Anime)
+
+internal fun isHomeTab(screen: Screen) = homeTabs.any { it.second == screen }
+
 @Composable
 internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, gutter: Dp = 0.dp) {
-    val genres = LocalHomeGenres.current?.takeIf { it.choices.isNotEmpty() }
+    val genres = LocalHomeGenres.current?.takeIf { it.choices.isNotEmpty() && screen == Screen.Home }
     org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        listOf("All" to Screen.Home, "Movies" to Screen.Movies, "Series" to Screen.Series, "Anime" to Screen.Anime).forEach { (label, destination) ->
-            Surface(onClick = { navigate(destination) }, shape = RoundedCornerShape(20.dp),
-                color = if (destination == screen) Palette.text else Palette.raised.copy(alpha = 0.8f),
-                contentColor = if (destination == screen) Palette.background else Palette.text) {
+        homeTabs.forEach { (label, destination) ->
+            val selected = destination == screen
+            Surface(shape = RoundedCornerShape(20.dp),
+                color = if (selected) Palette.text else Palette.raised.copy(alpha = 0.8f),
+                contentColor = if (selected) Palette.background else Palette.text,
+                modifier = Modifier.pointerSelectable(selected, role = Role.Tab, shape = RoundedCornerShape(20.dp)) { navigate(destination) }) {
                 Text(label, Modifier.padding(horizontal = 14.dp, vertical = 7.dp), fontSize = 14.sp, lineHeight = 18.sp)
             }
         }
