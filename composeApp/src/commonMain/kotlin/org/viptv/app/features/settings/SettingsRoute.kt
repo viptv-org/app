@@ -44,6 +44,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
+        desktop = desktop,
+        editProfile = state.selectedProfile?.let { id -> { controller.editProfile(id) } },
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,
