@@ -66,7 +66,8 @@ internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedC
             AddDeviceStep.Code -> {
                 DeviceTile()
                 DeviceTitle("Add a device", compact)
-                DeviceSubtitle("Open VIPTV on the other device, choose Sign in, then enter the code it shows.", compact)
+                DeviceSubtitle(if (scanAvailable) "Open VIPTV on the other device, choose Sign in, then scan the code it shows."
+                    else "Open VIPTV on the other device, choose Sign in, then enter the code it shows.", compact)
                 if (scanAvailable) DeviceScanButton(!busy) { error = null; scanning = true }
                 // A phone that can scan opens on the scan button instead of a keyboard over it.
                 DeviceCodeInput(code, { code = it; error = null }, ::lookup, error != null, !busy, compact, autofocus = !scanAvailable)
