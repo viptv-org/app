@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.Density
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
+import io.ktor.http.content.TextContent
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
@@ -20,6 +21,7 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.ApplicationState
 import org.viptv.app.state.Screen
+import org.viptv.app.state.refreshPasswordChangeAvailability
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import java.util.concurrent.atomic.AtomicBoolean
@@ -161,7 +163,7 @@ class ChangePasswordTest {
     @Test fun tooManyAttemptsAsksTheViewerToWait() {
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine {
             respond("""{"error_code":"rate_limited"}""", HttpStatusCode.TooManyRequests,
-                headersOf(HttpHeaders.ContentType, "application/json", HttpHeaders.RetryAfter, "60"))
+                headersOf(HttpHeaders.ContentType, listOf("application/json"), HttpHeaders.RetryAfter, listOf("60")))
         }) { configureTransport() }, browserMode = true)
         val scene = page(remote)
         val probe = Probe(scene)
