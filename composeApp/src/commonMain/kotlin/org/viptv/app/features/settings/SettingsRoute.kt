@@ -45,7 +45,24 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         desktop = desktop,
-        editProfile = state.selectedProfile?.let { id -> { controller.editProfile(id) } },
+        profilePage = { layout -> ProfilePageRoute(state, controller, layout) },
+        profileTitles = if (state.parentTitles != null) ({ compact ->
+            ParentTitlesSettings(requireNotNull(state.parentTitles), state.busy, state.error, controller::closeParentTitles,
+                controller::searchParentTitles, controller::refreshApprovedTitles, controller::approveParentTitle,
+                controller::revokeParentTitle, backLabel = "Back to Profile")
+        }) else null,
+        profileTitlesBack = controller::closeParentTitles,
+        linkedServices = if (!state.localMode) ({ compact ->
+            LinkedServicesSettings(state.simkl.takeIf { state.linkedServicesProfile == state.selectedProfile },
+                state.profiles.find { it.id == state.selectedProfile }?.name, compact, state.busy, state.error,
+                controller::refreshLinkedServices, controller::linkLinkedService, controller::unlinkLinkedService)
+        }) else null,
+        tvProfilePage = ({ first, sidebar, scale, openSection -> TvProfilePageRoute(state, controller, scale, first, sidebar, openSection) }),
+        tvProfileTitles = if (state.parentTitles != null) ({ first, sidebar, scale ->
+            ParentTitlesSettings(requireNotNull(state.parentTitles), state.busy, state.error, controller::closeParentTitles,
+                controller::searchParentTitles, controller::refreshApprovedTitles, controller::approveParentTitle,
+                controller::revokeParentTitle, first, backLabel = "Back to Profile")
+        }) else null,
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,

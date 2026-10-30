@@ -28,10 +28,14 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
     returnToPlayer: (() -> Unit)? = null,
     tvDevicePlayback: DevicePlaybackState? = null,
-    desktop: Boolean = false, editProfile: (() -> Unit)? = null) {
+    desktop: Boolean = false, profilePage: (@Composable (SettingsLayout) -> Unit)? = null,
+    profileTitles: (@Composable (Boolean) -> Unit)? = null, profileTitlesBack: (() -> Unit)? = null,
+    linkedServices: (@Composable (Boolean) -> Unit)? = null,
+    tvProfilePage: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
+    tvProfileTitles: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
-            editProfile = editProfile)
+            profilePage = tvProfilePage, profileTitles = tvProfileTitles)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
@@ -56,7 +60,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             else -> SettingsLayout.Tablet
         }
         val rows = availableRows(parental != null, stremioImport != null, preferences != null || sectionPreferences != null,
-            account != null, devices != null, addDevice != null, watchOnTv = layout == SettingsLayout.Tablet, information = true)
+            account != null, devices != null, addDevice != null, watchOnTv = layout == SettingsLayout.Tablet, information = true,
+            linkedServices = linkedServices != null)
         val root = initialSection.takeIf { returnToPlayer != null }
         val shown = current.laidOut(compact, root)
         SideEffect { if (savedPage != shown) show(shown) }
@@ -77,10 +82,13 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             Box(Modifier.weight(1f, fill = !webAccount).then(if (webAccount) Modifier.widthIn(max = 760.dp) else Modifier)) {
                 when {
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
-                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, listState = listState)
+                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, profilePage = profilePage?.let { { open("Profile") } }, linkedServices = linkedServices?.let { { open("Linked services") } }, listState = listState)
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null, sourceIntegrations = phoneSourceIntegrations,
                         installWithCompletion = installWithCompletion)
+                    section == "Profile" && profileTitles != null -> SettingsDetailContent(compact, profileTitlesBack ?: back) { profileTitles(compact) }
+                    section == "Profile" && profilePage != null -> SettingsDetailContent(compact, back) { profilePage(layout) }
+                    section == "Linked services" && linkedServices != null -> SettingsDetailContent(compact, back) { linkedServices(compact) }
                     section == "Parental controls" && parental != null -> SettingsDetailContent(compact, parentalBack ?: back, content = parental)
                     section == "Account" && account != null -> SettingsDetailContent(compact, back, content = account)
                     section == "Devices" && devices != null -> devices(compact) { if (compact) back() else open("Account") }

@@ -34,7 +34,7 @@ class TvSettingsGroupsFocusTest {
         SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
             { left += "switch profile" }, { left += "leave" }, null,
             television = true, initialSection = section, tvPreferences = TvSettingsPreferences(), changeTvPreferences = { },
-            editProfile = { left += "profile" })
+            tvProfilePage = { _, _, _, _ -> androidx.compose.material3.Text("profile page") })
     } }
 
     @Test fun theRailShowsTheFourGroupLabelsProfileAndSwitchProfileAndSkipsLabelsWithTheRemote() = runBlocking {
@@ -53,7 +53,7 @@ class TvSettingsGroupsFocusTest {
                 assertFalse(node.config.contains(SemanticsActions.RequestFocus), "$label is not a focus stop")
             }
 
-            assertFocused(scene, "Default source")
+            assertFocused(scene, "Next episode button")
             press(scene, Key.DirectionLeft)
             assertFocused(scene, "Playback")
             press(scene, Key.DirectionDown)
@@ -62,8 +62,10 @@ class TvSettingsGroupsFocusTest {
             assertFocused(scene, "Display")
 
             click(scene, "Profile")
+            frames(scene)
+            assertTrue(nodes(scene).any { text(it) == "profile page" }, "Profile opens its page in the content column")
             click(scene, "Switch profile")
-            assertEquals(listOf("profile", "switch profile"), left)
+            assertEquals(listOf("switch profile"), left)
         } finally { scene.close() }
     }
 
