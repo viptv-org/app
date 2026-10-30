@@ -90,7 +90,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section == "Account" && account != null -> SettingsDetailContent(compact, back, content = account)
                     section == "Household PIN" && householdPin != null -> SettingsDetailContent(compact, back, content = householdPin)
                     section == "Delete account" && deleteAccount != null -> SettingsDetailContent(compact, back) {
-                        deleteAccount(if (compact) back else { open("Account") })
+                        val cancel: () -> Unit = if (compact) back else ({ open("Account") })
+                        deleteAccount(cancel)
                     }
                     section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {

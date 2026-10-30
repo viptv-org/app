@@ -31,7 +31,7 @@ internal fun accountDeletionFailure(failure: RemoteFailure): String = when {
     failure.code == "parent_pin_incorrect" -> "The parent PIN is not correct."
     failure.code == "account_changed" -> "This account changed. Try again."
     failure.code == "account_session_required" -> "Manage this from a signed-in phone, computer or the web dashboard."
-    failure.status == 429 -> failure.message
+    failure.status == 429 -> failure.message ?: "Too many attempts. Wait a minute and try again."
     else -> "Could not delete your account. Nothing was changed. Try again."
 }
 
