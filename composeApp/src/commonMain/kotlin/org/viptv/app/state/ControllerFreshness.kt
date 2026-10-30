@@ -137,9 +137,10 @@ private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, obse
         if (!current(owner) || result.selected != owner.profile) return
         publishHome(result.home)
         adoptContinuation(result.continuation)
-        val state = mutable.value
-        mutable.value = state.copy(profiles = result.profiles, profileManagement = result.profileManagement ?: state.profileManagement,
-            preferences = result.preferences ?: state.preferences, policyRefreshNeeded = false)
+        updateState { state ->
+            state.copy(profiles = result.profiles, profileManagement = result.profileManagement ?: state.profileManagement,
+                preferences = result.preferences ?: state.preferences, policyRefreshNeeded = false)
+        }
         result.library?.let { updateLibrary(it, membership = result.libraryMembership) }
         freshness.homeBuilt(result.revisions ?: observed)
     }
@@ -151,11 +152,12 @@ private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, obse
 private val DETAIL_SCREENS = setOf(Screen.Details, Screen.Sources)
 
 private fun ApplicationController.publishHome(fresh: HomeSnapshot?) {
-    val state = mutable.value
-    val merged = mergeHome(state.home, fresh) ?: return
-    val ids = merged.rows.mapTo(mutableSetOf()) { it.id }
-    mutable.value = state.copy(home = merged, homeRowBusy = state.homeRowBusy intersect ids,
-        homeRowErrors = state.homeRowErrors.filterKeys { it in ids })
+    updateState { state ->
+        val merged = mergeHome(state.home, fresh) ?: return@updateState state
+        val ids = merged.rows.mapTo(mutableSetOf()) { it.id }
+        state.copy(home = merged, homeRowBusy = state.homeRowBusy intersect ids,
+            homeRowErrors = state.homeRowErrors.filterKeys { it in ids })
+    }
 }
 
 internal fun mergeHome(current: HomeSnapshot?, fresh: HomeSnapshot?): HomeSnapshot? {
@@ -190,7 +192,7 @@ private suspend fun ApplicationController.reloadVisibleLibrary(owner: QuietOwner
         Screen.ContinueWatching -> reloadVisibleContinueWatching(owner)
         Screen.History -> {
             val history = owner.local?.history(owner.profile) ?: requireNotNull(owner.remote).history(owner.profile)
-            if (current(owner) && mutable.value.screen == Screen.History) mutable.value = mutable.value.copy(history = history)
+            if (current(owner) && mutable.value.screen == Screen.History) updateState { it.copy(history = history) }
         }
         else -> Unit
     }
@@ -219,13 +221,16 @@ private suspend fun ApplicationController.reloadDetailQuietly(owner: QuietOwner)
     val fresh = owner.local?.detailPage(owner.profile, shown.item, offset, limit)
         ?: requireNotNull(owner.remote).detail(shown.item, offset, limit)
     if (!current(owner)) return
-    val loaded = mutable.value.detail ?: return
+    val shownNow = mutable.value.detail ?: return
     val key = cardLookupKey(shown.item)
-    if (cardLookupKey(loaded.item) != key || cardLookupKey(fresh.item) != key) return
+    if (cardLookupKey(shownNow.item) != key || cardLookupKey(fresh.item) != key) return
     val updated = fresh.episodes.associateBy(::cardLookupKey)
-    // A sparse refresh must not blank the art the page already shows.
-    val item = fresh.item.copy(landscape = fresh.item.landscape ?: loaded.item.landscape,
-        poster = fresh.item.poster ?: loaded.item.poster, logo = fresh.item.logo ?: loaded.item.logo)
-    mutable.value = mutable.value.copy(detail = loaded.copy(item = item,
-        episodes = loaded.episodes.map { updated[cardLookupKey(it)] ?: it }))
+    updateState { state ->
+        val loaded = state.detail ?: return@updateState state
+        if (cardLookupKey(loaded.item) != key) return@updateState state
+        // A sparse refresh must not blank the art the page already shows.
+        val item = fresh.item.copy(landscape = fresh.item.landscape ?: loaded.item.landscape,
+            poster = fresh.item.poster ?: loaded.item.poster, logo = fresh.item.logo ?: loaded.item.logo)
+        state.copy(detail = loaded.copy(item = item, episodes = loaded.episodes.map { updated[cardLookupKey(it)] ?: it }))
+    }
 }
