@@ -16,11 +16,12 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getAllSemanticsNodes
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import org.junit.Rule
 import org.viptv.app.ContinueWatchingHost.Companion.card
@@ -274,12 +275,14 @@ class PageRestoreUiTest {
 
     /** Opens the last card in the direction the list scrolls and returns its title. */
     private fun openCard(scene: ImageComposeScene, height: Int, opened: () -> Card?, rightmost: Boolean = false): String {
-        val candidates = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) && it.boundsInRoot().bottom < height }
+        val candidates = nodes(scene).filter {
+            it.config.contains(SemanticsActions.OnClick) && it.boundsInRoot.bottom < height && label(it).contains("Show ")
+        }
         assertTrue(candidates.isNotEmpty(), "cards are on screen")
-        val target = if (rightmost) candidates.maxBy { it.boundsInRoot().left } else candidates.maxBy { it.boundsInRoot().top }
+        val target = if (rightmost) candidates.maxBy { it.boundsInRoot.left } else candidates.maxBy { it.boundsInRoot.top }
         target.config[SemanticsActions.OnClick].action?.invoke()
         frames(scene)
-        return requireNotNull(opened()) { "a card opens" }.title
+        return requireNotNull(opened()) { "a card opens; clicked ${label(target)}" }.title
     }
 
     /** The remote's OK on whatever holds focus; desktop has no D-pad centre for a clickable. */
@@ -296,7 +299,9 @@ class PageRestoreUiTest {
     private fun focusOn(scene: ImageComposeScene, title: String) {
         val deadline = System.nanoTime() + 5_000_000_000L
         while (!nodes(scene).any { it.config.getOrNull(SemanticsProperties.Focused) == true && label(it).contains(title) }) {
-            check(System.nanoTime() < deadline) { "focus never reached $title" }
+            check(System.nanoTime() < deadline) {
+                "focus never reached $title; it is ${nodes(scene).filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.map(::label)}"
+            }
             frames(scene, 2)
         }
     }

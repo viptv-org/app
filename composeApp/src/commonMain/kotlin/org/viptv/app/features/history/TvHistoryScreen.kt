@@ -45,6 +45,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
     val anchored = remember(lines, restore.lastKey) {
         lines.indexOfFirst { it is HistoryLine.Entry && cardLookupKey(it.display.entry.card) == restore.lastKey }
     }
+    val landing = remember(anchored, lines) { if (anchored >= 0) anchored else lines.entryAt(0) }
     val first = remember { FocusRequester() }
     val clearFocus = remember { FocusRequester() }
     var attached by remember { mutableStateOf(false) }
@@ -86,9 +87,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                 }
             }
             val list = rememberLazyListState()
-            PageRestore(list, restore, claimOnEntry = true, target = {
-                if (lines.isEmpty()) null else if (anchored >= 0) anchored else lines.entryAt(restore.lastIndex)
-            })
+            PageRestore(list, restore, claimOnEntry = true, target = { landing })
             LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 96.dp * scale),
                 verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
@@ -98,7 +97,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                         is HistoryLine.Entry -> {
                             val key = cardLookupKey(line.display.entry.card)
                             TvHistoryRow(line.display, scale, left = clearFocus,
-                                modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index),
+                                modifier = Modifier.pageAnchor(restore, key, index, target = landing == index),
                                 open = { restore.mark(key, index); open(it) })
                         }
                     }

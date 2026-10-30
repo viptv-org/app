@@ -84,9 +84,11 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {
-                        val anchoring = restore.lastKey?.let { opened -> group.cards.any { searchCardKey(it) == opened } } == true
+                        val anchoredRow = remember(group.cards, restore.lastKey) {
+                            group.cards.indexOfFirst { searchCardKey(it) == restore.lastKey }
+                        }
                         val row = rememberLazyListState()
-                        if (anchoring) PageRestore(row, restore, target = { restore.lastIndex })
+                        PageRestore(row, restore, target = { anchoredRow.takeIf { it >= 0 } })
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
                             (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
@@ -95,7 +97,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                                     val key = searchCardKey(card)
                                     MediaCard(card, width = 160, portrait = true, showLabels = true,
                                         open = { restore.mark(key, index); open(it) },
-                                        modifier = Modifier.pageAnchor(restore, key, index, target = anchoring && restore.lastIndex == index))
+                                        modifier = Modifier.pageAnchor(restore, key, index, target = anchoredRow == index))
                                 }
                             }
                         }

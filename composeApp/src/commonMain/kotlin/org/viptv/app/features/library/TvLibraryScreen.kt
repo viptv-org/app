@@ -48,7 +48,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         CompositionLocalProvider(LocalTvScale provides scale) {
-            Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
+            Column(Modifier.fillMaxSize().focusGroup()
                 .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
                 Box(Modifier.focusGroup().focusRequester(selectedFilter)) {
                     if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
