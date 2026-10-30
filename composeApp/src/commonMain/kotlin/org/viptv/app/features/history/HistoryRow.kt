@@ -25,10 +25,10 @@ import org.viptv.app.components.DropdownMenuItem
 import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
-internal fun HistoryRow(entry: HistoryEntry, phone: Boolean, open: (Card) -> Unit) {
+internal fun HistoryRow(entry: HistoryEntry, phone: Boolean, open: (Card) -> Unit, modifier: Modifier = Modifier) {
     var menu by remember { mutableStateOf(false) }
     val card = entry.card
-    Row(Modifier.fillMaxWidth().pointerClickable(shape = RectangleShape) { open(card) }.padding(vertical = 4.dp),
+    Row(modifier.fillMaxWidth().pointerClickable(shape = RectangleShape) { open(card) }.padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(if (phone) 136.dp else 160.dp).aspectRatio(16f / 9)
             .clip(RoundedCornerShape(8.dp)).background(Palette.raised)) {

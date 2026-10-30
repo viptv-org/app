@@ -6,7 +6,8 @@ import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -15,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -26,7 +26,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.components.PageRestore
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -37,16 +40,19 @@ import org.viptv.app.components.TextButton
 internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, open: (Card) -> Unit,
     clear: () -> Unit, back: () -> Unit = {}) {
     var confirm by remember { mutableStateOf(false) }
+    val restore = rememberPageRestore("history")
+    val lines = remember(history) { history.lines() }
+    val anchored = remember(lines, restore.lastKey) {
+        lines.indexOfFirst { it is HistoryLine.Entry && cardLookupKey(it.display.entry.card) == restore.lastKey }
+    }
     val first = remember { FocusRequester() }
     val clearFocus = remember { FocusRequester() }
     var attached by remember { mutableStateOf(false) }
-    LaunchedEffect(history.size, busy) {
+    LaunchedEffect(history.isEmpty(), busy) {
+        if (!history.isEmpty()) { attached = false; return@LaunchedEffect }
         if (busy) return@LaunchedEffect
-        if (history.isNotEmpty()) attached = false
         repeat(30) {
-            if (runCatching { first.requestFocus() }.getOrDefault(false)) {
-                attached = true; return@LaunchedEffect
-            }
+            if (runCatching { first.requestFocus() }.getOrDefault(false)) { attached = true; return@LaunchedEffect }
             withFrameNanos { }
         }
     }
@@ -79,19 +85,22 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                     }
                 }
             }
-            val ordered = remember(history) { history.distinctBy { cardLookupKey(it.entry.card) } }
-            val groups = remember(ordered) { ordered.groupBy { it.dayLabel } }
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp * scale),
+            val list = rememberLazyListState()
+            PageRestore(list, restore, claimOnEntry = true, target = {
+                if (lines.isEmpty()) null else if (anchored >= 0) anchored else lines.entryAt(restore.lastIndex)
+            })
+            LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 96.dp * scale),
                 verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-                groups.forEach { (day, entries) ->
-                    item(key = "day:$day") {
-                        Text(day, Modifier.padding(top = 16.dp * scale, bottom = 4.dp * scale),
+                itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
+                    when (line) {
+                        is HistoryLine.Day -> Text(line.label, Modifier.padding(top = 16.dp * scale, bottom = 4.dp * scale),
                             fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
-                    }
-                    items(entries, key = { cardLookupKey(it.entry.card) }) { entry ->
-                        val requester = remember(entry.entry.card) { FocusRequester() }
-                        TvHistoryRow(entry, scale, requester = if (entry === ordered.first()) first else requester,
-                            left = clearFocus, open = open)
+                        is HistoryLine.Entry -> {
+                            val key = cardLookupKey(line.display.entry.card)
+                            TvHistoryRow(line.display, scale, left = clearFocus,
+                                modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index),
+                                open = { restore.mark(key, index); open(it) })
+                        }
                     }
                 }
             }
@@ -105,12 +114,12 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
 }
 
 @Composable
-private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, requester: FocusRequester, left: FocusRequester,
+private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, left: FocusRequester, modifier: Modifier = Modifier,
     open: (Card) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val card = entry.entry.card
     val shape = RoundedCornerShape(16.dp * scale)
-    Row(Modifier.fillMaxWidth().height(148.dp * scale).focusRequester(requester)
+    Row(modifier.fillMaxWidth().height(148.dp * scale)
         .focusProperties { this.left = FocusRequester.Cancel; this.right = FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused }
         .graphicsLayer { this.shape = shape; shadowElevation = if (focused) 24.dp.toPx() * scale else 0f; clip = false }

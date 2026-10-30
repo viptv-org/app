@@ -10,8 +10,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.lazy.items as rowItems
+import androidx.compose.foundation.lazy.itemsIndexed as rowItemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
@@ -38,6 +43,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         return
     }
     var filter by remember { mutableStateOf("All") }
+    val restore = rememberPageRestore("search")
     val visible = results.distinctBy(::searchCardKey).filter { it.matchesSearchFilter(filter) }
     val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows, filter) else searchGroups(visible, addons)
     val hasResults = if (searchRows.isNotEmpty()) groups.any { it.cards.isNotEmpty() } else visible.isNotEmpty()
@@ -70,22 +76,43 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
-            LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
+            val column = rememberLazyListState()
+            val anchorGroup = remember(restore.lastKey, groups) {
+                groups.indexOfFirst { group -> group.cards.any { searchCardKey(it) == restore.lastKey } }
+            }
+            PageRestore(column, restore, target = { anchorGroup.takeIf { it >= 0 } })
+            LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {
+                        val anchoring = restore.lastKey?.let { opened -> group.cards.any { searchCardKey(it) == opened } } == true
+                        val row = rememberLazyListState()
+                        if (anchoring) PageRestore(row, restore, target = { restore.lastIndex })
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
                             (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
-                            LazyRow(contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                rowItems(group.cards, key = ::searchCardKey) { MediaCard(it, width = 160, portrait = true, showLabels = true, open = open) }
+                            LazyRow(state = row, contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                                rowItemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
+                                    val key = searchCardKey(card)
+                                    MediaCard(card, width = 160, portrait = true, showLabels = true,
+                                        open = { restore.mark(key, index); open(it) },
+                                        modifier = Modifier.pageAnchor(restore, key, index, target = anchoring && restore.lastIndex == index))
+                                }
                             }
                         }
                     }
                 }
             }
         } else {
-            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
-                items(visible, key = ::searchCardKey) { MediaCard(it, width = if (phone) 112 else 172, portrait = true, showLabels = true, open = open) }
+            val grid = rememberLazyGridState()
+            val anchored = restore.anchor(visible.size) { searchCardKey(visible[it]) }
+            PageRestore(grid, restore, target = { restore.anchor(visible.size) { searchCardKey(visible[it]) } })
+            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), state = grid, horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
+                gridItemsIndexed(visible, key = { _, card -> searchCardKey(card) }) { index, card ->
+                    val key = searchCardKey(card)
+                    MediaCard(card, width = if (phone) 112 else 172, portrait = true, showLabels = true,
+                        open = { restore.mark(key, index); open(it) },
+                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                }
             }
         }
     }

@@ -20,6 +20,9 @@ import com.composables.icons.lucide.Play
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.Button
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
@@ -27,13 +30,19 @@ import org.viptv.engine.wire.Card
 
 private const val TITLE_KEY = "continue:title"
 private const val CARD_TYPE = "continue:card"
+private const val CARDS_AFTER = 1
 private val MIN_CARD = 260.dp
 
 @Composable
 internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
     more: (() -> Unit)?, retry: () -> Unit, back: () -> Unit, home: () -> Unit) {
     val grid = rememberLazyGridState()
+    val restore = rememberPageRestore("continue")
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
+    val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
+    PageRestore(grid, restore, target = {
+        if (page.loaded) restore.anchor(cards.size) { cardLookupKey(cards[it]) }?.plus(CARDS_AFTER) else null
+    })
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val gutter = if (phone) 16.dp else 40.dp
@@ -74,8 +83,13 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
                 page.empty -> item(span = { GridItemSpan(maxLineSpan) }) {
                     PageMessage("Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, phone)
                 }
-                else -> items(cards, key = ::cardLookupKey, contentType = { CARD_TYPE }) { card ->
-                    MediaCard(card, cardWidth, portrait = false, open = open, select = continueWatchingActivation(play, open),
+                else -> itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> CARD_TYPE }) { index, card ->
+                    val key = cardLookupKey(card)
+                    val activate = continueWatchingActivation(play, open)
+                    MediaCard(card, cardWidth, portrait = false,
+                        open = { restore.mark(key, index); open(it) },
+                        select = { restore.mark(key, index); activate(it) },
+                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index),
                         showFocusOutline = !phone)
                 }
             }

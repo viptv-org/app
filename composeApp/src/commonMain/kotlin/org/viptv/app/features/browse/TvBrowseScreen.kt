@@ -23,6 +23,9 @@ import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvRequestedFocus
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.theme.Palette
@@ -33,22 +36,14 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     controls: DiscoveryControls? = null, query: BrowseQuery = BrowseQuery("movie"),
     filterChanged: (String, String) -> Unit = { _, _ -> }, multipleChanged: (String, List<String>) -> Unit = { _, _ -> },
     more: (() -> Unit)? = null, error: String? = null, applyQuery: (BrowseQuery) -> Unit = {},
-    retry: (() -> Unit)? = null, initialCard: Int = 0) {
+    retry: (() -> Unit)? = null) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val selected = remember(cards) { cards.distinctBy(::cardLookupKey) }
-    val targetIndex = initialCard.coerceIn(0, selected.lastIndex.coerceAtLeast(0))
-    val first = remember { FocusRequester() }
+    val restore = rememberPageRestore("browse")
+    val anchored = restore.landing(selected.size) { cardLookupKey(selected[it]) }
     val chromeFocus = remember { FocusRequester() }
     val grid = rememberLazyGridState()
-    LaunchedEffect(Unit) {
-        runCatching {
-            if (selected.isNotEmpty()) {
-                grid.scrollToItem(targetIndex)
-                withFrameNanos { }
-                first.requestFocus()
-            } else chromeFocus.requestFocus()
-        }
-    }
+    PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(selected.size) { cardLookupKey(selected[it]) } })
     AutomaticPage(selected.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
@@ -81,13 +76,15 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                             verticalArrangement = Arrangement.spacedBy(36.dp * scale),
                             contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                             itemsIndexed(selected, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                                val key = cardLookupKey(card)
                                 TvCatalogCard(card, scale, true,
-                                    Modifier.tvGridItem(index).then(if (index == targetIndex) Modifier.focusRequester(first) else Modifier)
+                                    Modifier.tvGridItem(index)
+                                        .pageAnchor(restore, key, index, target = anchored == index)
                                         .focusProperties {
                                             if (index < 7) up = chromeFocus
                                             if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                                         },
-                                    {}, open, focusedCaptions = true)
+                                    {}, { restore.mark(key, index); open(it) }, focusedCaptions = true)
                             }
                         }
                     }

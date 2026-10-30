@@ -28,6 +28,9 @@ import org.viptv.app.connection.catalogTitle
 import org.viptv.app.connection.selectedCatalog
 import org.viptv.app.state.Screen
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
@@ -62,6 +65,9 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         return
     }
     val grid = rememberLazyGridState()
+    val restore = rememberPageRestore("browse")
+    val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
+    PageRestore(grid, restore, target = { restore.anchor(cards.size) { cardLookupKey(cards[it]) } })
     AutomaticPage(cards.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val width = maxWidth
@@ -97,9 +103,12 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                 state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
                 verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
                 contentPadding = PaddingValues(bottom = if (compact) 88.dp else 24.dp)) {
-                items(cards, key = ::cardLookupKey) {
-                    MediaCard(it, width = 0, portrait = true, showLabels = true, open = open,
-                        modifier = Modifier.fillMaxWidth(), showFocusOutline = !compact || !browser)
+                itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                    val key = cardLookupKey(card)
+                    MediaCard(card, width = 0, portrait = true, showLabels = true,
+                        open = { restore.mark(key, index); open(it) },
+                        modifier = Modifier.fillMaxWidth().pageAnchor(restore, key, index, target = anchored == index),
+                        showFocusOutline = !compact || !browser)
                 }
             }
         }

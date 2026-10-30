@@ -143,9 +143,11 @@ fun App(
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
                             Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->
-                                if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
-                                else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
-                                    multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
+                                routes.SaveableStateProvider("${state.selectedProfile}:browse:${state.screen.name}") {
+                                    if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
+                                    else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
+                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
+                                }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
                                     controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)
@@ -184,13 +186,17 @@ fun App(
                                 type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
                                 sources = state.calendarSources, openEntry = controller::openCalendarEntry)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
-                            Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
+                            Screen.Library -> routes.SaveableStateProvider("${state.selectedProfile}:library") {
+                                org.viptv.app.features.library.LibraryRoute(state, controller, television)
+                            }
                             Screen.ContinueWatching -> routes.SaveableStateProvider("${state.selectedProfile}:continue") {
                                 org.viptv.app.features.continuewatching.ContinueWatchingRoute(state, controller, television)
                             }
-                            Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
-                                controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                            else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
+                            Screen.History -> routes.SaveableStateProvider("${state.selectedProfile}:history") {
+                                if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
+                                    controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
+                                else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
+                            }
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }

@@ -14,6 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.LocalTvScale
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
@@ -37,7 +40,10 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
         else -> filtered
     }.distinctBy(::cardLookupKey)
     val grid = rememberLazyGridState()
+    val restore = rememberPageRestore("library")
+    val anchored = restore.landing(visible.size) { cardLookupKey(visible[it]) }
     val empty = libraryEmptyState(snapshot, query, available)
+    PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(visible.size) { cardLookupKey(visible[it]) } })
     AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
@@ -64,11 +70,13 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                         horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
                         contentPadding = PaddingValues(bottom = 96.dp * scale)) {
                         itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                            val key = cardLookupKey(card)
                             TvCatalogCard(card, scale, true, Modifier.tvGridItem(index)
+                                .pageAnchor(restore, key, index, target = anchored == index)
                                 .focusProperties {
                                     if (index < 7) up = selectedFilter
                                     if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
-                                }, {}, open, focusedCaptions = true)
+                                }, {}, { restore.mark(key, index); open(it) }, focusedCaptions = true)
                         }
                     }
             }
