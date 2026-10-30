@@ -134,6 +134,7 @@ class TvFocusReachabilityTest {
         Triple("settings-subs", Screen.Settings, "Subs"),
         Triple("settings-addons", Screen.Settings, "Addons"),
         Triple("settings-sources", Screen.Settings, "Sources"),
+        Triple("settings-parental", Screen.Settings, "Parental"),
         Triple("settings-account", Screen.Settings, "Account"),
         Triple("settings-signout", Screen.Settings, "SignOut"),
         Triple("profiles", Screen.Profiles, "Profiles"),

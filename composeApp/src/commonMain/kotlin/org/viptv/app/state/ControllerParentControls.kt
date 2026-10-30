@@ -69,8 +69,7 @@ fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) 
 
 private suspend fun ApplicationController.parentRequest(notice: String? = null, forbidden: String = "Unlock parental controls and try again.",
     action: suspend (RemoteConnection) -> ProfileManagement) {
-    val remote = connection ?: throw LocalFailure("Manage this account through its server dashboard.")
-    if (!remote.accountManagementEnabled) throw LocalFailure("Manage parental controls through your server’s web dashboard.")
+    val remote = connection ?: throw LocalFailure("Connect to your account to manage parental controls.")
     val owner = generation
     try {
         val result = action(remote)

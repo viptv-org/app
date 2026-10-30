@@ -1,6 +1,11 @@
 package org.viptv.app.preview
 
 import androidx.compose.runtime.*
+import org.viptv.app.connection.FeatureAvailability
+import org.viptv.app.connection.ParentAccess
+import org.viptv.app.connection.ProfileCapabilities
+import org.viptv.app.connection.ProfileManagement
+import org.viptv.app.connection.ServerProfile
 import org.viptv.app.connection.SourceCredentialField
 import org.viptv.app.connection.SourceIntegrationSchema
 import org.viptv.app.connection.SourceIntegrationSnapshot
@@ -24,6 +29,11 @@ internal fun PreviewTvSettings(variant: String, go: (Screen) -> Unit) {
         "Sources" -> TvSettingsSection.Sources; "Display" -> TvSettingsSection.Display;
         "About" -> TvSettingsSection.About; "Parental" -> TvSettingsSection.Parental;
         "SignOut", "Account" -> TvSettingsSection.Account; else -> TvSettingsSection.Playback }
+    val parentalSnapshot = remember { ProfileManagement(
+        listOf(ServerProfile("preview", "vynxc"), ServerProfile("zayne", "zayne", kids = true, max_age = 10)),
+        ProfileCapabilities(FeatureAvailability("Available"), FeatureAvailability("Available"), FeatureAvailability("Available"),
+            FeatureAvailability("Available"), FeatureAvailability("Unsupported"), FeatureAvailability("Available")),
+        ParentAccess(true, true, false)) }
     val sources = remember { SourceIntegrationSnapshot(listOf(
         SourceIntegrationSchema("viptv_sources", "VIPTV Sources", "Ready", runtime_enabled = true, connection_id = "viptv-sources",
             credential_fields = listOf(SourceCredentialField("tmdb_key", "TMDB key")), provider_choices = List(8) { SourceProviderChoice("p$it", "Provider $it") }),
@@ -35,5 +45,6 @@ internal fun PreviewTvSettings(variant: String, go: (Screen) -> Unit) {
         { go(Screen.Profiles) }, { go(Screen.Connect) }, PreviewData.profile, initialSection = section, prefs = prefs,
         change = { prefs = it }, addonInfo = info, account = TvAccountInfo("[name@email.com]", 3), initialLeave = variant == "SignOut", placeholderQr = true,
         sourceIntegrations = { first, sidebar, _ -> SourceIntegrationSettings(sources, false, null, {}, { _, _ -> }, {}, television = true, profileName = "vynxc", first = first, left = sidebar) },
+        parental = { first, sidebar, scale -> TvParentControlsSettings(parentalSnapshot, false, null, null, 0, {}, {}, { _, _ -> }, { _, _ -> }, {}, first, sidebar, scale) },
         maturity = "Up to age 13", pinAvailable = true)
 }

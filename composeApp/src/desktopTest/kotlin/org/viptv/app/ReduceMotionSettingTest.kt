@@ -55,7 +55,7 @@ class ReduceMotionSettingTest {
         val store = MemoryStore(encodeTvDisplay(TvDisplayPreferences()))
         val display = TvDisplayState(decodeTvDisplay(store.raw), store)
         val scene = ImageComposeScene(100, 100, Density(1f)) {
-            CompositionLocalProvider(LocalTvDisplayState provides display) { ReducedMotionProbe() }
+            CompositionLocalProvider(LocalTvDisplayState provides display, LocalSystemReducedMotion provides false) { ReducedMotionProbe() }
         }
         try {
             render(scene)
@@ -67,6 +67,31 @@ class ReduceMotionSettingTest {
             render(scene)
             assertEquals("false", description(scene))
         } finally { scene.close() }
+    }
+
+    @Test fun thePlatformPreferenceSnapsEveryMotionSpecWhenItSaysSo() {
+        val store = MemoryStore(encodeTvDisplay(TvDisplayPreferences()))
+        val display = TvDisplayState(decodeTvDisplay(store.raw), store)
+        val target = mutableStateOf(0f)
+        val reduced = platformScene(display, target, system = true)
+        val allowed = platformScene(display, target, system = false)
+        try {
+            render(reduced); render(allowed)
+            target.value = 1f
+            render(reduced); render(allowed)
+            assertTrue(value(reduced) > .99f, "The platform preference lands the target in one frame, saw ${value(reduced)}")
+            assertTrue(value(allowed) < .5f, "Without it the same transition is still running, saw ${value(allowed)}")
+        } finally { reduced.close(); allowed.close() }
+    }
+
+    @Test fun anUnreadablePreferenceLeavesMotionAllowed() {
+        assertTrue(macReducedMotion("1\n"), "macOS reports the preference as 1")
+        assertFalse(macReducedMotion("0\n"))
+        assertFalse(macReducedMotion(null), "A failed query allows motion")
+        assertTrue(linuxReducedMotion("false\n"), "GNOME reports disabled animations as false")
+        assertFalse(linuxReducedMotion("true\n"))
+        assertFalse(linuxReducedMotion(null), "A failed query allows motion")
+        assertFalse(linuxReducedMotion("gsettings: command not found"), "Unreadable output allows motion")
     }
 
     @Composable
@@ -84,6 +109,14 @@ class ReduceMotionSettingTest {
     private fun probe(reduced: Boolean, target: State<Float>): ImageComposeScene =
         ImageComposeScene(100, 100, Density(1f)) {
             CompositionLocalProvider(LocalReducedMotion provides reduced) { MotionTargetProbe(target.value) }
+        }
+
+    private fun platformScene(display: TvDisplayState, target: State<Float>, system: Boolean): ImageComposeScene =
+        ImageComposeScene(100, 100, Density(1f)) {
+            CompositionLocalProvider(LocalSystemReducedMotion provides system) {
+                val reduced = reducedMotion(display.value, rememberSystemReducedMotion())
+                CompositionLocalProvider(LocalReducedMotion provides reduced) { MotionTargetProbe(target.value) }
+            }
         }
 
     private fun render(scene: ImageComposeScene, frames: Int = 3) {
