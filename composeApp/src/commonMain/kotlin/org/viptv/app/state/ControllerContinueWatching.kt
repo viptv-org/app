@@ -2,12 +2,15 @@ package org.viptv.app.state
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlin.concurrent.Volatile
 import org.viptv.app.connection.*
 import org.viptv.app.features.home.CONTINUE_ROW
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.ContinuationPage
 import org.viptv.engine.wire.HomeRow
 import org.viptv.engine.wire.HomeSnapshot
+import org.viptv.engine.wire.MediaIdentity
+import org.viptv.engine.wire.RowState
 import org.viptv.engine.wire.Scope
 
 internal const val HOME_CONTINUE_ROW_CAP = 12
@@ -15,6 +18,11 @@ internal const val CONTINUE_PAGE = 24
 private const val CONTINUE_PAGE_MAX = 100
 
 data class ContinueWatchingList(val profile: String, val cards: List<Card>, val next: String?)
+
+// Held until the viewer undoes the removal or removes another title.
+class ContinueUndo(val profile: String, val card: Card, val index: Int) {
+    @Volatile var identity: MediaIdentity = card.identity
+}
 
 internal data class ContinueCheck(val profile: String, val home: Scope, val revision: Long)
 
@@ -93,5 +101,69 @@ fun ApplicationController.continueWatchingMore() {
         val next = page.next_cursor?.takeIf { merged.size > shown.cards.size && it != cursor }
         updateState { current -> current.copy(continueWatching = shown.copy(cards = merged, next = next),
             continueNext = current.continueNext.announced(page.entries)) }
+    }
+}
+
+internal fun ApplicationState.withContinueCardRemoved(card: Card): ApplicationState {
+    val list = continueWatching ?: return this
+    val key = cardLookupKey(card)
+    val index = list.cards.indexOfFirst { cardLookupKey(it) == key }
+    if (index < 0) return this
+    return copy(
+        continueWatching = list.copy(cards = list.cards.filterIndexed { at, _ -> at != index }),
+        home = home?.let { snapshot -> snapshot.copy(rows = snapshot.rows.map { row ->
+            if (row.id != CONTINUE_ROW) row
+            else row.copy(cards = row.cards.filterNot { cardLookupKey(it) == key }).let {
+                if (it.cards.isEmpty()) it.copy(state = RowState.EMPTY) else it
+            } }) },
+        continueUndo = ContinueUndo(list.profile, card, index))
+}
+
+internal fun ApplicationState.withContinueCardRestored(undo: ContinueUndo, clearOffer: Boolean = true): ApplicationState {
+    val key = cardLookupKey(undo.card)
+    fun List<Card>.restored(): List<Card> = if (any { cardLookupKey(it) == key }) this
+        else toMutableList().apply { add(undo.index.coerceIn(0, size), undo.card) }
+    return copy(
+        continueWatching = continueWatching?.takeIf { it.profile == undo.profile }
+            ?.let { list -> list.copy(cards = list.cards.restored()) } ?: continueWatching,
+        home = home?.let { snapshot -> snapshot.copy(rows = snapshot.rows.map { row ->
+            if (row.id != CONTINUE_ROW || row.cards.size >= HOME_CONTINUE_ROW_CAP) row
+            else row.copy(cards = row.cards.restored(), state = RowState.READY) }) },
+        continueUndo = if (clearOffer) null else continueUndo)
+}
+
+fun ApplicationController.removeFromContinueWatching(card: Card) {
+    val profile = mutable.value.selectedProfile ?: return
+    val remote = connection ?: return
+    if (mutable.value.continueWatching?.profile != profile) return
+    updateState { it.withContinueCardRemoved(card) }
+    val undo = mutable.value.continueUndo?.takeIf { it.profile == profile && cardLookupKey(it.card) == cardLookupKey(card) } ?: return
+    continueVisibilityJob = scope.launch {
+        try {
+            undo.identity = remote.hideFromContinueWatching(profile, card)
+        }
+        catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            // A removal refused by the host has to put its card back even if a later removal now owns the offer.
+            updateState { state ->
+                state.withContinueCardRestored(undo, clearOffer = state.continueUndo === undo)
+                    .copy(error = failureMessage(error))
+            }
+        }
+    }
+}
+
+fun ApplicationController.undoRemoveFromContinueWatching() {
+    val undo = mutable.value.continueUndo ?: return
+    val remote = connection
+    val pending = continueVisibilityJob
+    continueVisibilityJob = null
+    updateState { it.withContinueCardRestored(undo) }
+    if (remote == null) return
+    scope.launch {
+        pending?.join()
+        try { remote.showInContinueWatching(undo.profile, undo.identity) }
+        catch (error: CancellationException) { throw error }
+        catch (error: Exception) { updateState { it.copy(error = failureMessage(error)) } }
     }
 }

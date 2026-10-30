@@ -19,6 +19,9 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListRemoval
+import org.viptv.app.components.ListRemovalConfirmation
+import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.LocalBarsFadeContent
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.ScrollEdge
@@ -35,15 +38,19 @@ private const val LIBRARY_TITLE_KEY = "library:title"
 private const val LIBRARY_CONTROLS_KEY = "library:controls"
 private const val LIBRARY_HISTORY_KEY = "library:history"
 private const val LIBRARY_CARD_TYPE = "library:card"
+internal const val REMOVE_LIBRARY_LABEL = "Remove from My List"
 
 @Composable
 fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, open: (Card) -> Unit,
     history: () -> Unit, home: () -> Unit, snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
     query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
-    changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null) {
-    if (television) { TvLibraryScreen(cards, available, open, home, snapshot = snapshot, query = query, changeQuery = changeQuery, more = more, busy = busy, error = error); return }
+    changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null,
+    remove: ((Card) -> Unit)? = null) {
+    if (television) { TvLibraryScreen(cards, available, open, home, snapshot = snapshot, query = query, changeQuery = changeQuery, more = more, busy = busy, error = error, remove = remove); return }
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf("Date added") }
+    var confirming by remember { mutableStateOf<Card?>(null) }
+    val removal = remember(remove) { remove?.let { ListRemoval(REMOVE_LIBRARY_LABEL, replacesSave = true) { card -> confirming = card } } }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
     val visible = if (snapshot != null) cards else when (sort) { "Date added" -> filtered.sortedByDescending { it.added_at_millis ?: Long.MIN_VALUE }; "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
     val gridCards = visible.distinctBy(::cardLookupKey)
@@ -64,46 +71,48 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
         }
         Column(Modifier.fillMaxSize().padding(start = if (phone) 16.dp else 40.dp, end = if (phone) 16.dp else 40.dp,
             top = if (phone) 8.dp else 24.dp)) {
-            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(176.dp), state = grid,
-                modifier = if (visible.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
-                contentPadding = PaddingValues(bottom = if (visible.isEmpty()) 0.dp else if (phone) 96.dp else 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-                topEdgeFade = false) {
-                if (!phone) item(LIBRARY_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_TITLE_KEY) {
-                    Text("My List", Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_TITLE_KEY) { 0 },
-                        fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
-                }
-                stickyHeader(LIBRARY_CONTROLS_KEY, contentType = LIBRARY_CONTROLS_KEY) {
-                    Column(Modifier.fillMaxWidth()) {
-                        Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                            if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
-                            else LibraryControls(filter, { filter = it }, sort, { sort = it })
-                            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-                            (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
-                        }
-                        if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
+            CompositionLocalProvider(LocalListRemoval provides removal) {
+                LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(176.dp), state = grid,
+                    modifier = if (visible.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = if (visible.isEmpty()) 0.dp else if (phone) 96.dp else 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
+                    topEdgeFade = false) {
+                    if (!phone) item(LIBRARY_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_TITLE_KEY) {
+                        Text("My List", Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_TITLE_KEY) { 0 },
+                            fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
                     }
-                }
-                item(LIBRARY_HISTORY_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_HISTORY_KEY) {
-                    Surface(onClick = history, modifier = Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_HISTORY_KEY) { pinned },
-                        shape = RoundedCornerShape(16.dp), color = Palette.surface) {
-                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Icon(Lucide.History, null, Modifier.size(22.dp))
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("History", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                Text("Everything you've played", fontSize = 12.sp, color = Palette.secondary)
+                    stickyHeader(LIBRARY_CONTROLS_KEY, contentType = LIBRARY_CONTROLS_KEY) {
+                        Column(Modifier.fillMaxWidth()) {
+                            Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                                if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
+                                else LibraryControls(filter, { filter = it }, sort, { sort = it })
+                                if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                                (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
                             }
-                            Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Palette.secondary)
+                            if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
                         }
                     }
-                }
-                itemsIndexed(gridCards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> LIBRARY_CARD_TYPE }) { index, card ->
-                    val key = cardLookupKey(card)
-                    MediaCard(card, if (phone) 112 else 176, portrait = true, showLabels = !phone,
-                        open = { restore.mark(key, index); open(it) },
-                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                    item(LIBRARY_HISTORY_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_HISTORY_KEY) {
+                        Surface(onClick = history, modifier = Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_HISTORY_KEY) { pinned },
+                            shape = RoundedCornerShape(16.dp), color = Palette.surface) {
+                            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(Lucide.History, null, Modifier.size(22.dp))
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("History", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("Everything you've played", fontSize = 12.sp, color = Palette.secondary)
+                                }
+                                Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Palette.secondary)
+                            }
+                        }
+                    }
+                    itemsIndexed(gridCards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> LIBRARY_CARD_TYPE }) { index, card ->
+                        val key = cardLookupKey(card)
+                        MediaCard(card, if (phone) 112 else 176, portrait = true, showLabels = !phone,
+                            open = { restore.mark(key, index); open(it) },
+                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                    }
                 }
             }
             if (visible.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp, bottom = if (phone) 96.dp else 0.dp), contentAlignment = Alignment.Center) {
@@ -118,6 +127,9 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                 }
             }
         }
+    }
+    confirming?.let { card ->
+        ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
     }
 }
 
