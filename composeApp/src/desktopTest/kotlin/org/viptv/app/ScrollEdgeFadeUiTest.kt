@@ -128,11 +128,10 @@ class ScrollEdgeFadeUiTest {
             } }
         }
 
-    private fun readColumn(scene: ImageComposeScene, x: Int, fromY: Int, rows: Int): List<Int> {
+    private fun readColumn(scene: ImageComposeScene, x: Int, fromY: Int, rows: Int): List<Int> =
         scene.render(frame++ * 16_666_667L).use { image ->
-            return Bitmap.makeFromImage(image).use { pixels -> (0 until rows).map { pixels.getColor(x, fromY + it) } }
+            Bitmap.makeFromImage(image).use { pixels -> (0 until rows).map { row -> pixels.getColor(x, fromY + row) } }
         }
-    }
 
     private fun scrollToEnd(scene: ImageComposeScene) {
         var before = -1f
@@ -143,7 +142,7 @@ class ScrollEdgeFadeUiTest {
             if (value <= before + .5f) return
             before = value
             scroll.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 4000f)
-            frames(scene, 4)
+            frames(scene, 6)
         }
         fail("the page never reached its end")
     }
