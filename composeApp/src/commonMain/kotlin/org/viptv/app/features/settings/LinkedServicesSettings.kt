@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,7 +21,15 @@ import org.viptv.app.theme.Palette
 internal fun LinkedServicesSettings(status: SimklLinkStatus?, profileName: String?, compact: Boolean, busy: Boolean,
     error: String?, load: () -> Unit, link: () -> Unit, unlink: () -> Unit) {
     var confirming by remember { mutableStateOf(false) }
+    var awaitingBrowser by remember { mutableStateOf(false) }
+    val windowFocused = LocalWindowInfo.current.isWindowFocused
     LaunchedEffect(Unit) { load() }
+    LaunchedEffect(windowFocused) {
+        if (windowFocused && awaitingBrowser) {
+            awaitingBrowser = false
+            load()
+        }
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
         .padding(horizontal = if (compact) 16.dp else 32.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Linked services", Modifier.padding(top = 16.dp), fontSize = if (compact) 22.sp else 26.sp, fontWeight = FontWeight.Bold)
@@ -43,7 +52,7 @@ internal fun LinkedServicesSettings(status: SimklLinkStatus?, profileName: Strin
                 } else if (status?.configured == true) {
                     HorizontalDivider(color = Palette.raised, thickness = 1.dp)
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        Button(link, enabled = !busy) { Text("Link Simkl") }
+                        Button({ awaitingBrowser = true; link() }, enabled = !busy) { Text("Link Simkl") }
                     }
                 }
             }

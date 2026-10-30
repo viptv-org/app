@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.viptv.app.connection.Profile
+import org.viptv.app.connection.SimklLinkStatus
+import org.viptv.app.features.settings.LinkedServicesSettings
 import org.viptv.app.features.settings.ProfilePageActions
 import org.viptv.app.features.settings.ProfilePageValues
 import org.viptv.app.features.settings.ProfileSettingsPage
@@ -227,6 +229,32 @@ class ProfilePageTest {
         }
     }
 
+    @Test fun linkedServicesShowsTheSelectedProfilesSimklStateAndConfirmsUnlink() {
+        var loads = 0
+        val scene = ImageComposeScene(1000, 800, Density(1f)) { ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+            LinkedServicesSettings(SimklLinkStatus(configured = true, linked = false), "Viewer", compact = false, busy = false,
+                error = null, load = { loads += 1 }, link = { calls += "link" }, unlink = { calls += "unlink" })
+        } } }
+        try {
+            render(scene)
+            assertEquals(1, loads, "the page reads the profile's link state when it opens")
+            click(nodes(scene), "Link Simkl"); render(scene)
+            assertEquals(listOf("link"), calls)
+        } finally { scene.close() }
+        calls.clear()
+        val linked = ImageComposeScene(1000, 800, Density(1f)) { ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+            LinkedServicesSettings(SimklLinkStatus(configured = true, linked = true), "Viewer", compact = false, busy = false,
+                error = null, load = { }, link = { }, unlink = { calls += "unlink" })
+        } } }
+        try {
+            render(linked)
+            assertTrue(nodes(linked).any { values(it).any { value -> value == "Linked to this profile" } })
+            click(nodes(linked), "Unlink Simkl"); render(linked)
+            click(nodes(linked), "Unlink"); render(linked)
+            assertEquals(listOf("unlink"), calls)
+        } finally { linked.close() }
+    }
+
     @Test fun theRemoteReachesEveryRowAndLeftReturnsToTheRail() = runBlocking {
         calls.clear()
         val saved = mutableStateOf(0L)
@@ -254,6 +282,10 @@ class ProfilePageTest {
             assertTrue(rail.boundsInRoot.left < 560f, "Left from a profile row returns to the sidebar")
             assertTrue(text(rail).startsWith("Profile"), "Left lands on the rail row that opened the page, was '${text(rail)}'")
         } finally { scene.close() }
+    }
+
+    private fun render(scene: ImageComposeScene) {
+        repeat(12) { scene.render(++frame * 16_666_667L).close(); Thread.sleep(3) }
     }
 
     private suspend fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(++frame * 16_666_667L).close(); delay(4) }
