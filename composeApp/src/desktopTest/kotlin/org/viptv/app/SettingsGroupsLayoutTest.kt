@@ -28,23 +28,26 @@ class SettingsGroupsLayoutTest {
     private data class Layout(val name: String, val width: Int, val height: Int, val desktop: Boolean, val web: Boolean, val devices: Boolean, val stremio: Boolean,
         val rows: Map<SettingsGroup, List<SettingsRow>>)
 
+    // The rail and the list compose only what fits, so the scene is taller than any layout's rows.
+    private val sceneHeight = 4000
+
     private val layouts = listOf(
-        Layout("phone", 390, 1700, desktop = false, web = false, devices = true, stremio = true, rows = mapOf(
+        Layout("phone", 390, sceneHeight, desktop = false, web = false, devices = true, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
             SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
-        Layout("tablet", 1000, 1200, desktop = false, web = false, devices = false, stremio = true, rows = mapOf(
+        Layout("tablet", 1000, sceneHeight, desktop = false, web = false, devices = false, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
             SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
-        Layout("desktop", 1440, 1200, desktop = true, web = false, devices = false, stremio = false, rows = mapOf(
+        Layout("desktop", 1440, sceneHeight, desktop = true, web = false, devices = false, stremio = false, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
             SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
-        Layout("web", 1440, 1200, desktop = false, web = true, devices = true, stremio = true, rows = mapOf(
+        Layout("web", 1440, sceneHeight, desktop = false, web = true, devices = true, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
