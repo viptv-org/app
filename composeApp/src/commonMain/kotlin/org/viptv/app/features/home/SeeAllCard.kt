@@ -1,5 +1,6 @@
 package org.viptv.app.features.home
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -29,8 +30,11 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ArrowRight
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.FocusOutline
+import org.viptv.app.components.Motion
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerHovered
+import org.viptv.app.components.pressScale
+import org.viptv.app.components.responseSpec
 import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.titleCount
 import org.viptv.app.theme.Palette
@@ -46,14 +50,15 @@ internal fun SeeAllCard(seeAll: RowSeeAll, width: Int, open: () -> Unit, portrai
     var focused by remember { mutableStateOf(false) }
     val interaction = remember { MutableInteractionSource() }
     val hovered = interaction.pointerHovered()
+    val fill by animateColorAsState(if (hovered) Palette.raised else Palette.surface, responseSpec(), label = "See all fill")
     val shape = RoundedCornerShape(cornerRadius)
     val description = seeAllDescription(seeAll)
     Column(modifier.width(width.dp).hoverable(interaction)
         .onFocusChanged { focused = it.isFocused }
         .pointerClickable(interactionSource = interaction, indication = null, role = Role.Button) { open() }
         .clearAndSetSemantics { role = Role.Button; contentDescription = description; onClick { open(); true } }) {
-        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).clip(shape)
-            .background(if (hovered) Palette.raised else Palette.surface).border(1.dp, Palette.raised, shape),
+        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).pressScale(interaction, Motion.card)
+            .clip(shape).background(fill).border(1.dp, Palette.raised, shape),
             contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp * labelScale)) {
                 Box(Modifier.size(40.dp * labelScale).clip(CircleShape).background(Palette.text.copy(alpha = .1f)), contentAlignment = Alignment.Center) {
