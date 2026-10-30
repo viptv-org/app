@@ -83,7 +83,6 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section in listOf("General", "Help", "About", "Watch on TV") -> SettingsDetailContent(compact, back) {
                         SettingsInformation(requireNotNull(section), local, serverAddress, profile?.name, profiles) { leaving = true }
                     }
-                    else -> SettingsSection(section.orEmpty(), local, busy, error, sessionNotice, { leaving = true })
                 }
             }
         }

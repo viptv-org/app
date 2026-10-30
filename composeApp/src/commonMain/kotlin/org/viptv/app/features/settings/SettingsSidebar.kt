@@ -16,7 +16,6 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.TextButton
 
 @Composable
 internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -> Unit, stremioImport: Boolean = false, select: (String) -> Unit) {
@@ -31,7 +30,7 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -
             }
         }
         val entries = listOfNotNull("General" to Lucide.Settings, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions,
-            "Watch on TV" to Lucide.Tv, "Add-ons" to Lucide.Puzzle, "Notifications" to Lucide.Bell,
+            "Watch on TV" to Lucide.Tv, "Add-ons" to Lucide.Puzzle,
             "Parental controls" to Lucide.LockKeyhole, "Account" to Lucide.UserRound,
             (stremioImportSection to Lucide.Import).takeIf { stremioImport }, "Help" to Lucide.Info, "About" to Lucide.Info)
         entries.forEach { (label, icon) -> item {
@@ -43,22 +42,5 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -
                 }
             }
         } }
-    }
-}
-
-@Composable
-internal fun SettingsSection(section: String, local: Boolean, busy: Boolean, error: String?, notice: String?, leave: () -> Unit) {
-    Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Text(section, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        notice?.let { Text(it, color = Palette.danger) }
-        when (section) {
-            "Account" -> {
-                Text(if (local) "Using this device locally" else "Connected to a server", color = Palette.secondary)
-                TextButton(onClick = leave, enabled = !busy) { Text(if (local) "Change connection" else "Sign out", color = Palette.danger) }
-            }
-            "About" -> Text("VIPTV · Experimental build", color = Palette.secondary)
-            else -> Text("$section is not available on this connection yet.", color = Palette.secondary)
-        }
-        error?.let { Text(it, color = Palette.danger) }
     }
 }
