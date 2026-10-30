@@ -49,10 +49,13 @@ internal fun rememberTvDisplayState(): TvDisplayState {
 
 internal val LocalTvDisplayState = staticCompositionLocalOf<TvDisplayState?> { null }
 
+internal val LocalSystemReducedMotion = staticCompositionLocalOf<Boolean?> { null }
+
 @Composable
 internal fun rememberSystemReducedMotion(): Boolean {
     val context = LocalPlatformContext.current
-    return remember(context) { systemReducedMotion(context) }
+    val provided = LocalSystemReducedMotion.current
+    return remember(context, provided) { provided ?: systemReducedMotion(context) }
 }
 
 @Composable
