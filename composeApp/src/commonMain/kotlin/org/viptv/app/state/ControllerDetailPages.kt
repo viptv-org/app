@@ -24,12 +24,14 @@ fun ApplicationController.detailPage(offset: Long) {
                 ?: requireNotNull(remote).detail(previous.item, offset.toInt(), 96)
             if (!current()) return@launch
             require(cardLookupKey(page.item) == cardLookupKey(previous.item))
-            val loaded = requireNotNull(mutable.value.detail)
-            updateState { next -> next.copy(detail = loaded.copy(
-                episodes = (loaded.episodes + page.episodes).distinctBy(::cardLookupKey),
-                next_cursor = page.next_cursor,
-                recommendations = page.recommendations.ifEmpty { loaded.recommendations },
-                seasons = page.seasons.ifEmpty { loaded.seasons })) }
+            updateState { next ->
+                val loaded = requireNotNull(next.detail)
+                next.copy(detail = loaded.copy(
+                    episodes = (loaded.episodes + page.episodes).distinctBy(::cardLookupKey),
+                    next_cursor = page.next_cursor,
+                    recommendations = page.recommendations.ifEmpty { loaded.recommendations },
+                    seasons = page.seasons.ifEmpty { loaded.seasons }))
+            }
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
             if (current()) {

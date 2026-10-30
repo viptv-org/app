@@ -68,7 +68,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
             }
             if (!current()) return@launch
             val next = resolved?.item?.takeIf { resolved.status == ContinuationStatus.NEXT && validNextEpisode(card, it) }
-            updateState { current -> current.copy(nextEpisode = next,
+            updateState { latest -> latest.copy(nextEpisode = next,
                 nextEpisodeStatus = if (resolved == null || (resolved.status == ContinuationStatus.NEXT && next == null)) ContinuationStatus.UNAVAILABLE else resolved.status) }
         } catch (error: CancellationException) {
             if (current()) updateState { next -> next.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.UNAVAILABLE) }

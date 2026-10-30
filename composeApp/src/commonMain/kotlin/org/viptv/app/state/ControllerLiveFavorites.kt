@@ -32,8 +32,7 @@ fun ApplicationController.toggleLiveFavorite(channel: String) {
             val result = context.device?.setLiveFavorite(context.profile, channel, saved) ?: requireNotNull(context.remote).setLiveFavorite(context.profile, channel, saved)
             if (ownsLive(context, false)) {
                 liveFavoriteVersion++
-                val current = mutable.value.liveFavorites
-                updateState { next -> next.copy(liveFavorites = if (channel in result) current + channel else current - channel, liveFavoriteError = null) }
+                updateState { next -> next.copy(liveFavorites = if (channel in result) next.liveFavorites + channel else next.liveFavorites - channel, liveFavoriteError = null) }
                 if (ownsLive(context) && mutable.value.liveFavoritesOnly && mutable.value.liveFavorites.isNotEmpty() &&
                     mutable.value.livePage?.channels?.none { it.id in mutable.value.liveFavorites } == true && mutable.value.livePage?.next_cursor != null)
                     moreLive()

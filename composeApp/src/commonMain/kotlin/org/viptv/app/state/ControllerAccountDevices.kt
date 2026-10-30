@@ -19,10 +19,9 @@ fun ApplicationController.signOutDevice(id: String) = run {
     val remote = requireNotNull(connection)
     val owner = generation
     accountDeviceRequest { it.signOutDevice(id) }
-    if (connection === remote && generation == owner) {
-        val current = mutable.value.accountDevices
-        updateState { next -> next.copy(accountDevices = current?.copy(devices = current.devices.filterNot { it.id == id })) }
-    }
+    if (connection === remote && generation == owner)
+        updateState { next -> next.copy(accountDevices = next.accountDevices?.let { devices ->
+            devices.copy(devices = devices.devices.filterNot { it.id == id }) }) }
 }
 
 fun ApplicationController.signOutAllDevices() = run {

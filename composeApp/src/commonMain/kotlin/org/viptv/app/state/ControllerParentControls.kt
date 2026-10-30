@@ -72,12 +72,11 @@ private suspend fun ApplicationController.parentRequest(notice: String? = null, 
     val remote = connection ?: throw LocalFailure("Manage this account through its server dashboard.")
     if (!remote.accountManagementEnabled) throw LocalFailure("Manage parental controls through your server’s web dashboard.")
     val owner = generation
-    val saved = mutable.value.parentSettingsSaved
     try {
         val result = action(remote)
         if (connection === remote && generation == owner) updateState { next -> next.copy(
             parentSettings = result, parentSettingsNotice = notice,
-            parentSettingsSaved = saved + if (notice != null) 1 else 0,
+            parentSettingsSaved = next.parentSettingsSaved + if (notice != null) 1 else 0,
             profiles = result.cards(), profileManagement = result) }
     } catch (failure: RemoteFailure) {
         val refreshed = if (failure.status in setOf(403, 409)) try { remote.profileManagement() }
