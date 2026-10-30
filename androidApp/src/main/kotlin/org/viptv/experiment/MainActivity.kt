@@ -18,6 +18,7 @@ import org.viptv.app.updates.updatePromptAllowed
 import org.viptv.app.updates.updateServerOrigin
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.connection.AndroidSecrets
+import org.viptv.app.player.AndroidPictureInPicture
 import org.viptv.app.connection.AndroidAccountAuthorization
 import androidx.lifecycle.ViewModelProvider
 import android.content.Intent
@@ -50,6 +51,7 @@ open class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
         model.start(filesDir.resolve("local.sqlite").absolutePath, applicationContext)
+        AndroidPictureInPicture.attach(this, model.controller, tv)
         // ON_START runs after onStart's resumePlayback, ON_STOP after onPause's suspendPlayback; App.kt skips this hook.
         lifecycle.addObserver(model.controller.foregroundObserver(onReturn = model::foregroundReturned))
         // A recreated Activity gets the launching intent again: only the first creation may act on it.
@@ -98,12 +100,24 @@ open class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         // ON_STOP observers can pause the renderer before onStop runs: capture the resume intent first.
-        applicationModel?.controller?.suspendPlayback()
+        if (!isInPictureInPictureMode) applicationModel?.controller?.suspendPlayback()
         super.onPause()
     }
     override fun onStop() {
-        applicationModel?.controller?.suspendPlayback()
+        if (!isInPictureInPictureMode) applicationModel?.controller?.suspendPlayback()
         super.onStop()
+    }
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        AndroidPictureInPicture.onUserLeaveHint()
+    }
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        AndroidPictureInPicture.modeChanged(isInPictureInPictureMode)
+    }
+    override fun onDestroy() {
+        AndroidPictureInPicture.detach()
+        super.onDestroy()
     }
     override fun onResume() {
         super.onResume()
