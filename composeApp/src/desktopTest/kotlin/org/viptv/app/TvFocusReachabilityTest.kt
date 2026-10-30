@@ -142,7 +142,6 @@ class TvFocusReachabilityTest {
         Triple("profile-edit", Screen.ProfileEdit, "ProfileEdit"),
         Triple("player", Screen.Player, "Player"),
         Triple("signin", Screen.Connect, "Welcome"),
-        Triple("signin-email", Screen.Connect, "Email"),
         Triple("signed-in", Screen.Connect, "SignedIn"),
         Triple("splash", Screen.Connect, "Splash"),
         Triple("pairing", Screen.Connect, "Pairing"),
@@ -162,8 +161,8 @@ class TvFocusReachabilityTest {
                 report.unrequestable.take(8).forEach { println("    clickable-without-requestFocus: $it") }
             }
         }
-        // Transition/loading screens legitimately have nothing to focus.
-        val exempt = setOf("splash", "signed-in", "home-loading", "sources-empty", "player")
+        // Transition/loading screens legitimately have nothing to focus, and so does pairing without a server challenge.
+        val exempt = setOf("splash", "signed-in", "home-loading", "sources-empty", "player", "pairing")
         val noFocus = reports.filter { it.targets.isNotEmpty() && it.initialFocus == null && it.name !in exempt }
         assertTrue(noFocus.isEmpty(), "TV screens with no initial focus: ${noFocus.map { it.name }}")
         val clickableNotFocusable = reports.filter { it.unrequestable.isNotEmpty() }

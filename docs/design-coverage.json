@@ -67,9 +67,9 @@
     "title": "Sign in \u2014 email (fallback)",
     "width": 1920,
     "height": 1080,
-    "status": "in_progress",
-    "implementation": "docs/TV_EMAIL.md",
-    "capture": "docs/evidence/android-tv-email.png"
+    "status": "pending",
+    "implementation": null,
+    "capture": null
   },
   {
     "id": "Tv3SignInCode",
@@ -77,9 +77,9 @@
     "title": "Sign in \u2014 email code",
     "width": 1920,
     "height": 1080,
-    "status": "in_progress",
-    "implementation": "docs/TV_EMAIL_CODE.md",
-    "capture": "docs/evidence/android-tv-email-code.png"
+    "status": "pending",
+    "implementation": null,
+    "capture": null
   },
   {
     "id": "Tv3SignInPassword",

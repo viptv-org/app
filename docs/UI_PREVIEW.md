@@ -97,17 +97,9 @@ TV `Search --es ui_variant Loading` renders empty-result loading placeholders;
 other variants keep the existing search fixtures. Keyboard edits change preview
 memory only, with no provider requests.
 
-TV `Connect --es ui_variant Email` starts the email-entry board with its vynxc
-draft and Gmail-key focus. Next shows the missing code-service state; no email
-is sent. Phone and Back navigate the existing entry state machine.
-
 TV `Connect --es ui_variant Iptv` starts the supplied Xtream form with example
 values and username focus. Edits stay in memory. Connect reports the absent
 provider service; no provider, playlist, account or catalog request runs.
-
-TV `Connect --es ui_variant EmailCode` renders the supplied code-entry board with
-fixture challenge status and digits. Verify/resend explain unavailable services,
-and Back returns to email entry. No real challenge or email is created.
 
 TV `Connect --es ui_variant Splash` renders the supplied animated startup scene.
 It performs no actual session restoration or authentication.
@@ -118,7 +110,8 @@ variants make no provider request.
 
 TV `Connect --es ui_variant Pairing|PairingUnavailable` renders the shared phone/
 browser pairing scene. Pairing uses an explicit `.invalid` fixture URL and static
-code/expiry; unavailable contains no QR. No pairing poll or account request runs.
+code/expiry; unavailable contains no QR and no New code action. No pairing poll
+or account request runs.
 
 TV `Connect --es ui_variant SignedIn|SignedInHold` supplies an isolated greeting
 identity. SignedIn completes to Profiles; Hold retains the scene. Neither variant

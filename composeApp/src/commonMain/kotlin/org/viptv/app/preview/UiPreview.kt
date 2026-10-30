@@ -14,7 +14,6 @@ import org.viptv.app.features.entry.ProfilesScreen
 import org.viptv.app.features.entry.ConnectScreen
 import org.viptv.app.features.entry.TvSignIn
 import org.viptv.app.features.entry.TvSignInStep
-import org.viptv.app.features.entry.TvEmailCodeChallenge
 import org.viptv.app.features.entry.TvSplash
 import org.viptv.app.features.entry.TvPairingSession
 import org.viptv.app.features.entry.TvSignedIn
@@ -87,9 +86,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                     TvSignedInIdentity("isolated-preview", "vynxc", "[name@email.com]", PreviewData.profile),
                                     if (tvDetailVariant == "SignedInHold") null else ({ go(Screen.Profiles) }))
                                 else if (television) TvSignIn("https://your-server.example", false, null, { go(Screen.Profiles) },
-                                { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Pairing", "PairingUnavailable" -> TvSignInStep.Phone; "Email" -> TvSignInStep.Email; "EmailCode" -> TvSignInStep.EmailCode; else -> TvSignInStep.Welcome },
-                                if (tvDetailVariant == "Email") "vynxc" else "",
-                                if (tvDetailVariant == "EmailCode") TvEmailCodeChallenge("Sent to [name@email.com] · expires in 15 minutes", "481", "isolated-preview") else null,
+                                { _, _, _ -> }, entryBackChanged, when (tvDetailVariant) { "Pairing", "PairingUnavailable" -> TvSignInStep.Phone; else -> TvSignInStep.Welcome },
                                 if (tvDetailVariant == "Pairing") TvPairingSession("https://example.invalid/device?code=AB12CD34EF", "example.invalid/device", "AB12CD34EF", "14:52") else null)
                                 else if (!browser && tvDetailVariant in listOf("PairingDevice", "PairingBrowser", "PairingDeviceLoading", "PairingBrowserLoading"))
                                     PreviewNativePairing(desktop, tvDetailVariant) { go(Screen.Profiles) }
