@@ -1,7 +1,6 @@
 package org.viptv.app.state
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 import org.viptv.app.connection.*
@@ -120,7 +119,7 @@ internal fun ApplicationState.withContinueCardRemoved(card: Card): ApplicationSt
         continueUndo = ContinueUndo(list.profile, card, index))
 }
 
-internal fun ApplicationState.withContinueCardRestored(undo: ContinueUndo): ApplicationState {
+internal fun ApplicationState.withContinueCardRestored(undo: ContinueUndo, clearOffer: Boolean = true): ApplicationState {
     val key = cardLookupKey(undo.card)
     fun List<Card>.restored(): List<Card> = if (any { cardLookupKey(it) == key }) this
         else toMutableList().apply { add(undo.index.coerceIn(0, size), undo.card) }
@@ -130,7 +129,7 @@ internal fun ApplicationState.withContinueCardRestored(undo: ContinueUndo): Appl
         home = home?.let { snapshot -> snapshot.copy(rows = snapshot.rows.map { row ->
             if (row.id != CONTINUE_ROW || row.cards.size >= HOME_CONTINUE_ROW_CAP) row
             else row.copy(cards = row.cards.restored(), state = RowState.READY) }) },
-        continueUndo = null)
+        continueUndo = if (clearOffer) null else continueUndo)
 }
 
 fun ApplicationController.removeFromContinueWatching(card: Card) {
@@ -145,9 +144,10 @@ fun ApplicationController.removeFromContinueWatching(card: Card) {
         }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
+            // A removal refused by the host has to put its card back even if a later removal now owns the offer.
             updateState { state ->
-                if (state.continueUndo !== undo) state
-                else state.withContinueCardRestored(undo).copy(error = failureMessage(error))
+                state.withContinueCardRestored(undo, clearOffer = state.continueUndo === undo)
+                    .copy(error = failureMessage(error))
             }
         }
     }

@@ -102,6 +102,17 @@ class ListRemovalTest {
         }
     }
 
+    @Test fun aRefusedRemovalRestoresItsCardWithoutDroppingAnotherRemovalsOffer() {
+        val newer = ContinueUndo("1", continueCard(3), 2)
+        val state = ApplicationState(selectedProfile = "1", continueUndo = newer,
+            continueWatching = ContinueWatchingList("1", listOf(continueCard(1)), next = null))
+        val restored = state.withContinueCardRestored(ContinueUndo("1", continueCard(2), 1), clearOffer = false)
+        assertEquals(listOf(continueCard(1), continueCard(2)), restored.continueWatching?.cards)
+        assertSame(newer, restored.continueUndo, "the newer removal keeps its own offer")
+        assertNull(state.withContinueCardRestored(ContinueUndo("1", continueCard(2), 1)).continueUndo,
+            "Undo itself clears the offer")
+    }
+
     @Test fun aSecondRemovalReplacesTheUndoOffer() = runBlocking<Unit> {
         ListRemovalHost().use { host ->
             val controller = controller(host, Screen.ContinueWatching)

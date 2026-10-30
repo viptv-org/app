@@ -47,7 +47,7 @@ internal fun ApplicationState.withoutSavedCard(card: Card): ApplicationState {
         library = library.without(),
         libraryPage = libraryPage?.let { page -> page.copy(cards = page.cards.without()) },
         home = home?.let { snapshot -> snapshot.copy(rows = snapshot.rows.map { row ->
-            if (row.id != MY_LIST_ROW && row.provider_id != "library") row
+            if (row.id != MY_LIST_ROW || row.provider_id != "library") row
             else row.copy(cards = row.cards.without()).let { shown ->
                 if (shown.cards.isEmpty()) shown.copy(state = RowState.EMPTY) else shown
             } }) },
