@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +37,7 @@ internal fun AccountIdentityScreen(identity: AccountIdentity?, busy: Boolean, er
 
 @Composable
 private fun IdentityRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(vertical = 8.dp),
+    Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(vertical = 8.dp).semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
         Text(value, fontSize = 14.sp, lineHeight = 20.sp, color = Palette.secondary)

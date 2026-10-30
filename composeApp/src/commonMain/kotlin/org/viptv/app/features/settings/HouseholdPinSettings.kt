@@ -47,7 +47,7 @@ internal fun HouseholdPinSettings(snapshot: ProfileManagement?, busy: Boolean, e
                 if (configured && kids) Text("Turn off kids restrictions on all profiles before removing the PIN.", color = Palette.secondary)
             }
         }
-        if (error != null) TextButton(load, enabled = !busy) { Text("Retry") }
+        if (error != null && snapshot != null) TextButton(load, enabled = !busy) { Text("Retry") }
     }
     mode?.let { current -> ParentPinDialog(current, configured, busy, error,
         dismiss = { if (!busy) mode = null },

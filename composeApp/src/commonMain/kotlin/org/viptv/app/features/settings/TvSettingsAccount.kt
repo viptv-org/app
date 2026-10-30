@@ -62,7 +62,7 @@ internal fun TvSettingsAccount(local: Boolean, info: TvAccountInfo?, scale: Floa
 
 @Composable
 private fun TvAccountValue(label: String, value: String, scale: Float) {
-    Row(Modifier.fillMaxWidth().height(96.dp * scale).padding(horizontal = 28.dp * scale),
+    Row(Modifier.fillMaxWidth().height(96.dp * scale).padding(horizontal = 28.dp * scale).semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically) {
         Text(label, color = Palette.text, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp,
             fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
