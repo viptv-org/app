@@ -2,6 +2,7 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.lazy.grid.*
@@ -16,6 +17,21 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+
+private fun Modifier.pageEdgeFades(top: Boolean, bottom: Boolean): Modifier = when {
+    top && bottom -> scrollEdgeFade(ScrollEdge.Top)
+        .then(scrollEdgeFade(ScrollEdge.Bottom, height = BottomBarHeight + ScrollEdgeFadeHeight))
+    top -> scrollEdgeFade(ScrollEdge.Top)
+    bottom -> scrollEdgeFade(ScrollEdge.Bottom, height = BottomBarHeight + ScrollEdgeFadeHeight)
+    else -> this
+}
+
+private fun Modifier.pageEdgeFades(state: ScrollableState, fadeTop: Boolean, fadeBottom: Boolean): Modifier =
+    pageEdgeFades(fadeTop && state.canScrollBackward, fadeBottom && state.canScrollForward)
+
+// Only the page's own list draws the fades; a list nested inside one keeps its edges.
+@Composable
+private fun pageFadesUnderBottomBar(): Boolean = LocalBottomBarFades.current && !LocalVerticalPage.current
 
 @Composable
 internal fun FocusLazyRow(
@@ -51,12 +67,14 @@ internal fun FocusLazyColumn(
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
     sectionControlled: Boolean = false,
+    topEdgeFade: Boolean = LocalBarsFadeContent.current,
     content: LazyListScope.() -> Unit,
 ) {
+    val bottomBar = pageFadesUnderBottomBar()
     TvFocusScroll(contentPadding = contentPadding, reverseLayout = reverseLayout, sectionControlled = sectionControlled) {
         val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
             state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
-        }
+        }.pageEdgeFades(state, topEdgeFade, bottomBar)
         CompositionLocalProvider(LocalVerticalPage provides true) {
             FoundationLazyColumn(anchored, state, contentPadding, reverseLayout, verticalArrangement,
                 horizontalAlignment, flingBehavior, userScrollEnabled, content = content)
@@ -75,16 +93,18 @@ internal fun FocusLazyVerticalGrid(
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
+    topEdgeFade: Boolean = LocalBarsFadeContent.current,
     content: LazyGridScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val focus = if (LocalTvFocusAnchoring.current) remember(state, scope) { TvGridFocus(state, scope) } else null
+    val bottomBar = pageFadesUnderBottomBar()
     DisposableEffect(focus) { onDispose { focus?.cancel() } }
     TvFocusScroll(contentPadding = contentPadding, reverseLayout = reverseLayout) {
+        val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
+            state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
+        }.pageEdgeFades(state, topEdgeFade, bottomBar)
         CompositionLocalProvider(LocalTvGridFocus provides focus, LocalVerticalPage provides true) {
-            val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
-                state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
-            }
             FoundationLazyVerticalGrid(columns, anchored,
                 state, contentPadding, reverseLayout, verticalArrangement, horizontalArrangement, flingBehavior, userScrollEnabled, content = content)
         }

@@ -68,7 +68,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
                 color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
                 Box {
-                    LazyColumn(state = list, contentPadding = PaddingValues(bottom = 30.dp)) {
+                    LazyColumn(state = list, contentPadding = PaddingValues(bottom = 30.dp), topEdgeFade = false) {
                         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
                         error?.let { item { Text(it, Modifier.padding(gutter), color = Palette.danger) } }
                         detail?.item?.let { card ->

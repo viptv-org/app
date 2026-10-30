@@ -82,7 +82,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             KeepSourceListPosition(listState, rows, focusedSource, headerHeight, leading = if (error != null) 1 else 0)
             LazyColumn(Modifier.weight(1f), state = listState, contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
-                vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp)) {
+                vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp), topEdgeFade = false) {
                 error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
                 if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
                     val empty = if (torrentOnlyProviders > 0)
