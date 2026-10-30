@@ -20,7 +20,7 @@ internal data class ContinueCheck(val profile: String, val home: Scope, val revi
 
 internal fun ApplicationController.adoptContinuation(page: ContinuationPage?) {
     if (page == null) return
-    mutable.value = mutable.value.copy(continueNext = mutable.value.continueNext.announced(page.entries))
+    updateState { next -> next.copy(continueNext = next.continueNext.announced(page.entries)) }
 }
 
 internal fun HomeSnapshot.continueRow(): HomeRow? = rows.find { it.id == CONTINUE_ROW && it.opensContinueWatching() }
@@ -58,8 +58,8 @@ private suspend fun ApplicationController.reloadContinueWatching(remote: RemoteC
     val page = remote.continueWatching(profile, 0, limit)
     if (connection !== remote || mutable.value.selectedProfile != profile) return
     val current = mutable.value.continueWatching?.takeIf { it.profile == profile }
-    mutable.value = mutable.value.copy(continueWatching = current.refreshedBy(profile, page, limit),
-        continueNext = mutable.value.continueNext.announced(page.entries))
+    updateState { next -> next.copy(continueWatching = current.refreshedBy(profile, page, limit),
+        continueNext = next.continueNext.announced(page.entries)) }
 }
 
 internal fun ContinueWatchingList?.refreshedBy(profile: String, page: ContinuationPage, limit: Int): ContinueWatchingList {
@@ -74,8 +74,8 @@ internal fun ApplicationController.loadContinueWatching(navigation: Long = navig
     runPage {
         val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
         val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
-        mutable.value = mutable.value.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
-            continueNext = mutable.value.continueNext.announced(page.entries))
+        updateState { next -> next.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
+            continueNext = next.continueNext.announced(page.entries)) }
     }
 }
 
@@ -91,7 +91,7 @@ fun ApplicationController.continueWatchingMore() {
         val shown = mutable.value.continueWatching?.takeIf { it.profile == profile && it.next == cursor } ?: return@runPage
         val merged = (shown.cards + page.entries.map { it.card }).distinctBy(::cardLookupKey)
         val next = page.next_cursor?.takeIf { merged.size > shown.cards.size && it != cursor }
-        mutable.value = mutable.value.copy(continueWatching = shown.copy(cards = merged, next = next),
-            continueNext = mutable.value.continueNext.announced(page.entries))
+        updateState { current -> current.copy(continueWatching = shown.copy(cards = merged, next = next),
+            continueNext = current.continueNext.announced(page.entries)) }
     }
 }

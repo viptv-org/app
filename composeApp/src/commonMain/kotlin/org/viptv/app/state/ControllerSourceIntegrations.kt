@@ -11,14 +11,14 @@ internal suspend fun ApplicationController.loadSourceIntegrations(operation: Add
     try {
         val result = owner.device?.sourceIntegrationSchemas(profile) ?: requireNotNull(owner.remote).sourceIntegrationSchemas(profile)
         owner.requireCurrent(this)
-        mutable.value = mutable.value.copy(sourceIntegrations = result, sourceIntegrationError = null)
+        updateState { next -> next.copy(sourceIntegrations = result, sourceIntegrationError = null) }
     } catch (error: CancellationException) { throw error }
     catch (error: Exception) {
         owner.requireCurrent(this)
         if (error is RemoteFailure && error.status == 401) throw error
-        mutable.value = mutable.value.copy(sourceIntegrationError =
+        updateState { next -> next.copy(sourceIntegrationError =
             if (error is RemoteFailure && error.status == 403) error.message
-            else "Could not load source integrations. Try again.")
+            else "Could not load source integrations. Try again.") }
     }
 }
 

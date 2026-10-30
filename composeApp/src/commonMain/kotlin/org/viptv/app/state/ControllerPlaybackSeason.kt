@@ -45,16 +45,16 @@ fun ApplicationController.loadPlaybackSeason() {
         catch (_: Exception) { null } ?: return@launch
         if (!current() || cardLookupKey(read.item) != cardLookupKey(item)) return@launch
         val season = card.identity.episode?.season
-        mutable.value = mutable.value.copy(playbackSeason = read.episodes.filter {
+        updateState { next -> next.copy(playbackSeason = read.episodes.filter {
             it.identity.episode?.season == season && sameEpisodeScope(card, it)
-        })
+        }) }
     }
 }
 
 internal fun ApplicationController.cancelPlaybackSeason() {
     playbackSeasonGeneration++
     playbackSeasonJob?.cancel(); playbackSeasonJob = null; playbackSeasonKey = null
-    if (mutable.value.playbackSeason.isNotEmpty()) mutable.value = mutable.value.copy(playbackSeason = emptyList())
+    if (mutable.value.playbackSeason.isNotEmpty()) updateState { next -> next.copy(playbackSeason = emptyList()) }
 }
 
 private const val SEASON_PAGE_LIMIT = 128L

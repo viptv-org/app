@@ -13,5 +13,5 @@ fun ApplicationController.selectBrowsingProvider(plugin: String) = run {
     updateAddonHome(owner)
     loadSourceIntegrations(owner)
     owner.requireCurrent(this)
-    mutable.value = mutable.value.copy(browseControls = null, browseCards = emptyList(), results = emptyList())
+    updateState { next -> next.copy(browseControls = null, browseCards = emptyList(), results = emptyList()) }
 }

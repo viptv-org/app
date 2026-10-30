@@ -39,9 +39,9 @@ internal suspend fun ApplicationController.loadLibrary() {
 fun ApplicationController.clearHistory() = run {
     val profile=requireNotNull(mutable.value.selectedProfile)
     if (local != null) requireNotNull(local).clearHistory(profile) else requireNotNull(connection).clearHistory(profile)
-    mutable.value=mutable.value.copy(history=emptyList())
+    updateState { next -> next.copy(history=emptyList()) }
     val updated=local?.bootstrap(profile) ?: requireNotNull(connection).bootstrap()
-    mutable.value=mutable.value.copy(home=updated.home)
+    updateState { next -> next.copy(home=updated.home) }
 }
 
 internal fun ApplicationController.updateLibrary(cards: List<Card>, identities: List<MediaIdentity> = cards.map { it.identity },
@@ -55,7 +55,7 @@ internal fun ApplicationController.updateLibrary(cards: List<Card>, identities: 
             else snapshot.rows.toMutableList().apply { add(indexOfFirst { it.id != CONTINUE_ROW }.takeIf { it >= 0 } ?: size, row) }
         snapshot.copy(rows = rows)
     }
-    mutable.value = mutable.value.copy(library = ordered, home = home, favoriteKeys = (membership?.identities ?: identities).map { it.kind to it.id }.toSet(), libraryMembership = membership)
+    updateState { next -> next.copy(library = ordered, home = home, favoriteKeys = (membership?.identities ?: identities).map { it.kind to it.id }.toSet(), libraryMembership = membership) }
 }
 
 private fun ApplicationController.adoptFavoriteAssertions(authoritative: Card) {
@@ -65,11 +65,10 @@ private fun ApplicationController.adoptFavoriteAssertions(authoritative: Card) {
         card.identity.id == authoritative.identity.id && card.identity.episode == authoritative.identity.episode &&
         card.identity.edition == authoritative.identity.edition && card.identity.ids.all { it in authoritative.identity.ids })
         card.copy(identity = authoritative.identity) else card
-    val state = mutable.value
-    mutable.value = state.copy(
+    updateState { state -> state.copy(
         results = state.results.map(::adopt), searchRows = state.searchRows.map { it.copy(cards = it.cards.map(::adopt)) },
         browseCards = state.browseCards.map(::adopt), detail = state.detail?.let { it.copy(item = adopt(it.item)) },
         home = state.home?.let { home -> home.copy(hero = home.hero?.let(::adopt), featured = home.featured.map(::adopt),
             rows = home.rows.map { row -> if (row.provider_id == "library" || row.id in setOf(MY_LIST_ROW, CONTINUE_ROW)) row
-                else row.copy(cards = row.cards.map(::adopt)) }) })
+                else row.copy(cards = row.cards.map(::adopt)) }) }) }
 }

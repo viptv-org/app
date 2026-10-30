@@ -24,7 +24,7 @@ fun ApplicationController.loadHomeGenres() {
             device?.discoveryControls(profile, HOME_GENRE_TYPE) ?: remote?.discoveryControls(HOME_GENRE_TYPE) ?: return@launch
         } catch (error: CancellationException) { throw error } catch (_: Exception) { return@launch }
         if (local !== device || connection !== remote || mutable.value.selectedProfile != profile) return@launch
-        mutable.value = mutable.value.copy(homeGenres = HomeGenres(profile, home, revision, controls.genreChoices(HOME_GENRE_TYPE)))
+        updateState { next -> next.copy(homeGenres = HomeGenres(profile, home, revision, controls.genreChoices(HOME_GENRE_TYPE))) }
     }
 }
 

@@ -12,12 +12,6 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
-/**
- * A play tap reads the title's Details while the selector's discovery runs, so both publish into
- * the same state. A publication built from a snapshot it read earlier drops whatever the other
- * coroutine published in between: the page behind the selector stayed empty with no error,
- * because the read itself had succeeded.
- */
 class DetailReadPublicationTest {
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -28,7 +22,6 @@ class DetailReadPublicationTest {
     private val origin = MetadataOrigin("stremio", "addon:21", "c".repeat(32))
     private val series = Card(MediaIdentity(show, "series", listOf(ExternalId("imdb", show))), provider_id = "addon:21",
         title = "Breaking Bad", badges = emptyList(), metadata_origin = origin)
-    /** A Continue Watching episode: scoped, so its Details are read behind the selector. */
     private fun tapped() = series.copy(identity = MediaIdentity("$show:2:3", "series", emptyList(), EpisodeCoordinates("aired", 2, 3)),
         parent_identity = series.identity, title = "Episode 3", progress = 0.45)
     private val detail = DetailSnapshot(series, episodes = (1L..5L).map {

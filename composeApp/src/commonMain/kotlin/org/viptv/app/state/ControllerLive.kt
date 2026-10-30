@@ -16,7 +16,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
     val operation = generation
     if (!append) {
         liveDirectoryRequest++; liveGuideRequest++; liveGuideJob?.cancel(); liveGuideFetchedAt.clear()
-        mutable.value = mutable.value.copy(liveGuideLoading = false, liveGuideChannel = null, liveGuides = emptyMap())
+        updateState { next -> next.copy(liveGuideLoading = false, liveGuideChannel = null, liveGuides = emptyMap()) }
     }
     val context = liveContext()
     var wanted = query
@@ -33,7 +33,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
             throw LocalFailure("The server returned channels from a different TV source. Refresh Live TV.")
         wanted = wanted.copy(connection_id = selected)
         channels = (channels + page.channels).distinctBy { it.id }
-        mutable.value = mutable.value.copy(liveQuery = wanted, livePage = page.copy(channels = channels))
+        updateState { next -> next.copy(liveQuery = wanted, livePage = page.copy(channels = channels)) }
         if (!favoritesLoaded) { loadLiveFavorites(context); favoritesLoaded = true }
         if (!ownsLive(context) || generation != operation) throw CancellationException("Live TV selection changed")
         val state = mutable.value
@@ -56,12 +56,12 @@ fun ApplicationController.selectLiveConnection(id: String) {
 }
 
 fun ApplicationController.filterLive(group: String?) = run {
-    mutable.value = mutable.value.copy(liveFavoritesOnly = false)
+    updateState { next -> next.copy(liveFavoritesOnly = false) }
     loadLive(mutable.value.liveQuery.copy(group_id = group, offset = 0))
 }
 fun ApplicationController.filterLiveFavorites() = run {
     if (!mutable.value.liveFavoritesAvailable) return@run
-    mutable.value = mutable.value.copy(liveFavoritesOnly = true)
+    updateState { next -> next.copy(liveFavoritesOnly = true) }
     loadLive(mutable.value.liveQuery.copy(group_id = null, offset = 0))
 }
 fun ApplicationController.moreLive() = run {
@@ -79,7 +79,7 @@ fun ApplicationController.showLiveGuide(channel: String, force: Boolean = false)
     val request = ++liveGuideRequest
     val context = liveContext()
     val operation = generation
-    mutable.value = mutable.value.copy(liveGuideChannel = channel, liveGuideLoading = false)
+    updateState { next -> next.copy(liveGuideChannel = channel, liveGuideLoading = false) }
     val cached = mutable.value.liveGuides[channel]
     val fresh = liveGuideFetchedAt[channel]?.elapsedNow()?.let { it < 1.minutes } == true
     if (!force && fresh && cached?.availability != "TemporarilyUnavailable" && cached != null) return
@@ -87,7 +87,7 @@ fun ApplicationController.showLiveGuide(channel: String, force: Boolean = false)
         try {
             if (!force) delay(250)
             if (!ownsLive(context) || generation != operation || liveGuideRequest != request) return@launch
-            mutable.value = mutable.value.copy(liveGuideLoading = true)
+            updateState { next -> next.copy(liveGuideLoading = true) }
             val fetched = try { context.device?.liveGuide(context.profile, channel) ?: requireNotNull(context.remote).liveGuide(context.profile, channel) }
             catch (error: CancellationException) { throw error }
             catch (error: Exception) {
@@ -101,10 +101,10 @@ fun ApplicationController.showLiveGuide(channel: String, force: Boolean = false)
                     fetched.copy(reason = "Guide data isn’t available for this source yet. You can still watch this channel.") else fetched
             if (ownsLive(context) && generation == operation && liveGuideRequest == request && mutable.value.livePage?.channels?.any { it.id == channel } == true) {
                 liveGuideFetchedAt[channel] = TimeSource.Monotonic.markNow()
-                mutable.value = mutable.value.copy(liveGuides = mutable.value.liveGuides + (channel to guide))
+                updateState { next -> next.copy(liveGuides = next.liveGuides + (channel to guide)) }
             }
         } finally {
-            if (ownsLive(context) && liveGuideRequest == request) mutable.value = mutable.value.copy(liveGuideLoading = false)
+            if (ownsLive(context) && liveGuideRequest == request) updateState { next -> next.copy(liveGuideLoading = false) }
         }
     }
 }
@@ -114,12 +114,12 @@ fun ApplicationController.playLive(channel: String) = run {
     liveGuideJob?.cancel()
     val card = mutable.value.livePage?.channels?.find { it.id == channel }?.card ?: throw LocalFailure("Choose an available channel first.")
     val profile = requireNotNull(mutable.value.selectedProfile)
-    mutable.value = mutable.value.copy(screen = Screen.Sources, sourceReturnScreen = Screen.Live, detail = null, sourceTitle = card, sources = emptyList(), sourceGroups = org.viptv.app.connection.SourceGroups(), findingSources = true, liveGuideLoading = false)
+    updateState { next -> next.copy(screen = Screen.Sources, sourceReturnScreen = Screen.Live, detail = null, sourceTitle = card, sources = emptyList(), sourceGroups = org.viptv.app.connection.SourceGroups(), findingSources = true, liveGuideLoading = false) }
     try {
         val sources = local?.liveSources(profile, channel) ?: requireNotNull(connection).liveSources(profile, channel)
-        mutable.value = mutable.value.copy(sources = sources)
+        updateState { next -> next.copy(sources = sources) }
         if (sources.size == 1) playSource(sources.first())
-    } finally { if (generation == operation) mutable.value = mutable.value.copy(findingSources = false) }
+    } finally { if (generation == operation) updateState { next -> next.copy(findingSources = false) } }
 }
 
 internal fun ApplicationController.resetLiveRequests() {

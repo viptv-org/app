@@ -17,7 +17,7 @@ fun ApplicationController.detailPage(offset: Long) {
     fun current() = generation == operation && mutable.value.screen == Screen.Details &&
         mutable.value.selectedProfile == profile && mutable.value.home?.scope?.owner() == homeScope &&
         mutable.value.detail?.item?.let(::cardLookupKey) == cardLookupKey(previous.item) && connection === remote && local === device
-    mutable.value = mutable.value.copy(detailLoadingOffset = offset, detailPageError = null)
+    updateState { next -> next.copy(detailLoadingOffset = offset, detailPageError = null) }
     detailPagingJob = scope.launch {
         try {
             val page = device?.detailPage(profile, previous.item, offset.toInt(), 96)
@@ -25,27 +25,27 @@ fun ApplicationController.detailPage(offset: Long) {
             if (!current()) return@launch
             require(cardLookupKey(page.item) == cardLookupKey(previous.item))
             val loaded = requireNotNull(mutable.value.detail)
-            mutable.value = mutable.value.copy(detail = loaded.copy(
+            updateState { next -> next.copy(detail = loaded.copy(
                 episodes = (loaded.episodes + page.episodes).distinctBy(::cardLookupKey),
                 next_cursor = page.next_cursor,
                 recommendations = page.recommendations.ifEmpty { loaded.recommendations },
-                seasons = page.seasons.ifEmpty { loaded.seasons }))
+                seasons = page.seasons.ifEmpty { loaded.seasons })) }
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
             if (current()) {
                 if (error is RemoteFailure && error.status == 401 && device == null) {
                     releaseRemotePlayback(); discardStremioImport(); remote?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                } else mutable.value = mutable.value.copy(detailPageError = "Could not load the remaining episodes. Try selecting the season again.")
+                } else updateState { next -> next.copy(detailPageError = "Could not load the remaining episodes. Try selecting the season again.") }
             }
         } finally {
             if (current() && mutable.value.detailLoadingOffset == offset)
-                mutable.value = mutable.value.copy(detailLoadingOffset = null)
+                updateState { next -> next.copy(detailLoadingOffset = null) }
         }
     }
 }
 
 internal fun ApplicationController.cancelDetailPaging() {
     detailPagingJob?.cancel(); detailPagingJob = null
-    mutable.value = mutable.value.copy(detailLoadingOffset = null, detailPageError = null)
+    updateState { next -> next.copy(detailLoadingOffset = null, detailPageError = null) }
 }
