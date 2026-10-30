@@ -53,7 +53,7 @@ class DeleteAccountUiTest {
             assertTrue(primary(scene).config.contains(SemanticsProperties.Disabled), "the username is typed exactly")
             type(scene, 0, "viewer"); frames(scene)
             click(scene, "Delete account"); frames(scene)
-            assertEquals(listOf(Triple("viewer", "fixture-password", null)), submissions)
+            assertEquals(listOf(Triple<String, String, String?>("viewer", "fixture-password", null)), submissions)
         } finally { scene.close() }
     }
 
@@ -69,7 +69,7 @@ class DeleteAccountUiTest {
             assertTrue(primary(scene).config.contains(SemanticsProperties.Disabled), "a short PIN is not sent")
             type(scene, 2, "1234"); frames(scene)
             click(scene, "Delete account"); frames(scene)
-            assertEquals(listOf(Triple("viewer", "fixture-password", "1234")), submissions)
+            assertEquals(listOf(Triple<String, String, String?>("viewer", "fixture-password", "1234")), submissions)
             busy = false; error = "The parent PIN is not correct."; frames(scene)
             assertTrue(nodes(scene).any { text(it) == "The parent PIN is not correct." })
             assertEquals(listOf("viewer", "fixture-password", "1234"), (0..2).map { field(scene, it) },
