@@ -1,6 +1,7 @@
 package org.viptv.app
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import org.viptv.app.theme.Palette
@@ -47,6 +48,28 @@ class AccountDevicesUiTest {
             assertTrue(controls.isNotEmpty())
             controls.forEach { assertTrue(it.boundsInRoot.left >= 0 && it.boundsInRoot.right <= 390, "Action leaves the phone viewport") }
             probe.capture("phone")
+        } finally { scene.close() }
+    }
+
+    @Test fun failedLoadKeepsOneErrorLineAndRetryRecoversTheList() {
+        var busy by mutableStateOf(false); var error by mutableStateOf<String?>(null)
+        var loaded by mutableStateOf<AccountDevices?>(null); var loads = 0
+        val scene = ImageComposeScene(760, 700, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                AccountDevicesScreen(loaded, busy, error, { loads++; busy = true; error = null }, {}, {})
+            } }
+        }
+        try {
+            val probe = Probe(scene); probe.frames(16)
+            assertEquals(1, loads)
+            busy = false; error = "Could not load your devices."; probe.frames(12)
+            assertEquals(1, probe.nodes().count { probe.text(it) == error })
+            probe.click("Retry"); probe.frames(12)
+            assertEquals(2, loads)
+            loaded = snapshot; busy = false; probe.frames(12)
+            assertTrue(probe.nodes().any { probe.text(it) == "Living room TV" })
+            assertFalse(probe.nodes().any { probe.text(it) == "Retry" }, "A loaded list offers Refresh, not Retry")
+            assertFalse(probe.nodes().any { probe.text(it) == error })
         } finally { scene.close() }
     }
 

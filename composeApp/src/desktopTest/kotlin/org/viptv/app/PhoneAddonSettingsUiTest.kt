@@ -33,48 +33,34 @@ class PhoneAddonSettingsUiTest {
         IntegrationConnection("addon:a", "stremio", "fixture", null, "Fixture A", true, 1, listOf(Capability.METADATA, Capability.SOURCES)),
         IntegrationConnection("addon:b", "stremio", "fixture", null, "Fixture B", true, 1, listOf(Capability.SOURCES)),
         IntegrationConnection("addon:c", "stremio", "fixture", null, "Fixture C", true, 1, listOf(Capability.LIVETV)))
-    private val sourceSnapshot = SourceIntegrationSnapshot(listOf(
-        SourceIntegrationSchema("vsources", "VIPTV Sources", "NeedsConfiguration", true,
-            listOf(SourceCredentialField("key", "TMDB API key", required = true, secret = true))),
-        SourceIntegrationSchema("xtream", "Xtream live TV", "NeedsConfiguration", true),
-        SourceIntegrationSchema("m3u", "M3U live TV", "NeedsConfiguration", true)))
 
-    @Test fun emptyPhoneKeepsPrimaryAddAheadOfAdvancedConfigurationAndSourceFormReachable() = onEdt {
-        var refreshes = 0
+    @Test fun emptyPhoneKeepsPrimaryAddReachableUnderACentredHeading() = onEdt {
         val scene = scene {
-            AddonSettings(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, back = {},
-                sourceIntegrations = { AdvancedFixture { refreshes++ } })
+            AddonSettings(true, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, back = {})
         }
         try {
             frames(scene)
             val add = visibleAction(scene, "Add an add-on")
-            assertTrue(add.boundsInRoot.bottom <= 844f, "Primary Add must be reachable before advanced content")
-            val advanced = nodes(scene).single { text(it) == "Advanced configuration" }
-            assertTrue(add.boundsInRoot.bottom < advanced.boundsInRoot.top)
+            assertTrue(add.boundsInRoot.bottom <= 844f, "Primary Add must be reachable before the installed list")
             val heading = nodes(scene).single { text(it) == "Add-ons" }
             assertTrue(abs(heading.boundsInRoot.center.x - 195f) < 1f, "Compact heading must remain centered")
             capture(scene, "phone-addons-empty")
-            scrollToAction(scene, "Configure"); click(scene, "Configure"); frames(scene, 40)
-            assertTrue(nodes(scene).any { it.config.contains(SemanticsActions.SetText) && text(it).contains("TMDB API key") })
-            click(scene, "Cancel"); frames(scene, 32)
-            scrollToAction(scene, "Refresh"); click(scene, "Refresh"); assertEquals(1, refreshes)
         } finally { scene.close() }
     }
 
-    @Test fun populatedPhonePreservesProfileSwitchesAndRemovalWhileAddStaysBeforeAdvanced() = onEdt {
+    @Test fun populatedPhonePreservesProfileSwitchesAndRemoval() = onEdt {
         var addons by mutableStateOf(fixtures)
         var enabled by mutableStateOf(setOf("addon:a", "addon:b"))
         val removed = mutableListOf<String>(); val toggled = mutableListOf<Pair<String, Boolean>>()
         val scene = scene {
             AddonSettings(true, addons, enabled, false, null, null, {}, { id, value ->
                 toggled += id to value; enabled = if (value) enabled + id else enabled - id
-            }, { id -> removed += id; addons = addons.filterNot { it.id == id } }, back = {}, sourceIntegrations = { AdvancedFixture {} })
+            }, { id -> removed += id; addons = addons.filterNot { it.id == id } }, back = {})
         }
         try {
             frames(scene)
             val add = visibleAction(scene, "Add an add-on")
             assertTrue(add.boundsInRoot.bottom <= 844f)
-            assertTrue(add.boundsInRoot.bottom < nodes(scene).single { text(it) == "Advanced configuration" }.boundsInRoot.top)
             capture(scene, "phone-addons-populated")
             val control = descriptionAction(scene, "Enable Fixture C for this profile")
             assertEquals(ToggleableState.Off, control.config[SemanticsProperties.ToggleableState])
@@ -99,7 +85,7 @@ class PhoneAddonSettingsUiTest {
                 { requests += it; busy = true; error = null }, { _, _ -> }, {}, back = { backs++ })
         }
         try {
-            frames(scene); assertFalse(nodes(scene).any { text(it) == "Advanced configuration" })
+            frames(scene)
             click(scene, "Add an add-on"); frames(scene, 45)
             assertTrue(visibleAction(scene, "Install").config.contains(SemanticsProperties.Disabled))
             val field = nodes(scene).single { it.config.contains(SemanticsActions.SetText) }
@@ -171,18 +157,16 @@ class PhoneAddonSettingsUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun unavailableAddonManagementDoesNotHideIndependentSourceConfiguration() = onEdt {
-        var refreshes = 0
+    @Test fun unavailableAddonManagementHidesEveryWriteAction() = onEdt {
         val scene = scene {
             AddonSettings(false, fixtures.take(1), emptySet(), false, null, null, {}, { _, _ -> }, {}, back = {},
-                managementAvailable = false, sourceIntegrations = { AdvancedFixture { refreshes++ } })
+                managementAvailable = false)
         }
         try {
             frames(scene)
             assertTrue(nodes(scene).any { text(it) == "Add-on management is not available on this connection." })
             assertTrue(actions(scene, "Add an add-on").isEmpty()); assertTrue(actions(scene, "Remove").isEmpty())
             assertFalse(nodes(scene).any { it.config.getOrNull(SemanticsProperties.ContentDescription)?.any { d -> d.startsWith("Enable ") } == true })
-            scrollToAction(scene, "Refresh"); click(scene, "Refresh"); assertEquals(1, refreshes)
         } finally { scene.close() }
     }
 
@@ -220,12 +204,11 @@ class PhoneAddonSettingsUiTest {
         val requests = mutableListOf<String>()
         val scene = scene(width = 1440, height = 900) {
             AddonSettings(false, emptyList(), emptySet(), false, null, null, { requests += it }, { _, _ -> }, {},
-                sourceIntegrations = { AdvancedFixture {} })
+                back = {})
         }
         try {
             frames(scene)
             assertTrue(actions(scene, "Add an add-on").isEmpty())
-            assertFalse(nodes(scene).any { text(it) == "Advanced configuration" })
             val field = nodes(scene).single { it.config.contains(SemanticsActions.SetText) }
             assertTrue(field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("https://fixture.invalid/manifest.json")))
             frames(scene); click(scene, "Install")
@@ -233,14 +216,6 @@ class PhoneAddonSettingsUiTest {
         } finally { scene.close() }
     }
 
-    @Composable private fun AdvancedFixture(refresh: () -> Unit) {
-        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            Text("Metadata provider", style = MaterialTheme.typography.titleLarge)
-            Text("This profile uses one provider for Home and browsing. Search uses all enabled search integrations. Stream and subtitle add-ons can work together.", color = Palette.secondary)
-            Text("Stremio")
-            SourceIntegrationSettings(sourceSnapshot, false, null, refresh, { _, _ -> error("Source configuration must not be submitted") }, {})
-        }
-    }
     private fun scene(width: Int = 390, height: Int = 844, content: @Composable () -> Unit) = ImageComposeScene(width, height, Density(1f)) {
         ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background, content = content) }
     }
