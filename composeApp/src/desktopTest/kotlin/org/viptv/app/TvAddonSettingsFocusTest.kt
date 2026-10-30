@@ -66,7 +66,7 @@ class TvAddonSettingsFocusTest {
         assertTrue(bounds.top >= 8f && bounds.bottom <= 1080f - 8f && bounds.height > 0f, "$label is not fully on screen: $bounds")
     }
 
-    @Test fun downWalksEveryAddonToTheAddRowAndUpReturnsWithoutLeavingTheList() = onEdt {
+    @Test fun downWalksEveryAddonToTheAddRowAndUpReturnsThroughTheFilterRow() = onEdt {
         val scene = scene()
         try {
             settle(scene)
@@ -92,7 +92,13 @@ class TvAddonSettingsFocusTest {
                 assertVisible(node, name(index))
             }
             press(scene, Key.DirectionUp)
-            assertTrue(text(requireNotNull(focused(scene))).contains(name(1)), "Up at the top stays on the first add-on")
+            val filterRow = requireNotNull(focused(scene))
+            assertFalse(text(filterRow).contains("Add-on"), "Up from the first add-on reaches the filter row, focused ${text(filterRow)}")
+            press(scene, Key.DirectionUp)
+            assertFalse(text(requireNotNull(focused(scene))).contains("Add-on"), "Up at the top stays on the filter row")
+
+            press(scene, Key.DirectionDown)
+            assertTrue(text(requireNotNull(focused(scene))).contains(name(1)), "Down returns to the first add-on")
 
             press(scene, Key.DirectionLeft)
             val sidebar = requireNotNull(focused(scene))
