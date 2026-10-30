@@ -82,13 +82,26 @@ class PlaybackPreferenceMappingTest {
     }
 
     @Test fun tvPlaybackHidesUnstoredRowsOnRealConnections() {
-        assertEquals(listOf("Default source", "Preferred quality", "HDR and Dolby Vision"), tvPlaybackRows(actualPreferencesOnly = true))
+        assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision"),
+            tvPlaybackRows(actualPreferencesOnly = true))
         assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision",
             "Match frame rate"), tvPlaybackRows(actualPreferencesOnly = false))
         assertFalse("Start with subtitles" in tvPlaybackRows(false))
-        assertEquals(listOf("Autoplay next episode", "Default source", "Preferred quality", "HDR and Dolby Vision"),
-            tvPlaybackRows(actualPreferencesOnly = true, deviceRows = true))
+        assertEquals(listOf("Next episode button", autoplayNextRow, "Skip intros and recaps", "Default source", "Preferred quality",
+            "HDR and Dolby Vision"), tvPlaybackRows(actualPreferencesOnly = true, deviceRows = true))
         assertEquals(listOf("Audio language", "Subtitles", "Subtitle language", "Subtitle size", "Subtitle background", "Subtitle colour"), tvSubtitleRows)
+    }
+
+    @Test fun theNextEpisodeButtonAndSkipIntrosSwitchesRoundTrip() {
+        val stored = ProfilePreferences(next_episode_button = false, skip_intros = true)
+        assertEquals(stored, stored.tvSettings().profilePreferences(stored))
+        assertFalse(stored.tvSettings().nextEpisode)
+        assertTrue(stored.tvSettings().skipIntros)
+        assertTrue(ProfilePreferences().tvSettings().nextEpisode)
+        assertFalse(ProfilePreferences().tvSettings().skipIntros)
+        val mapped = TvSettingsPreferences(nextEpisode = false, skipIntros = true).profilePreferences()
+        assertFalse(mapped.next_episode_button)
+        assertTrue(mapped.skip_intros)
     }
 
     @Test fun foreignAudioRuleFollowsTheSpecCases() {

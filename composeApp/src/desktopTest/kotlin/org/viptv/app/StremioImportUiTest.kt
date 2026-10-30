@@ -477,8 +477,8 @@ class StremioImportUiTest {
                 return probe.nodes().filter { probe.text(it).startsWith(stremioImportSection) && it.config.contains(SemanticsActions.OnClick) }
                     .also { if (it.isNotEmpty()) {
                         val nodes = probe.nodes()
-                        val devices = nodes.firstOrNull { n -> probe.text(n) == "Devices" }
-                        if (devices != null) assertTrue(it.single().boundsInRoot.top > devices.boundsInRoot.top, "Import follows Devices")
+                        val account = nodes.firstOrNull { n -> probe.text(n) == "Account" && n.config.contains(SemanticsActions.OnClick) }
+                        if (account != null) assertTrue(it.single().boundsInRoot.top < account.boundsInRoot.top, "Import sits in the Profile group above Account")
                     } }
             } finally { scene.close() }
         }

@@ -19,6 +19,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         controller.loadPlaybackSeason()
     }
     val fallback = state.sources.firstOrNull { it.id != state.playingSource?.id } ?: state.playingSource
+    val preferences = state.playback?.preferences ?: state.preferences?.preferences
     val title = state.sourceTitle?.let { card ->
         val episode = card.identity.episode
         if (episode != null && detail != null) card.copy(title = detail.item.title,
@@ -29,7 +30,8 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         title, phone = phone, canvasColor = if (browser) Color.Transparent else Color.Black, television = television,
         tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.label,
             sourceQuality = state.playingSource?.quality_height?.let { if (it == 2160L) "4K" else "${it}p" } ?: state.playingSource?.presentation?.quality, episodes = episodes,
-            nextEpisode = state.nextEpisode, fallbackLabel = fallback?.label),
+            skips = state.playbackSegments, skipIntros = preferences?.skip_intros == true,
+            nextEpisode = state.nextEpisode.takeIf { preferences?.next_episode_button != false }, fallbackLabel = fallback?.label),
         chooseSources = controller::closePlayer, playEpisode = { controller.closePlayer(); controller.chooseSource(it) },
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,

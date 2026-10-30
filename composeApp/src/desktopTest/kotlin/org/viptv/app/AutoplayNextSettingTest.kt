@@ -74,7 +74,7 @@ class AutoplayNextSettingTest {
         } finally { scene.close() }
     }
 
-    @Test fun tvPlaybackRowIsFirstAndPersists() {
+    @Test fun tvAutoplayRowFollowsTheNextEpisodeRowAndPersists() {
         val store = MemoryStore()
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
             SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {}, television = true,
@@ -84,7 +84,9 @@ class AutoplayNextSettingTest {
             frames(scene)
             val row = switch(scene)
             assertEquals(ToggleableState.On, row.config[SemanticsProperties.ToggleableState])
-            assertEquals(true, row.config.getOrNull(SemanticsProperties.Focused), "Focus starts on the first row")
+            val first = nodes(scene).single { text(it).startsWith("Next episode button") && it.config.contains(SemanticsActions.OnClick) }
+            assertEquals(true, first.config.getOrNull(SemanticsProperties.Focused), "Focus starts on the first row")
+            assertNotEquals(true, row.config.getOrNull(SemanticsProperties.Focused))
             capture(scene, "tv-playback-autoplay-setting")
             row.config[SemanticsActions.OnClick].action!!.invoke(); frames(scene, 20)
             assertEquals(ToggleableState.Off, switch(scene).config[SemanticsProperties.ToggleableState])

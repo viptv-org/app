@@ -13,7 +13,7 @@ internal object PreviewTvPlayback {
         listOf(PlaybackTrack(10, "English", true), PlaybackTrack(11, "English (SDH)", false),
             PlaybackTrack(12, "Spanish", false), PlaybackTrack(13, "Portuguese", false)))
     val extras = TvPlaybackExtras("LordStreams", "4K", "[10:24 PM]", "Monster · S1 E2 · LordStreams 4K",
-        TvSkipRange(0, 90000), PreviewTvDetails.episodes[2].copy(badges = listOf("TV-MA", "HD")),
+        listOf(TvSkipRange(0, 90000)), PreviewTvDetails.episodes[2].copy(badges = listOf("TV-MA", "HD")),
         PreviewTvDetails.episodes, listOf(TvScrubThumbnail(0, 3132000, Res.getUri("files/ui-preview/tv3title-4.jpg"))),
         "[Provider 2] 4K", "LordStreams 4K didn’t respond. The next best source picks up at 14:02.",
         creditsLabel = "Monster · S1 E2 · Credits")

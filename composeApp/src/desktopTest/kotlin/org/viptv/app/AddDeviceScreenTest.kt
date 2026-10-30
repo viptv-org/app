@@ -28,14 +28,14 @@ class AddDeviceScreenTest {
     }
     private val pending = """{"user_code":"00428701","device":{"device_name":"Living room TV","status":"pending"},"expires_at":"1900000000"}"""
 
-    @Test fun aSignedInPhoneOpensTheNativeAddDeviceScreenFromWatchOnTv() {
+    @Test fun aSignedInPhoneOpensTheNativeAddDeviceScreenFromAddADevice() {
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { error("The screen makes no request until a code is entered") }) { configureTransport() }, browserMode = false)
         val scene = ImageComposeScene(822, 1720, Density(2f)) { Fixture(remote) }
         val probe = Probe(scene)
         try {
             probe.frames(12)
             assertTrue("Sign in a TV or another device" in probe.texts())
-            probe.click("Watch on TV")
+            probe.click("Add a device")
             assertTrue("Add a device" in probe.texts(), probe.texts().toString())
             assertFalse("Open TV sign-in" in probe.texts(), "No browser hand-off on a signed-in phone")
             assertTrue("Open VIPTV on the other device, choose Sign in, then enter the code it shows." in probe.texts(), probe.texts().toString())
