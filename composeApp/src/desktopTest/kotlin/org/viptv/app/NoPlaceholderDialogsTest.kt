@@ -12,6 +12,10 @@ class NoPlaceholderDialogsTest {
         offenders("""Saving channel favourites is not available|Creating pairing codes is not available|Code verification is not available|Resending email codes is not available|Email codes are not available|Playback preferences are not available on this connection|Subtitle preferences are not available on this connection""")
     }
 
+    @Test fun noSettingsSectionFallsBackToAMissingConnectionNotice() {
+        offenders("""[${'$'}]section is not available on this connection yet""")
+    }
+
     private fun offenders(expression: String) {
         // Gradle runs desktop tests from the composeApp module directory.
         val sources = File("src")
