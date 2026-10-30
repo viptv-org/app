@@ -22,6 +22,7 @@ import org.viptv.app.preview.PreviewData
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.MediaIdentity
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
@@ -30,10 +31,14 @@ class HomeHeroContinueHoverTest {
 
     private val featured = PreviewData.hero
     private val watched = PreviewData.watching.first()
+    private val slides = listOf(featured,
+        featured.copy(identity = MediaIdentity("hero-2", "movie", emptyList()), title = "Second Feature"),
+        featured.copy(identity = MediaIdentity("hero-3", "movie", emptyList()), title = "Third Feature"))
 
     private class Shell(val scene: ImageComposeScene, val played: MutableList<Card>) : AutoCloseable {
         private var frame = 0L
-        fun settle() = repeat(6) { scene.render(frame++ * 16_666_667L).close() }
+        fun frames(count: Int = 1) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
+        fun settle() = frames(20)
         fun nodes(merged: Boolean = true): List<SemanticsNode> =
             scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(merged) }
         fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
@@ -47,15 +52,19 @@ class HomeHeroContinueHoverTest {
         fun card(title: String): SemanticsNode = nodes().first {
             it.config.contains(SemanticsActions.OnClick) && label(it).contains(title)
         }
+        fun tagged(tag: String): SemanticsNode = nodes(merged = false).first {
+            it.config.getOrNull(SemanticsProperties.TestTag) == tag
+        }
         override fun close() = scene.close()
     }
 
     private fun shell(browser: Boolean = false): Shell {
         val played = mutableListOf<Card>()
+        val home = PreviewData.home.copy(hero = featured, featured = slides)
         val scene = ImageComposeScene(1440, 1000, Density(1f)) {
             ViptvTheme(pointer = true) {
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
-                    HomeScreen(PreviewData.home, television = false, open = {}, retry = {}, busy = false,
+                    HomeScreen(home, television = false, open = {}, retry = {}, busy = false,
                         desktopChrome = !browser, browser = browser, play = { played += it })
                 }
             }
@@ -90,6 +99,42 @@ class HomeHeroContinueHoverTest {
                     "$where: leaving the card restores the featured hero: ${shell.heroSummary()}")
             } finally { shell.close() }
         }
+    }
+
+    @Test fun hoveringAContinueWatchingCardCrossfadesTheHeroAndHoldsTheRows() {
+        val shell = shell()
+        try {
+            shell.settle()
+            val row = shell.card(watched.title).boundsInRoot
+            val summary = shell.tagged(HERO_SUMMARY_TAG).boundsInRoot
+            shell.scene.sendPointerEvent(PointerEventType.Move, row.center)
+            var bothOnScreen = false
+            for (step in 1..14) {
+                shell.frames(1)
+                val hero = shell.heroSummary()
+                if (hero.contains(featured.title) && hero.contains(watched.title)) bothOnScreen = true
+            }
+            assertTrue(bothOnScreen, "the hero crossfades from the featured slide to the preview")
+            shell.settle()
+            val preview = shell.heroSummary()
+            assertTrue(preview.contains(watched.title) && !preview.contains(featured.title), "the preview owns the hero: $preview")
+            assertFalse(preview.contains("Featured"), "the carousel dots are not drawn for the preview: $preview")
+            assertEquals(row, shell.card(watched.title).boundsInRoot, "the rows below the hero never move under the pointer")
+            assertEquals(summary, shell.tagged(HERO_SUMMARY_TAG).boundsInRoot, "the preview keeps the hero's footprint")
+
+            shell.scene.sendPointerEvent(PointerEventType.Move, Offset(1436f, 8f))
+            var backTogether = false
+            for (step in 1..14) {
+                shell.frames(1)
+                val hero = shell.heroSummary()
+                if (hero.contains(featured.title) && hero.contains(watched.title)) backTogether = true
+            }
+            assertTrue(backTogether, "leaving the card crossfades the preview back to the featured slide")
+            shell.settle()
+            assertEquals(row, shell.card(watched.title).boundsInRoot, "the rows below the hero never move on the way back")
+            assertEquals(summary, shell.tagged(HERO_SUMMARY_TAG).boundsInRoot, "the featured hero keeps its footprint")
+            assertTrue(shell.heroSummary().contains("Featured"), "the dots come back with the featured slide")
+        } finally { shell.close() }
     }
 
     @Test fun clickingTheHoveredContinueWatchingCardStillResumesTheEpisode() {
