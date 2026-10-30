@@ -33,7 +33,11 @@ internal fun CalendarEntry.actionLabel(): String? {
 
 enum class CalendarFilter(val label: String) { All("All"), YourShows("Your shows") }
 
-internal const val CALENDAR_DEFAULT_TYPE = "series"
+internal const val CALENDAR_TYPE_ALL = "all"
+internal val CalendarTypeRequests = listOf("series", "anime", "movie")
+internal const val CALENDAR_DEFAULT_TYPE = CALENDAR_TYPE_ALL
+internal val CALENDAR_DEFAULT_FILTER = CalendarFilter.YourShows
+internal const val CALENDAR_FALLBACK = "Nothing from your list this week — showing all releases."
 internal const val CALENDAR_WEEK_LIMIT = 52
 
 internal fun calendarFilterOffered(entries: List<CalendarEntry>, sources: Set<CalendarSource>?): Boolean =
@@ -41,6 +45,9 @@ internal fun calendarFilterOffered(entries: List<CalendarEntry>, sources: Set<Ca
 
 internal fun List<CalendarEntry>.shown(filter: CalendarFilter, offered: Boolean): List<CalendarEntry> =
     if (filter == CalendarFilter.YourShows && offered) filter { it.library } else this
+
+internal fun List<CalendarEntry>.fallsBackToAll(filter: CalendarFilter?): Boolean =
+    filter == CalendarFilter.YourShows && isNotEmpty() && none { it.library }
 
 internal fun calendarOpener(open: (Card) -> Unit, openEntry: ((CalendarEntry) -> Unit)?): (CalendarEntry) -> Unit =
     { entry -> openEntry?.invoke(entry) ?: open(entry.card) }

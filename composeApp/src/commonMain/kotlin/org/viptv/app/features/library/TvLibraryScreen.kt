@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.LocalTvScale
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
@@ -47,12 +50,15 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     }.distinctBy(::cardLookupKey)
     val target = lastFocused?.takeIf { card -> visible.any { cardLookupKey(it) == cardLookupKey(card) } } ?: visible.firstOrNull()
     val grid = rememberLazyGridState()
+    val restore = rememberPageRestore("library")
+    val anchored = restore.landing(visible.size) { cardLookupKey(visible[it]) }
     val empty = libraryEmptyState(snapshot, query, available)
+    PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(visible.size) { cardLookupKey(visible[it]) } })
     AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         CompositionLocalProvider(LocalTvScale provides scale) {
-            Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
+            Column(Modifier.fillMaxSize().focusGroup()
                 .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
                 Box(Modifier.focusGroup().focusRequester(selectedFilter)) {
                     if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
@@ -74,11 +80,13 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                         horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
                         contentPadding = PaddingValues(bottom = 8.dp * scale)) {
                         itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                            val key = cardLookupKey(card)
                             TvCatalogCard(card, scale, true, Modifier.tvGridItem(index)
+                                .pageAnchor(restore, key, index, target = anchored == index)
                                 .focusProperties {
                                     if (index < 7) up = selectedFilter
                                     if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
-                                }, { lastFocused = it }, open, focusedCaptions = true)
+                                }, { lastFocused = it }, { restore.mark(key, index); open(it) }, focusedCaptions = true)
                         }
                     }
                     if (remove != null) Row(Modifier.fillMaxWidth().padding(bottom = 96.dp * scale),

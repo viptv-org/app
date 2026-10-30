@@ -93,6 +93,29 @@ class MergedCalendarTest {
         } finally { remote.close() }
     }
 
+    @Test fun theDefaultTypeReadsEveryCalendarAndMergesThem() = runBlocking {
+        val types = mutableListOf<String>()
+        val client = client { request ->
+            if (!request.url.encodedPath.startsWith("/api/calendar")) return@client null
+            val type = request.url.parameters["type"].orEmpty()
+            types += type
+            when (type) {
+                "series" -> page(listOf(MergedCalendarWire.library("lib-1", "Your series", 2, 3)), sources = listOf("library", "public"))
+                "anime" -> page(listOf(MergedCalendarWire.library("an-1", "Your anime", 1, 5, date = MergedCalendarWire.today(22))), sources = listOf("library"))
+                else -> page(listOf(MergedCalendarWire.public("movie-1", "Movie premiere", date = MergedCalendarWire.today(21))), sources = listOf("public"))
+            }
+        }
+        val (controller, remote) = controller(client, this)
+        try {
+            controller.navigate(Screen.Calendar)
+            controller.job?.join()
+            assertEquals(listOf("series", "anime", "movie"), types, "The default Type reads every calendar")
+            assertEquals(listOf("lib-1", "movie-1", "an-1"), controller.state.value.calendarEntries.map { it.id }, "TV, movies and anime in one day order")
+            assertEquals(setOf(CalendarSource.Library, CalendarSource.Public), controller.state.value.calendarSources)
+            assertTrue(calendarFilterOffered(controller.state.value.calendarEntries, controller.state.value.calendarSources))
+        } finally { controller.calendarReread?.cancel(); remote.close() }
+    }
+
     @Test fun rereadsContinueWhileTheServerKeepsAskingAndStopWhenTheCalendarCloses() = runBlocking {
         var reads = 0
         val client = client { request ->
@@ -100,7 +123,7 @@ class MergedCalendarTest {
             reads++
             page(listOf(MergedCalendarWire.library("lib-1", "Your series", 1, 2)), sources = listOf("library"), refreshAfter = 1_000)
         }
-        val (controller, remote) = controller(client, this)
+        val (controller, remote) = controller(client, this, type = "series")
         try {
             controller.navigate(Screen.Calendar)
             controller.job?.join()
@@ -123,7 +146,7 @@ class MergedCalendarTest {
                     MergedCalendarWire.public("public-1", "Public show", source = "public")), sources = listOf("library", "public"))
             }
         }
-        val (controller, remote) = controller(client, this)
+        val (controller, remote) = controller(client, this, type = "series")
         try {
             controller.navigate(Screen.Calendar)
             controller.job?.join()
@@ -148,7 +171,7 @@ class MergedCalendarTest {
             reads++
             page(listOf(MergedCalendarWire.library("lib-$reads", "Your series", 1, 2)), sources = listOf("library"), refreshAfter = 1_000)
         }
-        val (controller, remote) = controller(client, this)
+        val (controller, remote) = controller(client, this, type = "series")
         try {
             controller.navigate(Screen.Calendar)
             controller.job?.join()
@@ -226,11 +249,11 @@ class MergedCalendarTest {
         respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
     }) { configureTransport() }
 
-    private fun controller(client: HttpClient, scope: CoroutineScope): Pair<ApplicationController, RemoteConnection> {
+    private fun controller(client: HttpClient, scope: CoroutineScope, type: String = CALENDAR_TYPE_ALL): Pair<ApplicationController, RemoteConnection> {
         val remote = RemoteConnection("https://fixture.example", client = client, browserMode = false)
         return ApplicationController(scope, store).also {
             it.connection = remote
-            it.mutable.value = ApplicationState(screen = Screen.Calendar, selectedProfile = "one", preferences = PreferencesSnapshot())
+            it.mutable.value = ApplicationState(screen = Screen.Calendar, selectedProfile = "one", calendarType = type, preferences = PreferencesSnapshot())
         } to remote
     }
 

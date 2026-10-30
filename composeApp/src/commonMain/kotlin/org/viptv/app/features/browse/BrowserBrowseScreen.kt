@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
@@ -19,6 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.connection.cardLookupKey
@@ -40,8 +43,9 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.HoverFill
-import org.viptv.app.components.pointerHovered
+import org.viptv.app.components.Motion
+import org.viptv.app.components.hoverFill
+import org.viptv.app.components.pressScale
 import androidx.compose.foundation.interaction.MutableInteractionSource
 
 @Composable
@@ -68,6 +72,9 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     changed: (String, String) -> Unit, multipleChanged: (String, List<String>) -> Unit,
     applyQuery: (BrowseQuery) -> Unit) {
     val grid = rememberLazyGridState()
+    val restore = rememberPageRestore("browse")
+    val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
+    PageRestore(grid, restore, target = { restore.anchor(cards.size) { cardLookupKey(cards[it]) } })
     AutomaticPage(cards.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     val facets = remember(controls, query, screen) { browseFacets(controls, query, screen == Screen.Discover) }
     val applied = remember(facets, query) { browserApplied(facets, query) }
@@ -87,8 +94,11 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
         LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
             horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(bottom = 24.dp)) {
-            items(cards, key = ::cardLookupKey) {
-                MediaCard(it, width = 172, portrait = true, showLabels = true, open = open, showFocusOutline = false)
+            itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                val key = cardLookupKey(card)
+                MediaCard(card, width = 172, portrait = true, showLabels = true, showFocusOutline = false,
+                    open = { restore.mark(key, index); open(it) },
+                    modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
             }
         }
     }
@@ -143,8 +153,8 @@ private fun BrowserBrowseFailure(error: String, title: String?, source: String?,
 private fun BrowserStateAction(label: String, primary: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val rest = if (primary) Palette.text else Color.Transparent
-    Row(Modifier.height(38.dp).clip(RoundedCornerShape(12.dp))
-        .background(if (interaction.pointerHovered()) HoverFill.container(rest) else rest)
+    Row(Modifier.height(38.dp).pressScale(interaction, Motion.button).clip(RoundedCornerShape(12.dp))
+        .background(hoverFill(interaction, rest))
         .then(if (primary) Modifier else Modifier.border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(12.dp)))
         .pointerClickable(interactionSource = interaction, onClick = onClick, shape = RoundedCornerShape(12.dp), hover = null).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (primary) Palette.background else Palette.text)
