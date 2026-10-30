@@ -100,12 +100,17 @@ open class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         // ON_STOP observers can pause the renderer before onStop runs: capture the resume intent first.
-        if (!isInPictureInPictureMode) applicationModel?.controller?.suspendPlayback()
+        suspendUnlessTheWindowKeepsPlaying()
         super.onPause()
     }
     override fun onStop() {
-        if (!isInPictureInPictureMode) applicationModel?.controller?.suspendPlayback()
+        suspendUnlessTheWindowKeepsPlaying()
         super.onStop()
+    }
+    // A picture-in-picture window plays on while this activity is paused, but closing it finishes the activity, which must save as leaving does.
+    private fun suspendUnlessTheWindowKeepsPlaying() {
+        if (isInPictureInPictureMode && !isFinishing) return
+        applicationModel?.controller?.suspendPlayback()
     }
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
