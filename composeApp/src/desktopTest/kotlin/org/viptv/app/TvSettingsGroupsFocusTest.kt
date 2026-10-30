@@ -53,7 +53,7 @@ class TvSettingsGroupsFocusTest {
                 assertFalse(node.config.contains(SemanticsActions.RequestFocus), "$label is not a focus stop")
             }
 
-            assertFocused(scene, "Default source")
+            assertFocused(scene, "Next episode button")
             press(scene, Key.DirectionLeft)
             assertFocused(scene, "Playback")
             press(scene, Key.DirectionDown)
