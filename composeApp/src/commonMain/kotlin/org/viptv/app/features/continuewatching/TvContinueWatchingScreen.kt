@@ -7,17 +7,21 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvGridItem
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.features.home.TvHomeSkeletonCard
+import org.viptv.app.state.ContinueUndo
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -27,15 +31,22 @@ private const val CARD_WIDTH = (1728f - GAP * (COLUMNS - 1)) / COLUMNS
 
 @Composable
 internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
-    more: (() -> Unit)?, retry: () -> Unit, home: () -> Unit) {
+    more: (() -> Unit)?, retry: () -> Unit, home: () -> Unit,
+    remove: ((Card) -> Unit)? = null, undo: ContinueUndo? = null, undoRemove: () -> Unit = {}) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val grid = rememberLazyGridState()
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
     var lastKey by rememberSaveable { mutableStateOf<String?>(null) }
     var lastIndex by rememberSaveable { mutableIntStateOf(0) }
     var focusedKey by remember { mutableStateOf<String?>(null) }
+    // The bar below the grid acts on the card the viewer last stood on, so it survives the move onto the bar.
+    var lastFocused by remember { mutableStateOf<Card?>(null) }
+    var confirming by remember { mutableStateOf<Card?>(null) }
+    val target = lastFocused?.takeIf { card -> cards.any { cardLookupKey(it) == cardLookupKey(card) } } ?: cards.firstOrNull()
     val restore = remember { FocusRequester() }
     val action = remember { FocusRequester() }
+    val removal = remember { FocusRequester() }
+    val undoFocus = remember { FocusRequester() }
     val restoreIndex = cards.indexOfFirst { cardLookupKey(it) == lastKey }.takeIf { it >= 0 }
         ?: lastIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
     suspend fun claim(requester: FocusRequester) {
@@ -74,25 +85,54 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                 }
                 !page.loaded && page.error != null -> TvPageMessage(scale, "Continue Watching didn’t load", page.error, "Try again", retry, action)
                 page.empty -> TvPageMessage(scale, "Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, action)
-                else -> LazyVerticalGrid(GridCells.Fixed(COLUMNS), Modifier.fillMaxWidth().weight(1f).focusGroup()
-                    .onFocusChanged {
-                        if (!it.hasFocus && latestCards.value.any { card -> cardLookupKey(card) == focusedKey }) focusedKey = null
-                    }, state = grid,
-                    horizontalArrangement = Arrangement.spacedBy(GAP.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale),
-                    contentPadding = PaddingValues(top = 8.dp * scale, bottom = 96.dp * scale)) {
-                    itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> "wide" }) { index, card ->
-                        TvCatalogCard(card, scale, false, Modifier.tvGridItem(index)
-                            .then(if (index == restoreIndex) Modifier.focusRequester(restore) else Modifier)
-                            .focusProperties {
-                                if (index < COLUMNS) up = FocusRequester.Cancel
-                                if (index % COLUMNS == COLUMNS - 1) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
-                            },
-                            { lastKey = cardLookupKey(it); lastIndex = index; focusedKey = lastKey },
-                            continueWatchingActivation(play, open),
-                            artworkWidth = CARD_WIDTH.dp * scale)
+                else -> {
+                    LazyVerticalGrid(GridCells.Fixed(COLUMNS), Modifier.fillMaxWidth().weight(1f).focusGroup()
+                        .onFocusChanged {
+                            if (!it.hasFocus && latestCards.value.any { card -> cardLookupKey(card) == focusedKey }) focusedKey = null
+                        }, state = grid,
+                        horizontalArrangement = Arrangement.spacedBy(GAP.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale),
+                        contentPadding = PaddingValues(top = 8.dp * scale, bottom = 8.dp * scale)) {
+                        itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> "wide" }) { index, card ->
+                            TvCatalogCard(card, scale, false, Modifier.tvGridItem(index)
+                                .then(if (index == restoreIndex) Modifier.focusRequester(restore) else Modifier)
+                                .focusProperties {
+                                    if (index < COLUMNS) up = FocusRequester.Cancel
+                                    if (index % COLUMNS == COLUMNS - 1) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
+                                },
+                                { lastKey = cardLookupKey(it); lastIndex = index; focusedKey = lastKey; lastFocused = it },
+                                continueWatchingActivation(play, open),
+                                artworkWidth = CARD_WIDTH.dp * scale)
+                        }
                     }
+                    if (remove != null) TvRemovalBar(scale, target, undo, undoFocus, removal, request = { confirming = it }, undoRemove = undoRemove)
                 }
             }
+        }
+    }
+    confirming?.let { card ->
+        ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
+    }
+}
+
+@Composable
+private fun TvRemovalBar(scale: Float, target: Card?, undo: ContinueUndo?, undoFocus: FocusRequester,
+    requester: FocusRequester, request: (Card) -> Unit, undoRemove: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 12.dp * scale, bottom = 96.dp * scale), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+        if (undo != null) {
+            Text("Removed “${undo.card.title}” from Continue Watching.", Modifier.weight(1f), color = Palette.secondary,
+                fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            TvAction(Modifier.height(64.dp * scale).width(200.dp * scale), scale, requester = undoFocus,
+                activate = undoRemove, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                Text("Undo", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
+            }
+        } else {
+            Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
+                fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        TvAction(Modifier.height(64.dp * scale).width(560.dp * scale), scale, requester = requester, enabled = target != null,
+            activate = { target?.let(request) }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+            Text(REMOVE_CONTINUE_LABEL, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }

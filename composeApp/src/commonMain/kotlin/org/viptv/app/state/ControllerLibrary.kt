@@ -22,6 +22,39 @@ fun ApplicationController.toggleFavorite(card: Card) = run {
     if (mutable.value.screen == Screen.Library) loadLibraryPage()
 }
 
+// The card leaves at once; the re-read then agrees with the host on membership and the page.
+fun ApplicationController.removeFromMyList(card: Card) = run {
+    val profile = requireNotNull(mutable.value.selectedProfile)
+    libraryHydration?.cancel()
+    libraryHydration?.join()
+    if (mutable.value.favoriteKeys == null || card.metadata_origin != null && mutable.value.libraryMembership == null) loadLibrary()
+    // A catalog alias that became known must not leave the removal pointing at a title nobody saved.
+    val favorite = card.parent_identity?.let { card.copy(identity = it, parent_identity = null) } ?: card
+    updateState { it.withoutSavedCard(favorite) }
+    try { local?.removeFavorite(profile, favorite) ?: requireNotNull(connection).removeFavorite(profile, favorite) }
+    catch (error: Exception) {
+        runCatching { loadLibrary(); if (mutable.value.screen == Screen.Library) loadLibraryPage() }
+        throw error
+    }
+    loadLibrary()
+    if (mutable.value.screen == Screen.Library) loadLibraryPage()
+}
+
+internal fun ApplicationState.withoutSavedCard(card: Card): ApplicationState {
+    val key = cardLookupKey(card)
+    fun List<Card>.without(): List<Card> = filterNot { cardLookupKey(it) == key }
+    return copy(
+        library = library.without(),
+        libraryPage = libraryPage?.let { page -> page.copy(cards = page.cards.without()) },
+        home = home?.let { snapshot -> snapshot.copy(rows = snapshot.rows.map { row ->
+            if (row.id != MY_LIST_ROW && row.provider_id != "library") row
+            else row.copy(cards = row.cards.without()).let { shown ->
+                if (shown.cards.isEmpty()) shown.copy(state = RowState.EMPTY) else shown
+            } }) },
+        favoriteKeys = favoriteKeys?.filterNot { it == (card.identity.kind to card.identity.id) }?.toSet(),
+    )
+}
+
 internal suspend fun ApplicationController.loadLibrary() {
     val profile = requireNotNull(mutable.value.selectedProfile)
     val device = local
