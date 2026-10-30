@@ -51,6 +51,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         householdPin = if (!state.localMode) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
+        deleteAccount = controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
+            DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured == true,
+                state.busy, state.error, controller::refreshAccountDeletion, cancel,
+                controller::deleteAccount)
+        } },
         account = controller.connection.takeUnless { state.localMode }?.let { remote -> {
             AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account, state.busy, state.error,
                 controller::refreshAccounts) {

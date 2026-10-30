@@ -33,22 +33,22 @@ class SettingsGroupsLayoutTest {
             SettingsGroup.Profile to listOf(SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut, SettingsRow.DeleteAccount))),
         Layout("tablet", 1000, 1200, desktop = false, web = false, devices = false, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut, SettingsRow.DeleteAccount))),
         Layout("desktop", 1440, 1200, desktop = true, web = false, devices = false, stremio = false, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.ParentalControls),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut, SettingsRow.DeleteAccount))),
         Layout("web", 1440, 1200, desktop = false, web = true, devices = true, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut, SettingsRow.DeleteAccount))),
     )
 
     @Test fun everyLayoutShowsTheFourGroupsInOrderWithItsOwnRows() {
@@ -76,12 +76,13 @@ class SettingsGroupsLayoutTest {
         }
     }
 
-    @Test fun signOutIsTheLastRowOfTheAccountGroup() {
+    @Test fun deleteAccountIsTheLastRowAfterSignOut() {
         val scene = scene(layouts.first())
         try {
             val rows = render(scene).filter { it.config.contains(SemanticsActions.OnClick) }
                 .sortedBy { it.boundsInRoot.top }.mapNotNull(::rowOf)
-            assertEquals(SettingsRow.SignOut, rows.last(), "Sign out is the last row")
+            assertEquals(listOf(SettingsRow.SignOut, SettingsRow.DeleteAccount), rows.takeLast(2),
+                "Sign out is followed by Delete account as the last row")
             assertTrue(rows.indexOf(SettingsRow.SignOut) > rows.indexOf(SettingsRow.Addons), "Sign out follows Add-ons")
         } finally { scene.close() }
     }
@@ -97,6 +98,7 @@ class SettingsGroupsLayoutTest {
                 stremioImport = if (layout.stremio) ({ _, _, _ -> }) else null,
                 addDevice = { Text("add device page") },
                 householdPin = { Text("household pin page") },
+                deleteAccount = { _ -> Text("delete account page") },
                 sourceIntegrations = { _, _, _ -> Text("source integrations page") },
                 devices = if (layout.devices) ({ _, _ -> }) else null,
                 desktop = layout.desktop)
