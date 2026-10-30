@@ -22,7 +22,6 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
 import kotlinx.coroutines.flow.first
 
-/** Where a list page was left: the item opened there and where it sat. */
 @Stable
 internal class PageRestoreState internal constructor() {
     internal var lastKey by mutableStateOf<String?>(null)
@@ -34,14 +33,12 @@ internal class PageRestoreState internal constructor() {
         lastIndex = index
     }
 
-    /** The opened item's index, or where it sat when the list has moved on; null until something opens. */
     internal fun anchor(count: Int, keyAt: (Int) -> String): Int? {
         if (count <= 0) return null
         val key = lastKey ?: return null
         return (0 until count).firstOrNull { keyAt(it) == key } ?: lastIndex.coerceIn(0, count - 1)
     }
 
-    /** [anchor], or the first item for a page that focuses a card as soon as it opens. */
     internal fun landing(count: Int, keyAt: (Int) -> String): Int? =
         if (count <= 0) null else anchor(count, keyAt) ?: 0
 }
@@ -55,7 +52,6 @@ private val PageRestoreSaver = listSaver<PageRestoreState, Any?>(
 internal fun rememberPageRestore(page: String): PageRestoreState =
     rememberSaveable(page, saver = PageRestoreSaver) { PageRestoreState() }
 
-/** The anchored item carries the page's focus claim and remembers itself while it holds focus. */
 internal fun Modifier.pageAnchor(restore: PageRestoreState, key: String, index: Int, target: Boolean): Modifier =
     (if (target) Modifier.focusRequester(restore.focus) else Modifier)
         .onFocusChanged { if (it.isFocused) restore.mark(key, index) }

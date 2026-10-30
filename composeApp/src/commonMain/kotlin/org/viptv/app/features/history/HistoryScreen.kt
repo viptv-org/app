@@ -38,7 +38,6 @@ internal fun HistoryLine.key(): String = when (this) {
     is HistoryLine.Entry -> cardLookupKey(display.entry.card)
 }
 
-/** The entry nearest where the page was left: a day heading moves to the row under it. */
 internal fun List<HistoryLine>.entryAt(index: Int): Int? {
     if (isEmpty()) return null
     val start = index.coerceIn(0, lastIndex)

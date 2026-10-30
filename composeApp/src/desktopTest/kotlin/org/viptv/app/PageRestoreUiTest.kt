@@ -41,11 +41,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HistoryEntry
 import kotlin.test.*
 
-/**
- * Back to a list page comes back to the item the viewer opened there, even when the list has
- * been refetched in another order (app#248). Each page is composed inside a saveable state
- * holder, so leaving it is the same as navigating away.
- */
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PageRestoreUiTest {
     @get:Rule val uiThread = UiThreadRule()
