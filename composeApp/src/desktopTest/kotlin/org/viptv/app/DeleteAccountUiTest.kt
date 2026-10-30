@@ -69,11 +69,12 @@ class DeleteAccountUiTest {
             assertTrue(primary(scene).config.contains(SemanticsProperties.Disabled), "a short PIN is not sent")
             type(scene, 2, "1234"); frames(scene)
             click(scene, "Delete account"); frames(scene)
-            assertEquals(listOf(Triple<String, String, String?>("viewer", "fixture-password", "1234")), submissions)
+            val refused = Triple<String, String, String?>("viewer", "fixture-password", "1234")
+            assertEquals(listOf(refused), submissions)
             busy = false; error = "The parent PIN is not correct."; frames(scene)
             assertTrue(nodes(scene).any { text(it) == "The parent PIN is not correct." })
-            assertEquals(listOf("viewer", "fixture-password", "1234"), (0..2).map { field(scene, it) },
-                "a refused attempt keeps every typed value")
+            click(scene, "Delete account"); frames(scene)
+            assertEquals(listOf(refused, refused), submissions, "a refused attempt keeps every typed value")
         } finally { scene.close() }
     }
 
@@ -112,8 +113,6 @@ class DeleteAccountUiTest {
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
-    private fun field(scene: ImageComposeScene, index: Int) = nodes(scene).filter { it.config.contains(SemanticsActions.SetText) }
-        .getOrNull(index)?.config?.get(SemanticsProperties.EditableText)?.text ?: fail("no field $index")
     private fun primary(scene: ImageComposeScene) = nodes(scene).last { text(it) == "Delete account" && it.config.contains(SemanticsActions.OnClick) }
     private fun clickable(scene: ImageComposeScene, label: String) =
         nodes(scene).lastOrNull { text(it) == label && it.config.contains(SemanticsActions.OnClick) } ?: fail("no clickable '$label'")
