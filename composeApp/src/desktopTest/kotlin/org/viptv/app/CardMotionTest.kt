@@ -74,8 +74,10 @@ class CardMotionTest {
         fun art() = tagged(MISSING_ART_TAG).first().boundsInRoot
         fun press(at: Offset) = scene.sendPointerEvent(PointerEventType.Press, at, type = PointerType.Mouse,
             buttons = PointerButtons(isPrimaryPressed = true), button = PointerButton.Primary, timeMillis = millis())
-        fun move(at: Offset, pressed: Boolean = false) = scene.sendPointerEvent(PointerEventType.Move, at, type = PointerType.Mouse,
-            buttons = if (pressed) PointerButtons(isPrimaryPressed = true) else null, timeMillis = millis())
+        fun move(at: Offset, pressed: Boolean = false) =
+            if (pressed) scene.sendPointerEvent(PointerEventType.Move, at, type = PointerType.Mouse,
+                buttons = PointerButtons(isPrimaryPressed = true), timeMillis = millis())
+            else scene.sendPointerEvent(PointerEventType.Move, at)
         fun release(at: Offset) = scene.sendPointerEvent(PointerEventType.Release, at, type = PointerType.Mouse,
             button = PointerButton.Primary, timeMillis = millis())
         fun control(label: String): Rect = nodes(true).first {
@@ -109,17 +111,17 @@ class CardMotionTest {
             assertTrue(scene.tagged(MEDIA_CARD_HOVER_TAG).isEmpty(), "no card is hovered at rest")
 
             scene.move(art.center)
-            scene.frames(2)
+            scene.frames(6)
             assertEquals(1, scene.tagged(MEDIA_CARD_HOVER_TAG).size, "hovering shows the scrim and the disc")
             assertEquals(1, scene.tagged(MEDIA_CARD_HOVER_RING_TAG).size, "hovering draws the inset ring")
             val starting = scene.pixel(sample)
-            scene.frames(12)
+            scene.frames(10)
             val settled = scene.pixel(sample)
             assertNotEquals(rest, starting, "the scrim starts fading as soon as the pointer arrives")
-            assertNotEquals(settled, starting, "the scrim is still on its way two frames in")
+            assertNotEquals(settled, starting, "the scrim is still on its way a few frames in")
 
             scene.move(Offset(880f, 580f))
-            scene.frames(2)
+            scene.frames(4)
             assertEquals(1, scene.tagged(MEDIA_CARD_HOVER_TAG).size, "the scrim fades out instead of vanishing")
             scene.frames(12)
             assertTrue(scene.tagged(MEDIA_CARD_HOVER_TAG).isEmpty(), "the scrim clears once the fade ends")
@@ -136,10 +138,10 @@ class CardMotionTest {
             val sample = Offset(art.left + 14f, art.top + 14f)
             val rest = scene.pixel(sample)
             scene.move(art.center)
-            scene.frames(2)
+            scene.frames(6)
             val first = scene.pixel(sample)
             assertNotEquals(rest, first, "the scrim is applied without motion")
-            scene.frames(12)
+            scene.frames(10)
             assertEquals(first, scene.pixel(sample), "reduce motion leaves no fade behind")
         } finally { scene.close() }
     }

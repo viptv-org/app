@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.hoverable
@@ -23,6 +24,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.*
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.responseSpec
 
 @Composable
 internal fun DesktopWindowButtons(
@@ -62,8 +64,9 @@ private val WindowButtonPress = Color.White.copy(alpha = .12f)
 private fun TrafficLight(color: Color, label: String, action: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
+    val fill by animateColorAsState(if (hovered) color.copy(alpha = .85f) else color, responseSpec(), label = "Traffic light fill")
     Box(Modifier.size(12.dp)
-        .background(if (hovered) color.copy(alpha = .85f) else color, CircleShape)
+        .background(fill, CircleShape)
         .hoverable(interaction)
         .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action, shape = CircleShape, hover = null))
 }
@@ -74,13 +77,13 @@ private fun WindowButton(icon: DrawableResource?, label: String, action: () -> U
     val hovered by interaction.collectIsHoveredAsState()
     val pressed by interaction.collectIsPressedAsState()
     val close = label == "Close"
-    val background = when {
+    val fill by animateColorAsState(when {
         pressed -> if (close) WindowClosePress else WindowButtonPress
         hovered -> if (close) WindowCloseHover else WindowButtonHover
         else -> Color.Transparent
-    }
+    }, responseSpec(), label = "Window button fill")
     Box(Modifier.width(46.dp).fillMaxHeight()
-        .background(background).hoverable(interaction)
+        .background(fill).hoverable(interaction)
         .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, onClick = action),
         contentAlignment = Alignment.Center) {
         if (icon != null) Icon(painterResource(icon), label, Modifier.size(10.dp), tint = Palette.text)
