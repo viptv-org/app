@@ -26,3 +26,12 @@ internal fun SettingsItem(label: String, icon: ImageVector, subtitle: String? = 
         Icon(Lucide.ChevronRight, null, Modifier.size(17.dp), tint = Palette.tertiary)
     }
 }
+
+@Composable
+internal fun SettingsDangerItem(label: String, icon: ImageVector, action: () -> Unit) {
+    Row(Modifier.fillMaxWidth().pointerClickable(onClick = action).heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+        Icon(icon, null, Modifier.size(20.dp), tint = Palette.danger)
+        Text(label, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold, color = Palette.danger)
+    }
+}

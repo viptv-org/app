@@ -17,20 +17,11 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.updates.*
 
 @Composable
-internal fun SettingsInformation(section: String, local: Boolean, address: String?, profileName: String?,
-    profiles: () -> Unit, changeConnection: () -> Unit) {
+internal fun SettingsInformation(section: String, local: Boolean, address: String?, changeConnection: () -> Unit) {
     var license by remember { mutableStateOf<String?>(null) }
     org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(if (section == "About") "About VIPTV" else section, style = MaterialTheme.typography.headlineMedium)
         when (section) {
-            "General" -> {
-                Text(if (local) "Using this device locally" else "Connected to a server", style = MaterialTheme.typography.titleLarge)
-                if (local) Text("Profiles, provider connections and viewing progress stay on this device.", color = Palette.secondary)
-                else address?.let { SelectionContainer { Text(it, color = Palette.secondary) } }
-                profileName?.let { Text("Current profile · $it", color = Palette.secondary) }
-                OutlinedButton(profiles) { Text("Manage profiles") }
-                TextButton(changeConnection) { Text(if (local) "Change connection" else "Sign out") }
-            }
             "Watch on TV" -> {
                 if (local || address == null) {
                     Text("TV sign-in uses a server account. Sign in to the same server on both devices to share profiles and progress.", color = Palette.secondary)
