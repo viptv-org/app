@@ -19,12 +19,39 @@ class ParentTitlesTest {
         override suspend fun clear() = Unit
     }
     private fun card(id: String = "tt123") = Card(MediaIdentity(id, "movie", emptyList()), provider_id = "addon:7", title = "A title", badges = emptyList())
-    private fun controller(scope: CoroutineScope, handle: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData): ApplicationController {
+    private fun controller(scope: CoroutineScope, browser: Boolean = true, handle: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData): ApplicationController {
         val client = HttpClient(MockEngine(handle)) { configureTransport() }
         return ApplicationController(scope, store).also {
-            it.connection = RemoteConnection("https://watch.example", store, client, browserMode = true)
+            it.connection = RemoteConnection("https://watch.example", store, client, browserMode = browser)
             it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1", parentSettings = parentFixture(kids = true))
         }
+    }
+
+    @Test fun nativeSessionsApproveAndRevokeTitlesThroughFakeHost() = runBlocking<Unit> {
+        val row = ParentTitleRow("addon-7", "My addon", "stremio", 7, items = listOf(ParentTitleItem(card(), true)))
+        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val controller = controller(this, browser = false) { request ->
+            val result = when {
+                request.url.encodedPath == "/api/parent/search" -> Json.encodeToString(ParentTitleSearch(listOf(row)))
+                request.method == HttpMethod.Post -> {
+                    writes += request.url.encodedPath to Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                    "{\"approved\":true}"
+                }
+                else -> "{\"items\":[{\"id\":\"tt123\",\"type\":\"movie\",\"name\":\"A title\"}]}"
+            }
+            respond(result, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        try {
+            controller.openParentTitles("2"); controller.job!!.join()
+            controller.searchParentTitles("A title"); controller.job!!.join()
+            controller.approveParentTitle(row.id, row.items.single().card); controller.job!!.join()
+            controller.revokeParentTitle(controller.state.value.parentTitles!!.approved.single()); controller.job!!.join()
+            assertEquals(listOf("/api/profiles/2/approvals", "/api/profiles/2/approvals"), writes.map { it.first })
+            assertEquals(true, writes[0].second["approved"]!!.jsonPrimitive.boolean)
+            assertEquals(false, writes[1].second["approved"]!!.jsonPrimitive.boolean)
+            assertEquals("tt123", writes[1].second["id"]!!.jsonPrimitive.content)
+            assertNull(controller.state.value.error)
+        } finally { controller.connection?.close() }
     }
 
     @Test fun typedSearchKeepsProviderRowsAndApprovalSendsOnlyTrustedSelector() = runBlocking<Unit> {
