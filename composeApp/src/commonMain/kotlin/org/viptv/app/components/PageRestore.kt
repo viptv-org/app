@@ -53,7 +53,7 @@ internal fun rememberPageRestore(page: String): PageRestoreState =
     rememberSaveable(page, saver = PageRestoreSaver) { PageRestoreState() }
 
 internal fun Modifier.pageAnchor(restore: PageRestoreState, key: String, index: Int, target: Boolean): Modifier =
-    (if (target) Modifier.focusRequester(restore.focus) else Modifier)
+    then(if (target) Modifier.focusRequester(restore.focus) else Modifier)
         .onFocusChanged { if (it.isFocused) restore.mark(key, index) }
 
 @Composable
