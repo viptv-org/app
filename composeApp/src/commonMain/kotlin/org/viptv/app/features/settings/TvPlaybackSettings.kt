@@ -14,35 +14,35 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences?, scale: Float, initial: FocusRequester,
+internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, scale: Float, initial: FocusRequester,
     sidebar: FocusRequester, change: (TvSettingsPreferences) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit,
-    unavailable: () -> Unit, actualPreferencesOnly: Boolean = false, devicePlayback: DevicePlaybackState? = null) {
+    actualPreferencesOnly: Boolean = false, devicePlayback: DevicePlaybackState? = null) {
     val rows = tvPlaybackRows(actualPreferencesOnly, deviceRows = devicePlayback != null)
     val deviceHeight = remember { deviceMaxVideoHeight() }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-        TvSettingsHeading("Playback", scale, if (prefs != null) "These apply to ${name ?: "this profile"}’s profile." else "Playback preferences are not available on this connection yet.")
+        TvSettingsHeading("Playback", scale, "These apply to ${name ?: "this profile"}’s profile.")
         rows.forEachIndexed { index, row ->
             val requester = if (index == 0) initial else null
             when (row) {
-                "Next episode button" -> TvSettingsRow(row, "Shows during the credits", scale, checked = prefs?.nextEpisode,
-                    requester = requester, left = sidebar) { if (prefs != null) change(prefs.copy(nextEpisode = !prefs.nextEpisode)) else unavailable() }
+                "Next episode button" -> TvSettingsRow(row, "Shows during the credits", scale, checked = prefs.nextEpisode,
+                    requester = requester, left = sidebar) { change(prefs.copy(nextEpisode = !prefs.nextEpisode)) }
                 autoplayNextRow -> devicePlayback?.let { device ->
                     TvSettingsRow(row, autoplayNextDescription, scale, checked = device.value.autoplayNext, requester = requester, left = sidebar) {
                         device.setAutoplayNext(!device.value.autoplayNext) }
                 }
-                "Skip intros and recaps" -> TvSettingsRow(row, "Skips them when the show marks where they are", scale, checked = prefs?.skipIntros,
-                    requester = requester, left = sidebar) { if (prefs != null) change(prefs.copy(skipIntros = !prefs.skipIntros)) else unavailable() }
-                "Default source" -> TvSettingsRow(row, scale = scale, value = prefs?.source ?: "Unavailable",
+                "Skip intros and recaps" -> TvSettingsRow(row, "Skips them when the show marks where they are", scale, checked = prefs.skipIntros,
+                    requester = requester, left = sidebar) { change(prefs.copy(skipIntros = !prefs.skipIntros)) }
+                "Default source" -> TvSettingsRow(row, scale = scale, value = prefs.source,
                     requester = requester, left = sidebar) {
-                    if (prefs != null) choose(row, listOf("Best match", "Always ask")) { change(prefs.copy(source = it)) } else unavailable() }
+                    choose(row, listOf("Best match", "Always ask")) { change(prefs.copy(source = it)) } }
                 "Preferred quality" -> TvSettingsRow(row, scale = scale,
-                    value = prefs?.let { tvQualityLabel(it.quality, deviceHeight) } ?: "Unavailable", requester = requester, left = sidebar) {
-                    if (prefs != null) choose(row, listOf("Auto", "4K", "1080p", "720p")) { change(prefs.copy(quality = it)) } else unavailable() }
-                "HDR and Dolby Vision" -> TvSettingsRow(row, scale = scale, value = prefs?.hdr ?: "Unavailable",
+                    value = tvQualityLabel(prefs.quality, deviceHeight), requester = requester, left = sidebar) {
+                    choose(row, listOf("Auto", "4K", "1080p", "720p")) { change(prefs.copy(quality = it)) } }
+                "HDR and Dolby Vision" -> TvSettingsRow(row, scale = scale, value = prefs.hdr,
                     requester = requester, left = sidebar) {
-                    if (prefs != null) choose(row, hdrPreferenceChoices.map { it.second }) { change(prefs.copy(hdr = it)) } else unavailable() }
-                "Match frame rate" -> TvSettingsRow(row, "Switches the TV to the video’s frame rate for smoother motion", scale, checked = prefs?.frameRate,
-                    requester = requester, left = sidebar) { if (prefs != null) change(prefs.copy(frameRate = !prefs.frameRate)) else unavailable() }
+                    choose(row, hdrPreferenceChoices.map { it.second }) { change(prefs.copy(hdr = it)) } }
+                "Match frame rate" -> TvSettingsRow(row, "Switches the TV to the video’s frame rate for smoother motion", scale, checked = prefs.frameRate,
+                    requester = requester, left = sidebar) { change(prefs.copy(frameRate = !prefs.frameRate)) }
             }
         }
     }

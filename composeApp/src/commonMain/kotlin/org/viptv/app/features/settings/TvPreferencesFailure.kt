@@ -24,6 +24,17 @@ internal fun TvPreferencesFailure(section: String, error: String, busy: Boolean,
 }
 
 @Composable
+internal fun TvPreferencesMissing(section: TvSettingsSection, busy: Boolean, scale: Float,
+    initial: FocusRequester, sidebar: FocusRequester, retry: (() -> Unit)?) {
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp * scale)) {
+        TvSettingsHeading(section.label, scale)
+        Text(if (busy) "Loading settings…" else "These settings are unavailable.",
+            fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp, color = Palette.secondary)
+        TvPreferencesRetry(busy, scale, initial, sidebar, retry)
+    }
+}
+
+@Composable
 internal fun TvPreferencesRetry(busy: Boolean, scale: Float, initial: FocusRequester?, sidebar: FocusRequester, retry: (() -> Unit)?) {
     if (retry != null) TvAction(Modifier.fillMaxWidth().height(96.dp * scale).focusProperties { left = sidebar }, scale, ring = false,
         requester = initial, enabled = !busy, activate = retry) {

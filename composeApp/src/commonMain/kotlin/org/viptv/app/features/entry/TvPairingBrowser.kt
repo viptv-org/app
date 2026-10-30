@@ -19,7 +19,7 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: FocusRequester, busy: Boolean = false, refresh: () -> Unit) {
+internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: FocusRequester, busy: Boolean = false, refresh: (() -> Unit)?) {
     Column(Modifier.offset(1064.dp * scale, 250.dp * scale).width(760.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale)) {
         Text("Use any browser", fontSize = (30 * scale).sp, lineHeight = (43.5f * scale).sp, fontWeight = FontWeight.Bold)
         TvPairingInstruction("1", "Go to", scale)
@@ -34,10 +34,12 @@ internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: F
         }
         Row(Modifier.padding(start = 62.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             session?.expiryLabel?.let { Text("Code expires in $it", fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Color(0xFF8F8D89)) }
-            TvAction(Modifier.height(48.dp * scale), scale, requester = first, activate = refresh, cornerRadius = 10.dp * scale,
-                contentPadding = PaddingValues(horizontal = 18.dp * scale)) {
-                Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(10.dp * scale))
-                Text("New code", color = it, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold)
+            refresh?.let { newCode ->
+                TvAction(Modifier.height(48.dp * scale), scale, requester = first, activate = newCode, cornerRadius = 10.dp * scale,
+                    contentPadding = PaddingValues(horizontal = 18.dp * scale)) {
+                    Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(10.dp * scale))
+                    Text("New code", color = it, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }

@@ -25,7 +25,6 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
     LaunchedEffect(selectedSource) { category = AllGroups }
     var selected by remember { mutableStateOf(channels.firstOrNull()) }
     var selectedProgram by remember { mutableStateOf<LiveProgram?>(null) }
-    var notice by remember { mutableStateOf(false) }
     val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || category == AllGroups || (it.groupId ?: it.category) == category) }
     LaunchedEffect(category, favoritesOnly, channels) {
         selected = visible.find { it.id == selected?.id && it.connectionId == selected?.connectionId } ?: visible.firstOrNull()
@@ -52,8 +51,8 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                     noticeRetry?.let { retry -> TextButton(retry, enabled = !busy) { Text("Retry") } }
                 }
             }
-            if (!fullGuide) selected?.let { LivePreview(it, selectedProgram ?: it.current(now), now, phone, television, scale,
-                { watch(it) }, { favoriteChanged?.invoke(it) ?: run { notice = true } }, if (!phone && start != null) ({ fullGuide = true }) else null) }
+            if (!fullGuide) selected?.let { channel -> LivePreview(channel, selectedProgram ?: channel.current(now), now, phone, television, scale,
+                { watch(channel) }, favoriteChanged?.let { save -> { save(channel) } }, if (!phone && start != null) ({ fullGuide = true }) else null) }
             if (fullGuide) TextButton(onClick = { fullGuide = false }) { Text("Show preview") }
             if (visible.isEmpty()) {
                 Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else emptyReason ?: "No channels are available for this profile.", color = Palette.secondary)
@@ -63,13 +62,10 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                 Box(Modifier.weight(1f)) { LiveGuide(visible, start, now, television, scale,
                     { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy) }
             } else LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp)) {
-                items(visible, key = { it.card.provider_id + ":" + it.card.identity.id }) {
-                    LiveChannelRow(it, now, { watch(it) }, { favoriteChanged?.invoke(it) ?: run { notice = true } })
+                items(visible, key = { it.card.provider_id + ":" + it.card.identity.id }) { channel ->
+                    LiveChannelRow(channel, now, { watch(channel) }, favoriteChanged?.let { save -> { save(channel) } })
                 }
             }
         }
     }
-    if (notice) AlertDialog(onDismissRequest = { notice = false }, title = { Text("Channel favourites") },
-        text = { Text("Saving channel favourites is not available for this connection yet.") },
-        confirmButton = { TextButton(onClick = { notice = false }) { Text("OK") } })
 }

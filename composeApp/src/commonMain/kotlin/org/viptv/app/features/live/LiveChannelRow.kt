@@ -16,7 +16,7 @@ import org.viptv.app.components.IconButton
 import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
-internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, favourite: () -> Unit) {
+internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, favourite: (() -> Unit)?) {
     val program = channel.current(now)
     val next = channel.next(now)
     Column {
@@ -37,7 +37,7 @@ internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, 
                 }
                 next?.let { Text("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
             }
-            IconButton(favourite, Modifier.size(28.dp), enabled = !channel.favoritePending) { Icon(Lucide.Star, if (channel.favorite) "Remove favourite channel" else "Favourite channel", Modifier.size(18.dp), tint = if (channel.favorite) Palette.accent else Palette.secondary) }
+            favourite?.let { save -> IconButton(save, Modifier.size(28.dp), enabled = !channel.favoritePending) { Icon(Lucide.Star, if (channel.favorite) "Remove favourite channel" else "Favourite channel", Modifier.size(18.dp), tint = if (channel.favorite) Palette.accent else Palette.secondary) } }
         }
         HorizontalDivider(color = Palette.raised)
     }

@@ -15,7 +15,7 @@ import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scale: Float,
-    connect: (String, String, String) -> Unit, forgot: () -> Unit, serverChanged: (String) -> Unit = {}) {
+    connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {}) {
     var server by remember { mutableStateOf(origin.ifBlank { "https://your-server.example" }) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -41,7 +41,6 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
                 connect(server, email, password); password = ""
             }
             TvPasswordAction(if (visible) "Hide password" else "Show password", if (visible) Lucide.EyeOff else Lucide.Eye, scale) { visible = !visible }
-            TvPasswordAction("Forgot password", Lucide.Mail, scale, activate = forgot)
             Text("Typing with a remote is slow. Scanning a code with your phone is quicker.", Modifier.padding(top = 14.dp * scale),
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary)
             TvPasswordAction("Delete character", Lucide.Delete, scale) { if (editingPassword) password = password.dropLast(1) else email = email.dropLast(1) }
