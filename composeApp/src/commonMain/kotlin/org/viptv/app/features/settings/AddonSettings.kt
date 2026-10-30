@@ -24,7 +24,7 @@ import org.viptv.app.components.IconButton
 @Composable
 internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
-    remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true, sourceIntegrations: (@Composable () -> Unit)? = null,
+    remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null) {
     val address = rememberTextFieldState()
     var installing by remember { mutableStateOf(false) }
@@ -91,13 +91,6 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                 AddonSettingsRow(addon, addon.id in enabledAddonIds, busy, managementAvailable,
                     { toggle(addon.id, it) }, { removing = addon })
             }
-            sourceIntegrations?.let { content -> item {
-                if (compact) Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                    HorizontalDivider(color = Palette.raised)
-                    Text("Advanced configuration", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
-                    content()
-                } else content()
-            } }
         }
         if (installing) ModalBottomSheet(onDismissRequest = closeInstall, containerColor = Palette.surface,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
