@@ -113,8 +113,9 @@ class ScrollEdgeFadeUiTest {
 
     @Composable
     private fun page(modifier: Modifier) {
+        // A grid scrolls by row: index 6 is the third row, so there is something above it.
         FocusLazyVerticalGrid(GridCells.Fixed(3), modifier,
-            state = rememberLazyGridState(initialFirstVisibleItemIndex = 2)) {
+            state = rememberLazyGridState(initialFirstVisibleItemIndex = 6)) {
             items(90) { Box(Modifier.fillMaxWidth().height(180.dp).background(Palette.raised)) }
         }
     }
