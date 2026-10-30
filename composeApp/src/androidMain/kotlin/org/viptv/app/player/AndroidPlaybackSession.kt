@@ -119,6 +119,13 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private fun windowOffsetMillis(): Long = if (input.live || player.currentTimeline.isEmpty) 0 else
         player.currentTimeline.getWindow(player.currentMediaItemIndex, window).positionInFirstPeriodMs.coerceAtLeast(0)
     private fun titlePositionMillis(): Long = input.mediaProgress(player.currentPosition, null, windowOffsetMillis()).positionMillis
+    val seekable: Boolean get() = !input.live
+    suspend fun skip(deltaMillis: Long) {
+        if (!seekable) return
+        val progress = input.mediaProgress(player.currentPosition, player.duration.takeIf { it != C.TIME_UNSET && it > 0 }, windowOffsetMillis())
+        val target = progress.positionMillis + deltaMillis
+        command(PlayerCommand.Seek(progress.durationMillis?.let { target.coerceIn(0, it) } ?: target.coerceAtLeast(0)))
+    }
     private fun properties() = emit(PlayerFact.Properties(player.volume, player.playbackParameters.speed.toDouble(), subtitleScale))
     suspend fun command(command: PlayerCommand) {
         try { when (command) {

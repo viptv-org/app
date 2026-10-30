@@ -39,6 +39,7 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
             session.view = view
         }, onRelease = { if (session.view === it) session.view = null; it.player = null })
         DisposableEffect(session, lifecycle) {
+            AndroidPictureInPicture.bind(session)
             val observer = LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_STOP) { session.progress(); session.player.pause() }
                 // onStart can run before the pause is recomposed: apply the intent on the next composition, never feed a stale pause back.
@@ -46,6 +47,7 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
             }
             lifecycle.addObserver(observer)
             onDispose {
+                AndroidPictureInPicture.unbind(session)
                 lifecycle.removeObserver(observer)
                 if (activity?.isChangingConfigurations != true) model.release(session)
             }
