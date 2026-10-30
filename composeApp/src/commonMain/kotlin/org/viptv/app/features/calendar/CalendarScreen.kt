@@ -29,16 +29,18 @@ internal fun calendarEmptyDay(filter: CalendarFilter?) =
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
-    type: String = "series", week: Int = 0, controls: Boolean = false,
+    type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
     sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null) {
-    var chosen by remember { mutableStateOf(CalendarFilter.All) }
+    var chosen by remember { mutableStateOf(CALENDAR_DEFAULT_FILTER) }
     val offered = calendarFilterOffered(entries, sources)
-    LaunchedEffect(offered) { if (!offered) chosen = CalendarFilter.All }
     val filter = chosen.takeIf { offered }
-    val shown = entries.shown(chosen, offered)
+    val fallback = entries.fallsBackToAll(filter)
+    val shown = if (fallback) entries else entries.shown(chosen, offered)
+    val notice = if (fallback) CALENDAR_FALLBACK else null
+    val emptyFilter = filter.takeUnless { fallback }
     if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry); return }
+        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice); return }
     val choose = calendarOpener(open, openEntry)
     var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
@@ -65,6 +67,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                 }
             }
             error?.let { Text(it, color = Palette.danger) }
+            notice?.let { Text(it, color = Palette.secondary, fontSize = if (phone) 13.sp else 14.sp) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             if (entries.isEmpty() && !busy && error == null) {
                 Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
@@ -81,13 +84,13 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                                     Text(day.fullDate, fontSize = 12.sp, color = Palette.secondary)
                                 }
                             }
-                            if(releases.isEmpty())item(key="empty:${day.id}"){Text(calendarEmptyDay(filter),color=Palette.secondary,fontSize=13.sp)}
+                            if(releases.isEmpty())item(key="empty:${day.id}"){Text(calendarEmptyDay(emptyFilter),color=Palette.secondary,fontSize=13.sp)}
                             items(releases, key = { it.id }) { CalendarReleaseRow(it,true,scale,watch,{focused=it},{choose(it)}) }
                         }
                     } else items(visible, key = { it.id }) {
                         CalendarReleaseRow(it,false,scale,watch,{focused=it},{choose(it)})
                     }
-                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(filter),color=Palette.secondary)}
+                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(emptyFilter),color=Palette.secondary)}
                 }
                 if (television && focused != null) Column(Modifier.width(584.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     val entry = requireNotNull(focused)

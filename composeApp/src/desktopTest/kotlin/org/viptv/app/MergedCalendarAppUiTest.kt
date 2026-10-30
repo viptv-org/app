@@ -23,6 +23,7 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.viptv.app.connection.*
+import org.viptv.app.features.calendar.CALENDAR_FALLBACK
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.resources.Res
 import org.viptv.app.state.*
@@ -86,23 +87,21 @@ class MergedCalendarAppUiTest {
         desktopChrome: Boolean = false, browser: Boolean = false) = scene(mergedPage, television, width, height, desktopChrome, browser) { s ->
         val phone = !television && width < 640
         if (phone) s.showToday()
-        s.until("the merged rows") { s.nodes().any { text(it).contains("Public premiere") } && s.nodes().any { text(it).contains("Slow Horses") } }
+        s.until("the merged rows") { s.nodes().any { text(it).contains("Slow Horses") } && s.nodes().any { text(it).contains("The Pitt") } }
         assertEquals(2, s.nodes().count { marked(it) && text(it).contains("Chapter") }, "Both library rows are marked")
-        assertFalse(s.nodes().any { marked(it) && text(it).contains("Public premiere") }, "Public rows are not")
-        assertEquals("Shows: All", s.showsLabel(), "$name: the Shows chip is the filter")
+        assertFalse(s.nodes().any { text(it).contains("Public premiere") }, "$name: Your shows hides the public schedule")
+        assertEquals("Shows: Your shows", s.showsLabel(), "$name: the Shows chip is the filter and states the default")
         if (television) assertTrue(s.showsTrigger()!!.config.contains(SemanticsActions.RequestFocus), "The remote reaches the filter")
+        s.save("$name-calendar-your-shows")
+        s.chooseShows("All")
+        s.until("the public schedule") { s.nodes().any { text(it).contains("Public premiere") } }
+        assertEquals("Shows: All", s.showsLabel(), "$name: the chip shows the picked source")
+        assertFalse(s.nodes().any { marked(it) && text(it).contains("Public premiere") }, "$name: a public row is not marked as yours")
+        assertFalse(s.nodes().any { text(it) == CALENDAR_FALLBACK }, "$name: All needs no fallback line")
         s.save("$name-calendar-all")
         s.chooseShows("Your shows")
-        s.until("the Your shows filter") { s.nodes().none { text(it).contains("Public premiere") } }
-        assertTrue(s.nodes().any { text(it).contains("Slow Horses") })
-        assertEquals("Shows: Your shows", s.showsLabel(), "$name: the chip shows the picked source")
-        s.save("$name-calendar-your-shows")
-        if (television) s.chooseShows("All")
-        else {
-            s.controller.navigate(Screen.Library); s.frames(10); s.controller.navigate(Screen.Calendar)
-            if (phone) s.showToday()
-        }
-        s.until("All again") { s.nodes().any { text(it).contains("Public premiere") } }
+        s.until("Your shows again") { s.nodes().none { text(it).contains("Public premiere") } && s.nodes().any { text(it).contains("Slow Horses") } }
+        assertEquals("Shows: Your shows", s.showsLabel(), "$name: the chip switches back")
         if (!details) return@scene
         val row = s.nodes().first { text(it).contains("Slow Horses") && it.config.contains(SemanticsActions.OnClick) }
         row.config[SemanticsActions.OnClick].action!!.invoke()

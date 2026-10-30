@@ -24,9 +24,10 @@ internal data class TvCalendarAction(val label: String, val target: Card, val pr
 @Composable
 internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, open: (Card) -> Unit,
     manage: () -> Unit, actions: Map<String, TvCalendarAction> = emptyMap(), watch: (Card) -> Unit = open, available: Boolean = true, busy: Boolean = false, error: String? = null,
-    type: String = "series", week: Int = 0, controls: Boolean = false,
+    type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
-    filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null) {
+    filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null,
+    notice: String? = null) {
     val choose = calendarOpener(open, openEntry)
     var chosen by remember { mutableStateOf<String?>(null) }
     val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
@@ -74,6 +75,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
         LazyColumn(Modifier.offset(96.dp * scale, contentY).width(1100.dp * scale)
             .height((pageHeight - contentY - 48.dp * scale).coerceAtLeast(0.dp)).tvRingRoom(tvRingReach(scale), horizontal = false), state = rows,
             contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
+            notice?.let { message -> item(key = "notice") { Text(message, color = Palette.secondary, fontSize = (24 * scale).sp) } }
             itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                 TvCalendarRow(entry, scale, focused?.id == entry.id, rowFocus.getOrPut(entry.id) { FocusRequester() },
                     if (index == 0) date else null, preview, { focusedId = entry.id }, { choose(entry) })
@@ -82,7 +84,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             error?.let { message -> item { Text(message, color = Palette.danger) } }
             if (visible.isEmpty() && !busy && error == null) item {
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                    Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter),
+                    Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter.takeIf { notice == null }),
                         color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
                     if (!available) TvAction(Modifier.height(64.dp * scale), scale, activate = manage,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text("Manage integrations", color = it, fontSize = (24 * scale).sp) }
