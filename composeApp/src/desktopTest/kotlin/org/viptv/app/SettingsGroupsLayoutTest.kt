@@ -33,22 +33,22 @@ class SettingsGroupsLayoutTest {
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
         Layout("tablet", 1000, 1200, desktop = false, web = false, devices = false, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
         Layout("desktop", 1440, 1200, desktop = true, web = false, devices = false, stremio = false, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
         Layout("web", 1440, 1200, desktop = false, web = true, devices = true, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
             SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
-            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SignOut))),
+            SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut))),
     )
 
     @Test fun everyLayoutShowsTheFourGroupsInOrderWithItsOwnRows() {
@@ -96,6 +96,8 @@ class SettingsGroupsLayoutTest {
                 sectionPreferences = { _, _ -> Text("preferences page") },
                 stremioImport = if (layout.stremio) ({ _, _, _ -> }) else null,
                 addDevice = { Text("add device page") },
+                householdPin = { Text("household pin page") },
+                sourceIntegrations = { _, _, _ -> Text("source integrations page") },
                 devices = if (layout.devices) ({ _, _ -> }) else null,
                 linkedServices = { _ -> Text("linked services page") },
                 desktop = layout.desktop)

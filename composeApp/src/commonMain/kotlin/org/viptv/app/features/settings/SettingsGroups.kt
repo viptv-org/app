@@ -50,7 +50,8 @@ internal fun settingsSections(available: Set<SettingsRow>): List<SettingsSection
     }
 
 internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: Boolean, account: Boolean,
-    devices: Boolean, addDevice: Boolean, watchOnTv: Boolean, information: Boolean, linkedServices: Boolean = false): Set<SettingsRow> = buildSet {
+    devices: Boolean, addDevice: Boolean, watchOnTv: Boolean, information: Boolean,
+    householdPin: Boolean = false, sourceIntegrations: Boolean = false, linkedServices: Boolean = false): Set<SettingsRow> = buildSet {
     add(SettingsRow.Profile)
     if (linkedServices) add(SettingsRow.LinkedServices)
     if (parental) add(SettingsRow.ParentalControls)
@@ -59,9 +60,11 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     if (watchOnTv) add(SettingsRow.WatchOnTv)
     if (information) { add(SettingsRow.About); add(SettingsRow.Help) }
     if (account) add(SettingsRow.Account)
+    if (householdPin) add(SettingsRow.HouseholdPin)
     if (devices) add(SettingsRow.Devices)
     if (addDevice) add(SettingsRow.AddDevice)
     add(SettingsRow.Addons)
+    if (sourceIntegrations) add(SettingsRow.SourceIntegrations)
     add(SettingsRow.SignOut)
 }
 

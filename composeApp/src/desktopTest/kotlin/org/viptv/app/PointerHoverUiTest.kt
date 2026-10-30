@@ -68,7 +68,7 @@ class PointerHoverUiTest {
             val where = if (browser) "web" else "desktop"
             val scene = scene(pointer = true, browser = browser)
             var frame = 0L
-            fun render() = repeat(4) { scene.render(frame++ * 16_666_667L).close() }
+            fun render() = repeat(14) { scene.render(frame++ * 16_666_667L).close() }
             try {
                 render()
                 assertTrue(hoverTags(scene).isEmpty(), "$where: no card is hovered before the mouse arrives")
@@ -97,7 +97,7 @@ class PointerHoverUiTest {
             }
         }
         var frame = 0L
-        fun render() = repeat(4) { scene.render(frame++ * 16_666_667L).close() }
+        fun render() = repeat(14) { scene.render(frame++ * 16_666_667L).close() }
         try {
             render()
             scene.sendPointerEvent(PointerEventType.Move, card(scene, "Saved Show").boundsInRoot.center); render()
@@ -111,7 +111,7 @@ class PointerHoverUiTest {
     @Test fun touchLayoutsKeepNoHoverVisuals() = onEdt {
         val scene = scene(pointer = false, browser = false)
         var frame = 0L
-        fun render() = repeat(4) { scene.render(frame++ * 16_666_667L).close() }
+        fun render() = repeat(14) { scene.render(frame++ * 16_666_667L).close() }
         try {
             render()
             scene.sendPointerEvent(PointerEventType.Move, card(scene, "Resume Movie").boundsInRoot.center); render()

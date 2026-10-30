@@ -40,8 +40,9 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.HoverFill
-import org.viptv.app.components.pointerHovered
+import org.viptv.app.components.Motion
+import org.viptv.app.components.hoverFill
+import org.viptv.app.components.pressScale
 import androidx.compose.foundation.interaction.MutableInteractionSource
 
 @Composable
@@ -143,8 +144,8 @@ private fun BrowserBrowseFailure(error: String, title: String?, source: String?,
 private fun BrowserStateAction(label: String, primary: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val rest = if (primary) Palette.text else Color.Transparent
-    Row(Modifier.height(38.dp).clip(RoundedCornerShape(12.dp))
-        .background(if (interaction.pointerHovered()) HoverFill.container(rest) else rest)
+    Row(Modifier.height(38.dp).pressScale(interaction, Motion.button).clip(RoundedCornerShape(12.dp))
+        .background(hoverFill(interaction, rest))
         .then(if (primary) Modifier else Modifier.border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(12.dp)))
         .pointerClickable(interactionSource = interaction, onClick = onClick, shape = RoundedCornerShape(12.dp), hover = null).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (primary) Palette.background else Palette.text)

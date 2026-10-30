@@ -65,10 +65,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         }) else null,
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
-        account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,
-            controller::refreshAccounts, controller::linkSimkl, controller::unlinkSimkl, leave,
-            identity = state.accountIdentity ?: state.accountDevices?.account,
-            dashboardAddress = controller.connection?.accountDashboardUrl) },
+        householdPin = if (!state.localMode) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
+            state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
+            controller::unlockParentControls, controller::changeParentPin) }) else null,
+        account = if (state.localMode) null else ({ AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account,
+            state.busy, state.error, controller::refreshAccounts) }),
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
@@ -90,7 +91,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
             StremioImportRoute(state, controller, compact, if (compact) back else null, manageAddons) }) else null,
         serverAddress = controller.connection?.accountDashboardUrl,
-        tvAccount = (state.accountIdentity ?: state.accountDevices?.account)?.let { TvAccountInfo(username = it.username) },
+        tvAccount = (state.accountIdentity ?: state.accountDevices?.account)?.let { TvAccountInfo(it.name, it.username, it.role) },
         accountRequested = if (!state.localMode) controller::refreshAccountIdentity else null,
         accountDashboard = controller.connection?.accountDashboardUrl?.let { url -> { org.viptv.app.connection.openAccountAuthorization(url) } },
         tvPreferences = state.preferences?.preferences?.tvSettings(),
