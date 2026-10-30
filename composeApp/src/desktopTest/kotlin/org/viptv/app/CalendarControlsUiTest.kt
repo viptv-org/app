@@ -45,7 +45,8 @@ class CalendarControlsUiTest {
         for(tv in listOf(false,true)){
             val layout=if(tv)"TV" else "desktop"
             var category=""
-            val scene=ImageComposeScene(if(tv)1920 else 1200,900,Density(1f)){ViptvTheme(tv){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry,library),tv,{},{},controls=true,categoryChanged={category=it})}}}
+            val type=mutableStateOf(CALENDAR_DEFAULT_TYPE)
+            val scene=ImageComposeScene(if(tv)1920 else 1200,900,Density(1f)){ViptvTheme(tv){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry,library),tv,{},{},controls=true,type=type.value,categoryChanged={category=it;type.value=it})}}}
             try{
                 frames(scene)
                 assertTrue(nodes(scene).any{it.config.getOrNull(SemanticsProperties.Role)==Role.DropdownList&&text(it)=="Type: All"},"$layout: every type is the default")

@@ -94,14 +94,14 @@ class MergedCalendarTest {
     }
 
     @Test fun theDefaultTypeReadsEveryCalendarAndMergesThem() = runBlocking {
-        val types = mutableListOf<String?>()
+        val types = mutableListOf<String>()
         val client = client { request ->
             if (!request.url.encodedPath.startsWith("/api/calendar")) return@client null
-            val type = request.url.parameters["type"]
+            val type = request.url.parameters["type"].orEmpty()
             types += type
             when (type) {
                 "series" -> page(listOf(MergedCalendarWire.library("lib-1", "Your series", 2, 3)), sources = listOf("library", "public"))
-                "anime" -> page(listOf(MergedCalendarWire.library("an-1", "Your anime", 1, 5, date = MergedCalendarWire.today(22)), sources = listOf("library")))
+                "anime" -> page(listOf(MergedCalendarWire.library("an-1", "Your anime", 1, 5, date = MergedCalendarWire.today(22))), sources = listOf("library"))
                 else -> page(listOf(MergedCalendarWire.public("movie-1", "Movie premiere", date = MergedCalendarWire.today(21))), sources = listOf("public"))
             }
         }
