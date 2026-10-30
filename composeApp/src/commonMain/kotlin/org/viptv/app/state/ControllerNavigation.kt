@@ -10,31 +10,31 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         pending.cancel()
         if (job === pending) {
             generation++
-            mutable.value = mutable.value.copy(busy = false)
+            updateState { it.copy(busy = false) }
         }
     }
     if (screen != Screen.Settings && mutable.value.parentTitles != null) closeParentTitles()
     if (mutable.value.screen == Screen.Calendar && screen != Screen.Calendar) {
         generation++
         job?.cancel()
-        mutable.value = mutable.value.copy(busy = false)
+        updateState { it.copy(busy = false) }
     }
     if (screen != Screen.Details) cancelDetailPaging()
     if (screen !in listOf(Screen.Details, Screen.Sources, Screen.Player)) {
         cancelSourceDetail()
         if (mutable.value.playTapTitle != null || mutable.value.detailFailure != null)
-            mutable.value = mutable.value.copy(playTapTitle = null, detailFailure = null)
+            updateState { it.copy(playTapTitle = null, detailFailure = null) }
     }
     if (screen != Screen.Sources && mutable.value.findingSources) {
         generation++
         job?.cancel()
-        mutable.value = mutable.value.copy(findingSources = false, busy = false)
+        updateState { it.copy(findingSources = false, busy = false) }
     }
     val playerVisit = screen == Screen.Settings && mutable.value.settingsReturnsToPlayer &&
         previousScreen in listOf(Screen.Player, Screen.Settings)
     if (screen != Screen.Player && !playerVisit && mutable.value.playback != null) {
         val live = mutable.value.playback?.live == true
-        if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releaseRemotePlayback(); mutable.value = mutable.value.copy(playback = null)
+        if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releaseRemotePlayback(); updateState { it.copy(playback = null) }
         afterPlayback(live)
     }
     val recorded = when (previousScreen) {
@@ -43,12 +43,15 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         Screen.Player -> mutable.value.detailReturnScreen
         else -> previousScreen
     }
-    val history = if (record && screen != previousScreen)
-        mutable.value.copy(navBack = (mutable.value.navBack + recorded).takeLast(32), navForward = emptyList())
-    else mutable.value
-    mutable.value = history.copy(screen = screen, error = null, detailRetryable = true, settingsEntrySection = if (screen == Screen.Settings) mutable.value.settingsEntrySection else null,
-        settingsReturnsToPlayer = playerVisit,
-        settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) mutable.value.settingsPage else null)
+    updateState { state ->
+        val history = if (record && screen != previousScreen)
+            state.copy(navBack = (state.navBack + recorded).takeLast(32), navForward = emptyList())
+        else state
+        history.copy(screen = screen, error = null, detailRetryable = true,
+            settingsEntrySection = if (screen == Screen.Settings) state.settingsEntrySection else null,
+            settingsReturnsToPlayer = playerVisit,
+            settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) state.settingsPage else null)
+    }
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
         loadBrowse(browse ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }
@@ -64,7 +67,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         progressJob?.join()
         val profile = requireNotNull(mutable.value.selectedProfile)
         val history = readCurrentPage(navigation) { local?.history(profile) ?: requireNotNull(connection).history(profile) } ?: return@runPage
-        mutable.value = mutable.value.copy(history = history)
+        updateState { it.copy(history = history) }
     }
     rememberNavigation()
 }
@@ -74,18 +77,19 @@ fun ApplicationController.backDetails() {
     generation++
     job?.cancel()
     val previous = mutable.value.detailHistory.lastOrNull()
-    if (previous != null) mutable.value = mutable.value.copy(detail = previous, detailHistory = mutable.value.detailHistory.dropLast(1), busy = false, error = null, detailRetryable = true)
-    else { mutable.value = mutable.value.copy(busy = false); returnTo(mutable.value.detailReturnScreen) }
+    if (previous != null) updateState { it.copy(detail = previous, detailHistory = it.detailHistory.dropLast(1), busy = false, error = null, detailRetryable = true) }
+    else { updateState { it.copy(busy = false) }; returnTo(mutable.value.detailReturnScreen) }
     rememberNavigation()
 }
 
 fun ApplicationController.backSources() {
-    val state = mutable.value
-    val awaitingTitle = state.playTapTitle != null && state.detail == null && state.sourceReturnScreen == Screen.Details
+    val awaitingTitle = mutable.value.let { it.playTapTitle != null && it.detail == null && it.sourceReturnScreen == Screen.Details }
     generation++; job?.cancel()
     if (!awaitingTitle) cancelSourceDetail()
-    mutable.value = state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false,
-        error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
+    updateState { state ->
+        state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false,
+            error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
+    }
     rememberNavigation()
 }
 
@@ -108,7 +112,7 @@ fun ApplicationController.navigateBack() {
 fun ApplicationController.navigateSystemBack() {
     if (mutable.value.screen == Screen.Home) {
         navigate(Screen.Profiles, record = false)
-        mutable.value = mutable.value.copy(profilesFromHome = true)
+        updateState { it.copy(profilesFromHome = true) }
         return
     }
     navigateBack()
@@ -149,7 +153,7 @@ private fun ApplicationState.settingsLevelOpen() =
     screen == Screen.Settings && (parentTitles != null || settingsPage?.parent() != null)
 
 fun ApplicationController.showSettingsPage(page: SettingsPage) {
-    if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page) mutable.value = mutable.value.copy(settingsPage = page)
+    if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page) updateState { it.copy(settingsPage = page) }
 }
 
 private fun ApplicationController.backWithinSettings(): Boolean {
@@ -157,27 +161,26 @@ private fun ApplicationController.backWithinSettings(): Boolean {
     if (!state.settingsLevelOpen()) return false
     if (state.parentTitles != null) { closeParentTitles(); return true }
     val parent = state.settingsPage?.parent() ?: return false
-    mutable.value = state.copy(settingsPage = parent)
+    updateState { it.copy(settingsPage = parent) }
     return true
 }
 
 fun ApplicationController.navigateForward() {
     val state = mutable.value
     val target = state.navForward.lastOrNull() ?: return
-    mutable.value = state.copy(navForward = state.navForward.dropLast(1), navBack = state.navBack + state.screen)
+    updateState { it.copy(navForward = it.navForward.dropLast(1), navBack = it.navBack + it.screen) }
     navigate(target, record = false)
 }
 
 private fun ApplicationController.returnTo(screen: Screen) {
     val state = mutable.value
-    val back = if (state.navBack.lastOrNull() == screen) state.navBack.dropLast(1) else state.navBack
-    mutable.value = state.copy(navBack = back)
+    updateState { current -> current.copy(navBack = if (current.navBack.lastOrNull() == screen) current.navBack.dropLast(1) else current.navBack) }
     navigate(screen, record = false)
 }
 
 private fun ApplicationController.popHistory() {
     val state = mutable.value
     val target = state.navBack.lastOrNull() ?: return
-    mutable.value = state.copy(navBack = state.navBack.dropLast(1), navForward = state.navForward + state.screen)
+    updateState { it.copy(navBack = it.navBack.dropLast(1), navForward = it.navForward + it.screen) }
     navigate(target, record = false)
 }

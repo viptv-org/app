@@ -60,6 +60,48 @@ class CalendarControlsUiTest {
             }finally{scene.close()}
         }
     }
+    @Test fun phoneKeepsTheWeekAndTheFiltersOnSeparateRowsThatScrollOnTheirOwn(){
+        val library=entry.copy(id="library",card=card.copy(identity=MediaIdentity("simkl:tv:21","series",emptyList()),title="Library series"),source=CalendarSource.Library)
+        val weekDays=listOf(CalendarDay("one","Thu","15","Today","Thursday, October 15"),CalendarDay("two","Fri","16","Tomorrow","Friday, October 16"))
+        val scene=ImageComposeScene(390,900,Density(1f)){ViptvTheme(false){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(weekDays,listOf(entry,library),false,{},{},controls=true)}}}
+        try{
+            frames(scene)
+            val week=weekRow(scene);val filters=filterRow(scene)
+            assertTrue(week.maxOf{it.boundsInRoot.bottom}<=filters.minOf{it.boundsInRoot.top},
+                "the week chips sit above the filter chips; week="+week.map{it.boundsInRoot}+" filters="+filters.map{it.boundsInRoot})
+            val bands=listOf(week,filters).map{row->row.minOf{it.boundsInRoot.top} to row.maxOf{it.boundsInRoot.bottom}}
+            var strips=bands.map{strip(scene,it)}
+            listOf(week,filters).forEachIndexed{index,row->
+                val rowStrip=strips[index]
+                near(390f,rowStrip.boundsInRoot.width,"row $index spans the screen")
+                row.forEach{control->
+                    assertTrue(control.boundsInRoot.top>=rowStrip.boundsInRoot.top&&control.boundsInRoot.bottom<=rowStrip.boundsInRoot.bottom,"row $index holds its own controls")
+                    val onScreen=control.boundsInRoot.left>=rowStrip.boundsInRoot.left&&control.boundsInRoot.right<=rowStrip.boundsInRoot.right
+                    assertTrue(onScreen||reach(rowStrip).second>0f,"row $index shows its controls or scrolls to them")
+                }
+            }
+            val overflowing=strips.indices.filter{reach(strips[it]).second>0f}
+            assertTrue(overflowing.isNotEmpty(),"the week's navigation overflows the 390 dp row")
+            for(index in overflowing){
+                val before=strips.map(::reach)
+                val (value,end)=before[index]
+                assertTrue(strips[index].config[SemanticsActions.ScrollBy].action!!.invoke(end-value,0f),"row $index scrolls by its own overflow")
+                frames(scene,10)
+                strips=listOf(bands[0],bands[1]).map{strip(scene,it)}
+                val after=strips.map(::reach)
+                near(end,after[index].first,"row $index reaches its end")
+                strips.indices.filter{it!=index}.forEach{other->near(before[other].first,after[other].first,"row $other stays put")}
+            }
+            val range=nodes(scene).firstOrNull{text(it)=="Thursday, October 15 – Friday, October 16"}?:fail("the date range is not on the week row")
+            assertTrue(range.boundsInRoot.top>=bands[0].first&&range.boundsInRoot.bottom<=bands[0].second,"the date range rides the week row")
+        }finally{scene.close()}
+    }
+    private fun weekRow(s:ImageComposeScene)=listOf("Previous week","This week","Next week").map{label->nodes(s).single{text(it)==label&&it.config.contains(SemanticsActions.OnClick)}}
+    private fun filterRow(s:ImageComposeScene)=listOf("Type: TV","Shows: All").map{label->nodes(s).single{it.config.getOrNull(SemanticsProperties.Role)==Role.DropdownList&&text(it)==label}}
+    private fun strip(s:ImageComposeScene,band:Pair<Float,Float>)=nodes(s).filter{it.config.contains(SemanticsProperties.HorizontalScrollAxisRange)}
+        .single{it.boundsInRoot.top<=band.first&&it.boundsInRoot.bottom>=band.second}
+    private fun reach(node:SemanticsNode)=node.config[SemanticsProperties.HorizontalScrollAxisRange].let{range->range.value() to range.maxValue()}
+    private fun near(expected:Float,actual:Float,what:String)=assertTrue(kotlin.math.abs(expected-actual)<=1f,"$what: expected $expected, was $actual")
     private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(20){s.render((offset+it)*16_666_667L).close();Thread.sleep(3)}
     private fun await(s:ImageComposeScene,offset:Int,what:String,condition:()->Boolean){
         val deadline=System.nanoTime()+2_000_000_000L
