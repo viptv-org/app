@@ -38,6 +38,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -430,6 +431,9 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
     val list = rememberLazyListState()
     // Keyed by option so a requester survives a search that renumbers the rows.
     val requesters = remember { mutableMapOf<String, FocusRequester>() }
+    val search = remember { FocusRequester() }
+    var lastFocus by remember { mutableStateOf<FocusRequester?>(null) }
+    val windowFocused = LocalWindowInfo.current.isWindowFocused
     fun key(row: SelectOption?) = row?.id ?: "any"
     fun enabled(row: SelectOption?) = choiceEnabled(row, multiple, cap, selected)
     fun pick(row: SelectOption?) {
@@ -446,8 +450,18 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
             if (requesters[key(rows.getOrNull(current))]?.requestFocus() == true) return@LaunchedEffect
         }
     }
+    // A fullscreen keyboard takes the window focus and Compose releases the panel's; Back hands it back with nothing focused.
+    LaunchedEffect(windowFocused) {
+        if (!windowFocused) return@LaunchedEffect
+        val target = lastFocus ?: return@LaunchedEffect
+        repeat(30) {
+            withFrameNanos { }
+            if (target.requestFocus()) return@LaunchedEffect
+        }
+    }
     Column(Modifier.fillMaxSize()) {
-        if (searchable) SelectField(query, searchPlaceholder, Lucide.Search, metrics, Modifier) { query = it }
+        if (searchable) SelectField(query, searchPlaceholder, Lucide.Search, metrics,
+            Modifier.focusRequester(search).onFocusChanged { if (it.isFocused) lastFocus = search }) { query = it }
         if (rows.isEmpty()) Text("No matches for “${query.trim()}”",
             Modifier.padding(horizontal = 8.dp * scale, vertical = 12.dp * scale), fontSize = (20 * scale).sp, color = Palette.secondary)
         LazyColumn(Modifier.fillMaxWidth().weight(1f), state = list,
@@ -456,7 +470,8 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
                 val checked = if (row == null) selected.isEmpty() else row.id in selected
                 TvSelectRow(row?.label ?: anyLabel.orEmpty(), unavailable = row != null && !row.enabled,
                     trailing = listOfNotNull(if (row == null) anyTrailing else row.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
-                    checked, multiple, enabled(row), scale, requesters.getOrPut(key(row)) { FocusRequester() }) { pick(row) }
+                    checked, multiple, enabled(row), scale, requesters.getOrPut(key(row)) { FocusRequester() },
+                    onFocus = { lastFocus = it }) { pick(row) }
             }
         }
     }
@@ -566,14 +581,14 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
 
 @Composable
 private fun TvSelectRow(label: String, unavailable: Boolean, trailing: String?, checked: Boolean, multiple: Boolean,
-    enabled: Boolean, scale: Float, requester: FocusRequester, pick: () -> Unit) {
+    enabled: Boolean, scale: Float, requester: FocusRequester, onFocus: (FocusRequester) -> Unit = {}, pick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     var focused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(14.dp * scale)
     val click = if (multiple) Modifier.pointerToggleable(checked, interaction, null, enabled, Role.Checkbox, shape, hover = null) { pick() }
     else Modifier.pointerSelectable(checked, interaction, null, enabled, Role.RadioButton, shape, hover = null, onClick = pick)
     Row(Modifier.fillMaxWidth().height(72.dp * scale).focusRequester(requester)
-        .onFocusChanged { focused = it.isFocused }
+        .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(requester) }
         .tvFocusOutline(focused, 14.dp * scale, scale)
         .clip(shape)
         .background(when { focused -> Palette.text; checked -> Color.White.copy(alpha = .16f); else -> Color.White.copy(alpha = .04f) })
