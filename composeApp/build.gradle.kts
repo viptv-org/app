@@ -53,6 +53,10 @@ kotlin {
             dependencies {
                 implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
                 implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+                implementation("androidx.activity:activity-compose:1.10.1")
+                // Add a device reads the TV's pairing QR with CameraX and ML Kit, whose barcode model ships in the APK.
+                listOf("camera-core", "camera-camera2", "camera-lifecycle", "camera-view").forEach { implementation("androidx.camera:$it:1.6.1") }
+                implementation("com.google.mlkit:barcode-scanning:17.3.0")
                 implementation("net.java.dev.jna:jna:5.17.0@aar")
                 implementation(project(":media3-ffmpeg"))
                 listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-exoplayer-dash", "media3-ui").forEach { implementation("androidx.media3:$it:1.11.1") }

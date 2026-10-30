@@ -31,9 +31,10 @@ internal fun DeviceCodeInput(
     error: Boolean = false,
     enabled: Boolean = true,
     compact: Boolean = false,
+    autofocus: Boolean = true,
 ) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    LaunchedEffect(Unit) { if (autofocus) focus.requestFocus() }
     val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     val slotWidth = if (compact) 34.dp else 56.dp
     val slotHeight = if (compact) 39.dp else 64.dp
