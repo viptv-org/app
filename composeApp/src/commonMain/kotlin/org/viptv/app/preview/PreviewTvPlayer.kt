@@ -34,7 +34,7 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
     val openSources = { go(Screen.Sources) }
     val previewExtras = when {
         variant == "ErrorBackOnly" -> PreviewTvPlayback.extras.copy(failureDescription = "Playback failed. Go back to choose another item.", fallbackLabel = null)
-        scene == TvPlayerScene.Skip -> PreviewTvPlayback.extras.copy(skip = TvSkipRange(0, 10000))
+        scene == TvPlayerScene.Skip -> PreviewTvPlayback.extras.copy(skips = listOf(TvSkipRange(0, 10000)))
         variant == "ScrubNoImage" -> PreviewTvPlayback.extras.copy(thumbnails = emptyList())
         else -> PreviewTvPlayback.extras
     }
