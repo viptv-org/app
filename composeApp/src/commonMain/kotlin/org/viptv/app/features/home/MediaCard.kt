@@ -29,6 +29,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -47,10 +49,12 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Ellipsis
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.Trash2
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
@@ -69,6 +73,8 @@ import org.viptv.app.components.caughtUpNextCaption
 import org.viptv.app.components.LocalNextEpisodes
 import org.viptv.app.components.Motion
 import org.viptv.app.components.hoverFill
+import org.viptv.app.components.LocalListRemoval
+import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvBackdropBlur
@@ -94,6 +100,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     onHover: (Boolean) -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
+    val removal = LocalListRemoval.current
     val nextEpisodes = LocalNextEpisodes.current
     val caughtUp = remember(card) { card.caughtUpCaption() }
     val nextCaption = remember(card, caughtUp, nextEpisodes) {
@@ -122,7 +129,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         }
     }
     Column(modifier.width(width.dp).hoverable(hover)
-        .cardContextClick(desktop) { previewOpen = false; menuAt = it }
+        .cardContextClick(desktop || removal != null) { previewOpen = false; menuAt = it }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .pointerClickable(interactionSource = press, indication = null) { (select ?: open)(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).pressScale(press, Motion.card)
@@ -143,6 +150,19 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 else ArtWatchedBadge(Modifier.matchParentSize())
             }
             if (hoverFade > 0f) CardHoverScrim(Modifier.matchParentSize().graphicsLayer { alpha = hoverFade })
+            // Phone and web have no context menu, so the menu gets a target of its own.
+            if (removal != null && !desktop) {
+                var at by remember { mutableStateOf(IntOffset.Zero) }
+                val more = remember { MutableInteractionSource() }
+                Box(Modifier.align(Alignment.BottomEnd).padding(6.dp)
+                    .onGloballyPositioned { at = IntOffset(it.positionInParent().x.roundToInt(), it.positionInParent().y.roundToInt()) }
+                    .size(44.dp).pressScale(more, Motion.button).clip(CircleShape).background(HoverFill.cardScrim)
+                    .pointerClickable(interactionSource = more, indication = null,
+                        onClickLabel = "More actions", shape = CircleShape) { previewOpen = false; menuAt = at },
+                    contentAlignment = Alignment.Center) {
+                    Icon(Lucide.Ellipsis, "More actions", Modifier.size(20.dp), tint = Palette.text)
+                }
+            }
             card.progress?.let { progress ->
                 val p = progress.toFloat().coerceIn(0f, 1f)
                 Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(4.dp).drawBehind {
@@ -162,27 +182,27 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
-        if (actions != null) {
+        if (actions != null || removal != null) {
             menuAt?.let { at ->
                 Popup(popupPositionProvider = CardMenuPosition(at),
                     onDismissRequest = { menuAt = null }, properties = PopupProperties(focusable = true)) {
-                    CardMenu(card, saved,
+                    CardMenu(card, saved, removal,
                         onDismiss = { menuAt = null },
                         onPlay = { menuAt = null; activate(card) },
                         onInfo = { menuAt = null; open(card) },
-                        onToggleSave = { menuAt = null; actions.toggleSave(card) })
+                        onToggleSave = actions?.let { { menuAt = null; it.toggleSave(card) } })
                 }
             }
-            if (previewOpen && menuAt == null) {
-                Popup(popupPositionProvider = CardPreviewPosition(gap),
-                    onDismissRequest = { previewOpen = false },
-                    properties = PopupProperties(focusable = false, dismissOnClickOutside = false, dismissOnBackPress = false)) {
-                    CardPreview(card, saved,
-                        onPlay = { previewOpen = false; activate(card) },
-                        onSave = { previewOpen = false; actions.toggleSave(card) },
-                        onInfo = { previewOpen = false; open(card) },
-                        onHoverChanged = { previewHovered = it })
-                }
+        }
+        if (actions != null && previewOpen && menuAt == null) {
+            Popup(popupPositionProvider = CardPreviewPosition(gap),
+                onDismissRequest = { previewOpen = false },
+                properties = PopupProperties(focusable = false, dismissOnClickOutside = false, dismissOnBackPress = false)) {
+                CardPreview(card, saved,
+                    onPlay = { previewOpen = false; activate(card) },
+                    onSave = { previewOpen = false; actions.toggleSave(card) },
+                    onInfo = { previewOpen = false; open(card) },
+                    onHoverChanged = { previewHovered = it })
             }
         }
     }
@@ -338,8 +358,9 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
 }
 
 @Composable
-private fun CardMenu(card: Card, saved: Boolean, onDismiss: () -> Unit,
-    onPlay: () -> Unit, onInfo: () -> Unit, onToggleSave: () -> Unit) {
+internal fun CardMenu(card: Card, saved: Boolean, removal: ListRemoval?, onDismiss: () -> Unit,
+    onPlay: () -> Unit, onInfo: () -> Unit, onToggleSave: (() -> Unit)?) {
+    val toggleSave = onToggleSave?.takeIf { removal?.replacesSave != true }
     Column(Modifier.width(300.dp)
         .graphicsLayer { shape = RoundedCornerShape(10.dp); shadowElevation = 16.dp.toPx() }
         .tvBackdropBlur(30.dp)
@@ -350,15 +371,26 @@ private fun CardMenu(card: Card, saved: Boolean, onDismiss: () -> Unit,
         .padding(5.dp)) {
         MenuItem(if (card.progress != null) "Resume" else "Play", Lucide.Play, onDismiss, onPlay)
         MenuItem("More info", Lucide.Info, onDismiss, onInfo)
-        Box(Modifier.padding(horizontal = 6.dp, vertical = 4.dp).fillMaxWidth().height(1.dp)
-            .background(Color.White.copy(alpha = .08f)))
-        MenuItem(if (saved) "In My List" else "Add to My List",
-            if (saved) Lucide.Check else Lucide.Plus, onDismiss, onToggleSave)
+        if (toggleSave != null) {
+            MenuDivider()
+            MenuItem(if (saved) "In My List" else "Add to My List",
+                if (saved) Lucide.Check else Lucide.Plus, onDismiss, toggleSave)
+        }
+        if (removal != null) {
+            MenuDivider()
+            MenuItem(removal.label, Lucide.Trash2, onDismiss, action = { removal.request(card) }, danger = true)
+        }
     }
 }
 
 @Composable
-private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, action: () -> Unit) {
+private fun MenuDivider() {
+    Box(Modifier.padding(horizontal = 6.dp, vertical = 4.dp).fillMaxWidth().height(1.dp)
+        .background(Color.White.copy(alpha = .08f)))
+}
+
+@Composable
+private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, action: () -> Unit, danger: Boolean = false) {
     val interaction = remember { MutableInteractionSource() }
     var focused by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(34.dp).pressScale(interaction, Motion.row)
@@ -371,7 +403,8 @@ private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, acti
         .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, shape = RoundedCornerShape(6.dp), hover = null) { dismiss(); action() }
         .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Icon(icon, null, Modifier.size(16.dp), tint = Palette.text)
-        Text(label, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium, color = Palette.text)
+        Icon(icon, null, Modifier.size(16.dp), tint = if (danger) Palette.danger else Palette.text)
+        Text(label, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium,
+            color = if (danger) Palette.danger else Palette.text)
     }
 }
