@@ -37,9 +37,13 @@ class TvPreferenceRowsUiTest {
             frames(scene)
             val rows = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.map(::text)
                 .mapNotNull { label -> tvPlaybackRows(false).firstOrNull { label.startsWith(it) } }
-            assertEquals(listOf("Default source", "Preferred quality", "HDR and Dolby Vision"), rows)
+            assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision"), rows)
             assertFalse(nodes(scene).any { text(it).startsWith("Start with subtitles") })
-            assertFocused(scene, "Default source")
+            assertFocused(scene, "Next episode button")
+            press(scene, Key.DirectionDown); assertFocused(scene, "Skip intros and recaps")
+            press(scene, Key.Enter); frames(scene, 20)
+            assertTrue(prefs.skipIntros, "Enter toggles the switch")
+            press(scene, Key.DirectionDown); assertFocused(scene, "Default source")
             press(scene, Key.DirectionDown); assertFocused(scene, "Preferred quality")
             assertTrue(focused(scene)!!.let(::text).contains("Auto"))
             press(scene, Key.DirectionDown); assertFocused(scene, "HDR and Dolby Vision")
@@ -51,7 +55,7 @@ class TvPreferenceRowsUiTest {
             capture(scene, "tv-playback-settings")
             press(scene, Key.DirectionLeft); frames(scene, 60)
             assertTrue(focused(scene)!!.let(::text).startsWith("Playback"), "Left reaches the sidebar: ${focused(scene)?.let(::text)}")
-            press(scene, Key.DirectionRight); frames(scene, 80); assertFocused(scene, "Default source")
+            press(scene, Key.DirectionRight); frames(scene, 80); assertFocused(scene, "Next episode button")
         } finally { scene.close() }
     }
 
