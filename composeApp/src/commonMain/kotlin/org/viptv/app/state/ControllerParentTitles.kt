@@ -80,7 +80,6 @@ fun ApplicationController.revokeParentTitle(selected: ApprovedTitle) {
 
 private suspend fun ApplicationController.parentTitlesRequest(action: suspend (RemoteConnection, ParentTitlesState) -> ParentTitlesState) {
     val remote = connection ?: throw LocalFailure("Connect to your account first.")
-    if (!remote.accountManagementEnabled) throw LocalFailure("Manage approved titles through your server’s web dashboard.")
     val state = mutable.value.parentTitles ?: throw LocalFailure("Choose a profile first.")
     val owner = generation
     try {
