@@ -46,12 +46,12 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     val rowFocus = remember(activeDay) { mutableMapOf<String, FocusRequester>() }
     val selectedRow = focused?.let { rowFocus.getOrPut(it.id) { FocusRequester() } }
     val rows = rememberLazyListState()
+    val returning = remember { restore.lastKey != null }
     val anchored = restore.landing(visible.size) { visible[it].id }
-    PageRestore(rows, restore, claimOnEntry = restore.lastKey != null, target = { restore.landing(visible.size) { visible[it].id } })
+    PageRestore(rows, restore, claimOnEntry = returning, target = { restore.landing(visible.size) { visible[it].id } })
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val pageHeight = maxHeight
-        // The chip row stays outside this group: a focus request into it counts as an entry and lands on today.
         if(controls)Box(Modifier.offset(96.dp*scale,8.dp*scale).width(1728.dp*scale).focusGroup()){
             CompositionLocalProvider(LocalTvScale provides scale) {
                 CalendarControls(type,week,true,scale,categoryChanged,weekChanged,
@@ -59,7 +59,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                     filter = filter, filterChanged = filterChanged, entry = typeChip)
             }
         }
-        Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (days.isNotEmpty()) date.requestFocus() else if (controls) typeChip.requestFocus() } }.focusGroup()) {
+        // onEnter also catches the restore's focus request; only a first visit sends it to the day rail.
+        Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (!returning) { if (days.isNotEmpty()) date.requestFocus() else if (controls) typeChip.requestFocus() } } }.focusGroup()) {
         val railY=if(controls)90.dp*scale else 8.dp*scale
         val contentY=if(controls)200.dp*scale else 118.dp*scale
         Row(Modifier.offset(96.dp * scale, railY).focusProperties { onEnter = { date.requestFocus() } }.focusGroup(),

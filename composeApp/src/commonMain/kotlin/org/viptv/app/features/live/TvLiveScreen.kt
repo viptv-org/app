@@ -47,13 +47,15 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         channel?.let(guideRequested)
     }
     val channelList = rememberLazyListState()
+    val returning = remember { restore.lastKey != null }
     val anchored = restore.landing(visible.size) { visible[it].key() }
     AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val pageHeight = maxHeight
         // The chip row stays outside the group below: that group's onEnter lands on the guide, and any focus request into it counts as an entry, so a chip inside could never take the remote's focus.
-        Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (visible.isNotEmpty()) first.requestFocus() else if (hasFilters) chip.requestFocus() } }.focusGroup()) {
+        // onEnter also catches the restore's focus request; only a first visit sends it to the guide's first cell.
+        Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (!returning) { if (visible.isNotEmpty()) first.requestFocus() else if (hasFilters) chip.requestFocus() } } }.focusGroup()) {
             channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
             Box(Modifier.offset(96.dp * scale, 460.dp * scale).width(1728.dp * scale)
                 .height((pageHeight - 510.dp * scale).coerceAtLeast(0.dp))) {
