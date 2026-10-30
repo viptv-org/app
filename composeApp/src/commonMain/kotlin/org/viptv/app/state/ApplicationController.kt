@@ -58,6 +58,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val viewerReturned = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
     internal val leaseWake = MutableStateFlow(0L)
     internal var subtitleDiscovery: Job? = null
+    internal var playbackSegmentsJob: Job? = null
     internal var nextEpisodeJob: Job? = null
     internal var nextEpisodeKey: NextEpisodeKey? = null
     internal var nextEpisodeGeneration = 0L

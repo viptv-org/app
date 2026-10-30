@@ -44,6 +44,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
+        desktop = desktop,
+        editProfile = state.selectedProfile?.let { id -> { controller.editProfile(id) } },
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         account = { LinkedAccounts(state.localMode, browser, state.simkl, state.busy, state.error,
@@ -78,16 +80,22 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         changeTvPreferences = { controller.updatePreferences(it.profilePreferences(state.preferences?.preferences ?: ProfilePreferences())) },
         parentalBack = if (state.parentTitles != null) controller::closeParentTitles else null,
         parental = {
-            if (browser && !state.localMode && state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
+            if (!state.localMode && state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
                 controller::closeParentTitles, controller::searchParentTitles, controller::refreshApprovedTitles,
                 controller::approveParentTitle, controller::revokeParentTitle)
-            else if (browser && !state.localMode) ParentControlsSettings(state.parentSettings, state.busy, state.error,
+            else if (!state.localMode) ParentControlsSettings(state.parentSettings, state.busy, state.error,
                 state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
                 controller::unlockParentControls, controller::changeParentPin, controller::changeKidsPolicy, controller::openParentTitles)
-            else ParentControlsNative(state.localMode, controller.connection?.accountDashboardUrl,
-                { controller.navigate(Screen.Profiles) })
+            else ParentControlsNative { controller.navigate(Screen.Profiles) }
         },
-        tvParental = null,
+        tvParental = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
+            if (state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
+                controller::closeParentTitles, controller::searchParentTitles, controller::refreshApprovedTitles,
+                controller::approveParentTitle, controller::revokeParentTitle, first)
+            else TvParentControlsSettings(state.parentSettings, state.busy, state.error, state.parentSettingsNotice,
+                state.parentSettingsSaved, controller::refreshParentControls, controller::unlockParentControls,
+                controller::changeParentPin, controller::changeKidsPolicy, controller::openParentTitles, first, sidebar, scale)
+        }),
         tvParentalMaturity = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.let {
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },

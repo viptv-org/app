@@ -5,7 +5,7 @@ import org.viptv.app.connection.*
 fun ApplicationController.selectProfile(id: String) {
     if (mutable.value.busy) return
     if (mutable.value.profiles.any { it.id == id && it.locked }) {
-        mutable.value = mutable.value.copy(screen = Screen.ProfilePin, profileToOpen = id, error = null)
+        updateState { next -> next.copy(screen = Screen.ProfilePin, profileToOpen = id, error = null) }
         return
     }
     run { openProfile(id) }
@@ -25,34 +25,37 @@ internal suspend fun ApplicationController.openProfile(id: String) {
     val result=local?.bootstrap(id) ?: requireNotNull(connection).selectProfile(id)
     restartRequested = false
     accept(result)
-    local?.let { mutable.value=mutable.value.copy(home=it.refreshHome(id)) }
+    local?.let { device ->
+        val home = device.refreshHome(id)
+        updateState { next -> next.copy(home = home) }
+    }
     resumeNavigation()
 }
 
-fun ApplicationController.manageProfiles() { mutable.value=mutable.value.copy(managingProfiles=true,error=null) }
+fun ApplicationController.manageProfiles() { updateState { next -> next.copy(managingProfiles=true,error=null) } }
 
-fun ApplicationController.stopManagingProfiles() { mutable.value=mutable.value.copy(managingProfiles=false,error=null) }
+fun ApplicationController.stopManagingProfiles() { updateState { next -> next.copy(managingProfiles=false,error=null) } }
 
-fun ApplicationController.editProfile(id: String) { mutable.value=mutable.value.copy(screen=Screen.ProfileEdit,profileToEdit=id,error=null) }
+fun ApplicationController.editProfile(id: String) { updateState { next -> next.copy(screen=Screen.ProfileEdit,profileToEdit=id,error=null) } }
 
 fun ApplicationController.createProfile(name: String) = profileMutation {
     if (local != null) requireNotNull(local).createProfile(name) else requireNotNull(connection).createProfile(name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
-    mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,error=null)
+    updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,error=null) }
 }
 
 fun ApplicationController.renameProfile(name: String, pin: String) = profileMutation {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).renameProfile(id,name,pin) else requireNotNull(connection).renameProfile(id,name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
-    mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true)
+    updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true) }
 }
 
 fun ApplicationController.setProfileAvatar(style: String, choice: Int, pin: String) = profileMutation {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).setProfileAvatar(id,style,choice,pin) else requireNotNull(connection).setProfileAvatar(id,style,choice)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
-    mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement)
+    updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement) }
 }
 
 fun ApplicationController.deleteProfile(pin: String) = profileMutation {
@@ -64,9 +67,9 @@ fun ApplicationController.deleteProfile(pin: String) = profileMutation {
         liveFavoriteJobs.values.forEach { it.cancel() }; liveFavoriteJobs.clear()
         releaseRemotePlayback()?.join()
         accept(next, screen = Screen.Profiles)
-        mutable.value = mutable.value.copy(managingProfiles = true)
-    } else mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,
-        screen=Screen.Profiles,managingProfiles=true,profileToEdit=null,profileToOpen=null)
+        updateState { next -> next.copy(managingProfiles = true) }
+    } else updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,
+        screen=Screen.Profiles,managingProfiles=true,profileToEdit=null,profileToOpen=null) }
 }
 
 fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = profileMutation {
@@ -74,7 +77,7 @@ fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = profil
     val device = local ?: throw LocalFailure("This server uses an account parent PIN. Open Parental controls to manage it.")
     device.setProfilePin(id,oldPin,newPin)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
-    mutable.value=mutable.value.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true)
+    updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true) }
 }
 
 private fun ApplicationController.profileMutation(operation: suspend () -> Unit) {
@@ -85,10 +88,10 @@ private fun ApplicationController.profileMutation(operation: suspend () -> Unit)
 fun ApplicationController.profileSettings(section: String) {
     if (mutable.value.busy || section !in listOf("Subtitles & audio", "Parental controls")) return
     if (section == "Subtitles & audio" && mutable.value.profileToEdit != mutable.value.selectedProfile) {
-        mutable.value = mutable.value.copy(screen = Screen.Profiles, managingProfiles = false, error = null, settingsEntrySection = null)
+        updateState { next -> next.copy(screen = Screen.Profiles, managingProfiles = false, error = null, settingsEntrySection = null) }
         return
     }
-    mutable.value = mutable.value.copy(settingsEntrySection = section)
+    updateState { next -> next.copy(settingsEntrySection = section) }
     navigate(Screen.Settings)
     if (section == "Subtitles & audio" && mutable.value.preferences == null) refreshPreferences()
 }

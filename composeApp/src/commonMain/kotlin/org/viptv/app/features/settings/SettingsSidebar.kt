@@ -11,14 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.*
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
 @Composable
-internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -> Unit, stremioImport: Boolean = false, select: (String) -> Unit) {
+internal fun SettingsSidebar(selected: String, profile: Profile?, layout: SettingsLayout, sections: List<SettingsSection>,
+    local: Boolean, profiles: () -> Unit, select: (String) -> Unit, signOut: () -> Unit) {
     LazyColumn(Modifier.width(240.dp).fillMaxHeight().background(Palette.surface), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("Settings", Modifier.padding(vertical = 12.dp), fontSize = 24.sp, fontWeight = FontWeight.Bold) }
@@ -29,18 +29,22 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, profiles: () -
                 Column { Text(profile?.name ?: "Profile", fontWeight = FontWeight.SemiBold); Text("Switch profile", fontSize = 12.sp, color = Palette.secondary) }
             }
         }
-        val entries = listOfNotNull("General" to Lucide.Settings, "Playback" to Lucide.CirclePlay, "Subtitles & audio" to Lucide.Captions,
-            "Watch on TV" to Lucide.Tv, "Add-ons" to Lucide.Puzzle,
-            "Parental controls" to Lucide.LockKeyhole, "Account" to Lucide.UserRound,
-            (stremioImportSection to Lucide.Import).takeIf { stremioImport }, "Help" to Lucide.Info, "About" to Lucide.Info)
-        entries.forEach { (label, icon) -> item {
-            Surface(color = if (selected == label) Palette.raised else Palette.surface, shape = RoundedCornerShape(10.dp)) {
-                Row(Modifier.fillMaxWidth().pointerClickable(shape = RoundedCornerShape(10.dp)) { select(label) }.padding(horizontal = 12.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(icon, null, Modifier.size(20.dp))
-                    Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        sections.forEach { section ->
+            item(key = section.key) { SettingsGroupLabel(section.group.label, layout) }
+            section.rows.forEach { row ->
+                val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
+                item(key = row.key) {
+                    Surface(color = if (row.key == selected) Palette.raised else Palette.surface, shape = RoundedCornerShape(10.dp)) {
+                        Row(Modifier.fillMaxWidth().pointerClickable(shape = RoundedCornerShape(10.dp)) {
+                            if (row == SettingsRow.SignOut) signOut() else select(row.key)
+                        }.padding(horizontal = 12.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            SettingsRailIcon(row, Modifier.size(20.dp))
+                            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (row == SettingsRow.SignOut) Palette.danger else Palette.text)
+                        }
+                    }
                 }
             }
-        } }
+        }
     }
 }

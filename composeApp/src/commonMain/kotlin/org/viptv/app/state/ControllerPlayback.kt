@@ -23,7 +23,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
 internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean) {
     progressJob?.join()
     val stopping = releaseRemotePlayback()
-    mutable.value = mutable.value.copy(playback = null, presentation = null, findingSources = false)
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = false) }
     stopping?.join()
     val store = local
     val remote = connection
@@ -31,8 +31,8 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     if (mutable.value.preferences == null) loadPreferences()
     val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
     val lease = if (store == null) try {
-        leaseOpener.open(requireNotNull(remote), source, profile, forceGateway, positionMillis) { text -> mutable.value = mutable.value.copy(openingStage = text) }
-    } finally { mutable.value = mutable.value.copy(openingStage = null) } else null
+        leaseOpener.open(requireNotNull(remote), source, profile, forceGateway, positionMillis) { text -> updateState { next -> next.copy(openingStage = text) } }
+    } finally { updateState { next -> next.copy(openingStage = null) } } else null
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
     val card = requireNotNull(mutable.value.sourceTitle)
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId,
@@ -53,7 +53,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     tracking = if (lease != null && remote != null) {
         val events = RemotePlaybackEvents(remote, input, card)
         PlaybackTracking(scope, { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }, {
-            if (mutable.value.playback === input) mutable.value = mutable.value.copy(error = "Could not update your tracking account.")
+            if (mutable.value.playback === input) updateState { next -> next.copy(error = "Could not update your tracking account.") }
         })
     } else null
     firstFrameSeen = false
@@ -62,8 +62,15 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
-    mutable.value = mutable.value.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList())
+    updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList()) }
     loadNextEpisode()
+    playbackSegmentsJob?.cancel()
+    playbackSegmentsJob = scope.launch {
+        val segments = try { withTimeoutOrNull(8_000) { lease?.segments() } ?: emptyList() }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { emptyList() }
+        if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = segments) }
+    }
     subtitleDiscovery = scope.launch {
         try {
             val snapshot = store?.subtitles(profile, card) ?: requireNotNull(remote).subtitles(card)
@@ -84,7 +91,7 @@ fun ApplicationController.pausePlayback() {
     resumeAfterRenewal = null
     val paused=!mutable.value.paused
     if (!paused) completionSeen = false
-    mutable.value = mutable.value.copy(paused = paused)
+    updateState { next -> next.copy(paused = paused) }
     if(paused && !completionSeen) saveProgress(false)
 }
 
@@ -92,7 +99,7 @@ fun ApplicationController.suspendPlayback() {
     val state = mutable.value
     if (state.playback == null || state.paused || backgroundPlayback != null) return
     backgroundPlayback = state.playback
-    mutable.value = state.copy(paused = true)
+    updateState { state -> state.copy(paused = true) }
     if (!completionSeen) saveProgress(false, final = true)
 }
 
@@ -101,7 +108,7 @@ fun ApplicationController.resumePlayback() {
     backgroundPlayback = null
     if (mutable.value.playback !== input || completionSeen) return
     if (remotePlayback != null) resumeAfterLease(input)
-    else mutable.value = mutable.value.copy(paused = false)
+    else updateState { next -> next.copy(paused = false) }
 }
 
 fun ApplicationController.observePlaybackFor(input: PlaybackInput?, fact: PlayerFact) {
@@ -110,7 +117,7 @@ fun ApplicationController.observePlaybackFor(input: PlaybackInput?, fact: Player
 
 internal fun ApplicationController.observePlayback(fact: PlayerFact) {
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
-        mutable.value = mutable.value.copy(presentation = fact)
+        updateState { next -> next.copy(presentation = fact) }
         firstFrameSeen = true
         if (!mutable.value.paused) tracking?.transition(PlaybackEvent.Start, lastProgress)
         val capturedInput = mutable.value.playback
@@ -118,7 +125,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
             fun active() = remotePlayback === lease && mutable.value.playback === capturedInput
             try { acknowledgePlaybackFrame(::active, lease::firstFrame) }
             catch (error: CancellationException) { throw error }
-            catch (_: Exception) { if (active()) mutable.value = mutable.value.copy(error = "Could not confirm playback with the server.") }
+            catch (_: Exception) { if (active()) updateState { next -> next.copy(error = "Could not confirm playback with the server.") } }
         } }
     }
     if (fact is PlayerFact.Progress) {
@@ -129,25 +136,26 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         else if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
     }
     if (fact is PlayerFact.Status && fact.name in listOf("Playing", "Paused") && mutable.value.playback != null) {
-        mutable.value = mutable.value.copy(paused = fact.name == "Paused")
+        updateState { next -> next.copy(paused = fact.name == "Paused") }
         if (firstFrameSeen) tracking?.transition(if (fact.name == "Paused") PlaybackEvent.Pause else PlaybackEvent.Start, lastProgress)
     }
     if (fact is PlayerFact.Status && fact.name=="Ended" && !completionSeen) {
         completionSeen=true
         if (firstFrameSeen) tracking?.transition(PlaybackEvent.Stop, lastProgress, ended = true)
-        mutable.value = mutable.value.copy(paused = true)
+        updateState { next -> next.copy(paused = true) }
         if (mutable.value.nextEpisode == null) loadNextEpisode(force = true)
         saveProgress(true)
     }
-    if (fact is PlayerFact.Failed) mutable.value = mutable.value.copy(error = "This source could not play. Choose another source.")
+    if (fact is PlayerFact.Failed) updateState { next -> next.copy(error = "This source could not play. Choose another source.") }
 }
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
+    playbackSegmentsJob?.cancel()
     val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)
-    mutable.value = mutable.value.copy(playback = null, screen = Screen.Sources, error = null, busy = false)
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false) }
     lastProgress=null
     afterPlayback(live)
 }

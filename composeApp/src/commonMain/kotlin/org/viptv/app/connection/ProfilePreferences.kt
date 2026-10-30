@@ -16,6 +16,8 @@ data class ProfilePreferences(
     val subtitle_background_color: String = "#00000000",
     val hdr_preference: String = "any",
     val subtitle_mode: String? = null,
+    val next_episode_button: Boolean = true,
+    val skip_intros: Boolean = false,
 )
 
 private val subtitleModes = setOf("always", "foreign", "never")
@@ -31,11 +33,13 @@ data class PreferencesSnapshot(val revision: Long = 0, val preferences: ProfileP
 
 private val preferencesCodec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-// Servers that predate `hdr_preference` reject unknown fields, so its default is left out.
+// Servers that predate a preference reject unknown fields, so each field's default is left out.
 internal fun profilePreferencesWire(preferences: ProfilePreferences): JsonObject {
     val mode = preferences.subtitleMode
     val encoded = preferencesCodec.encodeToJsonElement(preferences.copy(subtitles_enabled = mode != "never")).jsonObject.toMutableMap()
     if (preferences.hdr_preference == "any") encoded -= "hdr_preference"
+    if (preferences.next_episode_button) encoded -= "next_episode_button"
+    if (!preferences.skip_intros) encoded -= "skip_intros"
     if (mode == "foreign") encoded["subtitle_mode"] = JsonPrimitive(mode) else encoded -= "subtitle_mode"
     return JsonObject(encoded)
 }

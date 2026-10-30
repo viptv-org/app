@@ -26,7 +26,7 @@ internal fun subtitleModeValue(label: String): String = when {
     else -> "always"
 }
 
-internal val tvPlaceholderPlaybackRows = listOf("Next episode button", "Skip intros and recaps", "Match frame rate")
+internal val tvPlaceholderPlaybackRows = listOf("Match frame rate")
 
 internal const val autoplayNextRow = "Autoplay next episode"
 internal const val autoplayNextDescription = "Plays the next episode after a 10-second countdown. Applies to this device."

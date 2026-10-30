@@ -18,10 +18,12 @@ import com.composables.icons.lucide.*
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 
+internal val BottomBarHeight = 80.dp
+
 @Composable
 fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
     val destinations = desktopDestinations.filter { it.screen in listOf(Screen.Home, Screen.Live, Screen.Calendar, Screen.Library) }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+    Row(Modifier.fillMaxWidth().height(BottomBarHeight).padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).height(64.dp).clip(RoundedCornerShape(32.dp))
             .background(Color(0xFF292827).copy(alpha = .94f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(32.dp))

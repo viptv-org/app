@@ -9,7 +9,7 @@ private suspend fun ApplicationController.loadAccountDevices() {
     val owner = generation
     val snapshot = accountDeviceRequest { it.accountDevices() }
     if (connection === remote && generation == owner)
-        mutable.value = mutable.value.copy(accountDevices = snapshot)
+        updateState { next -> next.copy(accountDevices = snapshot) }
 }
 
 fun ApplicationController.signOutDevice(id: String) = run {
@@ -19,10 +19,9 @@ fun ApplicationController.signOutDevice(id: String) = run {
     val remote = requireNotNull(connection)
     val owner = generation
     accountDeviceRequest { it.signOutDevice(id) }
-    if (connection === remote && generation == owner) {
-        val current = mutable.value.accountDevices
-        mutable.value = mutable.value.copy(accountDevices = current?.copy(devices = current.devices.filterNot { it.id == id }))
-    }
+    if (connection === remote && generation == owner)
+        updateState { next -> next.copy(accountDevices = next.accountDevices?.let { devices ->
+            devices.copy(devices = devices.devices.filterNot { it.id == id }) }) }
 }
 
 fun ApplicationController.signOutAllDevices() = run {
@@ -39,7 +38,7 @@ private suspend fun <T> ApplicationController.accountDeviceRequest(operation: su
     try { return operation(remote) }
     catch (failure: RemoteFailure) {
         if (failure.status == 403 && connection === remote)
-            mutable.value = mutable.value.copy(accountDevices = null)
+            updateState { next -> next.copy(accountDevices = null) }
         throw failure
     }
 }

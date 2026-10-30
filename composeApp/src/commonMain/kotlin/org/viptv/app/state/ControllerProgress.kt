@@ -45,7 +45,7 @@ internal fun ApplicationController.saveProgress(completed: Boolean, final: Boole
             }
             catch (error: CancellationException) { throw error }
             catch (_: Exception) {
-                if(mutable.value.playback===input) mutable.value=mutable.value.copy(error="Could not save your viewing position.")
+                if(mutable.value.playback===input) updateState { next -> next.copy(error="Could not save your viewing position.") }
             }
         } }
         }

@@ -36,7 +36,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
     dashboardAddress: String? = null, preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
-    maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null) {
+    maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null, editProfile: (() -> Unit)? = null) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -88,13 +88,20 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                 },
                 cancel = { if (!installBusy) { installGeneration++; confirming = false } })
         } else Row(Modifier.fillMaxSize()) {
-            TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || browserFallback) {
-                if (it == TvSettingsSection.Profiles) profiles() else section = it
+            TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || browserFallback) { chosen ->
+                when (chosen) {
+                    TvSettingsSection.Profile -> editProfile?.invoke()
+                    TvSettingsSection.SwitchProfile -> profiles()
+                    else -> section = chosen
+                }
             }
-            // Add-ons owns a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
+            // Add-ons and the approved-titles page own a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
                     { installing = true }, placeholderQr)
+            }
+            else if (section == TvSettingsSection.Parental && parental != null && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+                parental(first, sidebar, scale)
             }
             else org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
@@ -127,7 +134,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     }
                     TvSettingsSection.About -> TvAboutSettings(local, dashboardAddress, profile?.name, addons.size, enabled.size,
                         error, notice, scale, first, sidebar, openDashboard = accountDashboard)
-                    TvSettingsSection.Profiles -> { }
+                    TvSettingsSection.Profile, TvSettingsSection.SwitchProfile -> { }
                 }
                 if (preferenceSection && preferencesError != null && !failedPreferences) {
                     Text(preferencesError, Modifier.padding(top = 20.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp)

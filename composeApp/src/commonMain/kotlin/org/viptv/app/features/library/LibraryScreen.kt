@@ -19,7 +19,10 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.LocalBarsFadeContent
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.ScrollEdge
+import org.viptv.app.components.ScrollEdgeFade
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
@@ -47,6 +50,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val grid = rememberLazyGridState()
     val restore = rememberPageRestore("library")
     val anchored = restore.anchor(gridCards.size) { cardLookupKey(gridCards[it]) }
+    val scrolled = remember(grid) { derivedStateOf { grid.canScrollBackward } }.value
     val empty = libraryEmptyState(snapshot, query, available)
     var pinned by remember { mutableIntStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -63,18 +67,22 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
             LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(176.dp), state = grid,
                 modifier = if (visible.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = if (visible.isEmpty()) 0.dp else if (phone) 96.dp else 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
+                topEdgeFade = false) {
                 if (!phone) item(LIBRARY_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_TITLE_KEY) {
                     Text("My List", Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_TITLE_KEY) { 0 },
                         fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
                 }
                 stickyHeader(LIBRARY_CONTROLS_KEY, contentType = LIBRARY_CONTROLS_KEY) {
-                    Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
-                        else LibraryControls(filter, { filter = it }, sort, { sort = it })
-                        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-                        (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
+                    Column(Modifier.fillMaxWidth()) {
+                        Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                            if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
+                            else LibraryControls(filter, { filter = it }, sort, { sort = it })
+                            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                            (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
+                        }
+                        if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
                     }
                 }
                 item(LIBRARY_HISTORY_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_HISTORY_KEY) {

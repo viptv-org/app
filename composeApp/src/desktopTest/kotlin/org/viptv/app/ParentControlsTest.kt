@@ -93,16 +93,29 @@ class ParentControlsTest {
         } finally { remote.close() }
     }
 
-    @Test fun nativeSessionsCannotDispatchHouseholdMutations() = runBlocking {
-        var requests = 0
-        val remote = RemoteConnection("https://watch.example", store, client { requests++; error("Native administration must use web") }, browserMode = false)
+    @Test fun nativeSessionsSetChangeRemovePinAndKidsPolicyThroughFakeHost() = runBlocking {
+        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val remote = RemoteConnection("https://watch.example", store, client { request ->
+            if (request.method != HttpMethod.Get)
+                writes += request.url.encodedPath to Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            respond(if (request.method == HttpMethod.Get) Json.encodeToString(parentFixture()) else "{}",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }, browserMode = false)
         val controller = ApplicationController(this, store)
         controller.connection = remote
-        controller.mutable.value = ApplicationState(parentSettings = parentFixture())
+        controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1",
+            parentSettings = parentFixture(configured = false))
         try {
-            controller.changeParentPin("1234", "5678"); controller.job!!.join()
-            assertEquals(0, requests)
-            assertContains(controller.state.value.error.orEmpty(), "web dashboard")
+            controller.changeParentPin("", "4321"); controller.job!!.join()
+            assertEquals("/api/parent/pin" to buildJsonObject { put("pin", "4321") }, writes.last())
+            controller.mutable.value = controller.state.value.copy(parentSettings = parentFixture(configured = true))
+            controller.changeParentPin("4321", ""); controller.job!!.join()
+            assertEquals("/api/parent/pin" to buildJsonObject { put("pin", ""); put("current_pin", "4321") }, writes.last())
+            controller.changeKidsPolicy("2", KidsPolicy(true, 12)); controller.job!!.join()
+            assertEquals("/api/profiles/2/kids" to buildJsonObject { put("enabled", true); put("max_age", 12) }, writes.last())
+            controller.changeKidsPolicy("2", KidsPolicy(false, 12)); controller.job!!.join()
+            assertEquals("/api/profiles/2/kids" to buildJsonObject { put("enabled", false); put("max_age", 12) }, writes.last())
+            assertNull(controller.state.value.error)
         } finally { remote.close() }
     }
 
