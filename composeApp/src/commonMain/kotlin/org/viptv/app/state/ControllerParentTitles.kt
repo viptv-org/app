@@ -9,7 +9,7 @@ fun ApplicationController.openParentTitles(profile: String) {
     run {
         val selected = mutable.value.parentSettings?.profiles?.singleOrNull { it.id == profile }
             ?: throw LocalFailure("Refresh parental controls and choose a profile.")
-        mutable.value = mutable.value.copy(parentTitles = ParentTitlesState(profile, selected.name))
+        updateState { next -> next.copy(parentTitles = ParentTitlesState(profile, selected.name)) }
         parentTitlesRequest { remote, state ->
             val page = remote.approvedTitles(state.profile)
             state.copy(approved = page, loaded = true, nextOffset = if (page.size == 500) 500 else null)
@@ -19,7 +19,7 @@ fun ApplicationController.openParentTitles(profile: String) {
 
 fun ApplicationController.closeParentTitles() {
     job?.cancel(); generation++
-    mutable.value = mutable.value.copy(parentTitles = null, busy = false, error = null)
+    updateState { next -> next.copy(parentTitles = null, busy = false, error = null) }
 }
 
 fun ApplicationController.searchParentTitles(query: String) {
@@ -27,7 +27,7 @@ fun ApplicationController.searchParentTitles(query: String) {
     run {
         val term = query.trim().take(200)
         if (term.isEmpty()) throw LocalFailure("Enter a title to search.")
-        mutable.value = mutable.value.copy(parentTitles = mutable.value.parentTitles?.copy(query = term, rows = emptyList(), searched = false, notice = null))
+        updateState { next -> next.copy(parentTitles = next.parentTitles?.copy(query = term, rows = emptyList(), searched = false, notice = null)) }
         parentTitlesRequest { remote, state -> state.copy(rows = remote.parentTitleSearch(state.profile, term).rows, searched = true) }
     }
 }
@@ -80,20 +80,19 @@ fun ApplicationController.revokeParentTitle(selected: ApprovedTitle) {
 
 private suspend fun ApplicationController.parentTitlesRequest(action: suspend (RemoteConnection, ParentTitlesState) -> ParentTitlesState) {
     val remote = connection ?: throw LocalFailure("Connect to your account first.")
-    if (!remote.accountManagementEnabled) throw LocalFailure("Manage approved titles through your server’s web dashboard.")
     val state = mutable.value.parentTitles ?: throw LocalFailure("Choose a profile first.")
     val owner = generation
     try {
         val result = action(remote, state)
         if (connection === remote && generation == owner && mutable.value.parentTitles?.profile == state.profile)
-            mutable.value = mutable.value.copy(parentTitles = result)
+            updateState { next -> next.copy(parentTitles = result) }
     } catch (failure: RemoteFailure) {
         if (failure.status == 403) {
             val settings = try { remote.profileManagement() }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { null }
             if (connection === remote && generation == owner)
-                mutable.value = mutable.value.copy(parentTitles = null, parentSettings = settings)
+                updateState { next -> next.copy(parentTitles = null, parentSettings = settings) }
             throw LocalFailure("Unlock parental controls and try again.")
         }
         if (failure.status == 404) throw LocalFailure("This server does not support title approvals. Update the server and try again.")

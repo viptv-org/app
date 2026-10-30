@@ -26,7 +26,7 @@ fun ApplicationController.deliverDeviceCode() {
     val origin = connection?.accountDashboardUrl?.trimEnd('/')
     if (current.localMode || origin == null || !origin.equals(link.origin, ignoreCase = true)) { deviceLink.value = null; return }
     deviceLink.value = link.delivered()
-    mutable.value = current.copy(settingsEntrySection = "Watch on TV")
+    updateState { current -> current.copy(settingsEntrySection = "Watch on TV") }
     navigate(Screen.Settings)
 }
 

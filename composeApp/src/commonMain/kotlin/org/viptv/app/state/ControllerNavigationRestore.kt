@@ -55,9 +55,9 @@ private fun ApplicationController.applyNavigationRecord(saved: SavedNavigation, 
     val target = rememberedScreens.firstOrNull { it.name == saved.screen } ?: return
     if (target == Screen.Home) return
     if (mutable.value.selectedProfile != profile || mutable.value.screen != Screen.Home) return
-    saved.browse?.let { mutable.value = mutable.value.copy(browseQuery = it.copy(skip = 0)) }
-    if (saved.search.isNotBlank()) mutable.value = mutable.value.copy(searchTerm = saved.search)
-    saved.library?.let { mutable.value = mutable.value.copy(libraryQuery = it.copy(offset = 0)) }
+    saved.browse?.let { updateState { next -> next.copy(browseQuery = it.copy(skip = 0)) } }
+    if (saved.search.isNotBlank()) updateState { next -> next.copy(searchTerm = saved.search) }
+    saved.library?.let { updateState { next -> next.copy(libraryQuery = it.copy(offset = 0)) } }
     when (target) {
         Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime -> navigate(target, record = false, browse = saved.browse)
         Screen.Search -> {
@@ -75,7 +75,7 @@ private fun screenNamed(name: String?): Screen = Screen.entries.firstOrNull { it
 private fun ApplicationController.restoreDetails(card: Card, returnScreen: Screen) {
     val profile = mutable.value.selectedProfile ?: return
     beginDetails()
-    mutable.value = mutable.value.copy(detailReturnScreen = returnScreen, navBack = emptyList())
+    updateState { next -> next.copy(detailReturnScreen = returnScreen, navBack = emptyList()) }
     val navigation = navigationGeneration
     val remote = connection
     val device = local
@@ -89,10 +89,10 @@ private fun ApplicationController.restoreDetails(card: Card, returnScreen: Scree
         if (navigationGeneration != navigation || mutable.value.screen != Screen.Details ||
             mutable.value.selectedProfile != profile || connection !== remote || local !== device) return@launch
         if (detail == null) {
-            mutable.value = mutable.value.copy(screen = Screen.Home, busy = false, error = null, detail = null,
-                detailHistory = emptyList(), navBack = emptyList(), playTapTitle = null, detailFailure = null)
+            updateState { next -> next.copy(screen = Screen.Home, busy = false, error = null, detail = null,
+                detailHistory = emptyList(), navBack = emptyList(), playTapTitle = null, detailFailure = null) }
             return@launch
         }
-        mutable.value = mutable.value.copy(detail = detail.withCardArt(card))
+        updateState { next -> next.copy(detail = detail.withCardArt(card)) }
     }
 }

@@ -20,7 +20,7 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
             Spacer(Modifier.weight(1f))
             ProfileMenuButton(profile, navigate, RoundedCornerShape(10.dp), Modifier.size(40.dp)) { ProfileAvatar(profile, 28.dp, 7.dp) }
         }
-        if (screen == Screen.Home) {
+        if (isHomeTab(screen)) {
             Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
                 HomeFilters(screen, navigate, gutter = 16.dp)
             }

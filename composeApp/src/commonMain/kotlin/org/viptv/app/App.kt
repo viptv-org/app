@@ -12,6 +12,7 @@ import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
 import org.viptv.app.state.*
@@ -89,6 +90,8 @@ fun App(
             val compact = maxWidth < 640.dp && !television
             val touch = !television && !browser && !desktopChrome
             val tablet = !compact && touch
+            val barFades = barsFadeContent(television, desktopChrome, touch, maxWidth)
+            val bottomBar = compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
@@ -120,7 +123,8 @@ fun App(
                     maturity = state.profileManagement?.profiles?.find { it.id == state.profileToEdit }?.let { if(it.kids)it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction" })
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
-                  CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext) { Column(Modifier.fillMaxSize()) {
+                  CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
+                      LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
@@ -198,7 +202,7 @@ fun App(
                         }
                     }
                   } }
-                  if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
+                  if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       BottomNavigation(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate)
                   }
                 }
@@ -210,6 +214,9 @@ fun App(
 
 // The player draws under the cutout and system bars, so the root must not pad it with the app background.
 internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
+
+internal fun barsFadeContent(television: Boolean, desktopChrome: Boolean, touch: Boolean, width: Dp): Boolean =
+    !television && !desktopChrome && (touch || width < 1000.dp)
 
 private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.ContinueWatching, Screen.Library, Screen.History, Screen.Details)
 

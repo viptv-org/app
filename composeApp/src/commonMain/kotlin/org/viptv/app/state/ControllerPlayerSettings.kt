@@ -12,13 +12,13 @@ fun ApplicationController.openPlayerSettings() {
     backgroundPlayback = null
     resumeAfterRenewal = null
     if (!state.paused) {
-        mutable.value = state.copy(paused = true)
+        updateState { state -> state.copy(paused = true) }
         // The renderer unmounts with Settings and never reports this pause itself.
         if (firstFrameSeen) tracking?.transition(PlaybackEvent.Pause, lastProgress)
         if (!completionSeen) saveProgress(false)
     }
     playerVisitTracks = mutable.value.preferences?.preferences?.serverTracks()
-    mutable.value = mutable.value.copy(settingsReturnsToPlayer = true, settingsEntrySection = PLAYER_SETTINGS_SECTION)
+    updateState { next -> next.copy(settingsReturnsToPlayer = true, settingsEntrySection = PLAYER_SETTINGS_SECTION) }
     navigate(Screen.Settings, record = false)
 }
 
@@ -34,7 +34,7 @@ internal fun ApplicationController.returnToPlayer() {
     playerVisitTracks = null
     // Before the player recomposes: its renderer opens with these.
     if (!reopen && input != null && preferences != null) input.reopenAt(lastProgress?.positionMillis, preferences)
-    mutable.value = state.copy(paused = true)
+    updateState { state -> state.copy(paused = true) }
     navigate(Screen.Player, record = false)
     if (reopen && input != null && source != null) {
         val position = if (input.live) null else lastProgress?.positionMillis ?: (input.positionMillis + input.timelineOffsetMillis)

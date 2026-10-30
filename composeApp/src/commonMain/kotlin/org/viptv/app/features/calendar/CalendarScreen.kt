@@ -54,7 +54,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
             if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
-                filter = filter, filterChanged = { chosen = it }, gutter = gutter)
+                filter = filter, filterChanged = { chosen = it }, gutter = gutter, phone = phone)
             if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale, gutter) { day ->
                 selected = day; focused = shown.firstOrNull { it.day == day }
                 if (phone) scope.launch {

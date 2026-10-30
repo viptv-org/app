@@ -91,10 +91,13 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             TvSettingsSidebar(section, scale, sidebar, first, modal = leaving || choice != null || installing || browserFallback) {
                 if (it == TvSettingsSection.Profiles) profiles() else section = it
             }
-            // Add-ons owns a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
+            // Add-ons and the approved-titles page own a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
                     { installing = true }, placeholderQr)
+            }
+            else if (section == TvSettingsSection.Parental && parental != null && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+                parental(first, sidebar, scale)
             }
             else org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)

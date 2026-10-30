@@ -25,10 +25,9 @@ internal suspend fun ApplicationController.loadAddons(operation: AddonOperationO
 }
 
 internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrowse: Boolean = false) {
-    val state = mutable.value
-    mutable.value = state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
+    updateState { state -> state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
         browseControls = state.browseControls.takeIf { keepBrowse }, browseCards = if (keepBrowse) state.browseCards else emptyList(),
-        browseNext = state.browseNext.takeIf { keepBrowse })
+        browseNext = state.browseNext.takeIf { keepBrowse }) }
 }
 
 fun ApplicationController.refreshAddons() = run {
@@ -49,7 +48,7 @@ internal suspend fun ApplicationController.updateAddonHome(operation: AddonOpera
         owner.device?.refreshHome(profile) ?: requireNotNull(owner.remote).bootstrap().home
     } catch (error: Exception) { owner.requireCurrent(this); throw error }
     owner.requireCurrent(this)
-    mutable.value = mutable.value.copy(home = home)
+    updateState { next -> next.copy(home = home) }
 }
 
 fun ApplicationController.installAddon(url: String) = installAddon(url) {}
