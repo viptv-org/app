@@ -5,7 +5,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancelAndJoin
 
 fun ApplicationController.refreshParentControls() = run {
-    mutable.value = mutable.value.copy(parentSettingsNotice = null)
+    updateState { next -> next.copy(parentSettingsNotice = null) }
     val operation = generation
     parentRequest { remote ->
         if (mutable.value.policyRefreshNeeded) {
@@ -72,20 +72,19 @@ private suspend fun ApplicationController.parentRequest(notice: String? = null, 
     val remote = connection ?: throw LocalFailure("Manage this account through its server dashboard.")
     if (!remote.accountManagementEnabled) throw LocalFailure("Manage parental controls through your server’s web dashboard.")
     val owner = generation
-    val saved = mutable.value.parentSettingsSaved
     try {
         val result = action(remote)
-        if (connection === remote && generation == owner) mutable.value = mutable.value.copy(
+        if (connection === remote && generation == owner) updateState { next -> next.copy(
             parentSettings = result, parentSettingsNotice = notice,
-            parentSettingsSaved = saved + if (notice != null) 1 else 0,
-            profiles = result.cards(), profileManagement = result)
+            parentSettingsSaved = next.parentSettingsSaved + if (notice != null) 1 else 0,
+            profiles = result.cards(), profileManagement = result) }
     } catch (failure: RemoteFailure) {
         val refreshed = if (failure.status in setOf(403, 409)) try { remote.profileManagement() }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { null }
             else mutable.value.parentSettings
-        if (connection === remote && generation == owner) mutable.value = mutable.value.copy(parentSettingsNotice = null,
-            parentSettings = refreshed)
+        if (connection === remote && generation == owner) updateState { next -> next.copy(parentSettingsNotice = null,
+            parentSettings = refreshed) }
         if (failure.status == 403) throw LocalFailure(forbidden)
         if (failure.status == 409) throw LocalFailure("These settings changed. Check the current profile restrictions and try again.")
         throw failure

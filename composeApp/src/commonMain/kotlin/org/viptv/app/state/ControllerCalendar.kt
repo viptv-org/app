@@ -8,14 +8,14 @@ import org.viptv.engine.wire.*
 
 fun ApplicationController.calendarCategory(type: String) {
     if (type !in listOf("series", "anime", "movie") || mutable.value.calendarType == type) return
-    mutable.value = mutable.value.copy(calendarType = type)
+    updateState { next -> next.copy(calendarType = type) }
     run { loadCalendar() }
 }
 
 fun ApplicationController.calendarWeek(change: Int) {
     if (change !in -1..1) return
     val week = if (change == 0) 0 else (mutable.value.calendarWeek + change).coerceIn(-CALENDAR_WEEK_LIMIT, CALENDAR_WEEK_LIMIT)
-    mutable.value = mutable.value.copy(calendarWeek = week)
+    updateState { next -> next.copy(calendarWeek = week) }
     run { loadCalendar() }
 }
 
@@ -26,23 +26,23 @@ internal suspend fun ApplicationController.loadCalendar() {
     val window = calendarWindow(state.calendarWeek * 7)
     val profile = state.selectedProfile
     val operation = generation
-    mutable.value = state.copy(calendarDays = window.days, calendarEntries = emptyList(), calendarSources = null, calendarAvailable = true)
+    updateState { state -> state.copy(calendarDays = window.days, calendarEntries = emptyList(), calendarSources = null, calendarAvailable = true) }
     val context=currentCoroutineContext()
     try {
         val read = remote.calendar(window, state.calendarType) { entries ->
             context.ensureActive()
             if (generation != operation || connection !== remote || mutable.value.selectedProfile != profile ||
                 mutable.value.screen != Screen.Calendar) throw CancellationException("Calendar changed")
-            mutable.value = mutable.value.copy(calendarEntries = entries)
+            updateState { next -> next.copy(calendarEntries = entries) }
         }
         context.ensureActive()
         if (generation != operation) return
-        mutable.value = mutable.value.copy(calendarSources = read.sources)
+        updateState { next -> next.copy(calendarSources = read.sources) }
         read.refreshAfterMillis?.let { rereadCalendar(CalendarRequest(remote, profile, state.calendarType, state.calendarWeek, window), it) }
     } catch (error: RemoteFailure) {
         if (error.status != 422) throw error
         currentCoroutineContext().ensureActive()
-        if (generation == operation) mutable.value = mutable.value.copy(calendarEntries = emptyList(), calendarAvailable = false)
+        if (generation == operation) updateState { next -> next.copy(calendarEntries = emptyList(), calendarAvailable = false) }
     }
 }
 
@@ -71,7 +71,7 @@ private fun ApplicationController.rereadCalendar(request: CalendarRequest, delay
                     return@launch
                 }
             if (!current() || job?.isActive == true) return@launch
-            mutable.value = mutable.value.copy(calendarEntries = read.entries, calendarSources = read.sources)
+            updateState { next -> next.copy(calendarEntries = read.entries, calendarSources = read.sources) }
             wait = read.refreshAfterMillis ?: return@launch
         }
     }
@@ -80,13 +80,13 @@ private fun ApplicationController.rereadCalendar(request: CalendarRequest, delay
 fun ApplicationController.openCalendarEntry(entry: CalendarEntry) {
     val episode = entry.episodeCard.takeIf { entry.library }
     open(episode ?: entry.card)
-    if (episode != null) mutable.value = mutable.value.copy(calendarEpisode = episode)
+    if (episode != null) updateState { next -> next.copy(calendarEpisode = episode) }
 }
 
 fun ApplicationController.watchCalendar(entry: CalendarEntry) {
     entry.episodeCard?.takeIf { entry.library }?.let { episode ->
         playTitle(episode)
-        mutable.value = mutable.value.copy(calendarEpisode = episode)
+        updateState { next -> next.copy(calendarEpisode = episode) }
         return
     }
     beginDetails()
@@ -102,7 +102,7 @@ fun ApplicationController.watchCalendar(entry: CalendarEntry) {
             if(!current())return@withTimeoutOrNull null
             requireCalendarParent(entry.card, initial.item)
             loaded = initial
-            mutable.value = mutable.value.copy(detail = initial)
+            updateState { next -> next.copy(detail = initial) }
             if (!entry.aired) return@withTimeoutOrNull null
             if (initial.item.identity.kind == "movie") return@withTimeoutOrNull initial.item
             val season = entry.season ?: return@withTimeoutOrNull null
@@ -126,7 +126,7 @@ fun ApplicationController.watchCalendar(entry: CalendarEntry) {
                 requireCalendarParent(initial.item, page.item)
                 candidates += page.episodes
                 loaded = initial.copy(episodes = candidates.distinctBy(::cardLookupKey), next_cursor = page.next_cursor)
-                mutable.value = mutable.value.copy(detail = loaded)
+                updateState { next -> next.copy(detail = loaded) }
                 val found=calendarMatches(candidates,initial.item,season,episode)
                 if(found.size==1)return@withTimeoutOrNull found.single()
                 if(found.size>1)return@withTimeoutOrNull null
@@ -138,8 +138,8 @@ fun ApplicationController.watchCalendar(entry: CalendarEntry) {
         currentCoroutineContext().ensureActive()
         if (generation != operation || connection !== remote || mutable.value.selectedProfile != profile || mutable.value.screen != Screen.Details) return@run
         if (target != null) chooseSource(target)
-        else mutable.value = mutable.value.copy(detail = loaded ?: mutable.value.detail,
-            error = if(loaded==null)"Could not load this release’s details. Go back and try again." else "This scheduled episode could not be matched safely. Choose an episode from these details.")
+        else updateState { next -> next.copy(detail = loaded ?: next.detail,
+            error = if(loaded==null)"Could not load this release’s details. Go back and try again." else "This scheduled episode could not be matched safely. Choose an episode from these details.") }
     }
 }
 
