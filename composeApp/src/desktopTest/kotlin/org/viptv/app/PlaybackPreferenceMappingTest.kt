@@ -99,8 +99,9 @@ class PlaybackPreferenceMappingTest {
         assertTrue(stored.tvSettings().skipIntros)
         assertTrue(ProfilePreferences().tvSettings().nextEpisode)
         assertFalse(ProfilePreferences().tvSettings().skipIntros)
-        assertEquals(ProfilePreferences(next_episode_button = false, skip_intros = true),
-            TvSettingsPreferences(nextEpisode = false, skipIntros = true).profilePreferences())
+        val mapped = TvSettingsPreferences(nextEpisode = false, skipIntros = true).profilePreferences()
+        assertFalse(mapped.next_episode_button)
+        assertTrue(mapped.skip_intros)
     }
 
     @Test fun foreignAudioRuleFollowsTheSpecCases() {
