@@ -20,14 +20,19 @@ import org.viptv.app.connection.validParentPin
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Boolean, busy: Boolean, error: String?,
+internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Boolean?, busy: Boolean, error: String?,
     load: () -> Unit, back: () -> Unit, delete: (String, String, String?) -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
     LaunchedEffect(Unit) { load() }
     val confirmed = identity != null && username == identity.username
-    val ready = confirmed && password.isNotEmpty() && (!pinConfigured || validParentPin(pin)) && !busy
+    val pinOk = when (pinConfigured) {
+        true -> validParentPin(pin)
+        null -> pin.isEmpty() || validParentPin(pin)
+        false -> true
+    }
+    val ready = confirmed && password.isNotEmpty() && pinOk && !busy
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Delete account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = Palette.danger)
@@ -47,12 +52,12 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
                 OutlinedTextField(password, { password = it }, Modifier.fillMaxWidth(), enabled = !busy,
                     label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
-                if (pinConfigured) OutlinedTextField(pin, { pin = it.filter { c -> c in '0'..'9' }.take(8) },
+                if (pinConfigured != false) OutlinedTextField(pin, { pin = it.filter { c -> c in '0'..'9' }.take(8) },
                     Modifier.fillMaxWidth(), enabled = !busy, label = { Text("Household PIN") }, singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button({ if (ready) delete(username, password, if (pinConfigured) pin else null) },
+                    Button({ if (ready) delete(username, password, if (pin.isEmpty()) null else pin) },
                         Modifier.widthIn(min = 240.dp).height(40.dp), enabled = ready, shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 18.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.danger.copy(alpha = .12f),

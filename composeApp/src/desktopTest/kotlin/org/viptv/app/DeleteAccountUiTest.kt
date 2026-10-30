@@ -24,14 +24,20 @@ class DeleteAccountUiTest {
 
     private val identity = AccountIdentity("1", "viewer", "Viewer Name", "owner")
 
-    @Test fun theCopyNamesTheAccountAndSaysItCannotBeUndone() {
-        val scene = scene { DeleteAccountScreen(identity, pinConfigured = false, busy = false, error = null, load = {}, back = {}, delete = { _, _, _ -> }) }
+    @Test fun theCopyNamesTheAccountAndAsksForAPinOnlyWhereOneMayBeSet() {
+        var configured by mutableStateOf<Boolean?>(false)
+        val scene = scene { DeleteAccountScreen(identity, configured, busy = false, error = null, load = {}, back = {}, delete = { _, _, _ -> }) }
         try {
             frames(scene)
             assertTrue(nodes(scene).any { text(it) ==
                 "This deletes Viewer Name’s account, its profiles, their history, My List, add-ons and paired devices. It cannot be undone." })
             assertEquals(2, nodes(scene).count { it.config.contains(SemanticsActions.SetText) },
                 "the username and the password, with no PIN field while none is set")
+            configured = true; frames(scene)
+            assertEquals(3, nodes(scene).count { it.config.contains(SemanticsActions.SetText) })
+            configured = null; frames(scene)
+            assertEquals(3, nodes(scene).count { it.config.contains(SemanticsActions.SetText) },
+                "an account whose PIN state could not be read still offers the field")
         } finally { scene.close() }
     }
 

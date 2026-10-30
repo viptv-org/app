@@ -52,7 +52,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
         deleteAccount = controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
-            DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured == true,
+            DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured,
                 state.busy, state.error, controller::refreshAccountDeletion, cancel,
                 controller::deleteAccount)
         } },
