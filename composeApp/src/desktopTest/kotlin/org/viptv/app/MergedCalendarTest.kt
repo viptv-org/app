@@ -100,19 +100,46 @@ class MergedCalendarTest {
             val type = request.url.parameters["type"].orEmpty()
             types += type
             when (type) {
-                "series" -> page(listOf(MergedCalendarWire.library("lib-1", "Your series", 2, 3)), sources = listOf("library", "public"))
-                "anime" -> page(listOf(MergedCalendarWire.library("an-1", "Your anime", 1, 5, date = MergedCalendarWire.today(22))), sources = listOf("library"))
-                else -> page(listOf(MergedCalendarWire.public("movie-1", "Movie premiere", date = MergedCalendarWire.today(21))), sources = listOf("public"))
+                "all" -> page(listOf(
+                    MergedCalendarWire.library("lib-1", "Your series", 2, 3),
+                    MergedCalendarWire.public("movie-1", "Movie premiere", date = MergedCalendarWire.today(21)),
+                    MergedCalendarWire.library("an-1", "Your anime", 1, 5, date = MergedCalendarWire.today(22))),
+                    sources = listOf("library", "public"))
+                else -> page(emptyList())
             }
         }
         val (controller, remote) = controller(client, this)
         try {
             controller.navigate(Screen.Calendar)
             controller.job?.join()
-            assertEquals(listOf("series", "anime", "movie"), types, "The default Type reads every calendar")
+            assertEquals(listOf("all"), types, "The default Type reads every calendar in one request")
             assertEquals(listOf("lib-1", "movie-1", "an-1"), controller.state.value.calendarEntries.map { it.id }, "TV, movies and anime in one day order")
             assertEquals(setOf(CalendarSource.Library, CalendarSource.Public), controller.state.value.calendarSources)
             assertTrue(calendarFilterOffered(controller.state.value.calendarEntries, controller.state.value.calendarSources))
+        } finally { controller.calendarReread?.cancel(); remote.close() }
+    }
+
+    @Test fun anOlderServerRejectingTheAllTypeFallsBackToThePerTypeMerge() = runBlocking {
+        val types = mutableListOf<String>()
+        val client = HttpClient(MockEngine { request ->
+            if (!request.url.encodedPath.startsWith("/api/calendar")) return@MockEngine respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+            val type = request.url.parameters["type"].orEmpty()
+            types += type
+            val (body, status) = when (type) {
+                "all" -> "{}" to HttpStatusCode.BadRequest
+                "series" -> page(listOf(MergedCalendarWire.library("lib-1", "Your series", 2, 3)), sources = listOf("library", "public")) to HttpStatusCode.OK
+                "anime" -> page(listOf(MergedCalendarWire.library("an-1", "Your anime", 1, 5, date = MergedCalendarWire.today(22))), sources = listOf("library")) to HttpStatusCode.OK
+                else -> page(listOf(MergedCalendarWire.public("movie-1", "Movie premiere", date = MergedCalendarWire.today(21))), sources = listOf("public")) to HttpStatusCode.OK
+            }
+            respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val (controller, remote) = controller(client, this)
+        try {
+            controller.navigate(Screen.Calendar)
+            controller.job?.join()
+            assertEquals(listOf("all", "series", "anime", "movie"), types, "An older server's 400 falls back to the three per-type reads")
+            assertEquals(listOf("lib-1", "movie-1", "an-1"), controller.state.value.calendarEntries.map { it.id }, "TV, movies and anime in one day order")
+            assertEquals(setOf(CalendarSource.Library, CalendarSource.Public), controller.state.value.calendarSources)
         } finally { controller.calendarReread?.cancel(); remote.close() }
     }
 
