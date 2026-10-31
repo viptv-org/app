@@ -12,6 +12,7 @@ fun ApplicationController.refreshAccountAccess() {
     scope.launch {
         try { loadAccountIdentity() }
         catch (error: CancellationException) { throw error }
+        catch (failure: RemoteFailure) { if (failure.status == 401) refreshAccountIdentity() }
         catch (_: Exception) { }
     }
 }
@@ -24,25 +25,4 @@ private suspend fun ApplicationController.loadAccountIdentity() {
         manageAccount = remote.accountManagementEnabled, accountOwner = remote.accountOwner) }
 }
 
-fun ApplicationController.refreshAccounts() = run {
-    val remote = requireNotNull(connection)
-    val owner = generation
-    loadAccountIdentity()
-    if (remote.browserSession) {
-        val profile = requireNotNull(mutable.value.selectedProfile)
-        val status = remote.simklStatus(profile)
-        if (connection === remote && generation == owner && mutable.value.selectedProfile == profile)
-            updateState { next -> next.copy(simkl = status) }
-    }
-}
-fun ApplicationController.linkSimkl() = run {
-    if (browserOrigin() == null) throw LocalFailure("Link accounts through the server web dashboard.")
-    openAccountAuthorization(requireNotNull(connection).authorizeSimkl(requireNotNull(mutable.value.selectedProfile)))
-}
-fun ApplicationController.unlinkSimkl() = run {
-    if (browserOrigin() == null) throw LocalFailure("Manage linked accounts through the server web dashboard.")
-    val profile = requireNotNull(mutable.value.selectedProfile)
-    requireNotNull(connection).unlinkSimkl(profile)
-    val status = requireNotNull(connection).simklStatus(profile)
-    updateState { next -> next.copy(simkl = status) }
-}
+fun ApplicationController.refreshAccounts() = run { loadAccountIdentity() }

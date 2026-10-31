@@ -22,7 +22,8 @@ import org.viptv.app.theme.Palette
 
 private const val YourShows = "your_shows"
 
-private val CalendarTypes = listOf(SelectOption("series", "TV"), SelectOption("anime", "Anime"), SelectOption("movie", "Movies"))
+private val CalendarTypes = listOf(SelectOption(CALENDAR_TYPE_ALL, "All"), SelectOption("series", "TV"),
+    SelectOption("anime", "Anime"), SelectOption("movie", "Movies"))
 private val CalendarSources = listOf(SelectOption(YourShows, CalendarFilter.YourShows.label))
 
 @Composable
@@ -30,8 +31,8 @@ internal fun CalendarControls(type: String, week: Int, television: Boolean, scal
     category: (String) -> Unit, shift: (Int) -> Unit, modifier: Modifier = Modifier, range: String? = null,
     filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {},
     gutter: Dp = 0.dp, bleed: Boolean = true, entry: FocusRequester? = null, phone: Boolean = false) {
-    val changed = type != CALENDAR_DEFAULT_TYPE || filter == CalendarFilter.YourShows
-    val clear = if (changed) ({ category(CALENDAR_DEFAULT_TYPE); filterChanged(CalendarFilter.All) }) else null
+    val changed = type != CALENDAR_DEFAULT_TYPE || (filter != null && filter != CALENDAR_DEFAULT_FILTER)
+    val clear = if (changed) ({ category(CALENDAR_DEFAULT_TYPE); filterChanged(CALENDAR_DEFAULT_FILTER) }) else null
     val filters: LazyListScope.() -> Unit = { calendarFilters(type, filter, category, filterChanged, entry) }
     val weeks: LazyListScope.() -> Unit = { calendarWeeks(week, shift, television, scale, range) }
     if (!phone) { FilterBar(modifier, gutter, bleed, clear = clear) { filters(); weeks() }; return }
@@ -50,7 +51,7 @@ private fun LazyListScope.calendarFilters(type: String, filter: CalendarFilter?,
     if (filter != null) item(key = "source") {
         SearchableSelect("Shows", CalendarSources, if (filter == CalendarFilter.YourShows) listOf(YourShows) else emptyList(),
             { ids -> filterChanged(if (YourShows in ids) CalendarFilter.YourShows else CalendarFilter.All) },
-            anyLabel = "All", highlighted = filter == CalendarFilter.YourShows)
+            anyLabel = "All", highlighted = filter != CALENDAR_DEFAULT_FILTER)
     }
 }
 

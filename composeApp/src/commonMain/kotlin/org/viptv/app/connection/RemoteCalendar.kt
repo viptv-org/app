@@ -56,6 +56,37 @@ internal suspend fun RemoteConnection.calendar(window: CalendarWindow, type: Str
     return CalendarRead(entries, sources, refreshAfter)
 }
 
+internal suspend fun RemoteConnection.calendarAll(window: CalendarWindow,
+    onPage: (List<CalendarEntry>) -> Unit = {}): CalendarRead {
+    val merged = mutableListOf<CalendarEntry>()
+    var sources: Set<CalendarSource>? = null
+    var refreshAfter: Long? = null
+    var answered = false
+    for (type in CalendarTypeRequests) {
+        val read = try {
+            calendar(window, type) { entries -> onPage((merged + entries).distinctReleases()) }
+        } catch (error: RemoteFailure) {
+            if (error.status != 422) throw error
+            continue
+        }
+        answered = true
+        merged += read.entries
+        read.sources?.let { found -> sources = sources.orEmpty() + found }
+        read.refreshAfterMillis?.let { delay -> refreshAfter = maxOf(refreshAfter ?: 0, delay) }
+    }
+    if (!answered) throw RemoteFailure(422, "The calendar is unavailable.")
+    return CalendarRead(merged.distinctReleases(), sources, refreshAfter)
+}
+
+// A title can list under more than one Simkl calendar file, each with its own row id.
+private fun List<CalendarEntry>.distinctReleases(): List<CalendarEntry> {
+    val seen = mutableSetOf<String>()
+    return filter { entry ->
+        val identity = entry.card.identity
+        seen.add("${identity.kind}|${identity.id}|${entry.releaseDate ?: entry.day}|${entry.season}|${entry.episode}")
+    }.sortedBy { it.releaseDate ?: it.day }
+}
+
 private fun CalendarRelease.libraryEpisode(): Card? = episode_card?.takeIf { episode ->
     val parent = episode.parent_identity
     source == CalendarSource.Library.wire && episode.identity.episode != null && parent != null && sameSeries(parent, card.identity)

@@ -39,12 +39,12 @@ fun Button(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean 
     shape: Shape = ButtonDefaults.shape, colors: ButtonColors = ButtonDefaults.buttonColors(),
     elevation: ButtonElevation? = ButtonDefaults.buttonElevation(), border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding, interactionSource: MutableInteractionSource? = null,
+    pressedScale: Float = Motion.button,
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.Button(onClick, modifier.cursorIf(enabled), enabled, shape,
-        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
-        elevation, border, contentPadding, source, content) }
+    val container = hoverFill(source, colors.containerColor, enabled = enabled)
+    DesignHoverOnly { androidx.compose.material3.Button(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
+        colors.copy(containerColor = container), elevation, border, contentPadding, source, content) }
 }
 
 @Composable
@@ -52,12 +52,12 @@ fun OutlinedButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: 
     shape: Shape = ButtonDefaults.outlinedShape, colors: ButtonColors = ButtonDefaults.outlinedButtonColors(),
     elevation: ButtonElevation? = null, border: BorderStroke? = ButtonDefaults.outlinedButtonBorder(enabled),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding, interactionSource: MutableInteractionSource? = null,
+    pressedScale: Float = Motion.button,
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.OutlinedButton(onClick, modifier.cursorIf(enabled), enabled, shape,
-        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
-        elevation, border, contentPadding, source, content) }
+    val container = hoverFill(source, colors.containerColor, enabled = enabled)
+    DesignHoverOnly { androidx.compose.material3.OutlinedButton(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
+        colors.copy(containerColor = container), elevation, border, contentPadding, source, content) }
 }
 
 @Composable
@@ -65,22 +65,22 @@ fun TextButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Bool
     shape: Shape = ButtonDefaults.textShape, colors: ButtonColors = ButtonDefaults.textButtonColors(),
     elevation: ButtonElevation? = null, border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.TextButtonContentPadding, interactionSource: MutableInteractionSource? = null,
+    pressedScale: Float = Motion.button,
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.TextButton(onClick, modifier.cursorIf(enabled), enabled, shape,
-        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors,
-        elevation, border, contentPadding, source, content) }
+    val container = hoverFill(source, colors.containerColor, enabled = enabled)
+    DesignHoverOnly { androidx.compose.material3.TextButton(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
+        colors.copy(containerColor = container), elevation, border, contentPadding, source, content) }
 }
 
 @Composable
 fun IconButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
     colors: IconButtonColors = IconButtonDefaults.iconButtonColors(), interactionSource: MutableInteractionSource? = null,
-    shape: Shape = IconButtonDefaults.standardShape, content: @Composable () -> Unit) {
+    shape: Shape = IconButtonDefaults.standardShape, pressedScale: Float = Motion.button, content: @Composable () -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val hovered = enabled && source.pointerHovered()
-    DesignHoverOnly { androidx.compose.material3.IconButton(onClick, modifier.cursorIf(enabled), enabled,
-        if (hovered) colors.copy(containerColor = HoverFill.container(colors.containerColor)) else colors, source, shape, content) }
+    val container = hoverFill(source, colors.containerColor, enabled = enabled)
+    DesignHoverOnly { androidx.compose.material3.IconButton(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled,
+        colors.copy(containerColor = container), source, shape, content) }
 }
 
 @Composable

@@ -47,20 +47,32 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         initialSection = state.settingsEntrySection ?: if (browser && !compact && manageAccount) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         desktop = desktop, browser = browser,
-        editProfile = state.selectedProfile?.let { id -> { controller.editProfile(id) } },
+        profilePage = { layout -> ProfilePageRoute(state, controller, layout) },
+        profileTitles = if (state.parentTitles != null) ({ compact ->
+            ParentTitlesSettings(requireNotNull(state.parentTitles), state.busy, state.error, controller::closeParentTitles,
+                controller::searchParentTitles, controller::refreshApprovedTitles, controller::approveParentTitle,
+                controller::revokeParentTitle, backLabel = "Back to Profile")
+        }) else null,
+        profileTitlesBack = controller::closeParentTitles,
+        linkedServices = if (!state.localMode) ({ compact ->
+            LinkedServicesSettings(state.simkl.takeIf { state.linkedServicesProfile == state.selectedProfile },
+                state.profiles.find { it.id == state.selectedProfile }?.name, compact, state.busy, state.error,
+                controller::refreshLinkedServices, controller::linkLinkedService, controller::unlinkLinkedService)
+        }) else null,
+        tvProfilePage = ({ first, sidebar, scale, openSection -> TvProfilePageRoute(state, controller, scale, first, sidebar, openSection) }),
+        tvProfileTitles = if (state.parentTitles != null) ({ first, sidebar, scale ->
+            ParentTitlesSettings(requireNotNull(state.parentTitles), state.busy, state.error, controller::closeParentTitles,
+                controller::searchParentTitles, controller::refreshApprovedTitles, controller::approveParentTitle,
+                controller::revokeParentTitle, first, backLabel = "Back to Profile")
+        }) else null,
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         accountAccessRequested = if (remote != null) controller::refreshAccountAccess else null,
         householdPin = if (ownsHousehold) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
-        account = controller.connection.takeUnless { state.localMode }?.let { remote -> {
-            AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account, state.busy, state.error,
-                controller::refreshAccounts) {
-                LinkedAccounts(browser, state.simkl, state.busy, controller::linkSimkl, controller::unlinkSimkl,
-                    remote.accountDashboardUrl)
-            }
-        } },
+        account = if (state.localMode) null else ({ AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account,
+            state.busy, state.error, controller::refreshAccounts) }),
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,

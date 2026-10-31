@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
@@ -16,6 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.ListRemovalConfirmation
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvGridItem
 import org.viptv.app.connection.cardLookupKey
@@ -36,32 +38,28 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val grid = rememberLazyGridState()
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
-    var lastKey by rememberSaveable { mutableStateOf<String?>(null) }
-    var lastIndex by rememberSaveable { mutableIntStateOf(0) }
+    val restore = rememberPageRestore("continue")
+    val anchored = restore.landing(cards.size) { cardLookupKey(cards[it]) }
     var focusedKey by remember { mutableStateOf<String?>(null) }
+    val action = remember { FocusRequester() }
     // The bar below the grid acts on the card the viewer last stood on, so it survives the move onto the bar.
     var lastFocused by remember { mutableStateOf<Card?>(null) }
     var confirming by remember { mutableStateOf<Card?>(null) }
     val target = lastFocused?.takeIf { card -> cards.any { cardLookupKey(it) == cardLookupKey(card) } } ?: cards.firstOrNull()
-    val restore = remember { FocusRequester() }
-    val action = remember { FocusRequester() }
     val removal = remember { FocusRequester() }
     val undoFocus = remember { FocusRequester() }
-    val restoreIndex = cards.indexOfFirst { cardLookupKey(it) == lastKey }.takeIf { it >= 0 }
-        ?: lastIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))
     suspend fun claim(requester: FocusRequester) {
         repeat(30) { if (runCatching { requester.requestFocus() }.getOrDefault(false)) return; withFrameNanos { } }
     }
+    PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(cards.size) { cardLookupKey(cards[it]) } })
     LaunchedEffect(cards.isEmpty(), page.loaded, page.error != null) {
-        if (cards.isEmpty()) { if (!page.loading) claim(action); return@LaunchedEffect }
-        if (grid.layoutInfo.visibleItemsInfo.none { it.index == restoreIndex }) grid.scrollToItem(restoreIndex)
-        claim(restore)
+        if (cards.isEmpty() && !page.loading) claim(action)
     }
     LaunchedEffect(cards) {
         val lost = focusedKey ?: return@LaunchedEffect
         if (cards.isEmpty() || cards.any { cardLookupKey(it) == lost }) return@LaunchedEffect
         focusedKey = null
-        claim(restore)
+        claim(restore.focus)
     }
     val latestCards = rememberUpdatedState(cards)
     AutomaticPage(cards.size, page.busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -94,12 +92,12 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                         contentPadding = PaddingValues(top = 8.dp * scale, bottom = 8.dp * scale)) {
                         itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> "wide" }) { index, card ->
                             TvCatalogCard(card, scale, false, Modifier.tvGridItem(index)
-                                .then(if (index == restoreIndex) Modifier.focusRequester(restore) else Modifier)
+                                .pageAnchor(restore, cardLookupKey(card), index, target = anchored == index)
                                 .focusProperties {
                                     if (index < COLUMNS) up = FocusRequester.Cancel
                                     if (index % COLUMNS == COLUMNS - 1) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                                 },
-                                { lastKey = cardLookupKey(it); lastIndex = index; focusedKey = lastKey; lastFocused = it },
+                                { focusedKey = cardLookupKey(it); lastFocused = it },
                                 continueWatchingActivation(play, open),
                                 artworkWidth = CARD_WIDTH.dp * scale)
                         }
