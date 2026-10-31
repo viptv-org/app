@@ -24,8 +24,10 @@ private data class TitleChoice(val kind: String, val id: String, val title: Stri
 @Composable
 internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error: String?, back: () -> Unit,
     search: (String) -> Unit, refresh: (Boolean) -> Unit, approve: (String, org.viptv.engine.wire.Card) -> Unit,
-    revoke: (ApprovedTitle) -> Unit, block: (org.viptv.engine.wire.Card) -> Unit, unblock: (BlockedTitle) -> Unit,
-    refreshBlocked: (Boolean) -> Unit, first: FocusRequester? = null) {
+    revoke: (ApprovedTitle) -> Unit, block: ((org.viptv.engine.wire.Card) -> Unit)? = null,
+    unblock: ((BlockedTitle) -> Unit)? = null, refreshBlocked: ((Boolean) -> Unit)? = null,
+    first: FocusRequester? = null, backLabel: String = "Back to parental controls") {
+    val blocks = block != null && unblock != null && refreshBlocked != null
     var query by remember(state.profile) { mutableStateOf(state.query) }
     var choice by remember(state.profile) { mutableStateOf<TitleChoice?>(null) }
     if (first != null) LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
@@ -34,10 +36,11 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (!compact) TextButton(back, modifier = if (first != null) Modifier.focusRequester(first) else Modifier) { Text("Back to parental controls") }
-                Text("Approved and blocked titles", style = MaterialTheme.typography.headlineMedium)
+                if (!compact) TextButton(back, modifier = if (first != null) Modifier.focusRequester(first) else Modifier) { Text(backLabel) }
+                Text(if (blocks) "Approved and blocked titles" else "Approved titles", style = MaterialTheme.typography.headlineMedium)
                 Text("For ${state.profileName}", style = MaterialTheme.typography.titleMedium)
-                Text("Allow individual titles beyond this profile’s age limit, or block titles entirely. Adult titles cannot be approved. Search uses the integrations enabled for this profile.", color = Palette.secondary)
+                Text(if (blocks) "Allow individual titles beyond this profile’s age limit, or block titles entirely. Adult titles cannot be approved. Search uses the integrations enabled for this profile."
+                    else "Allow individual titles beyond this profile’s age limit. Adult titles cannot be approved. Search uses the integrations enabled for this profile.", color = Palette.secondary)
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 error?.let { Text(it, color = Palette.danger) }
                 state.notice?.let { Text(it, color = Palette.secondary) }
@@ -64,7 +67,7 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
                         OutlinedButton({ choice = TitleChoice(card.identity.kind, card.identity.id, card.title, "approve",
                             row.id, candidate = card) },
                             enabled = !busy && item.approval_supported && !approved) { Text(if (approved) "Approved" else "Approve title") }
-                        if (card.identity.kind == "movie" || card.identity.kind == "series")
+                        if (blocks && (card.identity.kind == "movie" || card.identity.kind == "series"))
                             TextButton({ choice = TitleChoice(card.identity.kind, card.identity.id, card.title, "block",
                                 row.id, candidate = card) }, enabled = !busy && !blocked) { Text(if (blocked) "Blocked" else "Block title") }
                     }
@@ -86,22 +89,25 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
             }
         }
         if (state.nextOffset != null) item { OutlinedButton({ refresh(true) }, enabled = !busy) { Text("Load more approvals") } }
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                HorizontalDivider(color = Palette.raised)
-                Text("Blocked titles", style = MaterialTheme.typography.titleLarge)
-                Text("Blocked titles stay hidden for ${state.profileName}, even when they are approved.", color = Palette.secondary)
-                OutlinedButton({ refreshBlocked(false) }, enabled = !busy) { Text("Refresh blocked titles") }
-                if (state.blockedLoaded && state.blocked.isEmpty()) Text("No titles are blocked for ${state.profileName}.", color = Palette.secondary)
+        if (blocks) {
+            val refreshBlockedList = requireNotNull(refreshBlocked)
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HorizontalDivider(color = Palette.raised)
+                    Text("Blocked titles", style = MaterialTheme.typography.titleLarge)
+                    Text("Blocked titles stay hidden for ${state.profileName}, even when they are approved.", color = Palette.secondary)
+                    OutlinedButton({ refreshBlockedList(false) }, enabled = !busy) { Text("Refresh blocked titles") }
+                    if (state.blockedLoaded && state.blocked.isEmpty()) Text("No titles are blocked for ${state.profileName}.", color = Palette.secondary)
+                }
             }
-        }
-        items(state.blocked) { title ->
-            ParentTitleRowCard(title.name ?: title.id, title.type, null) {
-                TextButton({ choice = TitleChoice(title.type, title.id, title.name ?: title.id, "unblock", blocked = title) },
-                    enabled = !busy) { Text("Unblock title") }
+            items(state.blocked) { title ->
+                ParentTitleRowCard(title.name ?: title.id, title.type, null) {
+                    TextButton({ choice = TitleChoice(title.type, title.id, title.name ?: title.id, "unblock", blocked = title) },
+                        enabled = !busy) { Text("Unblock title") }
+                }
             }
+            if (state.blockedNextOffset != null) item { OutlinedButton({ refreshBlockedList(true) }, enabled = !busy) { Text("Load more blocked titles") } }
         }
-        if (state.blockedNextOffset != null) item { OutlinedButton({ refreshBlocked(true) }, enabled = !busy) { Text("Load more blocked titles") } }
     }
     }
     choice?.let { selected ->
@@ -122,8 +128,8 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
                 if (!busy) {
                     when (selected.action) {
                         "approve" -> approve(requireNotNull(selected.row), requireNotNull(selected.candidate))
-                        "block" -> block(requireNotNull(selected.candidate))
-                        "unblock" -> unblock(requireNotNull(selected.blocked))
+                        "block" -> requireNotNull(block).invoke(requireNotNull(selected.candidate))
+                        "unblock" -> requireNotNull(unblock).invoke(requireNotNull(selected.blocked))
                         else -> revoke(requireNotNull(selected.saved))
                     }
                     choice = null
