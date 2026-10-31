@@ -20,10 +20,11 @@ internal const val tvAccountManagedElsewhere = "Manage this from a signed-in pho
 
 @Composable
 internal fun TvSettingsAccount(local: Boolean, info: TvAccountInfo?, scale: Float, initial: FocusRequester,
-    sidebar: FocusRequester, leave: () -> Unit, openDashboard: (() -> Unit)?,
+    sidebar: FocusRequester, leave: () -> Unit, openDashboard: (() -> Unit)?, openDevices: (() -> Unit)? = null,
     busy: Boolean = false, error: String? = null, retry: (() -> Unit)? = null) {
     val missing = !local && info == null && retry != null
-    val devicesFirst = !local && info != null && openDashboard != null
+    val openDevicesOrDashboard = openDevices ?: openDashboard
+    val devicesFirst = !local && info != null && openDevicesOrDashboard != null
     val retryFirst = !local && info == null && missing
     val signOutFirst = !devicesFirst && !retryFirst
     Column(verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
@@ -37,9 +38,9 @@ internal fun TvSettingsAccount(local: Boolean, info: TvAccountInfo?, scale: Floa
             TvAccountValue("Role", if (info.role == "owner") "Owner" else "Member", scale)
             if (info.password) TvSettingsDisabledRow("Password", tvAccountManagedElsewhere, scale)
             TvSettingsDisabledRow("Household PIN", tvAccountManagedElsewhere, scale)
-            if (openDashboard != null) TvSettingsRow("Devices & sessions", scale = scale,
-                value = info.devices?.let { "$it devices" } ?: "Manage on the web",
-                requester = if (devicesFirst) initial else null, left = sidebar, activate = openDashboard)
+            if (openDevicesOrDashboard != null) TvSettingsRow("Devices & sessions", scale = scale,
+                value = info.devices?.let { "$it devices" } ?: if (openDevices != null) "Read only" else "Manage on the web",
+                requester = if (devicesFirst) initial else null, left = sidebar, activate = openDevicesOrDashboard)
         } else {
             Text(if (busy) "Loading account information…" else "Account information is unavailable.",
                 fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp, color = Palette.secondary)
