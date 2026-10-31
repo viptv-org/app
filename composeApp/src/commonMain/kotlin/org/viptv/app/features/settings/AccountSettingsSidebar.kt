@@ -42,7 +42,7 @@ internal fun AccountSettingsSidebar(selected: String, profile: Profile?, section
                         }.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             SettingsRailIcon(row, Modifier.size(19.dp))
-                            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (row == SettingsRow.SignOut) Palette.danger else Palette.text)
+                            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (row.dangerous) Palette.danger else Palette.text)
                         }
                     }
                 }

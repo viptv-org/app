@@ -38,6 +38,9 @@ internal enum class SettingsRow(val group: SettingsGroup, val key: String, val l
     Addons(SettingsGroup.Account, "Add-ons", "Add-ons", Lucide.Puzzle),
     SourceIntegrations(SettingsGroup.Account, "Source integrations", "Source integrations", Lucide.Server),
     SignOut(SettingsGroup.Account, "Sign out", "Sign out", Lucide.LogOut),
+    DeleteAccount(SettingsGroup.Account, "Delete account", "Delete account", Lucide.Trash2);
+
+    val dangerous: Boolean get() = this == SignOut || this == DeleteAccount
 }
 
 internal data class SettingsSection(val group: SettingsGroup, val rows: List<SettingsRow>) {
@@ -51,7 +54,8 @@ internal fun settingsSections(available: Set<SettingsRow>): List<SettingsSection
 
 internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: Boolean, account: Boolean,
     devices: Boolean, addDevice: Boolean, watchOnTv: Boolean, information: Boolean,
-    householdPin: Boolean = false, sourceIntegrations: Boolean = false, linkedServices: Boolean = false): Set<SettingsRow> = buildSet {
+    householdPin: Boolean = false, sourceIntegrations: Boolean = false, deleteAccount: Boolean = false,
+    linkedServices: Boolean = false): Set<SettingsRow> = buildSet {
     add(SettingsRow.Profile)
     if (linkedServices) add(SettingsRow.LinkedServices)
     if (parental) add(SettingsRow.ParentalControls)
@@ -66,6 +70,7 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     add(SettingsRow.Addons)
     if (sourceIntegrations) add(SettingsRow.SourceIntegrations)
     add(SettingsRow.SignOut)
+    if (deleteAccount) add(SettingsRow.DeleteAccount)
 }
 
 internal fun signOutLabel(local: Boolean) = if (local) "Change connection" else "Sign out"

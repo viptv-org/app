@@ -22,5 +22,5 @@ internal fun SettingsGroupLabel(label: String, layout: SettingsLayout) {
 
 @Composable
 internal fun SettingsRailIcon(row: SettingsRow, modifier: Modifier = Modifier) {
-    Icon(row.icon, null, modifier, tint = if (row == SettingsRow.SignOut) Palette.danger else Palette.text)
+    Icon(row.icon, null, modifier, tint = if (row.dangerous) Palette.danger else Palette.text)
 }
