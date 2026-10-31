@@ -33,17 +33,19 @@ internal fun calendarEmptyDay(filter: CalendarFilter?) =
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
-    type: String = "series", week: Int = 0, controls: Boolean = false,
+    type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
     sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null) {
-    var chosen by remember { mutableStateOf(CalendarFilter.All) }
+    var chosen by remember { mutableStateOf(CALENDAR_DEFAULT_FILTER) }
     val offered = calendarFilterOffered(entries, sources)
-    LaunchedEffect(offered) { if (!offered) chosen = CalendarFilter.All }
     val filter = chosen.takeIf { offered }
-    val shown = entries.shown(chosen, offered)
+    val fallback = entries.fallsBackToAll(filter)
+    val shown = if (fallback) entries else entries.shown(chosen, offered)
+    val notice = if (fallback) CALENDAR_FALLBACK else null
+    val emptyFilter = filter.takeUnless { fallback }
     val restore = rememberPageRestore("calendar")
     if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, restore = restore); return }
+        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice, restore = restore); return }
     val choose = calendarOpener(open, openEntry)
     var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
@@ -72,6 +74,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                 }
             }
             error?.let { Text(it, color = Palette.danger) }
+            notice?.let { Text(it, color = Palette.secondary, fontSize = if (phone) 13.sp else 14.sp) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             if (entries.isEmpty() && !busy && error == null) {
                 Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
@@ -86,7 +89,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                                 Text(line.day.label, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 Text(line.day.fullDate, fontSize = 12.sp, color = Palette.secondary)
                             }
-                            is CalendarLine.Empty -> Text(calendarEmptyDay(filter), color = Palette.secondary, fontSize = 13.sp)
+                            is CalendarLine.Empty -> Text(calendarEmptyDay(emptyFilter), color = Palette.secondary, fontSize = 13.sp)
                             is CalendarLine.Entry -> CalendarReleaseRow(line.entry, true, scale, watch, { focused = line.entry },
                                 { restore.mark(line.entry.id, index); choose(line.entry) })
                         }
@@ -94,7 +97,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                         CalendarReleaseRow(entry, false, scale, watch, { focused = entry }, { restore.mark(entry.id, index); choose(entry) },
                             Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
                     }
-                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(filter),color=Palette.secondary)}
+                    if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(emptyFilter),color=Palette.secondary)}
                 }
                 if (television && focused != null) Column(Modifier.width(584.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     val entry = requireNotNull(focused)
