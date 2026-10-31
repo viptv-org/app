@@ -21,7 +21,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     serverAddress: String? = null,
     tvAccount: TvAccountInfo? = null, accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
     householdPin: (@Composable () -> Unit)? = null,
-    password: (@Composable (() -> Unit) -> Unit)? = null,
+    password: (@Composable (() -> Unit) -> Unit)? = null, deleteAccount: (@Composable (() -> Unit) -> Unit)? = null,
     parentalBack: (() -> Unit)? = null, parental: (@Composable () -> Unit)? = null, tvParental: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
     preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
@@ -66,7 +66,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
         val rows = availableRows(parental != null, stremioImport != null, preferences != null || sectionPreferences != null,
             account != null, devices != null, addDevice != null, watchOnTv = layout == SettingsLayout.Tablet, information = true,
             householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null,
-            linkedServices = linkedServices != null, password = password != null)
+            deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null)
         val root = initialSection.takeIf { returnToPlayer != null }
         val shown = current.laidOut(compact, root)
         SideEffect { if (savedPage != shown) show(shown) }
@@ -87,7 +87,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             Box(Modifier.weight(1f, fill = !webAccount).then(if (webAccount) Modifier.widthIn(max = 760.dp) else Modifier)) {
                 when {
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
-                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, password = password?.let { { open("Password") } }, profilePage = profilePage?.let { { open("Profile") } }, linkedServices = linkedServices?.let { { open("Linked services") } }, listState = listState)
+                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, password = password?.let { { open("Password") } }, deleteAccount = deleteAccount?.let { { open("Delete account") } }, profilePage = profilePage?.let { { open("Profile") } }, linkedServices = linkedServices?.let { { open("Linked services") } }, listState = listState)
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null,
                         installWithCompletion = installWithCompletion)
@@ -100,6 +100,10 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         password(if (compact) back else ({ open("Account") }))
                     }
                     section == "Household PIN" && householdPin != null -> SettingsDetailContent(compact, back, content = householdPin)
+                    section == "Delete account" && deleteAccount != null -> SettingsDetailContent(compact, back) {
+                        val cancel: () -> Unit = if (compact) back else ({ open("Account") })
+                        deleteAccount(cancel)
+                    }
                     section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {
                             phoneSourceIntegrations.invoke()

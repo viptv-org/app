@@ -72,6 +72,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
         password = passwordPage,
+        deleteAccount = controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
+            DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured,
+                state.busy, state.error, controller::refreshAccountDeletion, cancel,
+                controller::deleteAccount)
+        } },
         account = if (state.localMode) null else ({ AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account,
             state.busy, state.error, controller::refreshAccounts, notice = state.passwordChangeNotice) }),
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {

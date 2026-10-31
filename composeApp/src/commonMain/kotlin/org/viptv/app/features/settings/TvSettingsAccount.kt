@@ -58,6 +58,7 @@ internal fun TvSettingsAccount(local: Boolean, info: TvAccountInfo?, scale: Floa
         TvSettingsRow(if (local) "Change connection" else "Sign out", scale = scale,
             requester = if (signOutFirst) initial else null, left = sidebar, activate = leave,
             labelColor = if (local) null else Palette.danger)
+        if (!local) TvSettingsDisabledRow("Delete account", tvAccountManagedElsewhere, scale)
     }
 }
 

@@ -40,7 +40,7 @@ internal fun SettingsSidebar(selected: String, profile: Profile?, layout: Settin
                         }.padding(horizontal = 12.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             SettingsRailIcon(row, Modifier.size(20.dp))
-                            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (row == SettingsRow.SignOut) Palette.danger else Palette.text)
+                            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (row.dangerous) Palette.danger else Palette.text)
                         }
                     }
                 }

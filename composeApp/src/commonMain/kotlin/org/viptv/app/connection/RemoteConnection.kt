@@ -379,6 +379,24 @@ class RemoteConnection(
         }
     }
 
+    internal suspend fun deleteAccount(username: String, password: String, pin: String?) {
+        val response = authenticatedResponse("/api/auth/account", HttpMethod.Delete, buildJsonObject {
+            put("username", username)
+            put("password", password)
+            if (!pin.isNullOrEmpty()) put("pin", pin)
+        })
+        checkStatus(response, response.bodyAsText())
+    }
+
+    internal suspend fun forgetDeletedAccount() {
+        authSession {
+            try { sessionStore.clear() }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { }
+            accessToken = null; refreshToken = null; csrf = null
+        }
+    }
+
     private suspend fun <T> authSession(block: suspend () -> T): T = refreshGate.withLock {
         ensureOpen()
         if (browser) block() else nativeSessionGate.withLock { ensureOpen(); block() }
