@@ -22,8 +22,8 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     if (screen != Screen.Details) cancelDetailPaging()
     if (screen !in listOf(Screen.Details, Screen.Sources, Screen.Player)) {
         cancelSourceDetail()
-        if (mutable.value.playTapTitle != null || mutable.value.detailFailure != null)
-            updateState { it.copy(playTapTitle = null, detailFailure = null) }
+        if (mutable.value.playTapTitle != null || mutable.value.detailFailure != null || mutable.value.detailShell)
+            updateState { it.copy(playTapTitle = null, detailFailure = null, detail = if (it.detailShell) null else it.detail, detailShell = false) }
     }
     if (screen != Screen.Sources && mutable.value.findingSources) {
         generation++
@@ -80,7 +80,7 @@ fun ApplicationController.backDetails() {
     generation++
     job?.cancel()
     val previous = mutable.value.detailHistory.lastOrNull()
-    if (previous != null) updateState { it.copy(detail = previous, detailHistory = it.detailHistory.dropLast(1), busy = false, error = null, detailRetryable = true) }
+    if (previous != null) updateState { it.copy(detail = previous, detailHistory = it.detailHistory.dropLast(1), busy = false, error = null, detailRetryable = true, detailShell = false) }
     else { updateState { it.copy(busy = false) }; returnTo(mutable.value.detailReturnScreen) }
     rememberNavigation()
 }

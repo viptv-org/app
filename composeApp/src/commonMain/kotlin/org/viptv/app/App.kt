@@ -177,10 +177,10 @@ fun App(
                                     if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
                                     if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
                                         // A failed first load lands in state.error, which the page must show instead of drawing blank.
-                                        state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null },
+                                        state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null || state.detailShell },
                                         // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
                                         if (browser && showingSources) controller::backSources else controller::backDetails,
-                                        controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
+                                        if (state.detailShell) controller::playTitle else controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
                                         defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
                                         // A Calendar row's episode comes first: Details opened from it land on its season.
                                         continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
@@ -188,7 +188,7 @@ fun App(
                                         paging = state.screen == Screen.Details,
                                         // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
                                         playTap = state.playTapTitle != null,
-                                        retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
+                                        retry = if ((state.playTapTitle != null && state.detail == null || state.detailShell) && state.detailRetryable) controller::retryDetails else null,
                                         // The drawer over the page owns the keyboard: the dialog must not take its focus.
                                         closeFocusOnOpen = !(browser && showingSources))
                                     if (drawerShown) {

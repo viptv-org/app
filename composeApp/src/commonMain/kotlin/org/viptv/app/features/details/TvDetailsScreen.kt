@@ -123,20 +123,26 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                         down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
                         downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }))
                 }
-                if (detail.episodes.isNotEmpty()) item(key = "episodes") {
-                    TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
-                        focused = { episodeMode = true; focusRow(TvDetailRow.Episodes) }, expanded = episodeMode,
-                        resume = resume,
-                        returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
-                        busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown)
-                }
-                if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
-                    TvRecommendationShelf(extras.recommendations, scale, open,
-                        focused = { focusRow(TvDetailRow.Recommendations) }, up = { focusEpisodes() })
+                when {
+                    !busy && error != null -> item(key = "failure") {
+                        DetailInlineFailure(error, retry, Modifier.padding(horizontal = 96.dp * scale, vertical = 32.dp * scale))
+                    }
+                    busy -> item(key = "skeleton") { TvDetailBelowSkeleton(scale) }
+                    else -> {
+                        if (detail.episodes.isNotEmpty()) item(key = "episodes") {
+                            TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
+                                focused = { episodeMode = true; focusRow(TvDetailRow.Episodes) }, expanded = episodeMode,
+                                resume = resume,
+                                returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
+                                busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown)
+                        }
+                        if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
+                            TvRecommendationShelf(extras.recommendations, scale, open,
+                                focused = { focusRow(TvDetailRow.Recommendations) }, up = { focusEpisodes() })
+                        }
+                    }
                 }
             }
-            if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-            error?.let { item { Text(it, Modifier.padding(96.dp * scale), color = Palette.danger) } }
         }
 
         notice?.let { message -> AlertDialog(onDismissRequest = { notice = null },

@@ -3,6 +3,7 @@ package org.viptv.app.state
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.MediaIdentity
 import org.viptv.engine.wire.RowState
 
@@ -143,12 +144,16 @@ fun ApplicationController.enrichSummary(card: Card) {
 fun ApplicationController.open(card: Card) {
     beginDetails()
     val navigation = navigationGeneration
-    runPage {
-        val profile = requireNotNull(mutable.value.selectedProfile)
-        val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-        updateState { it.copy(detail = detail.withCardArt(card)) }
-        rememberNavigation()
-    }
+    // The tapped card already carries the hero: draw the shell from it while the meta read is in flight.
+    updateState { it.copy(detail = DetailSnapshot(item = card, episodes = emptyList()), detailShell = true) }
+    runPage { readDetail(card, navigation) }
+}
+
+private suspend fun ApplicationController.readDetail(card: Card, navigation: Long) {
+    val profile = requireNotNull(mutable.value.selectedProfile)
+    val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return
+    updateState { it.copy(detail = detail.withCardArt(card), detailShell = false) }
+    rememberNavigation()
 }
 
 // A sparse meta must not wipe the art the card already has: the details hero would render a black page.
@@ -166,9 +171,9 @@ fun ApplicationController.playTitle(card: Card) {
     val before = mutable.value
     val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: before.detailReturnScreen
-    val keptDetail = before.detail?.takeIf { sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
+    val keptDetail = before.detail?.takeIf { !before.detailShell && sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
     releaseRemotePlayback()
-    updateState { it.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null) }
+    updateState { it.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null, detailShell = false) }
     openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null })
     if (card.identity.episode != null && card.metadata_origin != null) {
         loadSourceDetail(card, navigation)
@@ -179,7 +184,7 @@ fun ApplicationController.playTitle(card: Card) {
 }
 
 private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire.DetailSnapshot, card: Card, target: Card) {
-    updateState { it.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target) }
+    updateState { it.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target, detailShell = false) }
 }
 
 private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Long) {
@@ -225,12 +230,18 @@ private fun ApplicationController.resolveFailed(error: Exception, remote: Remote
 }
 
 fun ApplicationController.retryDetails() {
-    val card = mutable.value.playTapTitle ?: return
-    if (mutable.value.screen != Screen.Details) return
+    val state = mutable.value
+    if (state.screen != Screen.Details) return
+    val card = state.playTapTitle ?: state.detail?.item ?: return
     val navigation = navigationGeneration
     updateState { it.copy(error = null, detailFailure = null, detailPageError = null, detailRetryable = true) }
-    if (card.identity.episode != null && card.metadata_origin != null) loadSourceDetail(card, navigation)
-    else resolveSourceTarget(card, navigation)
+    if (state.playTapTitle != null) {
+        if (card.identity.episode != null && card.metadata_origin != null) loadSourceDetail(card, navigation)
+        else resolveSourceTarget(card, navigation)
+    } else {
+        updateState { it.copy(detailShell = true) }
+        runPage { readDetail(card, navigation) }
+    }
 }
 
 private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long) {
@@ -295,7 +306,7 @@ fun ApplicationController.chooseSource(card: Card) {
     }
     // A title-level series must never reach stream providers as S0E0.
     if (card.identity.kind == "series" && card.identity.episode == null) {
-        val detail = mutable.value.detail?.takeIf { it.item.identity == card.identity && it.item.provider_id == card.provider_id && it.item.metadata_origin == card.metadata_origin }
+        val detail = mutable.value.detail?.takeIf { !mutable.value.detailShell && it.item.identity == card.identity && it.item.provider_id == card.provider_id && it.item.metadata_origin == card.metadata_origin }
         if (detail == null) { playTitle(card); return }
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
             updateState { it.copy(error = error.message) }; return
@@ -425,6 +436,6 @@ internal fun ApplicationController.beginDetails() {
             else (previous.navBack + previous.screen).takeLast(32)
         previous.copy(detailReturnScreen = origin, detailHistory = history,
             navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
-            screen = Screen.Details, detail = null, calendarEpisode = null)
+            screen = Screen.Details, detail = null, detailShell = false, calendarEpisode = null)
     }
 }

@@ -85,28 +85,33 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                 Box {
                     LazyColumn(state = list, contentPadding = PaddingValues(bottom = 30.dp), topEdgeFade = false) {
                         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-                        error?.let { item { Text(it, Modifier.padding(gutter), color = Palette.danger) } }
                         detail?.item?.let { card ->
-                            item { BrowserDetailHero(card, gutter, play, save, saved, heroEpisode) }
-                            item { Column(Modifier.padding(horizontal = gutter, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                MediaMetadata(card)
-                                card.description?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
-                            } }
-                        }
-                        selected?.let { season ->
-                            item { Box(Modifier.padding(horizontal = gutter, vertical = 10.dp)) {
-                                DetailSeasonPicker(seasons, season, compact) {
-                                    seasonChoice.pick(it)
-                                    seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
+                            item(key = "hero") { BrowserDetailHero(card, gutter, play, save, saved, heroEpisode) }
+                            when {
+                                !busy && error != null -> item(key = "failure") { DetailInlineFailure(error, null, Modifier.padding(gutter)) }
+                                busy -> item(key = "skeleton") { Box(Modifier.padding(gutter)) { DetailBelowSkeleton(compact, !compact) } }
+                                else -> {
+                                    item(key = "information") { Column(Modifier.padding(horizontal = gutter, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        MediaMetadata(card)
+                                        card.description?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                    } }
+                                    selected?.let { season ->
+                                        item { Box(Modifier.padding(horizontal = gutter, vertical = 10.dp)) {
+                                            DetailSeasonPicker(seasons, season, compact) {
+                                                seasonChoice.pick(it)
+                                                seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
+                                            }
+                                        } }
+                                        items(season.episodes, key = ::episodeKey) { episode ->
+                                            val shown = resume.shown(episode)
+                                            if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp))
+                                            else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
+                                        }
+                                    }
+                                    if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(vertical = gutter), gutter = gutter) }
                                 }
-                            } }
-                            items(season.episodes, key = ::episodeKey) { episode ->
-                                val shown = resume.shown(episode)
-                                if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp))
-                                else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                             }
                         }
-                        if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(vertical = gutter), gutter = gutter) }
                     }
                     IconButton(onClick = requestDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)
                         .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }

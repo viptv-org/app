@@ -93,6 +93,7 @@ data class ApplicationState(
     val detailFailure: String? = null,
     val detailRetryable: Boolean = true,
     val detail: DetailSnapshot? = null,
+    val detailShell: Boolean = false,
     val detailLoadingOffset: Long? = null,
     val detailPageError: String? = null,
     val detailHistory: List<DetailSnapshot> = emptyList(),

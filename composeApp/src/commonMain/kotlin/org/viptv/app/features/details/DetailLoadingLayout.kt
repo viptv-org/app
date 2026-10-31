@@ -1,14 +1,11 @@
 package org.viptv.app.features.details
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import org.viptv.app.theme.Palette
 
 @Composable
 internal fun DetailLoadingLayout(television: Boolean, modifier: Modifier = Modifier) {
@@ -38,9 +35,4 @@ internal fun DetailLoadingLayout(television: Boolean, modifier: Modifier = Modif
             }
         }
     }
-}
-
-@Composable
-private fun DetailPlaceholder(modifier: Modifier) {
-    Box(modifier.background(Palette.raised, RoundedCornerShape(8.dp)))
 }
