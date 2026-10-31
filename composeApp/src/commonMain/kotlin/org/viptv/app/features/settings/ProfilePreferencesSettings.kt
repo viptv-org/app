@@ -33,6 +33,8 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
     var subtitleScale by remember(snapshot) { mutableStateOf(preferences?.subtitle_font_scale ?: 1.0) }
     var subtitleColor by remember(snapshot) { mutableStateOf(preferences?.subtitle_text_color ?: "#FFFFFF") }
     var subtitleBackground by remember(snapshot) { mutableStateOf(preferences?.subtitle_background_color ?: "#00000000") }
+    var nextEpisode by remember(snapshot) { mutableStateOf(preferences?.next_episode_button ?: true) }
+    var skipIntros by remember(snapshot) { mutableStateOf(preferences?.skip_intros ?: false) }
     org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(24.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Playback preferences", style = MaterialTheme.typography.headlineSmall)
         Text("These preferences apply to the current profile.", color = Palette.secondary)
@@ -49,6 +51,22 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
             }
         }
         if (preferences != null) {
+            Row(Modifier.pointerToggleable(nextEpisode, role = Role.Switch, shape = RoundedCornerShape(8.dp), onValueChange = { nextEpisode = it }),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.weight(1f, fill = false)) {
+                    Text(nextEpisodeButtonRow)
+                    Text(nextEpisodeButtonDescription, color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(nextEpisode, null)
+            }
+            Row(Modifier.pointerToggleable(skipIntros, role = Role.Switch, shape = RoundedCornerShape(8.dp), onValueChange = { skipIntros = it }),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.weight(1f, fill = false)) {
+                    Text(skipIntrosRow)
+                    Text(skipIntrosDescription, color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(skipIntros, null)
+            }
             OutlinedTextField(audio, { audio = it }, label = { Text("Preferred audio language") },
                 supportingText = { Text("Language tag, for example en or pt-BR. Leave empty for the original language.") }, enabled = !busy, singleLine = true)
             OutlinedTextField(subtitle, { subtitle = it }, label = { Text("Preferred subtitle language") },
@@ -88,7 +106,8 @@ internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Bo
                 supportingText = { Text("Hex colour with optional alpha; #00000000 is transparent.") }, enabled = !busy, singleLine = true)
             Button({ save(preferences.copy(preferred_audio_language = audio.trim().takeIf(String::isNotEmpty), preferred_subtitle_language = subtitle.trim().takeIf(String::isNotEmpty),
                 source_selection = selection, max_quality_height = quality, hdr_preference = hdr,
-                subtitle_font_scale = subtitleScale, subtitle_text_color = subtitleColor.trim(), subtitle_background_color = subtitleBackground.trim())
+                subtitle_font_scale = subtitleScale, subtitle_text_color = subtitleColor.trim(), subtitle_background_color = subtitleBackground.trim(),
+                next_episode_button = nextEpisode, skip_intros = skipIntros)
                 .let { if (it.subtitleMode == mode) it else it.withSubtitleMode(mode) }) }, enabled = !busy) { Text("Save preferences") }
         }
     } }

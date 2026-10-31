@@ -30,7 +30,11 @@ internal val tvPlaceholderPlaybackRows = listOf("Match frame rate")
 
 internal const val autoplayNextRow = "Autoplay next episode"
 internal const val autoplayNextDescription = "Plays the next episode after a 10-second countdown. Applies to this device."
+internal const val nextEpisodeButtonRow = "Next episode button"
+internal const val nextEpisodeButtonDescription = "Shows during the credits"
+internal const val skipIntrosRow = "Skip intros and recaps"
+internal const val skipIntrosDescription = "Skips them when the show marks where they are"
 
 internal fun tvPlaybackRows(actualPreferencesOnly: Boolean, deviceRows: Boolean = false): List<String> = listOf(
-    "Next episode button", autoplayNextRow, "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision", "Match frame rate",
+    nextEpisodeButtonRow, autoplayNextRow, skipIntrosRow, "Default source", "Preferred quality", "HDR and Dolby Vision", "Match frame rate",
 ).filterNot { actualPreferencesOnly && it in tvPlaceholderPlaybackRows || !deviceRows && it == autoplayNextRow }
