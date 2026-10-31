@@ -200,6 +200,7 @@ class BrowserSourceDrawerTest {
 
     private fun BrowserApp.assertDetailsUnchanged(before: Map<String, Float>, metaBefore: List<String>) {
         assertEquals(Screen.Details, controller.state.value.screen, "closing the drawer returns to Details")
+        until("the drawer to close") { drawerPane == null }
         assertNull(pane("Choose a source"), "the drawer is gone")
         assertNotNull(pane(title), "the Details dialog is still open")
         assertEquals(before, episodeTops(), "same season, same scroll position")
