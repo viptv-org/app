@@ -28,6 +28,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     val devicePlayback = rememberDevicePlaybackState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
+    val passwordPage: (@Composable (() -> Unit) -> Unit)? = remote?.takeIf { state.passwordChangeAvailable }?.let { connection ->
+        { back -> ChangePasswordScreen(connection, back) { controller.passwordChanged() } } }
+    LaunchedEffect(remote) { if (remote != null) controller.refreshPasswordChangeAvailability() }
     val manageAccount = state.manageAccount
     val ownsHousehold = manageAccount && state.accountOwner
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
@@ -71,13 +74,14 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         householdPin = if (ownsHousehold) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
+        password = if (manageAccount) passwordPage else null,
         deleteAccount = if (manageAccount) controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
             DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured,
                 state.busy, state.error, controller::refreshAccountDeletion, cancel,
                 controller::deleteAccount)
         } } else null,
         account = if (state.localMode) null else ({ AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account,
-            state.busy, state.error, controller::refreshAccounts) }),
+            state.busy, state.error, controller::refreshAccounts, notice = state.passwordChangeNotice) }),
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
@@ -99,7 +103,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
             StremioImportRoute(state, controller, compact, if (compact) back else null, manageAddons) }) else null,
         serverAddress = controller.connection?.accountDashboardUrl,
-        tvAccount = (state.accountIdentity ?: state.accountDevices?.account)?.let { TvAccountInfo(it.name, it.username, it.role) },
+        tvAccount = (state.accountIdentity ?: state.accountDevices?.account)?.let { TvAccountInfo(it.name, it.username, it.role, password = state.passwordChangeAvailable) },
         accountRequested = if (!state.localMode) controller::refreshAccountIdentity else null,
         accountDashboard = controller.connection?.accountDashboardUrl?.let { url -> { org.viptv.app.connection.openAccountAuthorization(url) } },
         tvPreferences = state.preferences?.preferences?.tvSettings(),

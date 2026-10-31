@@ -223,10 +223,17 @@ class RemoteConnection(
     }
 
     internal suspend fun accountCall(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonObject {
-        check(browser && path.startsWith("/api/auth/"))
+        check(accountManagementEnabled && path.startsWith("/api/auth/"))
         val value = call(path, method, body).jsonObject
         if (path in setOf("/api/auth/status", "/api/auth/me", "/api/auth/login", "/api/auth/refresh"))
             csrf = value["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        return value
+    }
+
+    // Self-service credential routes answer to a native sign-in too, and a browser write still needs the fresh CSRF they return.
+    internal suspend fun credentialCall(path: String, body: JsonElement): JsonObject {
+        val value = call(path, HttpMethod.Post, body).jsonObject
+        csrf = value["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
         return value
     }
 

@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
-internal data class TvAccountInfo(val name: String, val username: String, val role: String, val devices: Int? = null)
+internal data class TvAccountInfo(val name: String, val username: String, val role: String, val devices: Int? = null, val password: Boolean = false)
 
 internal const val tvAccountManagedElsewhere = "Manage this from a signed-in phone, computer or the web dashboard."
 
@@ -35,6 +35,7 @@ internal fun TvSettingsAccount(local: Boolean, info: TvAccountInfo?, scale: Floa
             TvAccountValue("Name", info.name, scale)
             TvAccountValue("Username", "@${info.username}", scale)
             TvAccountValue("Role", if (info.role == "owner") "Owner" else "Member", scale)
+            if (info.password) TvSettingsDisabledRow("Password", tvAccountManagedElsewhere, scale)
             TvSettingsDisabledRow("Household PIN", tvAccountManagedElsewhere, scale)
             if (openDashboard != null) TvSettingsRow("Devices & sessions", scale = scale,
                 value = info.devices?.let { "$it devices" } ?: "Manage on the web",

@@ -52,7 +52,8 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
             settingsEntrySection = if (screen == Screen.Settings) state.settingsEntrySection else null,
             liveSetupReturnFocus = state.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
             settingsReturnsToPlayer = playerVisit,
-            settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) state.settingsPage else null)
+            settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) state.settingsPage else null,
+            passwordChangeNotice = if (screen == Screen.Settings) state.passwordChangeNotice else null)
     }
     if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
         loadBrowse(browse ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))

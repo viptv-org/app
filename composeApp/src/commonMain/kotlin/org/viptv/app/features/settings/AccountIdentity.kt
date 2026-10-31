@@ -16,7 +16,8 @@ import org.viptv.app.connection.AccountIdentity
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun AccountIdentityScreen(identity: AccountIdentity?, busy: Boolean, error: String?, load: () -> Unit) {
+internal fun AccountIdentityScreen(identity: AccountIdentity?, busy: Boolean, error: String?, load: () -> Unit,
+    notice: String? = null) {
     LaunchedEffect(Unit) { load() }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
@@ -27,6 +28,7 @@ internal fun AccountIdentityScreen(identity: AccountIdentity?, busy: Boolean, er
                 IdentityRow("Role", if (identity.role == "owner") "Owner" else "Member")
             }
         } else Text(if (busy) "Loading your account…" else "Could not load your account.", color = Palette.secondary)
+        notice?.let { Text(it, color = Palette.secondary) }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         error?.let { Text(it, color = Palette.danger) }
         if (identity == null || error != null) TextButton(load, enabled = !busy) { Text("Retry account") }
