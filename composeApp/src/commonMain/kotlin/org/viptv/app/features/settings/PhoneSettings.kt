@@ -26,7 +26,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
     profilePage: (() -> Unit)? = null, linkedServices: (() -> Unit)? = null,
     listState: LazyListState = rememberLazyListState()) {
     val available = availableRows(parental != null, stremioImport != null, preferences != null, account != null,
-        devices != null, addDevice != null, watchOnTv = information != null, information = information != null,
+        devices != null, addDevice != null, information = information != null,
         householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null,
         deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null)
     val open: (SettingsRow) -> Unit = { row ->
@@ -36,7 +36,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             SettingsRow.ParentalControls -> parental?.invoke()
             SettingsRow.ImportFromStremio -> stremioImport?.invoke()
             SettingsRow.Playback, SettingsRow.SubtitlesAudio -> preferences?.invoke(row.key)
-            SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help -> information?.invoke(row.key)
+            SettingsRow.About, SettingsRow.Help -> information?.invoke(row.key)
             SettingsRow.Account -> account?.invoke()
             SettingsRow.Password -> password?.invoke()
             SettingsRow.HouseholdPin -> householdPin?.invoke()
@@ -83,7 +83,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                                 if (index > 0) SettingsDivider()
                                 val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
                                 if (row.dangerous) SettingsDangerItem(label, row.icon) { open(row) }
-                                else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local, addDevice != null), action = { open(row) })
+                                else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local), action = { open(row) })
                             }
                         }
                     }
@@ -94,10 +94,9 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
     }
 }
 
-private fun SettingsRow.subtitle(addonCount: Int, local: Boolean, addDevice: Boolean): String? = when (this) {
+private fun SettingsRow.subtitle(addonCount: Int, local: Boolean): String? = when (this) {
     SettingsRow.Account -> if (local) "Using this device locally" else "Connected to a server"
     SettingsRow.Addons -> "$addonCount installed"
-    SettingsRow.WatchOnTv -> if (addDevice) "Sign in a TV or another device" else null
     else -> null
 }
 

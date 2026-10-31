@@ -35,12 +35,12 @@ class SettingsGroupsLayoutTest {
         Layout("phone", 390, sceneHeight, desktop = false, web = false, devices = true, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
-            SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
+            SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
             SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.Devices, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut, SettingsRow.DeleteAccount))),
         Layout("tablet", 1000, sceneHeight, desktop = false, web = false, devices = false, stremio = true, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls, SettingsRow.ImportFromStremio),
             SettingsGroup.Playback to listOf(SettingsRow.Playback, SettingsRow.SubtitlesAudio),
-            SettingsGroup.ThisDevice to listOf(SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help),
+            SettingsGroup.ThisDevice to listOf(SettingsRow.About, SettingsRow.Help),
             SettingsGroup.Account to listOf(SettingsRow.Account, SettingsRow.HouseholdPin, SettingsRow.AddDevice, SettingsRow.Addons, SettingsRow.SourceIntegrations, SettingsRow.SignOut, SettingsRow.DeleteAccount))),
         Layout("desktop", 1440, sceneHeight, desktop = true, web = false, devices = false, stremio = false, rows = mapOf(
             SettingsGroup.Profile to listOf(SettingsRow.Profile, SettingsRow.LinkedServices, SettingsRow.ParentalControls),
@@ -99,7 +99,7 @@ class SettingsGroupsLayoutTest {
                 preferences = { Text("preferences page") },
                 sectionPreferences = { _, _ -> Text("preferences page") },
                 stremioImport = if (layout.stremio) ({ _, _, _ -> }) else null,
-                addDevice = { Text("add device page") },
+                addDevice = { _, _ -> Text("add device page") },
                 householdPin = { Text("household pin page") },
                 deleteAccount = { _ -> Text("delete account page") },
                 sourceIntegrations = { _, _, _ -> Text("source integrations page") },

@@ -34,7 +34,6 @@ class AddDeviceScreenTest {
         val probe = Probe(scene)
         try {
             probe.frames(12)
-            assertTrue("Sign in a TV or another device" in probe.texts())
             probe.click("Add a device")
             assertTrue("Add a device" in probe.texts(), probe.texts().toString())
             assertFalse("Open TV sign-in" in probe.texts(), "No browser hand-off on a signed-in phone")
@@ -46,6 +45,19 @@ class AddDeviceScreenTest {
                 scene.render(40 * 16_666_667L).use { image -> image.encodeToData()!!.use { File(directory, "add-device-phone.png").writeBytes(it.bytes) } }
             }
         } finally { scene.close(); remote.close() }
+    }
+
+    @Test fun localModeShowsTheServerNeededNoteAndChangeConnection() {
+        val scene = ImageComposeScene(822, 1720, Density(2f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) { AddDeviceScreen(null, compact = true) } }
+        }
+        val probe = Probe(scene)
+        try {
+            probe.frames(12)
+            assertTrue("TV sign-in uses a server account. Sign in to the same server on both devices to share profiles and progress." in probe.texts(), probe.texts().toString())
+            assertTrue("Change connection" in probe.texts(), probe.texts().toString())
+            assertFalse("Continue" in probe.texts(), "No code entry in local mode")
+        } finally { scene.close() }
     }
 
     @Test fun aCodeEnteredOnThePhoneLandsOnTheApprovalStep() {
@@ -69,7 +81,7 @@ class AddDeviceScreenTest {
         ViptvTheme {
             Surface(Modifier.fillMaxSize(), color = Palette.background) {
                 SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
-                    addDevice = { compact -> AddDeviceScreen(remote, compact) })
+                    addDevice = { compact, _ -> AddDeviceScreen(remote, compact) })
             }
         }
     }
