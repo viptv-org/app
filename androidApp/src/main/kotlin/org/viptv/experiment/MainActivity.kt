@@ -18,7 +18,9 @@ import org.viptv.app.updates.updatePromptAllowed
 import org.viptv.app.updates.updateServerOrigin
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.connection.AndroidSecrets
+import org.viptv.app.player.AndroidPictureInPicture
 import org.viptv.app.connection.AndroidAccountAuthorization
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import android.content.Intent
 
@@ -50,6 +52,7 @@ open class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this)[ApplicationModel::class.java]
         applicationModel = model
         model.start(filesDir.resolve("local.sqlite").absolutePath, applicationContext)
+        AndroidPictureInPicture.attach(this, model.controller, tv)
         // ON_START runs after onStart's resumePlayback, ON_STOP after onPause's suspendPlayback; App.kt skips this hook.
         lifecycle.addObserver(model.controller.foregroundObserver(onReturn = model::foregroundReturned))
         // A recreated Activity gets the launching intent again: only the first creation may act on it.
@@ -98,19 +101,45 @@ open class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         // ON_STOP observers can pause the renderer before onStop runs: capture the resume intent first.
-        applicationModel?.controller?.suspendPlayback()
+        suspendUnlessTheWindowKeepsPlaying()
         super.onPause()
     }
     override fun onStop() {
-        applicationModel?.controller?.suspendPlayback()
+        suspendUnlessTheWindowKeepsPlaying()
         super.onStop()
     }
+    // A picture-in-picture window plays on while this activity is paused, so only a stop that already left picture-in-picture saves.
+    private fun suspendUnlessTheWindowKeepsPlaying() {
+        if (isInPictureInPictureMode && !isFinishing) return
+        applicationModel?.controller?.suspendPlayback()
+    }
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        AndroidPictureInPicture.onUserLeaveHint()
+    }
+    // A closed window leaves picture-in-picture without resuming; an expanded one resumes a moment later.
+    private val leavePictureInPicture = Runnable {
+        if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) applicationModel?.controller?.suspendPlayback()
+    }
+    private fun stayInPictureInPicture() = window.decorView.removeCallbacks(leavePictureInPicture)
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        AndroidPictureInPicture.modeChanged(isInPictureInPictureMode)
+        if (isInPictureInPictureMode) stayInPictureInPicture()
+        else window.decorView.postDelayed(leavePictureInPicture, 1_000)
+    }
+    override fun onDestroy() {
+        AndroidPictureInPicture.detach()
+        super.onDestroy()
+    }
     override fun onResume() {
+        stayInPictureInPicture()
         super.onResume()
         // A translucent Activity pauses without stopping us and onStart is not called: only a lifecycle-owned pause may resume.
         applicationModel?.controller?.resumePlayback()
     }
     override fun onStart() {
+        stayInPictureInPicture()
         super.onStart()
         applicationModel?.controller?.resumePlayback()
     }

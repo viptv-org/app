@@ -57,6 +57,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val rendering = input ?: retainedInput
     var showTracks by remember(if (phone) playbackKey else Unit) { mutableStateOf(false) }
     var locked by remember(playbackKey) { mutableStateOf(false) }
+    val pictureInPicture by PictureInPictureWindow.active.collectAsState()
     var visible by remember(if (phone) playbackKey else Unit) { mutableStateOf(true) }
     var interaction by remember { mutableStateOf(0) }
     var volume by remember { mutableStateOf(1f) }
@@ -173,77 +174,79 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), { fact ->
             if (input === rendering) { applyFact(fact); observe(fact) }
         }, commands)
-        PlayerOverlayHost(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
-        if (event.type != KeyEventType.KeyDown) false else when (event.key) {
-            Key.Escape -> { if (phone) latestPhoneBack() else if (phonePanel != null) dismissPanel() else close(); true }
-            Key.Spacebar, Key.MediaPlayPause -> { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true }
-            else -> if (!visible && !locked) { visible = true; interaction++; true } else false
-        }
-    }) {
-        Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
-        if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
-            modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
-            Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
-        }
-        if (visible && !locked && phonePanel == null && !(phone && (showTracks || failed || error != null))) {
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
-                0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
-            Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconButton(onClick = close) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
-                Column {
-                    Text(title?.title ?: "Playback", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }
+        if (!pictureInPicture) {
+            PlayerOverlayHost(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) false else when (event.key) {
+                    Key.Escape -> { if (phone) latestPhoneBack() else if (phonePanel != null) dismissPanel() else close(); true }
+                    Key.Spacebar, Key.MediaPlayPause -> { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true }
+                    else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
-            }
-            if (phone) Box(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal))) {
-                PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
-            }
-            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)).padding(horizontal = 24.dp, vertical = 12.dp)) {
-                if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
-                    Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
-                if (phone) {
-                    if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
-                        color = Palette.secondary, fontSize = 12.sp)
-                    PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
-                        episodes = openEpisodes,
-                        episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
-                        next = if (episodeTitle) playNext else null,
-                        nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
+            }) {
+                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
+                if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
+                    modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
+                    Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
                 }
-                else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
-                    { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
-                    streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
-                    next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
-                    episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
+                if (visible && !locked && phonePanel == null && !(phone && (showTracks || failed || error != null))) {
+                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
+                        0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
+                    Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(onClick = close) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
+                        Column {
+                            Text(title?.title ?: "Playback", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }
+                        }
+                    }
+                    if (phone) Box(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal))) {
+                        PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
+                    }
+                    Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)).padding(horizontal = 24.dp, vertical = 12.dp)) {
+                        if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
+                            Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
+                        if (phone) {
+                            if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
+                                color = Palette.secondary, fontSize = 12.sp)
+                            PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
+                                episodes = openEpisodes,
+                                episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
+                                next = if (episodeTitle) playNext else null,
+                                nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
+                        }
+                        else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
+                            { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
+                            streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
+                            next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
+                            episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
+                    }
+                }
+                if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
+                    send(choice)
+                    trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
+                        .firstOrNull { it.id == choice.id }?.language)
+                }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets, openSettings)
+                if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
+                    if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
+                        latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }
+                    }
+                }, ::dismissPanel, controlInsets)
+                // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
+                if (phonePanel == PhonePlaybackPanel.Next) nextChoice?.let { candidate -> PhoneNextEpisode(candidate, {
+                    if (phonePanel == PhonePlaybackPanel.Next && latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
+                        latestNext?.let(::cardLookupKey) == cardLookupKey(candidate)) {
+                        endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
+                    }
+                }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
+                if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
+                    "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
+                else {
+                    if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                    (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
+                }
+                if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
+                    PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
             }
-        }
-        if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
-            send(choice)
-            trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
-                .firstOrNull { it.id == choice.id }?.language)
-        }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets, openSettings)
-        if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
-            if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
-                latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }
-            }
-        }, ::dismissPanel, controlInsets)
-        // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
-        if (phonePanel == PhonePlaybackPanel.Next) nextChoice?.let { candidate -> PhoneNextEpisode(candidate, {
-            if (phonePanel == PhonePlaybackPanel.Next && latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
-                latestNext?.let(::cardLookupKey) == cardLookupKey(candidate)) {
-                endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
-            }
-        }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
-        if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
-            "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
-        else {
-            if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
-            (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
-        }
-        if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
-            PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
         }
     }
 }
