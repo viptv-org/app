@@ -20,6 +20,7 @@ import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.connection.HistoryDisplay
+import org.viptv.app.connection.HistoryCorrection
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
@@ -46,16 +47,39 @@ internal fun List<HistoryLine>.entryAt(index: Int): Int? {
         ?: (start downTo 0).firstOrNull { this[it] is HistoryLine.Entry }
 }
 
+internal fun HistoryDisplay.watchState(): String = when {
+    watched && resumeActive -> "Watched · Rewatch in progress"
+    watched -> "Watched"
+    resumeActive -> "In progress"
+    else -> "Unwatched"
+}
+
+internal fun HistoryDisplay.descriptor(): String = entry.card.identity.episode?.let { episode ->
+    "S${episode.season ?: "?"} · E${episode.episode}"
+} ?: entry.card.identity.kind.replaceFirstChar { it.uppercase() }
+
+internal fun HistoryDisplay.watchStateLine(): String = "${descriptor()} · ${watchState()}"
+
+internal fun HistoryDisplay.importedNote(): String? =
+    if (completionOnly && !watchDateKnown) "Imported — date unknown" else null
+
+internal fun HistoryDisplay.progressFraction(): Double = when {
+    watched -> 1.0
+    duration > 0.0 -> (position / duration).coerceIn(0.0, 1.0)
+    else -> entry.card.progress ?: 0.0
+}
+
 @Composable
 fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, open: (Card) -> Unit,
-    clear: () -> Unit, back: () -> Unit = {}) {
+    clear: () -> Unit, back: () -> Unit = {}, correct: (HistoryDisplay, HistoryCorrection) -> Unit = { _, _ -> },
+    localMode: Boolean = false) {
     var confirm by remember { mutableStateOf(false) }
     val restore = rememberPageRestore("history")
     val lines = remember(history) { history.lines() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val list = rememberLazyListState()
-        val heading = 1 + (if (busy) 1 else 0) + (if (error != null) 1 else 0) + (if (!busy && history.isEmpty() && error == null) 1 else 0)
+        val heading = 1 + (if (busy) 1 else 0) + (if (error != null) 1 else 0) + (if (localMode) 1 else 0) + (if (!busy && history.isEmpty() && error == null) 1 else 0)
         val anchored = remember(lines, restore.lastKey) {
             lines.indexOfFirst { it is HistoryLine.Entry && cardLookupKey(it.display.entry.card) == restore.lastKey }
         }
@@ -80,6 +104,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
             }
             if (busy) item(key = "busy") { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { item(key = "error") { Text(it, color = Palette.danger) } }
+            if (localMode) item(key = "server") { Text("Progress corrections need a server.", color = Palette.secondary) }
             if (!busy && history.isEmpty() && error == null) item(key = "empty") { Text("Nothing watched yet.", color = Palette.secondary) }
             itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
                 when (line) {
@@ -87,7 +112,8 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                         fontWeight = FontWeight.Medium, color = Palette.secondary)
                     is HistoryLine.Entry -> {
                         val key = cardLookupKey(line.display.entry.card)
-                        HistoryRow(line.display.entry, phone, open = { restore.mark(key, index); open(it) },
+                        HistoryRow(line.display, phone, open = { restore.mark(key, index); open(it) },
+                            correct = { correct(line.display, it) }, available = !localMode,
                             modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
                     }
                 }

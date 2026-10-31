@@ -77,6 +77,20 @@ fun ApplicationController.clearHistory() = run {
     updateState { next -> next.copy(home=updated.home) }
 }
 
+fun ApplicationController.correctHistory(display: HistoryDisplay, correction: HistoryCorrection) = run {
+    val profile = requireNotNull(mutable.value.selectedProfile)
+    val remote = connection ?: return@run
+    val corrected = remote.correctProgress(profile, display, correction)
+    updateState { state ->
+        val key = cardLookupKey(display.entry.card)
+        state.copy(history = state.history.map { existing ->
+            if (cardLookupKey(existing.entry.card) != key) existing
+            else display.copy(position = corrected.position, duration = corrected.duration, watched = corrected.watched,
+                resumeActive = corrected.resumeActive, completionOnly = corrected.completionOnly, watchDateKnown = corrected.watchDateKnown)
+        })
+    }
+}
+
 internal fun ApplicationController.updateLibrary(cards: List<Card>, identities: List<MediaIdentity> = cards.map { it.identity },
     membership: LibraryMembershipSnapshot? = null) {
     val ordered = cards.sortedWith(compareByDescending<Card> { it.added_at_millis ?: Long.MIN_VALUE }.thenBy { it.title.lowercase() })

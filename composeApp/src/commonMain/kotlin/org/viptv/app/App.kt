@@ -203,8 +203,10 @@ fun App(
                             }
                             Screen.History -> routes.SaveableStateProvider("${state.selectedProfile}:history") {
                                 if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
-                                    controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                                else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
+                                    controller::open, controller::clearHistory, { controller.navigate(Screen.Home) },
+                                    correct = controller::correctHistory, localMode = state.localMode)
+                                else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack,
+                                    correct = controller::correctHistory, localMode = state.localMode)
                             }
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)

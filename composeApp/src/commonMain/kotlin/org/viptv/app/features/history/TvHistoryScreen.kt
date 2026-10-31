@@ -1,6 +1,7 @@
 package org.viptv.app.features.history
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.connection.HistoryCorrection
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.connection.cardLookupKey
 import androidx.compose.foundation.background
@@ -38,8 +39,11 @@ import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, open: (Card) -> Unit,
-    clear: () -> Unit, back: () -> Unit = {}) {
+    clear: () -> Unit, back: () -> Unit = {}, correct: (HistoryDisplay, HistoryCorrection) -> Unit = { _, _ -> },
+    localMode: Boolean = false) {
     var confirm by remember { mutableStateOf(false) }
+    var lastFocused by remember { mutableStateOf<HistoryDisplay?>(null) }
+    var resuming by remember { mutableStateOf<HistoryDisplay?>(null) }
     val restore = rememberPageRestore("history")
     val lines = remember(history) { history.lines() }
     val anchored = remember(lines, restore.lastKey) {
@@ -48,6 +52,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
     val landing = remember(anchored, lines) { if (anchored >= 0) anchored else lines.entryAt(0) }
     val first = remember { FocusRequester() }
     val clearFocus = remember { FocusRequester() }
+    val actionsFocus = remember { FocusRequester() }
     var attached by remember { mutableStateOf(false) }
     LaunchedEffect(history.isEmpty(), busy) {
         if (!history.isEmpty()) { attached = false; return@LaunchedEffect }
@@ -75,6 +80,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
             Spacer(Modifier.height(32.dp * scale))
             if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             error?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }
+            if (localMode) Text("Progress corrections need a server.", color = Palette.secondary, fontSize = (24 * scale).sp)
             if (!busy && history.isEmpty() && error == null) {
                 Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
                     Text("Nothing watched yet", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
@@ -88,7 +94,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
             }
             val list = rememberLazyListState()
             PageRestore(list, restore, claimOnEntry = true, target = { landing })
-            LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 96.dp * scale),
+            LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = 8.dp * scale),
                 verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
                     when (line) {
@@ -96,10 +102,29 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                             fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
                         is HistoryLine.Entry -> {
                             val key = cardLookupKey(line.display.entry.card)
-                            TvHistoryRow(line.display, scale, left = clearFocus,
+                            TvHistoryRow(line.display, scale, onFocus = { lastFocused = it },
                                 modifier = Modifier.pageAnchor(restore, key, index, target = landing == index),
                                 open = { restore.mark(key, index); open(it) })
                         }
+                    }
+                }
+            }
+            if (!localMode && history.isNotEmpty()) {
+                val target = lastFocused ?: lines.filterIsInstance<HistoryLine.Entry>().firstOrNull()?.display
+                Row(Modifier.fillMaxWidth().padding(top = 12.dp * scale, bottom = 96.dp * scale),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                    Text(target?.entry?.card?.title?.let { "“$it”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
+                        fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    TvAction(Modifier.height(64.dp * scale).width(360.dp * scale), scale, requester = actionsFocus,
+                        enabled = target != null, activate = {
+                            target?.let { correct(it, if (it.watched) HistoryCorrection.Unwatched else HistoryCorrection.Watched) }
+                        }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                        Text(if (target?.watched == true) "Mark unwatched" else "Mark watched", color = it,
+                            fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    if ((target?.duration ?: 0.0) > 0.0) TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale,
+                        activate = { target?.let { resuming = it } }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                        Text("Resume at…", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -110,17 +135,22 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
         text = { Text("This removes viewing history for this profile.") },
         confirmButton = { TextButton(onClick = { clear(); confirm = false }) { Text("Clear") } },
         dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } })
+    resuming?.let { display ->
+        ResumePositionDialog(display.position.toLong(), display.duration, onDismiss = { resuming = null },
+            onSave = { seconds -> resuming = null; correct(display, HistoryCorrection.Position(seconds)) })
+    }
 }
 
 @Composable
-private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, left: FocusRequester, modifier: Modifier = Modifier,
-    open: (Card) -> Unit) {
+private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, modifier: Modifier = Modifier,
+    onFocus: (HistoryDisplay) -> Unit, open: (Card) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val card = entry.entry.card
     val shape = RoundedCornerShape(16.dp * scale)
+    val progress = entry.progressFraction()
     Row(modifier.fillMaxWidth().height(148.dp * scale)
         .focusProperties { this.left = FocusRequester.Cancel; this.right = FocusRequester.Cancel }
-        .onFocusChanged { focused = it.isFocused }
+        .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(entry) }
         .graphicsLayer { this.shape = shape; shadowElevation = if (focused) 24.dp.toPx() * scale else 0f; clip = false }
         .background(if (focused) Palette.text else Color.White.copy(alpha = .06f), shape)
         .tvFocusOutline(focused, 16.dp * scale, scale)
@@ -133,13 +163,15 @@ private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, left: FocusRequest
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
             Text(card.title, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.SemiBold,
                 color = if (focused) Palette.background else Palette.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                if (entry.entry.completed_at_millis != null) "Watched" else card.subtitle ?: "In progress",
-                fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
+            Text(entry.watchStateLine(), fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
                 color = if (focused) Color(0xFF4A4945) else Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            entry.importedNote()?.let { note ->
+                Text(note, fontSize = (18 * scale).sp, lineHeight = (24 * scale).sp,
+                    color = if (focused) Color(0xFF4A4945) else Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
-        card.progress?.takeIf { it > 0 }?.let {
-            Text("${((it.toFloat().coerceIn(0f, 1f)) * 100).toInt()}% watched", fontSize = (22 * scale).sp,
+        if (progress > 0.0 && progress < 1.0) {
+            Text("${(progress * 100).toInt()}% watched", fontSize = (22 * scale).sp,
                 color = if (focused) Color(0xFF4A4945) else Palette.secondary)
         }
     }

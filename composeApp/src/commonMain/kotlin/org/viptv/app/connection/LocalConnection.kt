@@ -61,4 +61,28 @@ class LocalFailure(message: String) : Exception(message)
 
 data class SourcesOutcome(val candidates: List<SourceCandidate> = emptyList(), val torrentOnlyProviders: Int = 0)
 
-data class HistoryDisplay(val entry: HistoryEntry, val dayLabel: String)
+data class HistoryDisplay(
+    val entry: HistoryEntry,
+    val dayLabel: String,
+    val position: Double = 0.0,
+    val duration: Double = 0.0,
+    val watched: Boolean = entry.completed_at_millis != null,
+    val resumeActive: Boolean = entry.completed_at_millis == null && (entry.card.progress ?: 0.0) > 0.0,
+    val completionOnly: Boolean = false,
+    val watchDateKnown: Boolean = true,
+)
+
+sealed interface HistoryCorrection {
+    data object Watched : HistoryCorrection
+    data object Unwatched : HistoryCorrection
+    data class Position(val seconds: Long) : HistoryCorrection
+}
+
+data class ProgressCorrection(
+    val position: Double,
+    val duration: Double,
+    val watched: Boolean,
+    val resumeActive: Boolean,
+    val completionOnly: Boolean,
+    val watchDateKnown: Boolean,
+)
