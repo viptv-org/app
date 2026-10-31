@@ -5,45 +5,49 @@ Change the generator and rerun it instead.
 
 | Resource | What it is |
 |---|---|
-| `res/mipmap-anydpi-v26/ic_launcher.xml`, `ic_launcher_round.xml` | Adaptive icon: black background, white "V" foreground, the same "V" as the monochrome (themed icon) layer |
-| `res/drawable/ic_launcher_foreground.xml` | The white "V" as a 108dp vector, sized for the 72dp visible area |
+| `res/mipmap-anydpi-v26/ic_launcher.xml`, `ic_launcher_round.xml` | Adaptive icon: black background, white V foreground, the monochrome layer for themed icons |
+| `res/drawable/ic_launcher_foreground.xml` | The white V as a 108dp vector, sized for the 72dp visible area |
+| `res/drawable/ic_launcher_monochrome.xml` | The same V as a single-colour silhouette; launchers use its alpha and tint it |
 | `res/values/ic_launcher_background.xml` | `#000000` |
-| `res/mipmap-*dpi/ic_launcher*.png` | Legacy 48dp PNGs (black rounded square and disc, white "V"), mdpi to xxxhdpi |
+| `res/mipmap-*dpi/ic_launcher*.png` | Legacy 48dp PNGs (black rounded square and disc, white V), mdpi to xxxhdpi |
 | `res/drawable-xhdpi/tv_banner.png` | 320×180 `android:banner` for the Android TV and Fire TV launchers: white "VIPTV" on black |
+| `composeApp/src/commonMain/composeResources/drawable/viptv_v.xml` | The V as the Compose vector `Res.drawable.viptv_v`, tinted per surface |
+| `composeApp/src/desktopMain/resources/viptv-app-icon.png` | 1024 px square icon, the Compose Desktop window icon |
 
 ## Provenance
 
-The master is design's black and white V app icon and TV banner, chosen by the
-owner on 2026-10-27 (viptv-org/design#21). It is merged in design as commit
-`85179a8` (viptv-org/design#25):
+The master is design's `assets/brand/viptv-v.svg`: the VIPTV V as one closed
+path, `viewBox="0 0 195.506 167"`, traced from the Roku wordmark. It is merged in
+design as commit `ae6cd0a` (viptv-org/design#48):
 
-- `assets/ASSET_MANIFEST.md`, section "App icon and TV banner master": geometry, colours, pins and hashes;
-- `assets/brand/tools/make_app_icon.py`: the master generator;
+- `assets/ASSET_MANIFEST.md`, section "Branded V master, app icon and TV banner": geometry, colours, pins, hashes and the generator `assets/brand/tools/make_app_icon.py`;
+- `assets/brand/viptv-v.svg` (SHA-256 `f6f63ddd…4f74d`) and `assets/brand/brand-mark-tile.svg` (the in-app tile: 100 units, `#F5C542` ground at radius 30, the V in `#0B0B0C`);
 - `assets/brand/app-icon/app-icon-foreground.svg`, `app-icon-monochrome.svg`, `app-icon-square.svg`, `app-icon-square-1024.png`, `tv-banner-320x180.png`.
 
-What this generator reproduces from it:
+What the generator reproduces from it:
 
-- **V:** the Bricolage Grotesque ExtraBold "V", set at 0.625 × the mark size
-  and centred on its ink box. The outline comes from
-  `composeResources/font/bricolage.ttf`, whose "V" is point-for-point identical
-  to design's `assets/fonts/remote_bricolage_800.ttf`.
+- **V:** the master's path at 0.4125 × the mark size tall, scaled uniformly
+  (aspect 1.1707) and centred on its ink box. The path is copied into the
+  script; no output types a V glyph.
 - **Colours:** `#000000` (`color.bg-oled`) and `#FFFFFF` (`color.fill.white`). No accent.
 - **Adaptive icon:** a `#000000` background and the white V on a 108dp canvas,
   sized for the 72dp visible area. The foreground `pathData` equals the path in
-  design's `app-icon-foreground.svg`. The monochrome layer reuses the
-  foreground drawable, because launchers use only its alpha.
+  design's `app-icon-foreground.svg`; the monochrome drawable is the same
+  geometry, which is design's monochrome layer.
 - **Legacy PNGs:** a rounded square (corner radius 0.28 × mark) and a disc, each
   inset 2/48, filled `#000000` and holding the white V.
-- **Banner:** "VIPTV" in `#FFFFFF` on `#000000`, centred, at the channel-poster
-  wordmark size (72 px at 210 px high) scaled to 180 px high and −0.04 em
-  tracking. It has no square mark. The generator instances the variable
-  `bricolage.ttf` at its default axes before drawing, so with the pins below
-  `tv_banner.png` is byte-identical to design's `tv-banner-320x180.png`
-  (SHA-256 `1f6ebc6f1fd49e93f4e13832c4189ef8c61e1cc93597cb142a54056620718c27`).
+- **Banner:** "IPT" in Bricolage Grotesque ExtraBold and the master's V, both at
+  the same cap height, tracked −0.04 em, at the channel-poster wordmark size
+  (72 px at 210 px high) scaled to 180 px high. The generator instances the
+  variable `bricolage.ttf` at its default axes before drawing, so with the pins
+  below `tv_banner.png` is byte-identical to design's `tv-banner-320x180.png`
+  (SHA-256 `3704036c…09937a`).
+- **Desktop icon:** design's `app-icon-square-1024.png` byte for byte
+  (SHA-256 `1ac37a83…c77964`): the white V on a full-bleed black square.
 
-The colours and ratios are copied into the script by hand. If design's master
-changes, update the script, regenerate, and repoint this section at the new
-design commit.
+The path, colours and ratios are copied into the script by hand. If design's
+master changes, update the script, regenerate, and repoint this section at the
+new design commit.
 
 Regenerate with Python 3.13.5, Pillow 13.0.0 and fontTools 4.67.0 (other Pillow
 versions may change the PNG bytes):
