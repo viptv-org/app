@@ -10,6 +10,13 @@ data class LiveChannel(val card: Card, val number: String? = null, val category:
     fun next(now: Int?) = now?.let { minute -> programs.firstOrNull { it.start > minute } }
 }
 
+internal fun LiveChannel.key(): String = card.provider_id + ":" + card.identity.id
+
+internal fun LiveChannel.initialProgram(start: Int, span: Int, now: Int?): LiveProgram? {
+    val windowed = programs.filter { it.end > start && it.start < start + span }
+    return windowed.find { now != null && now in it.start until it.end } ?: windowed.firstOrNull()
+}
+
 @androidx.compose.runtime.Composable
 internal fun liveTime(minutes: Int, period: Boolean = false): String {
     LocalLiveClock.current?.let { return liveTimeAt(it.originMillis + minutes.toLong() * 60_000, period) }

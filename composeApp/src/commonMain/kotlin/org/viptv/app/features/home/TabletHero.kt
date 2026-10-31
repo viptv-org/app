@@ -39,26 +39,30 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
             Box(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 40.dp)) {
                 HomeFilters(Screen.Home, navigate)
             }
-            Column(Modifier.align(Alignment.BottomStart).padding(start = 32.dp, end = 32.dp, bottom = 40.dp).widthIn(max = 520.dp),
+            Column(Modifier.fillMaxHeight().padding(start = 32.dp, end = 32.dp, bottom = 40.dp).widthIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(300.dp).height(130.dp),
-                    alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-                else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
-                MediaMetadata(card)
-                card.description?.let { Text(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body, maxLines = 2) }
-                Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(onClick = { play(card) }, modifier = Modifier.size(160.dp, 48.dp), shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-                        Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp))
-                        Text("Play", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    }
-                    FilledIconButton(onClick = { save(card) }, modifier = Modifier.size(48.dp),
-                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = .12f), contentColor = Palette.text)) {
-                        Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(24.dp))
-                    }
-                    FilledIconButton(onClick = { open(card) }, modifier = Modifier.size(48.dp),
-                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = .12f), contentColor = Palette.text)) {
-                        Icon(Lucide.Info, "More info", Modifier.size(24.dp))
+                HeroCopyFade(card, Modifier.fillMaxWidth().weight(1f), Alignment.BottomStart) { shown ->
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (shown.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(shown.logo), shown.title, Modifier.width(300.dp).height(130.dp),
+                            alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
+                        else Text(shown.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+                        MediaMetadata(shown)
+                        shown.description?.let { Text(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body, maxLines = 2) }
+                        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Button(onClick = { play(shown) }, modifier = Modifier.size(160.dp, 48.dp), shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
+                                Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp))
+                                Text("Play", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            }
+                            FilledIconButton(onClick = { save(shown) }, modifier = Modifier.size(48.dp),
+                                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = .12f), contentColor = Palette.text)) {
+                                Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(24.dp))
+                            }
+                            FilledIconButton(onClick = { open(shown) }, modifier = Modifier.size(48.dp),
+                                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = .12f), contentColor = Palette.text)) {
+                                Icon(Lucide.Info, "More info", Modifier.size(24.dp))
+                            }
+                        }
                     }
                 }
                 carousel?.let { HeroIndicators(it.count, it.index, it.progress) }

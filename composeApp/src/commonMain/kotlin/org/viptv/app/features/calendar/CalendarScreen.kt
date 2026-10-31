@@ -2,8 +2,9 @@ package org.viptv.app.features.calendar
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,7 +19,10 @@ import coil3.compose.AsyncImage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
+import org.viptv.app.components.PageRestore
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.LocalReducedMotion
 
 internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
@@ -39,10 +43,11 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     val shown = if (fallback) entries else entries.shown(chosen, offered)
     val notice = if (fallback) CALENDAR_FALLBACK else null
     val emptyFilter = filter.takeUnless { fallback }
+    val restore = rememberPageRestore("calendar")
     if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice); return }
+        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice, restore = restore); return }
     val choose = calendarOpener(open, openEntry)
-    var selected by remember(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
+    var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val reduceMotion = LocalReducedMotion.current
@@ -51,6 +56,10 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
         val phone = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else if (phone) 1f else 0.65f
         val visible = if (phone) shown else shown.filter { it.day == selected }
+        val lines = remember(days, visible) { visible.dayLines(days) }
+        val markedLine = remember(lines, restore.lastKey) { lines.indexOfFirst { it.key() == restore.lastKey } }
+        val markedEntry = remember(visible, restore.lastKey) { visible.indexOfFirst { it.id == restore.lastKey } }
+        val anchored = restore.anchor(visible.size) { visible[it].id }
         val gutter = if (phone) 16.dp else if (television) 96.dp * scale else 40.dp
         Column(Modifier.fillMaxSize().padding(horizontal = gutter,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
@@ -60,10 +69,8 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale, gutter) { day ->
                 selected = day; focused = shown.firstOrNull { it.day == day }
                 if (phone) scope.launch {
-                    val index = days.takeWhile { it.id != day }.sumOf { preceding ->
-                        shown.count { it.day == preceding.id }.let { count -> if (count > 0) count + 1 else 2 }
-                    }
-                    if (reduceMotion) list.scrollToItem(index) else list.animateScrollToItem(index)
+                    val index = lines.indexOfFirst { it is CalendarLine.Day && it.day.id == day }
+                    if (index >= 0) { if (reduceMotion) list.scrollToItem(index) else list.animateScrollToItem(index) }
                 }
             }
             error?.let { Text(it, color = Palette.danger) }
@@ -73,22 +80,22 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                 Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
                 TextButton(manage) { Text("Manage integrations") }
             } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
+                PageRestore(list, restore, target = { (if (phone) markedLine else markedEntry).takeIf { it >= 0 } })
                 LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp),
                     verticalArrangement = Arrangement.spacedBy(if (phone) 4.dp else 18.dp * scale)) {
-                    if (phone) days.forEach { day ->
-                        val releases = visible.filter { it.day == day.id }.sortedBy { it.aired }
-                        run {
-                            item(key = "day:${day.id}") {
-                                Row(Modifier.padding(top = 12.dp, bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    Text(day.label, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                    Text(day.fullDate, fontSize = 12.sp, color = Palette.secondary)
-                                }
+                    if (phone) itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
+                        when (line) {
+                            is CalendarLine.Day -> Row(Modifier.padding(top = 12.dp, bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text(line.day.label, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(line.day.fullDate, fontSize = 12.sp, color = Palette.secondary)
                             }
-                            if(releases.isEmpty())item(key="empty:${day.id}"){Text(calendarEmptyDay(emptyFilter),color=Palette.secondary,fontSize=13.sp)}
-                            items(releases, key = { it.id }) { CalendarReleaseRow(it,true,scale,watch,{focused=it},{choose(it)}) }
+                            is CalendarLine.Empty -> Text(calendarEmptyDay(emptyFilter), color = Palette.secondary, fontSize = 13.sp)
+                            is CalendarLine.Entry -> CalendarReleaseRow(line.entry, true, scale, watch, { focused = line.entry },
+                                { restore.mark(line.entry.id, index); choose(line.entry) })
                         }
-                    } else items(visible, key = { it.id }) {
-                        CalendarReleaseRow(it,false,scale,watch,{focused=it},{choose(it)})
+                    } else itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
+                        CalendarReleaseRow(entry, false, scale, watch, { focused = entry }, { restore.mark(entry.id, index); choose(entry) },
+                            Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
                     }
                     if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(emptyFilter),color=Palette.secondary)}
                 }
@@ -106,9 +113,9 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
 }
 
 @Composable
-private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit) {
+private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit, modifier: Modifier = Modifier) {
     Column {
-        CalendarRow(entry,phone,false,if(phone)1f else scale,focus,open)
+        CalendarRow(entry,phone,false,if(phone)1f else scale,focus,open,modifier)
         if(watch!=null)entry.actionLabel()?.let{label->TextButton({watch(entry)}){Text(label)}}
     }
 }

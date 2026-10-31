@@ -23,10 +23,10 @@ import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boolean, scale: Float,
-    focus: () -> Unit, open: () -> Unit, selected: Boolean = false) {
+    focus: () -> Unit, open: () -> Unit, modifier: Modifier = Modifier, selected: Boolean = false) {
     var focused by remember { mutableStateOf(false) }
     val color = if ((focused || selected) && television) Palette.background else Palette.text
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (phone) 16.dp else 18.dp * scale))
+    Row(modifier.fillMaxWidth().clip(RoundedCornerShape(if (phone) 16.dp else 18.dp * scale))
         .background(if ((focused || selected) && television) Palette.text else Palette.surface)
         .onFocusChanged { focused = it.isFocused; if (focused) focus() }.pointerClickable(onClick = open, shape = RoundedCornerShape(if (phone) 16.dp else 18.dp * scale))
         .heightIn(min = if (phone) 100.dp else 0.dp).padding(horizontal = if (phone) 12.dp else 28.dp * scale, vertical = if (phone) 10.dp else 12.dp * scale),
