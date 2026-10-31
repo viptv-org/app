@@ -29,9 +29,8 @@ internal fun accountDeletionFailure(failure: RemoteFailure): String = when {
     failure.code == "last_owner" -> "Other accounts still need an owner. Have them delete their accounts first."
     failure.code == "account_delete_rejected" -> "The username or password is not correct."
     failure.code == "parent_pin_incorrect" -> "The parent PIN is not correct."
-    failure.code == "account_changed" -> "This account changed. Try again."
     failure.code == "account_session_required" -> "Manage this from a signed-in phone, computer or the web dashboard."
-    failure.status == 429 -> failure.message ?: "Too many attempts. Wait a minute and try again."
+    failure.status == 429 -> failure.message
     else -> "Could not delete your account. Nothing was changed. Try again."
 }
 

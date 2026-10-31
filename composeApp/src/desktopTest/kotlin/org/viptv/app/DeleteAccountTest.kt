@@ -108,7 +108,6 @@ class DeleteAccountTest {
     @Test fun aWrongPinAndRejectedCredentialsKeepTheirOwnSentences() {
         assertEquals("The parent PIN is not correct.", accountDeletionFailure(RemoteFailure(400, "", "parent_pin_incorrect")))
         assertEquals("The username or password is not correct.", accountDeletionFailure(RemoteFailure(400, "", "account_delete_rejected")))
-        assertEquals("This account changed. Try again.", accountDeletionFailure(RemoteFailure(409, "", "account_changed")))
         assertEquals("Manage this from a signed-in phone, computer or the web dashboard.",
             accountDeletionFailure(RemoteFailure(403, "", "account_session_required")))
     }

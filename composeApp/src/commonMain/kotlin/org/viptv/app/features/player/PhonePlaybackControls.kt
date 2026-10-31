@@ -1,5 +1,6 @@
 package org.viptv.app.features.player
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,22 +13,26 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Motion
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.DropdownMenuItem
+import org.viptv.app.components.pressScale
 
 @Composable
 internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, seekEnabled: Boolean = true) {
     Row(horizontalArrangement = Arrangement.spacedBy(48.dp)) {
-        IconButton(enabled = seekEnabled, onClick = { skip(-10000) }, modifier = Modifier.size(56.dp)) {
+        IconButton(enabled = seekEnabled, onClick = { skip(-10000) }, modifier = Modifier.size(56.dp), pressedScale = Motion.control) {
             PlaybackSkipIcon(false, 34.dp)
         }
-        FilledIconButton(onClick = toggle, modifier = Modifier.size(72.dp),
+        val toggleSource = remember { MutableInteractionSource() }
+        FilledIconButton(onClick = toggle, modifier = Modifier.size(72.dp).pressScale(toggleSource, Motion.control),
+            interactionSource = toggleSource,
             colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.raised.copy(alpha = 0.8f), contentColor = Palette.text)) {
             if (paused) Icon(painterResource(Res.drawable.ic_play_zip), "Play", Modifier.size(28.dp))
             else Icon(Lucide.Pause, "Pause", Modifier.size(28.dp))
         }
-        IconButton(enabled = seekEnabled, onClick = { skip(10000) }, modifier = Modifier.size(56.dp)) {
+        IconButton(enabled = seekEnabled, onClick = { skip(10000) }, modifier = Modifier.size(56.dp), pressedScale = Motion.control) {
             PlaybackSkipIcon(true, 34.dp)
         }
     }
@@ -39,19 +44,19 @@ internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, loc
     nextEnabled: Boolean = false, episodesFocus: FocusRequester? = null, nextFocus: FocusRequester? = null) {
     var speeds by remember { mutableStateOf(false) }
     val episodeAction: @Composable () -> Unit = {
-        if (episodes != null) TextButton(episodes, enabled = episodesEnabled,
+        if (episodes != null) TextButton(episodes, enabled = episodesEnabled, pressedScale = Motion.control,
             modifier = episodesFocus?.let { Modifier.focusRequester(it) } ?: Modifier) {
             Icon(Lucide.List, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Episodes")
         }
     }
     val tracksAction: @Composable () -> Unit = {
-        TextButton(onClick = tracks) {
+        TextButton(onClick = tracks, pressedScale = Motion.control) {
             Icon(Lucide.Captions, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Audio & subtitles")
         }
     }
     val speedAction: @Composable () -> Unit = {
         Box {
-            TextButton(onClick = { speeds = true }) {
+            TextButton(onClick = { speeds = true }, pressedScale = Motion.control) {
                 Icon(Lucide.Gauge, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(playbackSpeed(speed))
             }
             DropdownMenu(speeds, onDismissRequest = { speeds = false }) {
@@ -62,12 +67,12 @@ internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, loc
         }
     }
     val lockAction: @Composable () -> Unit = {
-        TextButton(onClick = lock) {
+        TextButton(onClick = lock, pressedScale = Motion.control) {
             Icon(Lucide.Lock, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Lock")
         }
     }
     val nextAction: @Composable () -> Unit = {
-        if (next != null) TextButton(next, enabled = nextEnabled,
+        if (next != null) TextButton(next, enabled = nextEnabled, pressedScale = Motion.control,
             modifier = nextFocus?.let { Modifier.focusRequester(it) } ?: Modifier) {
             Icon(Lucide.SkipForward, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Next episode")
         }

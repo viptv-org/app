@@ -36,7 +36,7 @@ class DesktopShellHoverTest {
     private class Shell(val scene: ImageComposeScene) {
         private var frame = 0L
         fun pixels(): Bitmap {
-            repeat(6) { scene.render(frame++ * 16_666_667L).close() }
+            repeat(13) { scene.render(frame++ * 16_666_667L).close() }
             return scene.render(frame++ * 16_666_667L).use { Bitmap.makeFromImage(it) }
         }
         fun nodes(merged: Boolean = true) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(merged) }

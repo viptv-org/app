@@ -11,6 +11,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.Motion
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.DropdownMenuItem
@@ -23,37 +24,37 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
     episodes: (() -> Unit)? = null, episodesEnabled: Boolean = false) {
     var speeds by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        IconButton(onClick = toggle) {
+        IconButton(onClick = toggle, pressedScale = Motion.control) {
             if (paused) Icon(painterResource(Res.drawable.ic_play_zip), "Play", Modifier.size(24.dp))
             else Icon(Lucide.Pause, "Pause", Modifier.size(24.dp))
         }
-        IconButton(onClick = { skip(-10000) }, enabled = seekEnabled) { PlaybackSkipIcon(false, 22.dp) }
-        IconButton(onClick = { skip(10000) }, enabled = seekEnabled) { PlaybackSkipIcon(true, 22.dp) }
-        next?.let { IconButton(onClick = it, enabled = nextEnabled) { Icon(Lucide.SkipForward, "Next episode", Modifier.size(22.dp)) } }
-        IconButton(onClick = { setVolume(if (volume == 0f) 1f else 0f) }) {
+        IconButton(onClick = { skip(-10000) }, enabled = seekEnabled, pressedScale = Motion.control) { PlaybackSkipIcon(false, 22.dp) }
+        IconButton(onClick = { skip(10000) }, enabled = seekEnabled, pressedScale = Motion.control) { PlaybackSkipIcon(true, 22.dp) }
+        next?.let { IconButton(onClick = it, enabled = nextEnabled, pressedScale = Motion.control) { Icon(Lucide.SkipForward, "Next episode", Modifier.size(22.dp)) } }
+        IconButton(onClick = { setVolume(if (volume == 0f) 1f else 0f) }, pressedScale = Motion.control) {
             Icon(if (volume == 0f) Lucide.VolumeX else Lucide.Volume2, "Mute or unmute", Modifier.size(22.dp))
         }
         PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
         Spacer(Modifier.weight(1f))
         episodes?.let { episodesAction ->
-            TextButton(episodesAction, enabled = episodesEnabled) {
+            TextButton(episodesAction, enabled = episodesEnabled, pressedScale = Motion.control) {
                 Icon(Lucide.List, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Episodes")
             }
         }
         streams?.let { streamsAction ->
-            TextButton(onClick = streamsAction) {
+            TextButton(onClick = streamsAction, pressedScale = Motion.control) {
                 Icon(Lucide.Layers, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(streamLabel ?: "Streams")
             }
         }
-        IconButton(onClick = tracks) { Icon(Lucide.Captions, "Audio and subtitles", Modifier.size(22.dp)) }
+        IconButton(onClick = tracks, pressedScale = Motion.control) { Icon(Lucide.Captions, "Audio and subtitles", Modifier.size(22.dp)) }
         Box {
-            TextButton(onClick = { speeds = true }) { Text(playbackSpeed(speed)) }
+            TextButton(onClick = { speeds = true }, pressedScale = Motion.control) { Text(playbackSpeed(speed)) }
             DropdownMenu(speeds, onDismissRequest = { speeds = false }) {
                 listOf(0.5, 0.75, 1.0, 1.25, 1.5, 2.0).forEach { choice ->
                     DropdownMenuItem(text = { Text(playbackSpeed(choice)) }, onClick = { setSpeed(choice); speeds = false })
                 }
             }
         }
-        IconButton(onClick = close) { Icon(Lucide.X, "Close playback", Modifier.size(22.dp)) }
+        IconButton(onClick = close, pressedScale = Motion.control) { Icon(Lucide.X, "Close playback", Modifier.size(22.dp)) }
     }
 }

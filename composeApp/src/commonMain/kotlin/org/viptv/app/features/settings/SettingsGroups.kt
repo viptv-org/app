@@ -54,7 +54,10 @@ internal fun settingsSections(available: Set<SettingsRow>): List<SettingsSection
 
 internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: Boolean, account: Boolean,
     devices: Boolean, addDevice: Boolean, watchOnTv: Boolean, information: Boolean,
-    householdPin: Boolean = false, sourceIntegrations: Boolean = false, deleteAccount: Boolean = false): Set<SettingsRow> = buildSet {
+    householdPin: Boolean = false, sourceIntegrations: Boolean = false, deleteAccount: Boolean = false,
+    linkedServices: Boolean = false): Set<SettingsRow> = buildSet {
+    add(SettingsRow.Profile)
+    if (linkedServices) add(SettingsRow.LinkedServices)
     if (parental) add(SettingsRow.ParentalControls)
     if (stremioImport) add(SettingsRow.ImportFromStremio)
     if (playback) { add(SettingsRow.Playback); add(SettingsRow.SubtitlesAudio) }
