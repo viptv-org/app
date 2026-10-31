@@ -34,7 +34,8 @@ class SourceDrawerLayoutTest {
             } }
         }
         try {
-            repeat(10) { scene.render(it * 16_666_667L).close() }
+            // The drawer slides in over 300 ms; measure it once it has settled.
+            repeat(30) { scene.render(it * 16_666_667L).close() }
             check(scene.semanticsOwners.flatMap { owner -> owner.getAllSemanticsNodes(mergingEnabled = false) })
         } finally { scene.close() }
     }

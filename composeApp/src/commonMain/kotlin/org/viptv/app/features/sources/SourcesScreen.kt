@@ -1,6 +1,7 @@
 package org.viptv.app.features.sources
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +32,9 @@ import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.Motion
+import org.viptv.app.components.motionSpec
+import org.viptv.app.components.rememberOverlayMotion
 
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
@@ -52,14 +57,21 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val headerHeight = remember { SourceHeaderHeight() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.pointerClickable(onClick = back))
+        val motion = rememberOverlayMotion(true,
+            containerEnter = motionSpec(tween(Motion.panel, easing = Motion.standard)),
+            scrimEnter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
+            leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.pointerClickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
             television -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.5f)
             tablet -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().widthIn(max = 461.dp).fillMaxWidth()
             else -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(sourceDrawerWidth(maxWidth))
         }
-        Column(panel.clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
+        Column(panel.graphicsLayer {
+            if (phone) translationY = size.height * (1f - motion.container)
+            else translationX = size.width * (1f - motion.container)
+        }.clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
             topEnd = if (phone) 24.dp else 0.dp)).background(Palette.surface).semantics { paneTitle = "Choose a source" }) {
             if (phone) Box(Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp)
                 .width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Palette.secondary.copy(alpha = 0.4f)))

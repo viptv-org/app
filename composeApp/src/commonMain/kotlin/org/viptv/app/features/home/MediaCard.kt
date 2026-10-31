@@ -1,6 +1,7 @@
 package org.viptv.app.features.home
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -73,6 +74,8 @@ import org.viptv.app.components.caughtUpNextCaption
 import org.viptv.app.components.LocalNextEpisodes
 import org.viptv.app.components.Motion
 import org.viptv.app.components.hoverFill
+import org.viptv.app.components.motionSpec
+import org.viptv.app.components.rememberEnterLeaveMotion
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.newEpisodesDescription
@@ -295,8 +298,16 @@ private fun CardPreview(card: Card, saved: Boolean,
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
     LaunchedEffect(hovered) { onHoverChanged(hovered) }
+    val motion = rememberEnterLeaveMotion(true,
+        enter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
+        leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
     Column(Modifier.width(360.dp).hoverable(hover)
-        .graphicsLayer { shape = RoundedCornerShape(12.dp); shadowElevation = 24.dp.toPx() }
+        .graphicsLayer {
+            shape = RoundedCornerShape(12.dp); shadowElevation = 24.dp.toPx()
+            alpha = motion.progress
+            val s = 0.98f + 0.02f * motion.progress
+            scaleX = s; scaleY = s
+        }
         .clip(RoundedCornerShape(12.dp)).background(Color(0xFF1C1C1F))
         .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(12.dp))) {
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).background(Palette.raised)) {
@@ -361,8 +372,16 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
 internal fun CardMenu(card: Card, saved: Boolean, removal: ListRemoval?, onDismiss: () -> Unit,
     onPlay: () -> Unit, onInfo: () -> Unit, onToggleSave: (() -> Unit)?) {
     val toggleSave = onToggleSave?.takeIf { removal?.replacesSave != true }
+    val motion = rememberEnterLeaveMotion(true,
+        enter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
+        leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
     Column(Modifier.width(300.dp)
-        .graphicsLayer { shape = RoundedCornerShape(10.dp); shadowElevation = 16.dp.toPx() }
+        .graphicsLayer {
+            shape = RoundedCornerShape(10.dp); shadowElevation = 16.dp.toPx()
+            alpha = motion.progress
+            val s = 0.98f + 0.02f * motion.progress
+            scaleX = s; scaleY = s
+        }
         .tvBackdropBlur(30.dp)
         .clip(RoundedCornerShape(10.dp))
         .background(Color(0xFF242428).copy(alpha = .97f))

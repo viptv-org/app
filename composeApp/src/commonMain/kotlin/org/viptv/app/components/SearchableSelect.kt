@@ -1,6 +1,5 @@
 package org.viptv.app.components
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -231,7 +230,7 @@ private fun SelectChip(title: String, value: String, valueSet: Boolean, highligh
     Box(modifier) {
         SelectTrigger(title, value, valueSet, highlighted, metrics, chipFocus.takeIf { metrics.tv }) { open.value = true }
         when (presentation) {
-            SelectPresentation.Sheet -> if (open.value) SelectSheet(title, close) { listMax ->
+            SelectPresentation.Sheet -> SelectSheet(open.value, title, close) { listMax ->
                 panel(SelectMetrics(48.dp, listMax, sheet = true), close) }
             SelectPresentation.Panel -> if (open.value) SelectPanelSheet(title, close) { scale ->
                 panel(SelectMetrics(72.dp * scale, 640.dp * scale, sheet = false, tv = true, scale = scale), close) }
@@ -264,17 +263,19 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
 }
 
 @Composable
-private fun SelectSheet(title: String, dismiss: () -> Unit, content: @Composable (Dp) -> Unit) {
-    val rise = remember { Animatable(0f) }
-    val riseSpec = motionSpec<Float>(tween(220))
-    LaunchedEffect(Unit) { rise.animateTo(1f, riseSpec) }
+private fun SelectSheet(visible: Boolean, title: String, dismiss: () -> Unit, content: @Composable (Dp) -> Unit) {
+    val motion = rememberOverlayMotion(visible,
+        containerEnter = motionSpec(tween(Motion.panel, easing = Motion.standard)),
+        scrimEnter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
+        leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+    if (!motion.presented) return
     Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val height = maxHeight * .8f
-            Box(Modifier.matchParentSize().graphicsLayer { alpha = rise.value }.background(Color.Black.copy(alpha = .62f))
+            Box(Modifier.matchParentSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = .62f))
                 .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = height)
-                .graphicsLayer { translationY = size.height * (1f - rise.value) }
+                .graphicsLayer { translationY = size.height * (1f - motion.container) }
                 .shadow(24.dp, SheetShape).clip(SheetShape).background(Palette.surface)
                 // A tap on the sheet's own background must not reach the scrim below it.
                 .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }

@@ -1,33 +1,39 @@
 package org.viptv.app.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import org.viptv.app.theme.Palette
 
 internal const val PopoverMenuItemIconTag = "PopoverMenuItem.icon"
@@ -37,6 +43,8 @@ internal val PopoverMenuWidth = 260.dp
 
 internal val Hairline = Color.White.copy(alpha = .07f)
 
+private val PopoverShape = RoundedCornerShape(16.dp)
+
 @Composable
 internal fun PopoverMenu(
     expanded: Boolean,
@@ -45,19 +53,51 @@ internal fun PopoverMenu(
     wash: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    DropdownMenu(
-        expanded, onDismissRequest,
-        modifier = modifier.width(PopoverMenuWidth).then(if (wash == null) Modifier else Modifier.drawBehind {
-            drawRect(Brush.verticalGradient(listOf(wash.copy(alpha = .24f), Color.Transparent), endY = 88.dp.toPx()))
-        }),
-        offset = DpOffset(0.dp, 6.dp),
-        shape = RoundedCornerShape(16.dp),
-        containerColor = Palette.surface,
-        tonalElevation = 0.dp,
-        shadowElevation = 20.dp,
-        border = BorderStroke(1.dp, Hairline),
-        content = content,
-    )
+    val motion = rememberEnterLeaveMotion(expanded,
+        enter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
+        leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+    if (!motion.presented) return
+    val density = LocalDensity.current
+    val washBrush = wash?.let { with(density) { Brush.verticalGradient(listOf(it.copy(alpha = .24f), Color.Transparent), endY = 88.dp.toPx()) } }
+    Popup(onDismissRequest = onDismissRequest,
+        popupPositionProvider = remember(density) { PopoverMenuPosition(density) },
+        properties = PopupProperties(focusable = true)) {
+        Column(modifier.width(PopoverMenuWidth)
+            .graphicsLayer {
+                alpha = motion.progress
+                val s = 0.98f + 0.02f * motion.progress
+                scaleX = s; scaleY = s
+                shape = PopoverShape
+                shadowElevation = 20.dp.toPx()
+            }
+            .clip(PopoverShape)
+            .background(Palette.surface)
+            .then(if (washBrush == null) Modifier else Modifier.background(washBrush, PopoverShape))
+            .border(1.dp, Hairline, PopoverShape)) {
+            content()
+        }
+    }
+}
+
+private class PopoverMenuPosition(private val density: Density) : PopupPositionProvider {
+    override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection,
+        popupContentSize: IntSize): IntOffset {
+        val offset = with(density) { 6.dp.roundToPx() }
+        val margin = with(density) { 4.dp.roundToPx() }
+        val toBottom = anchorBounds.bottom + offset
+        val toTop = anchorBounds.top - offset - popupContentSize.height
+        val y = sequenceOf(toBottom, toTop).firstOrNull { it >= margin && it + popupContentSize.height <= windowSize.height - margin }
+            ?: toBottom
+        val toLeading = anchorBounds.left
+        val toTrailing = anchorBounds.right - popupContentSize.width
+        val toDisplayLeading = windowSize.width - offset - popupContentSize.width
+        val toDisplayTrailing = anchorBounds.left
+        val horizontal = if (layoutDirection == LayoutDirection.Ltr)
+            sequenceOf(toLeading, toTrailing, toDisplayLeading, toDisplayTrailing)
+        else sequenceOf(toTrailing, toLeading, toDisplayTrailing, toDisplayLeading)
+        val x = horizontal.firstOrNull { it >= margin && it + popupContentSize.width <= windowSize.width - margin } ?: toLeading
+        return IntOffset(x, y)
+    }
 }
 
 @Composable
