@@ -54,7 +54,7 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 favoritesOnly = state.liveFavoritesOnly, favoritesFilter = if (state.liveFavoritesAvailable) controller::filterLiveFavorites else null,
                 sources = state.livePage?.connections.orEmpty().filter { it.enabled }.associate { it.id to it.name }, selectedSource = state.liveQuery.connection_id,
                 sourceChanged = controller::selectLiveConnection, emptyReason = emptyReason, spread = spread,
-                noChannelsReason = state.livePage?.reason?.let { ServerMessages.human(it, ServerMessages.LIVE_REASON) } ?: state.error,
+                noChannelsReason = emptyReason,
                 noChannelsRetry = retry, sourceIntegrations = if (mayManageSources) ({ controller.openLiveSetup(LiveSourceIntegrationsSection) }) else null,
                 statusNotice = notice, noticeRetry = retry)
             if (state.busy || state.liveGuideLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)

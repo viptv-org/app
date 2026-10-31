@@ -4,24 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.rememberTvLoadingShimmer
@@ -131,8 +131,10 @@ internal fun LiveNoSourcePage(television: Boolean, access: AccountAccess?, local
             access.member -> LiveMemberWho
             else -> null
         }
+        val hadActions = remember { mutableStateOf(actions) }
         LaunchedEffect(actions, returnFocus) {
-            if (television && actions && returnFocus) { withFrameNanos { }; runCatching { primary.requestFocus() }; focusTaken() }
+            if (television && actions && (returnFocus || !hadActions.value)) { withFrameNanos { }; runCatching { primary.requestFocus() }; focusTaken() }
+            hadActions.value = actions
         }
         val metrics = if (television) LiveEmptyMetrics.television(scale) else LiveEmptyMetrics.wide(compact)
         val full = if (compact) Modifier.fillMaxWidth() else Modifier
@@ -156,7 +158,7 @@ internal fun LiveNoSourcePage(television: Boolean, access: AccountAccess?, local
                 else -> Spacer(Modifier.height(metrics.actionBlock))
             }
         }
-        Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (actions) primary.requestFocus() } }.focusGroup()) {
+        Box(Modifier.fillMaxSize().focusGroup()) {
             LiveEmptyArtwork(television || !compact)
             when {
                 television -> Column(Modifier.align(Alignment.CenterStart).padding(start = 96.dp * scale).width(840.dp * scale),

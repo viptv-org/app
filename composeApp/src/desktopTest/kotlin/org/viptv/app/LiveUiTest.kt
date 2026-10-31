@@ -162,14 +162,15 @@ class LiveUiTest {
             }
             try {
                 repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
-                assertEquals(if (returnFocus) LiveSetUp else null, focusedText(scene),
-                    "the primary takes focus only when the empty state is re-entered")
+                assertEquals(if (returnFocus) LiveSetUp else "", focusedText(scene),
+                    "the primary takes focus only when the empty state is re-entered, otherwise the navigation keeps it")
                 val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
                 scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
                 repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
                 if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
                 repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
-                assertEquals(LiveSetUp, focusedText(scene), "Down from the navigation lands on the primary")
+                assertEquals(if (returnFocus) LiveAddons else LiveSetUp, focusedText(scene),
+                    if (returnFocus) "Down from the primary reaches the secondary" else "Down from the navigation lands on the primary")
             } finally { scene.close() }
         }
     }
@@ -182,6 +183,10 @@ class LiveUiTest {
             val texts = nodes(scene).map(::text)
             assertTrue(texts.contains(LiveNoSourceHeadline))
             assertFalse(texts.contains(LiveSetUp)); assertFalse(texts.contains(LiveMemberWho)); assertFalse(texts.contains(LivePairedWho))
+            assertNotEquals(LiveSetUp, focusedText(scene), "the navigation keeps focus while the identity loads")
+            controller.mutable.value = controller.state.value.copy(accountAccess = AccountAccess("owner", true))
+            frames(scene)
+            assertEquals(LiveSetUp, focusedText(scene), "the primary takes focus the frame it appears")
         } finally { scene.close() }
     }
 
