@@ -148,6 +148,8 @@ class ParentTitlesTest {
     @Test fun approvalListLoadsBeyondFirstFiveHundredWithoutDroppingPriorRows() = runBlocking<Unit> {
         val offsets = mutableListOf<Int>()
         val controller = controller(this) { request ->
+            if (request.url.encodedPath.endsWith("/blocked"))
+                return@controller respond("{\"items\":[]}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
             val offset = request.url.parameters["offset"]!!.toInt(); offsets += offset
             respond(buildJsonObject { put("items", buildJsonArray {
                 repeat(if (offset == 0) 500 else 1) { index -> add(buildJsonObject { put("type", "movie"); put("id", "tt${offset + index}") }) }
@@ -176,6 +178,8 @@ class ParentTitlesTest {
                 assertEquals("tt1", Json.decodeFromJsonElement<Card>(body["card"]!!).identity.ids.single().value)
                 respond("{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
             } else {
+                if (request.url.encodedPath.endsWith("/blocked"))
+                    return@controller respond("{\"items\":[]}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
                 assertEquals("/api/profiles/2/approvals", request.url.encodedPath)
                 respond(buildJsonObject { put("items", Json.encodeToJsonElement(listOf(second))) }.toString(),
                     headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -202,4 +206,63 @@ class ParentTitlesTest {
         } finally { controller.connection?.close() }
     }
 
+    @Test fun nativeSessionsBlockAndUnblockTitlesThroughFakeHost() = runBlocking<Unit> {
+        val writes = mutableListOf<Pair<String, JsonObject>>()
+        var blocked = listOf<BlockedTitle>()
+        val controller = controller(this, browser = false) { request ->
+            val headers = headersOf(HttpHeaders.ContentType, "application/json")
+            when {
+                request.method == HttpMethod.Post -> {
+                    val value = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                    writes += request.url.encodedPath to value
+                    val id = value["id"]!!.jsonPrimitive.content
+                    blocked = if (value["blocked"]!!.jsonPrimitive.boolean)
+                        blocked + BlockedTitle(id, value["type"]!!.jsonPrimitive.content,
+                            value["name"]?.jsonPrimitive?.contentOrNull, value["poster"]?.jsonPrimitive?.contentOrNull)
+                    else blocked.filterNot { it.id == id }
+                    respond("{\"blocked\":${value["blocked"]}}", headers = headers)
+                }
+                request.url.encodedPath.endsWith("/blocked") -> respond(
+                    buildJsonObject { put("items", Json.encodeToJsonElement(blocked)) }.toString(), headers = headers)
+                else -> respond("{\"items\":[]}", headers = headers)
+            }
+        }
+        val selected = card().copy(title = "A title", poster = "https://images.example/a.jpg")
+        try {
+            controller.openParentTitles("2"); controller.job!!.join()
+            controller.blockParentTitle(selected); controller.job!!.join()
+            assertEquals("/api/profiles/2/blocked" to buildJsonObject {
+                put("type", "movie"); put("id", "tt123"); put("blocked", true)
+                put("name", "A title"); put("poster", "https://images.example/a.jpg")
+            }, writes.last())
+            assertEquals(listOf("tt123"), controller.state.value.parentTitles!!.blocked.map { it.id })
+            assertContains(controller.state.value.parentTitles!!.notice.orEmpty(), "is blocked for Child")
+            controller.unblockParentTitle(controller.state.value.parentTitles!!.blocked.single()); controller.job!!.join()
+            assertEquals("/api/profiles/2/blocked" to buildJsonObject { put("type", "movie"); put("id", "tt123"); put("blocked", false) }, writes.last())
+            assertTrue(controller.state.value.parentTitles!!.blocked.isEmpty())
+            assertNull(controller.state.value.error)
+        } finally { controller.connection?.close() }
+    }
+
+    @Test fun blockedTitlesLoadBeyondTheFirstPageWithoutDroppingPriorRows() = runBlocking<Unit> {
+        val blockedOffsets = mutableListOf<Int>()
+        val controller = controller(this) { request ->
+            val headers = headersOf(HttpHeaders.ContentType, "application/json")
+            if (request.url.encodedPath.endsWith("/blocked")) {
+                val offset = request.url.parameters["offset"]!!.toInt(); blockedOffsets += offset
+                respond(buildJsonObject { put("items", buildJsonArray {
+                    repeat(if (offset == 0) 500 else 1) { index -> add(buildJsonObject {
+                        put("type", "movie"); put("id", "tt${offset + index}") }) }
+                }) }.toString(), headers = headers)
+            } else respond("{\"items\":[]}", headers = headers)
+        }
+        try {
+            controller.openParentTitles("2"); controller.job!!.join()
+            assertEquals(500, controller.state.value.parentTitles!!.blockedNextOffset)
+            controller.refreshBlockedTitles(true); controller.job!!.join()
+            assertEquals(listOf(0, 500), blockedOffsets)
+            assertEquals(501, controller.state.value.parentTitles!!.blocked.size)
+            assertNull(controller.state.value.parentTitles!!.blockedNextOffset)
+        } finally { controller.connection?.close() }
+    }
 }

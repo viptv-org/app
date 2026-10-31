@@ -20,15 +20,25 @@ data class ApprovedTitle(val id: String, val type: String, val name: String? = n
     val metadata_origin: MetadataOrigin? = null, val card: Card? = null)
 @Serializable
 private data class ApprovedTitlePage(val items: List<ApprovedTitle> = emptyList())
+@Serializable
+data class BlockedTitle(val id: String, val type: String, val name: String? = null, val poster: String? = null)
+@Serializable
+private data class BlockedTitlePage(val items: List<BlockedTitle> = emptyList())
 
 data class ParentTitlesState(val profile: String, val profileName: String, val query: String = "",
     val rows: List<ParentTitleRow> = emptyList(), val searched: Boolean = false,
     val approved: List<ApprovedTitle> = emptyList(), val loaded: Boolean = false,
-    val nextOffset: Int? = null, val notice: String? = null) {
+    val nextOffset: Int? = null, val notice: String? = null,
+    val blocked: List<BlockedTitle> = emptyList(), val blockedLoaded: Boolean = false,
+    val blockedNextOffset: Int? = null) {
     fun isApproved(item: ParentTitleItem) = approved.any { saved ->
         if (saved.card != null) saved.card.metadata_origin == item.card.metadata_origin && sameLookupIdentity(saved.card.identity, item.card.identity)
         else saved.type == item.card.identity.kind && saved.id == item.card.identity.id &&
             (saved.metadata_origin == item.card.metadata_origin || saved.metadata_origin == null && saved.metadata_provider_id != null)
+    }
+
+    fun isBlocked(item: ParentTitleItem) = blocked.any { saved ->
+        saved.type == item.card.identity.kind && saved.id == item.card.identity.id
     }
 }
 
@@ -38,6 +48,19 @@ internal suspend fun RemoteConnection.parentTitleSearch(profile: String, query: 
 internal suspend fun RemoteConnection.approvedTitles(profile: String, offset: Int = 0): List<ApprovedTitle> =
     Json { ignoreUnknownKeys = true }.decodeFromJsonElement<ApprovedTitlePage>(
         call("/api/profiles/${profile.encodeURLPathPart()}/approvals?offset=$offset")).items
+
+internal suspend fun RemoteConnection.blockedTitles(profile: String, offset: Int = 0): List<BlockedTitle> =
+    Json { ignoreUnknownKeys = true }.decodeFromJsonElement<BlockedTitlePage>(
+        call("/api/profiles/${profile.encodeURLPathPart()}/blocked?offset=$offset")).items
+
+internal suspend fun RemoteConnection.saveBlockedTitle(profile: String, kind: String, id: String, blocked: Boolean,
+    name: String? = null, poster: String? = null) {
+    require(kind == "movie" || kind == "series")
+    call("/api/profiles/${profile.encodeURLPathPart()}/blocked", HttpMethod.Post, buildJsonObject {
+        put("type", kind); put("id", id); put("blocked", blocked)
+        name?.let { put("name", it) }; poster?.let { put("poster", it) }
+    })
+}
 
 internal suspend fun RemoteConnection.saveTitleApproval(profile: String, kind: String, id: String, approved: Boolean,
     provider: String? = null, addon: Long? = null, expected: Card? = null): ApprovedTitle? {

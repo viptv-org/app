@@ -19,7 +19,7 @@ import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: String?,
-    digit: (String) -> Unit, erase: () -> Unit, submit: () -> Unit, back: () -> Unit) {
+    digit: (String) -> Unit, erase: () -> Unit, submit: () -> Unit, back: () -> Unit, leaving: Boolean = false) {
     val first = remember { FocusRequester() }
     var forgot by remember { mutableStateOf(false) }
     val recovery = remember { FocusRequester() }
@@ -48,7 +48,7 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
     }) {
         val scale = maxWidth / 1920.dp
         ProfileAvatarAtTop(profile, scale)
-        Text(if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter the PIN for ${profile?.name.orEmpty()}", Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale),
+        Text(if (leaving) "Enter the PIN to leave ${profile?.name.orEmpty()}’s profile" else if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter the PIN for ${profile?.name.orEmpty()}", Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale),
             fontSize = (44 * scale).sp, lineHeight = (50.6f * scale).sp, letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)
         TvPinDigits(pin, scale, Modifier.align(Alignment.TopCenter).padding(top = 380.dp * scale))
         TvPinKeys(pin, scale, busy, first, digit, erase, submit, Modifier.align(Alignment.TopCenter).padding(top = 540.dp * scale))
