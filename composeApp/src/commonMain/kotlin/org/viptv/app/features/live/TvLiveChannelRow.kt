@@ -15,9 +15,9 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvLiveChannelRow(channel: LiveChannel, now: Int?, scale: Float, requester: FocusRequester?,
-    up: FocusRequester?, focus: () -> Unit, watch: () -> Unit) {
+    up: FocusRequester?, focus: () -> Unit, watch: () -> Unit, modifier: Modifier = Modifier) {
     val program = channel.current(now)
-    TvAction(Modifier.fillMaxWidth().height(72.dp * scale)
+    TvAction(modifier.fillMaxWidth().height(72.dp * scale)
         .onFocusChanged { if (it.isFocused) focus() }
         .focusProperties { if (up != null) this.up = up }, scale, requester = requester, activate = watch,
         background = Color.White.copy(alpha = .06f), cornerRadius = 10.dp * scale,

@@ -22,6 +22,7 @@ import org.jetbrains.compose.resources.Font
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.BrandMark
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.TextButton
 
@@ -93,9 +94,7 @@ internal fun SignInPanel(width: Dp, verticalPadding: Dp = 32.dp, content: @Compo
 @Composable
 private fun SignInBrand() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-        Box(Modifier.size(28.dp).background(Palette.accent, RoundedCornerShape(7.dp)), contentAlignment = Alignment.Center) {
-            Text("V", color = Palette.background, fontSize = 18.sp, fontWeight = FontWeight.Black)
-        }
+        BrandMark(28.dp)
         Text("VIPTV", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
             fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)))
     }

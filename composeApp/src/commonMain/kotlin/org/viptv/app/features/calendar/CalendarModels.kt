@@ -51,3 +51,21 @@ internal fun List<CalendarEntry>.fallsBackToAll(filter: CalendarFilter?): Boolea
 
 internal fun calendarOpener(open: (Card) -> Unit, openEntry: ((CalendarEntry) -> Unit)?): (CalendarEntry) -> Unit =
     { entry -> openEntry?.invoke(entry) ?: open(entry.card) }
+
+internal sealed interface CalendarLine {
+    data class Day(val day: CalendarDay) : CalendarLine
+    data class Empty(val day: CalendarDay) : CalendarLine
+    data class Entry(val entry: CalendarEntry) : CalendarLine
+}
+
+internal fun List<CalendarEntry>.dayLines(days: List<CalendarDay>): List<CalendarLine> = days.flatMap { day ->
+    val releases = filter { it.day == day.id }.sortedBy { it.aired }
+    listOf(CalendarLine.Day(day)) + if (releases.isEmpty()) listOf(CalendarLine.Empty(day))
+    else releases.map(CalendarLine::Entry)
+}
+
+internal fun CalendarLine.key(): String = when (this) {
+    is CalendarLine.Day -> "day:${day.id}"
+    is CalendarLine.Empty -> "empty:${day.id}"
+    is CalendarLine.Entry -> entry.id
+}

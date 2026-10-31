@@ -28,12 +28,18 @@ import org.viptv.app.ContinueWatchingHost.Companion.card
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.connection.SearchResultRow
 import org.viptv.app.features.browse.BrowseScreen
+import org.viptv.app.features.calendar.CalendarDay
+import org.viptv.app.features.calendar.CalendarEntry
+import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
 import org.viptv.app.features.continuewatching.ContinueWatchingScreen
 import org.viptv.app.features.continuewatching.TvContinueWatchingScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.history.TvHistoryScreen
 import org.viptv.app.features.library.LibraryScreen
+import org.viptv.app.features.live.LiveChannel
+import org.viptv.app.features.live.LiveProgram
+import org.viptv.app.features.live.LiveScreen
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -47,7 +53,20 @@ class PageRestoreUiTest {
     @get:Rule val uiThread = UiThreadRule()
 
     private val shows = (1..30).map(::card)
+    private val week = listOf(
+        CalendarDay("d1", "Mon", "10", "Today", "Mon 10 Nov"),
+        CalendarDay("d2", "Tue", "11", "Tue 11", "Tue 11 Nov"),
+        CalendarDay("d3", "Wed", "12", "Wed 12", "Wed 12 Nov"),
+        CalendarDay("d4", "Thu", "13", "Thu 13", "Thu 13 Nov"),
+        CalendarDay("d5", "Fri", "14", "Fri 14", "Fri 14 Nov"))
     private var frame = 0L
+
+    private fun releases() = week.flatMapIndexed { day, it ->
+        (1..12).map { n -> CalendarEntry("e${it.id}-$n", it.id, "20:00", card(day * 12 + n)) }
+    }
+
+    private fun liveChannel(n: Int) = LiveChannel(card(n).copy(title = "Channel $n", subtitle = null),
+        id = "live$n", connectionId = "m3u:1", programs = listOf(LiveProgram("p$n", "Show %02d".format(n), 0, 120)))
 
     @Test fun continueWatchingComesBackToTheOpenedCard() {
         val cards = mutableStateOf(shows)
@@ -238,6 +257,89 @@ class PageRestoreUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun calendarComesBackToTheOpenedRelease() {
+        for ((width, height) in listOf(393 to 852, 1440 to 900)) {
+            val entries = mutableStateOf(releases())
+            val visiting = mutableStateOf(true)
+            var opened: Card? = null
+            val scene = page(width, height, visiting) {
+                CalendarScreen(week, entries.value, television = false, open = { opened = it }, manage = {})
+            }
+            try {
+                frames(scene)
+                if (width > 640) click(scene, "Wed 12")
+                scrollDown(scene, 1400f)
+                val title = openCard(scene, height, { opened })
+                visiting.value = false; frames(scene)
+                visiting.value = true; frames(scene)
+                assertTrue(onScreen(scene, title), "$width: $title is back on screen")
+            } finally { scene.close() }
+        }
+    }
+
+    @Test fun liveComesBackToTheOpenedChannel() {
+        val channels = mutableStateOf((1..24).map(::liveChannel))
+        val visiting = mutableStateOf(true)
+        var opened: LiveChannel? = null
+        val scene = page(1200, 800, visiting) {
+            LiveScreen(channels.value, false, 0, 30, { opened = it }, {})
+        }
+        try {
+            frames(scene)
+            scrollDown(scene, 900f)
+            val title = openRow(scene, 800, "Channel ") { opened?.card?.title }
+            visiting.value = false; frames(scene)
+            visiting.value = true; frames(scene)
+            assertTrue(onScreen(scene, title), "$title is back on screen")
+        } finally { scene.close() }
+    }
+
+    @Test fun tvCalendarComesBackToTheFocusedRelease() {
+        val entries = mutableStateOf(releases())
+        val visiting = mutableStateOf(true)
+        var focusManager: FocusManager? = null
+        var opened: Card? = null
+        val scene = page(1920, 1080, visiting, television = true) {
+            focusManager = LocalFocusManager.current
+            CalendarScreen(week, entries.value, television = true, open = { opened = it }, manage = {})
+        }
+        try {
+            frames(scene)
+            nodes(scene).first { it.config.contains(SemanticsActions.OnClick) && label(it).contains("Show 01") }
+                .config[SemanticsActions.RequestFocus].action!!.invoke()
+            frames(scene, 20)
+            repeat(4) { move(scene, Key.DirectionDown, FocusDirection.Down, focusManager) }
+            val title = requireNotNull(focusedTitle(scene)) { "the remote is on a release" }
+            ok(scene)
+            assertNotNull(opened, "the remote opens the release")
+            visiting.value = false; frames(scene)
+            visiting.value = true; frames(scene)
+            assertEquals(title, focusedTitle(scene), "$title keeps the focus on the way back")
+        } finally { scene.close() }
+    }
+
+    @Test fun tvLiveComesBackToTheFocusedChannel() {
+        val channels = mutableStateOf((1..24).map(::liveChannel))
+        val visiting = mutableStateOf(true)
+        var focusManager: FocusManager? = null
+        var opened: LiveChannel? = null
+        val scene = page(1920, 1080, visiting, television = true) {
+            focusManager = LocalFocusManager.current
+            LiveScreen(channels.value, true, 0, 30, { opened = it }, {})
+        }
+        try {
+            frames(scene)
+            focusOn(scene, "Show 01")
+            repeat(6) { move(scene, Key.DirectionDown, FocusDirection.Down, focusManager) }
+            val title = requireNotNull(focusedTitle(scene)) { "the remote is on a guide cell" }
+            ok(scene)
+            assertNotNull(opened, "the remote opens the channel")
+            visiting.value = false; frames(scene)
+            visiting.value = true; frames(scene)
+            assertEquals(title, focusedTitle(scene), "$title keeps the focus on the way back")
+        } finally { scene.close() }
+    }
+
     private fun page(width: Int, height: Int, visiting: MutableState<Boolean>, television: Boolean = false,
         content: @Composable () -> Unit): ImageComposeScene =
         ImageComposeScene(width, height, Density(1f)) { ViptvTheme(television) {
@@ -312,5 +414,23 @@ class PageRestoreUiTest {
         scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
         if (!consumed) requireNotNull(manager).moveFocus(direction)
         frames(scene, 6)
+    }
+
+    private fun click(scene: ImageComposeScene, text: String) {
+        val node = nodes(scene).first { it.config.contains(SemanticsActions.OnClick) && label(it).contains(text) }
+        assertTrue(node.config[SemanticsActions.OnClick].action?.invoke() == true, "$text is clickable")
+        frames(scene)
+    }
+
+    /** Opens the lowest labelled row on screen and returns the title it opened. */
+    private fun openRow(scene: ImageComposeScene, height: Int, marker: String, opened: () -> String?): String {
+        val candidates = nodes(scene).filter {
+            it.config.contains(SemanticsActions.OnClick) && it.boundsInRoot.bottom < height && label(it).contains(marker)
+        }
+        assertTrue(candidates.isNotEmpty(), "rows are on screen")
+        val target = candidates.maxBy { it.boundsInRoot.top }
+        target.config[SemanticsActions.OnClick].action?.invoke()
+        frames(scene)
+        return requireNotNull(opened()) { "a row opens; clicked ${label(target)}" }
     }
 }

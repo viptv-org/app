@@ -47,7 +47,7 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { save(presented) }) { Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, if (presentedSaved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
-        progress?.let { HeroIndicators(indicators, selected, it, Modifier.offset(96.dp * scale, 760.dp * scale), scale) }
+        progress?.let { HeroIndicators(indicators, selected, it, Modifier.offset(96.dp * scale, 760.dp * scale), scale, animated = false) }
 
         }
     }

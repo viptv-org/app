@@ -16,11 +16,11 @@ import org.viptv.app.components.IconButton
 import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
-internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, favourite: (() -> Unit)?) {
+internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, favourite: (() -> Unit)?, modifier: Modifier = Modifier) {
     val program = channel.current(now)
     val next = channel.next(now)
     Column {
-        Row(Modifier.fillMaxWidth().pointerClickable(onClick = watch, shape = RectangleShape).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
+        Row(modifier.fillMaxWidth().pointerClickable(onClick = watch, shape = RectangleShape).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(Modifier.width(64.dp).height(48.dp), shape = RoundedCornerShape(10.dp), color = Palette.surface) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
