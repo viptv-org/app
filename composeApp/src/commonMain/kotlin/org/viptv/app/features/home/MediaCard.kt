@@ -121,6 +121,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     var previewOpen by remember { mutableStateOf(false) }
     var previewHovered by remember { mutableStateOf(false) }
     var menuAt by remember { mutableStateOf<IntOffset?>(null) }
+    var menuOpen by remember { mutableStateOf(false) }
     val saved = actions?.isSaved?.invoke(card) == true
     val activate = select ?: actions?.play ?: open
     // The preview survives the 12 dp gap, so the pointer can reach its own buttons.
@@ -132,7 +133,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         }
     }
     Column(modifier.width(width.dp).hoverable(hover)
-        .cardContextClick(desktop || removal != null) { previewOpen = false; menuAt = it }
+        .cardContextClick(desktop || removal != null) { previewOpen = false; menuAt = it; menuOpen = true }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .pointerClickable(interactionSource = press, indication = null) { (select ?: open)(card) }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).pressScale(press, Motion.card)
@@ -161,7 +162,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                     .onGloballyPositioned { at = IntOffset(it.positionInParent().x.roundToInt(), it.positionInParent().y.roundToInt()) }
                     .size(44.dp).pressScale(more, Motion.button).clip(CircleShape).background(HoverFill.cardScrim)
                     .pointerClickable(interactionSource = more, indication = null,
-                        onClickLabel = "More actions", shape = CircleShape) { previewOpen = false; menuAt = at },
+                        onClickLabel = "More actions", shape = CircleShape) { previewOpen = false; menuAt = at; menuOpen = true },
                     contentAlignment = Alignment.Center) {
                     Icon(Lucide.Ellipsis, "More actions", Modifier.size(20.dp), tint = Palette.text)
                 }
@@ -188,12 +189,13 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         if (actions != null || removal != null) {
             menuAt?.let { at ->
                 Popup(popupPositionProvider = CardMenuPosition(at),
-                    onDismissRequest = { menuAt = null }, properties = PopupProperties(focusable = true)) {
+                    onDismissRequest = { menuOpen = false }, properties = PopupProperties(focusable = true)) {
                     CardMenu(card, saved, removal,
-                        onDismiss = { menuAt = null },
-                        onPlay = { menuAt = null; activate(card) },
-                        onInfo = { menuAt = null; open(card) },
-                        onToggleSave = actions?.let { { menuAt = null; it.toggleSave(card) } })
+                        onDismiss = { menuOpen = false },
+                        onPlay = { menuOpen = false; activate(card) },
+                        onInfo = { menuOpen = false; open(card) },
+                        onToggleSave = actions?.let { { menuOpen = false; it.toggleSave(card) } },
+                        visible = menuOpen, onClosed = { menuAt = null })
                 }
             }
         }
@@ -370,11 +372,12 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
 
 @Composable
 internal fun CardMenu(card: Card, saved: Boolean, removal: ListRemoval?, onDismiss: () -> Unit,
-    onPlay: () -> Unit, onInfo: () -> Unit, onToggleSave: (() -> Unit)?) {
+    onPlay: () -> Unit, onInfo: () -> Unit, onToggleSave: (() -> Unit)?, visible: Boolean = true, onClosed: () -> Unit = {}) {
     val toggleSave = onToggleSave?.takeIf { removal?.replacesSave != true }
-    val motion = rememberEnterLeaveMotion(true,
+    val motion = rememberEnterLeaveMotion(visible,
         enter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
         leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+    LaunchedEffect(motion.presented) { if (!motion.presented) onClosed() }
     Column(Modifier.width(300.dp)
         .graphicsLayer {
             shape = RoundedCornerShape(10.dp); shadowElevation = 16.dp.toPx()

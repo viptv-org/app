@@ -39,7 +39,7 @@ import org.viptv.app.components.rememberOverlayMotion
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
-    openingStage: String? = null, groups: SourceGroups = SourceGroups()) {
+    openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
@@ -57,10 +57,11 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val headerHeight = remember { SourceHeaderHeight() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        val motion = rememberOverlayMotion(true,
+        val motion = rememberOverlayMotion(drawerVisible,
             containerEnter = motionSpec(tween(Motion.panel, easing = Motion.standard)),
             scrimEnter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
             leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+        LaunchedEffect(motion.presented) { if (!motion.presented) onClosed() }
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.pointerClickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
