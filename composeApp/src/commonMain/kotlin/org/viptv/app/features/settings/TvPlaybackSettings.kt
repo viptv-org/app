@@ -24,13 +24,13 @@ internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, sca
         rows.forEachIndexed { index, row ->
             val requester = if (index == 0) initial else null
             when (row) {
-                "Next episode button" -> TvSettingsRow(row, "Shows during the credits", scale, checked = prefs.nextEpisode,
+                nextEpisodeButtonRow -> TvSettingsRow(nextEpisodeButtonRow, nextEpisodeButtonDescription, scale, checked = prefs.nextEpisode,
                     requester = requester, left = sidebar) { change(prefs.copy(nextEpisode = !prefs.nextEpisode)) }
                 autoplayNextRow -> devicePlayback?.let { device ->
                     TvSettingsRow(row, autoplayNextDescription, scale, checked = device.value.autoplayNext, requester = requester, left = sidebar) {
                         device.setAutoplayNext(!device.value.autoplayNext) }
                 }
-                "Skip intros and recaps" -> TvSettingsRow(row, "Skips them when the show marks where they are", scale, checked = prefs.skipIntros,
+                skipIntrosRow -> TvSettingsRow(skipIntrosRow, skipIntrosDescription, scale, checked = prefs.skipIntros,
                     requester = requester, left = sidebar) { change(prefs.copy(skipIntros = !prefs.skipIntros)) }
                 "Default source" -> TvSettingsRow(row, scale = scale, value = prefs.source,
                     requester = requester, left = sidebar) {

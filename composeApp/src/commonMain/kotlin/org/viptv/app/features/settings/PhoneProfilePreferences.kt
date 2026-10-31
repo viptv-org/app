@@ -39,6 +39,15 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
             else {
                 Text("Playback resumes from your saved position.", color = Palette.secondary, fontSize = 13.sp)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PhonePreferenceGroup {
+                        PhonePreferenceSwitchRow(nextEpisodeButtonRow, nextEpisodeButtonDescription, value.next_episode_button) {
+                            draft = draft?.copy(next_episode_button = it)
+                        }
+                        PhonePreferenceDivider()
+                        PhonePreferenceSwitchRow(skipIntrosRow, skipIntrosDescription, value.skip_intros) {
+                            draft = draft?.copy(skip_intros = it)
+                        }
+                    }
                     Text("Sources", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     PhonePreferenceGroup {
                         PhonePreferenceRow("Default source", if (value.source_selection == "best") "Best match" else "Always ask", !busy) { dialog = PhonePreferenceField.Source }
