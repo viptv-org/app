@@ -7,23 +7,20 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import org.viptv.app.connection.*
 import org.viptv.app.features.settings.AccountIdentityScreen
-import org.viptv.app.features.settings.LinkedAccounts
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
-class LinkedAccountRecoveryUiTest {
+class AccountIdentityRecoveryUiTest {
     @get:Rule val uiThread = UiThreadRule()
 
     @Test fun failedIdentityKeepsThePageWithOneErrorLineAndARetry() {
         var busy by mutableStateOf(false); var error by mutableStateOf<String?>(null)
         var identity by mutableStateOf<AccountIdentity?>(null); var loads = 0
         val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
-            AccountIdentityScreen(identity, busy, error, { loads++; busy = true; error = null }) {
-                LinkedAccounts(false, null, busy, {}, {}, "https://fixture.example/")
-            }
+            AccountIdentityScreen(identity, busy, error, { loads++; busy = true; error = null })
         } }
         try {
             frames(scene); assertEquals(1, loads)
@@ -40,33 +37,8 @@ class LinkedAccountRecoveryUiTest {
             assertFalse(nodes(scene).any { text(it) == "Retry account" })
             identity = identity?.copy(role = "owner"); frames(scene)
             assertTrue(nodes(scene).any { text(it) == "Role Owner" })
-            assertTrue(nodes(scene).any { text(it) == "Link and manage accounts through your server’s web dashboard." })
-            assertFalse(nodes(scene).any { text(it) in listOf("Link Simkl", "Unlink Simkl") })
-        } finally { scene.close() }
-    }
-
-    @Test fun browserSimklOffersOnlyTheActionItsServerStateAllows() {
-        var busy by mutableStateOf(false); var status by mutableStateOf<SimklLinkStatus?>(null)
-        var links = 0; var unlinks = 0
-        val scene = ImageComposeScene(800, 700, Density(1f)) { ViptvTheme {
-            AccountIdentityScreen(AccountIdentity("fixture", "viewer", "Viewer", "member"), busy, null, {}) {
-                LinkedAccounts(true, status, busy, { links++ }, { unlinks++ })
-            }
-        } }
-        try {
-            frames(scene)
-            assertTrue(nodes(scene).any { text(it) == "Could not load linked accounts." })
-            status = SimklLinkStatus(false, false); frames(scene)
-            assertTrue(nodes(scene).any { text(it) == "Simkl is not configured on this server." })
-            assertFalse(nodes(scene).any { text(it) in listOf("Link Simkl", "Unlink Simkl") })
-            status = SimklLinkStatus(true, false); frames(scene)
-            click(scene, "Link Simkl"); assertEquals(1, links)
-            status = SimklLinkStatus(true, true); frames(scene)
-            assertTrue(nodes(scene).any { text(it) == "Linked to this profile" })
-            click(scene, "Unlink Simkl"); frames(scene)
-            assertEquals(0, unlinks)
-            click(scene, "Unlink"); frames(scene)
-            assertEquals(1, unlinks)
+            assertFalse(nodes(scene).any { text(it) in listOf("Link Simkl", "Unlink Simkl") },
+                "linked services live under the profile, not the account")
         } finally { scene.close() }
     }
 

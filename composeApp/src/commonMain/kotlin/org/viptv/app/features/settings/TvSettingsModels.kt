@@ -15,7 +15,7 @@ internal enum class TvSettingsSection(val label: String, val group: SettingsGrou
     Addons("Add-ons", SettingsGroup.Account, Lucide.Puzzle),
     Sources("Source integrations", SettingsGroup.Account, Lucide.Server);
 
-    val leavesSettings: Boolean get() = this == Profile || this == SwitchProfile
+    val leavesSettings: Boolean get() = this == SwitchProfile
 }
 
 internal fun tvSettingsGroups(): List<Pair<SettingsGroup, List<TvSettingsSection>>> =
