@@ -52,8 +52,8 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
             val heroForSlot = carousel.card?.let { preview ?: it }
             if (heroForSlot != null || (home == null && busy)) item(key = "hero") {
                 val hero = heroForSlot
-                Box(Modifier.fillMaxWidth().heightIn(min = if (preview == null) 0.dp else with(density) { heroFloor.toDp() })
-                    .onGloballyPositioned { if (preview == null) heroFloor = it.size.height }) {
+                Box(Modifier.fillMaxWidth().heightIn(min = with(density) { heroFloor.toDp() })
+                    .onGloballyPositioned { heroFloor = maxOf(heroFloor, it.size.height) }) {
                     if (!television && !tablet && !(compact && !desktopChrome)) hero?.landscape?.let { HomeBackdrop(it) }
                     Box(Modifier.padding(start = if (television || tablet) 0.dp else gutter, end = if (television || tablet) 0.dp else gutter, top = if (television || tablet || browser) 0.dp else 12.dp)) {
                         if (hero != null) Hero(hero, compact && !desktopChrome, television, open, play, tablet, navigate, browser, save, saved(hero),

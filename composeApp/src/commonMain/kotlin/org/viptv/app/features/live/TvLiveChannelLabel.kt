@@ -17,9 +17,9 @@ import org.viptv.app.resources.bricolage
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvLiveChannelLabel(channel: LiveChannel, scale: Float, first: FocusRequester?, up: FocusRequester?,
+internal fun TvLiveChannelLabel(channel: LiveChannel, scale: Float, first: FocusRequester?, up: FocusRequester?, modifier: Modifier = Modifier,
     focus: () -> Unit, watch: () -> Unit) {
-    TvAction(Modifier.width(300.dp * scale).height(72.dp * scale).onFocusChanged { if (it.isFocused) focus() }
+    TvAction(modifier.width(300.dp * scale).height(72.dp * scale).onFocusChanged { if (it.isFocused) focus() }
         .focusProperties { if (up != null) this.up = up }, scale, requester = first, activate = watch,
         background = Color.White.copy(alpha = .06f), cornerRadius = 10.dp * scale,
         contentPadding = PaddingValues(horizontal = 18.dp * scale), arrangement = Arrangement.Start) {

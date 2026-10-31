@@ -2,14 +2,17 @@ package org.viptv.app.features.live
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 
@@ -19,7 +22,8 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
     favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null, sources: Map<String, String> = emptyMap(), selectedSource: String? = null,
     sourceChanged: ((String) -> Unit)? = null, emptyReason: String? = null,
     statusNotice: String? = null, noticeRetry: (() -> Unit)? = null) {
-    if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged); return }
+    val restore = rememberPageRestore("live")
+    if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, restore = restore); return }
     var fullGuide by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
@@ -32,6 +36,7 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
     }
     LaunchedEffect(selected?.id) { selected?.let(guideRequested) }
     val channelList = rememberLazyListState()
+    val anchored = restore.anchor(visible.size) { visible[it].key() }
     AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
@@ -60,10 +65,14 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                 else TextButton(manage) { Text("Manage add-ons") }
             } else if (!phone && start != null && visible.any { it.programs.isNotEmpty() }) {
                 Box(Modifier.weight(1f)) { LiveGuide(visible, start, now, television, scale,
-                    { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy) }
-            } else LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp)) {
-                items(visible, key = { it.card.provider_id + ":" + it.card.identity.id }) { channel ->
-                    LiveChannelRow(channel, now, { watch(channel) }, favoriteChanged?.let { save -> { save(channel) } })
+                    { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy, restore = restore) }
+            } else {
+                PageRestore(channelList, restore, target = { restore.anchor(visible.size) { visible[it].key() } })
+                LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp)) {
+                    itemsIndexed(visible, key = { _, channel -> channel.key() }) { index, channel ->
+                        LiveChannelRow(channel, now, { restore.mark(channel.key(), index); watch(channel) }, favoriteChanged?.let { save -> { save(channel) } },
+                            modifier = Modifier.pageAnchor(restore, channel.key(), index, target = anchored == index))
+                    }
                 }
             }
         }

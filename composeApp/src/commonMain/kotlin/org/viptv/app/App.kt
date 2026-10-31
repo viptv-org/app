@@ -113,8 +113,9 @@ fun App(
                         // The picker opened by Back from Home has no arrow: Back leaves the app.
                         back = if (state.selectedProfile != null && !state.profilesFromHome) controller::navigateBack else null)
                 }
-                Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == state.profileToOpen }, compact,
-                    state.busy, state.error, controller::submitProfilePin, controller::navigateBack, television)
+                Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == (state.leavePinFrom ?: state.profileToOpen) }, compact,
+                    state.busy, state.error, controller::submitProfilePin, controller::navigateBack, television,
+                    leaving = state.leavePinFrom != null)
                 Screen.ProfileEdit -> ProfileEditScreen(state.profiles.find { it.id == state.profileToEdit }, state.profiles.size,
                     state.busy, state.error, compact, controller::navigateBack, controller::renameProfile,
                     controller::setProfilePin, controller::setProfileAvatar, controller::deleteProfile, television, entryBackChanged, pinAvailable = state.localMode,
@@ -186,10 +187,14 @@ fun App(
                                     }
                                 }
                             }
-                            Screen.Calendar -> CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
-                                type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
-                                sources = state.calendarSources, openEntry = controller::openCalendarEntry)
-                            Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
+                            Screen.Calendar -> routes.SaveableStateProvider("${state.selectedProfile}:calendar") {
+                                CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
+                                    type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
+                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry)
+                            }
+                            Screen.Live -> routes.SaveableStateProvider("${state.selectedProfile}:live") {
+                                org.viptv.app.features.live.LiveRoute(state, controller, television)
+                            }
                             Screen.Library -> routes.SaveableStateProvider("${state.selectedProfile}:library") {
                                 org.viptv.app.features.library.LibraryRoute(state, controller, television)
                             }

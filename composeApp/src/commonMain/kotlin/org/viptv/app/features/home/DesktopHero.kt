@@ -1,7 +1,6 @@
 package org.viptv.app.features.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -38,7 +37,7 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
         if (maxWidth < rowMin) {
             Column(verticalArrangement = Arrangement.spacedBy(if (short) 14.dp else 22.dp)) {
                 HeroArtwork(card, Modifier.fillMaxWidth(), artHeight, carousel)
-                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel, short, label)
+                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel, short, label, null)
             }
         } else {
             val gap = if (short) 32.dp else 48.dp
@@ -49,7 +48,8 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
                 else DesktopBreakpoints.heroSummaryMax)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
-                FeaturedSummary(card, open, play, save, saved, Modifier.width(copyWidth), carousel, short, label)
+                FeaturedSummary(card, open, play, save, saved, Modifier.width(copyWidth), carousel, short, label,
+                    artHeight ?: (artWidth * 9f / 16f))
                 HeroArtwork(card, Modifier.width(artWidth), artHeight, carousel)
             }
         }
@@ -67,23 +67,31 @@ private fun HeroArtwork(card: Card, modifier: Modifier, height: Dp?, carousel: H
 }
 
 @Composable
-private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?, short: Boolean, label: String) {
-    Column(modifier.testTag(HERO_SUMMARY_TAG), verticalArrangement = Arrangement.spacedBy(if (short) 12.dp else 14.dp)) {
-        Text(if (carousel != null && carousel.count > 1) "$label · ${carousel.index + 1} of ${carousel.count}" else label,
-            fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
-        if (card.logo != null) {
-            AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-                Modifier.width(if (short) 140.dp else 220.dp).height(if (short) 64.dp else 120.dp),
-                alignment = Alignment.BottomStart, contentScale = ContentScale.Fit)
-        } else {
-            Text(card.title, fontSize = if (short) 26.sp else 36.sp, lineHeight = if (short) 30.sp else 40.sp, fontWeight = FontWeight.Bold)
+private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?, short: Boolean, label: String, floor: Dp?) {
+    val spacing = if (short) 12.dp else 14.dp
+    val framed = if (floor != null) modifier.heightIn(min = floor) else modifier
+    Box(framed.testTag(HERO_SUMMARY_TAG), contentAlignment = Alignment.CenterStart) {
+        Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
+            HeroCopyFade(card, Modifier.fillMaxWidth(), Alignment.BottomStart) { shown ->
+                Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
+                    Text(if (carousel != null && carousel.count > 1) "$label · ${carousel.index + 1} of ${carousel.count}" else label,
+                        fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
+                    if (shown.logo != null) {
+                        AsyncImage(org.viptv.app.images.rememberLogoRequest(shown.logo), shown.title,
+                            Modifier.width(if (short) 140.dp else 220.dp).height(if (short) 64.dp else 120.dp),
+                            alignment = Alignment.BottomStart, contentScale = ContentScale.Fit)
+                    } else {
+                        Text(shown.title, fontSize = if (short) 26.sp else 36.sp, lineHeight = if (short) 30.sp else 40.sp, fontWeight = FontWeight.Bold)
+                    }
+                    MediaMetadata(shown)
+                    shown.description?.let {
+                        Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = if (short) 2 else 3,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    }
+                    DesktopHeroActions({ play(shown) }, { open(shown) }, { save(shown) }, saved)
+                }
+            }
+            carousel?.let { HeroIndicators(it.count, it.index, it.progress) }
         }
-        MediaMetadata(card)
-        card.description?.let {
-            Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = if (short) 2 else 3,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-        }
-        DesktopHeroActions({ play(card) }, { open(card) }, { save(card) }, saved)
-        carousel?.let { HeroIndicators(it.count, it.index, it.progress) }
     }
 }
