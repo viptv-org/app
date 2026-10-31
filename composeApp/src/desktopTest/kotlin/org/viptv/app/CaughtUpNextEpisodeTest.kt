@@ -157,7 +157,10 @@ class CaughtUpNextEpisodeTest {
             app.until("the Continue Watching page") {
                 app.controller.state.value.continueWatching?.cards?.size == 3 && !app.controller.state.value.busy
             }
-            app.until("the page's cards") { app.labels().count { it.contains("· Watched") } >= 3 }
+            app.until("the page's cards") {
+                val labels = app.labels()
+                labels.count { it.contains("More actions") } == 3 && labels.count { it.contains("· Watched") } == 3
+            }
             val labels = app.labels()
             fun card(title: String) = assertNotNull(labels.firstOrNull { it.contains(title) },
                 "$title is on the page: $labels")
