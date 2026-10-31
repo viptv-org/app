@@ -29,9 +29,7 @@ internal class SheetDrag(val offset: Float, val handle: Modifier, val nestedScro
 
 private const val SheetFlingVelocity = 1100f
 
-// One finger's drag on the handle or header, and the list's own scroll once it reaches its top.
-// The release either springs back to open or runs the same leave spec as the overlay, so the
-// dragged distance never jumps when a dismissal carries the sheet the rest of the way down.
+// The offset animates back to 0 with the leave, so a dismissal never jumps open first.
 @Composable
 internal fun rememberSheetDrag(
     enabled: Boolean,

@@ -37,9 +37,6 @@ import org.viptv.app.theme.Palette
 
 private val PhoneSheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 
-// One bottom sheet for phone layouts: scrim, handle on touch, title and a Close button,
-// with drag-down-to-dismiss and the list scrolling first. Back, Escape, the scrim and the
-// Close button all run the same guarded dismissal, so none of them fires twice.
 @Composable
 internal fun PhoneSheet(
     visible: Boolean,
