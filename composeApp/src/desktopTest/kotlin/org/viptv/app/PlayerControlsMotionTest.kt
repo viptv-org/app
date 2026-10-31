@@ -57,14 +57,14 @@ class PlayerControlsMotionTest {
             val leaving = scene.sample()
             assertTrue(leaving > shown && leaving < 255, "the controls are fading out, saw $leaving")
             scene.frames(20)
-            assertEquals(255, scene.sample(), 2, "the controls have fully faded out to the canvas")
+            assertEquals(255f, scene.sample().toFloat(), 2f, "the controls have fully faded out to the canvas")
 
             scene.tap(Offset(640f, 360f))
             scene.frames(6)
             val arriving = scene.sample()
             assertTrue(arriving < 255 && arriving > shown, "the controls are fading back in, saw $arriving")
             scene.frames(20)
-            assertEquals(shown, scene.sample(), 2, "the controls settle back to their shown dim")
+            assertEquals(shown.toFloat(), scene.sample().toFloat(), 2f, "the controls settle back to their shown dim")
         } finally { scene.close() }
     }
 
@@ -76,7 +76,7 @@ class PlayerControlsMotionTest {
 
             scene.tap(Offset(640f, 360f))
             scene.frames(2)
-            assertEquals(255, scene.sample(), 2, "reduce motion hides the controls in one frame")
+            assertEquals(255f, scene.sample().toFloat(), 2f, "reduce motion hides the controls in one frame")
 
             scene.tap(Offset(640f, 360f))
             scene.frames(2)

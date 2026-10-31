@@ -48,7 +48,8 @@ internal fun rememberOverlayMotion(
 @Composable
 internal fun rememberArriveFade(): Float {
     val reveal = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { reveal.animateTo(1f, motionSpec(tween(Motion.arrive, easing = Motion.standard))) }
+    val arrive = motionSpec<Float>(tween(Motion.arrive, easing = Motion.standard))
+    LaunchedEffect(arrive) { reveal.animateTo(1f, arrive) }
     return reveal.value
 }
 
