@@ -71,4 +71,27 @@ class PlaybackLifecycleTest {
             assertEquals(2, positions.size, "Repeated paused polling must not resend progress")
         } finally { remote.close() }
     }
+
+    @Test fun leavingWhileAlreadyPausedSavesThePositionWithoutResumingOnReturn() = runBlocking {
+        val positions = mutableListOf<Long>()
+        val client = HttpClient(MockEngine { request ->
+            assertEquals("/api/profiles/profile/progress", request.url.encodedPath)
+            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            positions += body.getValue("record").jsonObject.getValue("position_millis").jsonPrimitive.long
+            respond("{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", client = client, browserMode = false)
+        val controller = ApplicationController(this)
+        val input = PlaybackInput("attempt", "https://media.example/movie.mp4", profileId = "profile")
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Player, playback = input, paused = true,
+            sourceTitle = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "metadata", title = "Movie", badges = emptyList()))
+        controller.lastProgress = PlayerFact.Progress(28_957_000, 44_000_000)
+        try {
+            controller.suspendPlayback(); controller.progressJob?.join()
+            assertEquals(listOf(28_957_000L), positions)
+            controller.resumePlayback()
+            assertTrue(controller.state.value.paused)
+        } finally { remote.close() }
+    }
 }

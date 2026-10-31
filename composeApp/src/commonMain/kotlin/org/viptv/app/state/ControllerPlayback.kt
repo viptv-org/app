@@ -90,9 +90,11 @@ fun ApplicationController.pausePlayback() {
 
 fun ApplicationController.suspendPlayback() {
     val state = mutable.value
-    if (state.playback == null || state.paused || backgroundPlayback != null) return
-    backgroundPlayback = state.playback
-    mutable.value = state.copy(paused = true)
+    if (state.playback == null || backgroundPlayback != null) return
+    if (!state.paused) {
+        backgroundPlayback = state.playback
+        mutable.value = state.copy(paused = true)
+    }
     if (!completionSeen) saveProgress(false, final = true)
 }
 
