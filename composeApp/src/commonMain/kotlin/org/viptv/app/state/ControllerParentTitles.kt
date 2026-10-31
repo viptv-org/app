@@ -12,7 +12,10 @@ fun ApplicationController.openParentTitles(profile: String) {
         updateState { next -> next.copy(parentTitles = ParentTitlesState(profile, selected.name)) }
         parentTitlesRequest { remote, state ->
             val page = remote.approvedTitles(state.profile)
-            state.copy(approved = page, loaded = true, nextOffset = if (page.size == 500) 500 else null)
+            val blocked = remote.blockedTitles(state.profile)
+            state.copy(approved = page, loaded = true, nextOffset = if (page.size == 500) 500 else null,
+                blocked = blocked, blockedLoaded = true,
+                blockedNextOffset = if (blocked.size == 500) 500 else null)
         }
     }
 }
@@ -40,6 +43,48 @@ fun ApplicationController.refreshApprovedTitles(more: Boolean = false) {
             val page = remote.approvedTitles(state.profile, offset)
             state.copy(approved = (if (more) state.approved + page else page).distinctBy(::approvedTitleKey),
                 loaded = true, nextOffset = if (page.size == 500) offset + page.size else null, notice = null)
+        }
+    }
+}
+
+fun ApplicationController.refreshBlockedTitles(more: Boolean = false) {
+    if (mutable.value.busy) return
+    run {
+        parentTitlesRequest { remote, state ->
+            val offset = if (more) state.blockedNextOffset ?: return@parentTitlesRequest state else 0
+            val page = remote.blockedTitles(state.profile, offset)
+            state.copy(blocked = (if (more) state.blocked + page else page).distinctBy { it.type to it.id },
+                blockedLoaded = true, blockedNextOffset = if (page.size == 500) offset + page.size else null, notice = null)
+        }
+    }
+}
+
+fun ApplicationController.blockParentTitle(selected: org.viptv.engine.wire.Card) {
+    if (mutable.value.busy) return
+    run {
+        parentTitlesRequest { remote, state ->
+            val kind = selected.identity.kind
+            if (kind != "movie" && kind != "series") throw LocalFailure("Only movies and series can be blocked.")
+            if (mutable.value.selectedProfile == state.profile) invalidatePolicyContent()
+            remote.saveBlockedTitle(state.profile, kind, selected.identity.id, true, selected.title, selected.poster)
+            val page = remote.blockedTitles(state.profile)
+            state.copy(blocked = page, blockedLoaded = true, blockedNextOffset = if (page.size == 500) 500 else null,
+                notice = "${selected.title} is blocked for ${state.profileName}.")
+        }
+    }
+}
+
+fun ApplicationController.unblockParentTitle(selected: BlockedTitle) {
+    if (mutable.value.busy) return
+    run {
+        parentTitlesRequest { remote, state ->
+            val stored = state.blocked.singleOrNull { it.type == selected.type && it.id == selected.id }
+                ?: throw LocalFailure("Refresh the blocked titles first.")
+            if (mutable.value.selectedProfile == state.profile) invalidatePolicyContent()
+            remote.saveBlockedTitle(state.profile, stored.type, stored.id, false)
+            val page = remote.blockedTitles(state.profile)
+            state.copy(blocked = page, blockedLoaded = true, blockedNextOffset = if (page.size == 500) 500 else null,
+                notice = "${stored.name ?: stored.id} is no longer blocked for ${state.profileName}.")
         }
     }
 }
@@ -95,7 +140,7 @@ private suspend fun ApplicationController.parentTitlesRequest(action: suspend (R
                 updateState { next -> next.copy(parentTitles = null, parentSettings = settings) }
             throw LocalFailure("Unlock parental controls and try again.")
         }
-        if (failure.status == 404) throw LocalFailure("This server does not support title approvals. Update the server and try again.")
+        if (failure.status == 404) throw LocalFailure("This server does not support approved and blocked titles. Update the server and try again.")
         if (failure.status == 409) throw LocalFailure("The profile or its integrations changed. Refresh and try again.")
         if (failure.status == 422) throw LocalFailure("This title cannot be approved through the selected integration.")
         throw failure

@@ -14,14 +14,15 @@ import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvParentControlsSettings(snapshot: ProfileManagement?, busy: Boolean, error: String?, notice: String?,
-    saved: Long, load: () -> Unit, unlock: (String) -> Unit, pin: (String, String) -> Unit,
-    policy: (String, KidsPolicy) -> Unit, titles: (String) -> Unit,
-    first: FocusRequester, sidebar: FocusRequester, scale: Float) {
+internal fun TvParentControlsSettings(snapshot: ProfileManagement?, controls: Map<String, ParentProfileControls>,
+    busy: Boolean, error: String?, notice: String?, saved: Long, load: () -> Unit, unlock: (String) -> Unit,
+    pin: (String, String) -> Unit, policy: (String, KidsPolicy) -> Unit, leavePin: (String, String, String) -> Unit,
+    titles: (String) -> Unit, first: FocusRequester, sidebar: FocusRequester, scale: Float) {
     var pinMode by remember { mutableStateOf<String?>(null) }
     var editing by remember { mutableStateOf<ServerProfile?>(null) }
+    var leavePinFor by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
-    LaunchedEffect(saved) { pinMode = null; editing = null }
+    LaunchedEffect(saved) { pinMode = null; editing = null; leavePinFor = null }
     // The page also re-enters composition when the approved-titles page closes, and that removal drops focus.
     LaunchedEffect(snapshot != null) {
         if (snapshot != null) { withFrameNanos { }; runCatching { first.requestFocus() } }
@@ -54,19 +55,25 @@ internal fun TvParentControlsSettings(snapshot: ProfileManagement?, busy: Boolea
                 Spacer(Modifier.height(12.dp * scale))
                 Text("Profile restrictions", color = Palette.text, fontSize = (30 * scale).sp, lineHeight = (38 * scale).sp)
                 current.profiles.forEach { profile ->
-                    TvSettingsRow(profile.name,
-                        subtitle = if (profile.kids) profile.max_age?.let { "Kids profile · up to age $it" } ?: "Kids profile · age limit unavailable"
-                        else "Kids restrictions off",
+                    val profileControls = controls[profile.id]
+                    TvSettingsRow(profile.name, subtitle = kidsSummary(profile, profileControls?.policy),
                         scale = scale, left = sidebar, value = "Edit") { editing = profile }
-                    if (profile.kids) TvSettingsRow("Approved titles",
-                        subtitle = "Allow ${profile.name} individual titles beyond the age limit.",
+                    if (profile.kids) TvSettingsRow("Approved and blocked titles",
+                        subtitle = "Allow or block individual titles for ${profile.name}.",
                         scale = scale, left = sidebar) { titles(profile.id) }
+                    if (current.profilePinAvailable) TvSettingsRow(
+                        if (profileControls?.leavePin != false) "Change leave PIN" else "Set leave PIN",
+                        subtitle = leavePinSummary(profileControls?.leavePin),
+                        scale = scale, left = sidebar) { leavePinFor = profile }
                 }
             }
         }
     }
     pinMode?.let { mode -> ParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, error,
         dismiss = { if (!busy) pinMode = null }, submit = { current, next -> if (mode == "unlock") unlock(current) else pin(current, next) }) }
-    editing?.let { profile -> KidsPolicyDialog(profile, snapshot?.parent?.pin_configured == true, busy, error,
+    editing?.let { profile -> KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
+        snapshot?.parent?.pin_configured == true, busy, error,
         dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }) }
+    leavePinFor?.let { profile -> LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, error,
+        dismiss = { if (!busy) leavePinFor = null }, submit = { current, next -> leavePin(profile.id, current, next) }) }
 }
