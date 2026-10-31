@@ -16,8 +16,13 @@ import org.viptv.app.connection.AccountDevice
 import org.viptv.app.connection.historyDayLabel
 import org.viptv.app.theme.Palette
 
-internal fun AccountDevice.displayName(): String = if (current) "This browser"
-    else name.trim().ifEmpty { if (kind == "browser") "Browser" else "VIPTV app" }
+internal fun AccountDevice.displayName(): String = name.trim().takeIf { it.isNotEmpty() }
+    ?: when {
+        current && kind == "browser" -> "This browser"
+        current -> "This device"
+        kind == "browser" -> "Browser"
+        else -> "VIPTV app"
+    }
 
 @Composable
 internal fun AccountDeviceRow(device: AccountDevice, busy: Boolean, compact: Boolean, signOut: () -> Unit) {
