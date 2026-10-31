@@ -17,11 +17,12 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerSelectable
+import org.viptv.app.components.LocalPointerHover
+import org.viptv.app.components.PhoneSheet
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.DropdownMenuItem
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DetailSeasonPicker(seasons: List<DetailSeason>, selected: DetailSeason, phone: Boolean,
     choose: (Long?) -> Unit) {
@@ -56,19 +57,8 @@ internal fun DetailSeasonPicker(seasons: List<DetailSeason>, selected: DetailSea
             Text(selected.countLabel, color = Palette.secondary, fontSize = 13.sp)
         }
     }
-    if (phone && open) ModalBottomSheet(onDismissRequest = { open = false },
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color(0xFF1A1A1D), contentColor = Palette.text,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        dragHandle = { Box(Modifier.padding(top = 8.dp, bottom = 4.dp).size(36.dp, 5.dp)
-            .background(Color.White.copy(alpha = .3f), RoundedCornerShape(3.dp))) }) {
-        Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Seasons", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            IconButton(onClick = { open = false }, modifier = Modifier.size(32.dp)
-                .background(Color.White.copy(alpha = .14f), RoundedCornerShape(16.dp))) {
-                Icon(Lucide.X, "Close seasons", Modifier.size(18.dp))
-            }
-        }
+    PhoneSheet(visible = phone && open, title = "Seasons", dismiss = { open = false },
+        touch = !LocalPointerHover.current, closeLabel = "Close seasons") {
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 430.dp), contentPadding = PaddingValues(bottom = 24.dp), topEdgeFade = false) {
             items(seasons, key = { it.number?.toString() ?: "unknown" }) { season ->
                 val active = season.number == selected.number

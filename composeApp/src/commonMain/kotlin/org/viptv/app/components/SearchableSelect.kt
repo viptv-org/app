@@ -1,5 +1,6 @@
 package org.viptv.app.components
 
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,7 +36,9 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
@@ -265,29 +268,37 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
 
 @Composable
 private fun SelectSheet(visible: Boolean, title: String, dismiss: () -> Unit, content: @Composable (Dp) -> Unit) {
+    val leave: FiniteAnimationSpec<Float> = motionSpec(tween(Motion.leave, easing = Motion.exit))
     val motion = rememberOverlayMotion(visible,
         containerEnter = motionSpec(tween(Motion.panel, easing = Motion.standard)),
         scrimEnter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
-        leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+        leave = leave)
     if (!motion.presented) return
     Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val height = maxHeight * .8f
+            val touch = !LocalPointerHover.current
+            var sheetHeight by remember { mutableFloatStateOf(0f) }
+            val drag = rememberSheetDrag(enabled = touch, threshold = sheetHeight / 3f, dismiss = dismiss,
+                dismissSpec = leave, settleSpec = motionSpec(tween(Motion.response, easing = Motion.standard)))
             Box(Modifier.matchParentSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = .62f))
                 .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = height)
-                .graphicsLayer { translationY = size.height * (1f - motion.container) }
+                .graphicsLayer { translationY = size.height * (1f - motion.container) + drag.offset }
+                .onSizeChanged { sheetHeight = it.height.toFloat() }
+                .nestedScroll(drag.nestedScroll)
                 .shadow(24.dp, SheetShape).clip(SheetShape).background(Palette.surface)
                 // A tap on the sheet's own background must not reach the scrim below it.
                 .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
                 .padding(bottom = 24.dp)) {
-                Box(Modifier.padding(top = 8.dp, bottom = 4.dp).align(Alignment.CenterHorizontally)
-                    .size(width = 36.dp, height = 5.dp).clip(RoundedCornerShape(3.dp)).background(Color.White.copy(alpha = .3f)))
-                Row(Modifier.fillMaxWidth().height(48.dp).padding(start = 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(title, Modifier.weight(1f).semantics { heading() }, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Box(Modifier.size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = .14f))
-                        .pointerClickable(onClick = dismiss, shape = CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(Lucide.X, "Close", Modifier.size(16.dp))
+                Column(Modifier.fillMaxWidth().then(drag.handle)) {
+                    SheetHandle(touch, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp))
+                    Row(Modifier.fillMaxWidth().height(48.dp).padding(start = 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(title, Modifier.weight(1f).semantics { heading() }, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Box(Modifier.size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = .14f))
+                            .pointerClickable(onClick = dismiss, shape = CircleShape), contentAlignment = Alignment.Center) {
+                            Icon(Lucide.X, "Close", Modifier.size(16.dp))
+                        }
                     }
                 }
                 // Grabber, title and padding take about 120 dp of the sheet.

@@ -17,10 +17,11 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.components.Button
+import org.viptv.app.components.LocalPointerHover
+import org.viptv.app.components.PhoneSheet
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
@@ -92,13 +93,10 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                     { toggle(addon.id, it) }, { removing = addon })
             }
         }
-        if (installing) ModalBottomSheet(onDismissRequest = closeInstall, containerColor = Palette.surface,
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        PhoneSheet(visible = installing, title = "Add an add-on", dismiss = closeInstall,
+            touch = !LocalPointerHover.current, closeEnabled = !sheetBusy, closeLabel = "Close add-on form",
+            dragEnabled = !sheetBusy) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Add an add-on", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    IconButton(onClick = closeInstall, enabled = !sheetBusy) { Icon(Lucide.X, "Close add-on form") }
-                }
                 AddonInstallForm(address, sheetBusy, submitInstall, compact = true, dismiss = closeInstall)
                 if (sheetBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 error?.let { Text(it, color = Palette.danger) }
