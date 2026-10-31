@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.*
@@ -20,12 +21,14 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.rememberArriveFade
 
 @Composable
 internal fun PhonePlayerFailure(description: String, fallbackLabel: String?, retry: (() -> Unit)?, choose: (() -> Unit)?, close: () -> Unit,
     title: Card?, insets: WindowInsets) {
     val initial = remember { FocusRequester() }
-    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .8f)).windowInsetsPadding(insets)) {
+    val reveal = rememberArriveFade()
+    Box(Modifier.fillMaxSize().alpha(reveal).background(Color.Black.copy(alpha = .8f)).windowInsetsPadding(insets)) {
         Row(Modifier.align(Alignment.TopStart).padding(start = 44.dp, end = 48.dp, top = 14.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             IconButton(close, Modifier.size(44.dp).then(if (retry == null && choose == null) Modifier.focusRequester(initial) else Modifier)) {

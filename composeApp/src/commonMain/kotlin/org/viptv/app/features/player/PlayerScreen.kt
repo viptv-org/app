@@ -1,5 +1,9 @@
 package org.viptv.app.features.player
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -29,6 +33,8 @@ import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.Motion
+import org.viptv.app.components.motionSpec
 
 @Composable
 fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
@@ -187,7 +193,10 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
                 }
-                if (visible && !locked && phonePanel == null && !(phone && (showTracks || failed || error != null))) {
+                AnimatedVisibility(visible && !locked && phonePanel == null && !(phone && (showTracks || failed || error != null)),
+                    modifier = Modifier.fillMaxSize(), enter = fadeIn(motionSpec(tween(Motion.arrive, easing = Motion.standard))),
+                    exit = fadeOut(motionSpec(tween(Motion.leave, easing = Motion.exit)))) {
+                Box(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
                         0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
                     Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
@@ -220,6 +229,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                             next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
                             episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
                     }
+                }
                 }
                 if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
                     send(choice)
