@@ -207,6 +207,20 @@ class ChangePasswordTest {
         } finally { scene.close(); remote.close() }
     }
 
+    @Test fun aSignedInPhoneChangesThePasswordToo() = runBlocking {
+        val bodies = mutableListOf<JsonObject>()
+        val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
+            bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            respond(changedFixture, HttpStatusCode.OK, json)
+        }) { configureTransport() }, browserMode = false)
+        try {
+            assertFalse(remote.accountManagementEnabled, "a phone is not the browser dashboard")
+            remote.changePassword("current-password-1", "next-password-12")
+            assertEquals("current-password-1", bodies.single()["current_password"]?.jsonPrimitive?.content)
+            assertEquals("next-password-12", bodies.single()["new_password"]?.jsonPrimitive?.content)
+        } finally { remote.close() }
+    }
+
     @Test fun aChangedPasswordLeavesThePageAndSendsBothPasswords() {
         val bodies = mutableListOf<JsonObject>()
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
