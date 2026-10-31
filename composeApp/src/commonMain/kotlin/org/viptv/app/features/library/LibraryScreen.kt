@@ -33,6 +33,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.Surface
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 
 private const val LIBRARY_TITLE_KEY = "library:title"
 private const val LIBRARY_CONTROLS_KEY = "library:controls"
@@ -55,6 +57,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val visible = if (snapshot != null) cards else when (sort) { "Date added" -> filtered.sortedByDescending { it.added_at_millis ?: Long.MIN_VALUE }; "A–Z" -> filtered.sortedBy { it.title.lowercase() }; "Z–A" -> filtered.sortedByDescending { it.title.lowercase() }; else -> filtered }
     val gridCards = visible.distinctBy(::cardLookupKey)
     val grid = rememberLazyGridState()
+    val entrance = rememberListEntrance(gridCards.isNotEmpty())
     val restore = rememberPageRestore("library")
     val anchored = restore.anchor(gridCards.size) { cardLookupKey(gridCards[it]) }
     val scrolled = remember(grid) { derivedStateOf { grid.canScrollBackward } }.value
@@ -111,7 +114,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                         val key = cardLookupKey(card)
                         MediaCard(card, if (phone) 112 else 176, portrait = true, showLabels = !phone,
                             open = { restore.mark(key, index); open(it) },
-                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.owner
@@ -30,6 +31,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
+        val entrance = rememberListEntrance(home != null)
         val continueRow = home?.rows?.firstOrNull { it.id == CONTINUE_ROW }
         var hoveredContinue by remember(home?.scope?.owner()) { mutableStateOf<String?>(null) }
         val preview = hoveredContinue?.let { key -> continueRow?.cards?.firstOrNull { cardLookupKey(it) == key } }
@@ -73,6 +75,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 items(visibleRows, key = { it.id }) { row ->
                     HomeCatalogRow(row, compact, television, Modifier,
                         { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll,
+                        entrance = entrance,
                         hover = { card, inside ->
                             val key = cardLookupKey(card)
                             hoveredContinue = if (inside) key else hoveredContinue?.takeIf { it != key }

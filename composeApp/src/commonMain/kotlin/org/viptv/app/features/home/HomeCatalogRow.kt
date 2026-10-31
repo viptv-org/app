@@ -27,6 +27,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.LocalReducedMotion
+import org.viptv.app.components.ListEntrance
+import org.viptv.app.components.listItemEntrance
 import org.viptv.app.state.RowSeeAll
 
 internal const val CONTINUE_ROW = "continue"
@@ -38,7 +40,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     play: (Card) -> Unit = open,
     gutter: Dp = 0.dp,
     seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {},
-    hover: (Card, Boolean) -> Unit = { _, _ -> }) {
+    hover: (Card, Boolean) -> Unit = { _, _ -> }, entrance: ListEntrance) {
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -55,7 +57,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     var rowFocused by remember { mutableStateOf(false) }
     FollowNewFirstCard(list, cards, rowFocused)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(0, entrance.animate), verticalAlignment = Alignment.CenterVertically) {
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
             if (endCard != null && !television) {
                 Text("See all", Modifier.clip(RoundedCornerShape(6.dp))
@@ -85,10 +87,10 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
             RowState.READY -> LazyRow(Modifier.onFocusChanged { rowFocused = it.hasFocus }.focusGroup(), state = list,
                 contentPadding = PaddingValues(horizontal = gutter),
                 horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
-                items(cards, key = ::cardLookupKey) { card ->
+                itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
                     // Every platform scrolls a focused card into view: on web the browser focus can land outside the shelf viewport.
                     val bringIntoView = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
-                    Box(Modifier.bringIntoViewRequester(bringIntoView)) {
+                    Box(Modifier.bringIntoViewRequester(bringIntoView).listItemEntrance(index, entrance.animate)) {
                         MediaCard(card, width, portrait = portrait,
                             onFocus = {
                                 if (!television) scope.launch { bringIntoView.bringIntoView() }

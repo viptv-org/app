@@ -24,6 +24,8 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.LocalReducedMotion
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 
 internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
 
@@ -47,6 +49,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
         filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice, restore = restore); return }
     val choose = calendarOpener(open, openEntry)
+    val entrance = rememberListEntrance(shown.isNotEmpty())
     var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -91,11 +94,11 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                             }
                             is CalendarLine.Empty -> Text(calendarEmptyDay(emptyFilter), color = Palette.secondary, fontSize = 13.sp)
                             is CalendarLine.Entry -> CalendarReleaseRow(line.entry, true, scale, watch, { focused = line.entry },
-                                { restore.mark(line.entry.id, index); choose(line.entry) })
+                                { restore.mark(line.entry.id, index); choose(line.entry) }, Modifier.listItemEntrance(index, entrance.animate))
                         }
                     } else itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                         CalendarReleaseRow(entry, false, scale, watch, { focused = entry }, { restore.mark(entry.id, index); choose(entry) },
-                            Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
+                            Modifier.pageAnchor(restore, entry.id, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                     }
                     if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(emptyFilter),color=Palette.secondary)}
                 }

@@ -13,6 +13,8 @@ import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 
@@ -31,6 +33,7 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
     var selected by remember { mutableStateOf(channels.firstOrNull()) }
     var selectedProgram by remember { mutableStateOf<LiveProgram?>(null) }
     val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || category == AllGroups || (it.groupId ?: it.category) == category) }
+    val entrance = rememberListEntrance(visible.isNotEmpty())
     LaunchedEffect(category, favoritesOnly, channels) {
         selected = visible.find { it.id == selected?.id && it.connectionId == selected?.connectionId } ?: visible.firstOrNull()
         selectedProgram = selected?.programs?.find { it.id == selectedProgram?.id } ?: selected?.current(now)
@@ -78,7 +81,7 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                 LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp)) {
                     itemsIndexed(visible, key = { _, channel -> channel.key() }) { index, channel ->
                         LiveChannelRow(channel, now, { restore.mark(channel.key(), index); watch(channel) }, favoriteChanged?.let { save -> { save(channel) } },
-                            modifier = Modifier.pageAnchor(restore, channel.key(), index, target = anchored == index))
+                            modifier = Modifier.pageAnchor(restore, channel.key(), index, target = anchored == index).listItemEntrance(index, entrance.animate))
                     }
                 }
             }

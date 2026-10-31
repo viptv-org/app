@@ -29,6 +29,8 @@ import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvFocusOutline
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -49,6 +51,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     val visible = results.distinctBy(::searchCardKey).filter { it.matchesSearchFilter(filter) }
     val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows, filter) else searchGroups(visible, addons)
     val hasResults = if (searchRows.isNotEmpty()) groups.any { it.cards.isNotEmpty() } else visible.isNotEmpty()
+    val entrance = rememberListEntrance(hasResults)
     BoxWithConstraints(Modifier.fillMaxSize()) {
     val phone = maxWidth < 640.dp
     val gutter = if (phone) 16.dp else 40.dp
@@ -100,7 +103,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                                     val key = searchCardKey(card)
                                     MediaCard(card, width = 160, portrait = true, showLabels = true,
                                         open = { restore.mark(key, index); open(it) },
-                                        modifier = Modifier.pageAnchor(restore, key, index, target = anchoredRow == index))
+                                        modifier = Modifier.pageAnchor(restore, key, index, target = anchoredRow == index).listItemEntrance(index, entrance.animate))
                                 }
                             }
                         }
@@ -116,7 +119,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     val key = searchCardKey(card)
                     MediaCard(card, width = if (phone) 112 else 172, portrait = true, showLabels = true,
                         open = { restore.mark(key, index); open(it) },
-                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                 }
             }
         }
