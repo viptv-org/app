@@ -15,8 +15,6 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.connection.ProfileManagement
 import org.viptv.app.theme.Palette
 
-internal const val householdPinOwnerOnly = "Managed by the account owner."
-
 @Composable
 internal fun HouseholdPinSettings(snapshot: ProfileManagement?, busy: Boolean, error: String?, notice: String?, saved: Long,
     load: () -> Unit, unlock: (String) -> Unit, pin: (String, String) -> Unit) {

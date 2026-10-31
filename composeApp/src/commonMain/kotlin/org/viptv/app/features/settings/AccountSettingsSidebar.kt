@@ -17,7 +17,7 @@ import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun AccountSettingsSidebar(selected: String, profile: Profile?, sections: List<SettingsSection>, local: Boolean,
-    profiles: () -> Unit, select: (String) -> Unit, signOut: () -> Unit, disabledRows: Map<SettingsRow, String> = emptyMap()) {
+    profiles: () -> Unit, select: (String) -> Unit, signOut: () -> Unit) {
     LazyColumn(Modifier.width(240.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         item { Text("Settings", Modifier.padding(start = 12.dp, bottom = 14.dp), fontSize = 26.sp, lineHeight = 30.sp,
             letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold) }
@@ -35,12 +35,9 @@ internal fun AccountSettingsSidebar(selected: String, profile: Profile?, section
             section.rows.forEach { row ->
                 val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
                 item(key = row.key) {
-                    val note = disabledRows[row]
                     Surface(color = if (row.key == selected) Palette.text.copy(alpha = .1f) else Palette.background,
                         shape = RoundedCornerShape(8.dp)) {
-                        if (note != null) Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            SettingsRailDisabled(label, note, row.icon)
-                        } else Row(Modifier.fillMaxWidth().heightIn(min = 40.dp).pointerClickable(shape = RoundedCornerShape(8.dp)) {
+                        Row(Modifier.fillMaxWidth().heightIn(min = 40.dp).pointerClickable(shape = RoundedCornerShape(8.dp)) {
                             if (row == SettingsRow.SignOut) signOut() else select(row.key)
                         }.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)) {

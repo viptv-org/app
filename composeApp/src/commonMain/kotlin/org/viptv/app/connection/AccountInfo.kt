@@ -7,7 +7,7 @@ internal suspend fun RemoteConnection.accountIdentity(): AccountIdentity {
     val account = value["account"]?.takeUnless { it is JsonNull }
         ?: throw RemoteFailure(502, "The server did not provide account information.")
     val identity = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<AccountIdentity>(account)
-    recordAccountAccess(value["capabilities"]?.jsonObject?.get("manage_account")?.jsonPrimitive?.booleanOrNull,
-        owner = identity.role == "owner")
+    val capabilities = value["capabilities"] as? JsonObject
+    recordAccountAccess((capabilities?.get("manage_account") as? JsonPrimitive)?.booleanOrNull, owner = identity.role == "owner")
     return identity
 }

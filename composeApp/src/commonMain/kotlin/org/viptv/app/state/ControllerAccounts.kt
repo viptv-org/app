@@ -1,7 +1,6 @@
 package org.viptv.app.state
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.viptv.app.connection.*
 
@@ -10,7 +9,7 @@ fun ApplicationController.refreshAccountIdentity() = run { loadAccountIdentity()
 fun ApplicationController.refreshAccountAccess() {
     val remote = connection ?: return
     if (remote.accountAccessRead) return
-    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    scope.launch {
         try { loadAccountIdentity() }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { }

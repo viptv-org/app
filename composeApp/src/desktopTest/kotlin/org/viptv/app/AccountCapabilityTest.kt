@@ -12,7 +12,6 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.app.features.settings.SettingsRoute
-import org.viptv.app.features.settings.householdPinOwnerOnly
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
 import org.junit.Rule
@@ -119,23 +118,17 @@ class AccountCapabilityTest {
         }
     }
 
-    @Test fun aMemberReachesDevicesButThePinRowStaysOwnersOnly() {
+    @Test fun aMemberReachesDevicesButKeepsThePinRowOwnersOnly() {
         Host("""{"manage_account":true}""", role = "member").use { ui ->
             ui.render()
             ui.waitFor { ui.controller.state.value.manageAccount }
             ui.render()
             assertTrue(ui.shows("Devices & sessions"), "A member still reads the devices list")
-            assertTrue(ui.shows(householdPinOwnerOnly), "The PIN row says who can change it")
-            val pin = ui.nodes().filter { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Household PIN" } == true }
-            assertTrue(pin.isNotEmpty())
-            for (node in pin) {
-                assertFalse(node.config.contains(SemanticsActions.OnClick), "A member cannot open the PIN editor")
-                assertTrue(node.config.contains(SemanticsProperties.Disabled))
-            }
+            assertFalse(ui.shows("Household PIN"), "Only the owner changes the household PIN")
         }
     }
 
-    @Test fun theCapabilityComesFromTheServerAndFallsBackToTheBrowserRule() = runBlocking {
+    @Test fun theCapabilityComesFromTheServerAndFallsBackToTheBrowserRule(): Unit = runBlocking {
         Server("""{"manage_account":true}""", "owner", browser = false).use { server ->
             server.remote.accountIdentity()
             assertTrue(server.remote.accountManagementEnabled, "A native account session reports the capability")
@@ -152,11 +145,12 @@ class AccountCapabilityTest {
         }
     }
 
-    @Test fun aPairedTelevisionSessionCannotDispatchDeviceManagement() = runBlocking {
+    @Test fun aPairedTelevisionSessionCannotDispatchDeviceManagement(): Unit = runBlocking {
         Server("""{"manage_account":false}""", "owner", browser = false).use { server ->
             server.remote.accountIdentity()
             assertFailsWith<IllegalStateException> { server.remote.accountDevices() }
             assertFailsWith<IllegalStateException> { server.remote.signOutAllDevices() }
+            Unit
         }
     }
 }

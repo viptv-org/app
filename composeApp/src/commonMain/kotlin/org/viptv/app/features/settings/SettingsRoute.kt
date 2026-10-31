@@ -44,7 +44,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
         state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
-        initialSection = state.settingsEntrySection ?: if (browser && !compact) "Devices" else null,
+        initialSection = state.settingsEntrySection ?: if (browser && !compact && manageAccount) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         desktop = desktop, browser = browser,
         editProfile = state.selectedProfile?.let { id -> { controller.editProfile(id) } },
@@ -54,7 +54,6 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         householdPin = if (ownsHousehold) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
-        householdPinNote = if (manageAccount && !state.accountOwner) householdPinOwnerOnly else null,
         account = controller.connection.takeUnless { state.localMode }?.let { remote -> {
             AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account, state.busy, state.error,
                 controller::refreshAccounts) {
