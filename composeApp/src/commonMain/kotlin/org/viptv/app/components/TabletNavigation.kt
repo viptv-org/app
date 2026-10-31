@@ -1,5 +1,6 @@
 package org.viptv.app.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,10 +32,12 @@ internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Sc
         val entries = listOf(Destination(Screen.Home, "Home", Lucide.House), Destination(Screen.Live, "Live", Lucide.Tv),
             Destination(Screen.Library, "My List", Lucide.Bookmark), Destination(Screen.Search, "Search", Lucide.Search))
         entries.forEach { entry ->
+            val railFill = animateColorAsState(
+                if (selected == entry.screen) Color.White.copy(alpha = .16f) else Color.Transparent,
+                responseSpec(), label = "Tablet rail fill").value
             Column(Modifier.fillMaxWidth().pointerClickable { navigate(entry.screen) }, horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Box(Modifier.size(56.dp, 32.dp).background(if (selected == entry.screen) Color.White.copy(alpha = .16f) else Color.Transparent,
-                    RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(56.dp, 32.dp).background(railFill, RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
                     Icon(entry.icon, null, Modifier.size(22.dp), tint = if (selected == entry.screen) Palette.text else Palette.secondary)
                 }
                 Text(entry.label, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold,

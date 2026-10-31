@@ -1,5 +1,6 @@
 package org.viptv.app.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -29,8 +30,11 @@ fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
             .background(Color(0xFF292827).copy(alpha = .94f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(32.dp))
             .padding(4.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             destinations.forEach { destination ->
+                val pillFill = animateColorAsState(
+                    if (selected == destination.screen) Color.White.copy(alpha = .09f) else Color.Transparent,
+                    responseSpec(), label = "Bottom nav pill fill").value
                 Column(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(28.dp))
-                    .background(if (selected == destination.screen) Color.White.copy(alpha = .09f) else Color.Transparent)
+                    .background(pillFill)
                     .pointerClickable(shape = RoundedCornerShape(28.dp)) { navigate(destination.screen) }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center) {
                     Icon(if (destination.screen == Screen.Live) Lucide.Tv else destination.icon,
