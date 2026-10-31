@@ -128,6 +128,21 @@ class AccountCapabilityTest {
         }
     }
 
+    @Test fun theDeleteAccountRowFollowsTheCapability() {
+        Host("""{"manage_account":true}""").use { ui ->
+            ui.render()
+            ui.waitFor { ui.controller.state.value.manageAccount }
+            ui.render()
+            assertTrue(ui.shows("Delete account"), "A capable session offers the delete row")
+        }
+        Host("""{"manage_account":false}""").use { ui ->
+            ui.render()
+            ui.waitFor { ui.server.paths.contains("/api/auth/me") }
+            ui.render()
+            assertFalse(ui.shows("Delete account"), "A session without the capability hides the delete row")
+        }
+    }
+
     @Test fun theCapabilityComesFromTheServerAndFallsBackToTheBrowserRule(): Unit = runBlocking {
         Server("""{"manage_account":true}""", "owner", browser = false).use { server ->
             server.remote.accountIdentity()
