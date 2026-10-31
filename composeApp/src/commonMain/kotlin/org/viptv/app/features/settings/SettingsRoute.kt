@@ -61,7 +61,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         tvProfileTitles = if (state.parentTitles != null) ({ first, sidebar, scale ->
             ParentTitlesSettings(requireNotNull(state.parentTitles), state.busy, state.error, controller::closeParentTitles,
                 controller::searchParentTitles, controller::refreshApprovedTitles, controller::approveParentTitle,
-                controller::revokeParentTitle, first, backLabel = "Back to Profile")
+                controller::revokeParentTitle, first = first, backLabel = "Back to Profile")
         }) else null,
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
