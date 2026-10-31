@@ -109,21 +109,23 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                     }
                 }
             }
-            if (!localMode && history.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(top = 12.dp * scale, bottom = 96.dp * scale),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                Text(lastFocused?.entry?.card?.title?.let { "“$it”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
-                    fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                TvAction(Modifier.height(64.dp * scale).width(360.dp * scale), scale, requester = actionsFocus,
-                    enabled = lastFocused != null, activate = {
-                        lastFocused?.let { correct(it, if (it.watched) HistoryCorrection.Unwatched else HistoryCorrection.Watched) }
-                    }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-                    Text(if (lastFocused?.watched == true) "Mark unwatched" else "Mark watched", color = it,
-                        fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
-                }
-                TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale,
-                    enabled = lastFocused != null && (lastFocused?.duration ?: 0.0) > 0.0, activate = { resuming = lastFocused },
-                    contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-                    Text("Resume at…", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
+            if (!localMode && history.isNotEmpty()) {
+                val target = lastFocused ?: lines.filterIsInstance<HistoryLine.Entry>().firstOrNull()?.display
+                Row(Modifier.fillMaxWidth().padding(top = 12.dp * scale, bottom = 96.dp * scale),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                    Text(target?.entry?.card?.title?.let { "“$it”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
+                        fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    TvAction(Modifier.height(64.dp * scale).width(360.dp * scale), scale, requester = actionsFocus,
+                        enabled = target != null, activate = {
+                            target?.let { correct(it, if (it.watched) HistoryCorrection.Unwatched else HistoryCorrection.Watched) }
+                        }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                        Text(if (target?.watched == true) "Mark unwatched" else "Mark watched", color = it,
+                            fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    if ((target?.duration ?: 0.0) > 0.0) TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale,
+                        activate = { target?.let { resuming = it } }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                        Text("Resume at…", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
