@@ -39,7 +39,6 @@ internal fun PullRefreshIndicator(state: PullToRefreshState, refreshing: Boolean
     else PullToRefreshDefaults.Indicator(state, refreshing, modifier)
 }
 
-// The arc is the busy report, so under reduce motion it stays visible as a still arc instead of rotating.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PullStillArc(state: PullToRefreshState, refreshing: Boolean, modifier: Modifier) {

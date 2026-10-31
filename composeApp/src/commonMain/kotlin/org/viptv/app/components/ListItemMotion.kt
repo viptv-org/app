@@ -18,7 +18,6 @@ import kotlinx.coroutines.delay
 
 private const val LIST_STAGGER_CAP = 8
 
-// Only the empty-to-content transition animates; a refresh, a paged append and a restored page stay still.
 @Stable
 internal class ListEntrance internal constructor(restored: Boolean) {
     var animate by mutableStateOf(false)
@@ -49,7 +48,6 @@ internal fun rememberListEntrance(hasContent: Boolean): ListEntrance {
     return entrance
 }
 
-// The rise is a translation, never a height, so the item keeps its slot and nothing below moves.
 @Composable
 internal fun Modifier.listItemEntrance(index: Int, animate: Boolean): Modifier {
     if (!animate || LocalTvFocusAnchoring.current || LocalReducedMotion.current) return this
