@@ -44,7 +44,6 @@ internal fun rememberOverlayMotion(
     return OverlayMotion(container.value, scrim.value, presented)
 }
 
-// A surface that only exists while open fades in once; its removal is the exit.
 @Composable
 internal fun rememberArriveFade(): Float {
     val reveal = remember { Animatable(0f) }
