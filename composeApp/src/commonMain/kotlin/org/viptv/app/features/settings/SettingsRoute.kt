@@ -135,6 +135,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
         tvParentalPinAvailable = state.localMode,
+        tvDevices = if (manageAccount) ({ first, sidebar, scale, back ->
+            TvAccountDevices(state.accountDevices, state.busy, state.error, controller::refreshAccountDevices, scale, first, sidebar, back)
+        }) else null,
         returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback)
     }
     }
