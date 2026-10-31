@@ -1,5 +1,11 @@
 package org.viptv.app
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -135,7 +141,8 @@ fun App(
                             if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen.let { if (it == Screen.ContinueWatching) Screen.Home else it } else navigationScreen, controller::navigate)
                         PullRefresh(touch, enabled = state.screen in PULL_REFRESH_SCREENS,
                             refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        when (state.screen) {
+                        val pageArea: @Composable (Screen) -> Unit = { current ->
+                        when (current) {
                             Screen.Home -> {
                                 // The hero rotates while the viewer is present, so an idle window draws nothing; TV keeps its own timer.
                                 if (!television) LaunchedEffect(controller) { controller.trackViewerPresence() }
@@ -148,9 +155,9 @@ fun App(
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
                             Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->
-                                routes.SaveableStateProvider("${state.selectedProfile}:browse:${state.screen.name}") {
+                                routes.SaveableStateProvider("${state.selectedProfile}:browse:${current.name}") {
                                     if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
-                                    else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
+                                    else BrowseScreen(current, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
                                         multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
                                 }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
@@ -160,7 +167,7 @@ fun App(
                             // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
                                 Box(Modifier.fillMaxSize()) {
-                                    val showingSources = state.screen == Screen.Sources
+                                    val showingSources = current == Screen.Sources || state.screen == Screen.Sources
                                     // The drawer decides when it opens whether it returns to the Details dialog behind it.
                                     val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
                                     if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
@@ -208,7 +215,25 @@ fun App(
                             }
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)
-                            else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
+                            else -> Column(Modifier.padding(32.dp)) { Text(current.name, style = MaterialTheme.typography.headlineLarge) }
+                        }
+                        }
+                        if (television) {
+                            pageArea(state.screen)
+                        } else {
+                            val page = when (state.screen) {
+                                Screen.Sources -> if (state.sourceReturnScreen == Screen.Details) Screen.Details else Screen.Sources
+                                else -> state.screen
+                            }
+                            val enter: FiniteAnimationSpec<Float> = motionSpec(tween<Float>(Motion.arrive, easing = Motion.standard))
+                            val exit: FiniteAnimationSpec<Float> = motionSpec(tween<Float>(Motion.response, easing = Motion.standard))
+                            AnimatedContent(
+                                targetState = page,
+                                transitionSpec = {
+                                    ContentTransform(fadeIn(enter), fadeOut(exit), sizeTransform = null)
+                                },
+                                label = "page area",
+                            ) { current -> pageArea(current) }
                         }
                         }
                     }
