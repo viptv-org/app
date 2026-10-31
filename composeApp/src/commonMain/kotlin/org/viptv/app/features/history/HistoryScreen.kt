@@ -17,6 +17,8 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.connection.HistoryDisplay
@@ -76,6 +78,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
     var confirm by remember { mutableStateOf(false) }
     val restore = rememberPageRestore("history")
     val lines = remember(history) { history.lines() }
+    val entrance = rememberListEntrance(history.isNotEmpty())
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val list = rememberLazyListState()
@@ -114,7 +117,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                         val key = cardLookupKey(line.display.entry.card)
                         HistoryRow(line.display, phone, open = { restore.mark(key, index); open(it) },
                             correct = { correct(line.display, it) }, available = !localMode,
-                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                     }
                 }
             }

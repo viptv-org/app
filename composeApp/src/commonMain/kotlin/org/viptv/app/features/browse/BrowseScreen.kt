@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.rememberTvLoadingShimmer
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
@@ -66,6 +68,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         return
     }
     val grid = rememberLazyGridState()
+    val entrance = rememberListEntrance(cards.isNotEmpty())
     val restore = rememberPageRestore("browse")
     val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
     PageRestore(grid, restore, target = { restore.anchor(cards.size) { cardLookupKey(cards[it]) } })
@@ -108,7 +111,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                     val key = cardLookupKey(card)
                     MediaCard(card, width = 0, portrait = true, showLabels = true,
                         open = { restore.mark(key, index); open(it) },
-                        modifier = Modifier.fillMaxWidth().pageAnchor(restore, key, index, target = anchored == index),
+                        modifier = Modifier.fillMaxWidth().pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate),
                         showFocusOutline = !compact || !browser)
                 }
             }
