@@ -16,6 +16,7 @@ import org.viptv.app.components.tvFocusOutline
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
@@ -25,13 +26,15 @@ import org.viptv.app.player.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.rememberArriveFade
 
 @Composable
 internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.SelectTrack) -> Unit,
     close: () -> Unit, phone: Boolean, size: Float, setSize: (Float) -> Unit, insets: WindowInsets,
     openSettings: (() -> Unit)? = null) {
+    val reveal = rememberArriveFade()
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize().alpha(reveal)) {
         Box(Modifier.fillMaxSize().pointerClickable(onClick = close))
         val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.56f)
             else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = 76.dp).widthIn(max = 560.dp).fillMaxWidth().heightIn(max = 300.dp)

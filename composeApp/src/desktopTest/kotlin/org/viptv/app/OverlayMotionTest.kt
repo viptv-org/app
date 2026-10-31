@@ -12,6 +12,7 @@ import org.junit.Rule
 import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
+import org.viptv.app.components.rememberArriveFade
 import org.viptv.app.components.rememberEnterLeaveMotion
 import org.viptv.app.components.rememberOverlayMotion
 import org.viptv.app.theme.ViptvTheme
@@ -102,6 +103,33 @@ class OverlayMotionTest {
         try {
             render(scene, 2)
             assertEquals(1f, progress, .001f, "reduce motion presents the popover in one frame")
+        } finally { scene.close() }
+    }
+
+    @Test fun arriveFadeRampsIn() = runBlocking {
+        var reveal = -1f
+        val scene = ImageComposeScene(400, 700, Density(1f)) {
+            ViptvTheme(false, pointer = true) { reveal = rememberArriveFade() }
+        }
+        try {
+            render(scene, 6)
+            val partway = reveal
+            assertTrue(partway > 0f && partway < 1f, "an arriving surface is on its way after a few frames, not $partway")
+            render(scene, 30, 6)
+            assertEquals(1f, reveal, .001f, "an arriving surface settles in")
+        } finally { scene.close() }
+    }
+
+    @Test fun arriveFadeSnapsUnderReduceMotion() = runBlocking {
+        var reveal = -1f
+        val scene = ImageComposeScene(400, 700, Density(1f)) {
+            ViptvTheme(false, pointer = true) {
+                CompositionLocalProvider(LocalReducedMotion provides true) { reveal = rememberArriveFade() }
+            }
+        }
+        try {
+            render(scene, 2)
+            assertEquals(1f, reveal, .001f, "reduce motion presents an arriving surface in one frame")
         } finally { scene.close() }
     }
 }

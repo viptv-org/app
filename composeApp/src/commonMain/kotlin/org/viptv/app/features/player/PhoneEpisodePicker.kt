@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
@@ -24,6 +25,7 @@ import org.viptv.app.features.details.DetailEpisodeCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.rememberArriveFade
 
 internal fun phonePlaybackEpisodes(current: Card?, episodes: List<Card>): List<Card> {
     val parent = current?.parent_identity ?: return emptyList()
@@ -41,8 +43,9 @@ internal fun PhoneEpisodePicker(current: Card?, episodes: List<Card>, choose: (C
     val initial = remember { FocusRequester() }
     val latestEpisodes by rememberUpdatedState(episodes)
     val latestChoose by rememberUpdatedState(choose)
+    val reveal = rememberArriveFade()
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .35f))) {
+        Box(Modifier.fillMaxSize().alpha(reveal).background(Color.Black.copy(alpha = .35f))) {
             Column(Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(.56f).background(Palette.surface)
                 .windowInsetsPadding(insets.endSheet())) {
                 Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {

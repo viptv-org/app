@@ -2,6 +2,7 @@ package org.viptv.app.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +42,14 @@ internal fun rememberOverlayMotion(
         }
     }
     return OverlayMotion(container.value, scrim.value, presented)
+}
+
+// A surface that only exists while open fades in once; its removal is the exit.
+@Composable
+internal fun rememberArriveFade(): Float {
+    val reveal = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { reveal.animateTo(1f, motionSpec(tween(Motion.arrive, easing = Motion.standard))) }
+    return reveal.value
 }
 
 internal class EnterLeaveMotion(val progress: Float, val presented: Boolean)
