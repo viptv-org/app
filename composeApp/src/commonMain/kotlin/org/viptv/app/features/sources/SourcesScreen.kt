@@ -3,6 +3,7 @@ package org.viptv.app.features.sources
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
+import kotlinx.coroutines.flow.collect
 import org.viptv.app.connection.SourceGroups
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.theme.Palette
@@ -39,7 +41,7 @@ import org.viptv.app.components.rememberOverlayMotion
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
-    openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}) {
+    openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {}) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
@@ -53,6 +55,11 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val visible = sources.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
     val rows = remember(visible, groups) { sourceListRows(visible, groups) }
     val listState = rememberLazyListState()
+    LaunchedEffect(listState) {
+        listState.interactionSource.interactions.collect { interaction ->
+            if (interaction is DragInteraction.Start) scrolled()
+        }
+    }
     var focusedSource by remember { mutableStateOf<String?>(null) }
     val headerHeight = remember { SourceHeaderHeight() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
