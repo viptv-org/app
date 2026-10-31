@@ -20,6 +20,7 @@ import org.viptv.app.preview.UiPreview
 import org.viptv.app.connection.AndroidSecrets
 import org.viptv.app.player.AndroidPictureInPicture
 import org.viptv.app.connection.AndroidAccountAuthorization
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import android.content.Intent
 
@@ -107,7 +108,7 @@ open class MainActivity : ComponentActivity() {
         suspendUnlessTheWindowKeepsPlaying()
         super.onStop()
     }
-    // A picture-in-picture window plays on while this activity is paused, but closing it finishes the activity, which must save as leaving does.
+    // A picture-in-picture window plays on while this activity is paused, so only a stop that already left picture-in-picture saves.
     private fun suspendUnlessTheWindowKeepsPlaying() {
         if (isInPictureInPictureMode && !isFinishing) return
         applicationModel?.controller?.suspendPlayback()
@@ -116,20 +117,29 @@ open class MainActivity : ComponentActivity() {
         super.onUserLeaveHint()
         AndroidPictureInPicture.onUserLeaveHint()
     }
+    // A closed window leaves picture-in-picture without resuming; an expanded one resumes a moment later.
+    private val leavePictureInPicture = Runnable {
+        if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) applicationModel?.controller?.suspendPlayback()
+    }
+    private fun stayInPictureInPicture() = window.decorView.removeCallbacks(leavePictureInPicture)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         AndroidPictureInPicture.modeChanged(isInPictureInPictureMode)
+        if (isInPictureInPictureMode) stayInPictureInPicture()
+        else window.decorView.postDelayed(leavePictureInPicture, 1_000)
     }
     override fun onDestroy() {
         AndroidPictureInPicture.detach()
         super.onDestroy()
     }
     override fun onResume() {
+        stayInPictureInPicture()
         super.onResume()
         // A translucent Activity pauses without stopping us and onStart is not called: only a lifecycle-owned pause may resume.
         applicationModel?.controller?.resumePlayback()
     }
     override fun onStart() {
+        stayInPictureInPicture()
         super.onStart()
         applicationModel?.controller?.resumePlayback()
     }
