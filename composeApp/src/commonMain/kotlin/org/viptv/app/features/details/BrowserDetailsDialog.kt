@@ -46,7 +46,9 @@ import org.viptv.app.components.rememberEnterLeaveMotion
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
     continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true) {
-    InitialBrowserEscape(back)
+    var dismissing by remember(detail?.item?.let { it.provider_id to it.identity }) { mutableStateOf(false) }
+    val requestDismiss = { if (!dismissing) dismissing = true }
+    InitialBrowserEscape(requestDismiss)
     val closeFocus = remember { FocusRequester() }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
@@ -57,7 +59,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     val list = rememberLazyListState()
     LandOnResume(seasonChoice, list, resume.takeIf { detail != null }.indexIn(selected?.episodes)?.let { episode ->
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
-    Dialog(onDismissRequest = back, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onDismissRequest = requestDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val focusManager = LocalFocusManager.current
         // The window layer attaches a frame later, so retry until the button is placed.
         LaunchedEffect(closeFocusOnOpen) {
@@ -67,16 +69,17 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
             val compact = maxWidth < 640.dp
             val gutter = if (compact) 20.dp else 44.dp
-            val motion = rememberEnterLeaveMotion(true,
+            val motion = rememberEnterLeaveMotion(!dismissing,
                 enter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
                 leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+            LaunchedEffect(motion.presented) { if (!motion.presented) back() }
             Surface(Modifier.graphicsLayer {
                     alpha = motion.progress
                     val s = 0.98f + 0.02f * motion.progress
                     scaleX = s; scaleY = s
                 }.widthIn(max = 800.dp).fillMaxWidth().fillMaxHeight().onPreviewKeyEvent { event ->
-                    // One step per press: the key-down goes back and neither half reaches the page's Back as well.
-                    if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) back(); true } else false
+                    // One step per press: the key-down dismisses and neither half reaches the page's Back as well.
+                    if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) requestDismiss(); true } else false
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
                 color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
                 Box {
@@ -105,7 +108,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                         }
                         if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(vertical = gutter), gutter = gutter) }
                     }
-                    IconButton(onClick = back, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)
+                    IconButton(onClick = requestDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)
                         .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }
                 }
             }
