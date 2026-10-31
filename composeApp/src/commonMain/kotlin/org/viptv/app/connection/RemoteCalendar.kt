@@ -57,6 +57,15 @@ internal suspend fun RemoteConnection.calendar(window: CalendarWindow, type: Str
 }
 
 internal suspend fun RemoteConnection.calendarAll(window: CalendarWindow,
+    onPage: (List<CalendarEntry>) -> Unit = {}): CalendarRead = try {
+    calendar(window, CALENDAR_TYPE_ALL, onPage)
+} catch (error: RemoteFailure) {
+    if (error.status != 400) throw error
+    // Older backends reject type=all with 400: fall back to the per-type merge.
+    mergeCalendars(window, onPage)
+}
+
+private suspend fun RemoteConnection.mergeCalendars(window: CalendarWindow,
     onPage: (List<CalendarEntry>) -> Unit = {}): CalendarRead {
     val merged = mutableListOf<CalendarEntry>()
     var sources: Set<CalendarSource>? = null
