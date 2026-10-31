@@ -43,6 +43,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.state.ApplicationState
 import org.viptv.app.components.DesktopBreakpoints
+import org.viptv.app.components.BrandMark
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -164,9 +165,7 @@ private val SearchFieldHover = Color.White.copy(alpha = .08f).compositeOver(Sear
 @Composable
 private fun DesktopBrand() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        Box(Modifier.size(16.dp).background(Palette.accent, RoundedCornerShape(4.dp)), contentAlignment = Alignment.Center) {
-            Text("V", color = Palette.background, fontSize = 11.sp, fontWeight = FontWeight.Black)
-        }
+        BrandMark(16.dp)
         Text("VIPTV", color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
             fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)))
     }
