@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.connection.*
@@ -19,15 +21,16 @@ private data class ApprovalChoice(val kind: String, val id: String, val title: S
 @Composable
 internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error: String?, back: () -> Unit,
     search: (String) -> Unit, refresh: (Boolean) -> Unit, approve: (String, org.viptv.engine.wire.Card) -> Unit,
-    revoke: (ApprovedTitle) -> Unit) {
+    revoke: (ApprovedTitle) -> Unit, first: FocusRequester? = null, backLabel: String = "Back to parental controls") {
     var query by remember(state.profile) { mutableStateOf(state.query) }
     var choice by remember(state.profile) { mutableStateOf<ApprovalChoice?>(null) }
+    if (first != null) LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
     BoxWithConstraints(Modifier.fillMaxSize()) {
     val compact = maxWidth < 640.dp
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (!compact) TextButton(back) { Text("Back to parental controls") }
+                if (!compact) TextButton(back, modifier = if (first != null) Modifier.focusRequester(first) else Modifier) { Text(backLabel) }
                 Text("Approved titles", style = MaterialTheme.typography.headlineMedium)
                 Text("For ${state.profileName}", style = MaterialTheme.typography.titleMedium)
                 Text("Allow individual titles beyond this profile’s age limit. Adult titles cannot be approved. Search uses the integrations enabled for this profile.", color = Palette.secondary)

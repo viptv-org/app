@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,10 +43,13 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.state.ApplicationState
 import org.viptv.app.components.DesktopBreakpoints
+import org.viptv.app.components.BrandMark
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.pointerHovered
+import org.viptv.app.components.responseSpec
 
 @Composable
 internal fun DesktopTitleBar(
@@ -97,11 +101,12 @@ internal fun DesktopTitleBar(
                 val searchWidth = minOf(460.dp, maxWidth * .36f)
                 val searchHover = remember { MutableInteractionSource() }
                 val searchHovered by searchHover.collectIsHoveredAsState()
+                val searchFill by animateColorAsState(if (searchHovered) SearchFieldHover else SearchField, responseSpec(), label = "Search field fill")
                 Row(Modifier.align(Alignment.Center).width(searchWidth).height(32.dp)
                     .hoverable(searchHover)
                     .onFocusChanged { searchFocused = it.hasFocus }
                     .tvFocusOutline(searchFocused, 8.dp, darkGap = 2.dp, width = 2.dp)
-                    .background(if (searchHovered) SearchFieldHover else SearchField, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
+                    .background(searchFill, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     DesktopChromeIcon(ChromeIcon.Search, Palette.text, Modifier.size(16.dp))
                     BasicTextField(query, { query = it; if (it.isNotEmpty()) navigate(Screen.Search); search(it) },
@@ -160,9 +165,7 @@ private val SearchFieldHover = Color.White.copy(alpha = .08f).compositeOver(Sear
 @Composable
 private fun DesktopBrand() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        Box(Modifier.size(16.dp).background(Palette.accent, RoundedCornerShape(4.dp)), contentAlignment = Alignment.Center) {
-            Text("V", color = Palette.background, fontSize = 11.sp, fontWeight = FontWeight.Black)
-        }
+        BrandMark(16.dp)
         Text("VIPTV", color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
             fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)))
     }
@@ -171,12 +174,13 @@ private fun DesktopBrand() {
 @Composable
 private fun ChromeButton(icon: ChromeIcon, label: String, color: Color, onClick: (() -> Unit)?, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
-    val hovered by interaction.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
+    val fill by animateColorAsState(if (focused || interaction.pointerHovered()) Color.White.copy(alpha = if (focused) .16f else .08f) else Color.Transparent,
+        responseSpec(), label = "Chrome button fill")
     Box(modifier.size(36.dp).semantics { contentDescription = label }
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 8.dp)
-        .background(if (focused || hovered) Color.White.copy(alpha = if (focused) .16f else .08f) else Color.Transparent, RoundedCornerShape(8.dp))
+        .background(fill, RoundedCornerShape(8.dp))
         .pointerClickable(interactionSource = interaction, enabled = onClick != null, onClickLabel = label, shape = RoundedCornerShape(8.dp), hover = null) { onClick?.invoke() },
         contentAlignment = Alignment.Center) {
         DesktopChromeIcon(icon, if (onClick == null) color.copy(alpha = color.alpha * .38f) else color, Modifier.size(17.dp))
@@ -187,12 +191,12 @@ private fun ChromeButton(icon: ChromeIcon, label: String, color: Color, onClick:
 private fun TitleBarHit(label: String, onClick: () -> Unit, modifier: Modifier = Modifier,
     radius: Dp = 8.dp, hover: Color = Color.White.copy(alpha = .08f), content: @Composable () -> Unit) {
     val interactions = remember { MutableInteractionSource() }
-    val hovered by interactions.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
+    val fill by animateColorAsState(if (interactions.pointerHovered()) hover else Color.Transparent, responseSpec(), label = "Title bar fill")
     Box(modifier
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, radius, darkGap = 2.dp, width = 2.dp)
-        .background(if (hovered) hover else Color.Transparent, RoundedCornerShape(radius))
+        .background(fill, RoundedCornerShape(radius))
         .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = onClick, shape = RoundedCornerShape(radius), hover = null),
         contentAlignment = Alignment.Center) { content() }
 }

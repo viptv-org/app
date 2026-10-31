@@ -1,5 +1,6 @@
 package org.viptv.app.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -34,10 +35,11 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
             val interactions = remember { MutableInteractionSource() }
             val hovered by interactions.collectIsHoveredAsState()
             var focused by remember { mutableStateOf(false) }
+            val fill by animateColorAsState(railFill(destination.screen == selected, hovered), responseSpec(), label = "Rail row fill")
             Column(Modifier.width(56.dp).height(48.dp)
                 .onFocusChanged { focused = it.isFocused }
                 .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
-                .background(railFill(destination.screen == selected, hovered), RoundedCornerShape(10.dp))
+                .background(fill, RoundedCornerShape(10.dp))
                 .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = destination.label, shape = RoundedCornerShape(10.dp), hover = null) { navigate(destination.screen) },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center) {
@@ -67,10 +69,11 @@ private fun RailAction(icon: ImageVector, label: String, action: () -> Unit) {
     val interactions = remember { MutableInteractionSource() }
     val hovered by interactions.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
+    val fill by animateColorAsState(railFill(selected = false, hovered), responseSpec(), label = "Rail action fill")
     Box(Modifier.size(48.dp)
         .onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
-        .background(railFill(selected = false, hovered), RoundedCornerShape(10.dp))
+        .background(fill, RoundedCornerShape(10.dp))
         .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = label, onClick = action, shape = RoundedCornerShape(10.dp), hover = null),
         contentAlignment = Alignment.Center) { Icon(icon, label, Modifier.size(20.dp), tint = Palette.secondary) }
 }

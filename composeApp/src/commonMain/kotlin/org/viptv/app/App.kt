@@ -12,6 +12,7 @@ import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
 import org.viptv.app.state.*
@@ -89,6 +90,8 @@ fun App(
             val compact = maxWidth < 640.dp && !television
             val touch = !television && !browser && !desktopChrome
             val tablet = !compact && touch
+            val barFades = barsFadeContent(television, desktopChrome, touch, maxWidth)
+            val bottomBar = compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
@@ -120,7 +123,8 @@ fun App(
                     maturity = state.profileManagement?.profiles?.find { it.id == state.profileToEdit }?.let { if(it.kids)it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction" })
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
-                  CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext) { Column(Modifier.fillMaxSize()) {
+                  CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
+                      LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
@@ -143,9 +147,11 @@ fun App(
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
                             Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->
-                                if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
-                                else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
-                                    multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
+                                routes.SaveableStateProvider("${state.selectedProfile}:browse:${state.screen.name}") {
+                                    if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
+                                    else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
+                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
+                                }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
                                     controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)
@@ -184,13 +190,17 @@ fun App(
                                 type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
                                 sources = state.calendarSources, openEntry = controller::openCalendarEntry)
                             Screen.Live -> org.viptv.app.features.live.LiveRoute(state, controller, television)
-                            Screen.Library -> org.viptv.app.features.library.LibraryRoute(state, controller, television)
+                            Screen.Library -> routes.SaveableStateProvider("${state.selectedProfile}:library") {
+                                org.viptv.app.features.library.LibraryRoute(state, controller, television)
+                            }
                             Screen.ContinueWatching -> routes.SaveableStateProvider("${state.selectedProfile}:continue") {
                                 org.viptv.app.features.continuewatching.ContinueWatchingRoute(state, controller, television)
                             }
-                            Screen.History -> if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
-                                controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
-                            else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
+                            Screen.History -> routes.SaveableStateProvider("${state.selectedProfile}:history") {
+                                if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
+                                    controller::open, controller::clearHistory, { controller.navigate(Screen.Home) })
+                                else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack)
+                            }
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)
                             else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
@@ -198,7 +208,7 @@ fun App(
                         }
                     }
                   } }
-                  if (compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
+                  if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       BottomNavigation(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate)
                   }
                 }
@@ -210,6 +220,9 @@ fun App(
 
 // The player draws under the cutout and system bars, so the root must not pad it with the app background.
 internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
+
+internal fun barsFadeContent(television: Boolean, desktopChrome: Boolean, touch: Boolean, width: Dp): Boolean =
+    !television && !desktopChrome && (touch || width < 1000.dp)
 
 private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.ContinueWatching, Screen.Library, Screen.History, Screen.Details)
 

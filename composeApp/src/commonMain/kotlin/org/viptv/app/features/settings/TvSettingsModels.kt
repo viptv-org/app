@@ -1,9 +1,27 @@
 package org.viptv.app.features.settings
 
-internal enum class TvSettingsSection(val label: String) {
-    Account("Account"), Profiles("Profiles"), Playback("Playback"), Subtitles("Subtitles & audio"),
-    Addons("Add-ons"), Sources("Source integrations"), Display("Display"), Parental("Parental controls"), About("About"),
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.composables.icons.lucide.*
+
+internal enum class TvSettingsSection(val label: String, val group: SettingsGroup, val icon: ImageVector) {
+    Profile("Profile", SettingsGroup.Profile, Lucide.UserRound),
+    SwitchProfile("Switch profile", SettingsGroup.Profile, Lucide.Users),
+    Parental("Parental controls", SettingsGroup.Profile, Lucide.LockKeyhole),
+    Playback("Playback", SettingsGroup.Playback, Lucide.CirclePlay),
+    Subtitles("Subtitles & audio", SettingsGroup.Playback, Lucide.Captions),
+    Display("Display", SettingsGroup.ThisDevice, Lucide.Monitor),
+    About("About", SettingsGroup.ThisDevice, Lucide.Info),
+    Account("Account", SettingsGroup.Account, Lucide.UserRound),
+    Addons("Add-ons", SettingsGroup.Account, Lucide.Puzzle),
+    Sources("Source integrations", SettingsGroup.Account, Lucide.Server);
+
+    val leavesSettings: Boolean get() = this == SwitchProfile
 }
+
+internal fun tvSettingsGroups(): List<Pair<SettingsGroup, List<TvSettingsSection>>> =
+    SettingsGroup.entries.mapNotNull { group ->
+        TvSettingsSection.entries.filter { it.group == group }.takeIf { it.isNotEmpty() }?.let { group to it }
+    }
 
 internal data class TvSettingsPreferences(
     val nextEpisode: Boolean = true,

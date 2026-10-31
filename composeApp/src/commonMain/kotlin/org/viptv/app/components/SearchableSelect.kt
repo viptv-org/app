@@ -550,7 +550,7 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
     LaunchedEffect(pointer) { if (pointer) hovered() }
     val click = if (multiple) Modifier.pointerToggleable(checked, interaction, null, enabled, Role.Checkbox, RowShape, hover = null) { pick() }
     else Modifier.pointerSelectable(checked, interaction, null, enabled, Role.RadioButton, RowShape, hover = null, onClick = pick)
-    Row(Modifier.padding(horizontal = 6.dp).fillMaxWidth().height(height).clip(RowShape)
+    Row(Modifier.padding(horizontal = 6.dp).fillMaxWidth().height(height).pressScale(interaction, Motion.row).clip(RowShape)
         .background(if (active && enabled) Palette.raised else Color.Transparent).then(click).padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         ChoiceMark(checked, multiple, enabled, onLight = false,

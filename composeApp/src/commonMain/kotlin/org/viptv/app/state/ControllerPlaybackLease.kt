@@ -45,7 +45,7 @@ internal fun ApplicationController.keepPlaybackLease(lease: RemotePlaybackLease,
             if (retryTransient(RENEW_RETRY_MILLIS) { lease.renew() } != null) break
             if (resumeAfterRenewal === input) {
                 resumeAfterRenewal = null
-                if (mutable.value.playback === input) mutable.value = mutable.value.copy(paused = false)
+                if (mutable.value.playback === input) updateState { next -> next.copy(paused = false) }
             }
         }
         reacquirePlayback(lease, source, forceGateway, input)
@@ -83,8 +83,8 @@ private suspend fun ApplicationController.reacquirePlayback(lease: RemotePlaybac
         if (failure is RemoteFailure && failure.status == 401) throw failure
         releaseRemotePlayback()
         val gone = failure is RemoteFailure && failure.status in listOf(404, 410)
-        mutable.value = mutable.value.copy(playback = null, screen = Screen.Sources, error =
+        updateState { next -> next.copy(playback = null, screen = Screen.Sources, error =
             if (gone) "The server playback session ended and this source is no longer available. Choose the source again."
-            else "The server playback session ended and could not be reopened. Check the connection and choose the source again.")
+            else "The server playback session ended and could not be reopened. Check the connection and choose the source again.") }
     }
 }

@@ -22,5 +22,6 @@ internal fun LibraryRoute(state: ApplicationState, controller: ApplicationContro
     val cards = page?.cards ?: state.library
     LibraryScreen(cards, true, television, controller::open, { controller.navigate(Screen.History) },
         { controller.navigate(Screen.Home) }, page, state.libraryQuery, controller::libraryQuery,
-        if (page?.next_cursor != null) controller::libraryMore else null, state.busy, state.error)
+        if (page?.next_cursor != null) controller::libraryMore else null, state.busy, state.error,
+        remove = controller::removeFromMyList)
 }

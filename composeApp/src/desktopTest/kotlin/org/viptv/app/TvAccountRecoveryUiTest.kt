@@ -36,11 +36,14 @@ class TvAccountRecoveryUiTest {
             click(scene, "Open server dashboard"); assertEquals(1, dashboards)
             click(scene, "Retry account"); frames(scene); assertEquals(2, loads)
             assertTrue(action(scene, "Loading account…").config.contains(SemanticsProperties.Disabled))
-            info = TvAccountInfo(username = "viewer"); busy = false; frames(scene)
+            info = TvAccountInfo("Viewer Name", "viewer", "member"); busy = false; frames(scene)
             assertFalse(nodes(scene).any { text(it) == "Retry account" })
-            assertEquals(true, action(scene, "Username viewer").config.getOrNull(SemanticsProperties.Focused))
-            assertTrue(nodes(scene).any { text(it) == "Devices Managed on web" })
-            click(scene, "Refresh account"); assertEquals(3, loads)
+            assertTrue(nodes(scene).any { text(it) == "Name Viewer Name" })
+            assertTrue(nodes(scene).any { text(it) == "Username @viewer" })
+            assertTrue(nodes(scene).any { text(it) == "Role Member" })
+            assertEquals(true, action(scene, "Devices & sessions Manage on the web").config.getOrNull(SemanticsProperties.Focused))
+            assertTrue(nodes(scene).any { text(it) == "Household PIN $tvAccountManagedElsewhere" })
+            click(scene, "Devices & sessions Manage on the web"); assertEquals(2, dashboards)
         } finally { scene.close() }
     }
 
@@ -48,16 +51,16 @@ class TvAccountRecoveryUiTest {
         var busy by mutableStateOf(false); var error by mutableStateOf<String?>(null); var loads = 0
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
             TvSettingsScreen(false, emptyList(), emptySet(), busy, error, null, {}, { _, _ -> }, {}, {}, null,
-                initialSection = TvSettingsSection.Account, account = TvAccountInfo(username = "cached"),
+                initialSection = TvSettingsSection.Account, account = TvAccountInfo("Cached", "cached", "owner"),
                 accountRequested = { loads++; busy = true; error = null }, dashboardAddress = "https://fixture.example/")
         } }
         try {
             frames(scene); busy = false; error = "This account cannot perform that action."; frames(scene)
-            assertTrue(nodes(scene).any { text(it) == "Username cached" })
+            assertTrue(nodes(scene).any { text(it) == "Username @cached" })
             assertEquals(1, nodes(scene).count { text(it) == error })
-            click(scene, "Username cached"); frames(scene)
+            click(scene, "Devices & sessions Manage on the web"); frames(scene)
             assertTrue(nodes(scene).any { text(it) == "https://fixture.example/" })
-            click(scene, "Close"); frames(scene); click(scene, "Refresh account"); assertEquals(2, loads)
+            click(scene, "Close"); frames(scene); click(scene, "Retry account"); assertEquals(2, loads)
         } finally { scene.close() }
     }
 
@@ -69,7 +72,8 @@ class TvAccountRecoveryUiTest {
         } }
         try {
             frames(scene); assertEquals(0, loads)
-            assertTrue(nodes(scene).any { text(it) == "Connection Local mode" })
+            assertTrue(nodes(scene).any { text(it) == "Local mode. Your profiles and progress stay on this TV." })
+            assertTrue(nodes(scene).any { text(it) == "Change connection" })
             assertFalse(nodes(scene).any { text(it) in listOf("Retry account", "Refresh account", "Open server dashboard") })
         } finally { scene.close() }
     }

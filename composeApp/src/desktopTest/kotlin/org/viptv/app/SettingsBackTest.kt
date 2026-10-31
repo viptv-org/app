@@ -42,7 +42,8 @@ class SettingsBackTest {
                 node.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(value) == true
         fun shows(value: String) = nodes().any { labelled(it, value) }
         fun click(value: String) {
-            val node = nodes().first { labelled(it, value) && it.config.contains(SemanticsActions.OnClick) }
+            val node = nodes().firstOrNull { labelled(it, value) && it.config.contains(SemanticsActions.OnClick) }
+                ?: fail("no clickable '$value' in ${nodes().mapNotNull { it.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { text -> text.text } }}")
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); render()
         }
         fun atSettingsList() = controller.state.value.screen == Screen.Settings && shows("Settings") && shows("Switch profile")
@@ -53,12 +54,12 @@ class SettingsBackTest {
         ApplicationState(screen = Screen.Settings, navBack = navBack, selectedProfile = "1", localMode = localMode)
 
     @Test fun backFromEachPhoneSubPageReturnsToTheSettingsList() = Harness(browser = false, settings()).use { ui ->
-        assertBackFromEachRow(ui, listOf("Add-ons", "Playback", "Subtitles & audio", "Account", "Parental controls", "Help", "About VIPTV"))
+        assertBackFromEachRow(ui, listOf("Add-ons", "Playback", "Subtitles & audio", "Source integrations", "Parental controls", "Help", "About", "Watch on TV"))
     }
 
     @Test fun backFromEachServerSubPageOfAPhoneWidthBrowserReturnsToTheSettingsList() =
         Harness(browser = true, settings(localMode = false), height = 1400).use { ui ->
-            assertBackFromEachRow(ui, listOf("Devices", stremioImportSection, "Watch on TV", "Add-ons", "Account", "Parental controls"))
+            assertBackFromEachRow(ui, listOf("Devices & sessions", stremioImportSection, "Watch on TV", "Add-ons", "Household PIN", "Source integrations", "Parental controls"))
         }
 
     private fun assertBackFromEachRow(ui: Harness, rows: List<String>) {
@@ -138,9 +139,9 @@ class SettingsBackTest {
         list().config[SemanticsActions.ScrollBy].action!!.invoke(0f, 2000f); ui.render()
         val scrolled = offset()
         assertTrue(scrolled > 0f, "The Settings list did not scroll at this height")
-        ui.click("About VIPTV")
+        ui.click("Add-ons")
         ui.controller.navigateBack(); ui.render()
         assertEquals(scrolled, offset())
-        assertTrue(ui.shows("About VIPTV"))
+        assertTrue(ui.shows("Add-ons"))
     }
 }

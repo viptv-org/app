@@ -12,7 +12,8 @@ class SubtitleStylePreferencesTest {
         val original = ProfilePreferences("pt-BR", "ja", false, "best", 1080, 1.3, "#FFE16B", "#CC102030")
         val encoded = json.encodeToJsonElement(original).jsonObject
         assertEquals(setOf("preferred_audio_language", "preferred_subtitle_language", "subtitles_enabled", "source_selection", "max_quality_height",
-            "subtitle_font_scale", "subtitle_text_color", "subtitle_background_color", "hdr_preference", "subtitle_mode"), encoded.keys)
+            "subtitle_font_scale", "subtitle_text_color", "subtitle_background_color", "hdr_preference", "subtitle_mode",
+            "next_episode_button", "skip_intros"), encoded.keys)
         assertEquals(original, json.decodeFromJsonElement<ProfilePreferences>(encoded))
         assertEquals(original, original.tvSettings().profilePreferences(original))
     }

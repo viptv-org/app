@@ -46,6 +46,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var rememberedNavigation: SavedNavigation? = null
     internal var rememberedNavigationProfile: String? = null
     internal var continueChecked: ContinueCheck? = null
+    internal var continueVisibilityJob: Job? = null
     internal var libraryImportRefresh: Job? = null
     internal var calendarReread: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
@@ -58,6 +59,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val viewerReturned = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
     internal val leaseWake = MutableStateFlow(0L)
     internal var subtitleDiscovery: Job? = null
+    internal var playbackSegmentsJob: Job? = null
     internal var nextEpisodeJob: Job? = null
     internal var nextEpisodeKey: NextEpisodeKey? = null
     internal var nextEpisodeGeneration = 0L

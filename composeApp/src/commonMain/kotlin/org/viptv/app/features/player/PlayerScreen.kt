@@ -76,6 +76,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val next = tvExtras.nextEpisode.takeIf { input?.live != true }
     val seriesEpisode = input?.live != true && title?.identity?.episode != null
     val episodeTitle = phone && seriesEpisode
+    val activeSkip = tvExtras.skips.firstOrNull { position in it.startMillis until it.endMillis }
+    val creditsReached = tvExtras.skips.firstOrNull { !it.automatic }?.let { position >= it.startMillis } == true
     val playNext = { next?.let { playEpisode?.invoke(it) }; Unit }
     val openEpisodes = if (seriesEpisode) ({ phonePanel = PhonePlaybackPanel.Episodes; interaction++; Unit }) else null
     val nextEnabled = next != null && playEpisode != null
@@ -118,8 +120,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 phonePanel == PhonePlaybackPanel.Next && (next == null || nextChoice?.let(::cardLookupKey) != cardLookupKey(next)) ||
                 phonePanel == PhonePlaybackPanel.Episodes && episodes.isEmpty())) closePanel()
     }
-    LaunchedEffect(ended, endHandled, next, playEpisode != null, phonePanel, failed, error) {
-        if (ended && !endHandled && seriesEpisode && next != null && playEpisode != null && phonePanel == null && !failed && error == null) {
+    LaunchedEffect(ended, creditsReached, endHandled, next, playEpisode != null, phonePanel, failed, error) {
+        if ((ended || creditsReached) && !endHandled && seriesEpisode && next != null && playEpisode != null && phonePanel == null && !failed && error == null) {
             showTracks = false; locked = false
             nextChoice = next; phonePanel = PhonePlaybackPanel.Next
         }
@@ -130,11 +132,22 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
-    fun seek(value: Long) { if (input?.live != true) {
+    fun seekTo(value: Long, reveal: Boolean) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
-        send(PlayerCommand.Seek(target))
+        if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target)); interaction++; controlError = null }
     } }
+    fun seek(value: Long) { seekTo(value, reveal = true) }
+    val skipped = remember(playbackKey) { mutableSetOf<TvSkipRange>() }
+    fun skipSegment(range: TvSkipRange, automatic: Boolean) {
+        if (seekTarget != null) return
+        if (!skipped.add(range) && automatic) return
+        seekTo(range.endMillis, reveal = false)
+    }
+    LaunchedEffect(position, tvExtras.skips, tvExtras.skipIntros, paused) {
+        if (tvExtras.skipIntros && !paused) tvExtras.skips.firstOrNull { it.automatic && position in it.startMillis until it.endMillis }
+            ?.let { skipSegment(it, automatic = true) }
+    }
     fun applyFact(fact: PlayerFact) {
         when (fact) {
             is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
@@ -231,6 +244,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                     (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                 }
+                if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
+                    PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
             }
         }
     }

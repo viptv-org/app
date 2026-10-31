@@ -1,10 +1,9 @@
 package org.viptv.app.features.settings
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,15 +17,35 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
-    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: Boolean = false,
+    profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: (() -> Unit)? = null,
+    householdPin: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null, profilePage: (() -> Unit)? = null, linkedServices: (() -> Unit)? = null,
     listState: LazyListState = rememberLazyListState()) {
-    LazyColumn(Modifier.fillMaxSize(), listState, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    val available = availableRows(parental != null, stremioImport != null, preferences != null, account != null,
+        devices != null, addDevice != null, watchOnTv = information != null, information = information != null,
+        householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null, linkedServices = linkedServices != null)
+    val open: (SettingsRow) -> Unit = { row ->
+        when (row) {
+            SettingsRow.Profile -> profilePage?.invoke()
+            SettingsRow.LinkedServices -> linkedServices?.invoke()
+            SettingsRow.ParentalControls -> parental?.invoke()
+            SettingsRow.ImportFromStremio -> stremioImport?.invoke()
+            SettingsRow.Playback, SettingsRow.SubtitlesAudio -> preferences?.invoke(row.key)
+            SettingsRow.WatchOnTv, SettingsRow.About, SettingsRow.Help -> information?.invoke(row.key)
+            SettingsRow.Account -> account?.invoke()
+            SettingsRow.HouseholdPin -> householdPin?.invoke()
+            SettingsRow.Devices -> devices?.invoke()
+            SettingsRow.AddDevice -> addDevice?.invoke()
+            SettingsRow.Addons -> addons()
+            SettingsRow.SourceIntegrations -> sourceIntegrations?.invoke()
+            SettingsRow.SignOut -> leave()
+            else -> Unit
+        }
+    }
+    LazyColumn(Modifier.fillMaxSize(), listState, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
         item {
             Box(Modifier.fillMaxWidth().height(48.dp)) {
                 IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).size(44.dp)) {
@@ -36,6 +55,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             }
         }
         item {
+            Spacer(Modifier.height(18.dp))
             Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) {
                 Row(Modifier.fillMaxWidth().pointerClickable(onClick = profiles).padding(14.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -48,35 +68,33 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                 }
             }
         }
-        notice?.let { item { Text(it, color = Palette.danger) } }
-        settingsGroup(listOfNotNull(
-            preferences?.let { open -> { SettingsItem("Playback", Lucide.CirclePlay) { open("Playback") } } },
-            preferences?.let { open -> { SettingsItem("Subtitles & audio", Lucide.Captions) { open("Subtitles & audio") } } }))
-        settingsGroup(listOfNotNull(
-            information?.let { open -> { SettingsItem("Watch on TV", Lucide.Airplay, if (addDevice) "Sign in a TV or another device" else null) { open("Watch on TV") } } },
-            { SettingsItem("Add-ons", Lucide.Puzzle, "$addonCount installed", addons) }))
-        settingsGroup(listOfNotNull(
-            account?.let { { SettingsItem("Account", Lucide.UserRound, if (local) "Using this device locally" else "Connected to a server", action = it) } },
-            devices?.let { { SettingsItem("Devices", Lucide.Monitor, action = it) } },
-            stremioImport?.let { { SettingsItem(stremioImportSection, Lucide.Import, action = it) } },
-            parental?.let { { SettingsItem("Parental controls", Lucide.Lock, action = it) } },
-            information?.let { open -> { SettingsItem("Help", Lucide.Info) { open("Help") } } },
-            information?.let { open -> { SettingsItem("About VIPTV", Lucide.Info) { open("About") } } }))
-        item {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                TextButton(onClick = leave) { Text(if (local) "Change connection" else "Sign out", color = Palette.danger, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        notice?.let { item { Text(it, Modifier.padding(top = 18.dp), color = Palette.danger) } }
+        settingsSections(available).forEach { section ->
+            item(key = section.key) {
+                Column {
+                    SettingsGroupLabel(section.group.label, SettingsLayout.Phone)
+                    Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
+                        Column {
+                            section.rows.forEachIndexed { index, row ->
+                                if (index > 0) SettingsDivider()
+                                val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
+                                if (row == SettingsRow.SignOut) SettingsDangerItem(label, row.icon) { open(row) }
+                                else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local, addDevice != null), action = { open(row) })
+                            }
+                        }
+                    }
+                }
             }
         }
         item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
-private fun LazyListScope.settingsGroup(rows: List<@Composable () -> Unit>) {
-    if (rows.isNotEmpty()) item {
-        Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
-            Column { rows.forEachIndexed { index, row -> if (index > 0) SettingsDivider(); row() } }
-        }
-    }
+private fun SettingsRow.subtitle(addonCount: Int, local: Boolean, addDevice: Boolean): String? = when (this) {
+    SettingsRow.Account -> if (local) "Using this device locally" else "Connected to a server"
+    SettingsRow.Addons -> "$addonCount installed"
+    SettingsRow.WatchOnTv -> if (addDevice) "Sign in a TV or another device" else null
+    else -> null
 }
 
 @Composable

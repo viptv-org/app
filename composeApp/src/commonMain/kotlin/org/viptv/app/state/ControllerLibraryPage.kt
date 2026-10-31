@@ -4,7 +4,7 @@ import org.viptv.app.connection.*
 import org.viptv.engine.wire.LibraryQuery
 
 fun ApplicationController.libraryQuery(query: LibraryQuery) {
-    mutable.value = mutable.value.copy(libraryQuery = query.copy(offset = 0))
+    updateState { next -> next.copy(libraryQuery = query.copy(offset = 0)) }
     rememberNavigation()
     run { loadLibraryPage(query.copy(offset = 0)) }
 }
@@ -27,5 +27,5 @@ internal suspend fun ApplicationController.loadLibraryPage(query: LibraryQuery =
             statistics = (page.statistics + previous.statistics).distinctBy(::libraryStatisticsKey))
         else -> page
     }
-    mutable.value = mutable.value.copy(libraryQuery = page.query.copy(offset = 0), libraryPage = combined)
+    updateState { next -> next.copy(libraryQuery = page.query.copy(offset = 0), libraryPage = combined) }
 }

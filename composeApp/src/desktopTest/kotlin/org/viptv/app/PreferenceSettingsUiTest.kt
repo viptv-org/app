@@ -38,8 +38,9 @@ class PreferenceSettingsUiTest {
             preferences = TvSettingsPreferences(source = "Always ask"); error = null; busy = false; frames(scene, 40)
             assertFalse(nodes(scene).any { text(it) == "Retry settings" })
             assertTrue(nodes(scene).any { text(it).startsWith("Default source") && text(it).contains("Always ask") })
-            assertFalse(nodes(scene).any { text(it).startsWith("Next episode button") || text(it).startsWith("Match frame rate") })
-            assertEquals(true, nodes(scene).single { text(it).startsWith("Default source") && it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(nodes(scene).any { text(it).startsWith("Next episode button") })
+            assertFalse(nodes(scene).any { text(it).startsWith("Match frame rate") })
+            assertEquals(true, nodes(scene).single { text(it).startsWith("Next episode button") && it.config.contains(SemanticsActions.OnClick) }
                 .config.getOrNull(SemanticsProperties.Focused))
             assertEquals(0, changed)
         } finally { scene.close() }

@@ -11,14 +11,14 @@ internal data class PairingCode(val origin: String, val secret: String) {
 fun ApplicationController.cancelDevicePairing() {
     pairingGeneration++; pairingJob?.cancel(); pairingJob = null
     if (mutable.value.screen == Screen.Connect)
-        mutable.value = mutable.value.copy(devicePairing = null, busy = false, error = null)
+        updateState { next -> next.copy(devicePairing = null, busy = false, error = null) }
 }
 
 fun ApplicationController.startDevicePairing(origin: String) {
     cancelDevicePairing()
     this.generation++; job?.cancel()
     val generation = pairingGeneration
-    mutable.value = mutable.value.copy(busy = true, error = null)
+    updateState { next -> next.copy(busy = true, error = null) }
     pairingJob = scope.launch {
         var candidate: RemoteConnection? = null
         var adopted = false
@@ -33,8 +33,8 @@ fun ApplicationController.startDevicePairing(origin: String) {
             withTimeout(challenge.display.remainingSeconds * 1000) {
                 while (active()) {
                     val elapsed = started.elapsedNow().inWholeMilliseconds
-                    mutable.value = mutable.value.copy(devicePairing = challenge.display.copy(
-                        remainingSeconds = (challenge.display.remainingSeconds - elapsed / 1000).coerceAtLeast(0)))
+                    updateState { next -> next.copy(devicePairing = challenge.display.copy(
+                        remainingSeconds = (challenge.display.remainingSeconds - elapsed / 1000).coerceAtLeast(0))) }
                     if (elapsed >= nextPoll) {
                         val result = transport.poll(challenge)
                         if (!active()) return@withTimeout
@@ -49,16 +49,16 @@ fun ApplicationController.startDevicePairing(origin: String) {
                 }
             }
         } catch (_: TimeoutCancellationException) {
-            if (active()) mutable.value = mutable.value.copy(error = DEVICE_PAIRING_EXPIRED_MESSAGE)
+            if (active()) updateState { next -> next.copy(error = DEVICE_PAIRING_EXPIRED_MESSAGE) }
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (active()) mutable.value = mutable.value.copy(error = when (error) {
+            if (active()) updateState { next -> next.copy(error = when (error) {
                 is RemoteFailure, is DevicePairingEnded -> error.message
                 else -> "Could not reach your server. Check the address and try again."
-            })
+            }) }
         } finally {
             if (!adopted) candidate?.close()
-            if (active()) mutable.value = mutable.value.copy(devicePairing = null, busy = false)
+            if (active()) updateState { next -> next.copy(devicePairing = null, busy = false) }
         }
     }
 }

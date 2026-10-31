@@ -1,5 +1,8 @@
 package org.viptv.app.components
 
+import androidx.compose.animation.VectorConverter
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.IndicationNodeFactory
 import androidx.compose.foundation.LocalIndication
@@ -18,8 +21,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import kotlinx.coroutines.Job
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DelegatingNode
@@ -96,6 +101,8 @@ private class ShapedHighlightNode(
     private var hovered = false
     private var pressed = false
     private var focused = false
+    private var fill = Color.Transparent
+    private var fillJob: Job? = null
     private var touchNode: DelegatableNode? = null
 
     override fun onAttach() {
@@ -123,7 +130,7 @@ private class ShapedHighlightNode(
                 val nowHovered = hovers.isNotEmpty(); val nowPressed = presses.isNotEmpty(); val nowFocused = focuses.isNotEmpty()
                 if (nowHovered != hovered || nowPressed != pressed || nowFocused != focused) {
                     hovered = nowHovered; pressed = nowPressed; focused = nowFocused
-                    invalidateDraw()
+                    animateFill()
                 }
             }
         }
@@ -133,19 +140,33 @@ private class ShapedHighlightNode(
     override fun onDetach() {
         touchNode?.let { undelegate(it) }
         touchNode = null
+        fillJob?.cancel()
+        fill = Color.Transparent
         hovered = false; pressed = false; focused = false
+    }
+
+    private fun animateFill() {
+        val hover = hover ?: return
+        val target = when {
+            pressed -> HoverFill.washPressed
+            hovered -> hover
+            else -> Color.Transparent
+        }
+        fillJob?.cancel()
+        if (currentValueOf(LocalReducedMotion)) { fill = target; invalidateDraw(); return }
+        fillJob = coroutineScope.launch {
+            animate(Color.VectorConverter(ColorSpaces.Srgb), fill, target, animationSpec = tween(Motion.response, easing = Motion.standard)) { value, _ ->
+                fill = value
+                invalidateDraw()
+            }
+        }
     }
 
     override fun ContentDrawScope.draw() {
         drawContent()
         if (!pointer || hover == null) return
-        val fill = when {
-            pressed -> HoverFill.washPressed
-            hovered -> hover
-            else -> null
-        }
         val outline = shape.createOutline(size, layoutDirection, this)
-        if (fill != null) drawOutline(outline, fill)
+        if (fill.alpha > 0f) drawOutline(outline, fill)
         if (focused && focusLayer) drawOutline(outline, HoverFill.focusLayer)
     }
 }

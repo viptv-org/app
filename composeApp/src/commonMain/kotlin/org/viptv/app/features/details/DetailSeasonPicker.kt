@@ -69,7 +69,7 @@ internal fun DetailSeasonPicker(seasons: List<DetailSeason>, selected: DetailSea
                 Icon(Lucide.X, "Close seasons", Modifier.size(18.dp))
             }
         }
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 430.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 430.dp), contentPadding = PaddingValues(bottom = 24.dp), topEdgeFade = false) {
             items(seasons, key = { it.number?.toString() ?: "unknown" }) { season ->
                 val active = season.number == selected.number
                 Row(Modifier.fillMaxWidth().heightIn(min = 54.dp).pointerSelectable(active, role = Role.RadioButton,

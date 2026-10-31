@@ -24,7 +24,7 @@ import org.viptv.app.components.IconButton
 @Composable
 internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
-    remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true, sourceIntegrations: (@Composable () -> Unit)? = null,
+    remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null) {
     val address = rememberTextFieldState()
     var installing by remember { mutableStateOf(false) }
@@ -49,6 +49,11 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
         }
     }
     var removing by remember { mutableStateOf<IntegrationConnection?>(null) }
+    var query by remember { mutableStateOf("") }
+    var provides by remember { mutableStateOf<AddonProvides?>(null) }
+    val filter = AddonFilter(query, provides)
+    val counts = remember(addons) { addonProvidesCounts(addons) }
+    val shown = filter.filtered(addons)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
         LazyColumn(Modifier.widthIn(max = 824.dp).fillMaxSize(), contentPadding = PaddingValues(if (compact) 16.dp else 32.dp),
@@ -67,28 +72,25 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                 fontSize = 14.sp, lineHeight = 21.sp, color = Palette.secondary) }
             sessionNotice?.let { item { Text(it, color = Palette.danger) } }
             if (!managementAvailable) item { Text("Add-on management is not available on this connection.", color = Palette.secondary) }
-            if (!compact && managementAvailable) item { AddonInstallForm(address, busy, { install(address.text.toString().trim()) }) }
-            if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-            error?.let { item { Text(it, color = Palette.danger) } }
-            if (addons.isNotEmpty() && !compact) item { Text("Installed", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) }
-            if (addons.isEmpty() && !busy) item { Text("No add-ons installed.", color = Palette.secondary) }
-            items(addons, key = { it.id }) { addon ->
-                AddonSettingsRow(addon, addon.id in enabledAddonIds, busy, managementAvailable,
-                    { toggle(addon.id, it) }, { removing = addon })
-            }
             if (compact && managementAvailable) item {
                 Button(onClick = { installing = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(Lucide.Plus, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Add an add-on", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            sourceIntegrations?.let { content -> item {
-                if (compact) Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                    HorizontalDivider(color = Palette.raised)
-                    Text("Advanced configuration", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)
-                    content()
-                } else content()
-            } }
+            if (!compact && managementAvailable) item { AddonInstallForm(address, busy, { install(address.text.toString().trim()) }) }
+            if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
+            error?.let { item { Text(it, color = Palette.danger) } }
+            if (addons.isNotEmpty()) item {
+                AddonFilterControls(query, { query = it }, provides, { provides = it }, counts, shown.size, addons.size)
+            }
+            if (addons.isNotEmpty() && !compact) item { Text("Installed", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) }
+            if (addons.isEmpty() && !busy) item { Text("No add-ons installed.", color = Palette.secondary) }
+            if (addons.isNotEmpty() && shown.isEmpty()) item { Text("No add-ons match.", color = Palette.secondary) }
+            items(shown, key = { it.id }) { addon ->
+                AddonSettingsRow(addon, addon.id in enabledAddonIds, busy, managementAvailable,
+                    { toggle(addon.id, it) }, { removing = addon })
+            }
         }
         if (installing) ModalBottomSheet(onDismissRequest = closeInstall, containerColor = Palette.surface,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {

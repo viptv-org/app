@@ -8,12 +8,19 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.LocalTvScale
+import org.viptv.app.components.PageRestore
+import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
@@ -24,11 +31,16 @@ import org.viptv.engine.wire.Card
 internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card) -> Unit, home: () -> Unit,
     lastWatched: Map<String, Long> = emptyMap(), snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
     query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
-    changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null) {
+    changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null,
+    remove: ((Card) -> Unit)? = null) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf(if (lastWatched.isEmpty()) "Date added" else "Last watched") }
     val selectedFilter = remember { FocusRequester() }
+    val removeFocus = remember { FocusRequester() }
+    // The bar below the grid acts on the card the viewer last stood on, so it survives the move onto the bar.
+    var lastFocused by remember { mutableStateOf<Card?>(null) }
+    var confirming by remember { mutableStateOf<Card?>(null) }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
     val visible = if (snapshot != null) cards else when (sort) {
         "A–Z" -> filtered.sortedBy { it.title.lowercase() }
@@ -36,13 +48,17 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
         "Last watched" -> filtered.sortedByDescending { lastWatched[it.identity.id] ?: Long.MIN_VALUE }
         else -> filtered
     }.distinctBy(::cardLookupKey)
+    val target = lastFocused?.takeIf { card -> visible.any { cardLookupKey(it) == cardLookupKey(card) } } ?: visible.firstOrNull()
     val grid = rememberLazyGridState()
+    val restore = rememberPageRestore("library")
+    val anchored = restore.landing(visible.size) { cardLookupKey(visible[it]) }
     val empty = libraryEmptyState(snapshot, query, available)
+    PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(visible.size) { cardLookupKey(visible[it]) } })
     AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         CompositionLocalProvider(LocalTvScale provides scale) {
-            Column(Modifier.fillMaxSize().focusProperties { onEnter = { selectedFilter.requestFocus() } }.focusGroup()
+            Column(Modifier.fillMaxSize().focusGroup()
                 .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
                 Box(Modifier.focusGroup().focusRequester(selectedFilter)) {
                     if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
@@ -59,19 +75,35 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                     TvAction(Modifier.height(64.dp * scale), scale, primary = true,
                         activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
                         contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
-                } else
+                } else {
                     LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
                         horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
-                        contentPadding = PaddingValues(bottom = 96.dp * scale)) {
+                        contentPadding = PaddingValues(bottom = 8.dp * scale)) {
                         itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                            val key = cardLookupKey(card)
                             TvCatalogCard(card, scale, true, Modifier.tvGridItem(index)
+                                .pageAnchor(restore, key, index, target = anchored == index)
                                 .focusProperties {
                                     if (index < 7) up = selectedFilter
                                     if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
-                                }, {}, open, focusedCaptions = true)
+                                }, { lastFocused = it }, { restore.mark(key, index); open(it) }, focusedCaptions = true)
                         }
                     }
+                    if (remove != null) Row(Modifier.fillMaxWidth().padding(bottom = 96.dp * scale),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                        Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
+                            fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        TvAction(Modifier.width(560.dp * scale).height(64.dp * scale), scale, requester = removeFocus,
+                            enabled = target != null, activate = { target?.let { confirming = it } },
+                            contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+                            Text(REMOVE_LIBRARY_LABEL, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
             }
         }
+    }
+    confirming?.let { card ->
+        ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
     }
 }
