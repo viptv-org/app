@@ -1,6 +1,7 @@
 package org.viptv.app.features.details
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalFocusManager
@@ -37,6 +39,9 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.Motion
+import org.viptv.app.components.motionSpec
+import org.viptv.app.components.rememberEnterLeaveMotion
 
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
@@ -62,7 +67,14 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
             val compact = maxWidth < 640.dp
             val gutter = if (compact) 20.dp else 44.dp
-            Surface(Modifier.widthIn(max = 800.dp).fillMaxWidth().fillMaxHeight().onPreviewKeyEvent { event ->
+            val motion = rememberEnterLeaveMotion(true,
+                enter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
+                leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+            Surface(Modifier.graphicsLayer {
+                    alpha = motion.progress
+                    val s = 0.98f + 0.02f * motion.progress
+                    scaleX = s; scaleY = s
+                }.widthIn(max = 800.dp).fillMaxWidth().fillMaxHeight().onPreviewKeyEvent { event ->
                     // One step per press: the key-down goes back and neither half reaches the page's Back as well.
                     if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) back(); true } else false
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },

@@ -22,11 +22,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 internal object Motion {
     const val response = 120
     const val arrive = 200
+    const val panel = 300
+    const val leave = 200
     const val card = .98f
     const val button = .97f
     const val row = .99f
     const val control = .94f
     val standard = CubicBezierEasing(.2f, 0f, 0f, 1f)
+    val exit = CubicBezierEasing(.3f, 0f, 1f, 1f)
 }
 
 @Composable
