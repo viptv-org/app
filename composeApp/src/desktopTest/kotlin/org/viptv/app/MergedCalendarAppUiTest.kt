@@ -105,7 +105,7 @@ class MergedCalendarAppUiTest {
         if (!details) return@scene
         val row = s.nodes().first { text(it).contains("Slow Horses") && it.config.contains(SemanticsActions.OnClick) }
         row.config[SemanticsActions.OnClick].action!!.invoke()
-        s.until("Details") { s.controller.state.value.screen == Screen.Details && s.controller.state.value.detail != null }
+        s.until("Details") { s.controller.state.value.screen == Screen.Details && s.controller.state.value.detail?.episodes?.isNotEmpty() == true }
         assertEquals(MergedCalendarWire.episodeId("Slow Horses", 5, 3), s.controller.state.value.calendarEpisode?.identity?.id)
         assertEquals(MergedCalendarWire.seriesId("Slow Horses"), s.controller.state.value.detail?.item?.identity?.id)
         s.until("season 5's episodes") { s.nodes().any { text(it).contains("Episode 5-3") } }
