@@ -28,7 +28,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     val devicePlayback = rememberDevicePlaybackState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
-    val manageAccount = remote != null && state.manageAccount
+    val manageAccount = state.manageAccount
     val ownsHousehold = manageAccount && state.accountOwner
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
