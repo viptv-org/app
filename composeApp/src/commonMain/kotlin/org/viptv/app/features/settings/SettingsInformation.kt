@@ -17,20 +17,11 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.updates.*
 
 @Composable
-internal fun SettingsInformation(section: String, local: Boolean, address: String?, changeConnection: () -> Unit) {
+internal fun SettingsInformation(section: String, local: Boolean, address: String?) {
     var license by remember { mutableStateOf<String?>(null) }
     org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(if (section == "About") "About VIPTV" else section, style = MaterialTheme.typography.headlineMedium)
         when (section) {
-            "Watch on TV" -> {
-                if (local || address == null) {
-                    Text("TV sign-in uses a server account. Sign in to the same server on both devices to share profiles and progress.", color = Palette.secondary)
-                    OutlinedButton(changeConnection) { Text("Change connection") }
-                } else {
-                    Text("On your TV, choose Sign in and Continue in browser. Open the page below on your phone or computer and enter the code shown on the TV.", color = Palette.secondary)
-                    ServerWebAction("Open TV sign-in", address + "device")
-                }
-            }
             "Help" -> {
                 HelpTopic("No titles or sources", "Enable the right integrations for your selected profile. Browsing and search integrations supply titles; stream integrations supply playable sources.")
                 HelpTopic("A source will not play", "Choose another available source. Source availability can change independently of VIPTV. Your viewing position is saved while you watch.")

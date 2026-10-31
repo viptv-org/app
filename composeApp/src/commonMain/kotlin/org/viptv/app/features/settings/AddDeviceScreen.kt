@@ -3,19 +3,33 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import org.viptv.app.components.OutlinedButton
 import org.viptv.app.connection.*
 import org.viptv.app.features.entry.*
 
 private enum class AddDeviceStep { Code, Confirm, Done, Denied }
 
 @Composable
-internal fun AddDeviceScreen(remote: RemoteConnection, compact: Boolean, linkedCode: String? = null, linkConsumed: () -> Unit = {}) {
+internal fun AddDeviceScreen(remote: RemoteConnection?, compact: Boolean, linkedCode: String? = null, linkConsumed: () -> Unit = {}, changeConnection: () -> Unit = {}) {
+    if (remote == null) {
+        org.viptv.app.components.TvFocusScroll(contentPadding = PaddingValues(vertical = if (compact) 16.dp else 32.dp)) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = if (compact) 16.dp else 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                DeviceTile()
+                DeviceTitle("Add a device", compact)
+                DeviceSubtitle("TV sign-in uses a server account. Sign in to the same server on both devices to share profiles and progress.", compact)
+                OutlinedButton(changeConnection) { Text("Change connection") }
+            }
+        }
+        return
+    }
     val approval = remember(remote) { RemoteDeviceApproval(remote) }
     val scope = rememberCoroutineScope()
     var step by remember { mutableStateOf(AddDeviceStep.Code) }

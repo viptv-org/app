@@ -34,7 +34,6 @@ class AddDeviceScreenTest {
         val probe = Probe(scene)
         try {
             probe.frames(12)
-            assertTrue("Sign in a TV or another device" in probe.texts())
             probe.click("Add a device")
             assertTrue("Add a device" in probe.texts(), probe.texts().toString())
             assertFalse("Open TV sign-in" in probe.texts(), "No browser hand-off on a signed-in phone")
@@ -69,7 +68,7 @@ class AddDeviceScreenTest {
         ViptvTheme {
             Surface(Modifier.fillMaxSize(), color = Palette.background) {
                 SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
-                    addDevice = { compact -> AddDeviceScreen(remote, compact) })
+                    addDevice = { compact, _ -> AddDeviceScreen(remote, compact) })
             }
         }
     }

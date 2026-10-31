@@ -228,7 +228,7 @@ class AppUpdateUiTest {
         platform.feed = feedJson(1300)
         Scene(390, 1200) {
             ViptvTheme { CompositionLocalProvider(LocalAppUpdater provides updater) {
-                SettingsInformation("About", local = false, address = "https://viptv.example/", changeConnection = {})
+                SettingsInformation("About", local = false, address = "https://viptv.example/")
             } }
         }.use { scene ->
             scene.render()

@@ -29,7 +29,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
     tvParentalMaturity: String? = null, tvParentalPinAvailable: Boolean = true,
     stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null,
-    addDevice: (@Composable (Boolean) -> Unit)? = null,
+    addDevice: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
     returnToPlayer: (() -> Unit)? = null,
     tvDevicePlayback: DevicePlaybackState? = null,
@@ -67,7 +67,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             else -> SettingsLayout.Tablet
         }
         val rows = availableRows(parental != null, stremioImport != null, preferences != null || sectionPreferences != null,
-            account != null, devices != null, addDevice != null, watchOnTv = layout == SettingsLayout.Tablet, information = true,
+            account != null, devices != null, addDevice != null, information = true,
             householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null,
             deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null)
         val root = initialSection.takeIf { returnToPlayer != null }
@@ -119,9 +119,9 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, back, backLabel) {
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()
                     }
-                    section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) }
-                    section in listOf("Help", "About", "Watch on TV") -> SettingsDetailContent(compact, back) {
-                        SettingsInformation(requireNotNull(section), local, serverAddress) { leaving = true }
+                    section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) { leaving = true } }
+                    section in listOf("Help", "About") -> SettingsDetailContent(compact, back) {
+                        SettingsInformation(requireNotNull(section), local, serverAddress)
                     }
                 }
             }
