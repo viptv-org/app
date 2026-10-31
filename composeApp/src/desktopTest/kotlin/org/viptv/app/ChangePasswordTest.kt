@@ -94,11 +94,15 @@ class ChangePasswordTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val asked = AtomicBoolean(false)
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
-            if (request.url.encodedPath == "/api/auth/password") {
-                assertEquals(HttpMethod.Get, request.method)
-                asked.set(true)
-                respond("{}", status, json)
-            } else respond("{}", HttpStatusCode.NotFound, json)
+            when (request.url.encodedPath) {
+                "/api/auth/password" -> {
+                    assertEquals(HttpMethod.Get, request.method)
+                    asked.set(true)
+                    respond("{}", status, json)
+                }
+                "/api/auth/me" -> respond(accountIdentityFixture(manageAccount = true), HttpStatusCode.OK, json)
+                else -> respond("{}", HttpStatusCode.NotFound, json)
+            }
         }) { configureTransport() }, browserMode = true)
         val controller = ApplicationController(scope, store)
         controller.connection = remote
@@ -127,20 +131,18 @@ class ChangePasswordTest {
     }
 
     @Test fun thePasswordRowFollowsTheManageAccountCapability() {
-        assertPasswordCapability("""{"manage_account":true}""", present = true)
-        assertPasswordCapability("""{"manage_account":false}""", present = false)
+        assertPasswordCapability(manageAccount = true, present = true)
+        assertPasswordCapability(manageAccount = false, present = false)
     }
 
-    private fun assertPasswordCapability(capabilities: String?, present: Boolean) {
+    private fun assertPasswordCapability(manageAccount: Boolean, present: Boolean) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val meAsked = AtomicBoolean(false)
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             when (request.url.encodedPath) {
                 "/api/auth/me" -> {
                     meAsked.set(true)
-                    val body = """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"owner"}}""" +
-                        (capabilities?.let { ""","capabilities":$it""" } ?: "") + "}"
-                    respond(body, HttpStatusCode.OK, json)
+                    respond(accountIdentityFixture(manageAccount), HttpStatusCode.OK, json)
                 }
                 "/api/auth/password" -> respond("{}", HttpStatusCode.MethodNotAllowed, json)
                 else -> respond("{}", HttpStatusCode.NotFound, json)
@@ -159,6 +161,7 @@ class ChangePasswordTest {
         val probe = Probe(scene)
         try {
             if (present) {
+                probe.await("the account capability") { meAsked.get() }
                 probe.await("the Password row") { probe.hasPrefix("Password") }
                 assertTrue(probe.hasPrefix("Password"), "a capable session offers the password row")
             } else {
@@ -168,6 +171,9 @@ class ChangePasswordTest {
             }
         } finally { scene.close(); scope.cancel(); remote.close() }
     }
+
+    private fun accountIdentityFixture(manageAccount: Boolean) =
+        """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"owner"},"capabilities":{"manage_account":$manageAccount}}"""
 
     @Test fun aWrongCurrentPasswordClearsThatFieldAndKeepsTheNewOne() {
         val bodies = mutableListOf<JsonObject>()
