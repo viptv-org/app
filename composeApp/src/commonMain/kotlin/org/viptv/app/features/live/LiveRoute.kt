@@ -20,6 +20,17 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 LiveProgram(program.id, program.title, clock.minute(program.start_millis), clock.minute(program.end_millis), program.description)
             })
     }
+    val filtered = state.liveFavoritesOnly || state.liveQuery.group_id != null
+    val spread = liveSpread(state.livePage, state.busy, filtered)
+    if (spread == LiveSpread.NoSource) {
+        LiveNoSourcePage(television, state.accountAccess, state.localMode, state.liveSetupReturnFocus,
+            setUp = { controller.openLiveSetup(LiveSourceIntegrationsSection) },
+            addons = { controller.openLiveSetup(LiveAddonsSection) },
+            requestAccess = controller::loadLiveAccountAccess,
+            focusTaken = controller::consumeLiveSetupFocus)
+        return
+    }
+    if (spread == LiveSpread.NoChannels) LaunchedEffect(Unit) { controller.loadLiveAccountAccess() }
     CompositionLocalProvider(LocalLiveClock provides clock) {
         Box(Modifier.fillMaxSize()) {
             val empty = channels.isEmpty()
@@ -35,13 +46,16 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 guide?.availability == "TemporarilyUnavailable" -> controller::retryLiveGuide
                 else -> null
             }
+            val mayManageSources = state.localMode || state.accountAccess?.managesSources == true
             LiveScreen(channels, television, if (channels.any { it.programs.isNotEmpty() }) 0 else null, clock.nowMinute, { controller.playLive(it.id) }, { controller.navigate(Screen.Settings) },
                 groupLabels = state.livePage?.groups.orEmpty().associate { it.id to it.label }, groupChanged = controller::filterLive,
                 guideRequested = { controller.showLiveGuide(it.id) }, more = if (state.livePage?.next_cursor != null && (!state.liveFavoritesOnly || state.liveFavorites.any { id -> state.livePage.channels.none { it.id == id } })) controller::moreLive else null, busy = state.busy,
                 favoriteChanged = if (state.liveFavoritesAvailable) ({ controller.toggleLiveFavorite(it.id) }) else null,
                 favoritesOnly = state.liveFavoritesOnly, favoritesFilter = if (state.liveFavoritesAvailable) controller::filterLiveFavorites else null,
                 sources = state.livePage?.connections.orEmpty().filter { it.enabled }.associate { it.id to it.name }, selectedSource = state.liveQuery.connection_id,
-                sourceChanged = controller::selectLiveConnection, emptyReason = emptyReason,
+                sourceChanged = controller::selectLiveConnection, emptyReason = emptyReason, spread = spread,
+                noChannelsReason = emptyReason,
+                noChannelsRetry = retry, sourceIntegrations = if (mayManageSources) ({ controller.openLiveSetup(LiveSourceIntegrationsSection) }) else null,
                 statusNotice = notice, noticeRetry = retry)
             if (state.busy || state.liveGuideLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         }
