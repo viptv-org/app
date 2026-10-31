@@ -50,15 +50,17 @@ class SettingsBackTest {
         override fun close() { scene.close(); scope.cancel() }
     }
 
-    private fun settings(navBack: List<Screen> = listOf(Screen.Home), localMode: Boolean = true) =
-        ApplicationState(screen = Screen.Settings, navBack = navBack, selectedProfile = "1", localMode = localMode)
+    private fun settings(navBack: List<Screen> = listOf(Screen.Home), localMode: Boolean = true,
+        manageAccount: Boolean = false, accountOwner: Boolean = false) =
+        ApplicationState(screen = Screen.Settings, navBack = navBack, selectedProfile = "1", localMode = localMode,
+            manageAccount = manageAccount, accountOwner = accountOwner)
 
     @Test fun backFromEachPhoneSubPageReturnsToTheSettingsList() = Harness(browser = false, settings()).use { ui ->
         assertBackFromEachRow(ui, listOf("Add-ons", "Playback", "Subtitles & audio", "Source integrations", "Parental controls", "Help", "About", "Watch on TV"))
     }
 
     @Test fun backFromEachServerSubPageOfAPhoneWidthBrowserReturnsToTheSettingsList() =
-        Harness(browser = true, settings(localMode = false), height = 1400).use { ui ->
+        Harness(browser = true, settings(localMode = false, manageAccount = true, accountOwner = true), height = 1400).use { ui ->
             assertBackFromEachRow(ui, listOf("Devices & sessions", stremioImportSection, "Watch on TV", "Add-ons", "Household PIN", "Source integrations", "Parental controls"))
         }
 

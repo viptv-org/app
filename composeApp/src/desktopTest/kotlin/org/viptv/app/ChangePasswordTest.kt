@@ -126,6 +126,49 @@ class ChangePasswordTest {
         } finally { scene.close(); scope.cancel(); remote.close() }
     }
 
+    @Test fun thePasswordRowFollowsTheManageAccountCapability() {
+        assertPasswordCapability("""{"manage_account":true}""", present = true)
+        assertPasswordCapability("""{"manage_account":false}""", present = false)
+    }
+
+    private fun assertPasswordCapability(capabilities: String?, present: Boolean) {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val meAsked = AtomicBoolean(false)
+        val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/api/auth/me" -> {
+                    meAsked.set(true)
+                    val body = """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"owner"}}""" +
+                        (capabilities?.let { ""","capabilities":$it""" } ?: "") + "}"
+                    respond(body, HttpStatusCode.OK, json)
+                }
+                "/api/auth/password" -> respond("{}", HttpStatusCode.MethodNotAllowed, json)
+                else -> respond("{}", HttpStatusCode.NotFound, json)
+            }
+        }) { configureTransport() }, browserMode = false)
+        val controller = ApplicationController(scope, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1",
+            profiles = listOf(Profile("1", "Viewer", null)))
+        val scene = ImageComposeScene(390, 1600, Density(1f)) {
+            val state by controller.state.collectAsState()
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                SettingsRoute(state, controller, browser = false, television = false, compact = true)
+            } }
+        }
+        val probe = Probe(scene)
+        try {
+            if (present) {
+                probe.await("the Password row") { probe.hasPrefix("Password") }
+                assertTrue(probe.hasPrefix("Password"), "a capable session offers the password row")
+            } else {
+                probe.await("the account capability") { meAsked.get() }
+                probe.frames()
+                assertFalse(probe.hasPrefix("Password"), "a session without the capability hides the password row")
+            }
+        } finally { scene.close(); scope.cancel(); remote.close() }
+    }
+
     @Test fun aWrongCurrentPasswordClearsThatFieldAndKeepsTheNewOne() {
         val bodies = mutableListOf<JsonObject>()
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->

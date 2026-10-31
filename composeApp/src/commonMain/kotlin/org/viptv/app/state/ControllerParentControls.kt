@@ -146,5 +146,6 @@ internal suspend fun ApplicationController.invalidatePolicyContent() {
         profiles = current.profiles, profileManagement = current.profileManagement,
         parentSettings = current.parentSettings, parentControls = current.parentControls,
         parentTitles = current.parentTitles, parentSettingsSaved = current.parentSettingsSaved,
-        settingsPage = current.settingsPage, busy = true, policyRefreshNeeded = true)
+        settingsPage = current.settingsPage, busy = true, policyRefreshNeeded = true,
+        manageAccount = current.manageAccount, accountOwner = current.accountOwner)
 }

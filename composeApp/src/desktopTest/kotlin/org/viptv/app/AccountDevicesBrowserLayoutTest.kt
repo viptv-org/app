@@ -57,7 +57,7 @@ class AccountDevicesBrowserLayoutTest {
                     SettingsScreen(false,emptyList(),emptySet(),false,null,null,{}, { _, _ -> },{}, {},{},
                         initialSection = "Devices",addonsRequested = addonsRequested,devices = { compact, back ->
                             AccountDevicesScreen(snapshot,false,null,{}, {},{},compact,if (compact) back else null)
-                        })
+                        },browser = true)
                 }
             }
         }

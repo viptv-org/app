@@ -190,6 +190,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
     mutable.value = ApplicationState(screen = screen ?: if (value.selected == null) Screen.Profiles else Screen.Home, busy = busy,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
+        manageAccount = connection?.accountManagementEnabled == true, accountOwner = connection?.accountOwner == true,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
     adoptContinuation(value.continuation)
     discardReplacedStremioImport()

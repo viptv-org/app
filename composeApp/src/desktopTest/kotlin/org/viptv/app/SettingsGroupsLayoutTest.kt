@@ -105,7 +105,7 @@ class SettingsGroupsLayoutTest {
                 sourceIntegrations = { _, _, _ -> Text("source integrations page") },
                 devices = if (layout.devices) ({ _, _ -> }) else null,
                 linkedServices = { _ -> Text("linked services page") },
-                desktop = layout.desktop)
+                desktop = layout.desktop, browser = layout.web)
         } }
     }
 
