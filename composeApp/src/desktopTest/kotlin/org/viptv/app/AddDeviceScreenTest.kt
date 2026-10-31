@@ -47,6 +47,19 @@ class AddDeviceScreenTest {
         } finally { scene.close(); remote.close() }
     }
 
+    @Test fun localModeShowsTheServerNeededNoteAndChangeConnection() {
+        val scene = ImageComposeScene(822, 1720, Density(2f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) { AddDeviceScreen(null, compact = true) } }
+        }
+        val probe = Probe(scene)
+        try {
+            probe.frames(12)
+            assertTrue("TV sign-in uses a server account. Sign in to the same server on both devices to share profiles and progress." in probe.texts(), probe.texts().toString())
+            assertTrue("Change connection" in probe.texts(), probe.texts().toString())
+            assertFalse("Continue" in probe.texts(), "No code entry in local mode")
+        } finally { scene.close() }
+    }
+
     @Test fun aCodeEnteredOnThePhoneLandsOnTheApprovalStep() {
         val asked = mutableListOf<String>()
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
