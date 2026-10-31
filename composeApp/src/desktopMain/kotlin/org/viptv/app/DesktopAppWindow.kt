@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.Window
@@ -21,6 +22,7 @@ import org.viptv.app.theme.Palette
 internal fun DesktopAppWindow(onCloseRequest: () -> Unit, title: String, state: WindowState, framed: Boolean,
     onPreviewKeyEvent: (KeyEvent) -> Boolean = { false }, content: @Composable FrameWindowScope.() -> Unit) {
     Window(onCloseRequest = onCloseRequest, title = title, state = state, undecorated = true,
+        icon = painterResource("viptv-app-icon.png"),
         onPreviewKeyEvent = onPreviewKeyEvent) {
         // A supporting window sits behind the pointer until it is activated; the activating press is consumed before Compose sees it.
         LaunchedEffect(window) { window.toFront(); window.requestFocus() }
