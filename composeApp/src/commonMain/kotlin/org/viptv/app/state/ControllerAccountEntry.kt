@@ -19,7 +19,7 @@ private fun ApplicationController.accountEntry(origin: String, username: String,
         val remote = connection ?: browserOrigin()?.let {
             RemoteConnection(origin, sessionStore = sessionStore).also { created -> connection = created }
         } ?: throw LocalFailure("Create or recover accounts through your server’s web sign-in page.")
-        if (!remote.accountManagementEnabled) throw LocalFailure("Create or recover accounts through your server’s web sign-in page.")
+        if (!remote.browserSession) throw LocalFailure("Create or recover accounts through your server’s web sign-in page.")
         val owner = generation
         try {
             val kit = if (code == null) remote.registerAccount(username, requireNotNull(name), password)

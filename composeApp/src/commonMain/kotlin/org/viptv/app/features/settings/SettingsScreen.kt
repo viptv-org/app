@@ -20,7 +20,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     tvPreferences: TvSettingsPreferences? = null, changeTvPreferences: ((TvSettingsPreferences) -> Unit)? = null,
     serverAddress: String? = null,
     tvAccount: TvAccountInfo? = null, accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
-    householdPin: (@Composable () -> Unit)? = null, deleteAccount: (@Composable (() -> Unit) -> Unit)? = null,
+    householdPin: (@Composable () -> Unit)? = null, accountAccessRequested: (() -> Unit)? = null,
+    deleteAccount: (@Composable (() -> Unit) -> Unit)? = null,
     parentalBack: (() -> Unit)? = null, parental: (@Composable () -> Unit)? = null, tvParental: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
     preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
@@ -35,7 +36,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     profileTitles: (@Composable (Boolean) -> Unit)? = null, profileTitlesBack: (() -> Unit)? = null,
     linkedServices: (@Composable (Boolean) -> Unit)? = null,
     tvProfilePage: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
-    tvProfileTitles: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null) {
+    tvProfileTitles: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
+    browser: Boolean = false) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
             profilePage = tvProfilePage, profileTitles = tvProfileTitles)
@@ -51,11 +53,12 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     var leaving by remember { mutableStateOf(initialLeave) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var addonsLoaded by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { accountAccessRequested?.invoke() }
     LaunchedEffect(Unit) { addonsRequested?.invoke(); addonsLoaded = true }
     LaunchedEffect(section) { if (section == "Add-ons" && addonsLoaded) addonsRequested?.invoke() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
-        val webAccount = devices != null && !compact
+        val webAccount = browser && !compact && !local
         val layout = when {
             compact -> SettingsLayout.Phone
             webAccount -> SettingsLayout.Web
