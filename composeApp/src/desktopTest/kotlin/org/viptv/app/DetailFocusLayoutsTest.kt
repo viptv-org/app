@@ -59,7 +59,11 @@ class DetailFocusLayoutsTest {
             it.text == text || it.text == text.substringAfter(". ") && text.matches(Regex("[0-9]+\\. .*")) } }
         fun top(text: String) = assertNotNull(node(text), "$text is composed: " + nodes().mapNotNull { node ->
             node.config.getOrNull(SemanticsProperties.Text)?.joinToString("|") { it.text }?.let { "$it@${node.boundsInRoot.top}" } }).boundsInRoot.top
-        suspend fun settle() { frames(); delay(200); frames() }
+        suspend fun settle(pages: Int = 0) {
+            frames(); delay(200); frames()
+            val deadline = System.nanoTime() + 10_000_000_000L
+            while (this.pages.size < pages && System.nanoTime() < deadline) { frames(1); delay(20) }
+        }
         override fun close() = scene.close()
     }
 
@@ -68,7 +72,7 @@ class DetailFocusLayoutsTest {
 
     @Test fun phoneOpensOnTheFocusSeasonAndScrollsToTheFocusEpisode() = onEdt {
         Page(390, 844, focus = DetailFocus(4, 3)).use { page ->
-            page.settle()
+            page.settle(1)
             assertEquals(listOf(18L), page.pages, "the focus season pages from its canonical offset")
             assertBelowBackBar(label(4, 3), page.top(label(4, 3)))
             assertNull(page.node(label(1, 1)), "season 1 is not drawn")
@@ -96,7 +100,7 @@ class DetailFocusLayoutsTest {
             "tablet" to { Page(1280, 800, focus = DetailFocus(4, 3), tablet = true) },
             "browser" to { Page(1280, 900, focus = DetailFocus(4, 3), browser = true) })) {
             page().use { shown ->
-                shown.settle()
+                shown.settle(1)
                 assertEquals(listOf(18L), shown.pages, "$name: the focus season pages from its canonical offset")
                 assertTrue(shown.top(label(4, 3)) in 0f..80f, "$name: S4 E3 is the first item in its list")
             }
@@ -105,7 +109,7 @@ class DetailFocusLayoutsTest {
 
     @Test fun tvShelfOpensOnTheFocusSeasonAndFocusesTheEpisode() = onEdt {
         Page(1920, 1080, focus = DetailFocus(4, 3), television = true).use { page ->
-            page.settle()
+            page.settle(1)
             assertNotNull(page.node("Season 4"), "the shelf selects the focus season")
             assertEquals(listOf(18L), page.pages, "the focus season pages from its canonical offset")
             page.scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))

@@ -2,6 +2,9 @@ package org.viptv.app
 
 import io.ktor.http.Url
 import io.ktor.http.encodeURLParameter
+import coil3.PlatformContext
+import coil3.request.Options
+import org.viptv.app.images.DriveLetterFileUriMapper
 import org.viptv.app.images.blurredArtwork
 import org.viptv.app.images.publicArtworkUrl
 import org.viptv.app.images.sizedArtwork
@@ -23,6 +26,14 @@ class PublicArtworkTest {
             "https://custom-addon.example/logo/token", "https://images.metahub.space/logo?token=private",
             "https://user:password@images.metahub.space/logo", "https://images.metahub.space:8443/logo",
             "https://images.metahub.space.evil.example/logo").forEach { assertEquals(it, publicArtworkUrl(it)) }
+    }
+
+    @Test fun windowsDriveLetterFileUrisGainTheEmptyAuthorityCoilNeeds() {
+        val mapper = DriveLetterFileUriMapper()
+        val options = Options(PlatformContext.INSTANCE)
+        assertEquals("file:///D:/a/app/art.jpg", mapper.map("file:/D:/a/app/art.jpg", options).toString())
+        listOf("file:///D:/a/app/art.jpg", "file:/tmp/art.jpg", "file:///tmp/art.jpg", "https://host.example/a.jpg", "/tmp/art.jpg")
+            .forEach { assertNull(mapper.map(it, options), it) }
     }
 
     @Test fun serverProxiedArtIsSizedForTheSlot() {

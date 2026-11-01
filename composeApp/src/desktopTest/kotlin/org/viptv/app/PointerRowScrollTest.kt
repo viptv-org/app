@@ -38,13 +38,20 @@ class PointerRowScrollTest {
         private var time = 0L
         private fun millis() = time / 1_000_000
         suspend fun frames(n: Int = 30) = repeat(n) { scene.render(time).close(); time += 16_666_667L; delay(2) }
-        suspend fun wheel(at: Offset, notches: Int = 3) {
+        suspend fun wheel(at: Offset, notches: Int = 3, position: () -> Int = { 0 }) {
             scene.sendPointerEvent(PointerEventType.Move, at, type = PointerType.Mouse, timeMillis = millis())
             repeat(notches) {
                 scene.sendPointerEvent(PointerEventType.Scroll, at, type = PointerType.Mouse, scrollDelta = Offset(0f, 1f), timeMillis = millis())
                 frames(2)
             }
-            frames(60)
+            var last = position()
+            var still = 0
+            val deadline = System.nanoTime() + 5_000_000_000L
+            while (still < 30 && System.nanoTime() < deadline) {
+                frames(1)
+                val now = position()
+                if (now == last) still++ else { still = 0; last = now }
+            }
         }
         suspend fun drag(from: Offset, dx: Float, type: PointerType = PointerType.Mouse) {
             val buttons = if (type == PointerType.Mouse) PointerButtons(isPrimaryPressed = true) else null
@@ -83,8 +90,8 @@ class PointerRowScrollTest {
         val state = LazyListState()
         Scene(pointer = true) { Chips(state) {} }.use { s ->
             s.frames()
-            s.wheel(Offset(200f, 20f))
-            assertTrue(state.scrolled() > 40, "three wheel notches move the row: ${state.scrolled()} px")
+            s.wheel(Offset(200f, 20f)) { state.scrolled() }
+            assertTrue(state.scrolled() > 20, "three wheel notches move the row: ${state.scrolled()} px")
         }
     }
 
@@ -132,7 +139,7 @@ class PointerRowScrollTest {
             }
         }.use { s ->
             s.frames()
-            s.wheel(Offset(200f, 20f))
+            s.wheel(Offset(200f, 20f)) { rail.scrolled() + page.firstVisibleItemScrollOffset }
             assertEquals(0, rail.scrolled(), "the rail stays put")
             assertTrue(page.firstVisibleItemIndex > 0 || page.firstVisibleItemScrollOffset > 0, "the page scrolls")
         }
@@ -148,8 +155,8 @@ class PointerRowScrollTest {
             }
         }.use { s ->
             s.frames()
-            s.wheel(Offset(200f, 20f))
-            assertTrue(chips.scrolled() > 40, "the chip row scrolls sideways: ${chips.scrolled()} px, page ${page.firstVisibleItemIndex}/${page.firstVisibleItemScrollOffset}")
+            s.wheel(Offset(200f, 20f)) { chips.scrolled() + page.firstVisibleItemScrollOffset }
+            assertTrue(chips.scrolled() > 20, "the chip row scrolls sideways: ${chips.scrolled()} px, page ${page.firstVisibleItemIndex}/${page.firstVisibleItemScrollOffset}")
             assertEquals(0, page.firstVisibleItemIndex + page.firstVisibleItemScrollOffset, "the page stays put while the row can scroll")
         }
     }

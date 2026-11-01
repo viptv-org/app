@@ -25,6 +25,16 @@ internal fun LiveEmptyArtwork(wide: Boolean, modifier: Modifier = Modifier) {
     }
 }
 
+// The band ends on the page ground, so its scrim has to reach the background at its bottom edge.
+@Composable
+internal fun LiveEmptyPhoneArt(modifier: Modifier = Modifier) {
+    Box(modifier) {
+        AsyncImage(Res.getUri(LiveEmptyTallArt), null, Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop, alignment = Alignment.BottomCenter)
+        Box(Modifier.fillMaxSize().background(phoneScrim))
+    }
+}
+
 private val wideScrim = Brush.horizontalGradient(
     0f to Palette.background.copy(alpha = 0.92f),
     0.45f to Palette.background.copy(alpha = 0.6f),
@@ -34,3 +44,9 @@ private val tallScrim = Brush.verticalGradient(
     0f to Palette.background.copy(alpha = 0.0f),
     0.4f to Palette.background.copy(alpha = 0.35f),
     1f to Palette.background.copy(alpha = 0.9f))
+
+private val phoneScrim = Brush.verticalGradient(
+    0f to Palette.background.copy(alpha = 0.0f),
+    0.45f to Palette.background.copy(alpha = 0.3f),
+    0.8f to Palette.background.copy(alpha = 0.86f),
+    1f to Palette.background)

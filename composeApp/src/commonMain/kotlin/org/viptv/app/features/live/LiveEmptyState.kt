@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -24,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.pageBottomClearance
+import org.viptv.app.components.pageGutter
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.connection.AccountAccess
 import org.viptv.app.connection.LiveCatalogPage
@@ -116,6 +119,10 @@ internal class LiveEmptyMetrics(
     }
 }
 
+internal const val LivePhoneArtTag = "live-empty-phone-art"
+
+private val LivePhoneArtToCopy = 20.dp
+
 @Composable
 internal fun LiveNoSourcePage(television: Boolean, access: AccountAccess?, local: Boolean, returnFocus: Boolean,
     setUp: () -> Unit, addons: () -> Unit, requestAccess: () -> Unit, focusTaken: () -> Unit) {
@@ -138,6 +145,7 @@ internal fun LiveNoSourcePage(television: Boolean, access: AccountAccess?, local
         }
         val metrics = if (television) LiveEmptyMetrics.television(scale) else LiveEmptyMetrics.wide(compact)
         val full = if (compact) Modifier.fillMaxWidth() else Modifier
+        val gutter = pageGutter(television = false, tablet = false, browser = false, maxWidth = maxWidth)
         val text: @Composable ColumnScope.() -> Unit = {
             Text(LiveEyebrow, color = Palette.secondary, fontSize = metrics.eyebrow, lineHeight = metrics.eyebrowLine,
                 letterSpacing = metrics.eyebrowTracking, fontWeight = FontWeight.Bold)
@@ -159,12 +167,14 @@ internal fun LiveNoSourcePage(television: Boolean, access: AccountAccess?, local
             }
         }
         Box(Modifier.fillMaxSize().focusGroup()) {
-            LiveEmptyArtwork(television || !compact)
+            if (television || !compact) LiveEmptyArtwork(true)
             when {
                 television -> Column(Modifier.align(Alignment.CenterStart).padding(start = 96.dp * scale).width(840.dp * scale),
                     verticalArrangement = Arrangement.Center, content = text)
-                compact -> Column(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, end = 16.dp, bottom = 112.dp)
-                    .fillMaxWidth(), content = text)
+                compact -> Column(Modifier.fillMaxSize().pageBottomClearance()) {
+                    LiveEmptyPhoneArt(Modifier.fillMaxWidth().weight(1f).testTag(LivePhoneArtTag))
+                    Column(Modifier.fillMaxWidth().padding(start = gutter, end = gutter, top = LivePhoneArtToCopy), content = text)
+                }
                 else -> Column(Modifier.align(Alignment.CenterStart).padding(start = 40.dp).widthIn(max = 620.dp), content = text)
             }
         }

@@ -118,7 +118,7 @@ class PointerAffordanceTest {
         val problems = mutableListOf<String>()
         roots.flatMap { root -> root.walkTopDown().filter { it.extension == "kt" }.toList() }.forEach { file ->
             if (file.name in setOf("PointerAffordance.kt", "PointerMaterial.kt")) return@forEach
-            val text = file.readText()
+            val text = file.readText().replace("\r\n", "\n")
             raw.findAll(text).forEach { problems += "${file.path}: raw .${it.groupValues[1]} — use pointer${it.groupValues[1].replaceFirstChar(Char::uppercase)}" }
             if (text.contains("package org.viptv.app.components\n")) return@forEach
             val used = material.filter { Regex("""(?<![\w.])$it\(""").containsMatchIn(text) && !text.contains("fun $it(") } +

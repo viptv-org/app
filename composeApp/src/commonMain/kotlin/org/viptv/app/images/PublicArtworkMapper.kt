@@ -13,6 +13,14 @@ internal class PublicArtworkMapper : Mapper<String, Uri> {
         publicArtworkUrl(data).takeIf { it != data }?.toUri()
 }
 
+// Compose Resources and File.toURI() write Windows paths as file:/C:/..., which Coil has no fetcher for; file:///C:/... works.
+internal class DriveLetterFileUriMapper : Mapper<String, Uri> {
+    override fun map(data: String, options: Options): Uri? =
+        if (driveLetterFileUri.containsMatchIn(data)) data.replaceFirst("file:/", "file:///").toUri() else null
+}
+
+private val driveLetterFileUri = Regex("^file:/[A-Za-z]:/")
+
 internal fun publicArtworkUrl(value: String): String {
     if (!isPublicArtwork(value)) return value
     // No background or flatten option: the caller owns the background color.
