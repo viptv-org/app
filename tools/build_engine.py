@@ -23,7 +23,8 @@ env["CARGO_TARGET_DIR"] = str(root / "build/rust")
 env.setdefault("CARGO_BUILD_JOBS", "2")
 env.setdefault("CARGO_PROFILE_DEV_DEBUG", "0")
 env.setdefault("CARGO_INCREMENTAL", "0")
-build = ["build", "--release", "--manifest-path", str(core / "Cargo.toml"), "--locked", "-p", "viptv-core", "--features", "vsources-runtime,live-runtime", "--lib"]
+features = "vsources-runtime,live-runtime" + (",os-secrets" if args.target == "desktop" else "")
+build = ["build", "--release", "--manifest-path", str(core / "Cargo.toml"), "--locked", "-p", "viptv-core", "--features", features, "--lib"]
 if args.target == "android":
     sdk = env.get("ANDROID_SDK_ROOT") or env.get("ANDROID_HOME")
     properties = root / "local.properties"
