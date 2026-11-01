@@ -22,13 +22,14 @@ import org.viptv.app.components.IconButton
 @Composable
 internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, notice: String?,
     profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: (() -> Unit)? = null,
-    householdPin: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null, password: (() -> Unit)? = null, deleteAccount: (() -> Unit)? = null,
+    householdPin: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null, xtreamConnections: (() -> Unit)? = null, password: (() -> Unit)? = null, deleteAccount: (() -> Unit)? = null,
     profilePage: (() -> Unit)? = null, linkedServices: (() -> Unit)? = null,
     listState: LazyListState = rememberLazyListState()) {
     val available = availableRows(parental != null, stremioImport != null, preferences != null, account != null,
         devices != null, addDevice != null, information = information != null,
         householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null,
-        deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null)
+        deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null,
+        xtreamConnections = xtreamConnections != null)
     val open: (SettingsRow) -> Unit = { row ->
         when (row) {
             SettingsRow.Profile -> profilePage?.invoke()
@@ -44,6 +45,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             SettingsRow.AddDevice -> addDevice?.invoke()
             SettingsRow.Addons -> addons()
             SettingsRow.SourceIntegrations -> sourceIntegrations?.invoke()
+            SettingsRow.XtreamConnections -> xtreamConnections?.invoke()
             SettingsRow.SignOut -> leave()
             SettingsRow.DeleteAccount -> deleteAccount?.invoke()
             else -> Unit
