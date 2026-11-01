@@ -41,7 +41,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     profilePage: (@Composable (FocusRequester, FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
     profileTitles: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     tvDevices: (@Composable (FocusRequester, FocusRequester, Float, () -> Unit) -> Unit)? = null,
-    xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null) {
+    xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
+    vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -116,6 +117,9 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             else if (section == TvSettingsSection.Xtream && xtream != null) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 xtream(first, sidebar, scale)
             }
+            else if (section == TvSettingsSection.VodMatches && vodMatches != null) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+                vodMatches(first, sidebar, scale)
+            }
             else org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
                 else if (missingPreferences) TvPreferencesMissing(section, busy, scale, first, sidebar, retryPreferences)
@@ -156,6 +160,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     TvSettingsSection.About -> TvAboutSettings(local, dashboardAddress, profile?.name, addons.size, enabled.size,
                         error, notice, scale, first, sidebar, openDashboard = accountDashboard)
                     TvSettingsSection.Profile -> profilePage?.invoke(first, sidebar, scale, { chosen -> section = chosen })
+                    TvSettingsSection.VodMatches -> { }
                     TvSettingsSection.SwitchProfile -> { }
                 }
                 if (preferenceSection && preferencesError != null && !failedPreferences) {

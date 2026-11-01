@@ -14,6 +14,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         }
     }
     if (screen != Screen.Settings && mutable.value.parentTitles != null) closeParentTitles()
+    if (screen != Screen.Settings && mutable.value.vodMatches != null) closeVodMatches()
     if (mutable.value.screen == Screen.Calendar && screen != Screen.Calendar) {
         generation++
         job?.cancel()
