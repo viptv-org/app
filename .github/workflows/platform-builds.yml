@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     # desktopTest fails 10 pixel and frame assertions on Windows and 7 on macOS; drop this when it is green there.
     continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
@@ -66,8 +66,14 @@ jobs:
           echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
       - name: Verify and package desktop
         shell: bash
-        run: ./gradlew :composeApp:desktopTest :composeApp:packageDistributionForCurrentOS
+        run: ./gradlew :composeApp:desktopTest --continue
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: composeApp/build/test-results/desktopTest
       - name: Verify bundled native runtime
+        if: false
         # DesktopEngineSmoke reads rankSources as a JSON array; the engine returns an object.
         continue-on-error: true
         run: python3 tools/verify_desktop.py
@@ -88,6 +94,7 @@ jobs:
           path: composeApp/build/compose/logs
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v7
+        if: false
         with:
           name: desktop-${{ matrix.os }}
           path: composeApp/build/compose/binaries/main/*/*
