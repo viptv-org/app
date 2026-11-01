@@ -181,14 +181,15 @@ class LibraryCollapsingHeaderUiTest {
             assertTrue(web.historyShown())
             val filters = web.top("Type: All")
             web.capture("browser-top")
-            web.wheel(9)
+            var settled = Float.NaN
+            repeat(40) { val bar = web.top("Type: All"); if (web.historyShown() || bar != settled) { settled = bar; web.wheel(3) } }
             assertFalse(web.historyShown(), "History scrolled away")
             val pinned = web.top("Type: All")
             assertTrue(pinned < filters, "the controls take the title's place: $pinned < $filters")
             web.capture("browser-scrolled")
             web.wheel(4)
             assertEquals(pinned, web.top("Type: All"), "the filter bar stays pinned while the grid scrolls")
-            web.wheel(-30)
+            repeat(40) { if (!web.historyShown() || web.top("Type: All") != filters) web.wheel(-3) }
             web.await("History returns") { web.historyShown() }
             assertEquals(filters, web.top("Type: All"))
         } finally { web.close() }

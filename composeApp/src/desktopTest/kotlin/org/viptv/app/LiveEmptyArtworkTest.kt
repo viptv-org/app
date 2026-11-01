@@ -12,6 +12,7 @@ import org.junit.Rule
 import org.viptv.app.features.live.LiveEmptyArtwork
 import org.viptv.app.features.live.LiveEmptyTallArt
 import org.viptv.app.features.live.LiveEmptyWideArt
+import org.viptv.app.images.ConfigureImageLoading
 import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -58,22 +59,29 @@ class LiveEmptyArtworkTest {
 
     private fun scene(width: Int, height: Int, wide: Boolean) = ImageComposeScene(width, height, Density(1f)) {
         ViptvTheme(false) {
-            Surface(Modifier.fillMaxSize(), color = Palette.background) { LiveEmptyArtwork(wide, Modifier.fillMaxSize()) }
+            Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                ConfigureImageLoading()
+                LiveEmptyArtwork(wide, Modifier.fillMaxSize())
+            }
         }
     }
 
     private fun render(scene: ImageComposeScene, name: String): IntArray {
-        repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
-        return scene.render(1_000_000_000L).use { image ->
-            System.getenv("VIPTV_LIVE_CAPTURE_DIR")?.let { path ->
+        var time = 0L
+        fun frame() = scene.render(time).also { time += 16_666_667L }
+        fun settle(frames: Int) = repeat(frames) { frame().close(); Thread.sleep(3) }
+        fun pixels(capture: Boolean): IntArray = frame().use { image ->
+            if (capture) System.getenv("VIPTV_LIVE_CAPTURE_DIR")?.let { path ->
                 File(path).mkdirs()
                 image.encodeToData()!!.use { File(path, "$name.png").writeBytes(it.bytes) }
             }
             val width = image.width
-            Bitmap.makeFromImage(image).use { bitmap ->
-                IntArray(width * image.height) { index -> bitmap.getColor(index % width, index / width) }
-            }
+            Bitmap.makeFromImage(image).use { bitmap -> IntArray(width * image.height) { index -> bitmap.getColor(index % width, index / width) } }
         }
+        settle(20)
+        val deadline = System.nanoTime() + 10_000_000_000L
+        while (distinct(pixels(capture = false)) <= 400 && System.nanoTime() < deadline) settle(5)
+        return pixels(capture = true)
     }
 
     private fun distinct(pixels: IntArray) = pixels.toSet().size

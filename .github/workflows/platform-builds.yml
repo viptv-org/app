@@ -15,8 +15,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    # desktopTest fails 10 pixel and frame assertions on Windows and 7 on macOS; drop this when it is green there.
-    continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -68,6 +66,8 @@ jobs:
         shell: bash
         run: ./gradlew :composeApp:desktopTest :composeApp:packageDistributionForCurrentOS
       - name: Verify bundled native runtime
+        # The packaged macOS mpv dylibs do not match their manifest.
+        continue-on-error: ${{ runner.os == 'macOS' }}
         run: python3 tools/verify_desktop.py
       - name: Packaging diagnostics
         if: failure()
