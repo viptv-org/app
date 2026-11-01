@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.viptv.app.connection.RemoteFailure
+import org.viptv.app.connection.titleNeedsSearch
 
 internal fun ApplicationController.runPage(operation: suspend () -> Unit) {
     run(operation)
@@ -28,7 +29,7 @@ internal suspend fun <T : Any> ApplicationController.readCurrentPage(navigation:
     } catch (error: CancellationException) { throw error }
     catch (error: Exception) {
         currentCoroutineContext().ensureActive()
-        if (currentPage() || error is RemoteFailure && error.status == 401 && sameSession()) throw error
+        if (currentPage() || error is RemoteFailure && (error.status == 401 && sameSession() || error.titleNeedsSearch != null)) throw error
         return null
     }
 }

@@ -30,7 +30,7 @@ data class Profile(val id: String, val name: String, val avatar: String?, val lo
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null,
     val continuation: org.viptv.engine.wire.ContinuationPage? = null,
     val revisions: org.viptv.app.state.Revisions? = null)
-class RemoteFailure(val status: Int, message: String, val code: String? = null) : Exception(message)
+class RemoteFailure(val status: Int, message: String, val code: String? = null, val body: String? = null) : Exception(message)
 internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && code == "metadata_not_found"
 
 private val nativeSessionGate = Mutex()
@@ -183,10 +183,13 @@ class RemoteConnection(
     }
 
     suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
-    suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = (card.parent_identity ?: card.identity).let {
-        detail(it.kind, it.id, offset, limit, card.provider_id, if (card.parent_identity == null) card else card.copy(identity = it, parent_identity = null))
+    suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = detailRead(card, offset, limit).detail
+    suspend fun detailRead(card: Card, offset: Int = 0, limit: Int = 24): DetailRead = (card.parent_identity ?: card.identity).let {
+        detailRead(it.kind, it.id, offset, limit, card.provider_id, if (card.parent_identity == null) card else card.copy(identity = it, parent_identity = null))
     }
-    suspend fun detail(kind: String, id: String, offset: Int = 0, limit: Int = 24, provider: String? = null, expected: Card? = null): DetailSnapshot {
+    suspend fun detail(kind: String, id: String, offset: Int = 0, limit: Int = 24, provider: String? = null, expected: Card? = null): DetailSnapshot =
+        detailRead(kind, id, offset, limit, provider, expected).detail
+    suspend fun detailRead(kind: String, id: String, offset: Int = 0, limit: Int = 24, provider: String? = null, expected: Card? = null): DetailRead {
         require(offset in 0..10_000)
         require(limit in 1..128)
         val parameters = mutableListOf<String>()
@@ -201,7 +204,8 @@ class RemoteConnection(
         }
         val page = parameters.takeIf { it.isNotEmpty() }?.joinToString("&", prefix = "?") ?: ""
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            codec.decodeFromJsonElement(call("/api/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page"))
+            val value = call("/api/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page")
+            DetailRead(codec.decodeFromJsonElement<DetailSnapshot>(value), (value as? JsonObject)?.let(::detailFocus))
         }
     }
 
@@ -295,11 +299,12 @@ class RemoteConnection(
         val code = errorCode(text)
         throw RemoteFailure(status, when {
             status == 404 && code == "metadata_not_found" -> "This title is no longer available."
+            status == 404 && code == "title_needs_search" -> "Search for this title to open it."
             status == 401 -> "Sign in to continue."
             status == 403 -> "This action is not available for this profile."
             status == 429 -> tooManyRequestsMessage(response, code)
             else -> "The server could not complete this request."
-        }, code)
+        }, code, text)
     }
 
     private fun errorCode(body: String?): String? = body?.let {

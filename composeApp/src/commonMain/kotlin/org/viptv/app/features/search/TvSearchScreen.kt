@@ -23,16 +23,19 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.bleedHorizontally
+import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.connection.SearchResultRow
 
+private const val SEARCH_FOCUS_RETRY_FRAMES = 32
+
 @Composable
 internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean,
     error: String?, query: (String) -> Unit, open: (Card) -> Unit, editQuery: ((String) -> String) -> Unit,
-    suggestions: List<String> = emptyList(), searchRows: List<SearchResultRow> = emptyList()) {
+    suggestions: List<String> = emptyList(), searchRows: List<SearchResultRow> = emptyList(), focusResults: Boolean = false) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val gutter = 96.dp * scale
@@ -47,6 +50,12 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
         val channels = if (searchRows.isEmpty()) unique.filter { it.identity.kind in listOf("channel", "tv") } else emptyList()
         val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows) else searchGroups(titles, addons)
         val hasResults = if (searchRows.isNotEmpty()) searchRows.any { it.cards.isNotEmpty() } else unique.isNotEmpty()
+        val firstResultGroup = groups.indexOfFirst { it.cards.isNotEmpty() }
+        val firstResultFocus = remember { FocusRequester() }
+        LaunchedEffect(focusResults, hasResults) {
+            if (!focusResults || !hasResults) return@LaunchedEffect
+            repeat(SEARCH_FOCUS_RETRY_FRAMES) { withFrameNanos { }; if (firstResultFocus.requestPlacedFocus()) return@LaunchedEffect }
+        }
 
         Row(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(84.dp * scale)) {
             Column(Modifier.width(520.dp * scale)) {
@@ -61,7 +70,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                     }
                 }
                 Spacer(Modifier.height(24.dp * scale))
-                TvSearchKeyboard(editQuery, scale, requestInitialFocus = restoreId == null, first = keyboardFocus)
+                TvSearchKeyboard(editQuery, scale, requestInitialFocus = restoreId == null && !focusResults, first = keyboardFocus)
                 Spacer(Modifier.height(68.dp * scale))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
                     suggestions.forEach { suggestion ->
@@ -92,9 +101,10 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                         (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, fontSize = (22 * scale).sp, color = Palette.secondary) }
 
                         LazyRow(modifier = Modifier.focusRestorer(), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                            items(group.cards, key = ::searchCardKey) { card ->
+                            itemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
                                 val key = searchFocusKey(group, card)
-                                val requester = remember { FocusRequester() }
+                                val own = remember { FocusRequester() }
+                                val requester = if (rowIndex == firstResultGroup && index == 0) firstResultFocus else own
                                 if (key == restoreId) LaunchedEffect(Unit) { withFrameNanos { }; requester.requestFocus() }
                                 MediaCard(card, (212 * scale).toInt(), portrait = true, showLabels = true, labelScale = scale * 1.7f,
                                 open = open, onFocus = { focusedId = key; sectionScroll.focus(rowIndex + if (error != null) 1 else 0) }, modifier = Modifier.focusRequester(requester), cornerRadius = 12.dp * scale, focusWidth = 3.dp * scale,

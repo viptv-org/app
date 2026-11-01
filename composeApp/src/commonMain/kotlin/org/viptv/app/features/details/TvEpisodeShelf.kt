@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
 import coil3.compose.AsyncImage
 import org.viptv.app.components.*
+import org.viptv.app.connection.DetailFocus
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ internal enum class ShelfLanding {
     Any,
     Return,
     Resume,
+    Focus,
 }
 
 internal class ShelfFocusHandle { var request: ((landing: ShelfLanding) -> ShelfFocus)? = null }
@@ -41,22 +43,25 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     focused: () -> Unit, expanded: Boolean, resume: DetailResume?, returnToHero: () -> Unit,
     seasonIndex: List<org.viptv.engine.wire.EpisodeSeason> = emptyList(), nextCursor: String? = null,
     busy: Boolean = false, loadPage: (Long) -> Unit = {}, focus: ShelfFocusHandle = remember { ShelfFocusHandle() },
-    paging: Boolean = true) {
+    paging: Boolean = true, detailFocus: DetailFocus? = null) {
     val groups = remember(episodes, seasonIndex) { detailSeasons(episodes, seasonIndex) }
     val seasons = groups.map { it.number }
     var kept by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf(false) }
     var selected by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf<Long?>(null) }
+    val focusSeason = detailFocus.seasonIn(groups)
     val activeSeason = when {
         kept && selected in seasons -> selected
+        focusSeason != null -> focusSeason.number
         resume != null && resume.season in seasons -> resume.season
         else -> seasons.firstOrNull { (it ?: 0L) > 0L } ?: seasons.firstOrNull()
     }
     val group = groups.find { it.number == activeSeason }
     val visible = group?.episodes.orEmpty()
+    val focusIndex = detailFocus.episodeIn(activeSeason, visible)
     var lastFocused by rememberSaveable(parent.provider_id, parent.identity.id, activeSeason) { mutableStateOf<String?>(null) }
     val episodeRows = key(parent.identity, activeSeason) { rememberLazyListState() }
     var landed by remember(parent.identity) { mutableStateOf(false) }
-    val landingIndex = visible.indexOfFirst { episodeKey(it) == lastFocused }.takeIf { it >= 0 } ?: resume.indexIn(visible)
+    val landingIndex = visible.indexOfFirst { episodeKey(it) == lastFocused }.takeIf { it >= 0 } ?: resume.indexIn(visible) ?: focusIndex
     LaunchedEffect(episodeRows, landingIndex) {
         if (landingIndex == null || landed) return@LaunchedEffect
         episodeRows.scrollToItem(landingIndex)
@@ -69,11 +74,16 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     var pendingEntry by remember(parent.identity) { mutableStateOf<Pair<Long?, Int>?>(null) }
     fun focusEpisode(): Boolean = targets[lastFocused]?.requestPlacedFocus() == true ||
         targets[visible.find { resume?.matches(it) == true }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
+        targets[focusIndex?.let { visible.getOrNull(it) }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
         visible.firstNotNullOfOrNull { targets[episodeKey(it)] }?.requestPlacedFocus() == true
     val scope = rememberCoroutineScope()
     fun requestFocus(landing: ShelfLanding): ShelfFocus {
         if (landing == ShelfLanding.Any) return if (focusEpisode() || seasonFocus.requestPlacedFocus()) ShelfFocus.Focused else ShelfFocus.Pending
-        val index = (if (landing == ShelfLanding.Resume) resume.indexIn(visible) else landingIndex) ?: return ShelfFocus.Missing
+        val index = when (landing) {
+            ShelfLanding.Resume -> resume.indexIn(visible) ?: focusIndex
+            ShelfLanding.Focus -> focusIndex ?: visible.indices.firstOrNull()
+            ShelfLanding.Return, ShelfLanding.Any -> landingIndex
+        } ?: return ShelfFocus.Missing
         if (targets[episodeKey(visible[index])]?.requestPlacedFocus() == true) return ShelfFocus.Focused
         if (episodeRows.layoutInfo.visibleItemsInfo.none { it.index == index }) scope.launch { episodeRows.scrollToItem(index) }
         return ShelfFocus.Pending
