@@ -34,6 +34,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     LaunchedEffect(remote) { if (remote != null) controller.refreshPasswordChangeAvailability() }
     val manageAccount = state.manageAccount
     val ownsHousehold = manageAccount && state.accountOwner
+    // The identity loads after the page: until it does, leave the writes to the server rather than flashing an owner note at the owner.
+    val xtreamCanManage = state.accountIdentity == null || state.accountOwner
     val xtreamManageNote = if (manageAccount) "Only the account owner can change connections." else xtreamManagedElsewhere
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
@@ -92,14 +94,14 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar) } },
         xtreamConnections = if (state.localMode) null else ({ compact: Boolean, back: (() -> Unit)? ->
             XtreamConnectionsSettings(state.xtreamConnections, state.xtreamDefaultLive, state.busy, state.error, state.xtreamNotice,
-                canManage = state.accountOwner, manageNote = xtreamManageNote, compact = compact, back = back,
+                canManage = xtreamCanManage, manageNote = xtreamManageNote, compact = compact, back = back,
                 request = controller::refreshXtreamConnections, create = controller::createXtreamConnection,
                 update = controller::updateXtreamConnection, replacePassword = controller::replaceXtreamPassword,
                 sync = controller::syncXtreamConnection, setDefault = controller::setXtreamDefaultLive,
                 remove = controller::deleteXtreamConnection) }),
         tvXtreamConnections = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
             TvXtreamConnections(state.xtreamConnections, state.xtreamDefaultLive, state.busy, state.error, state.xtreamNotice,
-                canManage = state.accountOwner, manageNote = xtreamManageNote, scale = scale, first = first, sidebar = sidebar,
+                canManage = xtreamCanManage, manageNote = xtreamManageNote, scale = scale, first = first, sidebar = sidebar,
                 request = controller::refreshXtreamConnections, create = controller::createXtreamConnection,
                 update = controller::updateXtreamConnection, replacePassword = controller::replaceXtreamPassword,
                 sync = controller::syncXtreamConnection, setDefault = controller::setXtreamDefaultLive,
