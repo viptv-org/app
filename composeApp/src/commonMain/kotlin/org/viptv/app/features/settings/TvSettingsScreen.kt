@@ -31,9 +31,10 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     notice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile?,
     initialSection: TvSettingsSection = TvSettingsSection.Playback, prefs: TvSettingsPreferences? = null,
     change: ((TvSettingsPreferences) -> Unit)? = null, addonInfo: Map<String, TvAddonInfo> = emptyMap(), account: TvAccountInfo? = null,
-    initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null, actualPreferencesOnly: Boolean = false,
+    initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null, gateways: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null, actualPreferencesOnly: Boolean = false,
     parental: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,
+    gatewaysRequested: (() -> Unit)? = null,
     dashboardAddress: String? = null, preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
     maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null,
@@ -60,6 +61,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             ?: dashboardAddress?.let { { browserFallback = true } }
     }
     LaunchedEffect(section, local) { if (section == TvSettingsSection.Account && !local) accountRequested?.invoke() }
+    LaunchedEffect(section) { if (section == TvSettingsSection.Gateways) gatewaysRequested?.invoke() }
     val sidebar = remember { FocusRequester() }; val first = remember { FocusRequester() }
     CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(lineHeightStyle =
         LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None, LineHeightStyle.Mode.Fixed))) {
@@ -124,6 +126,11 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     TvSettingsSection.Addons -> { } // handled above: the add-on list scrolls itself
                     TvSettingsSection.Sources -> if (sourceIntegrations != null) sourceIntegrations(first, sidebar, scale) else {
                         Text("Source integrations", fontSize = (40 * scale).sp)
+                        Spacer(Modifier.height(24.dp * scale))
+                        Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
+                    }
+                    TvSettingsSection.Gateways -> if (gateways != null) gateways(first, sidebar, scale) else {
+                        Text("Playback gateways", fontSize = (40 * scale).sp)
                         Spacer(Modifier.height(24.dp * scale))
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }

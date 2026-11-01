@@ -47,7 +47,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         val history = if (record && screen != previousScreen)
             state.copy(navBack = (state.navBack + recorded).takeLast(32), navForward = emptyList())
         else state
-        history.copy(screen = screen, error = null, detailRetryable = true,
+        history.copy(screen = screen, error = null, errorCode = null, detailRetryable = true,
             leavePinFrom = history.leavePinFrom.takeIf { screen == Screen.ProfilePin },
             settingsEntrySection = if (screen == Screen.Settings) state.settingsEntrySection else null,
             liveSetupReturnFocus = state.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
