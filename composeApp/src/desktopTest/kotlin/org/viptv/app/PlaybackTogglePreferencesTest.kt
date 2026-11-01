@@ -41,7 +41,7 @@ class PlaybackTogglePreferencesTest {
     @Test fun desktopPlaybackTogglesSaveTheProfilePreferenceBody() {
         val saved = mutableListOf<ProfilePreferences>()
         val scene = ImageComposeScene(1280, 800, Density(1f)) { ViptvTheme {
-            ProfilePreferencesSettings(PreferencesSnapshot(3, ProfilePreferences()), false, null, {}, { saved += it })
+            ProfilePreferencesSettings("Playback", PreferencesSnapshot(3, ProfilePreferences()), false, null, {}, { saved += it })
         } }
         try {
             frames(scene)
