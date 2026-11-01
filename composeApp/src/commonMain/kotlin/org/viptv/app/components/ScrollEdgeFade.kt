@@ -36,7 +36,6 @@ internal val ScrollEdgeFadeHeight = 28.dp
 internal fun bottomBarClearance(): Dp =
     BottomBarHeight + ScrollEdgeFadeHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
-// Applied by the non-lazy page scrollers (Settings and the detail pages) instead of a per-page magic number.
 @Composable
 internal fun Modifier.pageBottomClearance(): Modifier = padding(bottom = LocalBottomClearance.current)
 
