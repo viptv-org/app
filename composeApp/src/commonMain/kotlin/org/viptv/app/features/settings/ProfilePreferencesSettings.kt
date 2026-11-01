@@ -2,113 +2,95 @@ package org.viptv.app.features.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.viptv.app.components.Button
+import org.viptv.app.components.SearchableSelect
+import org.viptv.app.components.SelectOption
+import org.viptv.app.components.TextButton
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
-import org.viptv.app.components.Button
-import org.viptv.app.components.TextButton
-import org.viptv.app.components.FilterChip
-import org.viptv.app.components.Switch
-import org.viptv.app.components.pointerToggleable
+
+private val subtitleSizeOptions = listOf(0.75 to "Small", 1.0 to "Medium", 1.25 to "Large", 1.5 to "Extra large")
+private val sourceOptions = listOf(SelectOption("best", "Best match"), SelectOption("ask", "Always ask"))
+private val hdrOptions = hdrPreferenceChoices.map { (value, label) -> SelectOption(value, label) }
+private val textColourOptions = listOf(
+    SelectOption("#FFFFFF", "White"), SelectOption("#FFE16B", "Yellow"),
+    SelectOption("#7AE0EC", "Blue"), SelectOption("#B5EF98", "Green"))
+private val languageOptions = languageChoices.map { (tag, name) -> SelectOption(tag, languageOptionLabel(name, tag)) }
 
 @Composable
-internal fun ProfilePreferencesSettings(snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,
+internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,
     retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null) {
-    val preferences = snapshot?.preferences
-    var audio by remember(snapshot) { mutableStateOf(preferences?.preferred_audio_language.orEmpty()) }
-    var subtitle by remember(snapshot) { mutableStateOf(preferences?.preferred_subtitle_language.orEmpty()) }
-    var mode by remember(snapshot) { mutableStateOf(preferences?.subtitleMode ?: "always") }
-    var hdr by remember(snapshot) { mutableStateOf(preferences?.hdr_preference ?: "any") }
+    var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
-    var selection by remember(snapshot) { mutableStateOf(preferences?.source_selection ?: "ask") }
-    var quality by remember(snapshot) { mutableStateOf(preferences?.max_quality_height) }
-    var subtitleScale by remember(snapshot) { mutableStateOf(preferences?.subtitle_font_scale ?: 1.0) }
-    var subtitleColor by remember(snapshot) { mutableStateOf(preferences?.subtitle_text_color ?: "#FFFFFF") }
-    var subtitleBackground by remember(snapshot) { mutableStateOf(preferences?.subtitle_background_color ?: "#00000000") }
-    var nextEpisode by remember(snapshot) { mutableStateOf(preferences?.next_episode_button ?: true) }
-    var skipIntros by remember(snapshot) { mutableStateOf(preferences?.skip_intros ?: false) }
-    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(24.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Playback preferences", style = MaterialTheme.typography.headlineSmall)
-        Text("These preferences apply to the current profile.", color = Palette.secondary)
-        error?.let { Text(it, color = Palette.danger) }
-        TextButton(retry, enabled = !busy) { Text("Refresh") }
-        devicePlayback?.let { device ->
-            Row(Modifier.pointerToggleable(device.value.autoplayNext, role = Role.Switch, shape = RoundedCornerShape(8.dp), onValueChange = device::setAutoplayNext),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(Modifier.weight(1f, fill = false)) {
-                    Text(autoplayNextRow)
-                    Text(autoplayNextDescription, color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
+    org.viptv.app.components.TvFocusScroll(horizontal = false) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Text(section, style = MaterialTheme.typography.headlineSmall)
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            error?.let { Text(it, color = Palette.danger) }
+            val value = draft
+            if (value == null || error != null) TextButton(retry, enabled = !busy) { Text(if (value == null && error == null) "Load settings" else "Retry settings") }
+            if (section == "Playback" && devicePlayback != null) {
+                PhonePreferenceGroup { PhonePreferenceSwitchRow(autoplayNextRow, autoplayNextDescription, devicePlayback.value.autoplayNext, devicePlayback::setAutoplayNext) }
+            }
+            if (value != null) {
+                if (section == "Subtitles & audio") {
+                    SubtitleStylePreview(value)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SearchableSelect("Text size", subtitleSizeOptions.map { (scale, label) -> SelectOption(scale.toString(), label) },
+                            listOf(value.subtitle_font_scale.toString()),
+                            { ids -> ids.firstOrNull()?.toDoubleOrNull()?.let { draft = draft?.copy(subtitle_font_scale = it) } },
+                            anyLabel = null, placeholder = "Choose")
+                        SearchableSelect("Background", listOf(SelectOption("none", "None"), SelectOption("box", "Box")),
+                            listOf(if (value.subtitle_background_color.equals("#00000000", true)) "none" else "box"),
+                            { ids -> draft = draft?.copy(subtitle_background_color = when (ids.firstOrNull()) {
+                                "none" -> "#00000000"; else -> value.subtitle_background_color.takeUnless { it.equals("#00000000", true) } ?: "#B3000000" }) },
+                            anyLabel = null, placeholder = "Choose")
+                        SearchableSelect("Text colour", textColourOptions, listOf(value.subtitle_text_color.uppercase()),
+                            { ids -> ids.firstOrNull()?.let { draft = draft?.copy(subtitle_text_color = it) } },
+                            anyLabel = null, placeholder = "Choose")
+                        SearchableSelect("Audio language", languageOptions, listOfNotNull(value.preferred_audio_language),
+                            { ids -> draft = draft?.copy(preferred_audio_language = ids.firstOrNull()) },
+                            anyLabel = "Original audio", searchPlaceholder = "Search audio languages")
+                        SearchableSelect("Subtitles", subtitleModeChoices(value.preferred_audio_language).map { (mode, label) -> SelectOption(mode, label) },
+                            listOf(value.subtitleMode),
+                            { ids -> ids.firstOrNull()?.let { mode -> draft = draft?.withSubtitleMode(mode) } },
+                            anyLabel = null, placeholder = "Choose")
+                        SearchableSelect("Subtitle language", languageOptions, listOfNotNull(value.preferred_subtitle_language),
+                            { ids -> draft = draft?.copy(preferred_subtitle_language = ids.firstOrNull()) },
+                            anyLabel = "None", searchPlaceholder = "Search subtitle languages")
+                    }
+                } else {
+                    PhonePreferenceGroup {
+                        PhonePreferenceSwitchRow(nextEpisodeButtonRow, nextEpisodeButtonDescription, value.next_episode_button) { draft = draft?.copy(next_episode_button = it) }
+                        PhonePreferenceDivider()
+                        PhonePreferenceSwitchRow(skipIntrosRow, skipIntrosDescription, value.skip_intros) { draft = draft?.copy(skip_intros = it) }
+                    }
+                    Text("Sources", color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SearchableSelect("Default source", sourceOptions, listOf(value.source_selection),
+                            { ids -> ids.firstOrNull()?.let { draft = draft?.copy(source_selection = it) } },
+                            anyLabel = null, placeholder = "Choose")
+                        SearchableSelect("Preferred quality", qualityOptions(value.max_quality_height, deviceHeight),
+                            listOf(value.max_quality_height?.toString().orEmpty()),
+                            { ids -> draft = draft?.copy(max_quality_height = ids.firstOrNull()?.toIntOrNull()) },
+                            anyLabel = null, placeholder = "Choose")
+                        SearchableSelect("HDR and Dolby Vision", hdrOptions, listOf(value.hdr_preference),
+                            { ids -> ids.firstOrNull()?.let { draft = draft?.copy(hdr_preference = it) } },
+                            anyLabel = null, placeholder = "Choose")
+                    }
                 }
-                Switch(device.value.autoplayNext, null)
+                Button({ save(value) }, enabled = !busy && value != snapshot?.preferences, modifier = Modifier.fillMaxWidth()) { Text("Save preferences") }
             }
         }
-        if (preferences != null) {
-            Row(Modifier.pointerToggleable(nextEpisode, role = Role.Switch, shape = RoundedCornerShape(8.dp), onValueChange = { nextEpisode = it }),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(Modifier.weight(1f, fill = false)) {
-                    Text(nextEpisodeButtonRow)
-                    Text(nextEpisodeButtonDescription, color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(nextEpisode, null)
-            }
-            Row(Modifier.pointerToggleable(skipIntros, role = Role.Switch, shape = RoundedCornerShape(8.dp), onValueChange = { skipIntros = it }),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(Modifier.weight(1f, fill = false)) {
-                    Text(skipIntrosRow)
-                    Text(skipIntrosDescription, color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(skipIntros, null)
-            }
-            OutlinedTextField(audio, { audio = it }, label = { Text("Preferred audio language") },
-                supportingText = { Text("Language tag, for example en or pt-BR. Leave empty for the original language.") }, enabled = !busy, singleLine = true)
-            OutlinedTextField(subtitle, { subtitle = it }, label = { Text("Preferred subtitle language") },
-                supportingText = { Text("Leave empty to use the media’s default subtitle track.") }, enabled = !busy, singleLine = true)
-            Text("Subtitles")
-            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                subtitleModeChoices(audio.trim().takeIf(String::isNotEmpty)).forEach { (value, label) ->
-                    FilterChip(mode == value, { mode = value }, label = { Text(label) }, enabled = !busy)
-                }
-            } }
-            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("ask" to "Always ask", "best" to "Best match").forEach { (value, label) ->
-                    FilterChip(selection == value, { selection = value }, label = { Text(label) }, enabled = !busy)
-                }
-            } }
-            Text("Preferred quality")
-            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(null, 720, 1080, 2160).forEach { height ->
-                    FilterChip(quality == height, { quality = height }, label = { Text(qualityLabel(height, deviceHeight)) }, enabled = !busy)
-                }
-            } }
-            Text("HDR and Dolby Vision")
-            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                hdrPreferenceChoices.forEach { (value, label) ->
-                    FilterChip(hdr == value, { hdr = value }, label = { Text(label) }, enabled = !busy)
-                }
-            } }
-            Text("Subtitle size")
-            org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(.75 to "Small", 1.0 to "Medium", 1.25 to "Large", 1.5 to "Extra large").forEach { (value, label) ->
-                    FilterChip(subtitleScale == value, { subtitleScale = value }, label = { Text(label) }, enabled = !busy)
-                }
-            } }
-            OutlinedTextField(subtitleColor, { subtitleColor = it }, label = { Text("Subtitle text colour") },
-                supportingText = { Text("Hex colour, for example #FFFFFF.") }, enabled = !busy, singleLine = true)
-            OutlinedTextField(subtitleBackground, { subtitleBackground = it }, label = { Text("Subtitle background colour") },
-                supportingText = { Text("Hex colour with optional alpha; #00000000 is transparent.") }, enabled = !busy, singleLine = true)
-            Button({ save(preferences.copy(preferred_audio_language = audio.trim().takeIf(String::isNotEmpty), preferred_subtitle_language = subtitle.trim().takeIf(String::isNotEmpty),
-                source_selection = selection, max_quality_height = quality, hdr_preference = hdr,
-                subtitle_font_scale = subtitleScale, subtitle_text_color = subtitleColor.trim(), subtitle_background_color = subtitleBackground.trim(),
-                next_episode_button = nextEpisode, skip_intros = skipIntros)
-                .let { if (it.subtitleMode == mode) it else it.withSubtitleMode(mode) }) }, enabled = !busy) { Text("Save preferences") }
-        }
-    } }
+    }
 }
+
+private fun qualityOptions(current: Int?, deviceHeight: Int?): List<SelectOption> =
+    (listOf<Int?>(null, 720, 1080, 2160) + current).distinct().map { height ->
+        SelectOption(height?.toString().orEmpty(), qualityLabel(height, deviceHeight))
+    }
