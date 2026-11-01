@@ -42,6 +42,28 @@ class UnifiedSearchTest {
         } finally { remote.close() }
     }
 
+    @Test fun deletingWithoutChangingTheSearchTermDoesNotSearchAgain() = runBlocking {
+        var requests = 0
+        val expected = SearchSnapshot(emptyList(), false)
+        val client = HttpClient(MockEngine { request ->
+            requests++
+            assertEquals("/api/search", request.url.encodedPath)
+            assertEquals("Space & Time", request.url.parameters["query"])
+            respond(Json.encodeToString(expected), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Search, selectedProfile = "profile")
+        try {
+            controller.search("Space & Time"); controller.job!!.join()
+            controller.search("Space & Time")
+            yield()
+            assertEquals(1, requests)
+            assertEquals("Space & Time", controller.state.value.searchTerm)
+        } finally { remote.close() }
+    }
+
     @Test fun detailPaginationKeepsTheSelectedSearchAddonInsteadOfTheDefaultBrowser() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             assertEquals("stremio", request.url.parameters["provider_id"])

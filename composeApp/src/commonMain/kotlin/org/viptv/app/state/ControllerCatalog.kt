@@ -96,8 +96,8 @@ fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mut
 fun ApplicationController.searchFilters(filters: Set<String>) = updateState { it.copy(searchFilters = filters) }
 
 fun ApplicationController.search(term: String) {
-    if (term != mutable.value.searchTerm)
-        updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
+    if (term == mutable.value.searchTerm) return
+    updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
     updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
     rememberNavigation()
     run {
