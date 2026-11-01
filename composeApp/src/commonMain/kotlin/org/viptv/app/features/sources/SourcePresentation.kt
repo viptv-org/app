@@ -23,8 +23,16 @@ internal fun SourceCandidate.factBadges(): List<String> = listOfNotNull(
         "dubbed" in audio_flags -> "Dubbed"
         else -> null
     },
+    languageBadge(audio_languages),
+    subtitleBadge(),
     "3D".takeIf { three_d },
 )
+private const val LANGUAGE_BADGE_LIMIT = 3
+private fun languageTags(tags: List<String>): List<String> = tags.map { it.trim().uppercase() }.filter { it.isNotEmpty() }.distinct()
+private fun languageBadge(tags: List<String>): String? = languageTags(tags).takeIf { it.isNotEmpty() }?.let { shown ->
+    shown.take(LANGUAGE_BADGE_LIMIT).joinToString(" / ") + if (shown.size > LANGUAGE_BADGE_LIMIT) " +${shown.size - LANGUAGE_BADGE_LIMIT}" else ""
+}
+private fun SourceCandidate.subtitleBadge(): String? = languageBadge(subtitle_languages)?.let { "Subs $it" } ?: "Subs".takeIf { subbed }
 internal fun SourceCandidate.releaseDetail(): String? = detail?.takeIf {
     it.isNotBlank() && it.trim() != label.trim() && it.trim() != technicalDetail()?.trim()
 }

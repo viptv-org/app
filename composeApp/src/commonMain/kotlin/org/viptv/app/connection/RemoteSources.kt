@@ -68,4 +68,6 @@ internal fun SourceCandidate.withReleaseFacts(card: JsonObject): SourceCandidate
     audio_flags = card.texts("audio_flags"),
     seeders = (card["seeders"] as? JsonPrimitive)?.takeUnless { it.isString }?.longOrNull,
     delivery = card.text("delivery"),
+    subbed = (card["subbed"] as? JsonPrimitive)?.booleanOrNull ?: false,
+    subtitle_languages = card.texts("subtitle_languages"),
 )
