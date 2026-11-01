@@ -12,10 +12,13 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
+import org.viptv.app.components.TopNavigation
+import org.viptv.app.connection.Profile
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.PreferencesSnapshot
 import org.viptv.app.features.settings.ProfilePreferencesSettings
 import org.viptv.app.features.settings.SettingsScreen
+import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
@@ -73,8 +76,26 @@ class WebPreferencesSettingsTest {
             ui.open("Subtitle language: None")
             ui.type("spa")
             ui.click("Spanish (es)")
-            ui.click("Save preferences")
+            ui.clickText("Save preferences")
             assertEquals(ProfilePreferences(preferred_audio_language = "ja", preferred_subtitle_language = "es"), saved.single())
+        }
+    }
+
+    @Test fun settingsTitleAlignsWithTheNavBrandAtDesktopWidth() {
+        Ui(1920, 1080) {
+            Column {
+                TopNavigation(Screen.Settings, television = false, navigate = {}, profile = Profile("1", "Viewer", null))
+                SettingsScreen(local = false, addons = emptyList(), enabledAddonIds = emptySet(), busy = false, error = null,
+                    sessionNotice = null, install = {}, toggle = { _, _ -> }, remove = {}, profiles = {}, leave = {},
+                    initialSection = "Subtitles & audio", browser = true,
+                    sectionPreferences = { section, _ ->
+                        ProfilePreferencesSettings(section, PreferencesSnapshot(9, ProfilePreferences()), false, null, {}, {})
+                    })
+            }
+        }.use { ui ->
+            val brand = ui.nodes().single { ui.text(it) == "VIPTV" }
+            val title = ui.nodes().single { ui.text(it) == "Settings" }
+            assertEquals(brand.boundsInRoot.left - 37f, title.boundsInRoot.left, 1f)
         }
     }
 
@@ -108,6 +129,12 @@ class WebPreferencesSettingsTest {
         fun click(label: String) {
             val option = options().singleOrNull { optionLabel(it) == label } ?: fail("no option '$label' in ${options().map(::optionLabel)}")
             assertTrue(option.config[SemanticsActions.OnClick].action!!.invoke())
+            frames(30)
+        }
+        fun clickText(label: String) {
+            val node = nodes().singleOrNull { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
+                ?: fail("no clickable '$label'")
+            assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
             frames(30)
         }
         override fun close() = scene.close()

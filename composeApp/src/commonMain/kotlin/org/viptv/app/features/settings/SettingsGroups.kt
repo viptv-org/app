@@ -79,5 +79,5 @@ internal enum class SettingsLayout(val groupLabelSize: TextUnit, val groupLabelT
     Phone(11.sp, .08f, 16.dp, groupLabelAbove = 2.dp, groupLabelBelow = 8.dp),
     Tablet(11.sp, .08f, 16.dp, groupLabelAbove = 16.dp, groupLabelBelow = 12.dp),
     Desktop(12.sp, .06f, 12.dp, groupLabelAbove = 8.dp, groupLabelBelow = 8.dp),
-    Web(12.sp, 0f, 16.dp, groupLabelAbove = 12.dp, groupLabelBelow = 12.dp),
+    Web(12.sp, 0f, 0.dp, groupLabelAbove = 12.dp, groupLabelBelow = 12.dp),
 }
