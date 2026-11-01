@@ -39,7 +39,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
     maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null,
     profilePage: (@Composable (FocusRequester, FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
-    profileTitles: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null) {
+    profileTitles: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
+    xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -109,6 +110,9 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             else if (section == TvSettingsSection.Profile && profileTitles != null) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 profileTitles(first, sidebar, scale)
             }
+            else if (section == TvSettingsSection.Xtream && xtream != null) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+                xtream(first, sidebar, scale)
+            }
             else org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
                 else if (missingPreferences) TvPreferencesMissing(section, busy, scale, first, sidebar, retryPreferences)
@@ -129,6 +133,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         Spacer(Modifier.height(24.dp * scale))
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
+                    TvSettingsSection.Xtream -> { } // handled above: the connections list scrolls itself
                     TvSettingsSection.Gateways -> if (gateways != null) gateways(first, sidebar, scale) else {
                         Text("Playback gateways", fontSize = (40 * scale).sp)
                         Spacer(Modifier.height(24.dp * scale))
