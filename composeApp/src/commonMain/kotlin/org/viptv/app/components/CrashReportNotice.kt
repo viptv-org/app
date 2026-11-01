@@ -10,16 +10,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
-import kotlinx.coroutines.delay
+import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
+
+internal fun showsCrashNotice(screen: Screen): Boolean = screen == Screen.Home || screen == Screen.Settings
 
 @Composable
 fun CrashReportNotice(television: Boolean, send: () -> Unit, discard: () -> Unit) {
@@ -47,25 +46,20 @@ private fun PhoneCrashBanner(send: () -> Unit, discard: () -> Unit) {
 private fun TvCrashNotice(send: () -> Unit, discard: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        val first = remember { FocusRequester() }
-        Popup(alignment = Alignment.TopEnd, onDismissRequest = discard, properties = PopupProperties(focusable = true)) {
-            TvFocusColumn(Modifier.padding(top = 96.dp * scale, end = 96.dp * scale)) {
-                Column(Modifier.width(760.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Color(0xFF202023))
-                    .padding(horizontal = 44.dp * scale, vertical = 40.dp * scale).testTag("crash-report-prompt"),
-                    verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                    Text("VIPTV closed unexpectedly. Send a crash report?", color = Palette.text,
-                        fontSize = (28 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.Bold)
-                    Row(Modifier.padding(top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                        TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, requester = first, activate = send) {
-                            Text("Send report", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
-                        }
-                        TvAction(Modifier.width(180.dp * scale).height(72.dp * scale), scale, activate = discard) {
-                            Text("No", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+        Column(Modifier.align(Alignment.TopEnd).padding(top = 96.dp * scale, end = 96.dp * scale)
+            .width(760.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Color(0xFF202023))
+            .padding(horizontal = 44.dp * scale, vertical = 40.dp * scale).testTag("crash-report-prompt"),
+            verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+            Text("VIPTV closed unexpectedly. Send a crash report?", color = Palette.text,
+                fontSize = (28 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.Bold)
+            Row(Modifier.padding(top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                TvAction(Modifier.width(260.dp * scale).height(72.dp * scale).testTag("crash-report-send"), scale, activate = send) {
+                    Text("Send report", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                }
+                TvAction(Modifier.width(180.dp * scale).height(72.dp * scale).testTag("crash-report-dismiss"), scale, activate = discard) {
+                    Text("No", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                 }
             }
-            LaunchedEffect(Unit) { delay(700); first.requestFocus() }
         }
     }
 }
