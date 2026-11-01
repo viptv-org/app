@@ -53,7 +53,7 @@ internal fun TvProfileEditScreen(profile: Profile?, count: Int, busy: Boolean, e
             verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             ProfileAvatar(profile, 280.dp * scale, 36.dp * scale)
             TvAction(Modifier.width(280.dp * scale).height(72.dp * scale).focusProperties { right = first }, scale,
-                requester = avatarFocus, enabled = !busy, activate = { avatar = true }) {
+                requester = avatarFocus, enabled = !busy, keepFocus = true, activate = { avatar = true }) {
                 Icon(Lucide.Pencil, null, Modifier.size(28.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
                 Text("Change avatar", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }

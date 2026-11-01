@@ -175,7 +175,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                     Spacer(Modifier.height(16.dp * scale))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                    TvAction(Modifier.height(72.dp * scale).width(280.dp * scale), scale, primary = true, enabled = !busy, activate = {
+                    TvAction(Modifier.height(72.dp * scale).width(280.dp * scale), scale, primary = true, enabled = !busy, keepFocus = true, activate = {
                         val configuration = buildJsonObject {
                             values.forEach { (key, value) -> if (value.isNotBlank()) put(key, value.trim()) }
                             if (schema.provider_choices.isNotEmpty()) put("providers", JsonArray(selected.map { kotlinx.serialization.json.JsonPrimitive(it) }))
@@ -185,7 +185,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                         if (busy) androidx.compose.material3.CircularProgressIndicator(Modifier.size(28.dp * scale), color = tint, strokeWidth = 3.dp * scale)
                         else Text("Save", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
-                    TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale, requester = cancelFocus, enabled = !busy, activate = back) { tint ->
+                    TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale, requester = cancelFocus, enabled = !busy, keepFocus = true, activate = back) { tint ->
                         Text("Cancel", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -205,7 +205,7 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
     if (error != null) {
         Text(error, color = Palette.danger, fontSize = (22 * scale).sp)
         Spacer(Modifier.height(12.dp * scale))
-        TvAction(Modifier.height(60.dp * scale).width(200.dp * scale), scale, requester = first, enabled = !busy, activate = retry) { tint ->
+        TvAction(Modifier.height(60.dp * scale).width(200.dp * scale), scale, requester = first, enabled = !busy, keepFocus = true, activate = retry) { tint ->
             Text("Retry", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(16.dp * scale))
@@ -292,13 +292,13 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
                 horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 if (configured) {
                     TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, primary = true,
-                        requester = requester, left = left, ring = false, enabled = enabled, activate = configure) { tint ->
+                        requester = requester, left = left, ring = false, enabled = enabled, keepFocus = true, activate = configure) { tint ->
                         Icon(Lucide.Pencil, null, Modifier.size(24.dp * scale), tint = tint)
                         Spacer(Modifier.width(12.dp * scale))
                         Text("Replace", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                     remove?.let { onRemove ->
-                        TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, left = left, ring = false, enabled = enabled, activate = onRemove) { tint ->
+                        TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, left = left, ring = false, enabled = enabled, keepFocus = true, activate = onRemove) { tint ->
                             Icon(Lucide.Trash2, null, Modifier.size(24.dp * scale), tint = Palette.danger)
                             Spacer(Modifier.width(12.dp * scale))
                             Text("Remove", color = Palette.danger, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
@@ -306,7 +306,7 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
                     }
                 } else {
                     TvAction(Modifier.height(60.dp * scale).width(240.dp * scale), scale, requester = requester,
-                        left = left, ring = false, enabled = enabled, activate = configure) { tint ->
+                        left = left, ring = false, enabled = enabled, keepFocus = true, activate = configure) { tint ->
                         Icon(Lucide.SlidersHorizontal, null, Modifier.size(24.dp * scale), tint = tint)
                         Spacer(Modifier.width(12.dp * scale))
                         Text("Configure", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
@@ -373,10 +373,10 @@ internal fun TvSourceRemoveConfirmation(schema: SourceIntegrationSchema, profile
                     fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, color = Palette.secondary)
                 Row(Modifier.padding(top = 18.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                     TvAction(Modifier.width(240.dp * scale).height(72.dp * scale), scale, primary = true, requester = initial,
-                        enabled = !busy, activate = dismiss) { tint ->
+                        enabled = !busy, keepFocus = true, activate = dismiss) { tint ->
                         Text("Cancel", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
-                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, enabled = !busy, activate = confirm) {
+                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, enabled = !busy, keepFocus = true, activate = confirm) {
                         Icon(Lucide.Trash2, null, Modifier.size(28.dp * scale), Palette.danger); Spacer(Modifier.width(12.dp * scale))
                         Text("Remove", color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
