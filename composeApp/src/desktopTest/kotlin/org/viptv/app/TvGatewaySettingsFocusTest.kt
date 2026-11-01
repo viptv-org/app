@@ -37,7 +37,9 @@ class TvGatewaySettingsFocusTest {
         Gateway("g2", "Shared edge", "https://edge.example/", "public", 200, false, 1, can_manage = false),
     )
 
-    private fun scene() = ImageComposeScene(1920, 1080, Density(1f)) {
+    private fun scene(
+        snapshot: GatewaySnapshot? = GatewaySnapshot(gateways), error: String? = null, loadError: String? = null,
+    ) = ImageComposeScene(1920, 1080, Density(1f)) {
         ViptvTheme(true) {
             focusManager = LocalFocusManager.current
             val first = remember { FocusRequester() }
@@ -48,7 +50,7 @@ class TvGatewaySettingsFocusTest {
                     if (first.requestFocus()) return@LaunchedEffect
                 }
             }
-            TvGatewaySettings(GatewaySnapshot(gateways), emptyMap(), false, null, null, null,
+            TvGatewaySettings(snapshot, emptyMap(), false, error, null, loadError,
                 {}, {}, { _, _ -> }, 1f, first, left)
         }
     }
@@ -79,6 +81,48 @@ class TvGatewaySettingsFocusTest {
             assertFocused(scene, "Beta transcoder")
             press(scene, Key.DirectionDown)
             assertFocused(scene, "Check capacity")
+        } finally { scene.close() }
+    }
+
+    private fun texts(scene: ImageComposeScene) = nodes(scene).map(::text)
+
+    @Test fun showsLoadingTextWhileTheListLoads() = runBlocking {
+        val scene = scene(snapshot = null)
+        try {
+            frames(scene)
+            val shown = texts(scene)
+            assertTrue("Loading gateways…" in shown, "shown: $shown")
+            assertTrue("Retry" !in shown && "No gateways are configured for your account." !in shown, "shown: $shown")
+        } finally { scene.close() }
+    }
+
+    @Test fun showsTheEmptyStateForAnEmptyList() = runBlocking {
+        val scene = scene(snapshot = GatewaySnapshot(emptyList()))
+        try {
+            frames(scene)
+            val shown = texts(scene)
+            assertTrue("No gateways are configured for your account." in shown, "shown: $shown")
+            assertTrue("Loading gateways…" !in shown, "shown: $shown")
+        } finally { scene.close() }
+    }
+
+    @Test fun showsTheLoadErrorWithAFocusedRetry() = runBlocking {
+        val scene = scene(snapshot = null, loadError = "Could not load gateways.")
+        try {
+            frames(scene)
+            val shown = texts(scene)
+            assertTrue("Could not load gateways." in shown && "Retry" in shown, "shown: $shown")
+            assertTrue("Loading gateways…" !in shown, "shown: $shown")
+            assertFocused(scene, "Retry")
+        } finally { scene.close() }
+    }
+
+    @Test fun showsTheActionErrorInPlaceOfTheLoadingText() = runBlocking {
+        val scene = scene(snapshot = null, error = "Gateway request failed.")
+        try {
+            frames(scene)
+            val shown = texts(scene)
+            assertTrue("Gateway request failed." in shown && "Loading gateways…" !in shown, "shown: $shown")
         } finally { scene.close() }
     }
 }

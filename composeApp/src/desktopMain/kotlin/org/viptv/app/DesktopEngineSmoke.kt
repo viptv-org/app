@@ -26,7 +26,8 @@ internal fun verifyPackagedLocalEngine() {
             check(schema.getValue("schemas").jsonArray.isNotEmpty())
             check(Json.parseToJsonElement(engine.profilePreferences("smoke")).jsonObject
                 .getValue("preferences").jsonObject.getValue("preferred_audio_language").jsonPrimitive.content == "fr")
-            check(Json.parseToJsonElement(engine.rankSources("smoke", "[]")).jsonArray.isEmpty())
+            val ranking = Json.parseToJsonElement(engine.rankSourcesForDevice("smoke", "[]", null)).jsonObject
+            check(ranking.getValue("streams").jsonArray.isEmpty())
             val live = Json.parseToJsonElement(engine.liveChannels("smoke", "{}")).jsonObject
             check(live.getValue("channels").jsonArray.isEmpty())
             check(live.getValue("availability").jsonPrimitive.content == "NeedsConfiguration")
