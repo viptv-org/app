@@ -57,6 +57,8 @@ class UnresolvedTitleSearchTest {
                         else -> json(metaBody, metaStatus)
                     }
                 }
+                path == "/api/streams" && request.method == HttpMethod.Post -> json("""{"id":"job-1"}""")
+                path == "/api/streams/job-1" -> json("""{"done":true,"events":[]}""")
                 else -> json("{}", HttpStatusCode.NotFound)
             }
         }) { configureTransport() }
@@ -110,6 +112,25 @@ class UnresolvedTitleSearchTest {
             val state = controller.state.value
             assertEquals(Screen.Home, state.screen, "Back returns to the row the card was opened from")
             assertTrue(state.navBack.isEmpty(), "the Details page never entered the Back history")
+        } finally { host.close(controller) }
+    }
+
+    @Test fun aPlayTapOnAnUnresolvedTitleOpensSearchInsteadOfTheSourceError() = runBlocking<Unit> {
+        val host = Host()
+        val controller = host.controller(this)
+        try {
+            controller.playTitle(unresolved)
+            until("the search") { controller.state.value.results.isNotEmpty() }
+            val state = controller.state.value
+            assertEquals(Screen.Search, state.screen, "Search takes the selector's place")
+            assertEquals("One Piece", state.searchTerm)
+            assertEquals(setOf("Series", "Anime"), state.searchFilters)
+            assertEquals(4L, state.pendingDetailSeason, "the season still carries into the search")
+            assertNull(state.error, "no source error")
+            assertNull(state.sourceTitle, "the selector is gone")
+            assertFalse(state.findingSources)
+            assertNull(state.playTapTitle, "the failed play tap is cleared")
+            assertEquals(listOf("One Piece"), host.searches(), "one search request")
         } finally { host.close(controller) }
     }
 

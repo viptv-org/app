@@ -157,7 +157,7 @@ fun ApplicationController.open(card: Card) {
             } ?: return@runPage
         } catch (error: RemoteFailure) {
             val unresolved = error.titleNeedsSearch ?: throw error
-            if (navigationGeneration == navigation) openTitleSearch(unresolved)
+            if (navigationGeneration == navigation) openTitleSearch(unresolved, after = job)
             return@runPage
         }
         val pendingSeason = mutable.value.pendingDetailSeason
@@ -229,6 +229,8 @@ private const val DETAILS_TIMEOUT = "Your server took too long to show this titl
 
 private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
     if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
+    val unresolved = (error as? RemoteFailure)?.titleNeedsSearch
+    if (unresolved != null) { openTitleSearch(unresolved); return }
     val message = failureMessage(error)
     val retryable = error !is RemoteFailure || !error.metadataNotFound
     updateState { state ->
