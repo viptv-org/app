@@ -29,6 +29,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var localPersistenceWarning: String? = null
     @Volatile internal var job: Job? = null
     @Volatile internal var generation = 0L
+    internal var lastSearchedTerm: String? = null
     private val runGate = SynchronizedObject()
     internal var navigationGeneration = 0L
     internal var pageRequestJob: Job? = null
