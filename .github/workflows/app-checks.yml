@@ -14,10 +14,58 @@ env:
   LC_ALL: C
   RUSTUP_TOOLCHAIN: 1.98.0
 jobs:
-  checks:
-    name: app checks
+  compile-android:
+    name: compile Android main
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Reclaim hosted Linux runner space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - name: Compile Android main
+        run: ./gradlew --max-workers=2 :composeApp:compileAndroidMain
+  compile-wasm:
+    name: compile Wasm JS main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Reclaim hosted Linux runner space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0'
+      - name: Compile Wasm JS main
+        run: ./gradlew --max-workers=2 :composeApp:compileKotlinWasmJs
+  desktop-test:
+    name: desktop test shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -35,6 +83,9 @@ jobs:
         with:
           go-version: '1.25.11'
           cache: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
@@ -49,14 +100,6 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.konan
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'kotlin-js-store/**') }}
-          restore-keys: gradle-${{ runner.os }}-
-      - uses: actions/cache@v6
-        with:
-          path: |
             ~/.cargo/registry
             ~/.cargo/git
             build/rust
@@ -68,15 +111,51 @@ jobs:
           git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
           git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
           echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
-      - name: Run checks
-        run: ./gradlew --max-workers=2 :composeApp:desktopTest :composeApp:compileAndroidMain :composeApp:compileKotlinWasmJs
-      - name: Upload failed test reports
+      - name: Test desktop shard
+        shell: bash
+        run: |
+          total=$(tools/desktop-test-shards.sh count)
+          mapfile -t classes < <(SHARDS=4 SHARD=${{ matrix.shard }} tools/desktop-test-shards.sh list)
+          printf 'shard %d: %d of %d desktop test classes\n' "${{ matrix.shard }}" "${#classes[@]}" "$total"
+          args=()
+          for class in "${classes[@]}"; do args+=(--tests "$class"); done
+          ./gradlew --max-workers=2 :composeApp:desktopTest "${args[@]}"
+          python3 - "${{ matrix.shard }}" <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          shard = sys.argv[1]
+          cases = sum(int(ET.parse(p).getroot().get('tests', 0)) for p in glob.glob('composeApp/build/test-results/desktopTest/*.xml'))
+          print(f'shard {shard} ran {cases} test cases')
+          PY
+      - name: Upload desktop test results (shard ${{ matrix.shard }})
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-test-results-${{ matrix.shard }}
+          path: composeApp/build/test-results/desktopTest
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload failed test reports (shard ${{ matrix.shard }})
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: desktop-test-reports
-          path: |
-            composeApp/build/reports/tests/desktopTest
-            composeApp/build/test-results/desktopTest
+          name: desktop-test-reports-${{ matrix.shard }}
+          path: composeApp/build/reports/tests/desktopTest
           if-no-files-found: ignore
           retention-days: 14
+  checks:
+    name: app checks
+    runs-on: ubuntu-latest
+    needs: [compile-android, compile-wasm, desktop-test]
+    if: always()
+    steps:
+      - name: Gate on every parallel job
+        shell: bash
+        run: |
+          results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.desktop-test.result }}'
+          echo "parallel jobs: $results"
+          for result in $results; do
+            if [[ "$result" != "success" ]]; then
+              echo "a parallel job did not succeed: $results" >&2
+              exit 1
+            fi
+          done
