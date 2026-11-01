@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlayerFact
+import org.viptv.app.crash.CrashFacts
+import org.viptv.app.crash.CrashReportStore
 import kotlinx.coroutines.sync.Mutex
 import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource
@@ -92,7 +94,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         val claimed = synchronized(runGate) {
             val prior = job
             val current = ++generation
-            updateState { it.copy(busy = true, error = null, detailLoadingOffset = null, detailPageError = null, detailRetryable = true) }
+            updateState { it.copy(busy = true, error = null, errorCode = null, detailLoadingOffset = null, detailPageError = null, detailRetryable = true) }
             val started = scope.launch(start = CoroutineStart.LAZY) {
                 try { prior?.join(); operation() }
                 catch (e: CancellationException) { throw e }
@@ -103,7 +105,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                         discardStremioImport()
                         connection?.close(); connection = null
                         mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                    } else if (generation == current) updateState { it.copy(error = failureMessage(e),
+                    } else if (generation == current) updateState { it.copy(error = failureMessage(e), errorCode = (e as? RemoteFailure)?.code,
                         detailRetryable = e !is RemoteFailure || !e.metadataNotFound) }
                 }
             }
@@ -121,6 +123,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
             if (generation != current) return
             updateState { it.copy(starting = false, busy = false, findingSources = false,
                 sessionNotice = connection?.persistenceWarning ?: localPersistenceWarning) }
+            checkPendingCrashReport()
         }
     }
 }
@@ -129,7 +132,17 @@ private class RunClaim(val prior: Job?, val generation: Long, val job: Job)
 
 // A write built from a snapshot drops whatever another coroutine published in between, so every state change publishes atomically.
 internal fun ApplicationController.updateState(change: (ApplicationState) -> ApplicationState) {
-    mutable.update(change)
+    mutable.update { before ->
+        val after = change(before)
+        CrashFacts.lastScreen = after.screen.name
+        if (before.playback == null && after.playback != null) {
+            // A native crash between playback start and a clean stop has no stack: this marker attributes it to the source opening.
+            CrashFacts.playbackAttempt?.let { CrashReportStore.writePlaybackMarker(it) }
+        } else if (before.playback != null && after.playback == null) {
+            CrashReportStore.clearPlaybackMarker()
+        }
+        after
+    }
 }
 
 internal fun ApplicationController.failureMessage(error: Exception): String? = when (error) {
@@ -138,4 +151,29 @@ internal fun ApplicationController.failureMessage(error: Exception): String? = w
     is kotlinx.serialization.SerializationException -> "The server returned an incompatible response."
     is IllegalArgumentException -> "Enter a valid HTTPS server address."
     else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
+}
+
+// Local mode has no signed-in account: keep the report on disk until one exists.
+fun ApplicationController.checkPendingCrashReport() {
+    if (mutable.value.pendingCrashReport != null || connection == null) return
+    val report = CrashReportStore.pendingReport() ?: return
+    updateState { it.copy(pendingCrashReport = report) }
+}
+
+fun ApplicationController.submitCrashReport() {
+    val report = mutable.value.pendingCrashReport ?: return
+    val remote = connection ?: return
+    scope.launch {
+        val sent = try { remote.submitCrashReport(report) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { false }
+        if (sent) CrashReportStore.deletePending()
+        // A missing endpoint leaves the report on disk for the next launch; this one hides the notice either way.
+        if (mutable.value.pendingCrashReport === report) updateState { it.copy(pendingCrashReport = null) }
+    }
+}
+
+fun ApplicationController.discardCrashReport() {
+    CrashReportStore.deletePending()
+    updateState { it.copy(pendingCrashReport = null) }
 }

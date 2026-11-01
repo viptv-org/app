@@ -78,7 +78,7 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                     { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy, restore = restore) }
             } else {
                 PageRestore(channelList, restore, target = { restore.anchor(visible.size) { visible[it].key() } })
-                LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp)) {
+                LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 24.dp)) {
                     itemsIndexed(visible, key = { _, channel -> channel.key() }) { index, channel ->
                         LiveChannelRow(channel, now, { restore.mark(channel.key(), index); watch(channel) }, favoriteChanged?.let { save -> { save(channel) } },
                             modifier = Modifier.pageAnchor(restore, channel.key(), index, target = anchored == index).listItemEntrance(index, entrance.animate))

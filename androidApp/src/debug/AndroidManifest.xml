@@ -7,6 +7,7 @@
   <activity android:name="org.viptv.experiment.NativePlaybackQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
   <activity android:name="org.viptv.experiment.SidecarPlaybackQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
   <activity android:name="org.viptv.experiment.PauseOnlyQaActivity" android:exported="false" android:theme="@android:style/Theme.Material.Dialog" />
+  <activity android:name="org.viptv.experiment.CrashQaActivity" android:exported="true" />
   <activity android:name="org.viptv.experiment.Api26LifecycleQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
   <activity android:name="org.viptv.experiment.LifecycleQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
   <activity android:name="org.viptv.experiment.PerformanceQaActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />

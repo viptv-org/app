@@ -92,7 +92,11 @@ private fun advancedCursor(next: String?, current: String): String? {
 
 fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mutable.value.searchTerm))
 
+fun ApplicationController.searchFilters(filters: Set<String>) = updateState { it.copy(searchFilters = filters) }
+
 fun ApplicationController.search(term: String) {
+    if (term != mutable.value.searchTerm)
+        updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
     updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
     rememberNavigation()
     run {
@@ -145,8 +149,21 @@ fun ApplicationController.open(card: Card) {
     val navigation = navigationGeneration
     runPage {
         val profile = requireNotNull(mutable.value.selectedProfile)
-        val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-        updateState { it.copy(detail = detail.withCardArt(card)) }
+        val device = local
+        val read = try {
+            readCurrentPage(navigation) {
+                val onDevice = device?.detail(profile, card)
+                if (onDevice != null) DetailRead(onDevice) else requireNotNull(connection).detailRead(card)
+            } ?: return@runPage
+        } catch (error: RemoteFailure) {
+            val unresolved = error.titleNeedsSearch ?: throw error
+            if (navigationGeneration == navigation) openTitleSearch(unresolved, after = job)
+            return@runPage
+        }
+        val pendingSeason = mutable.value.pendingDetailSeason
+        updateState { it.copy(detail = read.detail.withCardArt(card),
+            detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus,
+            pendingDetailSeason = null) }
         rememberNavigation()
     }
 }
@@ -212,6 +229,8 @@ private const val DETAILS_TIMEOUT = "Your server took too long to show this titl
 
 private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
     if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
+    val unresolved = (error as? RemoteFailure)?.titleNeedsSearch
+    if (unresolved != null) { openTitleSearch(unresolved); return }
     val message = failureMessage(error)
     val retryable = error !is RemoteFailure || !error.metadataNotFound
     updateState { state ->
@@ -437,6 +456,6 @@ internal fun ApplicationController.beginDetails() {
             else (previous.navBack + previous.screen).takeLast(32)
         previous.copy(detailReturnScreen = origin, detailHistory = history,
             navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
-            screen = Screen.Details, detail = null, calendarEpisode = null)
+            screen = Screen.Details, detail = null, detailFocus = null, calendarEpisode = null)
     }
 }

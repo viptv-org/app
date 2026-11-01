@@ -5,6 +5,8 @@ import org.viptv.app.connection.*
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
+import org.viptv.app.crash.CrashFacts
+import org.viptv.app.crash.playbackAttempt
 import kotlin.time.TimeSource
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,6 +52,11 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
             else requireNotNull(remote).subtitleContent(id).encodeToByteArray()
         })
     remotePlayback = lease
+    CrashFacts.playbackAttempt = playbackAttempt(source, when {
+        store != null -> "direct"
+        lease?.gateway == true -> "gateway"
+        else -> "direct"
+    })
     tracking = if (lease != null && remote != null) {
         val events = RemotePlaybackEvents(remote, input, card)
         PlaybackTracking(scope, { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }, {

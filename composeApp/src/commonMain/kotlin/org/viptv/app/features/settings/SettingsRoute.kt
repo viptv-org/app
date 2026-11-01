@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.state.*
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.addonLogo
+import org.viptv.app.connection.xtreamManagedElsewhere
 
 @Composable
 internal fun SettingsRoute(state: ApplicationState, controller: ApplicationController, browser: Boolean, television: Boolean, compact: Boolean = false,
@@ -33,6 +34,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     LaunchedEffect(remote) { if (remote != null) controller.refreshPasswordChangeAvailability() }
     val manageAccount = state.manageAccount
     val ownsHousehold = manageAccount && state.accountOwner
+    // The identity loads after the page: until it does, leave the writes to the server rather than flashing an owner note at the owner.
+    val xtreamCanManage = state.accountIdentity == null || state.accountOwner
+    val xtreamManageNote = if (manageAccount) "Only the account owner can change connections." else xtreamManagedElsewhere
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
     val escapeReturns = returnsToPlayer && (desktop || browser) && !television
@@ -88,6 +92,27 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
             profileName = state.profiles.find { it.id == state.selectedProfile }?.name,
             origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar) } },
+        xtreamConnections = if (state.localMode) null else ({ compact: Boolean, back: (() -> Unit)? ->
+            XtreamConnectionsSettings(state.xtreamConnections, state.xtreamDefaultLive, state.busy, state.error, state.xtreamNotice,
+                canManage = xtreamCanManage, manageNote = xtreamManageNote, compact = compact, back = back,
+                request = controller::refreshXtreamConnections, create = controller::createXtreamConnection,
+                update = controller::updateXtreamConnection, replacePassword = controller::replaceXtreamPassword,
+                sync = controller::syncXtreamConnection, setDefault = controller::setXtreamDefaultLive,
+                remove = controller::deleteXtreamConnection) }),
+        tvXtreamConnections = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
+            TvXtreamConnections(state.xtreamConnections, state.xtreamDefaultLive, state.busy, state.error, state.xtreamNotice,
+                canManage = xtreamCanManage, manageNote = xtreamManageNote, scale = scale, first = first, sidebar = sidebar,
+                request = controller::refreshXtreamConnections, create = controller::createXtreamConnection,
+                update = controller::updateXtreamConnection, replacePassword = controller::replaceXtreamPassword,
+                sync = controller::syncXtreamConnection, setDefault = controller::setXtreamDefaultLive,
+                remove = controller::deleteXtreamConnection) }),
+        gateways = if (!state.localMode) ({ first, sidebar, scale -> GatewaySettings(
+            state.gateways, state.gatewayChecks, state.gatewayGrants, state.busy, state.error, state.errorCode, state.gatewaysError,
+            controller.connection?.takeUnless { state.localMode },
+            controller::refreshGateways, controller::checkGateway, controller::setGatewayEnabled, controller::deleteGateway,
+            controller::grantGatewayAccess, controller::revokeGatewayAccess, controller::loadGatewayGrants,
+            television = television, scale = scale, first = first, left = sidebar) }) else null,
+        gatewaysRequested = if (!state.localMode) controller::refreshGateways else null,
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->
             if (compact && !browser) PhoneProfilePreferences(section, state.preferences, state.busy, state.preferencesError ?: state.error,

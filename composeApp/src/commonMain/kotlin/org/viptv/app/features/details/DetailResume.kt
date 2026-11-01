@@ -7,6 +7,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.viptv.app.connection.DetailFocus
 import org.viptv.app.connection.LocalFailure
 import org.viptv.app.state.sourceTarget
 import org.viptv.engine.wire.Card
@@ -53,30 +54,37 @@ private fun continues(card: Card, item: Card): Boolean {
 }
 
 @Stable
-internal class SeasonChoice(settled: Boolean = false, number: Long? = null) {
+internal class SeasonChoice(settled: Boolean = false, number: Long? = null, landed: Boolean = false) {
     private class Kept(val number: Long?)
     private var kept by mutableStateOf(if (settled) Kept(number) else null)
+    private var landedState by mutableStateOf(landed)
 
     val settled: Boolean get() = kept != null
+    val landed: Boolean get() = landedState
 
     fun selected(seasons: List<DetailSeason>, resume: DetailResume?): DetailSeason? =
         kept?.let { choice -> seasons.find { it.number == choice.number } }
             ?: resume?.let { target -> seasons.find { it.number == target.season } }
             ?: seasons.firstOrNull { (it.number ?: 0L) > 0L } ?: seasons.firstOrNull()
 
-    fun pick(number: Long?) { kept = Kept(number) }
+    fun pick(number: Long?) { kept = Kept(number); landedState = true }
 
-    fun keep(season: DetailSeason?) { if (kept == null && season != null) kept = Kept(season.number) }
+    fun keep(season: DetailSeason?) {
+        landedState = true
+        if (kept == null && season != null) kept = Kept(season.number)
+    }
 
     companion object {
-        val Saver = listSaver<SeasonChoice, Any?>(save = { listOf(it.settled, it.kept?.number) },
-            restore = { SeasonChoice(it[0] as Boolean, it[1] as Long?) })
+        val Saver = listSaver<SeasonChoice, Any?>(save = { listOf(it.settled, it.kept?.number, it.landed) },
+            restore = { SeasonChoice(it[0] as Boolean, it[1] as Long?, it[2] as Boolean) })
     }
 }
 
 @Composable
-internal fun rememberSeasonChoice(detail: DetailSnapshot?): SeasonChoice =
-    rememberSaveable(detail?.item?.identity, saver = SeasonChoice.Saver) { SeasonChoice() }
+internal fun rememberSeasonChoice(detail: DetailSnapshot?, focus: DetailFocus? = null): SeasonChoice =
+    rememberSaveable(detail?.item?.identity, saver = SeasonChoice.Saver) {
+        SeasonChoice(settled = focus?.season != null, number = focus?.season)
+    }
 
 @Composable
 internal fun LandOnResume(choice: SeasonChoice, list: LazyListState, index: Int?, season: DetailSeason?, clearance: Dp = 0.dp) {
@@ -84,7 +92,7 @@ internal fun LandOnResume(choice: SeasonChoice, list: LazyListState, index: Int?
     val shown by rememberUpdatedState(season)
     var landing by remember(choice) { mutableStateOf(false) }
     LaunchedEffect(choice, list, index) {
-        if (index == null || choice.settled) return@LaunchedEffect
+        if (index == null || choice.landed) return@LaunchedEffect
         landing = true
         try { list.scrollToItem(index, -clearancePx.toInt()) } finally { landing = false }
         choice.keep(shown)

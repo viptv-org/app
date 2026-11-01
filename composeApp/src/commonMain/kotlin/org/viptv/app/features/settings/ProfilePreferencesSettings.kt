@@ -11,6 +11,7 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
 
@@ -28,7 +29,7 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
     org.viptv.app.components.TvFocusScroll(horizontal = false) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Text(section, style = MaterialTheme.typography.headlineSmall)
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             error?.let { Text(it, color = Palette.danger) }

@@ -34,6 +34,7 @@ private val aboutLicences = listOf(
     AboutLicence("application.txt", "VIPTV application — GNU General Public License v2"),
     AboutLicence("onest.txt", "Onest font — SIL Open Font License 1.1"),
     AboutLicence("bricolage-grotesque.txt", "Bricolage Grotesque font — SIL Open Font License 1.1"),
+    AboutLicence("live-photography.txt", "Live sport photography — CC0"),
 )
 
 @Composable

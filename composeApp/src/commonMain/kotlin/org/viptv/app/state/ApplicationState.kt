@@ -10,6 +10,7 @@ import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.connection.HistoryDisplay
+import org.viptv.app.crash.CrashReport
 
 enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Anime, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings,
     ContinueWatching }
@@ -24,6 +25,7 @@ data class ApplicationState(
     val settingsReturnsToPlayer: Boolean = false,
     val busy: Boolean = false,
     val error: String? = null,
+    val errorCode: String? = null,
     val profiles: List<Profile> = emptyList(),
     val profileToOpen: String? = null,
     val profileToEdit: String? = null,
@@ -88,11 +90,15 @@ data class ApplicationState(
     val calendarSources: Set<org.viptv.app.features.calendar.CalendarSource>? = null,
     val calendarEpisode: Card? = null,
     val searchTerm: String = "",
+    val searchFilters: Set<String> = emptySet(),
+    val searchFocusResults: Boolean = false,
+    val pendingDetailSeason: Long? = null,
     val detailReturnScreen: Screen = Screen.Home,
     val playTapTitle: Card? = null,
     val detailFailure: String? = null,
     val detailRetryable: Boolean = true,
     val detail: DetailSnapshot? = null,
+    val detailFocus: DetailFocus? = null,
     val detailLoadingOffset: Long? = null,
     val detailPageError: String? = null,
     val detailHistory: List<DetailSnapshot> = emptyList(),
@@ -106,6 +112,13 @@ data class ApplicationState(
     val preferencesError: String? = null,
     val sourceIntegrations: SourceIntegrationSnapshot = SourceIntegrationSnapshot(),
     val sourceIntegrationError: String? = null,
+    val xtreamConnections: List<XtreamConnection>? = null,
+    val xtreamDefaultLive: Long? = null,
+    val xtreamNotice: String? = null,
+    val gateways: GatewaySnapshot? = null,
+    val gatewaysError: String? = null,
+    val gatewayChecks: Map<String, GatewayCheck> = emptyMap(),
+    val gatewayGrants: Map<String, List<Long>> = emptyMap(),
     val enabledAddonIds: Set<String> = emptySet(),
     val sourceTitle: Card? = null,
     val sourceReturnScreen: Screen = Screen.Home,
@@ -124,6 +137,7 @@ data class ApplicationState(
     val paused: Boolean = false,
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
+    val pendingCrashReport: CrashReport? = null,
 )
 
 internal fun ApplicationState.detailsPending(): Boolean =
