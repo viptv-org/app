@@ -232,15 +232,18 @@ class LiveUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun phoneNoSourceUsesTheTallBlockAboveTheBottomBar() {
+    @Test fun phoneNoSourceStacksTheCopyUnderThePhotoBandOnTheGutter() {
         val controller = liveController(livePage())
         val scene = liveScene(390, 844, false, controller)
         try {
             frames(scene)
             val primary = action(scene, LiveSetUp).boundsInRoot
+            val secondary = action(scene, LiveAddons).boundsInRoot
+            assertEquals(16f, primary.left, 1.5f)
             assertEquals(358f, primary.width, 1.5f)
             assertEquals(54f, primary.height, 1.5f)
-            assertTrue(primary.bottom <= 844f - 112f + 1f, "the block sits above the bottom bar")
+            assertTrue(primary.bottom <= secondary.top, "the actions stack")
+            assertTrue(secondary.bottom <= 844f, "the actions stay on the page")
             capture(scene, "phone-live-no-source")
         } finally { scene.close() }
     }
