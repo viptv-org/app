@@ -36,6 +36,7 @@ class ImageLoaderSingletonTest {
 
     @Test fun previewInstallsTheSharedImageLoaderAfterACardCreatedCoilsDefault() = runBlocking {
         SingletonImageLoader.reset()
+        assertNull(imageCacheDirectory(PlatformContext.INSTANCE), "desktop tests disable the persistent image cache")
 
         render { MediaCard(card, width = 240, open = {}) }
 

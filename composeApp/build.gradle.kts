@@ -113,6 +113,10 @@ tasks.withType<Test>().matching { it.name == "testAndroidHostTest" }.configureEa
     jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED")
 }
 
+tasks.withType<Test>().matching { it.name == "desktopTest" }.configureEach {
+    systemProperty("viptv.disableImageDiskCache", "true")
+}
+
 val buildDesktopMpv by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_mpv.py")
