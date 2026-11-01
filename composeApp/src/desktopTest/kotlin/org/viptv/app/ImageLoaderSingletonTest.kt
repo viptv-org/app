@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.viptv.app.features.home.MediaCard
+import org.viptv.app.images.imageCacheDirectory
 import org.viptv.app.images.publicArtworkUrl
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.state.Screen
@@ -36,6 +37,7 @@ class ImageLoaderSingletonTest {
 
     @Test fun previewInstallsTheSharedImageLoaderAfterACardCreatedCoilsDefault() = runBlocking {
         SingletonImageLoader.reset()
+        assertNull(imageCacheDirectory(PlatformContext.INSTANCE), "desktop tests disable the persistent image cache")
 
         render { MediaCard(card, width = 240, open = {}) }
 

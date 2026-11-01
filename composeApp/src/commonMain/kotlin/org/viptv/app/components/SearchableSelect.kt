@@ -494,6 +494,9 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
     var draft by remember { mutableStateOf(value) }
     var applied by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
+    val any = remember { FocusRequester() }
+    var lastFocus by remember { mutableStateOf<FocusRequester?>(null) }
+    val windowFocused = LocalWindowInfo.current.isWindowFocused
     fun apply(next: String) {
         if (applied) return
         applied = true
@@ -502,6 +505,15 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
     }
     // Typing is the point of this panel, so its field takes focus on every layout.
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    // A fullscreen keyboard takes the window focus and Compose releases the panel's; Back hands it back with nothing focused.
+    LaunchedEffect(windowFocused) {
+        if (!windowFocused) return@LaunchedEffect
+        val target = lastFocus ?: return@LaunchedEffect
+        repeat(30) {
+            withFrameNanos { }
+            if (target.requestFocus()) return@LaunchedEffect
+        }
+    }
     Column(metrics.width.onPreviewKeyEvent { event ->
         when {
             event.key in listOf(Key.Escape, Key.Back) && event.type == KeyEventType.KeyDown -> { close(); true }
@@ -510,14 +522,15 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
             else -> true
         }
     }) {
-        SelectField(draft, "Enter ${title.lowercase()}", null, metrics, Modifier.focusRequester(focus),
+        SelectField(draft, "Enter ${title.lowercase()}", null, metrics,
+            Modifier.focusRequester(focus).onFocusChanged { if (it.isFocused) lastFocus = focus },
             KeyboardOptions(keyboardType = if (number) KeyboardType.Number else KeyboardType.Text, imeAction = ImeAction.Done),
             KeyboardActions(onDone = { apply(draft.trim()) })) { draft = it }
         if (LocalPointerHover.current) Text("Press Enter to apply", Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
             fontSize = 12.sp, color = Palette.tertiary)
         if (value.isNotBlank()) {
             if (metrics.tv) TvSelectRow("Any", unavailable = false, trailing = null, checked = false, multiple = false, enabled = true,
-                metrics.scale, remember { FocusRequester() }) { apply("") }
+                metrics.scale, any, onFocus = { lastFocus = it }) { apply("") }
             else SelectRow("Any", unavailable = false, trailing = null, checked = false, multiple = false, enabled = true,
                 active = false, metrics.rowHeight, hovered = {}) { apply("") }
         }

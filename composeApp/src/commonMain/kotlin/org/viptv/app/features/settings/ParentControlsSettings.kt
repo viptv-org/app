@@ -18,13 +18,13 @@ import org.viptv.app.components.TextButton
 @Composable
 internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<String, ParentProfileControls>,
     busy: Boolean, error: String?, notice: String?, saved: Long, load: () -> Unit, unlock: (String) -> Unit,
-    pin: (String, String) -> Unit, policy: (String, KidsPolicy) -> Unit, leavePin: (String, String, String) -> Unit,
-    titles: (String) -> Unit) {
-    var pinMode by remember { mutableStateOf<String?>(null) }
+    policy: (String, KidsPolicy) -> Unit, leavePin: (String, String, String) -> Unit,
+    titles: (String) -> Unit, openHouseholdPin: (() -> Unit)? = null) {
+    var unlocking by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<ServerProfile?>(null) }
     var leavePinFor by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
-    LaunchedEffect(saved) { pinMode = null; editing = null; leavePinFor = null }
+    LaunchedEffect(saved) { unlocking = false; editing = null; leavePinFor = null }
     org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text("Parental controls", style = MaterialTheme.typography.headlineMedium)
@@ -39,18 +39,9 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
             if (!busy) OutlinedButton(load) { Text("Retry parental controls") }
         } else if (snapshot.parent.restricted && !snapshot.parent.unlocked) {
             Text("Enter the parent PIN to manage this household.", color = Palette.secondary)
-            Button({ pinMode = "unlock" }, enabled = !busy && snapshot.parent.pin_configured) { Text("Unlock parental controls") }
+            Button({ unlocking = true }, enabled = !busy && snapshot.parent.pin_configured) { Text("Unlock parental controls") }
         } else {
-            Text("Household PIN", style = MaterialTheme.typography.titleLarge)
-            Text(if (snapshot.parent.pin_configured) "A parent PIN is set." else "Set a PIN before enabling kids restrictions.", color = Palette.secondary)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button({ pinMode = "save" }, enabled = !busy) { Text(if (snapshot.parent.pin_configured) "Change parent PIN" else "Set parent PIN") }
-                if (snapshot.parent.pin_configured) TextButton({ pinMode = "remove" }, enabled = !busy && snapshot.profiles.none { it.kids }) {
-                    Text("Remove PIN", color = if (!busy && snapshot.profiles.none { it.kids }) Palette.danger else Palette.tertiary)
-                }
-            }
-            if (snapshot.profiles.any { it.kids }) Text("Turn off kids restrictions on all profiles before removing the PIN.", color = Palette.secondary)
-            HorizontalDivider(color = Palette.raised)
+            if (openHouseholdPin != null) TextButton(openHouseholdPin, enabled = !busy) { Text("Household PIN in Account") }
             Text("Profile restrictions", style = MaterialTheme.typography.titleLarge)
             snapshot.profiles.forEach { profile ->
                 val current = controls[profile.id]
@@ -71,8 +62,8 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
             }
         }
     } }
-    pinMode?.let { mode -> ParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, error,
-        dismiss = { if (!busy) pinMode = null }, submit = { current, next -> if (mode == "unlock") unlock(current) else pin(current, next) }) }
+    if (unlocking) ParentPinDialog("unlock", snapshot?.parent?.pin_configured == true, busy, error,
+        dismiss = { if (!busy) unlocking = false }, submit = { current, _ -> unlock(current) })
     editing?.let { profile -> KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
         snapshot?.parent?.pin_configured == true, busy, error,
         dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }) }

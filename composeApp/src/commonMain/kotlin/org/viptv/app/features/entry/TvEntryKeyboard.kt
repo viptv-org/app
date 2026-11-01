@@ -13,7 +13,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 
 @Composable
-internal fun TvEntryKeyboard(scale: Float, initialSuffix: Boolean = false, onDelete: (() -> Unit)? = null, onClear: (() -> Unit)? = null, input: (String) -> Unit) {
+internal fun TvEntryKeyboard(scale: Float, initialSuffix: Boolean = false, onDelete: (() -> Unit)? = null, onClear: (() -> Unit)? = null, suffixes: Boolean = true, input: (String) -> Unit) {
     var upper by remember { mutableStateOf(false) }
     var symbols by remember { mutableStateOf(false) }
     val initial = remember { FocusRequester() }
@@ -42,9 +42,11 @@ internal fun TvEntryKeyboard(scale: Float, initialSuffix: Boolean = false, onDel
             TvEntryKey(Modifier.width(332.dp * scale), scale, activate = { input(" ") }) { Icon(Lucide.Space, "Space", Modifier.size(28.dp * scale), it) }
             if (onDelete != null) TvEntryKey(Modifier.width(104.dp * scale), scale, activate = onDelete) { Icon(Lucide.Delete, "Backspace", Modifier.size(28.dp * scale), it) }
             if (onClear != null) TvEntryKey(Modifier.width(160.dp * scale), scale, activate = onClear) { Text("Clear", color = it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold) }
-            TvEntryKey(Modifier.width(218.dp * scale), scale, activate = { input(".com") }, suffix = true) { Text(".com", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold) }
-            TvEntryKey(Modifier.width(332.dp * scale), scale, requester = if (initialSuffix) initial else null,
-                activate = { input("@gmail.com") }, suffix = true) { Text("@gmail.com", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold) }
+            if (suffixes) {
+                TvEntryKey(Modifier.width(218.dp * scale), scale, activate = { input(".com") }, suffix = true) { Text(".com", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold) }
+                TvEntryKey(Modifier.width(332.dp * scale), scale, requester = if (initialSuffix) initial else null,
+                    activate = { input("@gmail.com") }, suffix = true) { Text("@gmail.com", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold) }
+            }
         }
     }
 }

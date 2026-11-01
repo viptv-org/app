@@ -29,6 +29,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var localPersistenceWarning: String? = null
     @Volatile internal var job: Job? = null
     @Volatile internal var generation = 0L
+    internal var lastSearchedTerm: String? = null
     private val runGate = SynchronizedObject()
     internal var navigationGeneration = 0L
     internal var pageRequestJob: Job? = null
@@ -71,6 +72,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var sourceDetailJob: Job? = null
     internal var sourcesScrolled = false
     internal var pairingJob: Job? = null
+    internal var vodMatchesJob: Job? = null
+    internal var vodMatchesRequest = 0L
     internal var pairingGeneration = 0L
     internal var pairingCode: PairingCode? = null
     internal var stremioImport: StremioImportSession? = null

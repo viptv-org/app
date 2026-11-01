@@ -530,6 +530,8 @@ data class SourceCandidate(
     val seeders: Long? = null,
     /** `direct` or `torrent`. */
     val delivery: String? = null,
+    val subbed: Boolean = false,
+    val subtitle_languages: List<String> = emptyList(),
 )
 
 @Serializable

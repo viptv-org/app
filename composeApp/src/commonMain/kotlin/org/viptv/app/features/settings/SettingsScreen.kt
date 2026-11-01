@@ -44,10 +44,12 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     tvDevices: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float, () -> Unit) -> Unit)? = null,
     browser: Boolean = false,
     xtreamConnections: (@Composable (Boolean, (() -> Unit)?) -> Unit)? = null,
-    tvXtreamConnections: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null) {
+    tvXtreamConnections: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
+    vodMatches: (@Composable (Boolean) -> Unit)? = null,
+    tvVodMatches: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
-            profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections)
+            profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections, vodMatches = tvVodMatches)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
@@ -78,7 +80,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             account != null, devices != null, addDevice != null, information = true,
             householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null,
             deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null,
-            xtreamConnections = xtreamConnections != null, gateways = gateways != null)
+            xtreamConnections = xtreamConnections != null, gateways = gateways != null, vodMatches = vodMatches != null)
         val root = initialSection.takeIf { returnToPlayer != null }
         val shown = current.laidOut(compact, root)
         SideEffect { if (savedPage != shown) show(shown) }
@@ -99,7 +101,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             Box(Modifier.weight(1f, fill = !webAccount).then(if (webAccount) Modifier.widthIn(max = 760.dp) else Modifier)) {
                 when {
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
-                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, xtreamConnections = if (xtreamConnections != null) ({ open(xtreamConnectionsSection) }) else null, gateways = if (gateways != null) ({ open("Gateways") }) else null, password = password?.let { { open("Password") } }, deleteAccount = deleteAccount?.let { { open("Delete account") } }, profilePage = profilePage?.let { { open("Profile") } }, linkedServices = linkedServices?.let { { open("Linked services") } }, listState = listState)
+                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, xtreamConnections = if (xtreamConnections != null) ({ open(xtreamConnectionsSection) }) else null, gateways = if (gateways != null) ({ open("Gateways") }) else null, password = password?.let { { open("Password") } }, deleteAccount = deleteAccount?.let { { open("Delete account") } }, profilePage = profilePage?.let { { open("Profile") } }, linkedServices = linkedServices?.let { { open("Linked services") } }, vodMatches = vodMatches?.let { { open("VOD matches") } }, listState = listState)
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null,
                         installWithCompletion = installWithCompletion)
@@ -122,6 +124,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         }
                     }
                     section == xtreamConnectionsSection && xtreamConnections != null -> xtreamConnections(compact, if (compact) back else null)
+                    section == "VOD matches" && vodMatches != null -> SettingsDetailContent(compact, back) { vodMatches(compact) }
                     section == "Gateways" && phoneGateways != null -> SettingsDetailContent(compact, back) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {
                             phoneGateways.invoke()

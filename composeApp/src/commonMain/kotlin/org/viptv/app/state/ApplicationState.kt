@@ -41,6 +41,7 @@ data class ApplicationState(
     val parentSettings: ProfileManagement? = null,
     val parentControls: Map<String, ParentProfileControls> = emptyMap(),
     val parentTitles: ParentTitlesState? = null,
+    val vodMatches: VodMatchesState? = null,
     val parentSettingsNotice: String? = null,
     val parentSettingsSaved: Long = 0,
     val profileApprovals: Int? = null,

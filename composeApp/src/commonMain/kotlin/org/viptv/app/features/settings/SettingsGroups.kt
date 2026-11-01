@@ -37,6 +37,7 @@ internal enum class SettingsRow(val group: SettingsGroup, val key: String, val l
     Addons(SettingsGroup.Account, "Add-ons", "Add-ons", Lucide.Puzzle),
     SourceIntegrations(SettingsGroup.Account, "Source integrations", "Source integrations", Lucide.Server),
     XtreamConnections(SettingsGroup.Account, xtreamConnectionsSection, xtreamConnectionsSection, Lucide.ServerCog),
+    VodMatches(SettingsGroup.Account, "VOD matches", "VOD matches", Lucide.Merge),
     Gateways(SettingsGroup.Account, "Gateways", "Playback gateways", Lucide.Network),
     SignOut(SettingsGroup.Account, "Sign out", "Sign out", Lucide.LogOut),
     DeleteAccount(SettingsGroup.Account, "Delete account", "Delete account", Lucide.Trash2);
@@ -57,7 +58,7 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     devices: Boolean, addDevice: Boolean, information: Boolean,
     householdPin: Boolean = false, sourceIntegrations: Boolean = false, deleteAccount: Boolean = false,
     linkedServices: Boolean = false, password: Boolean = false, xtreamConnections: Boolean = false,
-    gateways: Boolean = false): Set<SettingsRow> = buildSet {
+    vodMatches: Boolean = false, gateways: Boolean = false): Set<SettingsRow> = buildSet {
     add(SettingsRow.Profile)
     if (linkedServices) add(SettingsRow.LinkedServices)
     if (parental) add(SettingsRow.ParentalControls)
@@ -72,6 +73,7 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     add(SettingsRow.Addons)
     if (sourceIntegrations) add(SettingsRow.SourceIntegrations)
     if (xtreamConnections) add(SettingsRow.XtreamConnections)
+    if (vodMatches) add(SettingsRow.VodMatches)
     if (gateways) add(SettingsRow.Gateways)
     add(SettingsRow.SignOut)
     if (deleteAccount) add(SettingsRow.DeleteAccount)

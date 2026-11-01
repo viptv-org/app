@@ -39,6 +39,8 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.state.Screen
+import org.viptv.app.state.VodMatchProvider
+import org.viptv.app.state.VodMatchesState
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import kotlin.test.*
@@ -86,9 +88,10 @@ class TvDpadPassTest {
 
     private fun settings(section: TvSettingsSection, addons: List<IntegrationConnection> = emptyList(),
         gateways: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
-        xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null): @Composable () -> Unit = {
+        xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
+        vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null): @Composable () -> Unit = {
         TvSettingsScreen(false, addons, addons.map { it.id }.toSet(), false, null, null, {}, { _, _ -> }, {}, {}, PreviewData.profile,
-            initialSection = section, prefs = TvSettingsPreferences(), change = {}, gateways = gateways, xtream = xtream)
+            initialSection = section, prefs = TvSettingsPreferences(), change = {}, gateways = gateways, xtream = xtream, vodMatches = vodMatches)
     }
 
     @Test fun playerPillsAreChainedSoSourceAndNextEpisodeAreReachable() = onEdt {
@@ -218,6 +221,20 @@ class TvDpadPassTest {
             assertTrue(tv.focused().orEmpty().let { it == "Simkl" || it == "Stremio addons" }, "a provider row is focused: ${tv.focused()}")
             tv.press(Key.DirectionLeft)
             assertEquals("sidebar", tv.focused())
+        }
+    }
+
+    @Test fun vodMatchesSearchChipLeadsBackToTheSelectedSidebarRow() = onEdt {
+        val state = VodMatchesState(providers = listOf(VodMatchProvider(1, "Home Xtream")), loaded = true)
+        val page: @Composable (FocusRequester, FocusRequester, Float) -> Unit = { first, sidebar, scale ->
+            TvVodMatchesSettings(state, scale, first, sidebar, {}, {}, {}, {}, {}, {}, {}, {}, {})
+        }
+        val vod = settings(TvSettingsSection.VodMatches, vodMatches = page)
+        Tv(vod).use { tv ->
+            tv.settle()
+            assertEquals("Search", tv.focused())
+            tv.press(Key.DirectionLeft)
+            assertEquals("VOD matches", tv.focused(), "Left from the first chip lands on the selected row")
         }
     }
 }
