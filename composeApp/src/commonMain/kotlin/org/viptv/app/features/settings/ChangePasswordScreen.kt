@@ -13,6 +13,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.viptv.app.components.CredentialFields
 import org.viptv.app.components.CredentialForm
+import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.connection.RemoteConnection
 import org.viptv.app.connection.RemoteFailure
 import org.viptv.app.connection.changePassword
@@ -51,7 +52,7 @@ internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, ch
             finally { busy = false }
         }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Change password", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
         CredentialForm(
             fields = CredentialFields.changePassword(current, currentError, next, confirmation, if (mismatch) passwordMismatchMessage else null),

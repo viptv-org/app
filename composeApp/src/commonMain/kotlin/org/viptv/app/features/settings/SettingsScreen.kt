@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -109,7 +110,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         deleteAccount(cancel)
                     }
                     section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back) {
-                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance()) {
                             phoneSourceIntegrations.invoke()
                         }
                     }

@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -21,7 +22,7 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     var dialog by remember(section) { mutableStateOf<PhonePreferenceField?>(null) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
-    org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+    org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(section, Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontSize = 17.sp, fontWeight = FontWeight.Bold)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())

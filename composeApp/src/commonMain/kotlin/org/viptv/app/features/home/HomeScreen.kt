@@ -44,7 +44,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
         val gutter = pageGutter(television, tablet, browser, maxWidth)
         val viewportHeight = maxHeight
         var focused by remember(home?.scope?.owner()) { mutableStateOf<Card?>(null) }
-        LazyColumn(contentPadding = PaddingValues(bottom = if (compact) 96.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+        LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             if (error != null || (home == null && !busy)) item(key = "status") {
                 HomeStatus(home, error, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
             }

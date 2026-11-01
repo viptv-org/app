@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +20,7 @@ import org.viptv.app.theme.Palette
 internal fun AccountIdentityScreen(identity: AccountIdentity?, busy: Boolean, error: String?, load: () -> Unit,
     notice: String? = null) {
     LaunchedEffect(Unit) { load() }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
         if (identity != null) {
             Column(Modifier.fillMaxWidth()) {
