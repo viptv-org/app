@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Deterministically assign every desktop test class to one CI shard so the jobs
-# run disjoint subsets with Gradle's --tests filter. Assignment is a hash of the
-# fully qualified class name, so a new test class lands in a shard automatically.
+# Hash assignment, not round-robin: a new class lands in a shard without reshuffling existing ones.
 set -euo pipefail
 
 shards=${SHARDS:-4}
