@@ -138,7 +138,7 @@ fun App(
                     Row(Modifier.weight(1f)) {
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
-                            if (state.screen == Screen.Details || state.screen == Screen.Sources) pageBehindDetails(state.detailReturnScreen) else navigationScreen, controller::navigate)
+                            if (state.screen == Screen.Details || state.screen == Screen.Sources) navHighlightPage(state.detailReturnScreen) else navigationScreen, controller::navigate)
                         PullRefresh(touch, enabled = state.screen in PULL_REFRESH_SCREENS,
                             refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         val pageArea: @Composable (Screen) -> Unit = { current ->
@@ -199,7 +199,7 @@ fun App(
                         } else {
                             val page = when {
                                 browser && (state.screen == Screen.Details || state.screen == Screen.Sources) ->
-                                    pageBehindDetails(state.detailReturnScreen)
+                                    detailBackdrop(state.detailReturnScreen)
                                 state.screen == Screen.Sources ->
                                     if (state.sourceReturnScreen == Screen.Details) Screen.Details else Screen.Sources
                                 else -> state.screen
@@ -213,7 +213,6 @@ fun App(
                                 },
                                 label = "page area",
                             ) { current -> pageArea(current) }
-                            // The dialog and drawer are their own window layer, so the page behind never crossfades away.
                             if (browser && (state.screen == Screen.Details || state.screen == Screen.Sources))
                                 DetailsAndSources(state.screen, state, controller, television, tablet, browser = true)
                         }
@@ -230,9 +229,17 @@ fun App(
     }
 }
 
-// Continue Watching is Home's row, so Details opened from it resolves to Home in both the browser backdrop and the nav highlight.
-private fun pageBehindDetails(detailReturnScreen: Screen): Screen =
+// Continue Watching has no nav entry, so the SideNavigation highlight resolves it to Home.
+private fun navHighlightPage(detailReturnScreen: Screen): Screen =
     if (detailReturnScreen == Screen.ContinueWatching) Screen.Home else detailReturnScreen
+
+private val DETAIL_BACKDROP_PAGES = setOf(
+    Screen.Home, Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime, Screen.Search,
+    Screen.Calendar, Screen.Live, Screen.Library, Screen.ContinueWatching, Screen.History, Screen.Settings)
+
+// Details, Sources and Player are not pages, so a backdrop without a real page behind it falls back to Home.
+private fun detailBackdrop(detailReturnScreen: Screen): Screen =
+    if (detailReturnScreen in DETAIL_BACKDROP_PAGES) detailReturnScreen else Screen.Home
 
 @Composable
 private fun DetailsAndSources(current: Screen, state: ApplicationState, controller: ApplicationController, television: Boolean, tablet: Boolean, browser: Boolean) {
