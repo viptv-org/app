@@ -31,13 +31,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-          gradle-home-cache-excludes: |
-            caches/keyrings
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
       - name: Compile Android main
-        run: ./gradlew --max-workers=2 --build-cache :composeApp:compileAndroidMain
+        run: ./gradlew --max-workers=2 :composeApp:compileAndroidMain
   compile-wasm:
     name: compile Wasm JS main
     runs-on: ubuntu-latest
@@ -55,13 +53,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-          gradle-home-cache-excludes: |
-            caches/keyrings
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0'
       - name: Compile Wasm JS main
-        run: ./gradlew --max-workers=2 --build-cache :composeApp:compileKotlinWasmJs
+        run: ./gradlew --max-workers=2 :composeApp:compileKotlinWasmJs
   desktop-test:
     name: desktop test shard ${{ matrix.shard }}
     runs-on: ubuntu-latest
@@ -90,8 +86,6 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-          gradle-home-cache-excludes: |
-            caches/keyrings
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
@@ -125,7 +119,7 @@ jobs:
           printf 'shard %d: %d of %d desktop test classes\n' "${{ matrix.shard }}" "${#classes[@]}" "$total"
           args=()
           for class in "${classes[@]}"; do args+=(--tests "$class"); done
-          ./gradlew --max-workers=2 --build-cache :composeApp:desktopTest "${args[@]}"
+          ./gradlew --max-workers=2 :composeApp:desktopTest "${args[@]}"
           python3 - "${{ matrix.shard }}" <<'PY'
           import glob, sys, xml.etree.ElementTree as ET
           shard = sys.argv[1]
