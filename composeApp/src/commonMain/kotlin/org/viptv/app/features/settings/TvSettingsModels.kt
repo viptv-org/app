@@ -13,7 +13,8 @@ internal enum class TvSettingsSection(val label: String, val group: SettingsGrou
     About("About", SettingsGroup.ThisDevice, Lucide.Info),
     Account("Account", SettingsGroup.Account, Lucide.UserRound),
     Addons("Add-ons", SettingsGroup.Account, Lucide.Puzzle),
-    Sources("Source integrations", SettingsGroup.Account, Lucide.Server);
+    Sources("Source integrations", SettingsGroup.Account, Lucide.Server),
+    VodMatches("VOD matches", SettingsGroup.Account, Lucide.Merge);
 
     val leavesSettings: Boolean get() = this == SwitchProfile
 }

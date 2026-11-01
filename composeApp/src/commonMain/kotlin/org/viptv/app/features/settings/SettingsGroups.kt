@@ -36,6 +36,7 @@ internal enum class SettingsRow(val group: SettingsGroup, val key: String, val l
     AddDevice(SettingsGroup.Account, "Add a device", "Add a device", Lucide.Smartphone),
     Addons(SettingsGroup.Account, "Add-ons", "Add-ons", Lucide.Puzzle),
     SourceIntegrations(SettingsGroup.Account, "Source integrations", "Source integrations", Lucide.Server),
+    VodMatches(SettingsGroup.Account, "VOD matches", "VOD matches", Lucide.Merge),
     SignOut(SettingsGroup.Account, "Sign out", "Sign out", Lucide.LogOut),
     DeleteAccount(SettingsGroup.Account, "Delete account", "Delete account", Lucide.Trash2);
 
@@ -54,7 +55,7 @@ internal fun settingsSections(available: Set<SettingsRow>): List<SettingsSection
 internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: Boolean, account: Boolean,
     devices: Boolean, addDevice: Boolean, information: Boolean,
     householdPin: Boolean = false, sourceIntegrations: Boolean = false, deleteAccount: Boolean = false,
-    linkedServices: Boolean = false, password: Boolean = false): Set<SettingsRow> = buildSet {
+    linkedServices: Boolean = false, password: Boolean = false, vodMatches: Boolean = false): Set<SettingsRow> = buildSet {
     add(SettingsRow.Profile)
     if (linkedServices) add(SettingsRow.LinkedServices)
     if (parental) add(SettingsRow.ParentalControls)
@@ -68,6 +69,7 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     if (addDevice) add(SettingsRow.AddDevice)
     add(SettingsRow.Addons)
     if (sourceIntegrations) add(SettingsRow.SourceIntegrations)
+    if (vodMatches) add(SettingsRow.VodMatches)
     add(SettingsRow.SignOut)
     if (deleteAccount) add(SettingsRow.DeleteAccount)
 }

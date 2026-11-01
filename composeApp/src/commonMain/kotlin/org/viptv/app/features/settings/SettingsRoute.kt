@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -133,13 +136,40 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
         tvParentalPinAvailable = state.localMode,
-        returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback)
+        returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback,
+        vodMatches = if (remote != null) ({ VodMatchesRoute(state, controller) }) else null,
+        tvVodMatches = if (remote != null) ({ first, sidebar, scale -> TvVodMatchesRoute(state, controller, scale, first, sidebar) }) else null)
     }
     }
 }
 
 internal fun stremioImportAvailable(state: ApplicationState, television: Boolean, desktop: Boolean) =
     !television && !desktop && !state.localMode
+
+@Composable
+private fun VodMatchesRoute(state: ApplicationState, controller: ApplicationController) {
+    LaunchedEffect(Unit) { controller.openVodMatches() }
+    DisposableEffect(Unit) { onDispose { controller.closeVodMatches() } }
+    val page = state.vodMatches
+    if (page == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LinearProgressIndicator() }
+    else VodMatchesSettings(page, controller::updateVodMatchProvider, controller::updateVodMatchType,
+        controller::searchVodMatches, controller::loadMoreVodMatches, controller::refreshVodMatches,
+        controller::openVodMatchForm, controller::closeVodMatchForm, controller::changeVodMatchMetadata,
+        controller::saveVodMatch)
+}
+
+@Composable
+private fun TvVodMatchesRoute(state: ApplicationState, controller: ApplicationController, scale: Float,
+    first: FocusRequester, sidebar: FocusRequester) {
+    LaunchedEffect(Unit) { controller.openVodMatches() }
+    DisposableEffect(Unit) { onDispose { controller.closeVodMatches() } }
+    val page = state.vodMatches
+    if (page == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LinearProgressIndicator() }
+    else TvVodMatchesSettings(page, scale, first, sidebar, controller::updateVodMatchProvider,
+        controller::updateVodMatchType, controller::searchVodMatches, controller::openVodMatchForm,
+        controller::loadMoreVodMatches, controller::refreshVodMatches, controller::closeVodMatchForm,
+        controller::changeVodMatchMetadata, controller::saveVodMatch)
+}
 
 @Composable
 private fun StremioImportRoute(state: ApplicationState, controller: ApplicationController, compact: Boolean, back: (() -> Unit)?,

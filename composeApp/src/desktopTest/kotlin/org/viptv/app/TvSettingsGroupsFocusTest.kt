@@ -46,7 +46,7 @@ class TvSettingsGroupsFocusTest {
                 .containsAll(listOf("PROFILE", "PLAYBACK", "THIS DEVICE", "ACCOUNT")), "the rail labels every group")
             val rail = nodes.filter { it.config.contains(SemanticsActions.OnClick) && it.boundsInRoot.left < 560f }
             assertEquals(listOf("Profile", "Switch profile", "Parental controls", "Playback", "Subtitles & audio", "Display", "About",
-                "Account", "Add-ons", "Source integrations"), rail.map(::text), "the rail's rows in group order")
+                "Account", "Add-ons", "Source integrations", "VOD matches"), rail.map(::text), "the rail's rows in group order")
             for (label in listOf("PROFILE", "PLAYBACK", "THIS DEVICE", "ACCOUNT")) {
                 val node = nodes.first { text(it) == label }
                 assertFalse(node.config.contains(SemanticsActions.OnClick), "$label is not a row")
