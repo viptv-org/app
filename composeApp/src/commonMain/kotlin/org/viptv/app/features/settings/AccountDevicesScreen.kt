@@ -33,7 +33,7 @@ internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, erro
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 back?.let { TextButton(it) { Text("Back") } }
                 Text("Devices", fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = (-.48).sp)
-                Text("Everywhere ${snapshot?.account?.username?.let { "${it}’s account" } ?: "your account"} is signed in. Signing a device out doesn’t delete anything from the account.",
+                Text("Everywhere ${snapshot?.account?.name?.let { "${it}’s account" } ?: "your account"} is signed in. Signing a device out doesn’t delete anything from the account.",
                     fontSize = 14.sp, lineHeight = 20.sp, color = Palette.secondary)
             }
             Spacer(Modifier.height(14.dp))
