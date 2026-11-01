@@ -17,6 +17,9 @@ Change the generator and rerun it instead.
 | `composeApp/src/desktopMain/resources/viptv-app-icon.icns` | macOS launcher icon: the same square at 16–1024 px |
 | `composeApp/src/wasmJsMain/resources/favicon.svg` | 100-unit SVG favicon: the nav tile, a `#F5C542` rounded square (radius 0.3) holding the `#0B0B0C` V |
 | `composeApp/src/wasmJsMain/resources/favicon.ico` | The same tile as a 16–64 px ICO, the fallback for browsers that ignore the SVG |
+| `composeApp/src/wasmJsMain/resources/apple-touch-icon.png` | 180 px iOS home-screen icon: the tile square-cornered and opaque, so iOS applies its own radius |
+| `composeApp/src/wasmJsMain/resources/icon-192.png` | 192 px install icon: the tile with its rounded corners |
+| `composeApp/src/wasmJsMain/resources/icon-512.png` | 512 px install icon, also the maskable glyph: the tile square-cornered and opaque, the V inside the maskable safe zone |
 
 ## Provenance
 
@@ -51,10 +54,14 @@ What the generator reproduces from it:
   as `viptv-app-icon.png` for the window and the Linux launcher, and as Pillow's
   `viptv-app-icon.ico` (16–256 px) and `viptv-app-icon.icns` (16–1024 px) for
   jpackage's Windows and macOS launchers.
-- **Web favicon:** the in-app nav tile — design's `brand-mark-tile.svg` ground
+- **Web icons:** the in-app nav tile — design's `brand-mark-tile.svg` ground
   `#F5C542` at radius 0.3 and the `#0B0B0C` V at the BrandMark ratio.
   `favicon.svg` is the 100-unit vector served next to `index.html`;
   `favicon.ico` is the same tile at 16–64 px for browsers that ignore the SVG.
+  `apple-touch-icon.png` (180 px) and `icon-512.png` (the maskable glyph) fill
+  the square edge to edge, because iOS and icon masks round the corners
+  themselves; `icon-192.png` keeps the tile's rounded corners as the maskless
+  install icon.
 
 The path, colours and ratios are copied into the script by hand. If design's
 master changes, update the script, regenerate, and repoint this section at the
