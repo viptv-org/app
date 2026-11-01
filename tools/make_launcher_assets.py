@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generate the Android launcher icon, its adaptive and monochrome layers, the TV
-banner, the in-app V vector and the desktop window icon from design's branded V.
+banner, the in-app V vector and the desktop window and launcher icons from
+design's branded V.
 
 Design's `assets/brand/viptv-v.svg` is the master: one closed path in the ink box
 195.506 x 167. Every output places that path, scaled uniformly and centred on the
@@ -275,6 +276,22 @@ def save(path, image):
     print(path.relative_to(ROOT))
 
 
+def desktop_icons():
+    """The desktop window icon and the three jpackage launcher icons.
+
+    The square is design's `app-icon-square-1024.png` (white V on black,
+    1024 px). jpackage wants a PNG for Linux, an ICO for Windows and an ICNS
+    for macOS, so Pillow downsizes the same square into the ICO (16-256 px)
+    and ICNS (16-1024 px) containers; the PNG serves both the window and the
+    Linux launcher."""
+    square = square_icon(DESKTOP_ICON_PX)
+    save(DESKTOP_RESOURCES / "viptv-app-icon.png", square)
+    for name, fmt in (("viptv-app-icon.ico", "ICO"), ("viptv-app-icon.icns", "ICNS")):
+        path = DESKTOP_RESOURCES / name
+        square.save(path, format=fmt)
+        print(path.relative_to(ROOT))
+
+
 def main():
     write(RES / "values/ic_launcher_background.xml", COLOR)
     write(RES / "drawable/ic_launcher_foreground.xml", layer(MARK))
@@ -287,7 +304,7 @@ def main():
         save(RES / f"mipmap-{density}/ic_launcher_round.png", legacy_icon(px, disc=True))
     save(RES / "drawable-xhdpi/tv_banner.png", banner())
     write(COMPOSE_DRAWABLE / "viptv_v.xml", COMPOSE_V)
-    save(DESKTOP_RESOURCES / "viptv-app-icon.png", square_icon(DESKTOP_ICON_PX))
+    desktop_icons()
 
 
 if __name__ == "__main__":
