@@ -93,6 +93,11 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                     }
                 }
             }
+            if (selected == null && busy) {
+                Box(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 28.dp, vertical = 40.dp)) {
+                    DetailBelowSkeleton(phone = false, desktop = false)
+                }
+            }
         }
     }
 }

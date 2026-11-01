@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,7 +50,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail, focus)
-    var section by remember(detail?.item?.identity) { mutableStateOf(
+    var section by remember(detail?.item?.identity, detail?.episodes?.isNotEmpty() == true, detail?.recommendations?.isNotEmpty() == true) { mutableStateOf(
         when { detail?.episodes?.isNotEmpty() == true -> DetailSection.Episodes
             detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
             else -> DetailSection.Information }) }
@@ -68,51 +69,61 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val resumeIndex = landing?.let { episode ->
             (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 + (if (desktop) 0 else 1) + 1 + episode }
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
+        val reveal = rememberContentReveal(!busy)
         val scrolled by remember(phone) { derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
         LazyColumn(Modifier.fillMaxSize(), state = listState,
             contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
-            error?.let { item { Text(it, Modifier.padding(horizontal = gutter, vertical = if (phone) 64.dp else 0.dp), color = Palette.danger) } }
             detail?.let { value ->
-                item {
+                item(key = "hero") {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode)
                     else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
                         DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
                             sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
                     } else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved, playFromStart) }
                 }
-                if (!desktop) item(key = "sections") {
-                    DetailSections(section, seasons.isNotEmpty(), value.recommendations.isNotEmpty(),
-                        { section = it }, Modifier.padding(horizontal = gutter))
-                }
-                if (!desktop && section == DetailSection.Information) item(key = "information") {
-                    Column(Modifier.padding(horizontal = gutter), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        org.viptv.app.components.MediaMetadata(value.item)
-                        value.item.description?.let { Text(it, color = Palette.body, style = MaterialTheme.typography.bodyLarge) }
+                when {
+                    !busy && error != null -> item(key = "failure") {
+                        DetailInlineFailure(error, retry, Modifier.padding(horizontal = gutter, vertical = if (phone) 64.dp else 0.dp))
                     }
-                }
-                if ((!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())) selected?.let { season ->
-                    item {
-                        Box(Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter))) {
-                            DetailSeasonPicker(seasons, season, phone) { number ->
-                                seasonChoice.pick(number)
-                                seasons.find { it.number == number }?.nextOffset?.let(loadPage)
+                    busy -> item(key = "skeleton") {
+                        Box(Modifier.padding(horizontal = gutter)) { DetailBelowSkeleton(phone, desktop) }
+                    }
+                    else -> {
+                        if (!desktop) item(key = "sections") {
+                            DetailSections(section, seasons.isNotEmpty(), value.recommendations.isNotEmpty(),
+                                { section = it }, Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value })
+                        }
+                        if (!desktop && section == DetailSection.Information) item(key = "information") {
+                            Column(Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value }, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                org.viptv.app.components.MediaMetadata(value.item)
+                                value.item.description?.let { Text(it, color = Palette.body, style = MaterialTheme.typography.bodyLarge) }
                             }
                         }
-                    }
-                    if (phone) itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                        DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate))
-                    } else itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                        DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate))
-                    }
-                }
-                if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {
-                    Column(Modifier.padding(bottom = if (desktop) 24.dp else 0.dp),
-                        verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        if (desktop) Text("More like this", Modifier.padding(horizontal = gutter), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        RelatedTitles(value.recommendations, open, Modifier.fillMaxWidth(), showHeading = !desktop, gutter = gutter)
+                        if ((!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())) selected?.let { season ->
+                            item {
+                                Box(Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).graphicsLayer { alpha = reveal.value }) {
+                                    DetailSeasonPicker(seasons, season, phone) { number ->
+                                        seasonChoice.pick(number)
+                                        seasons.find { it.number == number }?.nextOffset?.let(loadPage)
+                                    }
+                                }
+                            }
+                            if (phone) itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
+                                DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value })
+                            } else itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
+                                DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value })
+                            }
+                        }
+                        if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {
+                            Column(Modifier.padding(bottom = if (desktop) 24.dp else 0.dp).graphicsLayer { alpha = reveal.value },
+                                verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                                if (desktop) Text("More like this", Modifier.padding(horizontal = gutter), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                RelatedTitles(value.recommendations, open, Modifier.fillMaxWidth(), showHeading = !desktop, gutter = gutter)
+                            }
+                        }
                     }
                 }
             }

@@ -41,6 +41,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     linkedServices: (@Composable (Boolean) -> Unit)? = null,
     tvProfilePage: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
     tvProfileTitles: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
+    tvDevices: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float, () -> Unit) -> Unit)? = null,
     browser: Boolean = false,
     xtreamConnections: (@Composable (Boolean, (() -> Unit)?) -> Unit)? = null,
     tvXtreamConnections: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
@@ -48,7 +49,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     tvVodMatches: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
-            profilePage = tvProfilePage, profileTitles = tvProfileTitles, xtream = tvXtreamConnections, vodMatches = tvVodMatches)
+            profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections, vodMatches = tvVodMatches)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }

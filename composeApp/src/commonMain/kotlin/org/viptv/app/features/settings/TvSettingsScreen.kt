@@ -40,6 +40,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null,
     profilePage: (@Composable (FocusRequester, FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
     profileTitles: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
+    tvDevices: (@Composable (FocusRequester, FocusRequester, Float, () -> Unit) -> Unit)? = null,
     xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null) {
     var section by remember { mutableStateOf(initialSection) }
@@ -47,6 +48,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
     var browserFallback by remember { mutableStateOf(false) }
     var installing by remember { mutableStateOf(false) }
+    var devicesPage by remember { mutableStateOf(false) }
     var confirming by remember { mutableStateOf(false) }
     var installPending by remember { mutableStateOf(false) }
     var installGeneration by remember { mutableIntStateOf(0) }
@@ -63,13 +65,14 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             ?: dashboardAddress?.let { { browserFallback = true } }
     }
     LaunchedEffect(section, local) { if (section == TvSettingsSection.Account && !local) accountRequested?.invoke() }
+    LaunchedEffect(section) { devicesPage = false }
     LaunchedEffect(section) { if (section == TvSettingsSection.Gateways) gatewaysRequested?.invoke() }
     val sidebar = remember { FocusRequester() }; val first = remember { FocusRequester() }
     CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(lineHeightStyle =
         LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None, LineHeightStyle.Mode.Fixed))) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val scale = maxWidth / 1920.dp
-        org.viptv.app.components.TvRequestedFocus(first, listOf(section, failedPreferences, missingPreferences, missingAccount, installing),
+        org.viptv.app.components.TvRequestedFocus(first, listOf(section, failedPreferences, missingPreferences, missingAccount, installing, devicesPage),
             enabled = !installing && !leaving && (!(failedPreferences || missingPreferences || missingAccount) || !busy))
         if (installing) {
             TvAddonEntryPage(address, { address = it }, installBusy, error, scale, placeholderQr,
@@ -145,8 +148,10 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     }
                     TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else
                         TvParentalSettings(profile, maturity, pinAvailable, scale, first, sidebar, profiles)
-                    TvSettingsSection.Account -> TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, openAccount,
-                        busy = busy, error = error.takeIf { accountRequested != null }, retry = accountRequested)
+                    TvSettingsSection.Account -> if (devicesPage && tvDevices != null) tvDevices(first, sidebar, scale) { devicesPage = false }
+                        else TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, openAccount,
+                            openDevices = if (tvDevices != null && !local) ({ devicesPage = true }) else null,
+                            busy = busy, error = error.takeIf { accountRequested != null }, retry = accountRequested)
                     TvSettingsSection.Display -> {
                         val display = LocalTvDisplayState.current ?: rememberTvDisplayState()
                         TvDisplaySettings(display.value, scale, first, sidebar,
