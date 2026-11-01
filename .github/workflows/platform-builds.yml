@@ -52,6 +52,12 @@ jobs:
         run: |
           rustup toolchain install 1.98.0 --profile minimal
           rustup default 1.98.0
+      - name: Check out the pinned torrent worker source
+        shell: bash
+        run: |
+          git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
+          git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
+          echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
       - name: Verify and package desktop
         shell: bash
         run: ./gradlew :composeApp:desktopTest :composeApp:packageDistributionForCurrentOS
@@ -105,6 +111,12 @@ jobs:
           rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
           cargo install cargo-ndk --version 4.1.2 --locked
           sdkmanager 'ndk;28.2.13676358'
+      - name: Check out the pinned torrent worker source
+        shell: bash
+        run: |
+          git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
+          git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
+          echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
       - name: Build Android
         run: ./gradlew -Pkotlin.compiler.execution.strategy=in-process :androidApp:assembleRelease
       - name: Android host tests
