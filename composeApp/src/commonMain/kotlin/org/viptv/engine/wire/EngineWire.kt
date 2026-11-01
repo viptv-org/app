@@ -211,7 +211,6 @@ data class IntegrationConnection(
     val enabled: Boolean,
     val revision: Long,
     val capabilities: List<Capability>,
-    /** Server path of the add-on's logo (`/api/addons/:id/logo?v=…`), never the add-on's own address. */
     val logo: String? = null,
 )
 
@@ -355,6 +354,7 @@ data class LiveQuery(
     val search: String? = null,
     val offset: Long,
     val limit: Long? = null,
+    val page_size: Long? = null,
 )
 
 @Serializable
@@ -517,21 +517,15 @@ data class SourceCandidate(
     val detail: String? = null,
     val quality_height: Long? = null,
     val audio_languages: List<String> = emptyList(),
-    val presentation: SourcePresentation? = null,
-    // Normalized release facts (SRC-BEST-MATCH-001). Every one is optional;
-    // absent means unknown, never "not HDR" or "no seeders".
-    /** `web_dl`, `webrip`, `bluray`, `remux`, `hdtv`, `dvd`, `other_rip` or `cam`. */
-    val release_type: String? = null,
-    val three_d: Boolean = false,
-    /** Any of `dv`, `hdr10_plus`, `hdr10`, `hdr`, `hlg`. */
-    val dynamic_range: List<String> = emptyList(),
-    /** Any of `dual`, `multi`, `dubbed`. */
-    val audio_flags: List<String> = emptyList(),
-    val seeders: Long? = null,
-    /** `direct` or `torrent`. */
-    val delivery: String? = null,
     val subbed: Boolean = false,
     val subtitle_languages: List<String> = emptyList(),
+    val presentation: SourcePresentation? = null,
+    val release_type: String? = null,
+    val three_d: Boolean = false,
+    val dynamic_range: List<String> = emptyList(),
+    val audio_flags: List<String> = emptyList(),
+    val seeders: Long? = null,
+    val delivery: String? = null,
 )
 
 @Serializable
