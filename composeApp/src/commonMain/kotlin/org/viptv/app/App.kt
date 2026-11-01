@@ -138,7 +138,7 @@ fun App(
                     Row(Modifier.weight(1f)) {
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
-                            if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen.let { if (it == Screen.ContinueWatching) Screen.Home else it } else navigationScreen, controller::navigate)
+                            if (state.screen == Screen.Details || state.screen == Screen.Sources) pageBehindDetails(state.detailReturnScreen) else navigationScreen, controller::navigate)
                         PullRefresh(touch, enabled = state.screen in PULL_REFRESH_SCREENS,
                             refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         val pageArea: @Composable (Screen) -> Unit = { current ->
@@ -166,37 +166,7 @@ fun App(
                             }
                             // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
-                                Box(Modifier.fillMaxSize()) {
-                                    val showingSources = current == Screen.Sources || state.screen == Screen.Sources
-                                    // The drawer stays composed one exit after Back, so Details never fades or reloads behind it.
-                                    var sourceDrawerOpen by remember { mutableStateOf(false) }
-                                    if (showingSources) sourceDrawerOpen = true
-                                    val drawerShown = if (television) showingSources else showingSources || sourceDrawerOpen
-                                    // The drawer decides when it opens whether it returns to the Details dialog behind it.
-                                    val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
-                                    if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
-                                    if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
-                                        // A failed first load lands in state.error, which the page must show instead of drawing blank.
-                                        state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null },
-                                        // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
-                                        if (browser && showingSources) controller::backSources else controller::backDetails,
-                                        controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
-                                        defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
-                                        // A Calendar row's episode comes first: Details opened from it land on its season.
-                                        continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
-                                            state.continueWatching?.takeIf { it.profile == state.selectedProfile }?.cards.orEmpty(),
-                                        paging = state.screen == Screen.Details,
-                                        // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
-                                        playTap = state.playTapTitle != null,
-                                        retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
-                                        // The drawer over the page owns the keyboard: the dialog must not take its focus.
-                                        closeFocusOnOpen = !(browser && showingSources))
-                                    if (drawerShown) {
-                                        val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled) }
-                                        // Over the Details dialog the drawer needs a window layer of its own.
-                                        if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
-                                    }
-                                }
+                                DetailsAndSources(current, state, controller, television, tablet, browser = false)
                             }
                             Screen.Calendar -> routes.SaveableStateProvider("${state.selectedProfile}:calendar") {
                                 CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
@@ -227,8 +197,11 @@ fun App(
                         if (television) {
                             pageArea(state.screen)
                         } else {
-                            val page = when (state.screen) {
-                                Screen.Sources -> if (state.sourceReturnScreen == Screen.Details) Screen.Details else Screen.Sources
+                            val page = when {
+                                browser && (state.screen == Screen.Details || state.screen == Screen.Sources) ->
+                                    pageBehindDetails(state.detailReturnScreen)
+                                state.screen == Screen.Sources ->
+                                    if (state.sourceReturnScreen == Screen.Details) Screen.Details else Screen.Sources
                                 else -> state.screen
                             }
                             val enter: FiniteAnimationSpec<Float> = motionSpec(tween<Float>(Motion.arrive, easing = Motion.standard))
@@ -240,6 +213,9 @@ fun App(
                                 },
                                 label = "page area",
                             ) { current -> pageArea(current) }
+                            // The dialog and drawer are their own window layer, so the page behind never crossfades away.
+                            if (browser && (state.screen == Screen.Details || state.screen == Screen.Sources))
+                                DetailsAndSources(state.screen, state, controller, television, tablet, browser = true)
                         }
                         }
                     }
@@ -251,6 +227,43 @@ fun App(
             }
         }
     }
+    }
+}
+
+// Continue Watching is Home's row, so Details opened from it resolves to Home in both the browser backdrop and the nav highlight.
+private fun pageBehindDetails(detailReturnScreen: Screen): Screen =
+    if (detailReturnScreen == Screen.ContinueWatching) Screen.Home else detailReturnScreen
+
+@Composable
+private fun DetailsAndSources(current: Screen, state: ApplicationState, controller: ApplicationController, television: Boolean, tablet: Boolean, browser: Boolean) {
+    Box(Modifier.fillMaxSize()) {
+        val showingSources = current == Screen.Sources || state.screen == Screen.Sources
+        // The drawer stays composed one exit after Back, so Details never fades or reloads behind it.
+        var sourceDrawerOpen by remember { mutableStateOf(false) }
+        if (showingSources) sourceDrawerOpen = true
+        val drawerShown = if (television) showingSources else showingSources || sourceDrawerOpen
+        val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
+        if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
+            // A failed first load lands in state.error, which the page must show instead of drawing blank.
+            state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null },
+            // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
+            if (browser && showingSources) controller::backSources else controller::backDetails,
+            controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
+            defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
+            // A Calendar row's episode comes first: Details opened from it land on its season.
+            continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
+                state.continueWatching?.takeIf { it.profile == state.selectedProfile }?.cards.orEmpty(),
+            paging = state.screen == Screen.Details,
+            // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
+            playTap = state.playTapTitle != null,
+            retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
+            // The drawer over the page owns the keyboard: the dialog must not take its focus.
+            closeFocusOnOpen = !(browser && showingSources))
+        if (drawerShown) {
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled) }
+            // Over the Details dialog the drawer needs a window layer of its own.
+            if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
+        }
     }
 }
 
