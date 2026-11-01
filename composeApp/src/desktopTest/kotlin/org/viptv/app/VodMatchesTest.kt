@@ -41,7 +41,7 @@ class VodMatchesTest {
     private suspend fun await(what: String, predicate: () -> Boolean) {
         withTimeout(5_000) {
             while (!predicate()) delay(10)
-        }.let { }
+        }
         check(predicate()) { "timed out waiting for $what" }
     }
 
