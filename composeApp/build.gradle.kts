@@ -128,6 +128,7 @@ val buildDesktopEngine by tasks.registering(Exec::class) {
     commandLine("python3", "tools/build_engine.py", "desktop")
     inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"))
     outputs.dir(layout.buildDirectory.dir("nativeResources"))
+    onlyIf { providers.environmentVariable("VIPTV_NATIVE_PREBUILT").orNull == null }
 }
 tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopEngine) }
 val buildDesktopTorrent by tasks.registering(Exec::class) {
@@ -139,6 +140,7 @@ val buildDesktopTorrent by tasks.registering(Exec::class) {
         inputs.files(fileTree(it) { include("**/*.go", "go.mod", "go.sum") })
     }
     outputs.dir(layout.buildDirectory.dir("torrentResources"))
+    onlyIf { providers.environmentVariable("VIPTV_NATIVE_PREBUILT").orNull == null }
 }
 tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopTorrent) }
 // Same Java version can have different native dependencies across JDK vendors.
