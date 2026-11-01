@@ -1,0 +1,14 @@
+Live sport photography
+
+live-empty-wide.webp
+  Photographer: Mario Klassen (marioklassen)
+  Source: https://commons.wikimedia.org/wiki/File:Well_lit_soccer_stadium_(Unsplash).jpg
+          https://unsplash.com/photos/70YxSTWa2Zw
+  Licence: Creative Commons Zero (CC0) 1.0 — Public Domain Dedication
+  Subject: floodlit football stadium (Volksparkstadion, Hamburg)
+
+live-empty-tall.webp
+  Photographer: Hilda Raphael
+  Source: https://commons.wikimedia.org/wiki/File:Students_participating_in_a_basketball_game_at_Arusha_Technical_College.jpg
+  Licence: Creative Commons Zero (CC0) 1.0 — Public Domain Dedication
+  Subject: outdoor basketball game with students watching (Arusha Technical College)

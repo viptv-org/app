@@ -38,6 +38,7 @@ internal fun SettingsInformation(section: String, local: Boolean, address: Strin
                 OutlinedButton({ license = "application" }) { Text("Application license") }
                 TextButton({ license = "onest" }) { Text("Onest font license") }
                 TextButton({ license = "bricolage-grotesque" }) { Text("Bricolage Grotesque font license") }
+                TextButton({ license = "live-photography" }) { Text("Live sport photography") }
             }
         }
     } }
