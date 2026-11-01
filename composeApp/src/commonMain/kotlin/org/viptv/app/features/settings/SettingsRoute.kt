@@ -104,6 +104,13 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 update = controller::updateXtreamConnection, replacePassword = controller::replaceXtreamPassword,
                 sync = controller::syncXtreamConnection, setDefault = controller::setXtreamDefaultLive,
                 remove = controller::deleteXtreamConnection) }),
+        gateways = if (!state.localMode) ({ first, sidebar, scale -> GatewaySettings(
+            state.gateways, state.gatewayChecks, state.gatewayGrants, state.busy, state.error, state.errorCode, state.gatewaysError,
+            controller.connection?.takeUnless { state.localMode },
+            controller::refreshGateways, controller::checkGateway, controller::setGatewayEnabled, controller::deleteGateway,
+            controller::grantGatewayAccess, controller::revokeGatewayAccess, controller::loadGatewayGrants,
+            television = television, scale = scale, first = first, left = sidebar) }) else null,
+        gatewaysRequested = if (!state.localMode) controller::refreshGateways else null,
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->
             if (compact && !browser) PhoneProfilePreferences(section, state.preferences, state.busy, state.preferencesError ?: state.error,
