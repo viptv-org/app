@@ -228,7 +228,7 @@ fun App(
                   }
                 }
             }
-            if (state.pendingCrashReport != null) {
+            if (state.pendingCrashReport != null && showsCrashNotice(state.screen)) {
                 CrashReportNotice(television, controller::submitCrashReport, controller::discardCrashReport)
             }
         }
