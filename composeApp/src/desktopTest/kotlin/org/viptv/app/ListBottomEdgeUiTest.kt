@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -14,8 +15,12 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.viptv.app.components.BottomNavigation
+import org.viptv.app.components.LocalBottomBarFades
+import org.viptv.app.components.LocalBottomClearance
+import org.viptv.app.components.bottomBarClearance
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.features.browse.BrowseScreen
 import org.viptv.app.features.browse.BrowserBrowseScreen
@@ -63,7 +68,10 @@ class ListBottomEdgeUiTest {
             val scene = ImageComposeScene(case.width, case.height, Density(1f)) {
                 ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
                     Box(Modifier.fillMaxSize()) {
-                        case.content()
+                        CompositionLocalProvider(LocalBottomBarFades provides case.bar,
+                            LocalBottomClearance provides if (case.bar) bottomBarClearance() else 0.dp) {
+                            case.content()
+                        }
                         if (case.bar) Box(Modifier.align(Alignment.BottomCenter).onGloballyPositioned { barTop = it.boundsInRoot().top }) {
                             BottomNavigation(Screen.Home, {})
                         }
