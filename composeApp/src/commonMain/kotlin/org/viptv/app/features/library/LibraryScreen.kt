@@ -77,7 +77,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
             CompositionLocalProvider(LocalListRemoval provides removal) {
                 LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(176.dp), state = grid,
                     modifier = if (visible.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
-                    contentPadding = PaddingValues(bottom = if (visible.isEmpty()) 0.dp else if (phone) 96.dp else 24.dp),
+                    contentPadding = PaddingValues(bottom = if (visible.isEmpty()) 0.dp else 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
                     topEdgeFade = false) {
                     if (!phone) item(LIBRARY_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_TITLE_KEY) {
@@ -118,7 +118,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                     }
                 }
             }
-            if (visible.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp, bottom = if (phone) 96.dp else 0.dp), contentAlignment = Alignment.Center) {
+            if (visible.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
                         Icon(Lucide.Bookmark, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)

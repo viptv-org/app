@@ -2,8 +2,12 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
@@ -23,7 +27,17 @@ internal val LocalBarsFadeContent = staticCompositionLocalOf { false }
 
 internal val LocalBottomBarFades = staticCompositionLocalOf { false }
 
+internal val LocalBottomClearance = staticCompositionLocalOf { 0.dp }
+
 internal val ScrollEdgeFadeHeight = 28.dp
+
+// The space a page must leave at its end to clear the bar, its fade and the gesture-navigation inset.
+@Composable
+internal fun bottomBarClearance(): Dp =
+    BottomBarHeight + ScrollEdgeFadeHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+@Composable
+internal fun Modifier.pageBottomClearance(): Modifier = padding(bottom = LocalBottomClearance.current)
 
 // The gradient is measured in pixels: a brush drawn into a shorter rect would still span the whole draw area.
 private fun scrim(edge: ScrollEdge, color: Color, fade: Float, height: Float): Brush {

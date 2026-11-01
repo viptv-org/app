@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -33,7 +34,7 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
         false -> true
     }
     val ready = confirmed && password.isNotEmpty() && pinOk && !busy
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Delete account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = Palette.danger)
         Text(if (identity != null) "This deletes ${identity.name}’s account, its profiles, their history, My List, add-ons and paired devices. It cannot be undone."

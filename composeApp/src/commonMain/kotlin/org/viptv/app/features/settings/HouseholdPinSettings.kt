@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -23,7 +24,7 @@ internal fun HouseholdPinSettings(snapshot: ProfileManagement?, busy: Boolean, e
     LaunchedEffect(saved) { mode = null }
     val configured = snapshot?.parent?.pin_configured == true
     val kids = snapshot?.profiles.orEmpty().any { it.kids }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Household PIN", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
         Text("Use a 4–8 digit PIN to protect leaving kids profiles. Turn off kids mode on all profiles before removing the PIN.",
             fontSize = 14.sp, lineHeight = 21.sp, color = Palette.secondary)
