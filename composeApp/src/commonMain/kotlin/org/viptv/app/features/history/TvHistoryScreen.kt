@@ -73,7 +73,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                         fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
                 }
                 TvAction(Modifier.height(64.dp * scale).width(260.dp * scale), scale,
-                    requester = clearFocus, enabled = !busy && history.isNotEmpty(), activate = { confirm = true }) { tint ->
+                    requester = clearFocus, enabled = !busy && history.isNotEmpty(), keepFocus = busy, activate = { confirm = true }) { tint ->
                     Text("Clear history", color = tint, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
                 }
             }
