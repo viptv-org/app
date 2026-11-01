@@ -28,7 +28,7 @@ internal fun ConfigureImageLoading(diagnostics: ((String) -> Unit)? = null) {
 
 private fun buildImageLoader(context: PlatformContext, diagnostics: ((String) -> Unit)?): ImageLoader =
     ImageLoader.Builder(context)
-        .components { add(PublicArtworkMapper()) }
+        .components { add(PublicArtworkMapper()); add(DriveLetterFileUriMapper()) }
         .eventListenerFactory(object : EventListener.Factory {
             override fun create(request: ImageRequest): EventListener = diagnostics?.let { ImageDiagnostics(it) } ?: EventListener.NONE
         })

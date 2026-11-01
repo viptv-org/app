@@ -83,7 +83,7 @@ class TvLeadingFocusTest {
         val graphics = bitmap.createGraphics()
         graphics.color = java.awt.Color.YELLOW; graphics.fillRect(0, 0, 64, 64); graphics.dispose()
         javax.imageio.ImageIO.write(bitmap, "png", file)
-        val card = homeFixture().hero!!.copy(poster = file.toURI().toString())
+        val card = homeFixture().hero!!.copy(poster = file.toPath().toUri().toString())
         try {
             Fixture(1920, 1080) {
                 org.viptv.app.features.home.TvHomeBackdrop(card, browsing = true, portrait = true)

@@ -1,9 +1,11 @@
 package org.viptv.app
 
 import com.sun.jna.Memory
+import com.sun.jna.Platform
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.*
+import org.junit.Assume.assumeTrue
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.mpv.*
 import kotlin.test.*
@@ -46,6 +48,7 @@ class MpvNativeTest {
     }
 
     @Test fun thePackagedRuntimeProvidesTheHdrToneMapChain() = runBlocking {
+        assumeTrue("Homebrew's libmpv is built without the zscale filter", !Platform.isMac())
         val session = MpvSession(PlaybackInput("owned", "about:blank"))
         try {
             session.command("vf", "set", mpvToneMapFilter)

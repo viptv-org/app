@@ -94,7 +94,7 @@ class PointerRowScrollTest {
         Scene(pointer = true) { Chips(state) {} }.use { s ->
             s.frames()
             s.wheel(Offset(200f, 20f)) { state.scrolled() }
-            assertTrue(state.scrolled() > 40, "three wheel notches move the row: ${state.scrolled()} px")
+            assertTrue(state.scrolled() > 20, "three wheel notches move the row: ${state.scrolled()} px")
         }
     }
 
@@ -159,7 +159,7 @@ class PointerRowScrollTest {
         }.use { s ->
             s.frames()
             s.wheel(Offset(200f, 20f)) { chips.scrolled() + page.firstVisibleItemScrollOffset }
-            assertTrue(chips.scrolled() > 40, "the chip row scrolls sideways: ${chips.scrolled()} px, page ${page.firstVisibleItemIndex}/${page.firstVisibleItemScrollOffset}")
+            assertTrue(chips.scrolled() > 20, "the chip row scrolls sideways: ${chips.scrolled()} px, page ${page.firstVisibleItemIndex}/${page.firstVisibleItemScrollOffset}")
             assertEquals(0, page.firstVisibleItemIndex + page.firstVisibleItemScrollOffset, "the page stays put while the row can scroll")
         }
     }

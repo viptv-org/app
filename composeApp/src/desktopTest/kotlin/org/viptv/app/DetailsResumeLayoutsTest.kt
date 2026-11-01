@@ -63,7 +63,11 @@ class DetailsResumeLayoutsTest {
             node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == text } }.config[SemanticsActions.OnClick].action!!.invoke())
         fun top(text: String) = assertNotNull(node(text), "$text is composed (${width}x$height): " + nodes().mapNotNull { node ->
             node.config.getOrNull(SemanticsProperties.Text)?.joinToString("|") { it.text }?.let { "$it@${node.boundsInRoot.top}" } }).boundsInRoot.top
-        suspend fun settle() { frames(); delay(200); frames() }
+        suspend fun settle(pages: Int = 0) {
+            frames(); delay(200); frames()
+            val deadline = System.nanoTime() + 10_000_000_000L
+            while (this.pages.size < pages && System.nanoTime() < deadline) { frames(1); delay(20) }
+        }
         override fun close() = scene.close()
     }
 
@@ -71,7 +75,7 @@ class DetailsResumeLayoutsTest {
 
     @Test fun phoneOpensOnTheContinuedSeasonOnceItsPageArrivesAndScrollsToTheEpisode() = onEdt {
         Details(390, 844, firstPage).use { page ->
-            page.settle()
+            page.settle(1)
             assertNotNull(page.node("Season 3"), "season 3 is selected while its episodes load")
             assertEquals(listOf(49L), page.pages, "the selected season loads through Details paging")
             page.detail = withSeason(firstPage, 3, 16)
@@ -85,7 +89,7 @@ class DetailsResumeLayoutsTest {
     @Test fun aSeasonMissingFromTheIndexIsSelectedWhenALaterPageBringsIt() = onEdt {
         val legacy = firstPage.copy(seasons = emptyList())
         Details(390, 844, legacy).use { page ->
-            page.settle()
+            page.settle(1)
             assertNotNull(page.node("Season 1"))
             assertEquals(listOf(25L), page.pages, "the legacy cursor keeps paging")
             page.detail = withSeason(withSeason(legacy, 2, 24), 3, 16).copy(next_cursor = null)
@@ -136,7 +140,7 @@ class DetailsResumeLayoutsTest {
             "desktop" to { Details(1280, 800, firstPage) },
             "browser" to { Details(1280, 900, firstPage, browser = true) })) {
             details().use { page ->
-                page.settle()
+                page.settle(1)
                 assertEquals(listOf(49L), page.pages, "$name: season 3 loads through Details paging")
                 page.detail = withSeason(firstPage, 3, 16)
                 page.settle()
@@ -148,7 +152,7 @@ class DetailsResumeLayoutsTest {
 
     @Test fun tvShelfOpensOnTheContinuedSeasonAndFocusLandsOnTheEpisode() = onEdt {
         Details(1920, 1080, firstPage, television = true).use { page ->
-            page.settle()
+            page.settle(1)
             assertNotNull(page.node("Season 3"), "the shelf selects season 3 before its episodes arrive")
             assertEquals(listOf(49L), page.pages, "season 3 loads through Details paging")
             page.detail = withSeason(firstPage, 3, 16)
