@@ -26,6 +26,7 @@ internal fun BrowseQuery.withDefaultCatalog(controls: DiscoveryControls): Browse
 
 // Mirrors the host's Home add-on row titles (server/src/engine_v3/home_titles.rs): say the type, name the add-on only on a clash.
 internal fun DiscoveryCatalog.catalogTitle(peers: List<DiscoveryCatalog>): String {
+    title?.let { return it }
     val typed = typedTitle()
     val shared = peers.count { it.typedTitle().lowercase() == typed.lowercase() } > 1
     return if (shared) "$typed · ${addonName()}" else typed
