@@ -4,8 +4,22 @@ import org.viptv.app.connection.DiscoveryCatalog
 import org.viptv.app.connection.catalogSource
 import org.viptv.app.connection.catalogTitle
 import kotlin.test.*
+import kotlinx.serialization.json.Json
 
 class BrowseCatalogTitleTest {
+    @Test fun serverCatalogTitleIsUsedWhenPresent() {
+        val catalog = Json.decodeFromString<DiscoveryCatalog>("""{"id":"top","name":"Popular","type":"movie","title":"Popular Movies · Friendly provider"}""")
+
+        assertEquals("Popular Movies · Friendly provider", catalog.catalogTitle(listOf(catalog)))
+    }
+
+    @Test fun missingServerCatalogTitleFallsBackToCurrentLabel() {
+        val catalog = Json.decodeFromString<DiscoveryCatalog>("""{"id":"top","name":"Popular","type":"movie"}""")
+
+        assertNull(catalog.title)
+        assertEquals("Popular Movies", catalog.catalogTitle(listOf(catalog)))
+    }
+
     private fun catalogs(rows: List<Triple<String, String, String>>): List<DiscoveryCatalog> =
         rows.mapIndexed { index, (name, type, addon) ->
             DiscoveryCatalog("c$index", name, type, "addon:$index", index.toLong(), connection_name = addon)

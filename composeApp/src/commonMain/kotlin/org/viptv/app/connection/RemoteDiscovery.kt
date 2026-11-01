@@ -10,7 +10,7 @@ data class FeatureAvailability(val availability: String, val message: String? = 
 @Serializable
 data class DiscoveryCatalog(val id: String, val name: String, val type: String,
     val connection_id: String? = null, val addon_id: Long? = null, val controls: List<QueryControl> = emptyList(),
-    val connection_name: String? = null)
+    val connection_name: String? = null, val title: String? = null)
 @Serializable
 data class DiscoveryControls(val provider_id: String, val media_types: List<String>,
     val controls: List<QueryControl>, val catalogs: List<DiscoveryCatalog> = emptyList(),
