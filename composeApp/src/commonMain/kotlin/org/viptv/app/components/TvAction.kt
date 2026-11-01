@@ -27,29 +27,30 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     ring: Boolean = true,
     // Pins Left, e.g. to the settings sidebar so it reopens on the selected row.
     left: FocusRequester? = null,
+    // A press that starts work disables the control; staying focusable keeps the D-pad from falling to an unrelated row.
+    keepFocus: Boolean = false,
     arrangement: Arrangement.Horizontal = Arrangement.Center, content: @Composable RowScope.(Color) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     // Register with an enclosing TvFocusColumn so Up/Down clamp at the page edges instead of falling into the settings sidebar.
     val fallback = remember { FocusRequester() }
     val target = requester ?: fallback
-    val (columnUp, columnDown) = org.viptv.app.components.rememberTvColumnItem(target)
+    val column = org.viptv.app.components.rememberTvColumnItem(target)
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     val shape = if (round) CircleShape else RoundedCornerShape(cornerRadius)
     val light = enabled && focused
     val fill by animateColorAsState(when { enabled && pressed -> Palette.body; light -> Palette.text; else -> background }, tween(150), label = "TV action fill")
     val ink by animateColorAsState(if (light || enabled && pressed) Palette.background else Palette.text, tween(150), label = "TV action content")
-    Row(modifier.focusRequester(target)
+    Row(modifier.then(column.position).focusRequester(target)
         .focusProperties {
             left?.let { this.left = it }
-            columnUp?.let { this.up = it }
-            columnDown?.let { this.down = it }
+            column.constrain(this)
         }
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused }
         // Ring before the clip/layer: inside them the part outside the button bounds is clipped away.
         .then(if (ring) Modifier.tvFocusOutline(light, cornerRadius, scale) else Modifier)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
-        .pointerClickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = activate, shape = shape).padding(contentPadding),
+        .pointerClickable(enabled = enabled || keepFocus, interactionSource = interactions, indication = null, onClick = { if (enabled) activate() }, shape = shape).padding(contentPadding),
         horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) { content(ink) }
 }

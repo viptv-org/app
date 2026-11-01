@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
@@ -34,11 +35,20 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
         horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalAlignment = Alignment.CenterVertically) {
         val dur = state.duration
         val belowTimeline = if (state.live || dur == null || dur <= 0) audio else timeline
-        if (extras.episodes.isNotEmpty() && playEpisode != null) TvPlayerPill("Episodes", Lucide.List, scale, belowTimeline) { state.showEpisodes = true }
-        TvPlayerPill("Audio & subtitles", Lucide.Captions, scale, belowTimeline, audio) { state.showTracks = true; state.interaction++ }
-        if (chooseSources != null) TvPlayerPill("Source" + (extras.sourceQuality?.let { " · $it" } ?: ""), Lucide.SlidersHorizontal, scale, belowTimeline, activate = chooseSources)
+        val showEpisodes = extras.episodes.isNotEmpty() && playEpisode != null
+        val showNext = extras.nextEpisode != null && playEpisode != null
+        val episodes = remember { FocusRequester() }; val source = remember { FocusRequester() }; val next = remember { FocusRequester() }
+        // Compose's geometric search prefers the full-width timeline over a neighbouring pill, so the row is chained explicitly.
+        val chain = listOfNotNull(episodes.takeIf { showEpisodes }, audio, source.takeIf { chooseSources != null }, next.takeIf { showNext })
+        fun neighbours(own: FocusRequester): Pair<FocusRequester, FocusRequester> {
+            val index = chain.indexOf(own)
+            return (chain.getOrNull(index - 1) ?: FocusRequester.Cancel) to (chain.getOrNull(index + 1) ?: FocusRequester.Cancel)
+        }
+        if (showEpisodes) TvPlayerPill("Episodes", Lucide.List, scale, belowTimeline, episodes, neighbours(episodes)) { state.showEpisodes = true }
+        TvPlayerPill("Audio & subtitles", Lucide.Captions, scale, belowTimeline, audio, neighbours(audio)) { state.showTracks = true; state.interaction++ }
+        if (chooseSources != null) TvPlayerPill("Source" + (extras.sourceQuality?.let { " · $it" } ?: ""), Lucide.SlidersHorizontal, scale, belowTimeline, source, neighbours(source), activate = chooseSources)
         Spacer(Modifier.weight(1f))
-        extras.nextEpisode?.let { next -> if (playEpisode != null) TvPlayerPill("Next episode", Lucide.SkipForward, scale, belowTimeline) { playEpisode(next) } }
+        extras.nextEpisode?.let { upcoming -> if (playEpisode != null) TvPlayerPill("Next episode", Lucide.SkipForward, scale, belowTimeline, next, neighbours(next)) { playEpisode(upcoming) } }
     }
     TvPlaybackTimeline(state, extras, scale, timeline, audio, previewCommand, state.live || title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
     state.controlError?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 170.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp) }
@@ -46,8 +56,8 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
 
 @Composable
 private fun TvPlayerPill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, scale: Float,
-    down: FocusRequester, requester: FocusRequester? = null, activate: () -> Unit) {
-    TvGlassAction(Modifier.height(56.dp * scale), scale, requester = requester, down = down, activate = activate,
+    down: FocusRequester, requester: FocusRequester, sides: Pair<FocusRequester, FocusRequester>, activate: () -> Unit) {
+    TvGlassAction(Modifier.height(56.dp * scale).focusProperties { left = sides.first; right = sides.second }, scale, requester = requester, down = down, activate = activate,
         cornerRadius = 28.dp * scale, contentPadding = PaddingValues(horizontal = 22.dp * scale), background = Color.White.copy(alpha = .16f)) {
         Icon(icon, null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(10.dp * scale))
         Text(label, color = it, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold)

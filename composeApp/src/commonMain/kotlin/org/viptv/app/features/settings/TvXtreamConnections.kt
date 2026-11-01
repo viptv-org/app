@@ -58,6 +58,15 @@ internal fun TvXtreamConnections(connections: List<XtreamConnection>?, defaultLi
     val rowFocus = remember { mutableMapOf<Long, FocusRequester>() }
     val addFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { request() }
+    // The Retry button holds focus until the list replaces it; the removed node would drop focus to an unrelated sidebar row.
+    val loaded = connections != null
+    LaunchedEffect(loaded) {
+        if (!loaded) return@LaunchedEffect
+        repeat(3) {
+            withFrameNanos { }
+            if (runCatching { first.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+        }
+    }
     val open = openId?.let { id -> connections?.find { it.id == id } }
     LaunchedEffect(connections, openId) { if (openId != null && connections != null && open == null) openId = null }
     // The page replaces the list in place, so closing it hands the D-pad back to the row that opened it.
@@ -96,7 +105,7 @@ internal fun TvXtreamConnections(connections: List<XtreamConnection>?, defaultLi
         if (list == null) {
             Text(if (busy) "Loading connections…" else "Could not load connections.", color = Palette.secondary, fontSize = (22 * scale).sp)
             TvAction(Modifier.height(72.dp * scale).width(240.dp * scale), scale, requester = first, left = sidebar,
-                enabled = !busy, activate = request) { tint ->
+                enabled = !busy, keepFocus = true, activate = request) { tint ->
                 Text("Retry", color = tint, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
             }
         } else {
@@ -117,7 +126,7 @@ internal fun TvXtreamConnections(connections: List<XtreamConnection>?, defaultLi
                         TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
                             .focusProperties { left = sidebar; down = FocusRequester.Cancel; if (list.isEmpty()) up = FocusRequester.Cancel }
                             .then(if (list.isEmpty()) Modifier.focusRequester(first) else Modifier.focusRequester(addFocus)), scale, ring = false,
-                            enabled = !busy, activate = { creating = true }, arrangement = Arrangement.Start,
+                            enabled = !busy, keepFocus = true, activate = { creating = true }, arrangement = Arrangement.Start,
                             contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                             Box(Modifier.size(60.dp * scale).background(tint.copy(alpha = 0.1f), RoundedCornerShape(14.dp * scale)),
                                 contentAlignment = Alignment.Center) { Icon(Lucide.Plus, "Add an Xtream connection", Modifier.size(30.dp * scale), tint) }
