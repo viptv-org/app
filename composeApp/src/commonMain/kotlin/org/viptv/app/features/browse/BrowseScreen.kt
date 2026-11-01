@@ -37,6 +37,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.pageGutter
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
 import org.viptv.app.components.Motion
@@ -76,7 +77,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val width = maxWidth
         val compact = width < 640.dp
-        val gutter = if (compact) 16.dp else 40.dp
+        val gutter = pageGutter(television = false, tablet = false, browser = false, maxWidth = width)
         val catalogOpen = remember { mutableStateOf(false) }
         val facets = remember(controls, query, screen) { browseFacets(controls, query, screen == Screen.Discover) }
         val applied = remember(facets, query) { appliedFacets(facets, query).size }

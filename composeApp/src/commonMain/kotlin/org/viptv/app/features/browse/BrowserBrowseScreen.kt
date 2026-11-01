@@ -43,6 +43,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.pageGutter
 import org.viptv.app.components.Motion
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.pressScale
@@ -85,20 +86,23 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     val label = catalog?.catalogTitle(peers)
     val source = catalog?.catalogSource(peers)
     val chooseCatalog = { catalogOpen.value = true }
-    Column(Modifier.fillMaxSize().padding(start = 32.dp, end = 32.dp, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
-        if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
-        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-        else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog)
-        else if (cards.isEmpty()) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
-        LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
-            horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)) {
-            itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
-                val key = cardLookupKey(card)
-                MediaCard(card, width = 172, portrait = true, showLabels = true, showFocusOutline = false,
-                    open = { restore.mark(key, index); open(it) },
-                    modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val gutter = pageGutter(television = false, tablet = false, browser = true, maxWidth)
+        Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
+            if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+            else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog)
+            else if (cards.isEmpty()) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
+            LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
+                horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)) {
+                itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                    val key = cardLookupKey(card)
+                    MediaCard(card, width = 172, portrait = true, showLabels = true, showFocusOutline = false,
+                        open = { restore.mark(key, index); open(it) },
+                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                }
             }
         }
     }

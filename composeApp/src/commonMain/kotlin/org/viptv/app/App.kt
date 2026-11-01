@@ -201,7 +201,7 @@ fun App(
                             Screen.Calendar -> routes.SaveableStateProvider("${state.selectedProfile}:calendar") {
                                 CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
                                     type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
-                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry)
+                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry, browser = browser)
                             }
                             Screen.Live -> routes.SaveableStateProvider("${state.selectedProfile}:live") {
                                 org.viptv.app.features.live.LiveRoute(state, controller, television)
