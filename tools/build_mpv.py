@@ -93,7 +93,10 @@ def build():
                 subprocess.run(['install_name_tool', '-id', '@loader_path/' + filename, str(output)], check=True)
                 for old, new in links[filename]:
                     subprocess.run(['install_name_tool', '-change', old, '@loader_path/' + new, str(output)], check=True)
-                subprocess.run(['codesign', '--force', '--sign', '-', str(output)], check=True)
+                # Packaging re-signs every jar dylib this way, so the manifest must hash these bytes.
+                subprocess.run(['codesign', '--remove-signature', str(output)], check=True)
+                if name.endswith('aarch64'):
+                    subprocess.run(['codesign', '--sign', '-', '--options', 'runtime', '--force', str(output)], check=True)
             manifest = {'library': library.name, 'abi_major': 2, 'platform': name + '-' + arch,
                         'origin': 'Homebrew mpv with private dependency closure; rewritten loader paths and ad-hoc signatures',
                         'source_versions': subprocess.check_output(['mpv', '--version'], text=True).splitlines(),
