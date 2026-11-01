@@ -164,7 +164,9 @@ fun App(
                                 }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
-                                    controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)
+                                    controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows,
+                                    filters = state.searchFilters, filterChanged = controller::searchFilters,
+                                    focusResults = state.searchFocusResults)
                             }
                             // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
@@ -267,9 +269,10 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             playTap = state.playTapTitle != null,
             retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
             // The drawer over the page owns the keyboard: the dialog must not take its focus.
-            closeFocusOnOpen = !(browser && showingSources))
+            closeFocusOnOpen = !(browser && showingSources),
+            focus = state.detailFocus)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled) }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }

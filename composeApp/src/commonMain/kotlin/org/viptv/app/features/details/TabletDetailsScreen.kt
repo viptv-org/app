@@ -24,6 +24,7 @@ import org.viptv.app.components.MediaMetadata
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
@@ -31,21 +32,22 @@ import org.viptv.app.components.IconButton
 
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
-    continuing: List<Card> = emptyList(), paging: Boolean = true) {
+    continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
-    val seasonChoice = rememberSeasonChoice(detail)
+    val seasonChoice = rememberSeasonChoice(detail, focus)
     val selected = seasonChoice.selected(seasons, resume)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth < 800.dp) {
             DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage,
-                continuing = continuing, paging = paging)
+                continuing = continuing, paging = paging, focus = focus)
             return@BoxWithConstraints
         }
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
         val episodesList = rememberLazyListState()
-        LandOnResume(seasonChoice, episodesList, resume.indexIn(selected?.episodes)?.plus(1), selected)
+        val landing = resume.indexIn(selected?.episodes) ?: focus.episodeIn(selected)
+        LandOnResume(seasonChoice, episodesList, landing?.plus(1), selected)
         val paneWidth = maxWidth
         Row(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxHeight().then(if (selected == null) Modifier.fillMaxWidth()

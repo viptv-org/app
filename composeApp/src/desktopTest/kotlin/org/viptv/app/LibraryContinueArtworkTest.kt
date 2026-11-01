@@ -29,6 +29,7 @@ import org.viptv.engine.wire.MediaIdentity
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import kotlin.test.*
@@ -68,7 +69,9 @@ class LibraryContinueArtworkTest {
     @Test fun aPosterThatFailsOnceIsRetriedAndThenDrawn() = runBlocking {
         withFakeArtwork(failFirst = 1) { art ->
             val cards = listOf(art.card("Retried", poster = art.url("poster-retry"), landscape = null))
-            val shot = render(frames = 260) { LibraryScreen(cards, available = true, television = false, open = {}, history = {}, home = {}) }
+            val shot = render(frames = 260, until = { it.count(PosterInk) > 300 }) {
+                LibraryScreen(cards, available = true, television = false, open = {}, history = {}, home = {})
+            }
             assertTrue((art.paths["/poster-retry.png"] ?: 0) > 1, "a failed poster is asked again: ${art.paths}")
             assertTrue(shot.count(PosterInk) > 300, "the retried poster is drawn instead of the no-art tile")
         }
@@ -84,9 +87,11 @@ class LibraryContinueArtworkTest {
     }
 
     private class Artwork(val origin: String) {
+        private val run = UUID.randomUUID()
         val paths = ConcurrentHashMap<String, Int>()
 
-        fun url(name: String) = "$origin/$name.png"
+        // Unique per server, so Coil's on-disk cache never answers in place of the server.
+        fun url(name: String) = "$origin/$name.png?run=$run"
 
         fun card(title: String, poster: String?, landscape: String?) = Card(
             MediaIdentity(title.lowercase().replace(' ', '-'), "series", emptyList()), provider_id = "library",
@@ -114,7 +119,7 @@ class LibraryContinueArtworkTest {
         try { block(art) } finally { server.stop(0) }
     }
 
-    private suspend fun render(frames: Int = 120, content: @Composable () -> Unit): Shown {
+    private suspend fun render(frames: Int = 120, until: (Shown) -> Boolean = { false }, content: @Composable () -> Unit): Shown {
         val context = PlatformContext.INSTANCE
         val previous: ImageLoader? = runCatching { SingletonImageLoader.get(context) }.getOrNull()
         val scene = ImageComposeScene(WIDTH, HEIGHT, Density(1f)) {
@@ -127,8 +132,10 @@ class LibraryContinueArtworkTest {
         }
         try {
             var shown: Shown? = null
-            repeat(frames) { frame ->
-                scene.render(frame * 16_666_667L).use { image -> shown = Shown(Bitmap.makeFromImage(image)) }
+            for (frame in 0 until frames) {
+                val shot = scene.render(frame * 16_666_667L).use { image -> Shown(Bitmap.makeFromImage(image)) }
+                shown = shot
+                if (until(shot)) break
                 delay(25)
             }
             return assertNotNull(shown)

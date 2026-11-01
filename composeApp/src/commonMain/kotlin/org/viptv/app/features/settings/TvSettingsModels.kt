@@ -14,7 +14,9 @@ internal enum class TvSettingsSection(val label: String, val group: SettingsGrou
     Account("Account", SettingsGroup.Account, Lucide.UserRound),
     Addons("Add-ons", SettingsGroup.Account, Lucide.Puzzle),
     Sources("Source integrations", SettingsGroup.Account, Lucide.Server),
-    VodMatches("VOD matches", SettingsGroup.Account, Lucide.Merge);
+    Xtream("Xtream connections", SettingsGroup.Account, Lucide.ServerCog),
+    VodMatches("VOD matches", SettingsGroup.Account, Lucide.Merge),
+    Gateways("Playback gateways", SettingsGroup.Account, Lucide.Network);
 
     val leavesSettings: Boolean get() = this == SwitchProfile
 }

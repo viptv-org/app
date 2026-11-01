@@ -41,15 +41,15 @@ import org.viptv.app.components.pointerClickable
 @Composable
 fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean,
     query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false, editQuery: ((String) -> String) -> Unit,
-    searchRows: List<SearchResultRow> = emptyList()) {
+    searchRows: List<SearchResultRow> = emptyList(), filters: Set<String> = emptySet(), filterChanged: (Set<String>) -> Unit = {},
+    focusResults: Boolean = false) {
     if (television) {
-        TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows)
+        TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows, focusResults = focusResults)
         return
     }
-    var filter by remember { mutableStateOf("All") }
     val restore = rememberPageRestore("search")
-    val visible = results.distinctBy(::searchCardKey).filter { it.matchesSearchFilter(filter) }
-    val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows, filter) else searchGroups(visible, addons)
+    val visible = results.distinctBy(::searchCardKey).filter { it.matchesSearchFilter(filters) }
+    val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows, filters) else searchGroups(visible, addons)
     val hasResults = if (searchRows.isNotEmpty()) groups.any { it.cards.isNotEmpty() } else visible.isNotEmpty()
     val entrance = rememberListEntrance(hasResults)
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -61,19 +61,21 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!desktop) SearchField(term, query)
         org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("All", "Movies", "Series", "Anime", "Channels").forEach { tab ->
+            searchFilterOptions.forEach { tab ->
+                val active = if (tab == "All") filters.isEmpty() else tab in filters
                 val interactions = remember { MutableInteractionSource() }
                 val hovered by interactions.collectIsHoveredAsState()
                 var focused by remember { mutableStateOf(false) }
-                val fill by animateColorAsState(if (hovered) (if (filter == tab) Color.White else Color(0xFF2A2A2E))
-                    else (if (filter == tab) Palette.text else Color(0xFF202022)), responseSpec(), label = "Search tab fill")
+                val fill by animateColorAsState(if (hovered) (if (active) Color.White else Color(0xFF2A2A2E))
+                    else (if (active) Palette.text else Color(0xFF202022)), responseSpec(), label = "Search tab fill")
                 Text(tab, Modifier
                     .onFocusChanged { focused = it.isFocused }
                     .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
                     .background(fill, RoundedCornerShape(18.dp))
-                    .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = tab, shape = RoundedCornerShape(18.dp), hover = null) { filter = tab }
+                    .pointerClickable(interactionSource = interactions, indication = null, onClickLabel = tab, shape = RoundedCornerShape(18.dp), hover = null) {
+                        filterChanged(if (tab == "All") emptySet() else if (tab in filters) filters - tab else filters + tab) }
                     .padding(horizontal = 14.dp, vertical = 7.dp),
-                    color = if (filter == tab) Palette.background else Palette.text,
+                    color = if (active) Palette.background else Palette.text,
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         } }
