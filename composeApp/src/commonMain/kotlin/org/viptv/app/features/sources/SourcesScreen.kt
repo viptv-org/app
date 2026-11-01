@@ -47,7 +47,8 @@ import org.viptv.app.components.rememberSheetDrag
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
-    openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {}) {
+    openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {},
+    errorCode: String? = null, openGateways: (() -> Unit)? = null) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
@@ -120,7 +121,17 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             KeepSourceListPosition(listState, rows, focusedSource, headerHeight, leading = if (error != null) 1 else 0)
             LazyColumn(Modifier.weight(1f), state = listState, contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp), topEdgeFade = false) {
-                error?.let { item { Text(it, Modifier.padding(20.dp), color = Palette.danger) } }
+                error?.let {
+                    item(key = "error") {
+                        Column(Modifier.padding(20.dp)) {
+                            Text(it, color = Palette.danger)
+                            if (openGateways != null && errorCode == "gateway_required") {
+                                Spacer(Modifier.height(8.dp))
+                                org.viptv.app.components.TextButton(openGateways) { Text("Open Gateways") }
+                            }
+                        }
+                    }
+                }
                 if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
                     val empty = if (torrentOnlyProviders > 0)
                         "${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this device cannot stream directly" else "providers returned torrent links this device cannot stream directly"}. Add a debrid service (for example TorBox) to play them, or try another title."
