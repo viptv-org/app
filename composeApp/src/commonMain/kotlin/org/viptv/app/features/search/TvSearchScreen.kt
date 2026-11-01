@@ -59,15 +59,18 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
 
         Row(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(84.dp * scale)) {
             Column(Modifier.width(520.dp * scale)) {
-                Row(Modifier.fillMaxWidth().height(72.dp * scale).background(Palette.raised, RoundedCornerShape(12.dp * scale)).padding(horizontal = 20.dp * scale),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-                    Icon(Lucide.Search, null, Modifier.size(28.dp * scale))
-                    Row(Modifier.widthIn(max = 418.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-                    Text(term.ifBlank { "Search" }, Modifier.widthIn(max = 402.dp * scale), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        fontSize = (32 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.Medium,
-                        color = if (term.isBlank()) Palette.secondary else Palette.text)
-                    Box(Modifier.width(2.dp * scale).height(36.dp * scale).background(Palette.accent))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+                    Row(Modifier.weight(1f).height(72.dp * scale).background(Palette.raised, RoundedCornerShape(12.dp * scale)).padding(horizontal = 20.dp * scale),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
+                        Icon(Lucide.Search, null, Modifier.size(28.dp * scale))
+                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Text(term.ifBlank { "Search" }, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                fontSize = (32 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.Medium,
+                                color = if (term.isBlank()) Palette.secondary else Palette.text)
+                            Box(Modifier.width(2.dp * scale).height(36.dp * scale).background(Palette.accent))
+                        }
                     }
+                    TvVoiceSearchAction(scale) { recognized -> editQuery { recognized } }
                 }
                 Spacer(Modifier.height(24.dp * scale))
                 TvSearchKeyboard(editQuery, scale, requestInitialFocus = restoreId == null && !focusResults, first = keyboardFocus)
