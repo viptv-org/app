@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Longest-processing-time split on the checked-in durations, so the slowest
-# classes spread across shards and a new class lands in the least-loaded shard.
+# Longest-processing-time split over the checked-in durations so a new class lands in the least-loaded shard.
 set -euo pipefail
 
 shards=${SHARDS:-4}
