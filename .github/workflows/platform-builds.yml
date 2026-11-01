@@ -68,8 +68,6 @@ jobs:
         shell: bash
         run: ./gradlew :composeApp:desktopTest :composeApp:packageDistributionForCurrentOS
       - name: Verify bundled native runtime
-        # DesktopEngineSmoke reads rankSources as a JSON array; the engine returns an object.
-        continue-on-error: true
         run: python3 tools/verify_desktop.py
       - name: Packaging diagnostics
         if: failure()

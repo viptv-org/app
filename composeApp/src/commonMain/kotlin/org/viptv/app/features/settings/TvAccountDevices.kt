@@ -52,7 +52,7 @@ internal fun TvAccountDevices(snapshot: AccountDevices?, busy: Boolean, error: S
             fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp)
         if (error != null || snapshot == null && !busy) {
             TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale, ring = false, left = sidebar,
-                requester = if (devices.isEmpty()) first else null, enabled = !busy, activate = load) { tint ->
+                requester = if (devices.isEmpty()) first else null, enabled = !busy, keepFocus = true, activate = load) { tint ->
                 Text("Retry", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
             }
         }
@@ -65,9 +65,9 @@ private fun TvAccountDeviceRow(device: AccountDevice, scale: Float, requester: F
     val color = if (focused) Palette.background else Palette.text
     val fallback = remember { FocusRequester() }
     val target = requester ?: fallback
-    val (columnUp, columnDown) = rememberTvColumnItem(target)
-    Row(Modifier.fillMaxWidth().height(96.dp * scale).focusRequester(target)
-        .focusProperties { this.left = left; columnUp?.let { this.up = it }; columnDown?.let { this.down = it } }
+    val column = rememberTvColumnItem(target)
+    Row(Modifier.fillMaxWidth().height(96.dp * scale).then(column.position).focusRequester(target)
+        .focusProperties { this.left = left; column.constrain(this) }
         .onFocusChanged { focused = it.isFocused }
         .graphicsLayer { this.shape = RoundedCornerShape(14.dp * scale); shadowElevation = if (focused) 24.dp.toPx() * scale else 0f; clip = false }
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))

@@ -36,12 +36,11 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
     val fallback = remember { FocusRequester() }
     val target = requester ?: fallback
     // Without the clamp the geometric search jumps from the last row to the sidebar's last item.
-    val (columnUp, columnDown) = rememberTvColumnItem(target)
-    Row(Modifier.fillMaxWidth().height(rowHeight.dp * scale).focusRequester(target)
+    val column = rememberTvColumnItem(target)
+    Row(Modifier.fillMaxWidth().height(rowHeight.dp * scale).then(column.position).focusRequester(target)
         .focusProperties {
             if (left != null) this.left = left
-            columnUp?.let { this.up = it }
-            columnDown?.let { this.down = it }
+            column.constrain(this)
         }.onFocusChanged { focused = it.isFocused }
         .semantics { if (checked != null) { role = Role.Switch; toggleableState = if (checked) ToggleableState.On else ToggleableState.Off } }
         .graphicsLayer {

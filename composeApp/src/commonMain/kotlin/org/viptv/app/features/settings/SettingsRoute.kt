@@ -90,7 +90,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         account = if (state.localMode) null else ({ AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account,
             state.busy, state.error, controller::refreshAccounts, notice = state.passwordChangeNotice) }),
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-            BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale)
+            BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale, left = sidebar)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
             profileName = state.profiles.find { it.id == state.selectedProfile }?.name,

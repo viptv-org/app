@@ -19,7 +19,7 @@ import org.viptv.app.components.FilterChip
 
 @Composable
 internal fun BrowsingProviderSettings(configuration: BrowsingConfiguration?, plugins: List<PluginDescriptor>, busy: Boolean,
-    select: (String) -> Unit, tv: Boolean = false, scale: Float = 1f) {
+    select: (String) -> Unit, tv: Boolean = false, scale: Float = 1f, left: androidx.compose.ui.focus.FocusRequester? = null) {
     if (configuration == null) return
     val choices = (plugins.filter { Capability.DISCOVERY in it.capabilities }.map { it.id }
         + configuration.profile.browsing_plugin).distinct()
@@ -32,7 +32,7 @@ internal fun BrowsingProviderSettings(configuration: BrowsingConfiguration?, plu
             val available = selected || configuration.connections.any { it.plugin_id == plugin && it.enabled && Capability.DISCOVERY in it.capabilities }
             if (choices.size == 1) Text(name)
             else if (tv) TvAction(Modifier.fillMaxWidth().height(64.dp * scale), scale,
-                enabled = available && !busy, activate = { select(plugin) }, arrangement = Arrangement.Start,
+                enabled = available && !busy, left = left, activate = { select(plugin) }, arrangement = Arrangement.Start,
                 contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                 Icon(if (selected) Lucide.CircleCheck else Lucide.Circle, null, Modifier.size(24.dp * scale), tint)
                 Spacer(Modifier.width(14.dp * scale))
