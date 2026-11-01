@@ -120,7 +120,7 @@ tasks.withType<Test>().matching { it.name == "desktopTest" }.configureEach {
 val buildDesktopMpv by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_mpv.py")
-    inputs.files(rootProject.file("tools/build_mpv.py"), rootProject.fileTree("native/mpv"))
+    inputs.files(rootProject.file("tools/build_mpv.py"), rootProject.file("tools/macos_signing.py"), rootProject.fileTree("native/mpv"))
     inputs.property("runtime", providers.environmentVariable("VIPTV_MPV_RUNTIME_DIR").orElse(""))
     providers.environmentVariable("VIPTV_MPV_RUNTIME_DIR").orNull?.let { inputs.dir(it) }
     outputs.dir(layout.buildDirectory.dir("mpvResources"))
@@ -130,7 +130,7 @@ tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsO
 val buildDesktopEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_engine.py", "desktop")
-    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"))
+    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"), rootProject.file("tools/macos_signing.py"))
     outputs.dir(layout.buildDirectory.dir("nativeResources"))
     onlyIf { providers.environmentVariable("VIPTV_NATIVE_PREBUILT").orNull == null }
 }

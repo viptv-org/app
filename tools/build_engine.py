@@ -6,6 +6,8 @@ import platform
 import shutil
 import subprocess
 
+from macos_signing import sign_like_packaging
+
 parser = argparse.ArgumentParser()
 parser.add_argument("target", choices=["desktop", "android"])
 # Every shipped Android ABI; androidApp passes -Pviptv.abis through here.
@@ -54,3 +56,5 @@ else:
     output = root / "composeApp/build/nativeResources" / f"{prefix}-{arch}"
     output.mkdir(parents=True, exist_ok=True)
     shutil.copy2(root / "build/rust/release" / library, output / library)
+    if system == "Darwin":
+        sign_like_packaging(output / library)
