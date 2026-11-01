@@ -15,6 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 
@@ -51,6 +53,7 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
         .then(if (ring) Modifier.tvFocusOutline(light, cornerRadius, scale) else Modifier)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
-        .pointerClickable(enabled = enabled || keepFocus, interactionSource = interactions, indication = null, onClick = { if (enabled) activate() }, shape = shape).padding(contentPadding),
+        .pointerClickable(enabled = enabled || keepFocus, interactionSource = interactions, indication = null, onClick = { if (enabled) activate() }, shape = shape)
+        .then(if (keepFocus && !enabled) Modifier.semantics { disabled() } else Modifier).padding(contentPadding),
         horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) { content(ink) }
 }

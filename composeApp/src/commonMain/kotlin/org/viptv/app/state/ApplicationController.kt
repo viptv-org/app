@@ -91,6 +91,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var quietDetail = false
     internal var freshnessWatcher: Job? = null
     internal var addonOperation: Job? = null
+    internal var crashReportChecked = false
 
     internal fun run(operation: suspend () -> Unit) {
         detailPagingJob?.cancel(); detailPagingJob = null
@@ -158,7 +159,8 @@ internal fun ApplicationController.failureMessage(error: Exception): String? = w
 
 // Local mode has no signed-in account: keep the report on disk until one exists.
 fun ApplicationController.checkPendingCrashReport() {
-    if (mutable.value.pendingCrashReport != null || connection == null) return
+    if (crashReportChecked || connection == null) return
+    crashReportChecked = true
     val report = CrashReportStore.pendingReport() ?: return
     updateState { it.copy(pendingCrashReport = report) }
 }

@@ -73,7 +73,7 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
         }
         if (local) Box(Modifier.align(Alignment.TopCenter).padding(top = 780.dp * scale)) {
             TvAction(Modifier.width(300.dp * scale).height(72.dp * scale).focusProperties { up = leftTile ?: first }, scale,
-                requester = manageFocus, activate = if (managing) done else manage, enabled = !busy, background = Color.White.copy(alpha = .16f)) {
+                requester = manageFocus, activate = if (managing) done else manage, enabled = !busy, keepFocus = true, background = Color.White.copy(alpha = .16f)) {
                 Icon(Lucide.Pencil, null, Modifier.size(28.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
                 Text(if (managing) "Done" else "Manage profiles", color = it, fontSize = (26 * scale).sp,
                     lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
