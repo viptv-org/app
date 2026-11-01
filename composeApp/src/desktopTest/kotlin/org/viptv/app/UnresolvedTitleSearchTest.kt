@@ -169,7 +169,7 @@ class UnresolvedTitleSearchTest {
             controller.open(unresolved)
             until("the search") { controller.state.value.results.isNotEmpty() }
             controller.open(resolved)
-            until("Details") { controller.state.value.detail != null }
+            until("Details") { controller.state.value.detailFocus != null }
             val state = controller.state.value
             assertEquals(Screen.Details, state.screen)
             assertEquals(DetailFocus(4), state.detailFocus, "the season the unresolved title asked for")
@@ -182,7 +182,7 @@ class UnresolvedTitleSearchTest {
         val controller = host.controller(this)
         try {
             controller.open(resolved)
-            until("Details") { controller.state.value.detail != null }
+            until("Details") { controller.state.value.detailFocus != null }
             assertEquals(DetailFocus(4, 11), controller.state.value.detailFocus)
         } finally { host.close(controller) }
     }
@@ -192,7 +192,7 @@ class UnresolvedTitleSearchTest {
         val controller = host.controller(this)
         try {
             controller.open(resolved)
-            until("Details") { controller.state.value.detail != null }
+            until("Details") { controller.state.value.detail?.episodes?.isNotEmpty() == true }
             assertNull(controller.state.value.detailFocus, "an older server sends no focus fields")
         } finally { host.close(controller) }
     }
