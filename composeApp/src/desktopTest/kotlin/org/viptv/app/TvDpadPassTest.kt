@@ -89,8 +89,9 @@ class TvDpadPassTest {
     private fun settings(section: TvSettingsSection, addons: List<IntegrationConnection> = emptyList(),
         gateways: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
         xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
-        vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null): @Composable () -> Unit = {
-        TvSettingsScreen(false, addons, addons.map { it.id }.toSet(), false, null, null, {}, { _, _ -> }, {}, {}, PreviewData.profile,
+        vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
+        busy: () -> Boolean = { false }, toggle: (String, Boolean) -> Unit = { _, _ -> }): @Composable () -> Unit = {
+        TvSettingsScreen(false, addons, addons.map { it.id }.toSet(), busy(), null, null, {}, toggle, {}, {}, PreviewData.profile,
             initialSection = section, prefs = TvSettingsPreferences(), change = {}, gateways = gateways, xtream = xtream, vodMatches = vodMatches)
     }
 
@@ -158,25 +159,28 @@ class TvDpadPassTest {
         }
     }
 
-    @Test fun openingAPageThatIsStillLoadingKeepsFocusOnItsSidebarRow() = onEdt {
-        var busy by mutableStateOf(true)
+    @Test fun xtreamRetryKeepsFocusWhileTheListLoadsAndHandsItToTheListAfterwards() = onEdt {
+        var connections by mutableStateOf<List<XtreamConnection>?>(null)
+        var busy by mutableStateOf(false)
         val page: @Composable (FocusRequester, FocusRequester, Float) -> Unit = { first, sidebar, scale ->
-            TvXtreamConnections(null as List<XtreamConnection>?, null, busy, null, null, true, "managed", scale, first, sidebar,
+            TvXtreamConnections(connections, null, busy, null, null, true, "managed", scale, first, sidebar,
                 {}, { _, _, _, _, _ -> }, { _, _, _ -> }, { _, _ -> }, {}, {}, {})
         }
         Tv(settings(TvSettingsSection.Playback, xtream = page)).use { tv ->
             tv.settle()
             tv.press(Key.DirectionLeft)
-            assertEquals("Playback", tv.focused())
-            repeat(7) { tv.press(Key.DirectionDown) }
+            tv.press(Key.DirectionDown, 7)
             assertEquals("Xtream connections", tv.focused())
             tv.ok()
             tv.settle()
-            assertEquals("Xtream connections", tv.focused(), "focus does not jump to another sidebar row")
+            assertEquals("Retry", tv.focused(), "the page takes focus")
+            busy = true
+            tv.settle()
+            assertEquals("Retry", tv.focused(), "focus survives the load starting")
+            connections = emptyList()
             busy = false
             tv.settle()
-            tv.press(Key.DirectionRight)
-            assertEquals("Retry", tv.focused())
+            assertEquals("Add an Xtream connection", tv.focused(), "focus follows the page once its list arrives")
             tv.press(Key.DirectionLeft)
             assertEquals("Xtream connections", tv.focused())
         }
@@ -235,6 +239,25 @@ class TvDpadPassTest {
             assertEquals("Search", tv.focused())
             tv.press(Key.DirectionLeft)
             assertEquals("VOD matches", tv.focused(), "Left from the first chip lands on the selected row")
+        }
+    }
+
+    @Test fun togglingAnAddonKeepsFocusOnItsRowWhileTheRequestRuns() = onEdt {
+        var busy by mutableStateOf(false)
+        val addons = listOf(
+            IntegrationConnection("a", "stremio", "acc", null, "Alpha", true, 1, listOf(Capability.SOURCES)),
+            IntegrationConnection("b", "stremio", "acc", null, "Beta", true, 1, listOf(Capability.METADATA)))
+        Tv(settings(TvSettingsSection.Addons, addons, busy = { busy }, toggle = { _, _ -> busy = true })).use { tv ->
+            tv.settle()
+            assertTrue(tv.focused().orEmpty().contains("Alpha"), "the first add-on is focused: ${tv.focused()}")
+            tv.ok()
+            tv.settle()
+            assertTrue(busy)
+            assertTrue(tv.focused().orEmpty().contains("Alpha"), "focus stays on the toggled row: ${tv.focused()}")
+            busy = false
+            tv.settle()
+            tv.press(Key.DirectionDown)
+            assertTrue(tv.focused().orEmpty().contains("Beta"), "the list is still walkable: ${tv.focused()}")
         }
     }
 }

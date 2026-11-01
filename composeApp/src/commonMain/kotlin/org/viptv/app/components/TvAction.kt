@@ -27,6 +27,8 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     ring: Boolean = true,
     // Pins Left, e.g. to the settings sidebar so it reopens on the selected row.
     left: FocusRequester? = null,
+    // A press that starts work disables the control; staying focusable keeps the D-pad from falling to an unrelated row.
+    keepFocus: Boolean = false,
     arrangement: Arrangement.Horizontal = Arrangement.Center, content: @Composable RowScope.(Color) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     // Register with an enclosing TvFocusColumn so Up/Down clamp at the page edges instead of falling into the settings sidebar.
@@ -49,6 +51,6 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
         .then(if (ring) Modifier.tvFocusOutline(light, cornerRadius, scale) else Modifier)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
-        .pointerClickable(enabled = enabled, interactionSource = interactions, indication = null, onClick = activate, shape = shape).padding(contentPadding),
+        .pointerClickable(enabled = enabled || keepFocus, interactionSource = interactions, indication = null, onClick = { if (enabled) activate() }, shape = shape).padding(contentPadding),
         horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) { content(ink) }
 }

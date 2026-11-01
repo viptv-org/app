@@ -52,7 +52,7 @@ internal fun TvAccountDevices(snapshot: AccountDevices?, busy: Boolean, error: S
             fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp)
         if (error != null || snapshot == null && !busy) {
             TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale, ring = false, left = sidebar,
-                requester = if (devices.isEmpty()) first else null, enabled = !busy, activate = load) { tint ->
+                requester = if (devices.isEmpty()) first else null, enabled = !busy, keepFocus = true, activate = load) { tint ->
                 Text("Retry", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
             }
         }
