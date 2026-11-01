@@ -48,6 +48,8 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
             state.copy(navBack = (state.navBack + recorded).takeLast(32), navForward = emptyList())
         else state
         history.copy(screen = screen, error = null, detailRetryable = true,
+            searchFocusResults = state.searchFocusResults && screen == Screen.Search,
+            pendingDetailSeason = state.pendingDetailSeason.takeIf { screen == Screen.Search },
             leavePinFrom = history.leavePinFrom.takeIf { screen == Screen.ProfilePin },
             settingsEntrySection = if (screen == Screen.Settings) state.settingsEntrySection else null,
             liveSetupReturnFocus = state.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),

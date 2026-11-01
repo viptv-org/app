@@ -92,7 +92,11 @@ private fun advancedCursor(next: String?, current: String): String? {
 
 fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mutable.value.searchTerm))
 
+fun ApplicationController.searchFilters(filters: Set<String>) = updateState { it.copy(searchFilters = filters) }
+
 fun ApplicationController.search(term: String) {
+    if (term != mutable.value.searchTerm)
+        updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
     updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
     rememberNavigation()
     run {
@@ -145,8 +149,21 @@ fun ApplicationController.open(card: Card) {
     val navigation = navigationGeneration
     runPage {
         val profile = requireNotNull(mutable.value.selectedProfile)
-        val detail = readCurrentPage(navigation) { local?.detail(profile, card) ?: requireNotNull(connection).detail(card) } ?: return@runPage
-        updateState { it.copy(detail = detail.withCardArt(card)) }
+        val device = local
+        val read = try {
+            readCurrentPage(navigation) {
+                val onDevice = device?.detail(profile, card)
+                if (onDevice != null) DetailRead(onDevice) else requireNotNull(connection).detailRead(card)
+            } ?: return@runPage
+        } catch (error: RemoteFailure) {
+            val unresolved = error.titleNeedsSearch ?: throw error
+            if (navigationGeneration == navigation) openTitleSearch(unresolved)
+            return@runPage
+        }
+        val pendingSeason = mutable.value.pendingDetailSeason
+        updateState { it.copy(detail = read.detail.withCardArt(card),
+            detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus,
+            pendingDetailSeason = null) }
         rememberNavigation()
     }
 }
@@ -437,6 +454,6 @@ internal fun ApplicationController.beginDetails() {
             else (previous.navBack + previous.screen).takeLast(32)
         previous.copy(detailReturnScreen = origin, detailHistory = history,
             navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
-            screen = Screen.Details, detail = null, calendarEpisode = null)
+            screen = Screen.Details, detail = null, detailFocus = null, calendarEpisode = null)
     }
 }

@@ -23,7 +23,7 @@ class SearchGroupsTest {
         assertNotEquals(searchFocusKey(groups[1], common), searchFocusKey(groups[2], common))
         assertEquals("Some search results are unavailable. Try again.", groups[2].message)
         assertFalse(groups.last().message.orEmpty().contains("private upstream"))
-        assertEquals(listOf("First add-on", "Second add-on", "Slow add-on"), searchResultGroups(rows, "Movies").map { it.label })
+        assertEquals(listOf("First add-on", "Second add-on", "Slow add-on"), searchResultGroups(rows, setOf("Movies")).map { it.label })
     }
 
     @Test fun nativeAddonKeepsMixedKindsInOneRowAndSimklKeepsItsCategories() {
