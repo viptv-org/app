@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import org.jetbrains.skia.Bitmap
 import org.viptv.app.connection.*
 import org.viptv.app.features.live.*
+import org.viptv.app.images.ConfigureImageLoading
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -150,6 +151,7 @@ class LiveUiTest {
             var frame = 0L
             val scene = ImageComposeScene(1920, 1080, Density(1f)) {
                 ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    ConfigureImageLoading()
                     focusManager += LocalFocusManager.current
                     val state by controller.state.collectAsState()
                     val navigation = remember { FocusRequester() }
@@ -190,8 +192,20 @@ class LiveUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun memberAccountSessionSeesSetupActionsAndNoOwnerMessage() {
+        val controller = liveController(livePage(), access = AccountAccess("member", true))
+        val scene = liveScene(1280, 800, false, controller)
+        try {
+            frames(scene)
+            val texts = nodes(scene).map(::text)
+            assertTrue(texts.contains(LiveSetUp), "a member account session gets the primary")
+            assertTrue(texts.contains(LiveAddons), "a member account session gets the secondary")
+            assertFalse(texts.contains(LiveMemberWho)); assertFalse(texts.contains(LivePairedWho))
+        } finally { scene.close() }
+    }
+
     @Test fun memberAndPairedSessionsGetTheWhoLineInsteadOfActions() {
-        for ((access, who) in listOf(AccountAccess("member", true) to LiveMemberWho, AccountAccess("device", false) to LivePairedWho, AccountAccess("owner", false) to LivePairedWho)) {
+        for ((access, who) in listOf(AccountAccess("member", false) to LiveMemberWho, AccountAccess("device", false) to LivePairedWho)) {
             val controller = liveController(livePage(), access = access)
             val scene = liveScene(1280, 800, false, controller)
             try {
@@ -285,9 +299,9 @@ class LiveUiTest {
         }
     }
 
-    @Test fun sourceIntegrationsIsAbsentForAMemberEvenWhenNoChannelsCameBack() {
+    @Test fun sourceIntegrationsIsAbsentWhenTheViewerCannotManageSources() {
         val controller = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"),
-            access = AccountAccess("member", true))
+            access = AccountAccess("device", false))
         val scene = liveScene(1280, 800, false, controller)
         try {
             frames(scene)
@@ -333,6 +347,7 @@ class LiveUiTest {
     private fun liveScene(width: Int, height: Int, television: Boolean, controller: ApplicationController) =
         ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                ConfigureImageLoading()
                 val state by controller.state.collectAsState()
                 LiveRoute(state, controller, television)
             } }

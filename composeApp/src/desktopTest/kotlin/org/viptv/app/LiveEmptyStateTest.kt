@@ -46,10 +46,14 @@ class LiveEmptyStateTest {
 
     @Test fun whoMayChangeSourcesFollowsTheIdentity() {
         assertTrue(AccountAccess("owner", true).managesSources)
-        assertFalse(AccountAccess("member", true).managesSources, "a member is refused by the server")
+        assertTrue(AccountAccess("member", true).managesSources, "an account session with the capability manages sources")
         assertFalse(AccountAccess("device", false).managesSources, "a paired TV is refused by the server")
-        assertFalse(AccountAccess("owner", false).managesSources, "no capability, no source writes")
-        assertTrue(AccountAccess("owner", false).pairedDevice)
+        assertFalse(AccountAccess("member", false).managesSources, "no capability, no source writes")
+        assertTrue(AccountAccess("device", false).pairedDevice)
+        assertFalse(AccountAccess("member", false).pairedDevice)
+        assertTrue(AccountAccess("member", false).member)
+        assertFalse(AccountAccess("member", true).member)
+        assertFalse(AccountAccess("device", false).member)
     }
 
     @Test fun setupActionsOpenSettingsOnTheirOwnSection() = runBlocking<Unit> {
