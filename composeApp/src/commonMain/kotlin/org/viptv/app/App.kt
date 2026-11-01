@@ -96,7 +96,7 @@ fun App(
             val compact = maxWidth < 640.dp && !television
             val touch = !television && !browser && !desktopChrome
             val tablet = !compact && touch
-            val barFades = barsFadeContent(television, desktopChrome, touch, maxWidth)
+            val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
@@ -277,8 +277,8 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
 // The player draws under the cutout and system bars, so the root must not pad it with the app background.
 internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
 
-internal fun barsFadeContent(television: Boolean, desktopChrome: Boolean, touch: Boolean, width: Dp): Boolean =
-    !television && !desktopChrome && (touch || width < 1000.dp)
+internal fun barsFadeContent(television: Boolean, desktopChrome: Boolean, browser: Boolean, touch: Boolean, width: Dp): Boolean =
+    !television && !desktopChrome && (touch || browser || width < 1000.dp)
 
 private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.ContinueWatching, Screen.Library, Screen.History, Screen.Details)
 

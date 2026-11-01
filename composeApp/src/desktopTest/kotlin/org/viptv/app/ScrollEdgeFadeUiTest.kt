@@ -103,25 +103,54 @@ class ScrollEdgeFadeUiTest {
     }
 
     @Test fun barsFadeContentOnlyWhereABarCoversIt() {
-        assertTrue(barsFadeContent(television = false, desktopChrome = false, touch = true, width = 393.dp))
-        assertTrue(barsFadeContent(television = false, desktopChrome = false, touch = true, width = 1024.dp))
-        assertTrue(barsFadeContent(television = false, desktopChrome = false, touch = false, width = 900.dp))
-        assertFalse(barsFadeContent(television = false, desktopChrome = false, touch = false, width = 1440.dp))
-        assertFalse(barsFadeContent(television = false, desktopChrome = true, touch = false, width = 393.dp))
-        assertFalse(barsFadeContent(television = true, desktopChrome = false, touch = false, width = 1920.dp))
+        assertTrue(barsFadeContent(television = false, desktopChrome = false, browser = false, touch = true, width = 393.dp))
+        assertTrue(barsFadeContent(television = false, desktopChrome = false, browser = false, touch = true, width = 1024.dp))
+        assertTrue(barsFadeContent(television = false, desktopChrome = false, browser = false, touch = false, width = 900.dp))
+        assertTrue(barsFadeContent(television = false, desktopChrome = false, browser = true, touch = false, width = 1280.dp))
+        assertTrue(barsFadeContent(television = false, desktopChrome = false, browser = true, touch = false, width = 1920.dp))
+        assertFalse(barsFadeContent(television = false, desktopChrome = false, browser = false, touch = false, width = 1440.dp))
+        assertFalse(barsFadeContent(television = false, desktopChrome = true, browser = false, touch = false, width = 393.dp))
+        assertFalse(barsFadeContent(television = true, desktopChrome = false, browser = false, touch = false, width = 1920.dp))
+    }
+
+    @Test fun webDrawsTheTopFadeOnceScrolledButNotAtTheTop() {
+        for (width in intArrayOf(1000, 1280, 1920)) {
+            var barBottom = 0f
+            val scene = sceneAt(width, HEIGHT, barsFade = true) {
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxWidth().height(68.dp).background(Palette.background)
+                        .onGloballyPositioned { barBottom = it.boundsInRoot().bottom })
+                    page(Modifier.weight(1f), startScrolled = false)
+                }
+            }
+            try {
+                frames(scene)
+                val row = barBottom.roundToInt() + 1
+                val atTop = readColumn(scene, 20, row, fade)
+                assertTrue(atTop.all { distance(it, raised) <= 1 },
+                    "at the top of a $width dp page the content keeps its colour: ${atTop.map(::hex)}")
+                scrollToEnd(scene)
+                val scrolled = readColumn(scene, 20, row, fade)
+                assertNear(background, scrolled.first(), "scrolled under the bar at $width dp: the content meets the background")
+                assertNoSteps(scrolled, "scrolled under the bar at $width dp")
+            } finally { scene.close() }
+        }
     }
 
     @Composable
-    private fun page(modifier: Modifier) {
+    private fun page(modifier: Modifier, startScrolled: Boolean = true) {
         // A grid scrolls by row: index 6 is the third row, so there is something above it.
         FocusLazyVerticalGrid(GridCells.Fixed(3), modifier,
-            state = rememberLazyGridState(initialFirstVisibleItemIndex = 6)) {
+            state = if (startScrolled) rememberLazyGridState(initialFirstVisibleItemIndex = 6) else rememberLazyGridState()) {
             items(90) { Box(Modifier.fillMaxWidth().height(180.dp).background(Palette.raised)) }
         }
     }
 
     private fun phone(barsFade: Boolean, bottomBar: Boolean, content: @Composable BoxScope.() -> Unit) =
-        ImageComposeScene(WIDTH, HEIGHT, Density(1f)) {
+        sceneAt(WIDTH, HEIGHT, barsFade, bottomBar, content)
+
+    private fun sceneAt(width: Int, height: Int, barsFade: Boolean, bottomBar: Boolean = false, content: @Composable BoxScope.() -> Unit) =
+        ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
                 CompositionLocalProvider(LocalBarsFadeContent provides barsFade, LocalBottomBarFades provides bottomBar) {
                     Box(Modifier.fillMaxSize(), content = content)
