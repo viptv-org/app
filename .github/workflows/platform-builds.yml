@@ -13,10 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    # desktopTest fails 10 pixel and frame assertions on Windows and 7 on macOS; drop this when it is green there.
-    continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -66,16 +64,8 @@ jobs:
           echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
       - name: Verify and package desktop
         shell: bash
-        run: ./gradlew :composeApp:desktopTest --continue --tests 'org.viptv.app.IdleRenderTest' --tests 'org.viptv.app.LiveEmptyArtworkTest' --tests 'org.viptv.app.LiveUiTest' --tests 'org.viptv.app.PointerAffordanceTest' --tests 'org.viptv.app.PointerRowScrollTest' --tests 'org.viptv.app.PullToRefreshUiTest' --tests 'org.viptv.app.TvLeadingFocusTest' --tests 'org.viptv.app.WebPreferencesSettingsTest' --tests 'org.viptv.app.MpvNativeTest' --tests 'org.viptv.app.LibraryCollapsingHeaderUiTest' --tests 'org.viptv.app.DetailFocusLayoutsTest' --tests 'org.viptv.app.DetailsResumeLayoutsTest' --tests 'org.viptv.app.PublicArtworkTest'
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: test-results-${{ matrix.os }}
-          path: composeApp/build/test-results/desktopTest
+        run: ./gradlew :composeApp:desktopTest :composeApp:packageDistributionForCurrentOS
       - name: Verify bundled native runtime
-        if: false
-        # DesktopEngineSmoke reads rankSources as a JSON array; the engine returns an object.
-        continue-on-error: true
         run: python3 tools/verify_desktop.py
       - name: Packaging diagnostics
         if: failure()
@@ -94,7 +84,6 @@ jobs:
           path: composeApp/build/compose/logs
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v7
-        if: false
         with:
           name: desktop-${{ matrix.os }}
           path: composeApp/build/compose/binaries/main/*/*

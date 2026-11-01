@@ -40,20 +40,17 @@ class PointerRowScrollTest {
         suspend fun frames(n: Int = 30) = repeat(n) { scene.render(time).close(); time += 16_666_667L; delay(2) }
         suspend fun wheel(at: Offset, notches: Int = 3, position: () -> Int = { 0 }) {
             scene.sendPointerEvent(PointerEventType.Move, at, type = PointerType.Mouse, timeMillis = millis())
-            repeat(notches) { n ->
+            repeat(notches) {
                 scene.sendPointerEvent(PointerEventType.Scroll, at, type = PointerType.Mouse, scrollDelta = Offset(0f, 1f), timeMillis = millis())
                 frames(2)
-                println("DIAG wheel notch ${n + 1}: ${position()}")
             }
             var last = position()
             var still = 0
-            var frame = 0
             val deadline = System.nanoTime() + 5_000_000_000L
             while (still < 30 && System.nanoTime() < deadline) {
-                frames(1); frame++
+                frames(1)
                 val now = position()
                 if (now == last) still++ else { still = 0; last = now }
-                if (frame % 10 == 0) println("DIAG wheel frame $frame: $now")
             }
         }
         suspend fun drag(from: Offset, dx: Float, type: PointerType = PointerType.Mouse) {
