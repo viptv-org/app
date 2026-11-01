@@ -35,7 +35,9 @@ internal fun TvGatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, G
             }
         } else if (error != null) {
             Text(gatewayCodeMessage(errorCode) ?: error, color = Palette.danger, fontSize = (22 * scale).sp)
-        } else if (snapshot != null && items.isEmpty()) {
+        } else if (snapshot == null) {
+            Text("Loading gateways…", color = Palette.secondary, fontSize = (22 * scale).sp)
+        } else if (items.isEmpty()) {
             Text("No gateways are configured for your account.", color = Palette.secondary, fontSize = (22 * scale).sp)
         }
         LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp * scale),
