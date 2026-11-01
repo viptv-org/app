@@ -81,21 +81,23 @@ class WebPreferencesSettingsTest {
         }
     }
 
-    @Test fun settingsTitleAlignsWithTheNavBrandAtDesktopWidth() {
-        Ui(1920, 1080) {
-            Column {
-                TopNavigation(Screen.Settings, television = false, navigate = {}, profile = Profile("1", "Viewer", null))
-                SettingsScreen(local = false, addons = emptyList(), enabledAddonIds = emptySet(), busy = false, error = null,
-                    sessionNotice = null, install = {}, toggle = { _, _ -> }, remove = {}, profiles = {}, leave = {},
-                    initialSection = "Subtitles & audio", browser = true,
-                    sectionPreferences = { section, _ ->
-                        ProfilePreferencesSettings(section, PreferencesSnapshot(9, ProfilePreferences()), false, null, {}, {})
-                    })
+    @Test fun settingsTitleAlignsWithTheNavBrandAtWideAndCollapsedWidths() {
+        for (width in listOf(1920, 900)) {
+            Ui(width, 1080) {
+                Column(Modifier.fillMaxSize()) {
+                    TopNavigation(Screen.Settings, television = false, navigate = {}, profile = Profile("1", "Viewer", null))
+                    SettingsScreen(local = false, addons = emptyList(), enabledAddonIds = emptySet(), busy = false, error = null,
+                        sessionNotice = null, install = {}, toggle = { _, _ -> }, remove = {}, profiles = {}, leave = {},
+                        initialSection = "Subtitles & audio", browser = true,
+                        sectionPreferences = { section, _ ->
+                            ProfilePreferencesSettings(section, PreferencesSnapshot(9, ProfilePreferences()), false, null, {}, {})
+                        })
+                }
+            }.use { ui ->
+                val brand = ui.nodes().single { it.config.getOrNull(SemanticsProperties.TestTag) == "top-nav-brand" }
+                val title = ui.nodes().single { ui.text(it) == "Settings" }
+                assertEquals(brand.boundsInRoot.left, title.boundsInRoot.left, 1f, "at $width dp")
             }
-        }.use { ui ->
-            val brand = ui.nodes().single { ui.text(it) == "VIPTV" }
-            val title = ui.nodes().single { ui.text(it) == "Settings" }
-            assertEquals(brand.boundsInRoot.left - 37f, title.boundsInRoot.left, 1f)
         }
     }
 
