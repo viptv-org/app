@@ -25,7 +25,9 @@ import org.viptv.app.theme.Palette
 internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val scale = maxWidth / 1920.dp
-        Box(Modifier.fillMaxWidth().height(132.dp * scale)) {
+        Box(Modifier.fillMaxWidth().height(132.dp * scale).focusProperties {
+            onEnter = { if (requestedFocusDirection == FocusDirection.Right) cancelFocusChange() }
+        }.focusGroup()) {
         val initial = remember { FocusRequester() }
         LaunchedEffect(selected) {
             if (selected in listOf(Screen.Movies, Screen.Series, Screen.Anime, Screen.Live, Screen.Calendar, Screen.Library, Screen.History)) initial.requestFocus()
