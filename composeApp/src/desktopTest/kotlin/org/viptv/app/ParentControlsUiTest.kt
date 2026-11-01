@@ -59,7 +59,7 @@ class ParentControlsUiTest {
             ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
                 ParentControlsSettings(parentFixture(kids = true, leavePin = true), mapOf(
                     "2" to ParentProfileControls(parentKids(true, 10, "PG-13", "TV-14"), false)), false, null, null, 0,
-                    { loads++ }, {}, { _, _ -> }, { _, _ -> }, { _, _, _ -> }, {})
+                    { loads++ }, {}, { _, _ -> }, { _, _, _ -> }, {})
             } }
         }
         try {
@@ -75,6 +75,63 @@ class ParentControlsUiTest {
             capture(scene, "phone-parent-controls")
         } finally { scene.close() }
     }
+    @Test fun parentalControlsHoldNoHouseholdPinEditorAndLinkToTheAccountPage() {
+        var opened = 0
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                ParentControlsSettings(parentFixture(kids = false), emptyMap(), false, null, null, 0,
+                    {}, {}, { _, _ -> }, { _, _, _ -> }, {}, openHouseholdPin = { opened++ })
+            } }
+        }
+        try {
+            frames(scene, 0)
+            listOf("Household PIN", "Change parent PIN", "Set parent PIN", "Remove PIN").forEach { label ->
+                assertTrue(nodes(scene).none { text(it) == label }, "Parental controls still shows $label")
+            }
+            nodes(scene).single { text(it) == "Household PIN in Account" && it.config.contains(SemanticsActions.OnClick) }
+                .config[SemanticsActions.OnClick].action!!.invoke()
+            assertEquals(1, opened)
+        } finally { scene.close() }
+    }
+
+    @Test fun parentalControlsWithoutAnAccountPageShowNoHouseholdPinLink() {
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                ParentControlsSettings(parentFixture(kids = false), emptyMap(), false, null, null, 0,
+                    {}, {}, { _, _ -> }, { _, _, _ -> }, {})
+            } }
+        }
+        try {
+            frames(scene, 0)
+            assertTrue(nodes(scene).none { text(it).contains("Household PIN") })
+        } finally { scene.close() }
+    }
+
+    @Test fun lockedRestrictedProfileStillAsksForTheParentPinOnTheParentalPage() {
+        var unlocked: String? = null
+        val locked = ParentAccess(true, unlocked = false, restricted = true).let { parentFixture(kids = true).copy(parent = it) }
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                ParentControlsSettings(locked, emptyMap(), false, null, null, 0,
+                    {}, { unlocked = it }, { _, _ -> }, { _, _, _ -> }, {}, openHouseholdPin = {})
+            } }
+        }
+        try {
+            frames(scene, 0)
+            assertTrue(nodes(scene).any { text(it) == "Enter the parent PIN to manage this household." })
+            assertTrue(nodes(scene).none { text(it) == "Household PIN in Account" })
+            nodes(scene).single { text(it) == "Unlock parental controls" && it.config.contains(SemanticsActions.OnClick) }
+                .config[SemanticsActions.OnClick].action!!.invoke()
+            frames(scene, 20)
+            val field = nodes(scene).first { it.config.contains(SemanticsActions.SetText) }
+            assertTrue(field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("1234")))
+            frames(scene, 40)
+            nodes(scene).first { it.config.contains(SemanticsActions.OnClick) && text(it) == "Unlock" }
+                .config[SemanticsActions.OnClick].action!!.invoke()
+            assertEquals("1234", unlocked)
+        } finally { scene.close() }
+    }
+
     @Test fun titleApprovalRequiresConfirmationAndUnsupportedResultsStayDisabled() {
         var approvals = 0
         val card = Card(MediaIdentity("tt123", "movie", emptyList()), provider_id = "stremio:7", title = "Example film", badges = emptyList())
