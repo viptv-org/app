@@ -206,6 +206,37 @@ class TvFilterBarTest {
         }
     }
 
+    @Test fun tvTextPanelTakesFocusBackWhenTheKeyboardCloses() {
+        val browse = Browse().apply { query = query.withSelections("search", listOf("dune")) }
+        Page {
+            TvBrowseScreen(posters, false, {}, controls = controls, query = browse.query,
+                filterChanged = browse.changed, multipleChanged = browse.multiple, applyQuery = browse.apply)
+        }.use {
+            it.focusChip("Catalog: Popular Movies")
+            repeat(5) { _ -> it.press(Key.DirectionRight) }
+            assertEquals("Search: dune", it.focusedChip())
+            it.press(Key.DirectionCenter)
+            assertTrue(it.panel("Search"))
+            assertTrue(it.focusedSearch(), "the field takes the focus when the panel opens")
+
+            it.keyboardOpens()
+            it.keyboardCloses()
+            assertTrue(it.focusedSearch(), "the field takes focus back when the keyboard closes")
+
+            it.down()
+            assertEquals("Any", it.focusedRow(), "Down from the field reaches Any")
+
+            it.keyboardOpens()
+            it.keyboardCloses()
+            assertEquals("Any", it.focusedRow(), "Any takes focus back when the keyboard closes")
+            assertTrue(it.panel("Search"), "the panel stays open")
+
+            it.press(Key.Back)
+            assertFalse(it.panel("Search"), "Back closes the panel")
+            assertEquals("Search: dune", it.focusedChip(), "focus returns to the chip")
+        }
+    }
+
     private class Page(content: @Composable () -> Unit) : AutoCloseable {
         private var focusManager: FocusManager? = null
         private var frame = 0L
