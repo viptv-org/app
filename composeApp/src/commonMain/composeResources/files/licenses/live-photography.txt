@@ -1,0 +1,15 @@
+Live sport photography
+
+live-empty-wide.webp
+  Photographer: Mario Klassen (marioklassen)
+  Source: https://commons.wikimedia.org/wiki/File:Well_lit_soccer_stadium_(Unsplash).jpg
+          https://unsplash.com/photos/70YxSTWa2Zw
+  Licence: Creative Commons Zero (CC0) 1.0 — Public Domain Dedication
+  Subject: football stadium roof, floodlights and stands (Volksparkstadion, Hamburg)
+
+live-empty-tall.webp
+  Photographer: Mario Klassen (marioklassen)
+  Source: https://commons.wikimedia.org/wiki/File:Well_lit_soccer_stadium_(Unsplash).jpg
+          https://unsplash.com/photos/70YxSTWa2Zw
+  Licence: Creative Commons Zero (CC0) 1.0 — Public Domain Dedication
+  Subject: right-hand stands and roof lights (Volksparkstadion, Hamburg)

@@ -3,9 +3,9 @@ package org.viptv.app.connection
 import kotlinx.serialization.json.*
 
 data class AccountAccess(val role: String, val manageAccount: Boolean) {
-    val pairedDevice: Boolean get() = role == "device" || !manageAccount
-    val member: Boolean get() = role == "member"
-    val managesSources: Boolean get() = !pairedDevice && !member
+    val pairedDevice: Boolean get() = role == "device"
+    val member: Boolean get() = role != "device" && !manageAccount
+    val managesSources: Boolean get() = manageAccount
 }
 
 internal suspend fun RemoteConnection.accountAccess(): AccountAccess {
