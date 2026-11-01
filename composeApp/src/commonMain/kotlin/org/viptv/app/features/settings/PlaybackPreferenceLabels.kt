@@ -14,6 +14,17 @@ internal fun preferredAudioName(tag: String?): String = when (tag?.lowercase()?.
     else -> tag
 }
 
+internal val languageChoices: List<Pair<String, String>> = listOf(
+    "en" to "English", "es" to "Spanish", "pt" to "Portuguese", "fr" to "French", "de" to "German",
+    "it" to "Italian", "ja" to "Japanese", "ko" to "Korean", "zh" to "Chinese", "ru" to "Russian",
+    "nl" to "Dutch", "pl" to "Polish", "tr" to "Turkish", "sv" to "Swedish", "da" to "Danish",
+    "no" to "Norwegian", "fi" to "Finnish", "cs" to "Czech", "uk" to "Ukrainian", "ar" to "Arabic",
+    "hi" to "Hindi", "he" to "Hebrew", "el" to "Greek", "hu" to "Hungarian", "ro" to "Romanian",
+    "th" to "Thai", "vi" to "Vietnamese", "id" to "Indonesian", "ta" to "Tamil", "te" to "Telugu",
+)
+
+internal fun languageOptionLabel(name: String, tag: String): String = "$name ($tag)"
+
 internal fun subtitleModeChoices(preferredAudio: String?): List<Pair<String, String>> =
     listOf("always" to "Always", "foreign" to "When audio isn’t ${preferredAudioName(preferredAudio)}", "never" to "Never")
 

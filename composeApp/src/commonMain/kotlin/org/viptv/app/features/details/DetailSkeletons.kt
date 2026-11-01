@@ -19,7 +19,6 @@ import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
 import org.viptv.app.theme.Palette
 
-// The meta fills the below-hero placeholders in, and the new content fades in over the shape the skeleton left.
 @Composable
 internal fun rememberContentReveal(loaded: Boolean): State<Float> {
     val alpha = remember { Animatable(if (loaded) 1f else 0f) }

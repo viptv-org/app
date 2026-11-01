@@ -2,6 +2,7 @@ package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.rememberListEntrance
+import org.viptv.app.components.pageGutter
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.owner
@@ -40,7 +41,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
         val carousel = rememberHeroCarousel(home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) }, heroRotates && preview == null, home?.scope?.owner())
         val compact = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else 1f
-        val gutter = if (compact) 16.dp else if (television) 96.dp * scale else if (tablet) 32.dp else if (browser) 57.dp else 40.dp
+        val gutter = pageGutter(television, tablet, browser, maxWidth)
         val viewportHeight = maxHeight
         var focused by remember(home?.scope?.owner()) { mutableStateOf<Card?>(null) }
         LazyColumn(contentPadding = PaddingValues(bottom = if (compact) 96.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {

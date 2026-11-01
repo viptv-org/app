@@ -24,6 +24,7 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.LocalReducedMotion
+import org.viptv.app.components.pageGutter
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
 
@@ -37,7 +38,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
     type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
-    sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null) {
+    sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null, browser: Boolean = false) {
     var chosen by remember { mutableStateOf(CALENDAR_DEFAULT_FILTER) }
     val offered = calendarFilterOffered(entries, sources)
     val filter = chosen.takeIf { offered }
@@ -63,7 +64,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
         val markedLine = remember(lines, restore.lastKey) { lines.indexOfFirst { it.key() == restore.lastKey } }
         val markedEntry = remember(visible, restore.lastKey) { visible.indexOfFirst { it.id == restore.lastKey } }
         val anchored = restore.anchor(visible.size) { visible[it].id }
-        val gutter = if (phone) 16.dp else if (television) 96.dp * scale else 40.dp
+        val gutter = pageGutter(television, tablet = false, browser, maxWidth)
         Column(Modifier.fillMaxSize().padding(horizontal = gutter,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)

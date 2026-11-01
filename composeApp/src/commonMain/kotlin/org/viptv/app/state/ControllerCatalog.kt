@@ -144,7 +144,6 @@ fun ApplicationController.enrichSummary(card: Card) {
 fun ApplicationController.open(card: Card) {
     beginDetails()
     val navigation = navigationGeneration
-    // The tapped card already carries the hero: draw the shell from it while the meta read is in flight.
     updateState { it.copy(detail = DetailSnapshot(item = card, episodes = emptyList()), detailShell = true) }
     runPage { readDetail(card, navigation) }
 }
@@ -320,6 +319,7 @@ fun ApplicationController.chooseSource(card: Card) {
 }
 
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null) {
+    sourcesScrolled = false
     updateState { it.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
         playTapTitle = playTap, detailFailure = null, detailRetryable = true) }
@@ -334,9 +334,18 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
         val remote = connection
         val deviceHeight = org.viptv.app.connection.deviceMaxVideoHeight()
         coroutineScope {
+            var playing = false
+            fun autoplay(ranked: RankedSources) {
+                if (playing || generation != operation || sourcesScrolled) return
+                val target = ranked.autoplayTarget() ?: return
+                if (mutable.value.preferences?.preferences?.source_selection != "best") return
+                playing = true
+                playSource(target)
+            }
             val ranking = ProgressiveSourceRanking(this,
                 rank = { rows -> device?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
-                show = { ranked -> if (generation == operation) updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups) } })
+                show = { ranked -> if (generation == operation) updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups) } },
+                onMatch = { autoplay(it) })
             val outcome = try {
                 device?.sources(profile, card, ranking::arrived) ?: SourcesOutcome(requireNotNull(remote).sources(card, ranking::arrived))
             } catch (deadline: TimeoutCancellationException) {
@@ -346,7 +355,7 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
             val ranked = ranking.finish()
             if (generation != operation) return@coroutineScope
             updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders) }
-            if (mutable.value.preferences?.preferences?.source_selection == "best") ranked?.autoplayTarget()?.let { playSource(it) }
+            autoplay(ranked ?: return@coroutineScope)
         }
     } catch (_: TimeoutCancellationException) {
         throw LocalFailure(if (mutable.value.sources.isNotEmpty())
@@ -354,6 +363,8 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
         else "Providers did not respond within a minute. Try again.")
     } finally { if (generation == operation) updateState { it.copy(findingSources = false) } }
 }
+
+internal fun ApplicationController.markSourcesScrolled() { sourcesScrolled = true }
 
 internal fun RankedSources.autoplayTarget(): org.viptv.engine.wire.SourceCandidate? =
     groups.bestMatches.firstOrNull()?.let { id -> rows.firstOrNull { it.id == id } }

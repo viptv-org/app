@@ -16,7 +16,7 @@ data class SourceGroups(val bestMatches: List<String> = emptyList(), val bestMat
 }
 
 @Immutable
-data class RankedSources(val rows: List<SourceCandidate>, val groups: SourceGroups = SourceGroups())
+data class RankedSources(val rows: List<SourceCandidate>, val groups: SourceGroups = SourceGroups(), val bestMatchFullyMatches: Boolean = false)
 
 internal fun SourceCandidate.failsHardFilter(): Boolean = release_type == "cam" || three_d ||
     (delivery == "torrent" && seeders?.let { it < 5 } == true)
@@ -41,10 +41,11 @@ internal fun rankedSourcesResponse(response: JsonObject, candidates: List<Source
     if (ranked.map { it.id }.distinct().size != ranked.size) throw RemoteFailure(502, "The server repeated a source choice.")
     val bestMatchId = (response["best_match_id"] as? JsonPrimitive)?.contentOrNull
     val supplied = (response["best_match_ids"] as? JsonArray)?.map { it.jsonPrimitive.content }
+    val bestMatchFullyMatches = (response["best_match_fully_matches"] as? JsonPrimitive)?.booleanOrNull ?: false
     val rankedIds = ranked.mapTo(HashSet()) { it.id }
     val groups = if (supplied != null) SourceGroups.of(supplied.filter { it in rankedIds }, bestMatchId)
         else interimSourceGroups(ranked, bestMatchId)
-    return RankedSources(ranked, groups)
+    return RankedSources(ranked, groups, bestMatchFullyMatches)
 }
 
 internal fun sourceRankingRequest(candidates: List<SourceCandidate>, deviceMaxHeight: Int?): JsonObject = buildJsonObject {
