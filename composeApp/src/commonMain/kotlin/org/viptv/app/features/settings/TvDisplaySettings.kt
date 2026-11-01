@@ -95,12 +95,11 @@ private fun TvDisplayAccentRow(prefs: TvDisplayPreferences, scale: Float, reques
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
     val selected = TvAccentChoices.firstOrNull { it.color == prefs.accent } ?: TvAccentChoices.first()
-    val (columnUp, columnDown) = rememberTvColumnItem(requester)
-    Row(Modifier.fillMaxWidth().height(96.dp * scale).focusRequester(requester)
+    val column = rememberTvColumnItem(requester)
+    Row(Modifier.fillMaxWidth().height(96.dp * scale).then(column.position).focusRequester(requester)
         .focusProperties {
             this.left = left
-            columnUp?.let { this.up = it }
-            columnDown?.let { this.down = it }
+            column.constrain(this)
         }.onFocusChanged { focused = it.isFocused }
         .semantics { stateDescription = selected.name }
         .graphicsLayer {

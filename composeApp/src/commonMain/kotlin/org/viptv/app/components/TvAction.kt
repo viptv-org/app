@@ -32,18 +32,17 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     // Register with an enclosing TvFocusColumn so Up/Down clamp at the page edges instead of falling into the settings sidebar.
     val fallback = remember { FocusRequester() }
     val target = requester ?: fallback
-    val (columnUp, columnDown) = org.viptv.app.components.rememberTvColumnItem(target)
+    val column = org.viptv.app.components.rememberTvColumnItem(target)
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     val shape = if (round) CircleShape else RoundedCornerShape(cornerRadius)
     val light = enabled && focused
     val fill by animateColorAsState(when { enabled && pressed -> Palette.body; light -> Palette.text; else -> background }, tween(150), label = "TV action fill")
     val ink by animateColorAsState(if (light || enabled && pressed) Palette.background else Palette.text, tween(150), label = "TV action content")
-    Row(modifier.focusRequester(target)
+    Row(modifier.then(column.position).focusRequester(target)
         .focusProperties {
             left?.let { this.left = it }
-            columnUp?.let { this.up = it }
-            columnDown?.let { this.down = it }
+            column.constrain(this)
         }
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused }
         // Ring before the clip/layer: inside them the part outside the button bounds is clipped away.

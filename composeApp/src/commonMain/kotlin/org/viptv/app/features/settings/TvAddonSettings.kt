@@ -57,7 +57,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
     }
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         TvSettingsHeading("Add-ons", scale)
-        if (addons.isNotEmpty()) TvAddonFilterChips(Modifier.width(760.dp * scale), addons.size, query, provides, counts, searchChip,
+        if (addons.isNotEmpty()) TvAddonFilterChips(Modifier.width(760.dp * scale), addons.size, query, provides, counts, searchChip, sidebar,
             searching, scale, startSearch = { searching = true }, select = { provides = it }, clear = clear)
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(60.dp * scale)) {
             // Inside the list its own focus search moves through every row: the page's TvFocusColumn clamp only knows composed rows and stops Down at the last visible one.
@@ -122,10 +122,10 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
 
 @Composable
 private fun TvAddonFilterChips(modifier: Modifier, total: Int, query: String, provides: AddonProvides?, counts: Map<AddonProvides, Int>,
-    searchChip: FocusRequester, searching: Boolean, scale: Float, startSearch: () -> Unit, select: (AddonProvides?) -> Unit, clear: () -> Unit) {
+    searchChip: FocusRequester, sidebar: FocusRequester, searching: Boolean, scale: Float, startSearch: () -> Unit, select: (AddonProvides?) -> Unit, clear: () -> Unit) {
     LazyRow(modifier, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         item(key = "search") {
-            TvAddonFilterChip("Search", Lucide.Search, searching || query.isNotBlank(), scale, searchChip, startSearch)
+            TvAddonFilterChip("Search", Lucide.Search, searching || query.isNotBlank(), scale, searchChip, left = sidebar, activate = startSearch)
         }
         item(key = "all") { TvAddonFilterChip("All ($total)", null, provides == null, scale, null) { select(null) } }
         AddonProvides.entries.forEach { entry ->
@@ -136,13 +136,13 @@ private fun TvAddonFilterChips(modifier: Modifier, total: Int, query: String, pr
                 }
             }
         }
-        if (query.isNotBlank() || provides != null) item(key = "clear") { TvAddonFilterChip("Clear", Lucide.X, false, scale, null, clear) }
+        if (query.isNotBlank() || provides != null) item(key = "clear") { TvAddonFilterChip("Clear", Lucide.X, false, scale, null, activate = clear) }
     }
 }
 
 @Composable
-private fun TvAddonFilterChip(label: String, icon: ImageVector?, selected: Boolean, scale: Float, requester: FocusRequester?, activate: () -> Unit) {
-    TvAction(Modifier.height(56.dp * scale), scale, requester = requester, ring = false, cornerRadius = 28.dp * scale,
+private fun TvAddonFilterChip(label: String, icon: ImageVector?, selected: Boolean, scale: Float, requester: FocusRequester?, left: FocusRequester? = null, activate: () -> Unit) {
+    TvAction(Modifier.height(56.dp * scale), scale, requester = requester, left = left, ring = false, cornerRadius = 28.dp * scale,
         background = if (selected) Palette.text.copy(alpha = 0.22f) else Color(0xFF191919),
         contentPadding = PaddingValues(horizontal = 22.dp * scale), activate = activate) { tint ->
         if (icon != null) { Icon(icon, null, Modifier.size(22.dp * scale), tint); Spacer(Modifier.width(10.dp * scale)) }

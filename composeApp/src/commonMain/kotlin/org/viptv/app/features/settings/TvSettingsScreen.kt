@@ -116,6 +116,9 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             else if (section == TvSettingsSection.Xtream && xtream != null) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 xtream(first, sidebar, scale)
             }
+            else if (section == TvSettingsSection.Gateways && gateways != null) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
+                gateways(first, sidebar, scale)
+            }
             else org.viptv.app.components.TvFocusColumn(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 if (failedPreferences) TvPreferencesFailure(section.label, requireNotNull(preferencesError), busy, scale, first, sidebar, retryPreferences)
                 else if (missingPreferences) TvPreferencesMissing(section, busy, scale, first, sidebar, retryPreferences)
@@ -137,7 +140,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
                     TvSettingsSection.Xtream -> { } // handled above: the connections list scrolls itself
-                    TvSettingsSection.Gateways -> if (gateways != null) gateways(first, sidebar, scale) else {
+                    TvSettingsSection.Gateways -> if (gateways == null) {
                         Text("Playback gateways", fontSize = (40 * scale).sp)
                         Spacer(Modifier.height(24.dp * scale))
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
