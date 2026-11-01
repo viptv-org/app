@@ -87,7 +87,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                 groups.indexOfFirst { group -> group.cards.any { searchCardKey(it) == restore.lastKey } }
             }
             PageRestore(column, restore, target = { anchorGroup.takeIf { it >= 0 } })
-            LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
+            LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {
                         val anchoredRow = remember(group.cards, restore.lastKey) {
@@ -114,7 +114,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             val grid = rememberLazyGridState()
             val anchored = restore.anchor(visible.size) { searchCardKey(visible[it]) }
             PageRestore(grid, restore, target = { restore.anchor(visible.size) { searchCardKey(visible[it]) } })
-            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), state = grid, horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(bottom = if (phone) 88.dp else 24.dp)) {
+            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), state = grid, horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
                 gridItemsIndexed(visible, key = { _, card -> searchCardKey(card) }) { index, card ->
                     val key = searchCardKey(card)
                     MediaCard(card, width = if (phone) 112 else 172, portrait = true, showLabels = true,

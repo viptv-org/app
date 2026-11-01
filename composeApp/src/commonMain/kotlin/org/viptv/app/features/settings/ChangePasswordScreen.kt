@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -57,7 +58,7 @@ internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, ch
             finally { busy = false }
         }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("Change password", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             OutlinedTextField(current, { current = it; currentError = null; failure = null }, Modifier.fillMaxWidth(), enabled = !busy,

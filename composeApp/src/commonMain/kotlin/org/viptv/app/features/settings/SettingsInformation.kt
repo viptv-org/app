@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +20,7 @@ import org.viptv.app.updates.*
 @Composable
 internal fun SettingsInformation(section: String, local: Boolean, address: String?) {
     var license by remember { mutableStateOf<String?>(null) }
-    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(if (section == "About") "About VIPTV" else section, style = MaterialTheme.typography.headlineMedium)
         when (section) {
             "Help" -> {

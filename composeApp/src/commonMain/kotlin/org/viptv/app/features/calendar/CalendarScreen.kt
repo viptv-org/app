@@ -85,7 +85,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                 TextButton(manage) { Text("Manage integrations") }
             } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
                 PageRestore(list, restore, target = { (if (phone) markedLine else markedEntry).takeIf { it >= 0 } })
-                LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = if (phone) 96.dp else 24.dp),
+                LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(if (phone) 4.dp else 18.dp * scale)) {
                     if (phone) itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
                         when (line) {

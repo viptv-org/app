@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -24,7 +25,7 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
     var leavePinFor by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(saved) { pinMode = null; editing = null; leavePinFor = null }
-    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text("Parental controls", style = MaterialTheme.typography.headlineMedium)
         Text("The household PIN is required to leave a restricted profile or manage settings from it. Each profile has its own age limit.", color = Palette.secondary)

@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -125,7 +126,7 @@ internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, erro
         return
     }
     val horizontal = if (layout == SettingsLayout.Phone) 16.dp else 32.dp
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = horizontal, vertical = 8.dp),
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = horizontal, vertical = 8.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Profile", Modifier.padding(top = 16.dp), fontSize = if (layout == SettingsLayout.Phone) 22.sp else 26.sp,
             fontWeight = FontWeight.Bold)

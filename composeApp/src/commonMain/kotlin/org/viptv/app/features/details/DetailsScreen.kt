@@ -68,7 +68,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val scrolled by remember(phone) { derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
         LazyColumn(Modifier.fillMaxSize(), state = listState,
-            contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = if (phone) 120.dp else 96.dp),
+            contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             error?.let { item { Text(it, Modifier.padding(horizontal = gutter, vertical = if (phone) 64.dp else 0.dp), color = Palette.danger) } }
