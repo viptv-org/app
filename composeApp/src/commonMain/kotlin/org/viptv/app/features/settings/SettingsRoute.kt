@@ -140,8 +140,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 controller::unblockParentTitle, controller::refreshBlockedTitles)
             else if (!state.localMode) ParentControlsSettings(state.parentSettings, state.parentControls, state.busy, state.error,
                 state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
-                controller::unlockParentControls, controller::changeParentPin, controller::changeKidsPolicy,
-                controller::changeProfileLeavePin, controller::openParentTitles)
+                controller::unlockParentControls, controller::changeKidsPolicy,
+                controller::changeProfileLeavePin, controller::openParentTitles,
+                openHouseholdPin = if (ownsHousehold) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null)
             else ParentControlsNative { controller.navigate(Screen.Profiles) }
         },
         tvParental = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->

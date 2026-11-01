@@ -139,7 +139,7 @@ class BottomClearanceUiTest {
         add(Case("Settings › Subtitles & audio") { PhoneProfilePreferences("Subtitles & audio", null, false, null, {}, {}) })
         add(Case("Settings › Add-ons") { AddonSettings(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}) })
         add(Case("Settings › Parental controls") {
-            ParentControlsSettings(null, emptyMap(), false, null, null, 0L, {}, {}, { _, _ -> }, { _, _ -> }, { _, _, _ -> }, { _ -> })
+            ParentControlsSettings(null, emptyMap(), false, null, null, 0L, {}, {}, { _, _ -> }, { _, _, _ -> }, { _ -> })
         })
         add(Case("Settings › Devices") {
             AccountDevicesScreen(AccountDevices(AccountIdentity("1", "viewer", "Viewer", "owner"),
