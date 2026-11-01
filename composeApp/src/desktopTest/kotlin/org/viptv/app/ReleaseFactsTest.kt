@@ -71,6 +71,39 @@ class ReleaseFactsTest {
             base.copy(release_type = "bluray", dynamic_range = listOf("dv"), audio_flags = listOf("dubbed"), three_d = true).factBadges())
     }
 
+    @Test fun customSourceLanguageAndSubtitleMetadataBecomesBadges() {
+        val base = SourceCandidate("a", "p", "A")
+        assertEquals(listOf("JA"), base.copy(audio_languages = listOf("ja")).factBadges())
+        assertEquals(listOf("EN / PT-BR"), base.copy(audio_languages = listOf("en", " pt-BR ", "EN", "")).factBadges())
+        assertEquals(listOf("EN / JA / FR +1"), base.copy(audio_languages = listOf("en", "ja", "fr", "de")).factBadges())
+        assertEquals(listOf("Subs"), base.copy(subbed = true).factBadges())
+        assertEquals(listOf("Subs EN / FR"), base.copy(subbed = true, subtitle_languages = listOf("en", "fr")).factBadges())
+        assertEquals(listOf("Subs EN"), base.copy(subtitle_languages = listOf("en")).factBadges())
+        assertEquals(emptyList(), base.copy(audio_languages = listOf(" ", ""), subtitle_languages = listOf("")).factBadges())
+        assertEquals(listOf("BluRay", "Dubbed", "JA", "Subs EN", "3D"),
+            base.copy(release_type = "bluray", audio_flags = listOf("dubbed"), audio_languages = listOf("ja"),
+                subtitle_languages = listOf("en"), three_d = true).factBadges())
+    }
+
+    @Test fun serverCardsCarryLanguageAndSubtitleMetadataOnlyWhenDeclared() {
+        val (full, bare, odd) = streams(
+            """{"id":"a","name":"A","audio_languages":["ja"],"audio_flags":["dubbed"],"subbed":true,"subtitle_languages":["en","fr"]}""",
+            """{"id":"b","name":"B","quality_height":1080}""",
+            """{"id":"c","name":"C","subbed":null,"subtitle_languages":"en"}""")
+        assertEquals(listOf("Dubbed", "JA", "Subs EN / FR"), full.factBadges())
+        assertTrue(full.subbed); assertEquals(listOf("en", "fr"), full.subtitle_languages)
+        assertFalse(bare.subbed); assertTrue(bare.subtitle_languages.isEmpty()); assertEquals(emptyList(), bare.factBadges())
+        assertFalse(odd.subbed); assertTrue(odd.subtitle_languages.isEmpty()); assertEquals(emptyList(), odd.factBadges())
+    }
+
+    @Test fun serializedCandidatesDecodeWithAndWithoutSubtitleMetadata() {
+        val json = Json { ignoreUnknownKeys = true }
+        val old = json.decodeFromString<SourceCandidate>("""{"id":"a","provider_id":"p","label":"A"}""")
+        assertFalse(old.subbed); assertTrue(old.subtitle_languages.isEmpty())
+        val full = json.decodeFromString<SourceCandidate>("""{"id":"a","provider_id":"p","label":"A","subbed":true,"subtitle_languages":["en"]}""")
+        assertTrue(full.subbed); assertEquals(listOf("Subs EN"), full.factBadges())
+    }
+
     @Test fun narrowRowsDropTrailingBadgesWhole() {
         assertEquals(listOf(0, 1, 2), sourceFactBadgesThatFit(listOf(40, 30, 50), 4, 128))
         assertEquals(listOf(0, 1), sourceFactBadgesThatFit(listOf(40, 30, 50), 4, 127))
