@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -18,6 +19,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.settings.LocalSystemReducedMotion
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import java.io.File
@@ -71,7 +73,9 @@ class PullToRefreshUiTest {
             // Coil's default loader may already exist in this JVM, where setSafe refuses a later factory.
             val context = LocalPlatformContext.current
             remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
-            App(television = television, desktopChrome = desktopChrome, providedController = controller, manageControllerLifecycle = false)
+            CompositionLocalProvider(LocalSystemReducedMotion provides false) {
+                App(television = television, desktopChrome = desktopChrome, providedController = controller, manageControllerLifecycle = false)
+            }
             appLoader = SingletonImageLoader.get(context)
         }
         private val time = java.util.concurrent.atomic.AtomicLong()

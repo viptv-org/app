@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.viptv.app.components.TopNavigation
 import org.viptv.app.connection.Profile
+import org.viptv.app.connection.autoQualityLabel
+import org.viptv.app.connection.deviceMaxVideoHeight
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.PreferencesSnapshot
 import org.viptv.app.features.settings.ProfilePreferencesSettings
@@ -55,7 +57,7 @@ class WebPreferencesSettingsTest {
                 })
         }.use { ui ->
             val triggers = ui.triggers()
-            assertEquals(listOf("Default source: Always ask", "Preferred quality: Auto", "HDR and Dolby Vision: No preference"), triggers)
+            assertEquals(listOf("Default source: Always ask", "Preferred quality: ${autoQualityLabel(deviceMaxVideoHeight())}", "HDR and Dolby Vision: No preference"), triggers)
             val nextEpisode = ui.switch("Next episode button")
             assertEquals(ToggleableState.On, nextEpisode.config[SemanticsProperties.ToggleableState])
             val skipIntros = ui.switch("Skip intros and recaps")
