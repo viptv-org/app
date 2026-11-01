@@ -37,6 +37,7 @@ android {
         val defaultServer = providers.gradleProperty("viptv.defaultServer").orNull.orEmpty()
         require(defaultServer.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?").matches(defaultServer)) { "viptv.defaultServer must be an https origin" }
         buildConfigField("String", "DEFAULT_SERVER", "\"$defaultServer\"")
+        buildConfigField("String", "BUILD_COMMIT", "\"${commitSha ?: "unknown"}\"")
         // Updates come from <signed-in server>/updates/android/update.json. -Pviptv.updateFeed=<url>
         // replaces that address (a future GitHub Releases feed, or a loopback test feed).
         val updateFeed = providers.gradleProperty("viptv.updateFeed").orNull.orEmpty()

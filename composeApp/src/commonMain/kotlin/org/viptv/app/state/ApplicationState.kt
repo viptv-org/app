@@ -10,6 +10,7 @@ import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.connection.HistoryDisplay
+import org.viptv.app.crash.CrashReport
 
 enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Anime, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings,
     ContinueWatching }
@@ -136,6 +137,7 @@ data class ApplicationState(
     val paused: Boolean = false,
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
+    val pendingCrashReport: CrashReport? = null,
 )
 
 internal fun ApplicationState.detailsPending(): Boolean =

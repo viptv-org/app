@@ -24,6 +24,7 @@ import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
+import org.viptv.app.crash.CrashReport
 
 data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null,
     val avatarStyle: String? = null, val avatarChoice: Int? = null, val avatarUrl: String? = null)
@@ -220,6 +221,13 @@ class RemoteConnection(
     internal suspend fun bytes(path: String): ByteArray = authenticatedResponse(path).let { response ->
         checkStatus(response)
         response.readRawBytes()
+    }
+
+    // A 404 means the server predates this endpoint: the caller keeps the report locally rather than throwing.
+    suspend fun submitCrashReport(report: CrashReport): Boolean {
+        ensureOpen()
+        val response = authenticatedResponse("/api/crash-reports", HttpMethod.Post, codec.encodeToJsonElement(CrashReport.serializer(), report))
+        return response.status.value in 200..299
     }
 
     suspend fun call(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement {

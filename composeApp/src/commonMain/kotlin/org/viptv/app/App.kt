@@ -228,6 +228,9 @@ fun App(
                   }
                 }
             }
+            if (state.pendingCrashReport != null) {
+                CrashReportNotice(television, controller::submitCrashReport, controller::discardCrashReport)
+            }
         }
     }
     }
