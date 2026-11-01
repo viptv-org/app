@@ -73,7 +73,7 @@ internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial:
             TvVodMatchForm(open, state.saving, state.error, scale, changeMetadata, save, { if (!state.saving) closeForm() })
             return@Column
         }
-        TvVodMatchFilters(state, scale, searchChip, searching, providerChanged, typeChanged, { searching = true },
+        TvVodMatchFilters(state, scale, searchChip, sidebar, searching, providerChanged, typeChanged, { searching = true },
             { providerChanged(null); typeChanged(null); search("") })
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(60.dp * scale)) {
             // Inside the list its own focus search moves through every row: the page's TvFocusColumn clamp only knows composed rows and stops Down at the last visible one.
@@ -138,11 +138,11 @@ internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial:
 }
 
 @Composable
-private fun TvVodMatchFilters(state: VodMatchesState, scale: Float, searchChip: FocusRequester, searching: Boolean,
+private fun TvVodMatchFilters(state: VodMatchesState, scale: Float, searchChip: FocusRequester, sidebar: FocusRequester, searching: Boolean,
     providerChanged: (Long?) -> Unit, typeChanged: (String?) -> Unit, startSearch: () -> Unit, clear: () -> Unit) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         item(key = "search") {
-            TvVodMatchChip("Search", Lucide.Search, searching || state.query.isNotBlank(), scale, searchChip, startSearch)
+            TvVodMatchChip("Search", Lucide.Search, searching || state.query.isNotBlank(), scale, searchChip, left = sidebar, activate = startSearch)
         }
         item(key = "all") {
             TvVodMatchChip("All providers", null, state.providerId == null, scale, null) { providerChanged(null) }
@@ -164,14 +164,14 @@ private fun TvVodMatchFilters(state: VodMatchesState, scale: Float, searchChip: 
                 typeChanged(if (state.type == "series") null else "series")
             }
         }
-        if (state.filtered) item(key = "clear") { TvVodMatchChip("Clear", Lucide.X, false, scale, null, clear) }
+        if (state.filtered) item(key = "clear") { TvVodMatchChip("Clear", Lucide.X, false, scale, null, activate = clear) }
     }
 }
 
 @Composable
 private fun TvVodMatchChip(label: String, icon: ImageVector?, selected: Boolean, scale: Float,
-    requester: FocusRequester?, activate: () -> Unit) {
-    TvAction(Modifier.height(56.dp * scale), scale, requester = requester, ring = false, cornerRadius = 28.dp * scale,
+    requester: FocusRequester?, left: FocusRequester? = null, activate: () -> Unit) {
+    TvAction(Modifier.height(56.dp * scale), scale, requester = requester, left = left, ring = false, cornerRadius = 28.dp * scale,
         background = if (selected) Palette.text.copy(alpha = 0.22f) else Color(0xFF191919),
         contentPadding = PaddingValues(horizontal = 22.dp * scale), activate = activate) { tint ->
         if (icon != null) { Icon(icon, null, Modifier.size(22.dp * scale), tint); Spacer(Modifier.width(10.dp * scale)) }

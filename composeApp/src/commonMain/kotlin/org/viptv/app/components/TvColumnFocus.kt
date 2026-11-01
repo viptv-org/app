@@ -6,19 +6,33 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusProperties
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 
 internal class TvColumnFocusState {
-    val requesters = mutableStateListOf<FocusRequester>()
+    internal class Entry(val requester: FocusRequester) { var top = Float.MAX_VALUE }
+
+    private val entries = mutableListOf<Entry>()
+
+    fun add(entry: Entry) { entries += entry }
+
+    fun remove(entry: Entry) { entries -= entry }
+
+    // Rows can appear above rows that are already composed, so order is the layout order, not the order of arrival.
+    private fun ordered(): List<FocusRequester> = entries.sortedBy { it.top }.map { it.requester }
 
     fun upFor(own: FocusRequester): FocusRequester {
-        val index = requesters.indexOf(own)
-        return if (index <= 0) FocusRequester.Cancel else requesters[index - 1]
+        val ordered = ordered()
+        val index = ordered.indexOf(own)
+        return if (index <= 0) FocusRequester.Cancel else ordered[index - 1]
     }
 
     fun downFor(own: FocusRequester): FocusRequester {
-        val index = requesters.indexOf(own)
-        return if (index < 0 || index >= requesters.lastIndex) FocusRequester.Cancel else requesters[index + 1]
+        val ordered = ordered()
+        val index = ordered.indexOf(own)
+        return if (index < 0 || index >= ordered.lastIndex) FocusRequester.Cancel else ordered[index + 1]
     }
 }
 
@@ -33,18 +47,24 @@ internal fun TvFocusColumn(modifier: Modifier = Modifier, content: @Composable C
     }
 }
 
-@Composable
-internal fun rememberTvColumnItem(own: FocusRequester): Pair<FocusRequester?, FocusRequester?> {
-    val column = LocalTvColumnFocus.current
-    DisposableEffect(column, own) {
-        column?.requesters?.add(own)
-        onDispose { column?.requesters?.remove(own) }
+internal class TvColumnItem(private val column: TvColumnFocusState?, private val own: FocusRequester,
+    private val entry: TvColumnFocusState.Entry) {
+    val position: Modifier = Modifier.onGloballyPositioned { entry.top = it.positionInRoot().y }
+
+    fun constrain(properties: FocusProperties) {
+        if (column == null) return
+        properties.up = column.upFor(own)
+        properties.down = column.downFor(own)
     }
-    if (column == null) return null to null
-    // Reading the list keeps the clamp correct if rows appear or disappear.
-    val index = column.requesters.indexOf(own)
-    val up = if (index <= 0) FocusRequester.Cancel else column.requesters.getOrNull(index - 1)
-    val down = if (index < 0 || index >= column.requesters.lastIndex) FocusRequester.Cancel
-        else column.requesters.getOrNull(index + 1)
-    return up to down
+}
+
+@Composable
+internal fun rememberTvColumnItem(own: FocusRequester): TvColumnItem {
+    val column = LocalTvColumnFocus.current
+    val entry = remember(own) { TvColumnFocusState.Entry(own) }
+    DisposableEffect(column, entry) {
+        column?.add(entry)
+        onDispose { column?.remove(entry) }
+    }
+    return remember(column, own, entry) { TvColumnItem(column, own, entry) }
 }
