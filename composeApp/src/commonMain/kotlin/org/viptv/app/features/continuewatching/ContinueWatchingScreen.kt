@@ -67,7 +67,7 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
         }
         CompositionLocalProvider(LocalListRemoval provides removal) {
             LazyVerticalGrid(GridCells.Fixed(columns), Modifier.fillMaxSize(), state = grid,
-                contentPadding = PaddingValues(start = gutter, end = gutter, top = if (phone) 8.dp else 24.dp, bottom = if (phone) 96.dp else 24.dp),
+                contentPadding = PaddingValues(start = gutter, end = gutter, top = if (phone) 8.dp else 24.dp, bottom = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(gap), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 item(TITLE_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = TITLE_KEY) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

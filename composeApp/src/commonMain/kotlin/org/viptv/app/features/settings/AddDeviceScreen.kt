@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +21,7 @@ private enum class AddDeviceStep { Code, Confirm, Done, Denied }
 internal fun AddDeviceScreen(remote: RemoteConnection?, compact: Boolean, linkedCode: String? = null, linkConsumed: () -> Unit = {}, changeConnection: () -> Unit = {}) {
     if (remote == null) {
         org.viptv.app.components.TvFocusScroll(contentPadding = PaddingValues(vertical = if (compact) 16.dp else 32.dp)) {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = if (compact) 16.dp else 32.dp),
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = if (compact) 16.dp else 32.dp).pageBottomClearance(),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 DeviceTile()
                 DeviceTitle("Add a device", compact)
@@ -74,7 +75,7 @@ internal fun AddDeviceScreen(remote: RemoteConnection?, compact: Boolean, linked
     }
 
     org.viptv.app.components.TvFocusScroll(contentPadding = PaddingValues(vertical = if (compact) 16.dp else 32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding()
-        .padding(horizontal = 24.dp, vertical = if (compact) 16.dp else 32.dp),
+        .padding(horizontal = 24.dp, vertical = if (compact) 16.dp else 32.dp).pageBottomClearance(),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         when (step) {
             AddDeviceStep.Code -> {

@@ -121,7 +121,6 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                     }
                 }
             }
-            item(key = "bottom") { Spacer(Modifier.height(if (phone) 96.dp else 24.dp)) }
         }
     }
     if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text("Clear history?") },

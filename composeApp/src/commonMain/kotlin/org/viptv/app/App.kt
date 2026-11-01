@@ -98,6 +98,7 @@ fun App(
             val tablet = !compact && touch
             val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)
+            val bottomClearance = if (bottomBar) bottomBarClearance() else 0.dp
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
@@ -131,7 +132,8 @@ fun App(
                 Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
                 else -> Box(Modifier.fillMaxSize()) {
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
-                      LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar) { Column(Modifier.fillMaxSize()) {
+                      LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar,
+                      LocalBottomClearance provides bottomClearance) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
@@ -162,7 +164,9 @@ fun App(
                                 }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
-                                    controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows)
+                                    controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows,
+                                    filters = state.searchFilters, filterChanged = controller::searchFilters,
+                                    focusResults = state.searchFocusResults)
                             }
                             // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
@@ -224,6 +228,9 @@ fun App(
                   }
                 }
             }
+            if (state.pendingCrashReport != null) {
+                CrashReportNotice(television, controller::submitCrashReport, controller::discardCrashReport)
+            }
         }
     }
     }
@@ -265,9 +272,10 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             playTap = state.playTapTitle != null,
             retry = if ((state.playTapTitle != null && state.detail == null || state.detailShell) && state.detailRetryable) controller::retryDetails else null,
             // The drawer over the page owns the keyboard: the dialog must not take its focus.
-            closeFocusOnOpen = !(browser && showingSources))
+            closeFocusOnOpen = !(browser && showingSources),
+            focus = state.detailFocus)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled) }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }

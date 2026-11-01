@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
+import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
@@ -31,10 +32,11 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     paging: Boolean = true,
     playTap: Boolean = false,
     retry: (() -> Unit)? = null,
-    closeFocusOnOpen: Boolean = true) {
+    closeFocusOnOpen: Boolean = true,
+    focus: DetailFocus? = null) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
-            continuing = continuing, shown = paging, playTap = playTap, retry = retry)
+            continuing = continuing, shown = paging, playTap = playTap, retry = retry, focus = focus)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
@@ -42,12 +44,12 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         DetailUnavailable(error, back, retry)
         return
     }
-    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging, closeFocusOnOpen); return }
+    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging, focus); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging, closeFocusOnOpen, focus); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
-    val seasonChoice = rememberSeasonChoice(detail)
+    val seasonChoice = rememberSeasonChoice(detail, focus)
     var section by remember(detail?.item?.identity, detail?.episodes?.isNotEmpty() == true, detail?.recommendations?.isNotEmpty() == true) { mutableStateOf(
         when { detail?.episodes?.isNotEmpty() == true -> DetailSection.Episodes
             detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
@@ -63,14 +65,15 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val listState = rememberLazyListState()
         val desktop = !phone && !tablet
         val episodesShown = detail != null && (!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())
-        val resumeIndex = resume.takeIf { episodesShown }.indexIn(selected?.episodes)?.let { episode ->
+        val landing = if (!episodesShown) null else (resume.indexIn(selected?.episodes) ?: focus.episodeIn(selected))
+        val resumeIndex = landing?.let { episode ->
             (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 + (if (desktop) 0 else 1) + 1 + episode }
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
         val reveal = rememberContentReveal(!busy)
         val scrolled by remember(phone) { derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
         LazyColumn(Modifier.fillMaxSize(), state = listState,
-            contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = if (phone) 120.dp else 96.dp),
+            contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             detail?.let { value ->

@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
+import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.TextButton
@@ -40,7 +41,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
     back: (() -> Unit)? = null, continuing: List<Card> = emptyList(),
     shown: Boolean = true,
     playTap: Boolean = false,
-    retry: (() -> Unit)? = null) {
+    retry: (() -> Unit)? = null,
+    focus: DetailFocus? = null) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     if (detail == null) {
         TvDetailUnavailable(error, scale = 1f, back = back, retry = retry)
@@ -103,7 +105,11 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             val firstLook = !visit.seen
             visit.seen = true
             when {
-                firstLook -> if (resume != null) focusEpisodes(ShelfLanding.Resume) else returnHero()
+                firstLook -> when {
+                    resume != null -> focusEpisodes(ShelfLanding.Resume)
+                    focus != null -> focusEpisodes(ShelfLanding.Focus)
+                    else -> returnHero()
+                }
                 activeRow == TvDetailRow.Episodes -> focusEpisodes(ShelfLanding.Return)
                 else -> returnHero()
             }
@@ -134,7 +140,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                                 focused = { episodeMode = true; focusRow(TvDetailRow.Episodes) }, expanded = episodeMode,
                                 resume = resume,
                                 returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
-                                busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown)
+                                busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown, detailFocus = focus)
                         }
                         if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
                             TvRecommendationShelf(extras.recommendations, scale, open,

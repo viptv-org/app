@@ -107,7 +107,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
             else LazyVerticalGrid(GridCells.Fixed(columns),
                 state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
                 verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
-                contentPadding = PaddingValues(bottom = if (compact) 88.dp else 24.dp)) {
+                contentPadding = PaddingValues(bottom = 24.dp)) {
                 itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
                     val key = cardLookupKey(card)
                     MediaCard(card, width = 0, portrait = true, showLabels = true,
