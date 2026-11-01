@@ -21,6 +21,8 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 
 @Composable
 fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null,
@@ -50,6 +52,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
             else -> DetailSection.Information }) }
     val selected = seasonChoice.selected(seasons, resume)
+    val entrance = rememberListEntrance(detail?.episodes?.isNotEmpty() == true)
     AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging && section == DetailSection.Episodes,
         scopeKey = detail?.item?.let { it.provider_id to it.identity })
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -96,10 +99,10 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                             }
                         }
                     }
-                    if (phone) items(season.episodes, key = ::episodeKey) { episode ->
-                        DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter))
-                    } else items(season.episodes, key = ::episodeKey) { episode ->
-                        DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)))
+                    if (phone) itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
+                        DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate))
+                    } else itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
+                        DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate))
                     }
                 }
                 if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {

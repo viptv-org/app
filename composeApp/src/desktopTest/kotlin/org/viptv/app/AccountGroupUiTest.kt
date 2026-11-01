@@ -73,7 +73,7 @@ class AccountGroupUiTest {
                 account = { AccountIdentityScreen(identity, false, null, {}) },
                 householdPin = { HouseholdPinSettings(management, false, null, null, 0, {}, {}, { _, _ -> }) },
                 sourceIntegrations = { _, _, _ -> Text("Metadata provider") },
-                addDevice = { Text("Add device page") })
+                addDevice = { _, _ -> Text("Add device page") })
         } }
     }
 

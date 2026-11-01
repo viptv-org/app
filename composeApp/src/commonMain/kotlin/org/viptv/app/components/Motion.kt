@@ -24,6 +24,7 @@ internal object Motion {
     const val arrive = 200
     const val panel = 300
     const val leave = 200
+    const val staggerStep = 30
     const val card = .98f
     const val button = .97f
     const val row = .99f

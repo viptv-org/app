@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.rememberTvLoadingShimmer
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
@@ -35,6 +37,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.pageGutter
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
 import org.viptv.app.components.Motion
@@ -66,6 +69,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         return
     }
     val grid = rememberLazyGridState()
+    val entrance = rememberListEntrance(cards.isNotEmpty())
     val restore = rememberPageRestore("browse")
     val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
     PageRestore(grid, restore, target = { restore.anchor(cards.size) { cardLookupKey(cards[it]) } })
@@ -73,7 +77,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val width = maxWidth
         val compact = width < 640.dp
-        val gutter = if (compact) 16.dp else 40.dp
+        val gutter = pageGutter(television = false, tablet = false, browser = false, maxWidth = width)
         val catalogOpen = remember { mutableStateOf(false) }
         val facets = remember(controls, query, screen) { browseFacets(controls, query, screen == Screen.Discover) }
         val applied = remember(facets, query) { appliedFacets(facets, query).size }
@@ -108,7 +112,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                     val key = cardLookupKey(card)
                     MediaCard(card, width = 0, portrait = true, showLabels = true,
                         open = { restore.mark(key, index); open(it) },
-                        modifier = Modifier.fillMaxWidth().pageAnchor(restore, key, index, target = anchored == index),
+                        modifier = Modifier.fillMaxWidth().pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate),
                         showFocusOutline = !compact || !browser)
                 }
             }

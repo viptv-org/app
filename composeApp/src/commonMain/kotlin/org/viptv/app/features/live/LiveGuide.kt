@@ -25,6 +25,8 @@ import org.viptv.app.components.PageRestore
 import org.viptv.app.components.PageRestoreState
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
+import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
@@ -34,6 +36,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
     first: FocusRequester? = null, up: FocusRequester? = null, more: (() -> Unit)? = null, busy: Boolean = false,
     restore: PageRestoreState = rememberPageRestore("live")) {
     val rows = rememberLazyListState()
+    val entrance = rememberListEntrance(channels.isNotEmpty())
     AutomaticPage(channels.size, busy, more) { rows.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     val anchored = restore.landing(channels.size) { channels[it].key() }
     PageRestore(rows, restore, claimOnEntry = television, target = { restore.landing(channels.size) { channels[it].key() } })
@@ -63,7 +66,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                     val key = channel.key()
                     val row = anchored == index
                     val initial = channel.initialProgram(start, span, now)
-                    Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.listItemEntrance(index, entrance.animate)) {
                         if (television) TvLiveChannelLabel(channel, scale,
                             if (channel == firstChannel && initialProgram == null) first else null,
                             if (channel == firstChannel) up else null,

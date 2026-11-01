@@ -152,6 +152,20 @@ compose.resources { publicResClass = true; packageOfResClass = "org.viptv.app.re
 compose.desktop {
     application {
         mainClass = "org.viptv.app.MainKt"
-        nativeDistributions { targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb); packageName = "VIPTV-Experiment"; packageVersion = "0.1.0"; macOS { packageVersion = "1.0.0" } }
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "VIPTV-Experiment"
+            packageVersion = "0.1.0"
+            macOS {
+                packageVersion = "1.0.0"
+                iconFile.set(project.file("src/desktopMain/resources/viptv-app-icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("src/desktopMain/resources/viptv-app-icon.ico"))
+            }
+            linux {
+                iconFile.set(project.file("src/desktopMain/resources/viptv-app-icon.png"))
+            }
+        }
     }
 }

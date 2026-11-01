@@ -1,5 +1,11 @@
 package org.viptv.app
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -90,7 +96,7 @@ fun App(
             val compact = maxWidth < 640.dp && !television
             val touch = !television && !browser && !desktopChrome
             val tablet = !compact && touch
-            val barFades = barsFadeContent(television, desktopChrome, touch, maxWidth)
+            val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
@@ -132,10 +138,11 @@ fun App(
                     Row(Modifier.weight(1f)) {
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (desktopChrome && (!compact || desktopMenuOpen)) SideNavigation(
-                            if (state.screen == Screen.Details || state.screen == Screen.Sources) state.detailReturnScreen.let { if (it == Screen.ContinueWatching) Screen.Home else it } else navigationScreen, controller::navigate)
+                            if (state.screen == Screen.Details || state.screen == Screen.Sources) navHighlightPage(state.detailReturnScreen) else navigationScreen, controller::navigate)
                         PullRefresh(touch, enabled = state.screen in PULL_REFRESH_SCREENS,
                             refresh = controller::pullToRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        when (state.screen) {
+                        val pageArea: @Composable (Screen) -> Unit = { current ->
+                        when (current) {
                             Screen.Home -> {
                                 // The hero rotates while the viewer is present, so an idle window draws nothing; TV keeps its own timer.
                                 if (!television) LaunchedEffect(controller) { controller.trackViewerPresence() }
@@ -148,9 +155,9 @@ fun App(
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
                             Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime ->
-                                routes.SaveableStateProvider("${state.selectedProfile}:browse:${state.screen.name}") {
+                                routes.SaveableStateProvider("${state.selectedProfile}:browse:${current.name}") {
                                     if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
-                                    else BrowseScreen(state.screen, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
+                                    else BrowseScreen(current, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
                                         multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
                                 }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
@@ -159,38 +166,12 @@ fun App(
                             }
                             // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
-                                Box(Modifier.fillMaxSize()) {
-                                    val showingSources = state.screen == Screen.Sources
-                                    // The drawer decides when it opens whether it returns to the Details dialog behind it.
-                                    val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
-                                    if (browser) HomeScreen(state.home, false, controller::open, controller::refresh, browser = true, play = controller::playTitle)
-                                    if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
-                                        // A failed first load lands in state.error, which the page must show instead of drawing blank.
-                                        state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null },
-                                        // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
-                                        if (browser && showingSources) controller::backSources else controller::backDetails,
-                                        controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
-                                        defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
-                                        // A Calendar row's episode comes first: Details opened from it land on its season.
-                                        continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
-                                            state.continueWatching?.takeIf { it.profile == state.selectedProfile }?.cards.orEmpty(),
-                                        paging = state.screen == Screen.Details,
-                                        // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
-                                        playTap = state.playTapTitle != null,
-                                        retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
-                                        // The drawer over the page owns the keyboard: the dialog must not take its focus.
-                                        closeFocusOnOpen = !(browser && showingSources))
-                                    if (showingSources) {
-                                        val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups) }
-                                        // Over the Details dialog the drawer needs a window layer of its own.
-                                        if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
-                                    }
-                                }
+                                DetailsAndSources(current, state, controller, television, tablet, browser = false)
                             }
                             Screen.Calendar -> routes.SaveableStateProvider("${state.selectedProfile}:calendar") {
                                 CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
                                     type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
-                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry)
+                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry, browser = browser)
                             }
                             Screen.Live -> routes.SaveableStateProvider("${state.selectedProfile}:live") {
                                 org.viptv.app.features.live.LiveRoute(state, controller, television)
@@ -210,7 +191,30 @@ fun App(
                             }
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)
-                            else -> Column(Modifier.padding(32.dp)) { Text(state.screen.name, style = MaterialTheme.typography.headlineLarge) }
+                            else -> Column(Modifier.padding(32.dp)) { Text(current.name, style = MaterialTheme.typography.headlineLarge) }
+                        }
+                        }
+                        if (television) {
+                            pageArea(state.screen)
+                        } else {
+                            val page = when {
+                                browser && (state.screen == Screen.Details || state.screen == Screen.Sources) ->
+                                    detailBackdrop(state.detailReturnScreen)
+                                state.screen == Screen.Sources ->
+                                    if (state.sourceReturnScreen == Screen.Details) Screen.Details else Screen.Sources
+                                else -> state.screen
+                            }
+                            val enter: FiniteAnimationSpec<Float> = motionSpec(tween<Float>(Motion.arrive, easing = Motion.standard))
+                            val exit: FiniteAnimationSpec<Float> = motionSpec(tween<Float>(Motion.response, easing = Motion.standard))
+                            AnimatedContent(
+                                targetState = page,
+                                transitionSpec = {
+                                    ContentTransform(fadeIn(enter), fadeOut(exit), sizeTransform = null)
+                                },
+                                label = "page area",
+                            ) { current -> pageArea(current) }
+                            if (browser && (state.screen == Screen.Details || state.screen == Screen.Sources))
+                                DetailsAndSources(state.screen, state, controller, television, tablet, browser = true)
                         }
                         }
                     }
@@ -225,11 +229,56 @@ fun App(
     }
 }
 
+// Continue Watching has no nav entry, so the SideNavigation highlight resolves it to Home.
+private fun navHighlightPage(detailReturnScreen: Screen): Screen =
+    if (detailReturnScreen == Screen.ContinueWatching) Screen.Home else detailReturnScreen
+
+private val DETAIL_BACKDROP_PAGES = setOf(
+    Screen.Home, Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime, Screen.Search,
+    Screen.Calendar, Screen.Live, Screen.Library, Screen.ContinueWatching, Screen.History, Screen.Settings)
+
+// Details, Sources and Player are not pages, so a backdrop without a real page behind it falls back to Home.
+private fun detailBackdrop(detailReturnScreen: Screen): Screen =
+    if (detailReturnScreen in DETAIL_BACKDROP_PAGES) detailReturnScreen else Screen.Home
+
+@Composable
+private fun DetailsAndSources(current: Screen, state: ApplicationState, controller: ApplicationController, television: Boolean, tablet: Boolean, browser: Boolean) {
+    Box(Modifier.fillMaxSize()) {
+        val showingSources = current == Screen.Sources || state.screen == Screen.Sources
+        // The drawer stays composed one exit after Back, so Details never fades or reloads behind it.
+        var sourceDrawerOpen by remember { mutableStateOf(false) }
+        if (showingSources) sourceDrawerOpen = true
+        val drawerShown = if (television) showingSources else showingSources || sourceDrawerOpen
+        val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
+        if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
+            // A failed first load lands in state.error, which the page must show instead of drawing blank.
+            state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null },
+            // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
+            if (browser && showingSources) controller::backSources else controller::backDetails,
+            controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
+            defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
+            // A Calendar row's episode comes first: Details opened from it land on its season.
+            continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
+                state.continueWatching?.takeIf { it.profile == state.selectedProfile }?.cards.orEmpty(),
+            paging = state.screen == Screen.Details,
+            // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
+            playTap = state.playTapTitle != null,
+            retry = if (state.playTapTitle != null && state.detail == null && state.detailRetryable) controller::retryDetails else null,
+            // The drawer over the page owns the keyboard: the dialog must not take its focus.
+            closeFocusOnOpen = !(browser && showingSources))
+        if (drawerShown) {
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled) }
+            // Over the Details dialog the drawer needs a window layer of its own.
+            if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
+        }
+    }
+}
+
 // The player draws under the cutout and system bars, so the root must not pad it with the app background.
 internal fun playerDrawsEdgeToEdge(screen: Screen, television: Boolean): Boolean = screen == Screen.Player && !television
 
-internal fun barsFadeContent(television: Boolean, desktopChrome: Boolean, touch: Boolean, width: Dp): Boolean =
-    !television && !desktopChrome && (touch || width < 1000.dp)
+internal fun barsFadeContent(television: Boolean, desktopChrome: Boolean, browser: Boolean, touch: Boolean, width: Dp): Boolean =
+    !television && !desktopChrome && (touch || browser || width < 1000.dp)
 
 private val PULL_REFRESH_SCREENS = setOf(Screen.Home, Screen.ContinueWatching, Screen.Library, Screen.History, Screen.Details)
 

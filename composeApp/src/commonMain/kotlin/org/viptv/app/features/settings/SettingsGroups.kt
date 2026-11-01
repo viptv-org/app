@@ -26,7 +26,6 @@ internal enum class SettingsRow(val group: SettingsGroup, val key: String, val l
     SubtitlesAudio(SettingsGroup.Playback, "Subtitles & audio", "Subtitles & audio", Lucide.Captions),
 
     Display(SettingsGroup.ThisDevice, "Display", "Display", Lucide.Monitor),
-    WatchOnTv(SettingsGroup.ThisDevice, "Watch on TV", "Watch on TV", Lucide.Airplay),
     About(SettingsGroup.ThisDevice, "About", "About", Lucide.Info),
     Help(SettingsGroup.ThisDevice, "Help", "Help", Lucide.Info),
 
@@ -53,7 +52,7 @@ internal fun settingsSections(available: Set<SettingsRow>): List<SettingsSection
     }
 
 internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: Boolean, account: Boolean,
-    devices: Boolean, addDevice: Boolean, watchOnTv: Boolean, information: Boolean,
+    devices: Boolean, addDevice: Boolean, information: Boolean,
     householdPin: Boolean = false, sourceIntegrations: Boolean = false, deleteAccount: Boolean = false,
     linkedServices: Boolean = false, password: Boolean = false): Set<SettingsRow> = buildSet {
     add(SettingsRow.Profile)
@@ -61,7 +60,6 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     if (parental) add(SettingsRow.ParentalControls)
     if (stremioImport) add(SettingsRow.ImportFromStremio)
     if (playback) { add(SettingsRow.Playback); add(SettingsRow.SubtitlesAudio) }
-    if (watchOnTv) add(SettingsRow.WatchOnTv)
     if (information) { add(SettingsRow.About); add(SettingsRow.Help) }
     if (account) add(SettingsRow.Account)
     if (password) add(SettingsRow.Password)
@@ -81,5 +79,5 @@ internal enum class SettingsLayout(val groupLabelSize: TextUnit, val groupLabelT
     Phone(11.sp, .08f, 16.dp, groupLabelAbove = 2.dp, groupLabelBelow = 8.dp),
     Tablet(11.sp, .08f, 16.dp, groupLabelAbove = 16.dp, groupLabelBelow = 12.dp),
     Desktop(12.sp, .06f, 12.dp, groupLabelAbove = 8.dp, groupLabelBelow = 8.dp),
-    Web(12.sp, 0f, 16.dp, groupLabelAbove = 12.dp, groupLabelBelow = 12.dp),
+    Web(12.sp, 0f, 0.dp, groupLabelAbove = 12.dp, groupLabelBelow = 12.dp),
 }

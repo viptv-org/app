@@ -181,7 +181,7 @@ class LibraryCollapsingHeaderUiTest {
             assertTrue(web.historyShown())
             val filters = web.top("Type: All")
             web.capture("browser-top")
-            web.wheel(6)
+            web.wheel(9)
             assertFalse(web.historyShown(), "History scrolled away")
             val pinned = web.top("Type: All")
             assertTrue(pinned < filters, "the controls take the title's place: $pinned < $filters")

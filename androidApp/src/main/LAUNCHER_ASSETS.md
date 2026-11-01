@@ -12,7 +12,9 @@ Change the generator and rerun it instead.
 | `res/mipmap-*dpi/ic_launcher*.png` | Legacy 48dp PNGs (black rounded square and disc, white V), mdpi to xxxhdpi |
 | `res/drawable-xhdpi/tv_banner.png` | 320×180 `android:banner` for the Android TV and Fire TV launchers: white "VIPTV" on black |
 | `composeApp/src/commonMain/composeResources/drawable/viptv_v.xml` | The V as the Compose vector `Res.drawable.viptv_v`, tinted per surface |
-| `composeApp/src/desktopMain/resources/viptv-app-icon.png` | 1024 px square icon, the Compose Desktop window icon |
+| `composeApp/src/desktopMain/resources/viptv-app-icon.png` | 1024 px square icon: the Compose Desktop window icon and the Linux launcher icon |
+| `composeApp/src/desktopMain/resources/viptv-app-icon.ico` | Windows launcher icon: the same square downsampled to 16–256 px |
+| `composeApp/src/desktopMain/resources/viptv-app-icon.icns` | macOS launcher icon: the same square at 16–1024 px |
 
 ## Provenance
 
@@ -42,8 +44,11 @@ What the generator reproduces from it:
   variable `bricolage.ttf` at its default axes before drawing, so with the pins
   below `tv_banner.png` is byte-identical to design's `tv-banner-320x180.png`
   (SHA-256 `3704036c…09937a`).
-- **Desktop icon:** design's `app-icon-square-1024.png` byte for byte
-  (SHA-256 `1ac37a83…c77964`): the white V on a full-bleed black square.
+- **Desktop icons:** design's `app-icon-square-1024.png` byte for byte
+  (SHA-256 `1ac37a83…c77964`): the white V on a full-bleed black square, written
+  as `viptv-app-icon.png` for the window and the Linux launcher, and as Pillow's
+  `viptv-app-icon.ico` (16–256 px) and `viptv-app-icon.icns` (16–1024 px) for
+  jpackage's Windows and macOS launchers.
 
 The path, colours and ratios are copied into the script by hand. If design's
 master changes, update the script, regenerate, and repoint this section at the

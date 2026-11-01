@@ -65,7 +65,7 @@ class AutoplayNextSettingTest {
     @Test fun desktopPlaybackSwitchPersists() {
         val store = MemoryStore()
         val scene = ImageComposeScene(1280, 800, Density(1f)) { ViptvTheme {
-            ProfilePreferencesSettings(PreferencesSnapshot(1, ProfilePreferences()), false, null, {}, {}, remember { DevicePlaybackState(store) })
+            ProfilePreferencesSettings("Playback", PreferencesSnapshot(1, ProfilePreferences()), false, null, {}, {}, remember { DevicePlaybackState(store) })
         } }
         try {
             frames(scene); switch(scene).config[SemanticsActions.OnClick].action!!.invoke(); frames(scene, 20)

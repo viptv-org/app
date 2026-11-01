@@ -1,8 +1,10 @@
 package org.viptv.app.features.sources
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -15,6 +17,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
+import kotlinx.coroutines.flow.collect
 import org.viptv.app.connection.SourceGroups
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.theme.Palette
@@ -32,14 +37,17 @@ import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.LocalPointerHover
 import org.viptv.app.components.Motion
+import org.viptv.app.components.SheetHandle
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.rememberOverlayMotion
+import org.viptv.app.components.rememberSheetDrag
 
 @Composable
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
-    openingStage: String? = null, groups: SourceGroups = SourceGroups()) {
+    openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {}) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
@@ -53,14 +61,25 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val visible = sources.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
     val rows = remember(visible, groups) { sourceListRows(visible, groups) }
     val listState = rememberLazyListState()
+    LaunchedEffect(listState) {
+        listState.interactionSource.interactions.collect { interaction ->
+            if (interaction is DragInteraction.Start) scrolled()
+        }
+    }
     var focusedSource by remember { mutableStateOf<String?>(null) }
     val headerHeight = remember { SourceHeaderHeight() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
-        val motion = rememberOverlayMotion(true,
+        val touch = !television && !LocalPointerHover.current
+        val leave: FiniteAnimationSpec<Float> = motionSpec(tween(Motion.leave, easing = Motion.exit))
+        val motion = rememberOverlayMotion(drawerVisible,
             containerEnter = motionSpec(tween(Motion.panel, easing = Motion.standard)),
             scrimEnter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
-            leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
+            leave = leave)
+        var sheetHeight by remember { mutableFloatStateOf(0f) }
+        val drag = rememberSheetDrag(enabled = touch && phone, threshold = sheetHeight / 3f, dismiss = back,
+            dismissSpec = leave, settleSpec = motionSpec(tween(Motion.response, easing = Motion.standard)))
+        LaunchedEffect(motion.presented) { if (!motion.presented) onClosed() }
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.pointerClickable(onClick = back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
@@ -69,26 +88,32 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             else -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(sourceDrawerWidth(maxWidth))
         }
         Column(panel.graphicsLayer {
-            if (phone) translationY = size.height * (1f - motion.container)
+            if (phone) translationY = size.height * (1f - motion.container) + drag.offset
             else translationX = size.width * (1f - motion.container)
-        }.clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
+        }.onSizeChanged { if (phone) sheetHeight = it.height.toFloat() }.nestedScroll(drag.nestedScroll)
+            .clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
             topEnd = if (phone) 24.dp else 0.dp)).background(Palette.surface).semantics { paneTitle = "Choose a source" }) {
-            if (phone) Box(Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp)
-                .width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Palette.secondary.copy(alpha = 0.4f)))
-            Column(Modifier.padding(horizontal = if (television) 48.dp else 20.dp, vertical = 16.dp),
+            val summary = when {
+                busy -> if (sources.isEmpty()) "Loading sources…" else openingStage ?: "Opening stream…"
+                sources.isEmpty() && loadingMore -> "Loading sources…"
+                else -> sourceSummary(sources)
+            }
+            val summaryLine = listOfNotNull(sourceHeading(title, detail), summary).joinToString(" · ")
+            if (phone) Column(Modifier.fillMaxWidth().then(drag.handle)) {
+                SheetHandle(touch, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp))
+                Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Choose a source", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
+                }
+                Text(summaryLine, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), color = Palette.secondary, fontSize = 13.sp)
+            } else Column(Modifier.padding(horizontal = if (television) 48.dp else 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("Choose a source", Modifier.weight(1f), fontSize = if (television) 36.sp else 18.sp,
                         fontWeight = FontWeight.Bold)
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
-                val summary = when {
-                    busy -> if (sources.isEmpty()) "Loading sources…" else openingStage ?: "Opening stream…"
-                    sources.isEmpty() && loadingMore -> "Loading sources…"
-                    else -> sourceSummary(sources)
-                }
-                Text(listOfNotNull(sourceHeading(title, detail), summary).joinToString(" · "),
-                    color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
+                Text(summaryLine, color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
             }
             SourceFilters(sources, quality, provider, { quality = it }, { provider = it })
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)

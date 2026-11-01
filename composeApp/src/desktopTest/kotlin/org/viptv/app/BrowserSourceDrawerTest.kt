@@ -173,6 +173,13 @@ class BrowserSourceDrawerTest {
                 if (shown == null) scrollDialog() else frames(8)
                 shown != null && shownRow("Episode 2-12") != null
             }
+            var settled: Map<String, Float> = emptyMap()
+            until("the Details dialog's enter motion to settle") {
+                val now = episodeTops()
+                val same = now.isNotEmpty() && now == settled
+                settled = now
+                same
+            }
         }
 
         fun chooseEpisode() {
@@ -200,6 +207,7 @@ class BrowserSourceDrawerTest {
 
     private fun BrowserApp.assertDetailsUnchanged(before: Map<String, Float>, metaBefore: List<String>) {
         assertEquals(Screen.Details, controller.state.value.screen, "closing the drawer returns to Details")
+        until("the drawer to close") { drawerPane == null }
         assertNull(pane("Choose a source"), "the drawer is gone")
         assertNotNull(pane(title), "the Details dialog is still open")
         assertEquals(before, episodeTops(), "same season, same scroll position")

@@ -56,12 +56,12 @@ class SettingsBackTest {
             manageAccount = manageAccount, accountOwner = accountOwner)
 
     @Test fun backFromEachPhoneSubPageReturnsToTheSettingsList() = Harness(browser = false, settings()).use { ui ->
-        assertBackFromEachRow(ui, listOf("Add-ons", "Playback", "Subtitles & audio", "Source integrations", "Parental controls", "Help", "About", "Watch on TV"))
+        assertBackFromEachRow(ui, listOf("Add-ons", "Playback", "Subtitles & audio", "Source integrations", "Parental controls", "Help", "About"))
     }
 
     @Test fun backFromEachServerSubPageOfAPhoneWidthBrowserReturnsToTheSettingsList() =
         Harness(browser = true, settings(localMode = false, manageAccount = true, accountOwner = true), height = 1400).use { ui ->
-            assertBackFromEachRow(ui, listOf("Devices & sessions", stremioImportSection, "Watch on TV", "Add-ons", "Household PIN", "Source integrations", "Parental controls"))
+            assertBackFromEachRow(ui, listOf("Devices & sessions", stremioImportSection, "Add-ons", "Household PIN", "Source integrations", "Parental controls"))
         }
 
     private fun assertBackFromEachRow(ui: Harness, rows: List<String>) {

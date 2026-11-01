@@ -108,7 +108,7 @@ class HomeHeaderControlsUiTest {
             frames(bare)
             val labels = nodes(bare).map(::text)
             assertTrue(labels.any { it.startsWith("Add-ons") } && "Sign out" in labels, "$labels")
-            for (hidden in listOf("Playback", "Subtitles & audio", "Watch on TV", "Account", "Help", "About")) assertFalse(labels.any { it.startsWith(hidden) }, hidden)
+            for (hidden in listOf("Playback", "Subtitles & audio", "Account", "Help", "About")) assertFalse(labels.any { it.startsWith(hidden) }, hidden)
         } finally { bare.close() }
         val opened = mutableListOf<String>()
         val wired = scene(390, 844, null) {
@@ -116,8 +116,8 @@ class HomeHeaderControlsUiTest {
         }
         try {
             frames(wired)
-            for (label in listOf("Playback", "Subtitles & audio", "Watch on TV", "Account", "Help", "About")) click(wired, label, prefix = true)
-            assertEquals(listOf("Playback", "Subtitles & audio", "Watch on TV", "Account", "Help", "About"), opened)
+            for (label in listOf("Playback", "Subtitles & audio", "Account", "Help", "About")) click(wired, label, prefix = true)
+            assertEquals(listOf("Playback", "Subtitles & audio", "Account", "Help", "About"), opened)
         } finally { wired.close() }
     }
 

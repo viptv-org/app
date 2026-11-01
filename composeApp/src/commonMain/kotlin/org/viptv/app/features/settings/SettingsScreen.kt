@@ -10,6 +10,7 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.state.SettingsPage
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.pageGutter
 
 @Composable
 internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
@@ -29,7 +30,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
     tvParentalMaturity: String? = null, tvParentalPinAvailable: Boolean = true,
     stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null,
-    addDevice: (@Composable (Boolean) -> Unit)? = null,
+    addDevice: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
     returnToPlayer: (() -> Unit)? = null,
     tvDevicePlayback: DevicePlaybackState? = null,
@@ -68,7 +69,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             else -> SettingsLayout.Tablet
         }
         val rows = availableRows(parental != null, stremioImport != null, preferences != null || sectionPreferences != null,
-            account != null, devices != null, addDevice != null, watchOnTv = layout == SettingsLayout.Tablet, information = true,
+            account != null, devices != null, addDevice != null, information = true,
             householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null,
             deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null)
         val root = initialSection.takeIf { returnToPlayer != null }
@@ -84,7 +85,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             }
         }
         val backLabel = if (returnToPlayer != null && section == root) "Back to player" else null
-        Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = 57.dp, vertical = 32.dp) else Modifier)) {
+        Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = pageGutter(television = false, tablet = false, browser = browser, maxWidth), vertical = 32.dp) else Modifier)) {
             if (webAccount) {
                 AccountSettingsSidebar(section ?: SettingsRow.Addons.key, profile, settingsSections(rows), local, profiles, { open(it) }, { leaving = true }); Spacer(Modifier.width(48.dp))
             } else if (!compact) SettingsSidebar(section ?: SettingsRow.Addons.key, profile, layout, settingsSections(rows), local, profiles, { open(it) }, { leaving = true })
@@ -120,9 +121,9 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, back, backLabel) {
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()
                     }
-                    section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) }
-                    section in listOf("Help", "About", "Watch on TV") -> SettingsDetailContent(compact, back) {
-                        SettingsInformation(requireNotNull(section), local, serverAddress) { leaving = true }
+                    section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) { leaving = true } }
+                    section in listOf("Help", "About") -> SettingsDetailContent(compact, back) {
+                        SettingsInformation(requireNotNull(section), local, serverAddress)
                     }
                 }
             }
