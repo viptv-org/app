@@ -16,7 +16,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
@@ -40,9 +42,9 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
     } else destinations
     var overflow by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(68.dp)
-        .padding(horizontal = if (collapsed) 16.dp else 57.dp),
+        .padding(horizontal = pageGutter(television = false, tablet = false, browser = true, maxWidth)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-        Box(Modifier.padding(end = if (collapsed) 0.dp else 14.dp)) { Brand(28.dp, 20.sp, 9.dp) }
+        Box(Modifier.padding(end = if (collapsed) 0.dp else 14.dp).testTag("top-nav-brand")) { Brand(28.dp, 20.sp, 9.dp) }
         visible.forEach { destination ->
             val interaction = remember { MutableInteractionSource() }
             val hovered by interaction.collectIsHoveredAsState()
@@ -75,3 +77,10 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
     }
     }
 }
+
+internal fun pageGutter(television: Boolean, tablet: Boolean, browser: Boolean, maxWidth: Dp): Dp =
+    if (television) 96.dp * (maxWidth / 1920.dp)
+    else if (browser) if (maxWidth < 1000.dp) 16.dp else 57.dp
+    else if (tablet) 32.dp
+    else if (maxWidth < 640.dp) 16.dp
+    else 40.dp
