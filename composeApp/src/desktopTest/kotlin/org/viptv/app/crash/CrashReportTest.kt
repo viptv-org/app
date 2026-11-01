@@ -11,10 +11,12 @@ import kotlin.test.assertNull
 private val reportJson = Json { encodeDefaults = true }
 
 class CrashReportTest {
-    @Test fun redactedStripsUserinfoQueryAndFragment() {
-        assertEquals("https://host:8080/path", redacted("https://user:pass@host:8080/path?token=SECRET#t=10"))
-        assertEquals("Torrentio", redacted("Torrentio"))
-        assertNull(redacted(null))
+    @Test fun scrubKeepsHostAndMasksLongTokens() {
+        assertEquals("https://host:8080", scrub("https://user:pass@host:8080/path?token=SECRET#t=10"))
+        assertEquals("Torrentio", scrub("Torrentio"))
+        assertNull(scrub(null))
+        assertEquals("token <redacted> tail", scrub("token ABCDEF0123456789ABCDEF0123456789 tail"))
+        assertEquals("ok abc123", scrub("ok abc123"))
     }
 
     @Test fun playbackAttemptKeepsOnlySourceMetadata() {
@@ -37,31 +39,24 @@ class CrashReportTest {
         assertEquals("gateway", attempt.delivery)
     }
 
-    @Test fun reportJsonHasNoQueryTokenOrHeaderValues() {
-        val source = SourceCandidate(
-            id = "s1",
-            provider_id = "p",
-            label = "https://user:pass@example.com/stream.m3u8?token=SECRET#t=10",
-            quality_height = 1080,
-            dynamic_range = listOf("hdr10"),
-            presentation = SourcePresentation(container = "mkv", video_codec = "hevc", quality = "1080p", audio_codecs = listOf("aac")),
-        )
+    @Test fun sanitizedReportJsonHasNoQueryTokenOrHeaderValues() {
         val report = CrashReport(
             appVersion = "0.1.9+abc1234",
             buildCommit = "abc1234",
             deviceModel = "Pixel 8",
             androidVersion = "14",
             thread = "main",
-            stack = "java.lang.RuntimeException: boom",
+            stack = "java.lang.RuntimeException: Failed to fetch https://user:pass@example.com/d/ABCDEF0123456789ABCDEF0123456789/file.mkv?token=SECRET",
             lastScreen = "Player",
-            playback = playbackAttempt(source, "direct"),
-        )
+            playback = playbackAttempt(SourceCandidate(id = "s1", provider_id = "p", label = "Torrentio"), "direct"),
+        ).sanitized()
         val json = reportJson.encodeToString(CrashReport.serializer(), report)
         assertFalse(json.contains("SECRET"), json)
         assertFalse(json.contains("token="), json)
         assertFalse(json.contains("Bearer"), json)
         assertFalse(json.contains("Authorization"), json)
         assertFalse(json.contains("user:pass@"), json)
-        assertFalse(json.contains("@example.com"), json)
+        assertFalse(json.contains("file.mkv"), json)
+        assertFalse(json.contains("ABCDEF0123456789ABCDEF0123456789"), json)
     }
 }

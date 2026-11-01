@@ -14,9 +14,9 @@ internal expect fun platformWritePlaybackMarker(attempt: PlaybackAttempt)
 internal expect fun platformClearPlaybackMarker()
 
 object CrashReportStore {
-    fun storeReport(report: CrashReport) = platformStoreCrashReport(report)
+    fun storeReport(report: CrashReport) = platformStoreCrashReport(report.sanitized())
     fun pendingReport(): CrashReport? = platformPendingCrashReport()
     fun deletePending() = platformDeletePendingCrashReport()
-    fun writePlaybackMarker(attempt: PlaybackAttempt) = platformWritePlaybackMarker(attempt)
+    fun writePlaybackMarker(attempt: PlaybackAttempt) = platformWritePlaybackMarker(attempt.sanitized())
     fun clearPlaybackMarker() = platformClearPlaybackMarker()
 }
