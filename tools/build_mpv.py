@@ -8,6 +8,8 @@ record exact hashes and host ABI; qualification applies only to that host.
 from pathlib import Path
 import argparse, hashlib, json, os, platform, re, shutil, subprocess, tempfile
 
+from macos_signing import sign_like_packaging
+
 ROOT = Path(__file__).resolve().parents[1]
 
 def sha(path):
@@ -93,7 +95,7 @@ def build():
                 subprocess.run(['install_name_tool', '-id', '@loader_path/' + filename, str(output)], check=True)
                 for old, new in links[filename]:
                     subprocess.run(['install_name_tool', '-change', old, '@loader_path/' + new, str(output)], check=True)
-                subprocess.run(['codesign', '--force', '--sign', '-', str(output)], check=True)
+                sign_like_packaging(output)
             manifest = {'library': library.name, 'abi_major': 2, 'platform': name + '-' + arch,
                         'origin': 'Homebrew mpv with private dependency closure; rewritten loader paths and ad-hoc signatures',
                         'source_versions': subprocess.check_output(['mpv', '--version'], text=True).splitlines(),
