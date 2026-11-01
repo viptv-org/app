@@ -15,6 +15,8 @@ Change the generator and rerun it instead.
 | `composeApp/src/desktopMain/resources/viptv-app-icon.png` | 1024 px square icon: the Compose Desktop window icon and the Linux launcher icon |
 | `composeApp/src/desktopMain/resources/viptv-app-icon.ico` | Windows launcher icon: the same square downsampled to 16–256 px |
 | `composeApp/src/desktopMain/resources/viptv-app-icon.icns` | macOS launcher icon: the same square at 16–1024 px |
+| `composeApp/src/wasmJsMain/resources/favicon.svg` | 100-unit SVG favicon: the nav tile, a `#F5C542` rounded square (radius 0.3) holding the `#0B0B0C` V |
+| `composeApp/src/wasmJsMain/resources/favicon.ico` | The same tile as a 16–64 px ICO, the fallback for browsers that ignore the SVG |
 
 ## Provenance
 
@@ -49,6 +51,10 @@ What the generator reproduces from it:
   as `viptv-app-icon.png` for the window and the Linux launcher, and as Pillow's
   `viptv-app-icon.ico` (16–256 px) and `viptv-app-icon.icns` (16–1024 px) for
   jpackage's Windows and macOS launchers.
+- **Web favicon:** the in-app nav tile — design's `brand-mark-tile.svg` ground
+  `#F5C542` at radius 0.3 and the `#0B0B0C` V at the BrandMark ratio.
+  `favicon.svg` is the 100-unit vector served next to `index.html`;
+  `favicon.ico` is the same tile at 16–64 px for browsers that ignore the SVG.
 
 The path, colours and ratios are copied into the script by hand. If design's
 master changes, update the script, regenerate, and repoint this section at the
