@@ -58,10 +58,70 @@ jobs:
           packages: 'platform-tools platforms;android-37.0'
       - name: Compile Wasm JS main
         run: ./gradlew --max-workers=2 :composeApp:compileKotlinWasmJs
+  native-prep:
+    name: build desktop natives
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Reclaim hosted Linux runner space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.25.11'
+          cache: false
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+      - name: Install pinned Rust
+        shell: bash
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          rustup default 1.98.0
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            build/rust
+          key: cargo-${{ runner.os }}-${{ hashFiles('native/core/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: Check out the pinned torrent worker source
+        shell: bash
+        run: |
+          git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
+          git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
+          echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
+      - name: Build the engine and desktop torrent worker
+        shell: bash
+        run: |
+          python3 tools/build_engine.py desktop &
+          engine=$!
+          python3 tools/build_desktop_torrent.py &
+          torrent=$!
+          status=0
+          wait "$engine" || status=1
+          wait "$torrent" || status=1
+          exit "$status"
+      - name: Package desktop natives
+        shell: bash
+        run: tar -czf desktop-natives.tar.gz -C composeApp/build nativeResources torrentResources
+      - name: Upload desktop natives
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-natives
+          path: desktop-natives.tar.gz
+          if-no-files-found: error
+          retention-days: 1
   desktop-test:
     name: desktop test shard ${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    needs: native-prep
     strategy:
       fail-fast: false
       matrix:
@@ -79,10 +139,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: actions/setup-go@v7
-        with:
-          go-version: '1.25.11'
-          cache: false
       - uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
@@ -90,29 +146,23 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
       - name: Install native media dependencies
-        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config libmpv-dev mpv patchelf
-      - name: Install pinned Rust
-        shell: bash
-        run: |
-          rustup toolchain install 1.98.0 --profile minimal
-          rustup default 1.98.0
-          rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
-      - uses: actions/cache@v6
+        run: sudo apt-get update && sudo apt-get install -y libmpv-dev mpv patchelf
+      - name: Download desktop natives
+        uses: actions/download-artifact@v7
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            build/rust
-          key: cargo-${{ runner.os }}-${{ hashFiles('native/core/Cargo.lock') }}
-          restore-keys: cargo-${{ runner.os }}-
-      - name: Check out the pinned torrent worker source
+          name: desktop-natives
+          path: .
+      - name: Unpack desktop natives
         shell: bash
         run: |
-          git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
-          git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
-          echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
+          mkdir -p composeApp/build
+          tar -xzf desktop-natives.tar.gz -C composeApp/build
+          test -f composeApp/build/nativeResources/linux-x86-64/libviptv_core.so
+          test -f composeApp/build/torrentResources/torrent-runtime/linux-x86-64/torrent-worker
       - name: Test desktop shard
         shell: bash
+        env:
+          VIPTV_NATIVE_PREBUILT: '1'
         run: |
           total=$(tools/desktop-test-shards.sh count)
           mapfile -t classes < <(SHARDS=4 SHARD=${{ matrix.shard }} tools/desktop-test-shards.sh list)
@@ -145,13 +195,13 @@ jobs:
   checks:
     name: app checks
     runs-on: ubuntu-latest
-    needs: [compile-android, compile-wasm, desktop-test]
+    needs: [compile-android, compile-wasm, native-prep, desktop-test]
     if: always()
     steps:
       - name: Gate on every parallel job
         shell: bash
         run: |
-          results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.desktop-test.result }}'
+          results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.native-prep.result }} ${{ needs.desktop-test.result }}'
           echo "parallel jobs: $results"
           for result in $results; do
             if [[ "$result" != "success" ]]; then
