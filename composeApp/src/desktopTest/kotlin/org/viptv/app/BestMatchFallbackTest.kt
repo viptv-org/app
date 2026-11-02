@@ -74,6 +74,19 @@ class BestMatchFallbackTest {
             assertNull(controller.state.value.error, "The next attempt clears the failure")
         }
 
+    @Test fun anUndecodableStartNamesTheDecodeReasonAndOpensTheNextSource() =
+        fallback(listOf(row("a"), row("b"))) { controller, fake ->
+            assertEquals(listOf("a"), fake.opened)
+            controller.observePlayback(PlayerFact.Undecodable)
+            val notice = controller.state.value.fallbackNotice
+            assertNotNull(notice)
+            assertEquals("b", notice.next.id)
+            assertEquals("${FALLBACK_REASON_UNDECODABLE}. Trying the next best source…", notice.message)
+            assertEquals("${FALLBACK_REASON_UNDECODABLE}. Choose another source.", controller.state.value.error)
+            awaitPlayback(controller, "b")
+            assertEquals(listOf("a", "b"), fake.opened)
+        }
+
     @Test fun stopKeepsTheFailureScreenAndNeverAdvances() =
         fallback(listOf(row("a"), row("b"))) { controller, fake ->
             controller.observePlayback(PlayerFact.Failed)
