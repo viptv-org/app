@@ -26,9 +26,13 @@ class UnifiedSearchTest {
             SearchResultRow("addon:42", "Community catalog", "stremio", 42, cards = listOf(card("addon:42"))),
             SearchResultRow("addon:43", "Unavailable catalog", "stremio", 43, "Failed", message = "Search unavailable")), false)
         val client = HttpClient(MockEngine { request ->
-            assertEquals("/api/search", request.url.encodedPath)
-            assertEquals("Space & Time", request.url.parameters["query"])
-            respond(Json.encodeToString(expected), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            if (request.url.encodedPath == "/api/search/stream") {
+                respond("{}", HttpStatusCode.NotFound, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            } else {
+                assertEquals("/api/search", request.url.encodedPath)
+                assertEquals("Space & Time", request.url.parameters["query"])
+                respond(Json.encodeToString(expected), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(this, store)
@@ -46,10 +50,14 @@ class UnifiedSearchTest {
         var requests = 0
         val expected = SearchSnapshot(emptyList(), false)
         val client = HttpClient(MockEngine { request ->
-            requests++
-            assertEquals("/api/search", request.url.encodedPath)
-            assertEquals("Space & Time", request.url.parameters["query"])
-            respond(Json.encodeToString(expected), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            if (request.url.encodedPath == "/api/search/stream") {
+                respond("{}", HttpStatusCode.NotFound, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            } else {
+                requests++
+                assertEquals("/api/search", request.url.encodedPath)
+                assertEquals("Space & Time", request.url.parameters["query"])
+                respond(Json.encodeToString(expected), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(this, store)
@@ -82,7 +90,7 @@ class UnifiedSearchTest {
         val paths = mutableListOf<String>()
         val client = HttpClient(MockEngine { request ->
             paths += request.url.encodedPath
-            if (request.url.encodedPath == "/api/search") respond("{}", HttpStatusCode.NotFound,
+            if (request.url.encodedPath == "/api/search/stream" || request.url.encodedPath == "/api/search") respond("{}", HttpStatusCode.NotFound,
                 headersOf(HttpHeaders.ContentType, "application/json"))
             else respond(Json.encodeToString(CatalogPage(listOf(card("stremio")), null, true)),
                 headers = headersOf(HttpHeaders.ContentType, "application/json"))
