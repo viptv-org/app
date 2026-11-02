@@ -45,7 +45,8 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     searchRows: List<SearchResultRow> = emptyList(), filters: Set<String> = emptySet(), filterChanged: (Set<String>) -> Unit = {},
     focusResults: Boolean = false, retry: (() -> Unit)? = null) {
     if (television) {
-        TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows, focusResults = focusResults)
+        TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows, focusResults = focusResults,
+            retry = retry)
         return
     }
     val restore = rememberPageRestore("search")
