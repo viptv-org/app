@@ -14,7 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -38,6 +40,7 @@ import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.LocalPointerHover
+import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.components.Motion
 import org.viptv.app.components.SheetHandle
 import org.viptv.app.components.motionSpec
@@ -69,6 +72,9 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     }
     var focusedSource by remember { mutableStateOf<String?>(null) }
     val headerHeight = remember { SourceHeaderHeight() }
+    val rowFocus = remember { mutableMapOf<String, FocusRequester>() }
+    var details by remember { mutableStateOf<SourceCandidate?>(null) }
+    var detailsRow by remember { mutableStateOf<FocusRequester?>(null) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         val touch = !television && !LocalPointerHover.current
@@ -143,9 +149,20 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 items(rows, key = { it.source.id }) { row ->
                     SourceRow(row.source, television, choose, enabled = !busy, selected = row.source.id == selectedSource,
                         header = row.header, bestMatch = row.bestMatch, didntStart = row.didntStart, headerMeasured = { headerHeight.pixels = it },
-                        focusChanged = { has -> if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null })
+                        focusChanged = { has -> if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null },
+                        details = { source ->
+                            detailsRow = rowFocus[source.id].takeIf { focusedSource == source.id }
+                            details = source
+                        }, requester = rowFocus.getOrPut(row.source.id) { FocusRequester() })
                 }
             }
+        }
+        details?.let { shown ->
+            SourceDetailsPanel(shown, television = false, scale = 1f, dismiss = {
+                val back = detailsRow
+                details = null; detailsRow = null
+                back?.requestPlacedFocus()
+            })
         }
     }
 }
