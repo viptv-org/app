@@ -10,6 +10,7 @@ import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import kotlin.test.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal const val xtreamConnectionsFixture = """{"items":[
 {"id":1,"name":"Living room","enabled":true,"enable_live":true,"enable_movies":true,"enable_series":true,"credentials_encrypted":true,"refresh":{"state":"succeeded","error":null}},
@@ -29,10 +30,10 @@ class XtreamConnectionsTest {
 
     private data class Sent(val path: String, val method: HttpMethod, val body: JsonObject?)
 
-    private fun client(log: MutableList<Sent>, handle: MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData) =
+    private fun client(log: CopyOnWriteArrayList<Sent>, handle: MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData) =
         HttpClient(MockEngine { request ->
             val body = (request.body as? TextContent)?.text?.takeIf { it.isNotBlank() }?.let { Json.parseToJsonElement(it).jsonObject }
-            log += Sent(request.url.encodedPath, request.method, body)
+            log.add(Sent(request.url.encodedPath, request.method, body))
             handle(request)
         }) { configureTransport() }
 
@@ -40,7 +41,7 @@ class XtreamConnectionsTest {
         respond(value, headers = headersOf(HttpHeaders.ContentType, "application/json"))
 
     @Test fun thePageListsTheAccountsConnectionsAndSendsEachWriteOnce() = runBlocking {
-        val log = mutableListOf<Sent>()
+        val log = CopyOnWriteArrayList<Sent>()
         val remote = RemoteConnection("https://watch.example", store, client(log) { request ->
             when (request.url.encodedPath) {
                 "/api/iptv/connections" -> when (request.method) {
@@ -59,6 +60,8 @@ class XtreamConnectionsTest {
                     HttpMethod.Put -> json("""{"catalog_id":2}""")
                     else -> json("""{"catalog_id":1}""")
                 }
+                "/api/profiles/1/source-integrations" -> json("""{"revision":1,"schemas":[],"connections":[]}""")
+                "/api/bootstrap" -> json("""{"identity":{"profiles":[{"id":"1","name":"Parent"}],"profile_id":"1"},"home":null,"integrations":[]}""")
                 else -> error("Unexpected request ${request.url.encodedPath}")
             }
         }, browserMode = true)
@@ -87,6 +90,7 @@ class XtreamConnectionsTest {
             assertEquals(2L, controller.state.value.xtreamDefaultLive)
             controller.deleteXtreamConnection(1); controller.job!!.join()
             assertEquals(listOf("Bedroom", "Garage"), controller.state.value.xtreamConnections?.map { it.name })
+            while (true) { val running = controller.quietJob ?: break; running.join(); if (controller.quietJob === running) break }
 
             val writes = log.filter { it.method != HttpMethod.Get }
             assertEquals(1, writes.count { it.path == "/api/iptv/connections" && it.method == HttpMethod.Post })
