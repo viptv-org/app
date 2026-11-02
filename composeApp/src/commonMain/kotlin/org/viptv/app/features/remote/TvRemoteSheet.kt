@@ -56,6 +56,7 @@ internal fun TvRemoteOverlay(
     onSwipeModeChange: (Boolean) -> Unit,
     scope: CoroutineScope,
     onClose: () -> Unit,
+    onPairAgain: () -> Unit = {},
     engineFactory: (() -> VizioRemoteEngine?)? = null,
 ) {
     val context = LocalPlatformContext.current
@@ -77,7 +78,7 @@ internal fun TvRemoteOverlay(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         RemoteKeepScreenOn(motion.presented)
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(RemoteScrim).pointerClickable { dismiss() })
-        RemoteSheet(tv, controller, motion.container, visible, swipeMode, onSwipeModeChange, dismiss, maxWidth)
+        RemoteSheet(tv, controller, motion.container, visible, swipeMode, onSwipeModeChange, dismiss, onPairAgain, maxWidth)
     }
 }
 
@@ -90,6 +91,7 @@ private fun BoxScope.RemoteSheet(
     swipeMode: Boolean,
     onSwipeModeChange: (Boolean) -> Unit,
     dismiss: () -> Unit,
+    onPairAgain: () -> Unit,
     maxWidth: Dp,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -112,7 +114,7 @@ private fun BoxScope.RemoteSheet(
                 Text("Open VIPTV on TV", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             }
         } else {
-            RemoteOfflineCard(tv.name, controller::retry)
+            RemoteOfflineCard(tv.name, controller::retry, onPairAgain)
         }
         Box(Modifier.graphicsLayer { alpha = if (controller.online) 1f else 0.4f }) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -151,12 +153,13 @@ private fun RemoteHeader(tv: VizioTv, controller: TvRemoteController, close: () 
 }
 
 @Composable
-private fun RemoteOfflineCard(tvName: String, retry: () -> Unit) {
+private fun RemoteOfflineCard(tvName: String, retry: () -> Unit, pairAgain: () -> Unit) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Palette.raised).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Can't reach $tvName", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("Turn the TV on and check it's on the same Wi-Fi as this phone.", color = Palette.secondary, fontSize = 14.sp)
         TextButton(retry, contentPadding = PaddingValues(0.dp)) { Text("Try again", color = Palette.accent, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+        TextButton(pairAgain, contentPadding = PaddingValues(0.dp)) { Text("Pair again", color = Palette.accent, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
     }
 }
 

@@ -45,6 +45,18 @@ class WatchOnTvSettingTest {
             "A newer build's fields don't throw the record away")
     }
 
+    @Test fun rePairingKeepsTheRemotePreferences() {
+        val store = MemoryStore()
+        val state = WatchOnTvState(store)
+        state.setRemoteSwipe(true)
+        state.dismissRemoteTip()
+        state.optIn("Living Room", "https://192.0.2.10:7345")
+        state.setRemoteSwipe(false)
+        state.optIn("Den", "https://192.0.2.11:9000")
+        assertEquals("Den", watchOnTvValue(WatchOnTvState(store).value), "Re-pairing keeps the feature on and updates the TV")
+        assertTrue(WatchOnTvState(store).value.tipDismissed, "Re-pairing does not reset the dismissed tip")
+    }
+
     @Test fun desktopNeverOffersWatchOnTv() {
         assertFalse(watchOnTvAvailable(PlatformContext.INSTANCE), "Desktop, like iOS and web, has no Watch on TV row")
     }

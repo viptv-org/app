@@ -16,12 +16,24 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun WatchOnTvSettings(state: WatchOnTvState, compact: Boolean, back: () -> Unit) {
     val engine = rememberVizioSetupEngine()
-    val startingPaired = remember { state.value.optedIn }
+    val repair = state.repairTv
+    val startingPaired = remember { state.value.optedIn && repair == null }
     if (startingPaired || engine == null) {
         WatchOnTvStatus(state.value)
         return
     }
-    WatchOnTvSetupFlow(engine, compact, back) { tv -> state.optIn(tv.name, tv.origin) }
+    WatchOnTvSetupFlow(
+        engine, compact, back,
+        onPaired = { tv ->
+            state.clearRepair()
+            state.optIn(tv.name, tv.origin)
+        },
+        pairAgain = repair,
+        onCancel = {
+            state.clearRepair()
+            back()
+        },
+    )
 }
 
 @Composable

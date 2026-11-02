@@ -93,6 +93,7 @@ class SmartCastClient(
             deviceName: String,
             tokenStore: SmartCastCredentialStore,
             timeoutMillis: Long = 5_000,
+            pinCertificate: Boolean = true,
         ): SmartCastClient {
             val config = buildJsonObject {
                 put("host", tvOrigin)
@@ -101,7 +102,7 @@ class SmartCastClient(
                 put("timeoutMillis", timeoutMillis)
                 tokenStore.loadToken(tvOrigin)?.let { put("authToken", it) }
             }.toString()
-            val transport = SmartCastTransport(tvOrigin, tokenStore.loadCertificatePin(tvOrigin))
+            val transport = SmartCastTransport(tvOrigin, if (pinCertificate) tokenStore.loadCertificatePin(tvOrigin) else null)
             return SmartCastClient(tvOrigin, transport, NativeSmartCastDriver(config), tokenStore)
         }
     }
