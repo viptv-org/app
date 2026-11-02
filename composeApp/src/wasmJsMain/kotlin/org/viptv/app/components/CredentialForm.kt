@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.HtmlElementView
@@ -30,6 +31,18 @@ private const val inputHeight = 56
 private const val gap = 14
 private const val buttonHeight = 40
 private const val errorHeight = 20
+
+private val submitImeActions = setOf(ImeAction.Go, ImeAction.Done, ImeAction.Send, ImeAction.Search)
+
+private fun enterKeyHint(action: ImeAction): String? = when (action) {
+    ImeAction.Next -> "next"
+    ImeAction.Previous -> "previous"
+    ImeAction.Go -> "go"
+    ImeAction.Search -> "search"
+    ImeAction.Send -> "send"
+    ImeAction.Done -> "done"
+    else -> null
+}
 
 private fun ensureCredentialStyle() {
     if (document.getElementById("viptv-credential-style") != null) return
@@ -59,6 +72,10 @@ private fun ensureCredentialStyle() {
     navigator.credentials.store(new window.PasswordCredential({ id, password }));
 }""")
 private external fun browserStorePassword(id: String, password: String)
+
+// A disabled submit button suppresses the browser's implicit submit on Enter, so Enter submits here instead.
+@JsFun("(form) => { form.requestSubmit(); }")
+private external fun requestFormSubmit(form: HTMLFormElement)
 
 @Composable
 internal actual fun CredentialForm(
@@ -105,8 +122,22 @@ internal actual fun CredentialForm(
                     value = field.value
                     disabled = busy
                     setAttribute("data-error", if (field.errorText != null) "true" else "false")
+                    enterKeyHint(field.imeAction)?.let { setAttribute("enterkeyhint", it) }
                 }
                 input.oninput = { latestOnChange(index, input.value); null }
+                input.onkeydown = { event ->
+                    if (event.key == "Enter") {
+                        if (field.imeAction in submitImeActions) {
+                            event.preventDefault()
+                            requestFormSubmit(form)
+                        } else if (field.imeAction == ImeAction.Next) {
+                            event.preventDefault()
+                            val next = nodes.inputs.getOrNull(index + 1)
+                            if (next != null) next.focus() else requestFormSubmit(form)
+                        }
+                    }
+                    null
+                }
                 nodes.inputs += input
                 form.appendChild(input)
             }
@@ -166,7 +197,7 @@ internal actual fun CredentialForm(
             if (error != null) pendingStore = null
         },
         onRelease = { form ->
-            nodes.inputs.forEach { it.oninput = null }
+            nodes.inputs.forEach { it.oninput = null; it.onkeydown = null }
             form.onsubmit = null
             nodes.secondary?.onclick = null
             pendingStore?.let { (id, password) -> runCatching { browserStorePassword(id, password) } }

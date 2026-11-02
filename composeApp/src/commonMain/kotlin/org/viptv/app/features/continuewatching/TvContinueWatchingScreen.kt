@@ -99,7 +99,8 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                                 },
                                 { focusedKey = cardLookupKey(it); lastFocused = it },
                                 continueWatchingActivation(play, open),
-                                artworkWidth = CARD_WIDTH.dp * scale)
+                                artworkWidth = CARD_WIDTH.dp * scale,
+                                info = open)
                         }
                     }
                     if (remove != null) TvRemovalBar(scale, target, undo, undoFocus, removal, request = { confirming = it }, undoRemove = undoRemove)
