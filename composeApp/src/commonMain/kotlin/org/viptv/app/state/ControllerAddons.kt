@@ -30,7 +30,7 @@ private fun ApplicationController.leaveAnimeIfUnavailable() {
 }
 
 internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrowse: Boolean = false) {
-    updateState { state -> state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
+    updateState { state -> state.copy(addons = result.addons, addonLogos = result.logos, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
         browseControls = state.browseControls.takeIf { keepBrowse }, browseCards = if (keepBrowse) state.browseCards else emptyList(),
         browseNext = state.browseNext.takeIf { keepBrowse }) }
     leaveAnimeIfUnavailable()

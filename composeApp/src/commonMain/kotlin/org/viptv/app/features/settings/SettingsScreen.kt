@@ -49,10 +49,12 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     tvVodMatches: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
     watchOnTvValue: String = "Off",
     watchOnTvSettings: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
-    addonsManageable: Boolean = true) {
+    addonsManageable: Boolean = true,
+    addonLogos: Map<String, String> = emptyMap()) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
             profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections, vodMatches = tvVodMatches,
+            addonLogos = addonLogos,
             addonsManageable = addonsManageable)
         return
     }
@@ -111,6 +113,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null,
                         managementAvailable = addonsManageable,
+                        logos = addonLogos,
                         installWithCompletion = installWithCompletion)
                     section == "Profile" && profileTitles != null -> SettingsDetailContent(compact, profileTitlesBack ?: back) { profileTitles(compact) }
                     section == "Profile" && profilePage != null -> SettingsDetailContent(compact, back) { profilePage(layout) }

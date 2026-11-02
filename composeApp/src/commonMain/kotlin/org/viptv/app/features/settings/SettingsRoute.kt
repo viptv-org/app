@@ -131,6 +131,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         addDevice = { compact, changeConnection -> AddDeviceScreen(controller.connection.takeUnless { state.localMode }, compact,
             deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode, changeConnection) },
         addonsManageable = ownerWrites,
+        addonLogos = state.addonLogos,
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
             StremioImportRoute(state, controller, compact, if (compact) back else null, manageAddons) }) else null,
         serverAddress = controller.connection?.accountDashboardUrl,

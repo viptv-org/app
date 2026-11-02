@@ -52,12 +52,12 @@ class TvAddonSettingsFocusTest {
     private val addons = (1..15).map {
         IntegrationConnection("addon:$it", "stremio", "7", null, name(it), true, 1, listOf(Capability.SOURCES))
     }
-    private fun scene(logos: AddonLogoSource? = null, list: List<IntegrationConnection> = addons) = ImageComposeScene(1920, 1080, Density(1f)) {
+    private fun scene(source: AddonLogoSource? = null, list: List<IntegrationConnection> = addons, logoPaths: Map<String, String> = emptyMap()) = ImageComposeScene(1920, 1080, Density(1f)) {
         ViptvTheme(true) {
             focusManager = LocalFocusManager.current
-            CompositionLocalProvider(LocalAddonLogos provides logos) {
+            CompositionLocalProvider(LocalAddonLogos provides source) {
                 TvSettingsScreen(false, list, setOf("addon:1"), false, null, null, {}, { _, _ -> }, {}, {}, null,
-                    initialSection = TvSettingsSection.Addons)
+                    initialSection = TvSettingsSection.Addons, addonLogos = logoPaths)
             }
         }
     }
@@ -119,8 +119,8 @@ class TvAddonSettingsFocusTest {
     @Test fun rowsLoadOnlyTheServerLogoRouteAndKeepTheLetterTileWhenItFails() = onEdt {
         AddonLogoCache.clear()
         val requested = mutableListOf<String>()
-        val list = listOf(addons[0].copy(logo = "/api/addons/1/logo?v=ab12"), addons[1])
-        val scene = scene(AddonLogoSource { path -> requested += path; error("offline") }, list)
+        val list = listOf(addons[0], addons[1])
+        val scene = scene(AddonLogoSource { path -> requested += path; error("offline") }, list, mapOf("addon:1" to "/api/addons/1/logo?v=ab12"))
         try {
             settle(scene)
             assertEquals(listOf("/api/addons/1/logo?v=ab12"), requested)
@@ -133,7 +133,7 @@ class TvAddonSettingsFocusTest {
         val png = org.jetbrains.skia.Surface.makeRasterN32Premul(16, 16).run {
             canvas.clear(0xFFE0A030.toInt()); makeImageSnapshot().encodeToData()!!.bytes
         }
-        val scene = scene(AddonLogoSource { png }, listOf(addons[0].copy(logo = "/api/addons/1/logo?v=cd34")))
+        val scene = scene(AddonLogoSource { png }, listOf(addons[0]), mapOf("addon:1" to "/api/addons/1/logo?v=cd34"))
         fun row() = nodes(scene).single { text(it).contains(name(1)) }
         try {
             settle(scene)

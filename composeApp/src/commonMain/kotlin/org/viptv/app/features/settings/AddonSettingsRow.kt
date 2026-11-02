@@ -22,11 +22,11 @@ import org.viptv.app.components.Switch
 
 @Composable
 internal fun AddonSettingsRow(addon: IntegrationConnection, enabled: Boolean, busy: Boolean, manageable: Boolean,
-    toggle: (Boolean) -> Unit, remove: () -> Unit) {
+    toggle: (Boolean) -> Unit, remove: () -> Unit, logo: String? = null) {
     Surface(color = Palette.surface, shape = RoundedCornerShape(14.dp)) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            AddonLogoTile(addon.logo, Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(Palette.raised),
+            AddonLogoTile(logo, Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(Palette.raised),
                 Modifier.padding(4.dp)) { Icon(Lucide.Puzzle, null, Modifier.size(24.dp)) }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(addon.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
