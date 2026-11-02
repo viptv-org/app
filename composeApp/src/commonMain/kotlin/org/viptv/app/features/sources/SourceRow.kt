@@ -28,7 +28,7 @@ import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false,
-    header: String? = null, bestMatch: Boolean = false, focusChanged: (Boolean) -> Unit = {}, headerMeasured: (Int) -> Unit = {}) {
+    header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, focusChanged: (Boolean) -> Unit = {}, headerMeasured: (Int) -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val foreground = if (focused) Palette.background else Palette.text
     val interaction = remember { MutableInteractionSource() }
@@ -50,9 +50,13 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             SourceTitleLine(source.label, TextStyle(fontSize = if (television) 24.sp else 14.sp, fontWeight = FontWeight.SemiBold), foreground,
                 source.factBadges(), if (television) SourceBadgeStyle(16.sp, 20.sp, 8.dp, 8.dp, 2.dp, 8.dp) else SourceBadgeStyle(10.sp, 13.sp, 4.dp, 5.dp, 2.dp, 6.dp),
-                Modifier.fillMaxWidth(), trailing = if (bestMatch) ({
-                    Text(BEST_MATCH_MARKER, color = if (focused) Palette.background else Palette.accent, fontSize = if (television) 16.sp else 11.sp,
-                        lineHeight = if (television) 20.sp else 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                Modifier.fillMaxWidth(), trailing = if (bestMatch || didntStart) ({
+                    Row(horizontalArrangement = Arrangement.spacedBy(if (television) 12.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (bestMatch) Text(BEST_MATCH_MARKER, color = if (focused) Palette.background else Palette.accent, fontSize = if (television) 16.sp else 11.sp,
+                            lineHeight = if (television) 20.sp else 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                        if (didntStart) Text(DIDNT_START_LABEL, color = if (focused) Palette.background else Palette.danger, fontSize = if (television) 16.sp else 11.sp,
+                            lineHeight = if (television) 20.sp else 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                    }
                 }) else null)
             source.releaseDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp, color = foreground) }
             source.technicalDetail()?.let { Text(it, fontSize = if (television) 18.sp else 12.sp,

@@ -19,6 +19,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         controller.loadPlaybackSeason()
     }
     val fallback = state.sources.firstOrNull { it.id != state.playingSource?.id } ?: state.playingSource
+    val fallbackNotice = state.fallbackNotice
     val preferences = state.playback?.preferences ?: state.preferences?.preferences
     val title = state.sourceTitle?.let { card ->
         val episode = card.identity.episode
@@ -37,6 +38,10 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
         trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
         autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion(),
+        fallback = fallbackNotice?.let { PlayerFallbackNotice(it.reason, it.next.label, it.next.fallbackFacts()) },
+        stopFallback = if (fallbackNotice != null) controller::stopBestMatchFallback else null,
+        audioNotice = state.audioNotice,
+        nextSource = if (state.bestMatch != null) controller::playNextSource else null,
         openingSource = state.openingSource)
 }
 

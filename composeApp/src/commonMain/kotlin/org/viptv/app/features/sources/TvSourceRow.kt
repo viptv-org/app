@@ -22,7 +22,7 @@ import org.viptv.app.components.pointerClickable
 @Composable
 internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Float, requester: FocusRequester?,
     enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null, focusedSource: (String) -> Unit = {},
-    header: String? = null, bestMatch: Boolean = false, headerMeasured: (Int) -> Unit = {}) {
+    header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, headerMeasured: (Int) -> Unit = {}) {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
     Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
@@ -41,8 +41,14 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
             SourceTitleLine(source.label, TextStyle(fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.SemiBold), color,
                 source.factBadges(), SourceBadgeStyle((18 * scale).sp, (20 * scale).sp, radius = 8.dp * scale, horizontal = 10.dp * scale,
                     vertical = 4.dp * scale, gap = 12.dp * scale), Modifier.fillMaxWidth(),
-                trailing = if (bestMatch) ({ Text(BEST_MATCH_MARKER, Modifier.background(color, RoundedCornerShape(5.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
-                    color = if (focused) Palette.text else Palette.background, fontSize = (18 * scale).sp, lineHeight = (20 * scale).sp, fontWeight = FontWeight.Bold) }) else null)
+                trailing = if (bestMatch || didntStart) ({
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalAlignment = Alignment.CenterVertically) {
+                        if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(color, RoundedCornerShape(5.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
+                            color = if (focused) Palette.text else Palette.background, fontSize = (18 * scale).sp, lineHeight = (20 * scale).sp, fontWeight = FontWeight.Bold)
+                        if (didntStart) Text(DIDNT_START_LABEL, color = if (focused) Palette.background else Palette.danger,
+                            fontSize = (18 * scale).sp, lineHeight = (20 * scale).sp, fontWeight = FontWeight.Bold)
+                    }
+                }) else null)
             source.releaseDetail()?.let { Text(it, color = color, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp) }
             source.technicalDetail()?.let { Text(it, color = color.copy(alpha = 0.75f), fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp) }
         }
