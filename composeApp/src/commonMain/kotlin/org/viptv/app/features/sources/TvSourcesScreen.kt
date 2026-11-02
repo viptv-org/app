@@ -33,6 +33,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.SourceGroups
+import org.viptv.app.connection.SourceProducerOutcome
 import org.viptv.app.components.rememberTvDrawerMotion
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.components.requestPlacedFocus
@@ -51,7 +52,8 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     detail: DetailSnapshot? = null, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     checkedAddons: Int = 0, checkedProviders: Int = 0, checkAgain: () -> Unit = {}, manageAddons: () -> Unit = {},
     debridHelp: () -> Unit = {}, openingStage: String? = null, groups: SourceGroups = SourceGroups(),
-    banner: String? = null, failed: List<String> = emptyList()) {
+    producers: List<SourceProducerOutcome> = emptyList(), banner: String? = null, failed: List<String> = emptyList(),
+    opening: Boolean = false) {
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -67,6 +69,13 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             var quality by remember { mutableStateOf<String?>(null) }
             var provider by remember { mutableStateOf<String?>(null) }
             val visible = remember(sources, info, quality, provider) { sources.filter { (quality == null || info[it.id]?.quality == quality) && (provider == null || it.sourceFilterId() == provider) } }
+            val producer = sourceProducerFor(producers, provider)
+            val pending = loadingMore && !opening
+            val notice = sourceProducerNotice(producer, discoveryPending = pending, hasRows = visible.isNotEmpty())
+            LaunchedEffect(sources, producers) {
+                val id = provider ?: return@LaunchedEffect
+                if (sources.none { it.sourceFilterId() == id } && producers.none { sourceProducerFilterId(it.providerId) == id }) provider = null
+            }
             val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
             val finding = loadingMore || busy && sources.isEmpty()
             val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
@@ -111,7 +120,9 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 Spacer(Modifier.height(12.dp * scale))
                 val count = sourceSummary(sources)
                 val summary = when {
-                    loadingMore || busy && sources.isEmpty() -> "finding sources"
+                    opening -> "opening stream"
+                    loadingMore -> "Finding sources"
+                    busy && sources.isEmpty() -> "Finding sources"
                     busy -> "opening stream"
                     torrentOnly -> sourcesTorrentHeading(torrentOnlyProviders)
                     noSources -> sourcesCheckedLine(checkedAddons, checkedProviders)
@@ -131,18 +142,24 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         CompositionLocalProvider(LocalTvScale provides scale) {
                             SourceFilters(sources, quality, provider,
                                 { quality = it; navigated = true }, { provider = it; navigated = true },
-                                Modifier.fillMaxWidth(), gutter = 0.dp)
+                                Modifier.fillMaxWidth(), gutter = 0.dp, producers = producers)
                         }
                     }
                 }
                 Spacer(Modifier.height(20.dp * scale))
 
                 // The list needs a trailing inset of the footer's height, else the status line draws over its last source.
-                KeepSourceListPosition(listState, rows, focusedSource.takeIf { navigated }, headerHeight, leading = if (error != null) 1 else 0)
+                KeepSourceListPosition(listState, rows, focusedSource.takeIf { navigated }, headerHeight,
+                    leading = (if (error != null) 1 else 0) + (if (notice != null) 1 else 0))
                 LazyColumn(Modifier.weight(1f), state = listState,
                     verticalArrangement = Arrangement.spacedBy(10.dp * scale),
                     contentPadding = PaddingValues(bottom = 24.dp * scale)) {
                     error?.let { item { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) } }
+                    notice?.let { message ->
+                        item(key = "producer") {
+                            Text(message, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = Palette.secondary, fontSize = (22 * scale).sp)
+                        }
+                    }
                     itemsIndexed(rows, key = { _, row -> row.source.id }) { index, row ->
                         TvSourceRow(row.source, info[row.source.id], scale, rowFocus.getOrPut(row.source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
                             up = if (index == 0) filterFocus else null, focusedSource = { focusedSource = it },
@@ -156,15 +173,19 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         Box(Modifier.fillMaxWidth().height(TvSourceRowHeight * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
                             .semantics { contentDescription = "Loading source" })
                     }
-                    if (!busy && !loadingMore && visible.isEmpty() && error == null && sources.isNotEmpty()) item {
+                    if (!busy && !loadingMore && visible.isEmpty() && error == null && sources.isNotEmpty() && notice == null) item {
                         Text("No sources match these filters.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
                 }
 
-                if (!noSources && !torrentOnly && (loadingMore || busy)) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
+                if (!noSources && !torrentOnly && (pending || loadingMore || busy || opening)) Row(Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                     CircularProgressIndicator(Modifier.size(20.dp * scale), color = Palette.secondary, strokeWidth = 2.dp * scale)
-                    Text(if (loadingMore || sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else openingStage ?: "Opening stream…",
-                        color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
+                    Text(when {
+                        busy || opening -> openingStage ?: "Opening stream…"
+                        sources.isEmpty() -> "Finding sources"
+                        else -> "Still checking sources"
+                    }, color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
                 }
             }
             details?.let { shown ->

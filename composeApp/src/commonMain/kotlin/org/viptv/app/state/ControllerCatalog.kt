@@ -351,7 +351,7 @@ private fun ApplicationController.openSources(card: Card, returnTo: Screen, play
     clearBestMatchSession()
     sourcesStartPlayback = startPlayback
     updateState { it.copy(screen = if (quiet) it.screen else Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
-        sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
+        sources = emptyList(), sourceProducers = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
         playTapTitle = playTap, detailFailure = null, detailRetryable = true) }
 }
 
@@ -383,15 +383,19 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
                 rank = { rows -> device?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
                 show = { ranked -> if (generation == operation) updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups) } },
                 onMatch = { if (reuse == null) autoplay(it) })
+            val observed: (SourcesOutcome) -> Unit = { outcome ->
+                if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
+                ranking.arrived(outcome.candidates)
+            }
             val outcome = try {
-                device?.sources(profile, card, ranking::arrived) ?: SourcesOutcome(requireNotNull(remote).sources(card, ranking::arrived))
+                device?.sources(profile, card, observed) ?: requireNotNull(remote).sources(card, observed)
             } catch (deadline: TimeoutCancellationException) {
                 ranking.finish(); throw deadline
             }
             ranking.arrived(outcome.candidates)
             val ranked = ranking.finish()
             if (generation != operation) return@coroutineScope
-            updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders) }
+            updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders, sourceProducers = producersLabelled(outcome.producers)) }
             if (reuse != null) {
                 val match = ranked?.let(::rememberedMatch)
                 if (match != null) rememberedStart(requireNotNull(ranked), match)
@@ -414,6 +418,13 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
 }
 
 internal fun ApplicationController.markSourcesScrolled() { sourcesScrolled = true }
+
+private fun ApplicationController.producersLabelled(producers: List<SourceProducerOutcome>): List<SourceProducerOutcome> {
+    if (producers.none { it.label.isBlank() }) return producers
+    val state = mutable.value
+    val names = state.addons.associate { it.id to it.name } + state.sourceIntegrations.connections.associate { it.id to it.name }
+    return producers.map { it.labelledBy(names) }
+}
 
 internal fun RankedSources.autoplayTarget(): org.viptv.engine.wire.SourceCandidate? =
     groups.bestMatches.firstOrNull()?.let { id -> rows.firstOrNull { it.id == id } }

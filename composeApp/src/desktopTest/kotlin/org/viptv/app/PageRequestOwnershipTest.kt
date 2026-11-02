@@ -26,7 +26,7 @@ class PageRequestOwnershipTest {
         val device = object : LocalConnection by fixture.local {
             override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot { waitForResult(); return DetailSnapshot(card, episodes = emptyList()) }
             override suspend fun history(profile: String): List<HistoryDisplay> { waitForResult(); return emptyList() }
-            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome { sourceCalls++; return SourcesOutcome() }
+            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome { sourceCalls++; return SourcesOutcome() }
         }
         val controller = fixture.controller { device }; controller.local = device
         controller.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "default", localMode = true, preferences = PreferencesSnapshot())

@@ -20,10 +20,10 @@ class BestMatchesDiscoveryTest {
         val rankingCalls = mutableListOf<List<String>>()
         val opened = mutableListOf<String>()
         val device = object : LocalConnection by fixture.local {
-            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome {
-                publish(firstBatch)
+            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
+                publish(SourcesOutcome(firstBatch))
                 release.await()
-                publish(firstBatch + secondBatch)
+                publish(SourcesOutcome(firstBatch + secondBatch))
                 return SourcesOutcome(firstBatch + secondBatch)
             }
             override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources {
