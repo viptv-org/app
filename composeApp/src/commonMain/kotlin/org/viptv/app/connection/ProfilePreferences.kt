@@ -18,6 +18,7 @@ data class ProfilePreferences(
     val subtitle_mode: String? = null,
     val next_episode_button: Boolean = true,
     val skip_intros: Boolean = false,
+    val remembered_source_reuse: Boolean = true,
 )
 
 private val subtitleModes = setOf("always", "foreign", "never")
@@ -40,6 +41,7 @@ internal fun profilePreferencesWire(preferences: ProfilePreferences): JsonObject
     if (preferences.hdr_preference == "any") encoded -= "hdr_preference"
     if (preferences.next_episode_button) encoded -= "next_episode_button"
     if (!preferences.skip_intros) encoded -= "skip_intros"
+    if (preferences.remembered_source_reuse) encoded -= "remembered_source_reuse"
     if (mode == "foreign") encoded["subtitle_mode"] = JsonPrimitive(mode) else encoded -= "subtitle_mode"
     return JsonObject(encoded)
 }

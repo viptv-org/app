@@ -62,6 +62,8 @@ class WebPreferencesSettingsTest {
             assertEquals(ToggleableState.On, nextEpisode.config[SemanticsProperties.ToggleableState])
             val skipIntros = ui.switch("Skip intros and recaps")
             assertEquals(ToggleableState.Off, skipIntros.config[SemanticsProperties.ToggleableState])
+            val rememberSources = ui.switch("Remember source choices")
+            assertEquals(ToggleableState.On, rememberSources.config[SemanticsProperties.ToggleableState])
         }
     }
 
