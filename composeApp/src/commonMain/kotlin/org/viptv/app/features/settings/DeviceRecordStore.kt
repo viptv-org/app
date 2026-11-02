@@ -7,7 +7,7 @@ internal interface DeviceRecordStore {
     fun write(value: String)
 }
 
-internal enum class DeviceRecord { Display, Playback }
+internal enum class DeviceRecord { Display, Playback, WatchOnTv }
 
 internal expect fun deviceRecordStore(context: PlatformContext, record: DeviceRecord): DeviceRecordStore
 

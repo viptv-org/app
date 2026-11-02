@@ -30,6 +30,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     }
     val deviceLink by controller.deviceLink.collectAsState()
     val devicePlayback = rememberDevicePlaybackState()
+    val watchOnTvState = rememberWatchOnTvState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
     val passwordPage: (@Composable (() -> Unit) -> Unit)? = remote?.takeIf { state.passwordChangeAvailable }?.let { connection ->
@@ -166,6 +167,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             TvAccountDevices(state.accountDevices, state.busy, state.error, controller::refreshAccountDevices, scale, first, sidebar, back)
         }) else null,
         returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback,
+        watchOnTvValue = watchOnTvValue(watchOnTvState.value),
+        watchOnTvSettings = { WatchOnTvSettings(watchOnTvState.value) },
         vodMatches = if (remote != null) ({ VodMatchesRoute(state, controller) }) else null,
         tvVodMatches = if (remote != null) ({ first, sidebar, scale -> TvVodMatchesRoute(state, controller, scale, first, sidebar) }) else null)
     }
