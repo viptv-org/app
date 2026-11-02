@@ -135,6 +135,7 @@ data class ApplicationState(
     val nextEpisode: Card? = null,
     val nextEpisodeStatus: org.viptv.engine.wire.ContinuationStatus? = null,
     val nextEpisodeLoading: Boolean = false,
+    val nextEpisodePreparation: NextEpisodePreparation? = null,
     val playbackSeason: List<Card> = emptyList(),
     val paused: Boolean = false,
     val presentation: PlayerFact.Presentation? = null,

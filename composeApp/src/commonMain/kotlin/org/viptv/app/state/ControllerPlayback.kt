@@ -143,6 +143,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         // ON_STOP pauses the renderer after the controller suspends: flush this last sample even if the 15s timer just ran.
         if (finalBackgroundSample && !completionSeen) saveProgress(false, final = true)
         else if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
+        maintainNextEpisodePreparation(fact.positionMillis, fact.durationMillis)
     }
     if (fact is PlayerFact.Status && fact.name in listOf("Playing", "Paused") && mutable.value.playback != null) {
         updateState { next -> next.copy(paused = fact.name == "Paused") }
@@ -161,6 +162,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
 fun ApplicationController.closePlayer() {
     job?.cancel()
     playbackSegmentsJob?.cancel()
+    cancelNextEpisodePreparation()
     val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)

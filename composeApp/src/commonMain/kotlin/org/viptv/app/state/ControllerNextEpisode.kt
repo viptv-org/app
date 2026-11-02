@@ -20,6 +20,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
     if (state.screen != Screen.Player || input == null || input.live || profile == null || input.profileId != profile || card == null ||
         card.identity.kind != "series" || card.identity.episode == null || parent == null) {
         cancelNextEpisode()
+        cancelNextEpisodePreparation()
         return
     }
     val key = NextEpisodeKey(input, profile, card.identity, parent, card.provider_id, connection, local, state.home?.scope?.owner(), card.metadata_origin)
