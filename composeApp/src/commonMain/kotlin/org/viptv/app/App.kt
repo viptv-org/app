@@ -275,7 +275,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             closeFocusOnOpen = !(browser && showingSources),
             focus = state.detailFocus)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings) }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, banner = state.sourcesBanner(), failed = state.failedSources()) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }

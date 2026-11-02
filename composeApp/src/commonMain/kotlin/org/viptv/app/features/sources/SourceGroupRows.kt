@@ -20,18 +20,19 @@ import org.viptv.engine.wire.SourceCandidate
 internal const val BEST_MATCHES_HEADER = "Best matches"
 internal const val ALL_SOURCES_HEADER = "All sources"
 internal const val BEST_MATCH_MARKER = "Best match"
+internal const val DIDNT_START_LABEL = "Didn’t start"
 
 @Immutable
-internal data class SourceListRow(val source: SourceCandidate, val header: String? = null, val bestMatch: Boolean = false)
+internal data class SourceListRow(val source: SourceCandidate, val header: String? = null, val bestMatch: Boolean = false, val didntStart: Boolean = false)
 
-internal fun sourceListRows(visible: List<SourceCandidate>, groups: SourceGroups): List<SourceListRow> {
+internal fun sourceListRows(visible: List<SourceCandidate>, groups: SourceGroups, failed: List<String> = emptyList()): List<SourceListRow> {
     val members = groups.bestMatches.toSet()
     val best = visible.filter { it.id in members }
-    if (best.isEmpty()) return visible.map { SourceListRow(it) }
+    if (best.isEmpty()) return visible.map { SourceListRow(it, didntStart = it.id in failed) }
     val rest = visible.filter { it.id !in members }
     return best.mapIndexed { index, source ->
-        SourceListRow(source, BEST_MATCHES_HEADER.takeIf { index == 0 }, source.id == groups.bestMatchId)
-    } + rest.mapIndexed { index, source -> SourceListRow(source, ALL_SOURCES_HEADER.takeIf { index == 0 }) }
+        SourceListRow(source, BEST_MATCHES_HEADER.takeIf { index == 0 }, source.id == groups.bestMatchId, source.id in failed)
+    } + rest.mapIndexed { index, source -> SourceListRow(source, ALL_SOURCES_HEADER.takeIf { index == 0 }, didntStart = source.id in failed) }
 }
 
 @Composable

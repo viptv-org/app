@@ -16,6 +16,7 @@ fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Bool
     val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
     val restart = restartRequested
     restartRequested = false
+    clearBestMatchSession()
     openSource(current, forceGateway, positionMillis = if (restart) 0L else null)
 }
 
@@ -69,7 +70,8 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
-    updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList()) }
+    updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null) }
+    armStartDeadline(input, source)
     loadNextEpisode()
     playbackSegmentsJob?.cancel()
     playbackSegmentsJob = scope.launch {
@@ -128,6 +130,10 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
         updateState { next -> next.copy(presentation = fact) }
         firstFrameSeen = true
+        startDeadlineJob?.cancel(); startDeadlineJob = null
+        mutable.value.bestMatch?.let { session ->
+            if (!session.started) updateState { next -> next.copy(bestMatch = session.copy(started = true)) }
+        }
         if (!mutable.value.paused) tracking?.transition(PlaybackEvent.Start, lastProgress)
         val capturedInput = mutable.value.playback
         remotePlayback?.let { lease -> frameAcknowledgment = scope.launch {
@@ -155,12 +161,16 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         if (mutable.value.nextEpisode == null) loadNextEpisode(force = true)
         saveProgress(true)
     }
-    if (fact is PlayerFact.Failed) updateState { next -> next.copy(error = "This source could not play. Choose another source.") }
+    if (fact is PlayerFact.Tracks) noticeMissingAudio(fact.options)
+    if (fact is PlayerFact.Undecodable) startFailed(FALLBACK_REASON_UNDECODABLE, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true)
+    if (fact is PlayerFact.Failed) startFailed(FALLBACK_REASON_FAILED)
 }
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
     playbackSegmentsJob?.cancel()
+    startDeadlineJob?.cancel(); startDeadlineJob = null
+    clearBestMatchSession()
     val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)

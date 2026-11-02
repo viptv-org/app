@@ -45,11 +45,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
-    autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
+    autoplayNext: Boolean = false, reduceMotion: Boolean = false,
+    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
-            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion)
+            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
+            fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -172,6 +174,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             is PlayerFact.Presentation -> Unit
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
             PlayerFact.Failed -> { buffering = false; failed = true }
+            PlayerFact.Undecodable -> { buffering = false; failed = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
@@ -248,12 +251,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
                     }
                 }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
-                if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
-                    "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
-                else {
-                    if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
-                    (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
+                val stopped = failed || error != null
+                when {
+                    stopped && fallback != null -> PhonePlayerFallback(fallback, stopFallback, controlInsets)
+                    stopped && phone -> PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
+                        "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
+                    else -> {
+                        if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                        (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
+                    }
                 }
+                if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
                     PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
             }

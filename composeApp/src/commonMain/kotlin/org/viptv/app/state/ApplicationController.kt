@@ -20,7 +20,9 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val playbackDiagnostics: ((String) -> Unit)? = null,
     internal val localFactory: (String) -> LocalConnection = ::localConnection,
     internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) },
-    internal val freshness: Freshness = Freshness()) {
+    internal val freshness: Freshness = Freshness(),
+    internal val bestMatchNoticeMillis: Long = 2_000L,
+    internal val startDeadlineMillis: Long = 20_000L) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
@@ -79,6 +81,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var stremioImport: StremioImportSession? = null
     internal var restartRequested = false
     internal var firstFrameSeen = false
+    internal var fallbackJob: Job? = null
+    internal var startDeadlineJob: Job? = null
     internal var frameAcknowledgment: Job? = null
     internal var lastProgress: PlayerFact.Progress? = null
     internal var backgroundPlayback: org.viptv.app.player.PlaybackInput? = null

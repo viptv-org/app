@@ -31,7 +31,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     previewFrame: String? = null, scene: TvPlayerScene = TvPlayerScene.Controls, initialFacts: List<PlayerFact> = emptyList(),
     externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
     playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
-    canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
+    canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false,
+    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
@@ -51,10 +52,14 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     }
     DisposableEffect(state) { backChanged(back); onDispose { backChanged(null) } }
     // A stream whose clock advances without a presented frame is a black screen this TV cannot decode; surface it instead of playing nothing.
-    LaunchedEffect(state) { while (true) { delay(1000); state.checkFirstFrame() } }
+    LaunchedEffect(state) { while (true) { delay(1000); if (state.checkFirstFrame()) observe(PlayerFact.Undecodable) } }
     LaunchedEffect(externalFacts, state) { externalFacts.collect(state::observe) }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
     val skipActive = activeSkip != null && !state.visible
+    val audioPrompt = audioNotice?.takeIf { !state.failed && !state.undecodable }
+    val audioPromptActive = audioPrompt != null && nextSource != null
+    val audioRequester = remember { FocusRequester() }
+    LaunchedEffect(audioPromptActive) { if (audioPromptActive) { withFrameNanos { }; audioRequester.requestFocus() } }
     val creditsReached = extras.skips.firstOrNull { !it.automatic }?.let { state.position >= it.startMillis } == true
     LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, state.failed, creditsReached) {
         state.offerNext(extras.nextEpisode != null && playEpisode != null, creditsReached)
@@ -66,12 +71,12 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (extras.skipIntros && !paused) extras.skips.firstOrNull { it.automatic && state.position in it.startMillis until it.endMillis }
             ?.let { state.skip(it, automatic = true, previewCommand) }
     }
-    LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive) {
-        if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes) {
+    LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive, audioPromptActive) {
+        if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes && !audioPromptActive) {
             val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
             if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.requestFocus() else audio.requestFocus()
         }
-        else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive) root.requestFocus()
+        else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive && !audioPromptActive) root.requestFocus()
     }
     TvBackdrop(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown) state.interaction++
@@ -107,7 +112,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.showNext) Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = .35f),
             .45f to Color.Black.copy(alpha = .55f), 1f to Color.Black.copy(alpha = .82f))))
         when {
-            state.failed || state.undecodable -> TvPlayerFailure(extras, state.position,
+            state.failed || state.undecodable -> if (fallback != null) TvPlayerFallback(fallback, scale, stopFallback) else TvPlayerFailure(extras, state.position,
                 if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error,
                 scale, retry, chooseSources, close)
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
@@ -136,5 +141,6 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             }, { state.showTracks = false; state.reveal() }, trackFocus,
             dismissChanged = { state.dismissTracks = it }, openSettings = openSettings)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
+        audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
     }
 }
