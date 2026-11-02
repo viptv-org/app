@@ -39,9 +39,8 @@ internal fun PlaybackSlider(value: Float, change: (Float) -> Unit, modifier: Mod
                         thumbTrackGapSize = 0.dp, drawStopIndicator = null)
                     else {
                         Box(Modifier.fillMaxSize().clip(RoundedCornerShape(TrackHeight / 2)).background(colors.inactiveTrackColor))
-                        BufferedSegments(bands, inset, Color.White.copy(alpha = 0.5f))
-                        Box(Modifier.offset(x = inset).width(span * state.coercedValueAsFraction.coerceIn(0f, 1f))
-                            .fillMaxHeight().background(accent))
+                        BufferedSegments(bands, Color.White.copy(alpha = 0.5f))
+                        Box(Modifier.fillMaxWidth(state.coercedValueAsFraction.coerceIn(0f, 1f)).fillMaxHeight().background(accent))
                     }
                     segments.forEach { segment ->
                         Box(Modifier.offset(x = inset + span * segment.startFraction)

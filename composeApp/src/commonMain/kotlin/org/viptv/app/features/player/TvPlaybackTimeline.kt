@@ -37,7 +37,7 @@ internal fun BoxScope.TvPlaybackTimeline(state: TvPlayerState, extras: TvPlaybac
                 Box(Modifier.size(28.dp * scale).background(ColorWhite, CircleShape))
             } },
             track = { BoxWithConstraints(Modifier.fillMaxWidth().height(6.dp * scale).clip(RoundedCornerShape(3.dp * scale)).background(ColorWhite.copy(alpha = .22f))) {
-                BufferedSegments(bufferedFractions(state.buffered, length), 0.dp, ColorWhite.copy(alpha = .5f))
+                BufferedSegments(bufferedFractions(state.buffered, length), ColorWhite.copy(alpha = .5f))
                 segments.forEach { segment ->
                     Box(Modifier.offset(x = maxWidth * segment.startFraction)
                         .fillMaxWidth((segment.endFraction - segment.startFraction).coerceAtLeast(0f)).fillMaxHeight()

@@ -5,11 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import org.viptv.app.player.BufferedRange
 
 // A length the timeline cannot place draws nothing: no duration and no band.
@@ -22,11 +21,10 @@ internal fun bufferedFractions(ranges: List<BufferedRange>, duration: Long?): Li
     }
 }
 
-// `inset` is half a thumb on the pointer slider, so a band starts and ends where the thumb travels.
+// The bar the thumb travels across, so a band starts exactly where the played fill ends.
 @Composable
-internal fun BoxWithConstraintsScope.BufferedSegments(fractions: List<Pair<Float, Float>>, inset: Dp, color: Color) {
-    val span = maxWidth - inset * 2
+internal fun BoxWithConstraintsScope.BufferedSegments(fractions: List<Pair<Float, Float>>, color: Color) {
     fractions.forEach { (start, end) ->
-        Box(Modifier.offset(x = inset + span * start).width(span * (end - start)).fillMaxHeight().background(color))
+        Box(Modifier.offset(x = maxWidth * start).fillMaxWidth(end - start).fillMaxHeight().background(color))
     }
 }

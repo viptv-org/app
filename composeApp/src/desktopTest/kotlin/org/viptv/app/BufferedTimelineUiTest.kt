@@ -108,7 +108,7 @@ class BufferedTimelineUiTest {
         }
         try {
             frames(scene)
-            val track = track(scene, tvBase, tvBand, inset = 0)
+            val track = track(scene, tvBase, tvBand)
             assertTrue(track.end > track.start, "the live timeline still draws its bar")
             assertTrue(track.bands.isEmpty(), "live has no buffered band: $track")
         } finally { scene.close() }
@@ -144,7 +144,7 @@ class BufferedTimelineUiTest {
         try {
             frames(scene)
             capture(scene, "tv-buffered")
-            val track = track(scene, tvBase, tvBand, inset = 0)
+            val track = track(scene, tvBase, tvBand)
             assertEquals(1, track.bands.size, "one reported range on the TV timeline: $track")
             assertFraction(track, track.playhead, .25f, "the TV played fill ends at the playhead")
             assertFraction(track, track.bands.single().last, .5f, "the TV band ends at the buffered end")
@@ -160,19 +160,19 @@ class BufferedTimelineUiTest {
 
     private data class Track(val start: Int, val playhead: Int, val end: Int, val bands: List<IntRange>)
 
-    // Fractions map onto the bar inside half a thumb at each end, where the played fill and a band start and stop.
-    private fun track(scene: ImageComposeScene, base: Int = pointerBase, band: Int = pointerBand, inset: Int = 6): Track {
+    private fun track(scene: ImageComposeScene, base: Int = pointerBase, band: Int = pointerBand): Track {
         val (width, colors) = pixels(scene)
         val height = colors.size / width
         val row = (0 until height).maxBy { y ->
             (0 until width).count { x -> near(colors[y * width + x], accent) || near(colors[y * width + x], base) }
         }
         val pixels = (0 until width).map { colors[row * width + it] }
-        val bar = pixels.indices.filter { near(pixels[it], accent) || near(pixels[it], base) || near(pixels[it], band, 5) }
-        assertTrue(bar.size > 8, "no timeline bar to measure")
+        val fill = runs(pixels) { near(it, accent) }.maxByOrNull { it.last - it.first }
+        val held = runs(pixels) { near(it, base) }.filter { it.last - it.first >= 8 }
         val knob = runs(pixels) { near(it, 0xFFFFFFFF.toInt(), 2) }.maxByOrNull { it.last - it.first }
-        return Track(bar.first() + inset, knob?.let { (it.first + it.last) / 2 } ?: -1, bar.last() - inset,
-            runs(pixels) { near(it, band, 5) }.filter { it.last - it.first >= 8 })
+        assertTrue(held.isNotEmpty(), "no timeline bar to measure")
+        return Track(fill?.first ?: held.minOf { it.first }, knob?.let { (it.first + it.last) / 2 } ?: -1,
+            held.maxOf { it.last }, runs(pixels) { near(it, band, 5) }.filter { it.last - it.first >= 8 })
     }
 
     private fun assertFraction(track: Track, actual: Int, fraction: Float, what: String) {
