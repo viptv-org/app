@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.pageGutter
@@ -41,24 +42,25 @@ internal const val LiveMemberWho = "Only the household owner can set up live TV.
 internal const val LivePairedWho = "Manage live TV from a signed-in phone, computer or the web dashboard."
 internal const val LiveNoChannelsHeadline = "No channels came back."
 internal const val LiveNoChannelsBody = "This source is set up, but it isn't sending channels."
+internal const val LiveLoadFailedHeadline = "Could not load Live TV."
 internal const val LiveTryAgain = "Try again"
 internal const val LiveSourceIntegrations = "Source integrations"
 internal const val LiveSourceIntegrationsSection = "Source integrations"
 internal const val LiveAddonsSection = "Add-ons"
 
-enum class LiveSpread { Channels, Filtered, Loading, NoSource, NoChannels }
+enum class LiveSpread { Channels, Filtered, Loading, NoSource, NoChannels, Failed }
 
 // The page's own facts decide the state; a source pick is how a working second connection is reached, so it never masquerades as an empty filter.
 internal fun liveSpread(page: LiveCatalogPage?, busy: Boolean, filtered: Boolean): LiveSpread = when {
     page != null && page.channels.isNotEmpty() -> LiveSpread.Channels
     filtered -> LiveSpread.Filtered
-    page == null -> if (busy) LiveSpread.Loading else LiveSpread.NoChannels
+    page == null -> if (busy) LiveSpread.Loading else LiveSpread.Failed
     page.connections.isEmpty() || page.availability == "NeedsConfiguration" -> LiveSpread.NoSource
     busy -> LiveSpread.Loading
     else -> LiveSpread.NoChannels
 }
 
-internal fun LiveSpread.showsChannelRows(): Boolean = this == LiveSpread.Loading || this == LiveSpread.NoChannels
+internal fun LiveSpread.showsChannelRows(): Boolean = this == LiveSpread.Loading || this == LiveSpread.NoChannels || this == LiveSpread.Failed
 
 internal class LiveEmptyMetrics(
     val eyebrow: TextUnit, val eyebrowLine: TextUnit, val eyebrowTracking: TextUnit,
@@ -207,14 +209,23 @@ private fun LiveEmptySecondary(television: Boolean, scale: Float, metrics: LiveE
 }
 
 @Composable
-internal fun LiveNoChannels(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?) {
+internal fun LiveNoChannels(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?) =
+    LiveEmptyCopy(television, scale, compact, LiveNoChannelsHeadline, reason ?: LiveNoChannelsBody, retry, integrations)
+
+@Composable
+internal fun LiveLoadFailed(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?) =
+    LiveEmptyCopy(television, scale, compact, LiveLoadFailedHeadline, reason ?: ServerMessages.GENERIC, retry, integrations)
+
+@Composable
+private fun LiveEmptyCopy(television: Boolean, scale: Float, compact: Boolean, headline: String, body: String,
+    retry: (() -> Unit)?, integrations: (() -> Unit)?) {
     val metrics = LiveEmptyMetrics.noChannels(television, scale, compact)
     val full = if (compact && !television) Modifier.fillMaxWidth() else Modifier
     Column(Modifier.fillMaxWidth()) {
-        Text(LiveNoChannelsHeadline, color = Palette.text, fontSize = metrics.headline, lineHeight = metrics.headlineLine,
+        Text(headline, color = Palette.text, fontSize = metrics.headline, lineHeight = metrics.headlineLine,
             fontWeight = FontWeight.Bold, maxLines = metrics.headlineLines)
         Spacer(Modifier.height(metrics.headlineToBody))
-        Text(reason ?: LiveNoChannelsBody, color = Palette.secondary, fontSize = metrics.body, lineHeight = metrics.bodyLine, maxLines = metrics.bodyLines)
+        Text(body, color = Palette.secondary, fontSize = metrics.body, lineHeight = metrics.bodyLine, maxLines = metrics.bodyLines)
         retry?.let {
             Spacer(Modifier.height(metrics.bodyToActions))
             if (television) TvAction(full.height(metrics.primaryHeight), scale, activate = it, cornerRadius = metrics.primaryRadius,
