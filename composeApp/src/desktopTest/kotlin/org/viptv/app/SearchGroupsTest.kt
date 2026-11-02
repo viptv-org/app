@@ -34,6 +34,23 @@ class SearchGroupsTest {
         assertEquals(listOf("movie", "series"), groups.first().cards.map { it.identity.kind })
     }
 
+    @Test fun rowsWithNothingToShowAreDroppedSoOneEmptyStateRemains() {
+        val rows = listOf(SearchResultRow("one", "One", "simkl"), SearchResultRow("two", "Two", "stremio"))
+        assertTrue(searchResultGroups(rows).isEmpty())
+        assertTrue(searchResultGroups(rows, setOf("Channels")).isEmpty())
+        val failed = rows.map { it.copy(state = "Failed") }
+        assertEquals(listOf("One", "Two"), searchResultGroups(failed).map { it.label })
+        assertTrue(searchResultGroups(failed).all { it.message != null })
+    }
+
+    @Test fun aFilterKeepsOnlyTheProvidersItMatches() {
+        val rows = listOf(SearchResultRow("movies", "Movie provider", "stremio", cards = listOf(card("stremio", "movie"))),
+            SearchResultRow("channels", "Channel provider", "stremio", cards = listOf(card("stremio", "channel"))))
+        assertEquals(listOf("Movie provider", "Channel provider"), searchResultGroups(rows).map { it.label })
+        assertEquals(listOf("Movie provider"), searchResultGroups(rows, setOf("Movies")).map { it.label })
+        assertEquals(listOf("Channel provider"), searchResultGroups(rows, setOf("Channels")).map { it.label })
+    }
+
     @Test fun providersThatCouldNotAnswerSitBelowTheProvidersThatReturnedResults() {
         val rows = listOf(SearchResultRow("simkl:anime", "Anime", "simkl", state = "Failed"),
             SearchResultRow("simkl:movie", "Movies", "simkl", state = "Failed"),
@@ -44,9 +61,7 @@ class SearchGroupsTest {
             searchResultGroups(rows.filter { it.state == "Failed" }).map { it.label })
     }
 
-    @Test fun allEmptyRowsKeepTheirNamesAndEpisodeCoordinatesDoNotCollide() {
-        val rows = listOf(SearchResultRow("one", "One", "simkl"), SearchResultRow("two", "Two", "stremio"))
-        assertEquals(listOf("One", "Two"), searchResultGroups(rows).map { it.label })
+    @Test fun episodeCoordinatesDoNotCollide() {
         val first = card("addon", "series").copy(identity = MediaIdentity("same", "series", emptyList(), EpisodeCoordinates("aired", 1, 1)))
         val second = first.copy(identity = first.identity.copy(episode = EpisodeCoordinates("aired", 1, 2)))
         assertNotEquals(searchCardKey(first), searchCardKey(second))

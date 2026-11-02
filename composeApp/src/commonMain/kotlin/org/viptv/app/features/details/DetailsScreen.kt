@@ -28,6 +28,7 @@ import org.viptv.app.components.rememberListEntrance
 
 @Composable
 fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null,
+    chooseSource: (Card) -> Unit = sources,
     continuing: List<Card> = emptyList(),
     paging: Boolean = true,
     playTap: Boolean = false,
@@ -35,7 +36,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     closeFocusOnOpen: Boolean = true,
     focus: DetailFocus? = null) {
     if (television) {
-        TvDetailsScreen(detail, busy, error, sources, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
+        TvDetailsScreen(detail, busy, error, sources, chooseSource = chooseSource, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
             continuing = continuing, shown = paging, playTap = playTap, retry = retry, focus = focus)
         return
     }

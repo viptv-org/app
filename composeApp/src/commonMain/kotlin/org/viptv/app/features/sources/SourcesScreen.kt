@@ -48,19 +48,19 @@ import org.viptv.app.components.rememberSheetDrag
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {},
-    errorCode: String? = null, openGateways: (() -> Unit)? = null) {
+    errorCode: String? = null, openGateways: (() -> Unit)? = null, banner: String? = null, failed: List<String> = emptyList()) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
             detail = detail,
             loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders, openingStage = openingStage,
-            groups = groups)
+            groups = groups, banner = banner, failed = failed)
         return
     }
     var quality by remember { mutableStateOf<String?>(null) }
     var provider by remember { mutableStateOf<String?>(null) }
     val visible = sources.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
-    val rows = remember(visible, groups) { sourceListRows(visible, groups) }
+    val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
     val listState = rememberLazyListState()
     LaunchedEffect(listState) {
         listState.interactionSource.interactions.collect { interaction ->
@@ -107,6 +107,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
                 Text(summaryLine, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), color = Palette.secondary, fontSize = 13.sp)
+                banner?.let { SourceFallbackBanner(it, 13.sp, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp)) }
             } else Column(Modifier.padding(horizontal = if (television) 48.dp else 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -115,6 +116,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
                 Text(summaryLine, color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
+                banner?.let { SourceFallbackBanner(it, if (television) 20.sp else 13.sp, Modifier.fillMaxWidth()) }
             }
             SourceFilters(sources, quality, provider, { quality = it }, { provider = it })
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
@@ -140,7 +142,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 }
                 items(rows, key = { it.source.id }) { row ->
                     SourceRow(row.source, television, choose, enabled = !busy, selected = row.source.id == selectedSource,
-                        header = row.header, bestMatch = row.bestMatch, headerMeasured = { headerHeight.pixels = it },
+                        header = row.header, bestMatch = row.bestMatch, didntStart = row.didntStart, headerMeasured = { headerHeight.pixels = it },
                         focusChanged = { has -> if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null })
                 }
             }

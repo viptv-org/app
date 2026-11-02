@@ -18,6 +18,9 @@ object Palette {
     val tertiary = Color(0xFF8F8D89)
     val accent = Color(0xFFF5C542)
     val danger = Color(0xFFFF7A6E)
+    val segmentIntro = Color(0xFF9AC7FF)
+    val segmentRecap = Color(0xFFB79CFF)
+    val segmentCredits = Color(0xFF8CE0A8)
 }
 
 @Composable
@@ -29,7 +32,8 @@ fun ViptvTheme(television: Boolean = false,
         typography = viptvTypography(), content = {
             org.viptv.app.components.TvFocusEnvironment(television) {
                 CompositionLocalProvider(LocalContentColor provides Palette.text,
-                    org.viptv.app.components.LocalPointerHover provides (pointer && !television)) {
+                    org.viptv.app.components.LocalPointerHover provides (pointer && !television),
+                    org.viptv.app.components.LocalCardOverflow provides (!pointer && !television)) {
                     if (television) CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(letterSpacing = 0.sp), content = content)
                     else content()
                 }
