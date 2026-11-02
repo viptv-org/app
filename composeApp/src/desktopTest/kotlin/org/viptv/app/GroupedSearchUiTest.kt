@@ -134,6 +134,45 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aQueryWhereEveryProviderFailedShowsOneFailureLineAndNoProviderBlocks() {
+        val rows = listOf("Movies Search", "Series Search", "People Search Movies", "People Search Series")
+            .map { SearchResultRow(it.lowercase().replace(' ', '-'), it, "stremio", state = "Failed") }
+        val scene = ImageComposeScene(600, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("zzzqx", emptyList(), emptyList(), false, null, false, {}, {},
+                        editQuery = {}, searchRows = rows)
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "This search provider could not respond. Try again." })
+            assertFalse(texts.any { it == "Movies Search" || it == "People Search Series" })
+            assertFalse(texts.any { it == "No matching titles" })
+        } finally { scene.close() }
+    }
+
+    @Test fun providersThatOnlyCameBackEmptyStillSayNoMatchingTitles() {
+        val rows = listOf(SearchResultRow("addon:1", "First provider", "stremio", addon_id = 1, state = "Empty"),
+            SearchResultRow("addon:2", "Second provider", "stremio", addon_id = 2, state = "Empty"))
+        val scene = ImageComposeScene(600, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("zzzqx", emptyList(), emptyList(), false, null, false, {}, {},
+                        editQuery = {}, searchRows = rows)
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it == "First provider" })
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }

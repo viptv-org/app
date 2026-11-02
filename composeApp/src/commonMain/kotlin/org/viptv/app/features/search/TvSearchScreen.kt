@@ -138,8 +138,8 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
 
                     }
                 }
-                if (!busy && term.isNotBlank() && error == null && !hasResults && groups.none { it.message != null }) item {
-                    Text("No matching titles", fontSize = (24 * scale).sp, color = Palette.secondary)
+                if (!busy && term.isNotBlank() && error == null && !hasResults) item {
+                    Text(searchNoResultsCopy(searchRows), fontSize = (24 * scale).sp, color = Palette.secondary)
                 }
             }
         }
