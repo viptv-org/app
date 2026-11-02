@@ -33,11 +33,13 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     paging: Boolean = true,
     playTap: Boolean = false,
     retry: (() -> Unit)? = null,
+    pageError: String? = null,
+    retryPage: (() -> Unit)? = null,
     closeFocusOnOpen: Boolean = true,
     focus: DetailFocus? = null) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, chooseSource = chooseSource, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
-            continuing = continuing, shown = paging, playTap = playTap, retry = retry, focus = focus)
+            continuing = continuing, shown = paging, playTap = playTap, retry = retry, pageError = pageError, retryPage = retryPage, focus = focus)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
@@ -45,8 +47,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         DetailUnavailable(error, back, retry)
         return
     }
-    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging, focus); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save, saved, open, loadPage, continuing, paging, closeFocusOnOpen, focus); return }
+    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
@@ -124,6 +126,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                             }
                         }
                     }
+                }
+                if (!busy && pageError != null) item(key = "page-failure") {
+                    DetailInlineFailure(pageError, retryPage, Modifier.padding(horizontal = gutter, vertical = if (phone) 12.dp else 0.dp))
                 }
             }
         }

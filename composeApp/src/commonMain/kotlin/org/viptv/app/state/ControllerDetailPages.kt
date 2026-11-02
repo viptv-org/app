@@ -17,7 +17,7 @@ fun ApplicationController.detailPage(offset: Long) {
     fun current() = generation == operation && mutable.value.screen == Screen.Details &&
         mutable.value.selectedProfile == profile && mutable.value.home?.scope?.owner() == homeScope &&
         mutable.value.detail?.item?.let(::cardLookupKey) == cardLookupKey(previous.item) && connection === remote && local === device
-    updateState { next -> next.copy(detailLoadingOffset = offset, detailPageError = null) }
+    updateState { next -> next.copy(detailLoadingOffset = offset, detailPageError = null, detailPageRetryOffset = null) }
     detailPagingJob = scope.launch {
         try {
             val page = device?.detailPage(profile, previous.item, offset.toInt(), 96)
@@ -38,7 +38,7 @@ fun ApplicationController.detailPage(offset: Long) {
                 if (error is RemoteFailure && error.status == 401 && device == null) {
                     releaseRemotePlayback(); discardStremioImport(); remote?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                } else updateState { next -> next.copy(detailPageError = "Could not load the remaining episodes. Try selecting the season again.") }
+                } else updateState { next -> next.copy(detailPageError = "Could not load the remaining episodes.", detailPageRetryOffset = offset) }
             }
         } finally {
             if (current() && mutable.value.detailLoadingOffset == offset)
@@ -49,5 +49,10 @@ fun ApplicationController.detailPage(offset: Long) {
 
 internal fun ApplicationController.cancelDetailPaging() {
     detailPagingJob?.cancel(); detailPagingJob = null
-    updateState { next -> next.copy(detailLoadingOffset = null, detailPageError = null) }
+    updateState { next -> next.copy(detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null) }
+}
+
+fun ApplicationController.retryDetailPage() {
+    val offset = mutable.value.detailPageRetryOffset ?: return
+    detailPage(offset)
 }

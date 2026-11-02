@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
@@ -43,7 +44,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     focused: () -> Unit, expanded: Boolean, resume: DetailResume?, returnToHero: () -> Unit,
     seasonIndex: List<org.viptv.engine.wire.EpisodeSeason> = emptyList(), nextCursor: String? = null,
     busy: Boolean = false, loadPage: (Long) -> Unit = {}, focus: ShelfFocusHandle = remember { ShelfFocusHandle() },
-    paging: Boolean = true, detailFocus: DetailFocus? = null) {
+    paging: Boolean = true, detailFocus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null) {
     val groups = remember(episodes, seasonIndex) { detailSeasons(episodes, seasonIndex) }
     val seasons = groups.map { it.number }
     var kept by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf(false) }
@@ -165,10 +166,26 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                             },
                             requester, seasonFocus)
                     }
+                    if (pageError != null) item(key = "page-failure") {
+                        TvEpisodePageFailure(scale, pageError, retryPage)
+                    }
                 }
 
         }
         if (jumpOpen && visible.isNotEmpty()) EpisodeJumpDialog(
             dismiss = { jumpOpen = false; chipRestore++ }, submit = ::jump)
+    }
+}
+
+@Composable
+private fun TvEpisodePageFailure(scale: Float, message: String, retry: (() -> Unit)?) {
+    Column(Modifier.width(448.dp * scale).padding(end = 24.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+        Text(message, color = Palette.danger, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
+            fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        retry?.let { again ->
+            TvAction(Modifier.height(60.dp * scale).width(180.dp * scale), scale, primary = true, activate = again) { tint ->
+                Text("Try again", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
+            }
+        }
     }
 }

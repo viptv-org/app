@@ -25,7 +25,7 @@ internal fun AccountDevice.displayName(): String = name.trim().takeIf { it.isNot
     }
 
 @Composable
-internal fun AccountDeviceRow(device: AccountDevice, busy: Boolean, compact: Boolean, signOut: () -> Unit) {
+internal fun AccountDeviceRow(device: AccountDevice, busy: Boolean, compact: Boolean, canSignOut: Boolean = true, signOut: () -> Unit) {
     val joined = historyDayLabel(device.created_at * 1000L).let { if (it == "Today" || it == "Yesterday") it.lowercase() else it }
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -39,6 +39,6 @@ internal fun AccountDeviceRow(device: AccountDevice, busy: Boolean, compact: Boo
                 fontSize = 13.sp, lineHeight = 18.sp, color = Palette.secondary)
         }
         if (device.current) Text("This device", color = Palette.tertiary, fontSize = 13.sp)
-        else if (device.can_sign_out) AccountSignOutButton("Sign out", busy, compact, signOut)
+        else if (device.can_sign_out && canSignOut) AccountSignOutButton("Sign out", busy, compact, signOut)
     }
 }
