@@ -30,7 +30,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     }
     val deviceLink by controller.deviceLink.collectAsState()
     val devicePlayback = rememberDevicePlaybackState()
-    val watchOnTvState = rememberWatchOnTvState()
+    val watchOnTvState = LocalWatchOnTv.current ?: rememberWatchOnTvState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
     val passwordPage: (@Composable (() -> Unit) -> Unit)? = remote?.takeIf { state.passwordChangeAvailable }?.let { connection ->
