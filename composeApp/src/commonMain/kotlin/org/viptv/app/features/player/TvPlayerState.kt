@@ -58,7 +58,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> {
-                buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
+                buffering = fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
                 if (!ended) endHandled = false
             }
