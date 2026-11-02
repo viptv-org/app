@@ -199,7 +199,8 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
 @Composable
 internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
     retry: () -> Unit, configure: (SourceIntegrationSchema) -> Unit, remove: (SourceIntegrationSchema) -> Unit,
-    scale: Float, first: FocusRequester? = null, left: FocusRequester? = null, profileName: String? = null) {
+    scale: Float, first: FocusRequester? = null, left: FocusRequester? = null, profileName: String? = null,
+    canManage: Boolean = true) {
     Text("Source integrations", fontSize = (40 * scale).sp, letterSpacing = (-0.8f * scale).sp, fontWeight = FontWeight.Bold)
     Spacer(Modifier.height(34.dp * scale))
     if (error != null) {
@@ -223,7 +224,7 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
                 alpha = if (available) 1f else 0.55f,
                 requester = if (index == 0) first else null, left = left,
                 configure = { configure(schema) },
-                remove = if (configured) ({ remove(schema) }) else null)
+                remove = if (configured) ({ remove(schema) }) else null, canManage = canManage)
         }
     }
     Spacer(Modifier.height(28.dp * scale))
@@ -233,7 +234,8 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
 
 @Composable
 private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Float, enabled: Boolean, alpha: Float,
-    requester: FocusRequester?, left: FocusRequester? = null, configure: () -> Unit, remove: (() -> Unit)?) {
+    requester: FocusRequester?, left: FocusRequester? = null, configure: () -> Unit, remove: (() -> Unit)?,
+    canManage: Boolean = true) {
     val configured = schema.connection_id != null
     val available = schema.runtime_enabled
     val ready = available && schema.state == "Ready"
@@ -287,7 +289,7 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
                     else -> Palette.tertiary
                 })
         }
-        if (available) {
+        if (available && canManage) {
             Row(Modifier.align(Alignment.BottomEnd).padding(end = 28.dp * scale, bottom = 16.dp * scale),
                 horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 if (configured) {

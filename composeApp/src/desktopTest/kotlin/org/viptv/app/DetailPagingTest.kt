@@ -73,4 +73,36 @@ class DetailPagingTest {
             assertNull(controller.state.value.detailLoadingOffset)
         } finally { remote.close() }
     }
+
+    @Test fun failedPageKeepsLoadedEpisodesAndRetryReRequestsOnlyThatPage() = runBlocking {
+        var pageTwoRequests = 0
+        val client = HttpClient(MockEngine {
+            assertEquals("96", it.url.parameters["limit"])
+            if (pageTwoRequests == 0) {
+                pageTwoRequests++
+                respond("""{"error":"Metadata identity changed. Select this title again."}""",
+                    HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+            } else {
+                respond(Json.encodeToString(snapshot((25L..48L).map(::episode)).copy(next_cursor = null)),
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "owner",
+            detail = snapshot((1L..24L).map(::episode)).copy(next_cursor = "24"))
+        try {
+            controller.detailPage(24); controller.detailPagingJob!!.join()
+            assertEquals(24, controller.state.value.detail!!.episodes.size)
+            assertEquals("Could not load the remaining episodes.", controller.state.value.detailPageError)
+            assertEquals(24L, controller.state.value.detailPageRetryOffset)
+
+            controller.retryDetailPage(); controller.detailPagingJob!!.join()
+            assertEquals(48, controller.state.value.detail!!.episodes.size)
+            assertNull(controller.state.value.detailPageError)
+            assertNull(controller.state.value.detailPageRetryOffset)
+            assertNull(controller.state.value.detailLoadingOffset)
+        } finally { remote.close() }
+    }
 }

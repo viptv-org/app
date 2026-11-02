@@ -46,11 +46,12 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
         val gap = (if (television) 28 else 8).dp * scale
         val unit = (maxWidth - channelWidth - gap + if (television) 4.dp * scale else 0.dp) / span
         val firstChannel = channels.firstOrNull()
-        val initialProgram = firstChannel?.initialProgram(start, span, now)
         val rowHeight = if (television) 72.dp * scale else 56.dp
         val headerHeight = (if (television) 44 else 34).dp * scale
         val spacing = (if (television) 8 else 6).dp * scale
         val programGap = if (television) 8.dp * scale else gap / 2
+        val minimumMinutes = liveGuideMinimumMinutes(television, scale, unit, programGap)
+        val initialProgram = firstChannel?.let { liveGuideSlots(it.programs, start, span, minimumMinutes).initial(now) }?.program
         Column {
             Row(Modifier.fillMaxWidth().height(headerHeight)) {
                 Spacer(Modifier.width(channelWidth + gap))
@@ -65,7 +66,8 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                 itemsIndexed(channels, key = { _, channel -> channel.key() }) { index, channel ->
                     val key = channel.key()
                     val row = anchored == index
-                    val initial = channel.initialProgram(start, span, now)
+                    val slots = liveGuideSlots(channel.programs, start, span, minimumMinutes)
+                    val initial = slots.initial(now)
                     Row(horizontalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.listItemEntrance(index, entrance.animate)) {
                         if (television) TvLiveChannelLabel(channel, scale,
                             if (channel == firstChannel && initialProgram == null) first else null,
@@ -81,19 +83,15 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                             Text(channel.card.title, fontSize = (if (television) 26 * scale else 14f).sp, fontWeight = FontWeight.Bold)
                         }
                         Box(Modifier.weight(1f).height(rowHeight).clipToBounds()) {
-                            channel.programs.forEach { program ->
-                                val begin = maxOf(start, program.start)
-                                val end = minOf(start + span, program.end)
-                                if (end > begin) {
-                                    key(program.id) {
-                                        LiveProgramCell(program, now, start, television, scale,
-                                            Modifier.offset(x = unit * (begin - start)).width((unit * (end - begin) - programGap).coerceAtLeast(1.dp)).fillMaxHeight()
-                                                .then(if (first != null && channel == firstChannel && program == initialProgram) Modifier.focusRequester(first) else Modifier)
-                                                .focusProperties { if (up != null && channel == firstChannel) this.up = up }
-                                                .pageAnchor(restore, key, index, row && program == initial),
-                                            { restore.mark(key, index); select(channel, program) },
-                                            { restore.mark(key, index); if (television) watch(channel) else select(channel, program) })
-                                    }
+                            slots.forEach { slot ->
+                                key(slot.program.id) {
+                                    LiveProgramCell(slot.program, now, start, television, scale,
+                                        Modifier.offset(x = unit * (slot.begin - start)).width((unit * (slot.end - slot.begin) - programGap).coerceAtLeast(1.dp)).fillMaxHeight()
+                                            .then(if (first != null && channel == firstChannel && slot.program == initialProgram) Modifier.focusRequester(first) else Modifier)
+                                            .focusProperties { if (up != null && channel == firstChannel) this.up = up }
+                                            .pageAnchor(restore, key, index, row && slot.program == initial?.program),
+                                        { restore.mark(key, index); select(channel, slot.program) },
+                                        { restore.mark(key, index); if (television) watch(channel) else select(channel, slot.program) })
                                 }
                             }
                         }
