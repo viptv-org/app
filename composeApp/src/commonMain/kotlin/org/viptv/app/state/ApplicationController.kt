@@ -97,6 +97,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var freshnessWatcher: Job? = null
     internal var addonOperation: Job? = null
     internal var crashReportChecked = false
+    internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
 
     internal fun run(operation: suspend () -> Unit) {
         detailPagingJob?.cancel(); detailPagingJob = null

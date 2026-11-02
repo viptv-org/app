@@ -149,9 +149,9 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
 
     override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray = fetchLocalSubtitleContent(id, input)
 
-    override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources = withContext(Dispatchers.IO) {
-        val response = json.parseToJsonElement(engine.rankSourcesForDevice(profile, json.encodeToString(sources),
-            deviceMaxHeight?.takeIf { it in 144..4320 }?.toUInt())).jsonObject
+    override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources = withContext(Dispatchers.IO) {
+        val response = json.parseToJsonElement(engine.rankSourcesWithContext(profile, json.encodeToString(sources),
+            rankingContextJson(context).toString())).jsonObject
         rankedSourcesResponse(response, sources)
     }
     override suspend fun openSource(id: String): PlaybackInput = fetchLocalOpenSource(id)

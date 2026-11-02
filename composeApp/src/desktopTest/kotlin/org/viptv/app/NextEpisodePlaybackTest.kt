@@ -29,7 +29,7 @@ class NextEpisodePlaybackTest {
             return SourcesOutcome(rows)
         }
 
-        override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources {
+        override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources {
             val ranked = sources.sortedByDescending { it.quality_height }
             return RankedSources(ranked, interimSourceGroups(ranked), bestMatchFullyMatches = true)
         }

@@ -121,10 +121,14 @@ class ReleaseFactsTest {
 
     @Test fun rankingRequestSendsTheDeviceHeightOnlyWhenKnown() = runBlocking {
         val candidates = listOf(SourceCandidate("a", "p", "A"), SourceCandidate("b", "p", "B"))
-        assertEquals(buildJsonObject { put("ids", JsonArray(listOf(JsonPrimitive("a"), JsonPrimitive("b")))); put("device_max_height", 1080) },
-            sourceRankingRequest(candidates, 1080))
-        assertFalse("device_max_height" in sourceRankingRequest(candidates, null))
-        assertFalse("device_max_height" in sourceRankingRequest(candidates, 100))
+        val heights = RankingContext(device = DeviceCapability(maxHeight = 1080))
+        assertEquals(buildJsonObject {
+            put("ids", JsonArray(listOf(JsonPrimitive("a"), JsonPrimitive("b"))))
+            put("device_max_height", 1080)
+            put("device", buildJsonObject { put("max_height", 1080) })
+        }, sourceRankingRequest(candidates, heights))
+        assertFalse("device_max_height" in sourceRankingRequest(candidates, RankingContext()))
+        assertFalse("device_max_height" in sourceRankingRequest(candidates, RankingContext(device = DeviceCapability(maxHeight = 100))))
         val bodies = mutableListOf<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/profiles/7/source-ranking", request.url.encodedPath)
@@ -133,10 +137,11 @@ class ReleaseFactsTest {
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         try {
-            assertEquals(listOf("b", "a"), remote.rankSources("7", candidates, 2160).rows.map { it.id })
-            remote.rankSources("7", candidates, null)
+            assertEquals(listOf("b", "a"), remote.rankSources("7", candidates, RankingContext(device = DeviceCapability(maxHeight = 2160))).rows.map { it.id })
+            remote.rankSources("7", candidates)
         } finally { remote.close() }
         assertEquals(2160, bodies[0].getValue("device_max_height").jsonPrimitive.int)
         assertFalse("device_max_height" in bodies[1])
+        assertFalse("device" in bodies[1])
     }
 }

@@ -25,10 +25,10 @@ internal fun SourceCandidate.failsHardFilter(): Boolean = release_type == "cam" 
 internal fun interimSourceGroups(ranked: List<SourceCandidate>, bestMatchId: String? = ranked.firstOrNull()?.id): SourceGroups =
     SourceGroups.of(ranked.takeWhile { !it.failsHardFilter() }.take(SourceGroups.LIMIT).map { it.id }, bestMatchId)
 
-suspend fun RemoteConnection.rankSources(profile: String, candidates: List<SourceCandidate>, deviceMaxHeight: Int? = null): RankedSources {
+suspend fun RemoteConnection.rankSources(profile: String, candidates: List<SourceCandidate>, context: RankingContext = RankingContext()): RankedSources {
     if (candidates.isEmpty()) return RankedSources(emptyList())
     val response = call("/api/profiles/${profile.encodeURLPathPart()}/source-ranking", HttpMethod.Post,
-        sourceRankingRequest(candidates, deviceMaxHeight)).jsonObject
+        sourceRankingRequest(candidates, context)).jsonObject
     return rankedSourcesResponse(response, candidates)
 }
 
@@ -48,7 +48,9 @@ internal fun rankedSourcesResponse(response: JsonObject, candidates: List<Source
     return RankedSources(ranked, groups, bestMatchFullyMatches)
 }
 
-internal fun sourceRankingRequest(candidates: List<SourceCandidate>, deviceMaxHeight: Int?): JsonObject = buildJsonObject {
+internal fun sourceRankingRequest(candidates: List<SourceCandidate>, context: RankingContext): JsonObject = buildJsonObject {
     put("ids", JsonArray(candidates.map { JsonPrimitive(it.id) }))
-    deviceMaxHeight?.takeIf { it in 144..4320 }?.let { put("device_max_height", it) }
+    wireHeight(context.device.maxHeight)?.let { put("device_max_height", it) }
+    deviceCapabilityJson(context.device)?.let { put("device", it) }
+    context.seriesMemory?.let(::seriesMemoryJson)?.let { put("series_memory", it) }
 }
