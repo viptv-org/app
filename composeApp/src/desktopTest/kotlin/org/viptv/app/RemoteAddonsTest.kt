@@ -85,8 +85,9 @@ class RemoteAddonsTest {
             }
         }) { configureTransport() }
         val connection = RemoteConnection("https://watch.example", MemoryStore(), client, browserMode = false)
-        val inventory = connection.addons("12").addons.associate { it.id to it.logo }
-        assertEquals(mapOf("addon:1" to "/api/addons/1/logo?v=ab12", "addon:2" to null, "addon:3" to null, "addon:4" to null), inventory)
+        val result = connection.addons("12")
+        assertEquals(listOf("addon:1", "addon:2", "addon:3", "addon:4"), result.addons.map { it.id })
+        assertEquals(mapOf("addon:1" to "/api/addons/1/logo?v=ab12"), result.logos)
         assertContentEquals(png, connection.addonLogo("/api/addons/1/logo?v=ab12"))
         assertEquals(listOf("/api/addons/1/logo?v=ab12"), requested)
         assertFailsWith<RemoteFailure> { connection.addonLogo("/api/profiles/12/integrations") }

@@ -113,6 +113,7 @@ data class ApplicationState(
     val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(),
     val browsingConfiguration: BrowsingConfiguration? = null,
     val addons: List<IntegrationConnection> = emptyList(),
+    val addonLogos: Map<String, String> = emptyMap(),
     val preferences: PreferencesSnapshot? = null,
     val preferencesError: String? = null,
     val sourceIntegrations: SourceIntegrationSnapshot = SourceIntegrationSnapshot(),

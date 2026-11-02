@@ -43,7 +43,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     tvDevices: (@Composable (FocusRequester, FocusRequester, Float, () -> Unit) -> Unit)? = null,
     xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
-    addonsManageable: Boolean = true) {
+    addonsManageable: Boolean = true,
+    addonLogos: Map<String, String> = emptyMap()) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
     var choice by remember { mutableStateOf<TvSettingsChoice?>(null) }
@@ -107,7 +108,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             // Add-ons and the approved-titles page own a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
-                    { installing = true }, placeholderQr, manage = addonsManageable)
+                    { installing = true }, placeholderQr, manage = addonsManageable, logos = addonLogos)
             }
             else if (section == TvSettingsSection.Parental && parental != null && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 parental(first, sidebar, scale)
