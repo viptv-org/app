@@ -13,10 +13,13 @@ data class AccountDevice(val id: String, val name: String, val kind: String, val
 data class AccountDevices(val account: AccountIdentity, val devices: List<AccountDevice>, val can_sign_out_all: Boolean)
 
 private val accountCodec = Json { ignoreUnknownKeys = true }
+internal val RemoteFailure.deviceListUnavailable: Boolean get() = status == 403 || status == 404
 internal suspend fun RemoteConnection.accountDevices(): AccountDevices {
     return try { accountCodec.decodeFromJsonElement<AccountDevices>(call("/api/account/devices")) }
     catch (failure: RemoteFailure) {
-        if (failure.status == 404) throw RemoteFailure(404, "Update the server to manage devices here.")
+        if (failure.status == 403)
+            throw RemoteFailure(403, "Manage this from a signed-in phone, computer or the web dashboard.", failure.code, failure.body)
+        if (failure.status == 404) throw RemoteFailure(404, "Update the server to manage devices here.", failure.code, failure.body)
         throw failure
     }
 }

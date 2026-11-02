@@ -34,7 +34,9 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
             LiveBadge(Modifier.padding(12.dp))
             Column(Modifier.align(Alignment.BottomStart).padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = 12.sp, color = Palette.secondary)
-                Text(program?.title ?: channel.card.subtitle ?: channel.card.title, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                (program?.title ?: channel.card.subtitle)?.let {
+                    Text(it, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
                 if (program != null && now != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     LinearProgressIndicator(progress = { liveProgress(program, now) }, modifier = Modifier.width(90.dp).height(3.dp),
                         color = Palette.text, trackColor = Palette.raised)

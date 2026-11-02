@@ -30,7 +30,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvAccountDevices(snapshot: AccountDevices?, busy: Boolean, error: String?, load: () -> Unit,
-    scale: Float, first: FocusRequester, sidebar: FocusRequester, back: () -> Unit) {
+    scale: Float, first: FocusRequester, sidebar: FocusRequester, back: () -> Unit, retryable: Boolean = true) {
     LaunchedEffect(Unit) { load() }
     Column(Modifier.fillMaxSize().onPreviewKeyEvent {
         if (it.type == KeyEventType.KeyDown && (it.key == Key.Back || it.key == Key.Escape)) { back(); true } else false
@@ -50,7 +50,7 @@ internal fun TvAccountDevices(snapshot: AccountDevices?, busy: Boolean, error: S
             fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp)
         if (error != null) Text(error, Modifier.padding(top = 4.dp * scale), color = Palette.danger,
             fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp)
-        if (error != null || snapshot == null && !busy) {
+        if (retryable && (error != null || snapshot == null && !busy)) {
             TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale, ring = false, left = sidebar,
                 requester = if (devices.isEmpty()) first else null, enabled = !busy, keepFocus = true, activate = load) { tint ->
                 Text("Retry", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)

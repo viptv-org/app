@@ -28,25 +28,27 @@ class AccountCapabilityTest {
     }
 
     private class Server(private val capabilities: String?, private val accountRole: String,
-        private val sessionRole: String, browser: Boolean) : AutoCloseable {
+        private val sessionRole: String, browser: Boolean,
+        private val devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture) : AutoCloseable {
         val paths = mutableListOf<String>()
+        private val json = headersOf(HttpHeaders.ContentType, "application/json")
         private val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
             paths += path
-            val body = when (path) {
-                "/api/auth/me" -> """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"$accountRole"},"role":"$sessionRole"""" +
-                    (capabilities?.let { ""","capabilities":$it""" } ?: "") + "}"
-                "/api/account/devices" -> accountFixture
-                else -> "{}"
+            when (path) {
+                "/api/auth/me" -> respond("""{"account":{"id":"1","username":"viewer","name":"Viewer","role":"$accountRole"},"role":"$sessionRole"""" +
+                    (capabilities?.let { ""","capabilities":$it""" } ?: "") + "}", headers = json)
+                "/api/account/devices" -> respond(devices.second, devices.first, headers = json)
+                else -> respond("{}", headers = json)
             }
-            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = browser)
         override fun close() = remote.close()
     }
 
-    private class Host(capabilities: String?, accountRole: String = "owner", sessionRole: String = accountRole) : AutoCloseable {
-        val server = Server(capabilities, accountRole, sessionRole, browser = false)
+    private class Host(capabilities: String?, accountRole: String = "owner", sessionRole: String = accountRole,
+        devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture) : AutoCloseable {
+        val server = Server(capabilities, accountRole, sessionRole, browser = false, devices)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession).also {
             it.connection = server.remote
@@ -116,15 +118,39 @@ class AccountCapabilityTest {
         }
     }
 
-    @Test fun aPairedTelevisionReadsDevicesWithoutOwnerOrSelfServiceRows() {
+    @Test fun aPairedTelevisionCannotReadTheDeviceListSoTheRowIsAbsent() {
         Host("""{"manage_account":false}""", accountRole = "owner", sessionRole = "device").use { ui ->
             ui.render()
             ui.waitFor { ui.server.paths.contains("/api/auth/me") }
             ui.render()
-            assertTrue(ui.shows("Devices & sessions"), "A paired television still reads the devices list")
+            assertFalse(ui.shows("Devices & sessions"), "GET /account/devices answers account_session_required to a device session")
             assertFalse(ui.shows("Household PIN"))
             assertFalse(ui.shows("Delete account"), "Only an account session gets the self-service delete row")
-            assertFalse(ui.server.paths.contains("/api/account/devices"), "The list loads on demand, not at the door")
+            assertFalse(ui.server.paths.contains("/api/account/devices"), "The refused page is never opened")
+        }
+    }
+
+    @Test fun aRefusedDeviceListSaysWhereToManageDevicesWithoutARetry() {
+        Host("""{"manage_account":false}""", accountRole = "member", sessionRole = "member",
+            devices = HttpStatusCode.Forbidden to """{"error":"Account session required","error_code":"account_session_required"}""").use { ui ->
+            ui.render()
+            ui.waitFor { ui.shows("Devices & sessions") }
+            ui.click("Devices & sessions")
+            ui.waitFor { ui.shows("Manage this from a signed-in phone, computer or the web dashboard.") }
+            ui.render()
+            assertFalse(ui.shows("Retry"), "A refusal can never succeed")
+        }
+    }
+
+    @Test fun aServerWithoutTheDeviceListKeepsItsReasonWithoutARetry() {
+        Host("""{"manage_account":false}""", accountRole = "member", sessionRole = "member",
+            devices = HttpStatusCode.NotFound to "{}").use { ui ->
+            ui.render()
+            ui.waitFor { ui.shows("Devices & sessions") }
+            ui.click("Devices & sessions")
+            ui.waitFor { ui.shows("Update the server to manage devices here.") }
+            ui.render()
+            assertFalse(ui.shows("Retry"), "A server without the route cannot answer a retry")
         }
     }
 
@@ -163,7 +189,7 @@ class AccountCapabilityTest {
         } finally { remote.close() }
     }
 
-    @Test fun aPairedTelevisionSessionReadsDevicesButCannotDispatchSignOut(): Unit = runBlocking {
+    @Test fun aPairedTelevisionSessionCannotDispatchADeviceSignOut(): Unit = runBlocking {
         Server("""{"manage_account":false}""", "owner", "device", browser = false).use { server ->
             server.remote.accountIdentity()
             assertFalse(server.remote.accountManagementEnabled)

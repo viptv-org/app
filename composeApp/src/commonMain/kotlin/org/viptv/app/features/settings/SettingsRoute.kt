@@ -125,9 +125,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             else ProfilePreferencesSettings(section, state.preferences, state.busy, state.preferencesError ?: state.error,
                 controller::refreshPreferences, controller::updatePreferences, devicePlayback)
         },
-        devices = if (!state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
+        devices = if (!state.localMode && accountSession) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null,
-            canSignOut = ownerWrites) }) else null,
+            canSignOut = ownerWrites, retryable = state.devicesRetryable) }) else null,
         addDevice = { compact, changeConnection -> AddDeviceScreen(controller.connection.takeUnless { state.localMode }, compact,
             deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode, changeConnection) },
         addonsManageable = ownerWrites,
@@ -166,8 +166,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
         tvParentalPinAvailable = state.localMode,
-        tvDevices = if (!state.localMode) ({ first, sidebar, scale, back ->
-            TvAccountDevices(state.accountDevices, state.busy, state.error, controller::refreshAccountDevices, scale, first, sidebar, back)
+        tvDevices = if (!state.localMode && accountSession) ({ first, sidebar, scale, back ->
+            TvAccountDevices(state.accountDevices, state.busy, state.error, controller::refreshAccountDevices, scale, first, sidebar, back,
+                retryable = state.devicesRetryable)
         }) else null,
         returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback,
         watchOnTvValue = watchOnTvValue(watchOnTvState.value),

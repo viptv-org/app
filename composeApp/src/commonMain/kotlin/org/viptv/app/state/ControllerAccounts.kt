@@ -12,7 +12,7 @@ fun ApplicationController.refreshAccountAccess() {
     scope.launch {
         try { loadAccountIdentity() }
         catch (error: CancellationException) { throw error }
-        catch (failure: RemoteFailure) { if (failure.status == 401) expireSession(remote, null) }
+        catch (failure: RemoteFailure) { if (failure.sessionExpired) expireSession(remote, null) }
         catch (_: Exception) { }
     }
 }
