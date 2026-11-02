@@ -15,8 +15,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
@@ -40,12 +38,7 @@ fun ProfilesScreen(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(28.dp), contentPadding = PaddingValues(24.dp)) {
             items(profiles, key = { it.id }) { profile ->
                 Column(Modifier.pointerClickable(enabled = !busy) { if (managing) edit(profile.id) else select(profile.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(Modifier.size(112.dp).clip(RoundedCornerShape(16.dp)), color = Palette.raised) {
-                        Box(contentAlignment = Alignment.Center) {
-                            if (profile.avatar != null) AsyncImage(profile.avatar, profile.name, Modifier.fillMaxSize())
-                            else Text(profile.name.take(1), fontSize = 40.sp)
-                        }
-                    }
+                    ProfileAvatar(profile, 112.dp, 16.dp)
                     Spacer(Modifier.height(14.dp)); Text(profile.name, color = Palette.secondary)
                     if (profile.locked && !managing) Text("Locked", style = MaterialTheme.typography.labelSmall)
                 }
