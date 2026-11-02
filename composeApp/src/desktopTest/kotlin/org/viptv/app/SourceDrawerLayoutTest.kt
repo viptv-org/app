@@ -63,6 +63,12 @@ class SourceDrawerLayoutTest {
         }
     }
 
+    @Test fun theWebDrawerShowsItsOpeningStatus() {
+        render(1440, 900, busy = true) { nodes ->
+            assertTrue(texts(nodes).any { it.contains("Opening stream…") }, texts(nodes).toString())
+        }
+    }
+
     @Test fun theDrawerWidthFollowsTheWindow() {
         assertEquals(720.dp, sourceDrawerWidth(1440.dp))
         assertEquals(720.dp, sourceDrawerWidth(2560.dp))

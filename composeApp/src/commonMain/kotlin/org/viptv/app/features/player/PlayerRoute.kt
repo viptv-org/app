@@ -36,7 +36,8 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
         trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
-        autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion())
+        autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion(),
+        openingSource = state.openingSource)
 }
 
 internal fun playerEpisodes(current: Card?, loaded: List<Card>): List<Card> {
