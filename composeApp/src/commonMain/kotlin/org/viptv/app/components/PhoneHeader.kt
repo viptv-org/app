@@ -32,3 +32,11 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
         }
     }
 }
+
+@Composable
+internal fun TabletHeader() {
+    val remote = LocalHeaderRemote.current ?: return
+    Row(Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 40.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+        remote()
+    }
+}
