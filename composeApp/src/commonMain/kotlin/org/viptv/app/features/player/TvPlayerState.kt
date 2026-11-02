@@ -11,6 +11,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     val commands = MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16)
     var position by mutableLongStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: 0)
     var duration by mutableStateOf<Long?>(input?.durationMillis)
+    var buffered by mutableStateOf(emptyList<BufferedRange>())
     var tracks by mutableStateOf(PlaybackTracks())
     var subtitleSize by mutableFloatStateOf(1f)
     var buffering by mutableStateOf(input != null || scene == TvPlayerScene.Buffer)
@@ -56,6 +57,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
                 }
             }
             is PlayerFact.Tracks -> tracks = fact.options
+            is PlayerFact.Buffered -> buffered = fact.ranges
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> {
                 buffering = fact.name in listOf("Opening", "Buffering", "Preparing")

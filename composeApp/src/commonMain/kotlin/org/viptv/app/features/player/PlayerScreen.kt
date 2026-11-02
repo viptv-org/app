@@ -55,6 +55,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
     var position by remember(playbackKey) { mutableStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: preview?.positionMillis ?: 0) }
     var duration by remember(playbackKey) { mutableStateOf(input?.durationMillis ?: preview?.durationMillis) }
+    var buffered by remember(playbackKey) { mutableStateOf(emptyList<BufferedRange>()) }
     var tracks by remember(playbackKey) { mutableStateOf(PlaybackTracks()) }
     var seekTarget by remember(playbackKey) { mutableStateOf<Long?>(null) }
     var seekMark by remember(playbackKey) { mutableStateOf(kotlin.time.TimeSource.Monotonic.markNow()) }
@@ -158,6 +159,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         when (fact) {
             is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
             is PlayerFact.Tracks -> tracks = fact.options
+            is PlayerFact.Buffered -> buffered = fact.ranges
             is PlayerFact.Progress -> {
                 duration = fact.durationMillis ?: duration
                 if (seekTarget == null || kotlin.math.abs(fact.positionMillis - seekTarget!!) <= 1500 || seekMark.elapsedNow().inWholeSeconds >= 10) {
@@ -213,7 +215,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)).padding(horizontal = 24.dp, vertical = 12.dp)) {
                         if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
                             Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
+                        } else PlaybackTimeline(position, duration, ::seek, remaining = phone, buffered = buffered)
                         if (phone) {
                             if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
                                 color = Palette.secondary, fontSize = 12.sp)

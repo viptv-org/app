@@ -35,6 +35,7 @@ internal fun BoxScope.TvPlaybackTimeline(state: TvPlayerState, extras: TvPlaybac
                 Box(Modifier.size(28.dp * scale).background(ColorWhite, CircleShape))
             } },
             track = { BoxWithConstraints(Modifier.fillMaxWidth().height(6.dp * scale).clip(RoundedCornerShape(3.dp * scale)).background(ColorWhite.copy(alpha = .22f))) {
+                BufferedSegments(bufferedFractions(state.buffered, length), ColorWhite.copy(alpha = .5f))
                 Box(Modifier.fillMaxWidth(actual).fillMaxHeight().background(Palette.accent))
                 if (state.scrub != null) Box(Modifier.offset(x = maxWidth * minOf(actual, current))
                     .fillMaxWidth(kotlin.math.abs(current - actual)).fillMaxHeight().background(ColorWhite.copy(alpha = .55f)))

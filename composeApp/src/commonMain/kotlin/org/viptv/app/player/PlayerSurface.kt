@@ -44,12 +44,17 @@ sealed interface PlayerFact {
     // Exactness refers to this stated renderer proof, never physical scanout.
     data class Presentation(val proof: PresentationProof, val atNanos: Long? = null, val exact: Boolean = false) : PlayerFact
     data class Progress(val positionMillis: Long, val durationMillis: Long?) : PlayerFact
+    // What the renderer actually holds, in title coordinates. A renderer that cannot tell sends nothing.
+    data class Buffered(val ranges: List<BufferedRange>) : PlayerFact
     data class Status(val name: String) : PlayerFact
     data class Properties(val volume: Float, val speed: Double, val subtitleSize: Float = 1f) : PlayerFact
     data class Tracks(val options: PlaybackTracks) : PlayerFact
     data object Failed : PlayerFact
     data object ControlFailed : PlayerFact
 }
+
+// Milliseconds on the title clock; ranges stay separate so a seek that leaves a gap keeps it.
+data class BufferedRange(val startMillis: Long, val endMillis: Long)
 
 enum class PresentationProof { BrowserCompositorPresented, AndroidWindowGpuCompleted, AndroidSoftwareDrawCompleted, DesktopDrawCompleted, NativeRendererPresented }
 

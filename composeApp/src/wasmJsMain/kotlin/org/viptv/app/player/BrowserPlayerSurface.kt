@@ -53,15 +53,24 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
         lifetime.active = true
         var disposed = false
         var removeHlsErrors: (() -> Unit)? = null
+        var reportedBuffered: List<BufferedRange>? = null
+        fun reportBuffered() {
+            if (disposed) return
+            val ranges = browserBufferedRanges(video)
+            if (ranges != reportedBuffered) { reportedBuffered = ranges; latestObserve(input.mediaBuffered(ranges)) }
+        }
         observeBrowserFrame(video) { if (!disposed) {
             latestObserve(input.mediaProgress((video.currentTime * 1000).toLong(), video.duration.takeIf { it.isFinite() }?.let { (it * 1000).toLong() }))
+            reportBuffered()
             latestObserve(PlayerFact.Presentation(PresentationProof.BrowserCompositorPresented))
         } }
         video.onloadedmetadata = {
             if (!input.live) video.currentTime = input.positionMillis / 1000.0
             latestObserve(input.mediaProgress((video.currentTime * 1000).toLong(), video.duration.takeIf { it.isFinite() }?.let { (it * 1000).toLong() }))
+            reportBuffered()
             null
         }
+        video.onprogress = { reportBuffered(); null }
         video.onplay = { latestObserve(PlayerFact.Status("Playing")); null }
         video.onpause = { latestObserve(PlayerFact.Status("Paused")); null }
         video.onwaiting = { latestObserve(PlayerFact.Status("Buffering")); null }
@@ -97,6 +106,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             blobs.forEach(::revokeSubtitleBlob)
             blobs.clear(); tracks.clear()
             video.onloadedmetadata = null; video.ontimeupdate = null; video.onerror = null; video.onended = null
+            video.onprogress = null
             video.onplay = null; video.onpause = null; video.onwaiting = null; video.oncanplay = null
             removeHlsErrors?.invoke(); removeHlsErrors = null
             hlsController?.destroy(); hlsController = null
