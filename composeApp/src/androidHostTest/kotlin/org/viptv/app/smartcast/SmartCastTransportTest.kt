@@ -1,18 +1,15 @@
 package org.viptv.app.smartcast
 
 import java.io.IOException
-import java.net.URI
-import java.security.KeyStore
-import java.security.PrivateKey
 import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLServerSocket
 import javax.net.ssl.SSLSocket
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,8 +39,7 @@ class SmartCastTransportTest {
     }
 
     @Test fun acceptsASelfSignedTvAndCapturesItsFingerprint() = runBlocking {
-        val (key, cert) = load("/smartcast-tv-a.p12")
-        FakeVizioTv(key, cert).use { tv ->
+        FakeVizioTv(selfSignedTv()).use { tv ->
             val transport = SmartCastTransport(tv.origin)
             val response = transport.execute(request("${tv.origin}/state/device/deviceinfo"))
             assertEquals(200, response.status)
@@ -52,25 +48,22 @@ class SmartCastTransportTest {
     }
 
     @Test fun aPinnedCertificateIsTrusted() = runBlocking {
-        val (key, cert) = load("/smartcast-tv-a.p12")
-        FakeVizioTv(key, cert).use { tv ->
+        FakeVizioTv(selfSignedTv()).use { tv ->
             val transport = SmartCastTransport(tv.origin, tv.fingerprint)
             assertEquals(200, transport.execute(request("${tv.origin}/state/device/deviceinfo")).status)
         }
     }
 
     @Test fun aDifferentCertificateOnTheSameHostIsRejected() = runBlocking {
-        val (key, certA) = load("/smartcast-tv-a.p12")
-        val (_, certB) = load("/smartcast-tv-b.p12")
-        FakeVizioTv(key, certA).use { tv ->
-            val transport = SmartCastTransport(tv.origin, certificateFingerprint(certB))
+        val wrongPin = certificateFingerprint(selfSignedTv().certificate)
+        FakeVizioTv(selfSignedTv()).use { tv ->
+            val transport = SmartCastTransport(tv.origin, wrongPin)
             assertTrue(expectError { transport.execute(request("${tv.origin}/state/device/deviceinfo")) } is IOException)
         }
     }
 
     @Test fun roundTripsMethodHeadersAndBody() = runBlocking {
-        val (key, cert) = load("/smartcast-tv-a.p12")
-        FakeVizioTv(key, cert).use { tv ->
+        FakeVizioTv(selfSignedTv()).use { tv ->
             tv.status = 200
             tv.body = """{"ok":true}"""
             val transport = SmartCastTransport(tv.origin, tv.fingerprint)
@@ -91,8 +84,7 @@ class SmartCastTransportTest {
     }
 
     @Test fun rejectsRedirects() = runBlocking {
-        val (key, cert) = load("/smartcast-tv-a.p12")
-        FakeVizioTv(key, cert).use { tv ->
+        FakeVizioTv(selfSignedTv()).use { tv ->
             tv.status = 302
             tv.headers = mapOf("Location" to "https://evil.example/")
             val transport = SmartCastTransport(tv.origin, tv.fingerprint)
@@ -101,8 +93,7 @@ class SmartCastTransportTest {
     }
 
     @Test fun enforcesTheResponseSizeLimit() = runBlocking {
-        val (key, cert) = load("/smartcast-tv-a.p12")
-        FakeVizioTv(key, cert).use { tv ->
+        FakeVizioTv(selfSignedTv()).use { tv ->
             tv.body = "a".repeat(64)
             val transport = SmartCastTransport(tv.origin, tv.fingerprint)
             val error = expectError {
@@ -120,16 +111,12 @@ class SmartCastTransportTest {
             error
         }
 
-    private fun load(resource: String): Pair<PrivateKey, X509Certificate> {
-        val keyStore = KeyStore.getInstance("PKCS12")
-        SmartCastTransportTest::class.java.getResourceAsStream(resource)!!.use { keyStore.load(it, PASSWORD.toCharArray()) }
-        val key = keyStore.getKey("server", PASSWORD.toCharArray()) as PrivateKey
-        val cert = keyStore.getCertificate("server") as X509Certificate
-        return key to cert
-    }
+    private fun selfSignedTv(): HeldCertificate = HeldCertificate.Builder()
+        .addSubjectAlternativeName("localhost")
+        .build()
 
-    private class FakeVizioTv(private val key: PrivateKey, private val cert: X509Certificate) : AutoCloseable {
-        val fingerprint = certificateFingerprint(cert)
+    private class FakeVizioTv(private val held: HeldCertificate) : AutoCloseable {
+        val fingerprint = certificateFingerprint(held.certificate)
         val origin: String
 
         @Volatile var requestLine: String? = null
@@ -143,13 +130,10 @@ class SmartCastTransportTest {
         private val thread: Thread
 
         init {
-            val keyStore = KeyStore.getInstance("PKCS12").apply {
-                load(null, null)
-                setKeyEntry("server", key, PASSWORD.toCharArray(), arrayOf(cert))
+            val serverCertificates = HandshakeCertificates.Builder().heldCertificate(held).build()
+            val sslContext = SSLContext.getInstance("TLS").apply {
+                init(arrayOf(serverCertificates.keyManager), null, SecureRandom())
             }
-            val keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
-                .apply { init(keyStore, PASSWORD.toCharArray()) }
-            val sslContext = SSLContext.getInstance("TLS").apply { init(keyManagerFactory.keyManagers, null, SecureRandom()) }
             server = sslContext.serverSocketFactory.createServerSocket(0) as SSLServerSocket
             origin = "https://localhost:${server.localPort}"
             thread = Thread { serveOnce() }
@@ -206,6 +190,4 @@ class SmartCastTransportTest {
             thread.join(2_000)
         }
     }
-
-    private companion object { const val PASSWORD = "testpass" }
 }
