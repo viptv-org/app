@@ -110,7 +110,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                         connection?.close(); connection = null
                         mutable.value = ApplicationState(error = "Session expired. Sign in again.")
                     } else if (generation == current) updateState { it.copy(error = failureMessage(e), errorCode = (e as? RemoteFailure)?.code,
-                        detailRetryable = e !is RemoteFailure || !e.metadataNotFound) }
+                        detailRetryable = e !is RemoteFailure || !e.metadataNotFound, openingSource = null) }
                 }
             }
             job = started

@@ -19,8 +19,10 @@ fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Bool
     openSource(current, forceGateway, positionMillis = if (restart) 0L else null)
 }
 
-internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false) =
+internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false) {
+    updateState { next -> next.copy(playingSource = source, openingSource = source) }
     run { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen) }
+}
 
 internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean) {
     progressJob?.join()
@@ -126,7 +128,7 @@ fun ApplicationController.observePlaybackFor(input: PlaybackInput?, fact: Player
 
 internal fun ApplicationController.observePlayback(fact: PlayerFact) {
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
-        updateState { next -> next.copy(presentation = fact) }
+        updateState { next -> next.copy(presentation = fact, openingSource = null) }
         firstFrameSeen = true
         if (!mutable.value.paused) tracking?.transition(PlaybackEvent.Start, lastProgress)
         val capturedInput = mutable.value.playback
@@ -164,7 +166,7 @@ fun ApplicationController.closePlayer() {
     val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false, openingSource = null) }
     lastProgress=null
     afterPlayback(live)
 }
