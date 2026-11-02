@@ -81,7 +81,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         } }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         error?.let { Text(it, color = Palette.danger) }
-        if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)
+        if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matching titles", color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
             val column = rememberLazyListState()

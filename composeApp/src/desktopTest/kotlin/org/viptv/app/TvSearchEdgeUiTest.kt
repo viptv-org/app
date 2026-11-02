@@ -124,6 +124,30 @@ class TvSearchEdgeUiTest {
         }
     }
 
+    @Test fun anEmptySearchShowsTheDesignEmptyStateCopy() = ui {
+        Fixture(screenWidth) {
+            SearchScreen("whisper", emptyList(), emptyList(), false, null, true, {}, {},
+                television = true, editQuery = {})
+        }.use { screen ->
+            screen.settle()
+            val texts = screen.nodes().flatMap(::texts)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
+        }
+    }
+
+    @Test fun aBlankTermShowsNoEmptyStateCopy() = ui {
+        Fixture(screenWidth) {
+            SearchScreen("", emptyList(), emptyList(), false, null, true, {}, {},
+                television = true, editQuery = {})
+        }.use { screen ->
+            screen.settle()
+            val texts = screen.nodes().flatMap(::texts)
+            assertFalse(texts.any { it == "No matching titles" })
+            assertFalse(texts.any { it == "Search movies, series and channels" })
+        }
+    }
+
     @Test fun previewResultsRunToTheRightScreenEdge() = ui {
         Fixture(screenWidth) {
             org.viptv.app.preview.UiPreview(television = true, screen = org.viptv.app.state.Screen.Search)

@@ -52,6 +52,22 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun anEmptySearchShowsTheDesignEmptyStateCopy() {
+        val scene = ImageComposeScene(1440, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("spider", emptyList(), emptyList(), false, null, true, {}, {}, editQuery = {})
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }
