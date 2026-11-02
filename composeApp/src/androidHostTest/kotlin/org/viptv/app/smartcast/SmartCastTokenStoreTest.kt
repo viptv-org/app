@@ -16,6 +16,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36])
 class SmartCastTokenStoreTest {
     private val origin = "https://192.0.2.10:7345"
+    private val pin = "ab".repeat(32)
 
     private fun store(): Pair<SmartCastTokenStore, SharedPreferences> {
         val context = RuntimeEnvironment.getApplication()
@@ -25,19 +26,25 @@ class SmartCastTokenStoreTest {
         return SmartCastTokenStore(preferences) { key } to preferences
     }
 
-    @Test fun roundTripsAndClearsAToken() {
+    @Test fun roundTripsAndClearsTokenAndPin() {
         val (store, _) = store()
-        assertNull(store.load(origin))
-        store.save(origin, "bearer-token")
-        assertEquals("bearer-token", store.load(origin))
+        assertNull(store.loadToken(origin))
+        assertNull(store.loadCertificatePin(origin))
+        store.saveToken(origin, "bearer-token")
+        store.saveCertificatePin(origin, pin)
+        assertEquals("bearer-token", store.loadToken(origin))
+        assertEquals(pin, store.loadCertificatePin(origin))
         store.clear(origin)
-        assertNull(store.load(origin))
+        assertNull(store.loadToken(origin))
+        assertNull(store.loadCertificatePin(origin))
     }
 
-    @Test fun neverWritesTheTokenInPlaintext() {
+    @Test fun neverWritesTokenOrPinInPlaintext() {
         val (store, preferences) = store()
-        store.save(origin, "bearer-token")
-        val sealed = preferences.all.values.single() as String
-        assertFalse(sealed.contains("bearer-token"))
+        store.saveToken(origin, "bearer-token")
+        store.saveCertificatePin(origin, pin)
+        val stored = preferences.all.values.map { it as String }
+        assertFalse(stored.any { it.contains("bearer-token") })
+        assertFalse(stored.any { it.contains(pin) })
     }
 }

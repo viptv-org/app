@@ -8,7 +8,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.viptv.engine.wire.VizioControllerOutput
 import org.viptv.engine.wire.VizioControllerOutputKind
-import org.viptv.engine.wire.VizioRequest
 import uniffi.viptv_core.SmartCastBridge as CoreSmartCastBridge
 
 interface SmartCastDriver {
@@ -44,7 +43,7 @@ class NativeSmartCastDriver(config: String) : SmartCastDriver {
 
 class SmartCastClient(
     private val tvOrigin: String,
-    private val transport: suspend (VizioRequest) -> SmartCastHttpResponse,
+    private val transport: SmartCastExchange,
     private val driver: SmartCastDriver,
     private val tokenStore: SmartCastCredentialStore,
 ) {
@@ -56,7 +55,7 @@ class SmartCastClient(
                     val requestId = checkNotNull(output.requestId).toUInt()
                     val request = checkNotNull(output.request)
                     output = try {
-                        val response = transport(request)
+                        val response = transport.execute(request)
                         withContext(Dispatchers.IO) { driver.resolve(requestId, response.status, response.body) }
                     } catch (error: CancellationException) {
                         throw error
@@ -65,7 +64,10 @@ class SmartCastClient(
                     }
                 }
                 VizioControllerOutputKind.COMPLETE -> {
-                    if (output.credentialChanged) driver.credential()?.let { tokenStore.save(tvOrigin, it) }
+                    if (output.credentialChanged) {
+                        driver.credential()?.let { tokenStore.saveToken(tvOrigin, it) }
+                        transport.observedFingerprint?.let { tokenStore.saveCertificatePin(tvOrigin, it) }
+                    }
                     return output
                 }
                 VizioControllerOutputKind.ERROR -> return output
@@ -97,9 +99,10 @@ class SmartCastClient(
                 put("deviceId", deviceId)
                 put("deviceName", deviceName)
                 put("timeoutMillis", timeoutMillis)
-                tokenStore.load(tvOrigin)?.let { put("authToken", it) }
+                tokenStore.loadToken(tvOrigin)?.let { put("authToken", it) }
             }.toString()
-            return SmartCastClient(tvOrigin, SmartCastTransport(tvOrigin)::execute, NativeSmartCastDriver(config), tokenStore)
+            val transport = SmartCastTransport(tvOrigin, tokenStore.loadCertificatePin(tvOrigin))
+            return SmartCastClient(tvOrigin, transport, NativeSmartCastDriver(config), tokenStore)
         }
     }
 }

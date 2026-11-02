@@ -43,11 +43,22 @@ class SmartCastClientTest {
         override fun close() = Unit
     }
 
+    private class FakeExchange(
+        var observed: String? = null,
+        private val respond: (VizioRequest) -> SmartCastHttpResponse,
+    ) : SmartCastExchange {
+        override val observedFingerprint: String? get() = observed
+        override suspend fun execute(request: VizioRequest): SmartCastHttpResponse = respond(request)
+    }
+
     private class FakeTokens : SmartCastCredentialStore {
-        val saved = mutableMapOf<String, String>()
-        override fun load(tvOrigin: String): String? = saved[tvOrigin]
-        override fun save(tvOrigin: String, token: String) { saved[tvOrigin] = token }
-        override fun clear(tvOrigin: String) { saved.remove(tvOrigin) }
+        val tokens = mutableMapOf<String, String>()
+        val pins = mutableMapOf<String, String>()
+        override fun loadToken(tvOrigin: String): String? = tokens[tvOrigin]
+        override fun loadCertificatePin(tvOrigin: String): String? = pins[tvOrigin]
+        override fun saveToken(tvOrigin: String, token: String) { tokens[tvOrigin] = token }
+        override fun saveCertificatePin(tvOrigin: String, pin: String) { pins[tvOrigin] = pin }
+        override fun clear(tvOrigin: String) { tokens.remove(tvOrigin); pins.remove(tvOrigin) }
     }
 
     private fun request(
@@ -68,7 +79,8 @@ class SmartCastClientTest {
 
     @Test fun resolvesEachEmittedRequestBeforeCompleting() = runTest {
         val driver = FakeDriver(listOf(emitted(), complete()))
-        val client = SmartCastClient(origin, { response -> assertRequest(response); SmartCastHttpResponse(200, "ok") }, driver, FakeTokens())
+        val exchange = FakeExchange { response -> assertRequest(response); SmartCastHttpResponse(200, "ok") }
+        val client = SmartCastClient(origin, exchange, driver, FakeTokens())
         val result = client.run("pingAuth")
         assertEquals(VizioControllerOutputKind.COMPLETE, result.kind)
         assertEquals(listOf("pingAuth" to "{}"), driver.started)
@@ -78,30 +90,34 @@ class SmartCastClientTest {
 
     @Test fun aTransportFailureTriggersRejectInsteadOfResolve() = runTest {
         val driver = FakeDriver(listOf(emitted(), failed()))
-        val client = SmartCastClient(origin, { throw RuntimeException("unreachable") }, driver, FakeTokens())
+        val exchange = FakeExchange { throw RuntimeException("unreachable") }
+        val client = SmartCastClient(origin, exchange, driver, FakeTokens())
         val result = client.run("pingAuth")
         assertEquals(VizioControllerOutputKind.ERROR, result.kind)
         assertEquals(listOf(1u), driver.rejected)
         assertEquals(emptyList<Triple<UInt, Int, String>>(), driver.resolved)
     }
 
-    @Test fun aChangedCredentialIsPersistedFromTheBridge() = runTest {
+    @Test fun aChangedCredentialAndFingerprintArePersisted() = runTest {
         val driver = FakeDriver(listOf(complete(credentialChanged = true)))
         driver.credential = "new-token"
+        val exchange = FakeExchange(observed = "ab12cd34") { SmartCastHttpResponse(200, "ok") }
         val tokens = FakeTokens()
-        val client = SmartCastClient(origin, { SmartCastHttpResponse(200, "ok") }, driver, tokens)
+        val client = SmartCastClient(origin, exchange, driver, tokens)
         client.run("finishPair")
-        assertEquals("new-token", tokens.saved[origin])
+        assertEquals("new-token", tokens.tokens[origin])
+        assertEquals("ab12cd34", tokens.pins[origin])
     }
 
-    @Test fun forgetClearsTheCredentialAndStoredToken() = runTest {
+    @Test fun forgetClearsTheCredentialPinAndStoredToken() = runTest {
         val driver = FakeDriver(emptyList())
         driver.credential = "old-token"
-        val tokens = FakeTokens().apply { saved[origin] = "stored" }
-        val client = SmartCastClient(origin, { SmartCastHttpResponse(200, "ok") }, driver, tokens)
+        val tokens = FakeTokens().apply { tokens[origin] = "stored"; pins[origin] = "pinned" }
+        val client = SmartCastClient(origin, FakeExchange { SmartCastHttpResponse(200, "ok") }, driver, tokens)
         client.forget()
         assertNull(driver.credential)
-        assertNull(tokens.saved[origin])
+        assertNull(tokens.tokens[origin])
+        assertNull(tokens.pins[origin])
     }
 
     private fun assertRequest(response: VizioRequest) {

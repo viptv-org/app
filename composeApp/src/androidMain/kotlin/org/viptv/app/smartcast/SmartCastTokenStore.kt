@@ -13,8 +13,10 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 interface SmartCastCredentialStore {
-    fun load(tvOrigin: String): String?
-    fun save(tvOrigin: String, token: String)
+    fun loadToken(tvOrigin: String): String?
+    fun loadCertificatePin(tvOrigin: String): String?
+    fun saveToken(tvOrigin: String, token: String)
+    fun saveCertificatePin(tvOrigin: String, pin: String)
     fun clear(tvOrigin: String)
 }
 
@@ -27,31 +29,45 @@ class SmartCastTokenStore internal constructor(
         { androidKey() },
     )
 
-    override fun load(tvOrigin: String): String? {
-        val encoded = preferences.getString(entry(tvOrigin), null) ?: return null
-        return runCatching {
-            val bytes = Base64.decode(encoded, Base64.NO_WRAP)
-            require(bytes.size > 12)
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, keyProvider(), GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
-            cipher.doFinal(bytes.copyOfRange(12, bytes.size)).toString(Charsets.UTF_8)
-        }.getOrNull()
+    override fun loadToken(tvOrigin: String): String? = preferences.getString(tokenEntry(tvOrigin), null)?.let(::open)
+
+    override fun loadCertificatePin(tvOrigin: String): String? = preferences.getString(pinEntry(tvOrigin), null)?.let(::open)
+
+    override fun saveToken(tvOrigin: String, token: String) {
+        require(token.isNotEmpty() && token.length <= 1024 && token.none { it.isISOControl() })
+        check(preferences.edit().putString(tokenEntry(tvOrigin), seal(token)).commit())
     }
 
-    override fun save(tvOrigin: String, token: String) {
-        require(token.isNotEmpty() && token.length <= 1024 && token.none { it.isISOControl() })
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE, keyProvider()) }
-        val sealed = cipher.iv + cipher.doFinal(token.toByteArray(Charsets.UTF_8))
-        check(preferences.edit().putString(entry(tvOrigin), Base64.encodeToString(sealed, Base64.NO_WRAP)).commit())
+    override fun saveCertificatePin(tvOrigin: String, pin: String) {
+        require(pin.length == 64 && pin.all { it.isDigit() || it in 'a'..'f' })
+        check(preferences.edit().putString(pinEntry(tvOrigin), seal(pin)).commit())
     }
 
     override fun clear(tvOrigin: String) {
-        preferences.edit().remove(entry(tvOrigin)).apply()
+        preferences.edit().remove(tokenEntry(tvOrigin)).remove(pinEntry(tvOrigin)).apply()
     }
 
-    private fun entry(tvOrigin: String): String = MessageDigest.getInstance("SHA-256")
-        .digest(tvOrigin.toByteArray(Charsets.UTF_8))
+    private fun seal(value: String): String {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE, keyProvider()) }
+        val sealed = cipher.iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8))
+        return Base64.encodeToString(sealed, Base64.NO_WRAP)
+    }
+
+    private fun open(encoded: String): String? = runCatching {
+        val bytes = Base64.decode(encoded, Base64.NO_WRAP)
+        require(bytes.size > 12)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, keyProvider(), GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
+        cipher.doFinal(bytes.copyOfRange(12, bytes.size)).toString(Charsets.UTF_8)
+    }.getOrNull()
+
+    private fun entry(value: String) = MessageDigest.getInstance("SHA-256")
+        .digest(value.toByteArray(Charsets.UTF_8))
         .joinToString("") { "%02x".format(it) }
+
+    private fun tokenEntry(tvOrigin: String) = "token:${entry(tvOrigin)}"
+
+    private fun pinEntry(tvOrigin: String) = "pin:${entry(tvOrigin)}"
 
     private companion object {
         const val KEY_ALIAS = "viptv.smartcast.credentials.v1"

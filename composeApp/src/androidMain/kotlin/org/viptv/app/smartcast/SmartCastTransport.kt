@@ -2,7 +2,9 @@ package org.viptv.app.smartcast
 
 import java.io.ByteArrayOutputStream
 import java.net.URI
+import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
@@ -14,13 +16,23 @@ import org.viptv.engine.wire.VizioRequest
 
 data class SmartCastHttpResponse(val status: Int, val body: String)
 
+interface SmartCastExchange {
+    val observedFingerprint: String?
+    suspend fun execute(request: VizioRequest): SmartCastHttpResponse
+}
+
 class SmartCastTransport(
     private val tvOrigin: String,
-    private val client: OkHttpClient = strictClient(),
-) {
+    certificatePin: String? = null,
+) : SmartCastExchange {
     private val origin = canonicalOrigin(tvOrigin)
+    private val trustManager = SmartCastTrustManager(certificatePin?.lowercase())
+    private val client = pinnedClient(origin, trustManager)
 
-    suspend fun execute(request: VizioRequest): SmartCastHttpResponse = withContext(Dispatchers.IO) {
+    override val observedFingerprint: String?
+        get() = trustManager.observedFingerprint()
+
+    override suspend fun execute(request: VizioRequest): SmartCastHttpResponse = withContext(Dispatchers.IO) {
         val uri = URI(request.url)
         require(runCatching { exactOrigin(uri) }.getOrNull() == origin) {
             "SmartCast request is outside the selected TV origin"
@@ -42,7 +54,7 @@ class SmartCastTransport(
         requestClient.newCall(builder.build()).execute().use { response ->
             require(response.code !in 300..399) { "SmartCast redirects are not permitted" }
             val output = ByteArrayOutputStream()
-            response.body?.byteStream()?.use { stream ->
+            response.body.byteStream().use { stream ->
                 val buffer = ByteArray(8192)
                 while (true) {
                     val count = stream.read(buffer)
@@ -67,12 +79,20 @@ class SmartCastTransport(
     companion object {
         private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
-        // The default platform trust store; never add a trust-all manager for the TV.
-        fun strictClient(): OkHttpClient = OkHttpClient.Builder()
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .retryOnConnectionFailure(false)
-            .build()
+        private fun pinnedClient(origin: String, trustManager: SmartCastTrustManager): OkHttpClient {
+            val host = URI(origin).host
+            val sslContext = SSLContext.getInstance("TLS").apply {
+                init(null, arrayOf(trustManager), SecureRandom())
+            }
+            return OkHttpClient.Builder()
+                .sslSocketFactory(sslContext.socketFactory, trustManager)
+                // The pin binds the cert to this exact host, so the host check is scoped, never skipped.
+                .hostnameVerifier { presented, _ -> presented.equals(host, ignoreCase = true) }
+                .followRedirects(false)
+                .followSslRedirects(false)
+                .retryOnConnectionFailure(false)
+                .build()
+        }
 
         fun canonicalOrigin(input: String): String {
             val uri = URI(if (input.contains("://")) input else "https://$input")
