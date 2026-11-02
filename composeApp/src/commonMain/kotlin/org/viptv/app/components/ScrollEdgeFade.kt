@@ -2,11 +2,8 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -31,10 +28,8 @@ internal val LocalBottomClearance = staticCompositionLocalOf { 0.dp }
 
 internal val ScrollEdgeFadeHeight = 28.dp
 
-// The space a page must leave at its end to clear the bar, its fade and the gesture-navigation inset.
-@Composable
-internal fun bottomBarClearance(): Dp =
-    BottomBarHeight + ScrollEdgeFadeHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+// The bar's box only: App.kt already applies WindowInsets.safeDrawing, and the fade is gone once a list ends.
+internal fun bottomBarClearance(): Dp = BottomBarHeight
 
 @Composable
 internal fun Modifier.pageBottomClearance(): Modifier = padding(bottom = LocalBottomClearance.current)
