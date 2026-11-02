@@ -82,6 +82,14 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
     }
 }
 
+// The viewer chose this episode from the player, so a successor plays the best match even when the profile asks before every source pick.
+fun ApplicationController.playEpisode(card: Card) {
+    val state = mutable.value
+    val successor = state.screen == Screen.Player && state.playback != null && state.sourceTitle?.let { validNextEpisode(it, card) } == true
+    closePlayer()
+    chooseSource(card, startPlayback = successor)
+}
+
 internal fun ApplicationController.cancelNextEpisode() {
     nextEpisodeGeneration++
     nextEpisodeJob?.cancel(); nextEpisodeJob = null; nextEpisodeKey = null
