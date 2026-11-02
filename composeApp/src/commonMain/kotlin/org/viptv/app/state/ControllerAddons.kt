@@ -25,10 +25,15 @@ internal suspend fun ApplicationController.loadAddons(operation: AddonOperationO
     publishAddons(result)
 }
 
+private fun ApplicationController.leaveAnimeIfUnavailable() {
+    if (mutable.value.screen == Screen.Anime && !mutable.value.animeAvailable) navigate(Screen.Home, record = false)
+}
+
 internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrowse: Boolean = false) {
     updateState { state -> state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
         browseControls = state.browseControls.takeIf { keepBrowse }, browseCards = if (keepBrowse) state.browseCards else emptyList(),
         browseNext = state.browseNext.takeIf { keepBrowse }) }
+    leaveAnimeIfUnavailable()
 }
 
 internal fun ApplicationController.startBrowsingConfiguration(profile: String) {
@@ -39,8 +44,9 @@ internal fun ApplicationController.startBrowsingConfiguration(profile: String) {
             device?.browsingConfiguration(profile) ?: remote?.browsingConfiguration(profile)
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { null }
-        if (mutable.value.selectedProfile == profile && connection === remote && local === device)
-            updateState { it.copy(browsingConfiguration = result) }
+        if (mutable.value.selectedProfile != profile || connection !== remote || local !== device) return@launch
+        updateState { it.copy(browsingConfiguration = result) }
+        leaveAnimeIfUnavailable()
     }
 }
 

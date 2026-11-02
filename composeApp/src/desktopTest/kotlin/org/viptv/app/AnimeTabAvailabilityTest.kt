@@ -32,6 +32,7 @@ import org.viptv.app.state.ApplicationState
 import org.viptv.app.state.Screen
 import org.viptv.app.state.accept
 import org.viptv.app.state.animeAvailable
+import org.viptv.app.state.profileConfigurationChanged
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.ExecutionMode
@@ -45,9 +46,9 @@ class AnimeTabAvailabilityTest {
     private val profile = Profile("12", "Parent", null)
 
     @Test fun onlyTheSimklProviderHasAnAnimeCatalog() {
+        assertTrue(ApplicationState().animeAvailable)
         assertTrue(ApplicationState(browsingConfiguration = browsing("simkl")).animeAvailable)
         assertFalse(ApplicationState(browsingConfiguration = browsing("stremio")).animeAvailable)
-        assertFalse(ApplicationState().animeAvailable)
     }
 
     @Test fun thePhoneTabRowDropsAnimeWithoutASimklProvider() {
@@ -92,6 +93,22 @@ class AnimeTabAvailabilityTest {
         assertTrue("/api/profiles/12/integrations" in paths)
         assertTrue(controller.state.value.animeAvailable)
         controller.connection?.close()
+    }
+
+    @Test fun aProfileChangeLeavesAnAnimeScreenTheProviderCannotServe() = runBlocking<Unit> {
+        val fixture = LocalSetupFixture()
+        val controller = fixture.controller()
+        controller.local = fixture.local
+        controller.mutable.value = ApplicationState(screen = Screen.Anime, localMode = true, selectedProfile = "default")
+        try {
+            controller.profileConfigurationChanged()
+            withTimeout(5_000) { while (controller.state.value.screen != Screen.Home) delay(10) }
+            assertEquals(Screen.Home, controller.state.value.screen)
+            assertEquals("stremio", controller.state.value.browsingConfiguration?.profile?.browsing_plugin)
+            assertFalse(controller.state.value.animeAvailable)
+            assertNull(controller.state.value.error)
+            assertFalse(controller.state.value.busy)
+        } finally { fixture.close(controller) }
     }
 
     private fun browsing(plugin: String) = BrowsingConfiguration(
