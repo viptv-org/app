@@ -35,9 +35,11 @@ internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, ch
     var failure by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val mismatch = confirmation.isNotEmpty() && confirmation != next
-    val valid = current.isNotEmpty() && validNewPassword(next) && next == confirmation
+    fun canSubmit() = current.isNotEmpty() && validNewPassword(next) && next == confirmation
+    val valid = canSubmit()
     fun submit() {
-        if (busy || !valid) return
+        // The web native form keeps the submit callback it was built with, so recheck the fields instead of the captured valid.
+        if (busy || !canSubmit()) return
         busy = true; currentError = null; failure = null
         scope.launch {
             try {
