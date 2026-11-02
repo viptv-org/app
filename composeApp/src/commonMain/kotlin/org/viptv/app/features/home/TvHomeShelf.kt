@@ -55,6 +55,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
     rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
     onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open, state: LazyListState = rememberLazyListState(),
+    save: ((Card) -> Unit)? = null, saved: (Card) -> Boolean = { false },
     seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
@@ -111,7 +112,8 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                             .then(if (index == 0) Modifier.focusProperties { if (rtl) right = FocusRequester.Cancel else left = FocusRequester.Cancel } else Modifier)
                         TvCatalogCard(card, scale, portrait, entry,
                             { lastFocusedIndex = index; lastFocusedKey = cardLookupKey(it); focusedKey = lastFocusedKey; focus(it) }, activate, showFocus, focusedCaptions = portrait,
-                            onUp = up, artworkWidth = (if (portrait) 255.2f else 422.4f).dp * scale)
+                            onUp = up, artworkWidth = (if (portrait) 255.2f else 422.4f).dp * scale,
+                            menu = TvTitleMenuActions(play, open, save, saved))
                     }
                     if (endCard != null) item(key = endKey, contentType = "see-all") {
                         TvSeeAllCard(endCard, scale, { openSeeAll(endCard) }, Modifier

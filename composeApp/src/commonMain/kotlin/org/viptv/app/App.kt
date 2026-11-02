@@ -263,6 +263,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
             if (browser && showingSources) controller::backSources else controller::backDetails,
             if (state.detailShell) controller::playTitle else controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
+            chooseSource = controller::chooseSource,
             defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
             // A Calendar row's episode comes first: Details opened from it land on its season.
             continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
