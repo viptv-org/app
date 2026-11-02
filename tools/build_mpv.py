@@ -71,6 +71,10 @@ def build():
             prefix = Path(subprocess.check_output(['brew', '--prefix'], text=True).strip())
             library = prefix / 'lib/libmpv.2.dylib'
             assert library.is_file(), 'Install mpv using Homebrew or set VIPTV_MPV_RUNTIME_DIR'
+            ffmpeg = (prefix / 'opt/ffmpeg').resolve()
+            ffmpeg_full = (prefix / 'opt/ffmpeg-full').resolve()
+            assert ffmpeg_full.is_dir(), 'Install ffmpeg-full using Homebrew; it is the FFmpeg build with zimg (zscale)'
+            assert ffmpeg_full.name == ffmpeg.name, f'ffmpeg {ffmpeg.name} and ffmpeg-full {ffmpeg_full.name} must be the same release'
             files, links, pending = {}, {}, [library]
             while pending:
                 file = pending.pop()
@@ -85,6 +89,8 @@ def build():
                     dep = Path(dependency.replace('@loader_path', str(file.parent)))
                     if dependency.startswith('@rpath/'):
                         dep = prefix / 'lib' / Path(dependency).name
+                    if dep.parent.resolve() == ffmpeg / 'lib':
+                        dep = ffmpeg_full / 'lib' / dep.name
                     assert dep.is_file(), f'Unresolved mpv dependency: {dependency}'
                     if dep.resolve() == file.resolve(): continue
                     links[file.name].append((dependency, dep.name))
@@ -97,8 +103,8 @@ def build():
                     subprocess.run(['install_name_tool', '-change', old, '@loader_path/' + new, str(output)], check=True)
                 sign_like_packaging(output)
             manifest = {'library': library.name, 'abi_major': 2, 'platform': name + '-' + arch,
-                        'origin': 'Homebrew mpv with private dependency closure; rewritten loader paths and ad-hoc signatures',
-                        'source_versions': subprocess.check_output(['mpv', '--version'], text=True).splitlines(),
+                        'origin': 'Homebrew mpv with ffmpeg-full FFmpeg libraries and private dependency closure; rewritten loader paths and ad-hoc signatures',
+                        'source_versions': subprocess.check_output(['mpv', '--version'], text=True).splitlines() + ['ffmpeg-full ' + ffmpeg_full.name],
                         'upstream': 'https://github.com/mpv-player/mpv',
                         'files': {file.name: sha(file) for file in sorted(stage.iterdir())}}
         elif system == 'Windows':
