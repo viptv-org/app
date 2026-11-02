@@ -13,7 +13,7 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (SourcesOutco
         put("type", card.identity.kind); put("id", card.identity.id)
         card.parent_identity?.takeIf { card.identity.kind == "series" }?.let { put("series_id", it.id) }
         card.metadataOriginFields().forEach { (key, value) -> put(key, value) }
-        card.identity.ids.firstOrNull { it.namespace == "imdb" }?.let { put("imdb_id", it.value) }
+        card.streamRequestFields().forEach { (key, value) -> put(key, value) }
         card.identity.episode?.let { coordinates ->
             coordinates.season?.let { put("season", it) }; put("episode", coordinates.episode)
         }
@@ -64,6 +64,25 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (SourcesOutco
         }
     }
 }
+
+// The host rejects the whole request when a field it validates is malformed, so send only accepted values.
+private fun Card.streamRequestFields(): JsonObject = buildJsonObject {
+    val show = if (identity.episode == null) identity else parent_identity ?: identity
+    show.ids.firstOrNull { it.namespace == "imdb" }?.value.requestImdbId()?.let { put("imdb_id", it) }
+    show.ids.firstOrNull { it.namespace == "tmdb" }?.value.requestTmdbId()?.let { put("tmdb_id", it) }
+    if (identity.episode == null) title.requestText(512)?.let { put("name", it) }
+    metadata?.year?.takeIf { it in 1870..2200 }?.let { put("year", it) }
+}
+
+private fun String?.requestText(limit: Int): String? = this?.trim()
+    ?.takeIf { it.isNotEmpty() && it.length <= limit && it.none { char -> char.isISOControl() } }
+
+private fun String?.requestImdbId(): String? = this?.trim()?.removePrefix("imdb:")
+    ?.takeIf { it.startsWith("tt") && it.length in 7..14 && it.drop(2).all { char -> char in '0'..'9' } }
+
+private fun String?.requestTmdbId(): String? = this?.trim()?.removePrefix("tmdb:")
+    ?.takeIf { it.length in 1..12 && it.all { char -> char in '0'..'9' } }
+    ?.toLongOrNull()?.takeIf { it in 1..2_147_483_647L }?.toString()
 
 private fun JsonObject.text(key: String): String? = (get(key) as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
 private fun JsonObject.texts(key: String): List<String> = (get(key) as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.takeIf { value -> value.isString }?.content }
