@@ -22,6 +22,8 @@ import org.viptv.app.features.player.TvPlaybackExtras
 import org.viptv.app.features.player.TvPlaybackTimeline
 import org.viptv.app.features.player.TvPlayerScene
 import org.viptv.app.features.player.TvPlayerState
+import org.viptv.app.features.player.TvSkipKind
+import org.viptv.app.features.player.TvSkipRange
 import org.viptv.app.player.BufferedRange
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
@@ -77,6 +79,24 @@ class BufferedTimelineUiTest {
         assertTrue(abs(plain.start - filled.start) <= 3, "the bar starts where it did: $plain vs $filled")
         assertTrue(abs(plain.end - filled.end) <= 3, "the bar ends where it did: $plain vs $filled")
         assertTrue(abs(plain.playhead - filled.playhead) <= 3, "the playhead does not move: $plain vs $filled")
+    }
+
+    @Test fun theBandStaysUnderTheSkipMarkers() {
+        val scene = scene(1280, 200) {
+            PlaybackTimeline(60_000, 240_000, {}, skips = listOf(TvSkipRange(120_000, 180_000, TvSkipKind.Intro)),
+                buffered = listOf(BufferedRange(0, 180_000)))
+        }
+        try {
+            frames(scene)
+            capture(scene, "timeline-skip-and-buffer")
+            val track = track(scene)
+            assertEquals(1, track.bands.size, "the band shows where no marker covers it: $track")
+            assertFraction(track, track.bands.single().last, .5f, "the band ends where the intro marker starts")
+            val marker = runs(track.row) { near(it, Palette.segmentIntro.toArgb()) }.maxByOrNull { it.last - it.first }
+            assertNotNull(marker, "the intro marker is drawn over the band: $track")
+            assertFraction(track, marker.first, .5f, "the intro marker starts at its own range")
+            assertFraction(track, marker.last, .75f, "the intro marker ends at its own range")
+        } finally { scene.close() }
     }
 
     @Test fun theBandDoesNotChangeSeeking() {
@@ -158,7 +178,7 @@ class BufferedTimelineUiTest {
     private fun scene(width: Int, height: Int, content: @Composable () -> Unit) =
         ImageComposeScene(width, height, Density(1f)) { ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Color.Black) { content() } } }
 
-    private data class Track(val start: Int, val playhead: Int, val end: Int, val bands: List<IntRange>)
+    private data class Track(val start: Int, val playhead: Int, val end: Int, val bands: List<IntRange>, val row: List<Int>)
 
     private fun track(scene: ImageComposeScene, base: Int = pointerBase, band: Int = pointerBand): Track {
         val (width, colors) = pixels(scene)
@@ -172,7 +192,7 @@ class BufferedTimelineUiTest {
         val knob = runs(pixels) { near(it, 0xFFFFFFFF.toInt(), 2) }.maxByOrNull { it.last - it.first }
         assertTrue(held.isNotEmpty(), "no timeline bar to measure")
         return Track(fill?.first ?: held.minOf { it.first }, knob?.let { (it.first + it.last) / 2 } ?: -1,
-            held.maxOf { it.last }, runs(pixels) { near(it, band, 5) }.filter { it.last - it.first >= 8 })
+            held.maxOf { it.last }, runs(pixels) { near(it, band, 5) }.filter { it.last - it.first >= 8 }, pixels)
     }
 
     private fun assertFraction(track: Track, actual: Int, fraction: Float, what: String) {
