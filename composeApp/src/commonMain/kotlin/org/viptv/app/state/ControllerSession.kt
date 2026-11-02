@@ -192,6 +192,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         manageAccount = connection?.accountManagementEnabled == true, accountOwner = connection?.accountOwner == true,
+        accountRole = connection?.accountRole ?: "member",
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
     if (switchesProfile) value.selected?.let { startBrowsingConfiguration(it) }
     adoptContinuation(value.continuation)

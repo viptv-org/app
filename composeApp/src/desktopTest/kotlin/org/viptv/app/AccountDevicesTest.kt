@@ -51,10 +51,16 @@ class AccountDevicesTest {
         } finally { remote.close() }
     }
 
-    @Test fun nativeViewingConnectionsCannotDispatchAccountManagementRequests(): Unit = runBlocking {
-        val remote = RemoteConnection("https://watch.example",store,HttpClient(MockEngine { error("No account request may leave a paired client") }),browserMode = false)
+    @Test fun nativeViewingConnectionsReadDevicesButCannotSignOut(): Unit = runBlocking {
+        val calls = mutableListOf<HttpMethod>()
+        val remote = RemoteConnection("https://watch.example",store,HttpClient(MockEngine { request ->
+            calls += request.method
+            respond(accountFixture,HttpStatusCode.OK,headersOf(HttpHeaders.ContentType,"application/json"))
+        }),browserMode = false)
         try {
-            assertFailsWith<IllegalStateException> { remote.accountDevices() }
+            val data = remote.accountDevices()
+            assertEquals("viewer",data.account.username)
+            assertEquals(listOf(HttpMethod.Get),calls)
             assertFailsWith<IllegalStateException> { remote.signOutDevice("other-family") }
             assertFailsWith<IllegalStateException> { remote.signOutAllDevices() }
             Unit

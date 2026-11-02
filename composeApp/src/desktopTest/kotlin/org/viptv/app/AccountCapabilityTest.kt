@@ -27,13 +27,14 @@ class AccountCapabilityTest {
         override suspend fun clear() = Unit
     }
 
-    private class Server(private val capabilities: String?, private val role: String, browser: Boolean) : AutoCloseable {
+    private class Server(private val capabilities: String?, private val accountRole: String,
+        private val sessionRole: String, browser: Boolean) : AutoCloseable {
         val paths = mutableListOf<String>()
         private val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
             paths += path
             val body = when (path) {
-                "/api/auth/me" -> """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"$role"}""" +
+                "/api/auth/me" -> """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"$accountRole"},"role":"$sessionRole"""" +
                     (capabilities?.let { ""","capabilities":$it""" } ?: "") + "}"
                 "/api/account/devices" -> accountFixture
                 else -> "{}"
@@ -44,8 +45,8 @@ class AccountCapabilityTest {
         override fun close() = remote.close()
     }
 
-    private class Host(capabilities: String?, role: String = "owner") : AutoCloseable {
-        val server = Server(capabilities, role, browser = false)
+    private class Host(capabilities: String?, accountRole: String = "owner", sessionRole: String = accountRole) : AutoCloseable {
+        val server = Server(capabilities, accountRole, sessionRole, browser = false)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession).also {
             it.connection = server.remote
@@ -82,88 +83,90 @@ class AccountCapabilityTest {
         override fun close() { scene.close(); scope.cancel(); server.close() }
     }
 
-    @Test fun anAccountSessionShowsBothRowsAndLoadsTheDeviceListOnce() {
-        Host("""{"manage_account":true}""").use { ui ->
+    @Test fun anOwnerShowsOwnerRowsAndLoadsTheDeviceListOnce() {
+        Host("""{"manage_account":true}""", accountRole = "owner", sessionRole = "owner").use { ui ->
             ui.render()
             ui.waitFor { ui.controller.state.value.manageAccount }
             ui.render()
-            assertTrue(ui.shows("Devices & sessions"), "A capable session offers the devices row")
+            assertTrue(ui.shows("Devices & sessions"), "An owner reads the devices list")
             assertTrue(ui.shows("Household PIN"), "An owner keeps the household PIN row")
+            assertTrue(ui.shows("Delete account"), "An owner keeps the self-service delete row")
             ui.click("Devices & sessions")
             ui.waitFor { ui.server.paths.count { it == "/api/account/devices" } > 0 }
             ui.render(24)
             assertEquals(1, ui.server.paths.count { it == "/api/account/devices" }, "The page loads the list once")
             assertTrue(ui.shows("Living room TV"))
+            assertTrue(ui.shows("Sign out"), "An owner can sign devices out")
         }
     }
 
-    @Test fun aSessionWithoutTheCapabilityKeepsBothRowsAway() {
-        Host("""{"manage_account":false}""").use { ui ->
+    @Test fun aMemberReadsDevicesAndSelfServiceRowsWithoutOwnerWrites() {
+        Host("""{"manage_account":false}""", accountRole = "member", sessionRole = "member").use { ui ->
             ui.render()
             ui.waitFor { ui.server.paths.contains("/api/auth/me") }
-            ui.render()
-            assertFalse(ui.shows("Devices & sessions"), "A paired television cannot manage the account")
-            assertFalse(ui.shows("Household PIN"))
-            assertFalse(ui.server.paths.contains("/api/account/devices"))
-        }
-    }
-
-    @Test fun aServerWithoutTheFieldFallsBackToTheNativeBehaviour() {
-        Host(null).use { ui ->
-            ui.render()
-            ui.waitFor { ui.server.paths.contains("/api/auth/me") }
-            ui.render()
-            assertFalse(ui.shows("Devices & sessions"), "An older server left native clients unable to manage the account")
-            assertFalse(ui.shows("Household PIN"))
-        }
-    }
-
-    @Test fun aMemberReachesDevicesButKeepsThePinRowOwnersOnly() {
-        Host("""{"manage_account":true}""", role = "member").use { ui ->
-            ui.render()
-            ui.waitFor { ui.controller.state.value.manageAccount }
             ui.render()
             assertTrue(ui.shows("Devices & sessions"), "A member still reads the devices list")
             assertFalse(ui.shows("Household PIN"), "Only the owner changes the household PIN")
+            assertTrue(ui.shows("Delete account"), "Any account session keeps the self-service delete row")
+            ui.click("Devices & sessions")
+            ui.render(24)
+            assertTrue(ui.shows("Living room TV"))
+            assertFalse(ui.shows("Sign out"), "A member has no device sign-out action")
+            assertFalse(ui.shows("Sign out of all devices"))
         }
     }
 
-    @Test fun theDeleteAccountRowFollowsTheCapability() {
-        Host("""{"manage_account":true}""").use { ui ->
-            ui.render()
-            ui.waitFor { ui.controller.state.value.manageAccount }
-            ui.render()
-            assertTrue(ui.shows("Delete account"), "A capable session offers the delete row")
-        }
-        Host("""{"manage_account":false}""").use { ui ->
+    @Test fun aPairedTelevisionReadsDevicesWithoutOwnerOrSelfServiceRows() {
+        Host("""{"manage_account":false}""", accountRole = "owner", sessionRole = "device").use { ui ->
             ui.render()
             ui.waitFor { ui.server.paths.contains("/api/auth/me") }
             ui.render()
-            assertFalse(ui.shows("Delete account"), "A session without the capability hides the delete row")
+            assertTrue(ui.shows("Devices & sessions"), "A paired television still reads the devices list")
+            assertFalse(ui.shows("Household PIN"))
+            assertFalse(ui.shows("Delete account"), "Only an account session gets the self-service delete row")
+            assertFalse(ui.server.paths.contains("/api/account/devices"), "The list loads on demand, not at the door")
         }
     }
 
-    @Test fun theCapabilityComesFromTheServerAndFallsBackToTheBrowserRule(): Unit = runBlocking {
-        Server("""{"manage_account":true}""", "owner", browser = false).use { server ->
+    @Test fun theCapabilityComesFromTheServerAndFallsBackToTheAccountRole(): Unit = runBlocking {
+        Server("""{"manage_account":true}""", "owner", "owner", browser = false).use { server ->
             server.remote.accountIdentity()
             assertTrue(server.remote.accountManagementEnabled, "A native account session reports the capability")
             assertTrue(server.remote.accountOwner)
+            assertEquals("owner", server.remote.accountRole)
         }
-        Server(null, "member", browser = true).use { server ->
+        Server(null, "member", "member", browser = true).use { server ->
             server.remote.accountIdentity()
             assertTrue(server.remote.accountManagementEnabled, "An older browser server keeps the browser rule")
             assertFalse(server.remote.accountOwner)
+            assertEquals("member", server.remote.accountRole)
         }
-        Server("""{"manage_account":false}""", "owner", browser = true).use { server ->
+        Server("""{"manage_account":false}""", "owner", "device", browser = false).use { server ->
             server.remote.accountIdentity()
-            assertFalse(server.remote.accountManagementEnabled, "The server's answer wins over the platform")
+            assertFalse(server.remote.accountOwner, "A paired television is not the account owner")
+            assertEquals("device", server.remote.accountRole)
         }
     }
 
-    @Test fun aPairedTelevisionSessionCannotDispatchDeviceManagement(): Unit = runBlocking {
-        Server("""{"manage_account":false}""", "owner", browser = false).use { server ->
+    @Test fun aServerWithoutTheTopLevelRoleFallsBackToTheAccountRole(): Unit = runBlocking {
+        val client = HttpClient(MockEngine { request ->
+            val body = if (request.url.encodedPath == "/api/auth/me")
+                """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"owner"}}"""
+            else "{}"
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = false)
+        try {
+            remote.accountIdentity()
+            assertTrue(remote.accountOwner, "An older server without the session role falls back to the account role")
+            assertEquals("owner", remote.accountRole)
+        } finally { remote.close() }
+    }
+
+    @Test fun aPairedTelevisionSessionReadsDevicesButCannotDispatchSignOut(): Unit = runBlocking {
+        Server("""{"manage_account":false}""", "owner", "device", browser = false).use { server ->
             server.remote.accountIdentity()
-            assertFailsWith<IllegalStateException> { server.remote.accountDevices() }
+            assertFalse(server.remote.accountManagementEnabled)
             assertFailsWith<IllegalStateException> { server.remote.signOutAllDevices() }
             Unit
         }

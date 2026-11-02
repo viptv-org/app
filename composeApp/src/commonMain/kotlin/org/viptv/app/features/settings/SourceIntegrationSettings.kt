@@ -18,7 +18,7 @@ import org.viptv.app.components.TextButton
 internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy: Boolean, error: String?,
     retry: () -> Unit, configure: (String, JsonObject) -> Unit, remove: (String) -> Unit, television: Boolean = false,
     profileName: String? = null, origin: String? = null, tvScale: Float = 1f, first: androidx.compose.ui.focus.FocusRequester? = null,
-    left: androidx.compose.ui.focus.FocusRequester? = null) {
+    left: androidx.compose.ui.focus.FocusRequester? = null, canManage: Boolean = true) {
     var editing by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     var deleting by remember { mutableStateOf<SourceIntegrationSchema?>(null) }
     if (television) {
@@ -37,7 +37,7 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
             }
         }
         Column { TvSourceIntegrationList(snapshot, busy, error, retry, { editing = it }, { deleting = it }, tvScale,
-            first = first, left = left, profileName = profileName) }
+            first = first, left = left, profileName = profileName, canManage = canManage) }
         deleting?.let { target -> TvSourceRemoveConfirmation(target, profileName, busy, tvScale,
             confirm = { target.connection_id?.let(remove); deleting = null },
             dismiss = { if (!busy) deleting = null }) }
@@ -60,7 +60,7 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
                     schema.state == "Ready" -> "Configured for this profile"
                     else -> "Needs configuration"
                 }, color = Palette.secondary)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (canManage) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button({ editing = schema }, enabled = schema.runtime_enabled && !busy) {
                         Text(if (schema.connection_id == null) "Configure" else "Replace configuration")
                     }

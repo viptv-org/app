@@ -50,14 +50,17 @@ class RemoteConnection(
         private set
     internal var accountOwner = false
         private set
+    internal var accountRole = "member"
+        private set
     internal var accountAccessRead = false
         private set
     internal val accountDashboardUrl: String get() = origin + "/"
 
-    internal fun recordAccountAccess(manageAccount: Boolean?, owner: Boolean) {
+    internal fun recordAccountAccess(manageAccount: Boolean?, role: String) {
         accountAccessRead = true
         manageAccount?.let { accountManagementEnabled = it }
-        accountOwner = owner
+        accountRole = role
+        accountOwner = role == "owner"
     }
     internal val origin = validatedRemoteOrigin(rawOrigin)
     private val client = client ?: platformClient()
