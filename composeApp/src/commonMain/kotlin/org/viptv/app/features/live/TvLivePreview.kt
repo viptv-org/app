@@ -34,8 +34,10 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = (22 * scale).sp,
                 lineHeight = (26 * scale).sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
         }
-        Text(program?.title ?: channel.card.subtitle ?: channel.card.title, fontSize = (52 * scale).sp, lineHeight = (59.8f * scale).sp,
-            letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2)
+        (program?.title ?: channel.card.subtitle)?.let {
+            Text(it, fontSize = (52 * scale).sp, lineHeight = (59.8f * scale).sp,
+                letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2)
+        }
         program?.let {
             val remaining = if (now != null && now in it.start until it.end) " · ${it.end - now} min left" else ""
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
