@@ -29,7 +29,7 @@ internal fun TvPlayerEpisodePicker(episodes: List<Card>, scale: Float, current: 
                 .padding(top = 48.dp * scale, bottom = 40.dp * scale),
                 verticalArrangement = Arrangement.spacedBy(30.dp * scale)) {
                 Text("Episodes", Modifier.padding(start = 96.dp * scale), fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
-                LazyRow(state = list, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                LazyRow(state = list, contentPadding = PaddingValues(start = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     itemsIndexed(episodes, key = { _, card -> card.provider_id + ":" + card.identity.id }) { index, card ->
                         TvEpisodeCard(card, scale, play = { choose(card) }, onFocus = {},
                             requester = if (index == currentIndex.coerceAtLeast(0)) initial else null,
