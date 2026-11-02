@@ -83,6 +83,7 @@ import org.viptv.app.components.LocalPointerHover
 import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvFocusOutline
+import org.viptv.app.components.tvHold
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -104,7 +105,8 @@ internal val LocalCardActions = compositionLocalOf<CardActions?> { null }
 fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabels: Boolean = true, onFocus: (Card) -> Unit = {}, open: (Card) -> Unit, labelScale: Float = 1f, cornerRadius: androidx.compose.ui.unit.Dp = 8.dp, focusWidth: androidx.compose.ui.unit.Dp = 3.dp, showFocusOutline: Boolean = true, modifier: Modifier = Modifier,
     watchedBadgeSize: Dp? = null,
     select: ((Card) -> Unit)? = null,
-    onHover: (Boolean) -> Unit = {}) {
+    onHover: (Boolean) -> Unit = {},
+    scale: Float = 1f) {
     var focused by remember { mutableStateOf(false) }
     val actions = LocalCardActions.current
     val removal = LocalListRemoval.current
@@ -115,6 +117,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         if (caughtUp != null) nextEpisodes[card]?.caughtUpNextCaption() else null
     }
     val desktop = LocalPointerHover.current
+    val television = !desktop && !LocalCardOverflow.current
     val hover = remember { MutableInteractionSource() }
     val press = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
@@ -139,6 +142,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     }
     Column(modifier.width(width.dp).hoverable(hover)
         .cardContextClick(desktop || removal != null) { previewOpen = false; menuAt = it; menuOpen = true }
+        .tvHold(enabled = television && menu, onHold = { previewOpen = false; menuOpen = true })
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .pointerClickable(interactionSource = press, indication = null) { (select ?: open)(card) }
         .cardHoldMenu(LocalCardOverflow.current && menu) { previewOpen = false; menuAt = it; menuOpen = true }) {
@@ -193,15 +197,24 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         if (menu) {
+            val present: @Composable () -> Unit = {
+                CardMenu(card, saved, removal, actions,
+                    onDismiss = { menuOpen = false },
+                    onPlay = { menuOpen = false; activate(card) },
+                    onInfo = { menuOpen = false; open(card) },
+                    onToggleSave = actions?.let { { menuOpen = false; it.toggleSave(card) } },
+                    visible = menuOpen, onClosed = { menuAt = null }, scale = scale)
+            }
             menuAt?.let { at ->
                 Popup(popupPositionProvider = CardMenuPosition(at),
                     onDismissRequest = { menuOpen = false }, properties = PopupProperties(focusable = true)) {
-                    CardMenu(card, saved, removal, actions,
-                        onDismiss = { menuOpen = false },
-                        onPlay = { menuOpen = false; activate(card) },
-                        onInfo = { menuOpen = false; open(card) },
-                        onToggleSave = actions?.let { { menuOpen = false; it.toggleSave(card) } },
-                        visible = menuOpen, onClosed = { menuAt = null })
+                    present()
+                }
+            }
+            if (menuAt == null && menuOpen) {
+                Popup(popupPositionProvider = TvCardMenuPosition(),
+                    onDismissRequest = { menuOpen = false }, properties = PopupProperties(focusable = true)) {
+                    present()
                 }
             }
         }

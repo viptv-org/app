@@ -12,6 +12,7 @@ fun ApplicationController.selectBrowsingProvider(plugin: String) = run {
     loadAddons(owner)
     updateAddonHome(owner)
     loadSourceIntegrations(owner)
+    reloadLiveIfVisible()
     owner.requireCurrent(this)
     updateState { next -> next.copy(browseControls = null, browseCards = emptyList(), results = emptyList()) }
 }
