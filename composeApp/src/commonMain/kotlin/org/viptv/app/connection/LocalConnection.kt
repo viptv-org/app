@@ -25,7 +25,7 @@ interface LocalConnection : AutoCloseable {
     suspend fun searchResults(profile: String, term: String): SearchSnapshot? = null
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
     suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = detail(profile, card, offset)
-    suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit = {}): SourcesOutcome
+    suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit = {}): SourcesOutcome
     suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = LiveCatalogPage(reason = "Live TV is unavailable on this device.")
     suspend fun liveFavorites(profile: String): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
     suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
@@ -59,7 +59,17 @@ expect fun localConnection(databasePath: String): LocalConnection
 
 class LocalFailure(message: String) : Exception(message)
 
-data class SourcesOutcome(val candidates: List<SourceCandidate> = emptyList(), val torrentOnlyProviders: Int = 0)
+data class SourcesOutcome(val candidates: List<SourceCandidate> = emptyList(), val torrentOnlyProviders: Int = 0,
+    val producers: List<SourceProducerOutcome> = emptyList())
+
+const val SOURCE_FORMAT_UNSUPPORTED = "source_format_unsupported"
+const val SOURCE_PRODUCER_UNREACHABLE = "producer_unreachable"
+
+data class SourceProducerOutcome(val providerId: String, val label: String = "",
+    val errorCode: String? = null, val errorMessage: String? = null) {
+    internal fun labelledBy(names: Map<String, String>): SourceProducerOutcome =
+        if (label.isNotBlank()) this else copy(label = names[providerId].orEmpty())
+}
 
 data class HistoryDisplay(
     val entry: HistoryEntry,

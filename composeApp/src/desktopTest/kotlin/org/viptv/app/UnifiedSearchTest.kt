@@ -111,7 +111,7 @@ class UnifiedSearchTest {
             respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
-        try { assertTrue(remote.sources(card("addon:42").copy(parent_identity = MediaIdentity("parent-title", "series", emptyList()))).isEmpty()) }
+        try { assertTrue(remote.sources(card("addon:42").copy(parent_identity = MediaIdentity("parent-title", "series", emptyList()))).candidates.isEmpty()) }
         finally { remote.close() }
     }
 

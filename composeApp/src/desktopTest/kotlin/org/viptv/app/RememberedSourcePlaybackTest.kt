@@ -34,10 +34,10 @@ class RememberedSourcePlaybackTest {
         val device = object : LocalConnection by fixture.local {
             override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot =
                 DetailSnapshot(series, episodes = listOf(episode(1, 1), episode(1, 2), otherEpisode(1, 1), otherEpisode(1, 2)))
-            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome {
+            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
                 discovered += card
                 val candidates = rows(card)
-                publish(candidates)
+                publish(SourcesOutcome(candidates))
                 return SourcesOutcome(candidates)
             }
             override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources =

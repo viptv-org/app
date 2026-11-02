@@ -35,7 +35,8 @@ import uniffi.viptv_core.LocalEngine
 
 internal data class NativePlaybackOrigin(val profile: String, val revision: Long, val origin: org.viptv.engine.wire.MetadataOrigin?, val mediaContext: JsonObject, val openedAt: Long = System.nanoTime())
 
-internal data class LocalSourcesOutcome(val candidates: List<SourceCandidate>, val torrentOnly: Int)
+internal data class LocalSourcesOutcome(val candidates: List<SourceCandidate>, val torrentOnly: Int,
+    val producers: List<SourceProducerOutcome> = emptyList())
 
 /** A stream response that lists streams but yields none this connection can play (torrent links without a debrid integration). */
 private fun NativeLocalConnection.reportsStreams(body: String): Boolean = try {
@@ -43,7 +44,7 @@ private fun NativeLocalConnection.reportsStreams(body: String): Boolean = try {
 } catch (_: Exception) { false }
 
 internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, card: Card,
-    publish: suspend (List<SourceCandidate>) -> Unit = {}): LocalSourcesOutcome {
+    publish: suspend (SourcesOutcome) -> Unit = {}): LocalSourcesOutcome {
     var operation: String? = null
     try {
         // Capture ownership inside IO: cancellation on the return hop must still
@@ -60,9 +61,16 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
         val gate = Mutex()
         var found = emptyList<SourceCandidate>()
         var torrentOnly = 0
+        val producers = linkedMapOf<String, SourceProducerOutcome>()
+        request.getValue("requests").jsonArray.forEach { item ->
+            val provider = item.jsonObject.getValue("provider").jsonPrimitive.content
+            producers.getOrPut(provider) { SourceProducerOutcome(provider) }
+        }
+        fun published() = SourcesOutcome(found, producers = producers.values.toList())
         coroutineScope {
             request.getValue("requests").jsonArray.map { item -> async {
                 val connection = item.jsonObject
+                val provider = connection.getValue("provider").jsonPrimitive.content
                 val body = try {
                     // Debrid providers (torrentio + TorBox/RealDebrid) resolve cached
                     // torrents and can take 10-20s; discovery stays progressive so fast
@@ -80,9 +88,11 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
                     }
                     currentCoroutineContext().ensureActive()
                     if (partial.size == found.size && body != null && reportsStreams(body)) torrentOnly += 1
-                    if (partial.map { it.id } != found.map { it.id }) {
+                    val reached = SourceProducerOutcome(provider, errorCode = SOURCE_PRODUCER_UNREACHABLE).takeIf { body == null }
+                    if (reached != null) producers[provider] = reached
+                    if (partial.map { it.id } != found.map { it.id } || reached != null) {
                         found = partial
-                        publish(partial)
+                        publish(published())
                     }
                 }
             } }.awaitAll()
@@ -91,7 +101,7 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
         val candidates = withContext(Dispatchers.IO) {
             json.decodeFromString<List<SourceCandidate>>(engine.projectSourcesPartial(id, "[]", true))
         }
-        return LocalSourcesOutcome(candidates, if (candidates.isEmpty()) torrentOnly else 0)
+        return LocalSourcesOutcome(candidates, if (candidates.isEmpty()) torrentOnly else 0, producers.values.toList())
     } finally {
         operation?.let { id -> withContext(NonCancellable) {
             withContext(Dispatchers.IO) {

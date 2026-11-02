@@ -22,10 +22,10 @@ class NextEpisodePlaybackTest {
         var holdOpen = false
         var holdSources = false
 
-        override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome {
+        override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
             listening.complete(Unit)
             if (holdSources) releasing.await()
-            publish(rows)
+            publish(SourcesOutcome(rows))
             return SourcesOutcome(rows)
         }
 

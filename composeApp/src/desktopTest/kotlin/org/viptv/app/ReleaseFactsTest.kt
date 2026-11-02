@@ -26,7 +26,7 @@ class ReleaseFactsTest {
             respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
-        try { remote.sources(card) } finally { remote.close() }
+        try { remote.sources(card).candidates } finally { remote.close() }
     }
 
     @Test fun serverCardsCarryReleaseFactsAndOlderCardsStayUnknown() {

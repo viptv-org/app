@@ -143,7 +143,7 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
     override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, 24)
     override suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, limit)
 
-    override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome = fetchMergedLocalSources(profile, card, publish)
+    override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome = fetchMergedLocalSources(profile, card, publish)
 
     override suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot = fetchLocalSubtitles(profile, card)
 
