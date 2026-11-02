@@ -38,7 +38,10 @@ fun ApplicationController.updatePreferences(preferences: ProfilePreferences) = r
     val snapshot = mutable.value.preferences ?: throw LocalFailure("Refresh profile preferences first.")
     val updated = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
         ?: requireNotNull(remote).updateProfilePreferences(profile, snapshot.revision, preferences)
-    if (ownsProfile(profile, remote, device)) updateState { it.copy(preferences = updated, preferencesError = null) }
+    if (ownsProfile(profile, remote, device)) {
+        cancelNextEpisodePreparation()
+        updateState { it.copy(preferences = updated, preferencesError = null) }
+    }
 }
 
 // Not `run {}`: it cancels the controller job and sets `busy`, which must not happen while a player is open.
@@ -63,7 +66,10 @@ fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language:
         try {
             val saved = device?.updateProfilePreferences(profile, snapshot.revision, updated)
                 ?: remote?.updateProfilePreferences(profile, snapshot.revision, updated) ?: return@launch
-            if (ownsProfile(profile, remote, device)) updateState { it.copy(preferences = saved, preferencesError = null) }
+            if (ownsProfile(profile, remote, device)) {
+                cancelNextEpisodePreparation()
+                updateState { it.copy(preferences = saved, preferencesError = null) }
+            }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) {
             if (ownsProfile(profile, remote, device))
