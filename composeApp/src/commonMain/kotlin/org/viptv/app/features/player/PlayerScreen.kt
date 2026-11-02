@@ -210,24 +210,27 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     if (phone) Box(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal))) {
                         PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
                     }
-                    Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)).padding(horizontal = 24.dp, vertical = 12.dp)) {
-                        if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
-                            Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
-                        if (phone) {
-                            if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
-                                color = Palette.secondary, fontSize = 12.sp)
-                            PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
-                                episodes = openEpisodes,
-                                episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
-                                next = if (episodeTitle) playNext else null,
-                                nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
+                    BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))) {
+                        val gutter = if (!phone && maxWidth < CompactButtonsBelow) 12.dp else 24.dp
+                        Column(Modifier.fillMaxWidth().padding(horizontal = gutter, vertical = 12.dp)) {
+                            if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
+                                Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
+                            if (phone) {
+                                if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
+                                    color = Palette.secondary, fontSize = 12.sp)
+                                PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
+                                    episodes = openEpisodes,
+                                    episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
+                                    next = if (episodeTitle) playNext else null,
+                                    nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
+                            }
+                            else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
+                                { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
+                                streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
+                                next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
+                                episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
                         }
-                        else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
-                            { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
-                            streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
-                            next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
-                            episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
                     }
                 }
                 }

@@ -17,7 +17,7 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.DropdownMenuItem
 
-private val CompactButtonsBelow = 1000.dp
+internal val CompactButtonsBelow = 1000.dp
 private val SourceLabelWidth = 200.dp
 
 @Composable
@@ -76,8 +76,8 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
     }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth < CompactButtonsBelow) Column {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                playPause(); skipBack(); skipForward(); nextAction(); Spacer(Modifier.weight(1f)); closeAction()
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                playPause(); skipBack(); skipForward(); nextAction(); muteAction(); closeAction()
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 episodesAction()

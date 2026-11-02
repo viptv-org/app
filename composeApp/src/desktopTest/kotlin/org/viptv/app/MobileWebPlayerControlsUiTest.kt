@@ -37,6 +37,9 @@ class MobileWebPlayerControlsUiTest {
                     frames(scene)
                     assertSourceLabelOnOneLine(scene, label ?: "Streams", "$width×$height \"$label\"")
                     assertControlsInView(scene, width, height, "$width×$height \"$label\"")
+                    assertTrue(control(scene, "Mute or unmute").boundsInRoot.right <= width + 1f, "$width×$height: the mute control stays in view")
+                    assertEquals(control(scene, "Play").boundsInRoot.center.y, control(scene, "Mute or unmute").boundsInRoot.center.y, 1f,
+                        "$width×$height: mute sits in the compact transport row")
                     assertFalse(hasControl(scene, "Volume"), "$width×$height: the compact player hides the volume slider")
                 } finally { scene.close() }
             }
