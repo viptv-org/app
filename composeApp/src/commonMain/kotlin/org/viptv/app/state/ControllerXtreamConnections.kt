@@ -31,6 +31,7 @@ fun ApplicationController.createXtreamConnection(name: String, url: String, user
         next.copy(xtreamConnections = (next.xtreamConnections.orEmpty().filterNot { it.id == created.id } + created).sortedBy { it.id },
             xtreamNotice = "Connection added.")
     }
+    profileConfigurationChanged()
 }
 
 fun ApplicationController.updateXtreamConnection(id: Long, name: String, scopes: XtreamScopes) = run {
@@ -42,6 +43,7 @@ fun ApplicationController.updateXtreamConnection(id: Long, name: String, scopes:
         next.copy(xtreamConnections = next.xtreamConnections?.map { if (it.id == id) updated else it },
             xtreamNotice = "Connection saved.")
     }
+    profileConfigurationChanged()
 }
 
 fun ApplicationController.replaceXtreamPassword(id: Long, password: String) = run {
@@ -52,6 +54,7 @@ fun ApplicationController.replaceXtreamPassword(id: Long, password: String) = ru
         next.copy(xtreamConnections = next.xtreamConnections?.map { if (it.id == id) updated else it },
             xtreamNotice = "Password replaced.")
     }
+    profileConfigurationChanged()
 }
 
 fun ApplicationController.syncXtreamConnection(id: Long) = run {
@@ -71,6 +74,7 @@ fun ApplicationController.setXtreamDefaultLive(id: Long) = run {
     if (connection === remote && generation == owner) updateState { next ->
         next.copy(xtreamDefaultLive = selected, xtreamNotice = "Default live playlist saved.")
     }
+    profileConfigurationChanged()
 }
 
 fun ApplicationController.deleteXtreamConnection(id: Long) = run {
@@ -81,4 +85,5 @@ fun ApplicationController.deleteXtreamConnection(id: Long) = run {
     if (connection === remote && generation == owner) updateState { next ->
         next.copy(xtreamConnections = next.xtreamConnections?.filterNot { it.id == id }, xtreamNotice = "Connection removed.")
     }
+    profileConfigurationChanged()
 }
