@@ -66,10 +66,26 @@ class GroupedSearchUiTest {
         try {
             frames(scene, 0)
             val texts = nodes(scene).map(::text)
-            assertEquals(1, texts.count { it == "No matches. Try another search." })
-            assertFalse(texts.any { it == "No matches." })
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
             assertFalse(texts.any { it == "First provider" })
             assertFalse(texts.any { it == "Only copy" })
+        } finally { scene.close() }
+    }
+
+    @Test fun anEmptySearchShowsTheDesignEmptyStateCopy() {
+        val scene = ImageComposeScene(1440, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("spider", emptyList(), emptyList(), false, null, true, {}, {}, editQuery = {})
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
         } finally { scene.close() }
     }
 

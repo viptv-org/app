@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
 
 @UnstableApi
 @Composable
-internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier,
+internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier,
     observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) {
     key(input) {
         val context = LocalContext.current
