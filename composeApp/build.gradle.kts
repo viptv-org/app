@@ -59,6 +59,7 @@ kotlin {
                 implementation("com.google.mlkit:barcode-scanning:17.3.0")
                 implementation("net.java.dev.jna:jna:5.17.0@aar")
                 implementation(project(":media3-ffmpeg"))
+                implementation("com.squareup.okhttp3:okhttp:4.12.0")
                 listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-exoplayer-dash", "media3-ui").forEach { implementation("androidx.media3:$it:1.11.1") }
             }
         }
@@ -99,6 +100,7 @@ kotlin {
             implementation("androidx.activity:activity:1.10.1")
             implementation("io.ktor:ktor-client-mock:3.4.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+            implementation("com.squareup.okhttp3:okhttp-tls:5.3.2")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

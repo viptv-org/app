@@ -44,8 +44,10 @@ class PlaybackPreferenceMappingTest {
             "preferred_subtitle_language":"en","subtitles_enabled":false,"source_selection":"best","max_quality_height":null}}""")
         assertEquals("any", old.preferences.hdr_preference)
         assertEquals("never", old.preferences.subtitleMode)
+        assertTrue(old.preferences.remembered_source_reuse, "an older server that never sent it defaults to reuse")
         val wire = profilePreferencesWire(old.preferences)
         assertFalse("hdr_preference" in wire); assertFalse("subtitle_mode" in wire)
+        assertFalse("remembered_source_reuse" in wire)
         assertFalse(wire.getValue("subtitles_enabled").jsonPrimitive.boolean)
         val chosen = profilePreferencesWire(old.preferences.copy(hdr_preference = "avoid").withSubtitleMode("foreign"))
         assertEquals("avoid", chosen.getValue("hdr_preference").jsonPrimitive.content)
@@ -82,26 +84,29 @@ class PlaybackPreferenceMappingTest {
     }
 
     @Test fun tvPlaybackHidesUnstoredRowsOnRealConnections() {
-        assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision"),
+        assertEquals(listOf("Next episode button", "Skip intros and recaps", "Remember source choices", "Default source", "Preferred quality", "HDR and Dolby Vision"),
             tvPlaybackRows(actualPreferencesOnly = true))
-        assertEquals(listOf("Next episode button", "Skip intros and recaps", "Default source", "Preferred quality", "HDR and Dolby Vision",
+        assertEquals(listOf("Next episode button", "Skip intros and recaps", "Remember source choices", "Default source", "Preferred quality", "HDR and Dolby Vision",
             "Match frame rate"), tvPlaybackRows(actualPreferencesOnly = false))
         assertFalse("Start with subtitles" in tvPlaybackRows(false))
-        assertEquals(listOf("Next episode button", autoplayNextRow, "Skip intros and recaps", "Default source", "Preferred quality",
+        assertEquals(listOf("Next episode button", autoplayNextRow, "Skip intros and recaps", "Remember source choices", "Default source", "Preferred quality",
             "HDR and Dolby Vision"), tvPlaybackRows(actualPreferencesOnly = true, deviceRows = true))
         assertEquals(listOf("Audio language", "Subtitles", "Subtitle language", "Subtitle size", "Subtitle background", "Subtitle colour"), tvSubtitleRows)
     }
 
     @Test fun theNextEpisodeButtonAndSkipIntrosSwitchesRoundTrip() {
-        val stored = ProfilePreferences(next_episode_button = false, skip_intros = true)
+        val stored = ProfilePreferences(next_episode_button = false, skip_intros = true, remembered_source_reuse = false)
         assertEquals(stored, stored.tvSettings().profilePreferences(stored))
         assertFalse(stored.tvSettings().nextEpisode)
         assertTrue(stored.tvSettings().skipIntros)
+        assertFalse(stored.tvSettings().rememberSource)
         assertTrue(ProfilePreferences().tvSettings().nextEpisode)
         assertFalse(ProfilePreferences().tvSettings().skipIntros)
-        val mapped = TvSettingsPreferences(nextEpisode = false, skipIntros = true).profilePreferences()
+        assertTrue(ProfilePreferences().tvSettings().rememberSource)
+        val mapped = TvSettingsPreferences(nextEpisode = false, skipIntros = true, rememberSource = false).profilePreferences()
         assertFalse(mapped.next_episode_button)
         assertTrue(mapped.skip_intros)
+        assertFalse(mapped.remembered_source_reuse)
     }
 
     @Test fun foreignAudioRuleFollowsTheSpecCases() {

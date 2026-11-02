@@ -83,6 +83,16 @@ class NextEpisodePlaybackTest {
         assertEquals(Screen.Player, controller.state.value.screen)
     }
 
+    @Test fun disablingRememberedReuseMakesTheSuccessorAsk() = transition("ask") { controller, device ->
+        controller.mutable.value = controller.mutable.value.copy(preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "ask", remembered_source_reuse = false)))
+        controller.playEpisode(episode(25))
+        settle(controller)
+        assertTrue(device.opened.isEmpty(), "Disabling reuse restores manual source selection for a successor")
+        assertEquals(Screen.Sources, controller.state.value.screen)
+        assertNull(controller.state.value.playback)
+        assertEquals(episode(25), controller.state.value.sourceTitle)
+    }
+
     @Test fun anotherEpisodeFromThePlayerKeepsAskingForASource() = transition("ask") { controller, device ->
         controller.playEpisode(episode(3))
         settle(controller)

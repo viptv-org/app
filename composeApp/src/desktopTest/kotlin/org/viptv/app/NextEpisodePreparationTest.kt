@@ -374,4 +374,20 @@ class NextEpisodePreparationTest {
             controller.closePlayer()
         } finally { fixture.close(controller) }
     }
+
+    @Test fun disablingReuseNeverPreparesAndTheSuccessorAsks() = runTest {
+        val fixture = LocalSetupFixture()
+        val controller = controller(local = localDevice(fixture, listOf(row("best", languages = listOf("ja"))), bestMatch = "best"))
+        try {
+            controller.mutable.value = controller.state.value.copy(preferences = PreferencesSnapshot(2, ProfilePreferences(source_selection = "ask", remembered_source_reuse = false)))
+            controller.progress(1_300_000); advanceTimeBy(2_000); runCurrent()
+            assertNull(controller.state.value.nextEpisodePreparation, "No successor is prepared once reuse is disabled")
+
+            controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
+            val state = controller.state.value
+            assertEquals(Screen.Sources, state.screen, "The successor asks for a source instead of starting on its own")
+            assertNull(state.playback)
+            controller.closePlayer()
+        } finally { fixture.close(controller) }
+    }
 }

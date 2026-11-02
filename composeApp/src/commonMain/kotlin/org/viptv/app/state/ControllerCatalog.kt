@@ -191,7 +191,8 @@ fun ApplicationController.playTitle(card: Card) {
     val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: before.detailReturnScreen
     val keptDetail = before.detail?.takeIf { !before.detailShell && sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
-    val remembered = before.selectedProfile?.let { sourceMemory.entry(it, card) }
+    val remembered = if (before.preferences.rememberedSourceReuseEnabled())
+        before.selectedProfile?.let { sourceMemory.entry(it, card) } else null
     releaseRemotePlayback()
     updateState { it.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null, detailShell = false) }
     openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null }, quiet = remembered != null)
