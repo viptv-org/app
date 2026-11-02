@@ -85,6 +85,7 @@ class SkipSegmentsUiTest {
             player.keyDown(Key.Enter); player.keyDown(Key.Enter); player.keyDown(Key.Enter)
             player.keyUp(Key.Enter); player.frames()
             assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(60_000)), player.seeks, "Held OK seeks once per activation")
+            assertFalse((player.seeks.single() as PlayerCommand.Seek).automatic, "A pressed Skip answers to the viewer")
             assertEquals(0, player.toggles, "Skipping never toggles playback")
         } finally { player.close() }
     }
@@ -94,7 +95,7 @@ class SkipSegmentsUiTest {
         try {
             player.frames()
             player.facts(PlayerFact.Progress(31_000, 1_800_000))
-            assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(60_000)), player.seeks, "Crossing the start skips once")
+            assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(60_000, automatic = true)), player.seeks, "Crossing the start skips once, on nobody's command")
             player.facts(PlayerFact.Progress(60_000, 1_800_000))
             player.facts(PlayerFact.Progress(31_500, 1_800_000))
             player.frames()

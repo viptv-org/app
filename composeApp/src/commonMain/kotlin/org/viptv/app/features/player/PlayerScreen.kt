@@ -142,17 +142,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
-    fun seekTo(value: Long, reveal: Boolean) { if (input?.live != true) {
+    fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
-        if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target)); interaction++; controlError = null }
+        if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target, automatic)); interaction++; if (!automatic) controlError = null }
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
     val skipped = remember(playbackKey) { mutableSetOf<TvSkipRange>() }
     fun skipSegment(range: TvSkipRange, automatic: Boolean) {
         if (seekTarget != null) return
         if (!skipped.add(range) && automatic) return
-        seekTo(range.endMillis, reveal = false)
+        seekTo(range.endMillis, reveal = false, automatic = automatic)
     }
     LaunchedEffect(position, tvExtras.skips, tvExtras.skipIntros, paused) {
         if (tvExtras.skipIntros && !paused) tvExtras.skips.firstOrNull { it.automatic && position in it.startMillis until it.endMillis }

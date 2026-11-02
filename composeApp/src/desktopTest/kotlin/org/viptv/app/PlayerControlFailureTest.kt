@@ -16,7 +16,9 @@ import org.viptv.app.player.PlaybackControl
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerCommand
 import org.viptv.app.player.PlayerFact
+import org.viptv.app.player.control
 import org.viptv.app.player.controlFailed
+import org.viptv.app.player.failureObserver
 import org.viptv.app.player.playbackControlErrorCopy
 import org.viptv.app.player.playbackControlErrorVisibleMillis
 import org.viptv.app.theme.ViptvTheme
@@ -42,6 +44,26 @@ class PlayerControlFailureTest {
         input.controlFailed(PlaybackControl.Seek, "IllegalStateException", observed::add)
         assertEquals(listOf<PlayerFact>(PlayerFact.ControlFailed(PlaybackControl.Seek)), observed)
         assertEquals(listOf("control_failed control=Seek cause=IllegalStateException user=true"), lines)
+    }
+
+    @Test fun anAutomaticSkipReportsItsFailureOnlyInDiagnostics() {
+        val lines = mutableListOf<String>()
+        val input = PlaybackInput("opaque", "opaque", diagnostics = { lines += it })
+        val observed = mutableListOf<PlayerFact>()
+        val skip = PlayerCommand.Seek(90_000, automatic = true)
+        input.controlFailed(skip.control, "IOException", skip.failureObserver(observed::add))
+        assertTrue(observed.isEmpty(), "an intro or recap skip is not the viewer's command")
+        assertEquals(listOf("control_failed control=Seek cause=IOException user=false"), lines)
+    }
+
+    @Test fun theViewersSkipReportsItsFailure() {
+        val lines = mutableListOf<String>()
+        val input = PlaybackInput("opaque", "opaque", diagnostics = { lines += it })
+        val observed = mutableListOf<PlayerFact>()
+        val skip = PlayerCommand.Seek(90_000)
+        input.controlFailed(skip.control, "IOException", skip.failureObserver(observed::add))
+        assertEquals(listOf<PlayerFact>(PlayerFact.ControlFailed(PlaybackControl.Seek)), observed)
+        assertEquals(listOf("control_failed control=Seek cause=IOException user=true"), lines)
     }
 
     @Test fun theTvPlayerShowsTheNoticeUntilTheNextControl() {

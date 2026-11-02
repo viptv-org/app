@@ -146,7 +146,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
                 else tracks.select(command.kind, command.id)
             }
         } } catch (error: kotlinx.coroutines.CancellationException) { throw error }
-        catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), ::emit) }
+        catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), command.failureObserver(::emit)) }
     }
     fun sourcesChanged(values: List<SubtitleCandidate>) { tracks.changed(); subtitles.sourcesChanged(values) }
     private var diagnosticFrames = 0

@@ -155,7 +155,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
                         }
                     }
                 } catch (error: CancellationException) { throw error }
-                catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), latestObserve) }
+                catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), command.failureObserver(latestObserve)) }
             }
         }
         LaunchedEffect(candidates, opened, subtitleTouched) {
