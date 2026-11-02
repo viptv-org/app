@@ -3,6 +3,11 @@ package org.viptv.app.connection
 import io.ktor.client.request.*
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.timeout
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.sse.SSECapability
+import io.ktor.client.plugins.sse.SSEClientException
+import io.ktor.client.plugins.sse.sse
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.client.statement.readRawBytes
@@ -15,6 +20,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.sync.Mutex
@@ -34,10 +40,21 @@ data class Bootstrap(val profiles: List<Profile>, val selected: String?, val hom
 class RemoteFailure(val status: Int, message: String, val code: String? = null, val body: String? = null) : Exception(message)
 internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && code == "metadata_not_found"
 
+internal class SearchStreamUnavailable : Exception()
+
+internal fun Throwable.searchStreamTimeout(): Throwable? {
+    var current: Throwable? = this
+    while (current != null) {
+        if (current is HttpRequestTimeoutException || current is SocketTimeoutException) return current
+        current = current.cause
+    }
+    return null
+}
+
 private val nativeSessionGate = Mutex()
 internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
 
-class RemoteConnection(
+open class RemoteConnection(
     rawOrigin: String,
     private val sessionStore: RemoteSessionStore = remoteSessionStore(),
     client: HttpClient? = null,
@@ -179,11 +196,15 @@ class RemoteConnection(
     }
 
     suspend fun selectProfile(id: String, pin: String? = null): Bootstrap {
+        switchProfile(id, pin)
+        return bootstrap()
+    }
+
+    suspend fun switchProfile(id: String, pin: String? = null) {
         call("/api/auth/profile", HttpMethod.Post, buildJsonObject {
             put("profile_id", id)
             pin?.let { put("pin", it) }
         })
-        return bootstrap()
     }
 
     suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
@@ -254,6 +275,25 @@ class RemoteConnection(
 
     internal suspend fun exchange(path: String, method: HttpMethod, body: JsonElement? = null, timeoutMillis: Long? = null): Pair<Int, String> =
         authenticatedResponse(path, method, body, timeoutMillis).let { it.status.value to it.bodyAsText() }
+
+    internal open suspend fun searchEventStream(path: String, onEvent: suspend (String?, String?) -> Unit) {
+        if (!client.isSupported(SSECapability)) throw SearchStreamUnavailable()
+        try {
+            client.sse(urlString = origin + path, request = {
+                header("x-viptv-image-delivery", if (browser) "proxy" else "direct")
+                if (!browser) header(HttpHeaders.Origin, origin)
+                accessToken?.let { bearerAuth(it) }
+                csrf?.let { header("x-csrf-token", it) }
+            }) {
+                incoming.collect { event -> onEvent(event.event, event.data) }
+            }
+        } catch (error: SSEClientException) {
+            if (error.response?.status?.value == 404) throw SearchStreamUnavailable()
+            error.response?.let { checkStatus(it) }
+            error.searchStreamTimeout()?.let { throw it }
+            throw error
+        }
+    }
 
     private suspend fun authenticatedResponse(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null,
         timeoutMillis: Long? = null): HttpResponse {
