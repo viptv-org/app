@@ -6,8 +6,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
-import org.viptv.app.features.home.CardActions
-import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
 
@@ -53,13 +51,8 @@ internal fun DesktopShell(
                             maximized = controls.maximized)
                     }
                     Box(Modifier.weight(1f)) {
-                        CompositionLocalProvider(LocalCardActions provides CardActions(
-                            play = controller::playTitle,
-                            toggleSave = controller::toggleFavorite,
-                            isSaved = { state.isSaved(it) })) {
-                            App(localDatabase = localDatabase, desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
-                                manageControllerLifecycle = manageControllerLifecycle, entryBackChanged = globalBack.routeBackChanged)
-                        }
+                        App(localDatabase = localDatabase, desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
+                            manageControllerLifecycle = manageControllerLifecycle, entryBackChanged = globalBack.routeBackChanged)
                         if (state.screen == Screen.Home && state.error == ServerUnreachableMessage && !offlineDismissed) DesktopOfflineBar(
                             retry = controller::refresh,
                             dismiss = { offlineDismissed = true },

@@ -89,6 +89,8 @@ fun ApplicationController.backDetails() {
 }
 
 fun ApplicationController.backSources() {
+    // A restart the viewer never started must not move a later title to 0:00.
+    restartRequested = false
     val awaitingTitle = mutable.value.let { it.playTapTitle != null && it.detail == null && it.sourceReturnScreen == Screen.Details }
     generation++; job?.cancel()
     if (!awaitingTitle) cancelSourceDetail()

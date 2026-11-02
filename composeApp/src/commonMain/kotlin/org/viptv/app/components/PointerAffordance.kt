@@ -40,6 +40,9 @@ import org.viptv.app.theme.Palette
 
 val LocalPointerHover = staticCompositionLocalOf { false }
 
+// Touch cards carry their own menu target; a pointer right-clicks and TV holds OK instead.
+val LocalCardOverflow = staticCompositionLocalOf { false }
+
 fun Modifier.handCursor(): Modifier = pointerHoverIcon(PointerIcon.Hand)
 
 fun Modifier.pointerClickable(enabled: Boolean = true, onClickLabel: String? = null, role: Role? = null,

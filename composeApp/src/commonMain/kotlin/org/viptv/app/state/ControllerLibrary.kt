@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import org.viptv.app.components.isWatched
 import org.viptv.app.connection.*
 import org.viptv.app.features.home.CONTINUE_ROW
 import org.viptv.app.features.home.MY_LIST_ROW
@@ -89,6 +90,15 @@ fun ApplicationController.correctHistory(display: HistoryDisplay, correction: Hi
                 resumeActive = corrected.resumeActive, completionOnly = corrected.completionOnly, watchDateKnown = corrected.watchDateKnown)
         })
     }
+}
+
+// A title marked from its own menu has no history row to correct, so the page re-reads instead.
+fun ApplicationController.toggleWatched(card: Card) = run {
+    val profile = requireNotNull(mutable.value.selectedProfile)
+    val remote = connection ?: throw LocalFailure("Connect to your account to mark this title watched.")
+    val display = HistoryDisplay(HistoryEntry(card, 0L), "")
+    remote.correctProgress(profile, display, if (card.isWatched()) HistoryCorrection.Unwatched else HistoryCorrection.Watched)
+    requestQuiet(QuietWork.Refresh, detail = true)
 }
 
 internal fun ApplicationController.updateLibrary(cards: List<Card>, identities: List<MediaIdentity> = cards.map { it.identity },
