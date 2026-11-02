@@ -74,7 +74,22 @@ class TvRemoteSheetUiTest {
             assertTrue(probe.has("Not reachable"), probe.texts().toString())
             assertTrue(probe.has("Turn the TV on and check it's on the same Wi-Fi as this phone."), probe.texts().toString())
             assertTrue(probe.has("Try again"), probe.texts().toString())
+            assertTrue(probe.has("Pair again"), probe.texts().toString())
             assertFalse(probe.has("Open VIPTV on TV"), probe.texts().toString())
+        } finally { scene.close() }
+    }
+
+    @Test fun pairAgainFromTheOfflineCardInvokesTheRecovery() {
+        val engine = FakeEngine(error(VizioFailureKind.TRANSPORT))
+        var paired = 0
+        val scene = scene(390, 844) { scope ->
+            TvRemoteOverlay(tv, "https://example.invalid/tv/?platform=vizio", false, {}, scope, {}, onPairAgain = { paired++ }) { engine }
+        }
+        val probe = Probe(scene)
+        try {
+            probe.await("the offline card") { probe.has("Can't reach Living Room") }
+            probe.click("Pair again")
+            assertEquals(1, paired)
         } finally { scene.close() }
     }
 

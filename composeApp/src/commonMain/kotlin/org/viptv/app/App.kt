@@ -266,6 +266,12 @@ fun App(
                     onSwipeModeChange = watchOnTvState::setRemoteSwipe,
                     scope = scope,
                     onClose = { remoteOpen = false },
+                    onPairAgain = {
+                        remoteOpen = false
+                        watchOnTvState.beginRepair(remoteTv)
+                        controller.navigate(Screen.Settings)
+                        controller.showSettingsPage(SettingsPage("Watch on TV"))
+                    },
                 )
             }
             if (state.pendingCrashReport != null && showsCrashNotice(state.screen)) {

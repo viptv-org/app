@@ -51,6 +51,7 @@ internal sealed interface VizioSetupStep {
     data object Intro : VizioSetupStep
     data object Searching : VizioSetupStep
     data object Manual : VizioSetupStep
+    data object NoAccess : VizioSetupStep
     data class Pin(val tv: VizioTv) : VizioSetupStep
     data class Done(val tv: VizioTv) : VizioSetupStep
 }
@@ -67,6 +68,7 @@ internal interface VizioSetupEngine {
     suspend fun beginPair(tv: VizioTv): VizioPairingChallenge?
     suspend fun finishPair(tv: VizioTv, challenge: VizioPairingChallenge, pin: String): VizioPairResult
     suspend fun cancelPair(tv: VizioTv)
+    fun openLocalNetworkSettings() {}
 }
 
 internal expect fun vizioSetupEngine(context: PlatformContext): VizioSetupEngine?
@@ -81,6 +83,7 @@ internal const val vizioSearchLimit = 16
 private const val vizioSearchTimeoutMillis = 30_000L
 
 internal class VizioNoLocalNetwork : Exception()
+internal class VizioNoAccess : Exception()
 
 // A private local IPv4 address with an optional SmartCast port, canonicalized to https.
 internal fun vizioManualOrigin(value: String): String? {
@@ -120,6 +123,7 @@ internal class WatchOnTvSetupController(
     private var challenge: VizioPairingChallenge? = null
     private var pendingPair: VizioTv? = null
     private var pinReturnToSearch = true
+    private var pinCancel: (() -> Unit)? = null
 
     fun beginSearch() {
         if (searchJob != null) return
@@ -133,6 +137,7 @@ internal class WatchOnTvSetupController(
             } catch (_: TimeoutCancellationException) {
                 // Partial results are already published.
             } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: VizioNoAccess) { step = VizioSetupStep.NoAccess }
             catch (_: VizioNoLocalNetwork) { searchError = "Connect this phone to the same Wi-Fi as your TV." }
             catch (_: Exception) { searchError = "Could not search for TVs. Enter the IP address instead." }
             finally { searching = false; searchJob = null }
@@ -167,6 +172,7 @@ internal class WatchOnTvSetupController(
                 if (tv == null) manualError = "Can't reach that TV. Check the address is on the same Wi-Fi and try again."
                 else beginPin(tv)
             } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: VizioNoAccess) { busy = false; step = VizioSetupStep.NoAccess }
             catch (_: Exception) { manualError = "Can't reach that TV. Check the address is on the same Wi-Fi and try again." }
             finally {
                 probeJob = null
@@ -192,10 +198,21 @@ internal class WatchOnTvSetupController(
         beginPair(tv)
     }
 
+    fun pairAgain(tv: VizioTv, cancel: () -> Unit) {
+        stopSearch()
+        pinReturnToSearch = false
+        beginPin(tv)
+        pinCancel = cancel
+    }
+
+    fun openLocalNetworkSettings() = engine.openLocalNetworkSettings()
+
     fun cancelPin() {
         val tv = (step as? VizioSetupStep.Pin)?.tv ?: return
         cancelPairing(tv)
-        step = if (pinReturnToSearch) VizioSetupStep.Searching else VizioSetupStep.Manual
+        val leave = pinCancel
+        pinCancel = null
+        if (leave != null) leave() else step = if (pinReturnToSearch) VizioSetupStep.Searching else VizioSetupStep.Manual
     }
 
     fun pinChanged(value: String) {
@@ -207,6 +224,7 @@ internal class WatchOnTvSetupController(
 
     private fun beginPin(tv: VizioTv) {
         step = VizioSetupStep.Pin(tv)
+        pinCancel = null
         beginPair(tv)
     }
 
@@ -247,6 +265,7 @@ internal class WatchOnTvSetupController(
                 when (val result = engine.finishPair(tv, challenge, entered)) {
                     VizioPairResult.Paired -> {
                         pendingPair = null
+                        pinCancel = null
                         paired(tv)
                         step = VizioSetupStep.Done(tv)
                     }
@@ -280,9 +299,20 @@ internal class WatchOnTvSetupController(
 }
 
 @Composable
-internal fun WatchOnTvSetupFlow(engine: VizioSetupEngine, compact: Boolean, back: () -> Unit, onPaired: (VizioTv) -> Unit) {
+internal fun WatchOnTvSetupFlow(
+    engine: VizioSetupEngine,
+    compact: Boolean,
+    back: () -> Unit,
+    onPaired: (VizioTv) -> Unit,
+    pairAgain: VizioTv? = null,
+    onCancel: (() -> Unit)? = null,
+) {
     val scope = rememberCoroutineScope()
     val controller = remember(engine) { WatchOnTvSetupController(engine, scope, onPaired) }
+    LaunchedEffect(engine, pairAgain) {
+        val tv = pairAgain
+        if (tv != null) controller.pairAgain(tv) { onCancel?.invoke() }
+    }
     val step = controller.step
     TvFocusScroll(contentPadding = PaddingValues(vertical = if (compact) 16.dp else 32.dp)) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding()
@@ -292,6 +322,7 @@ internal fun WatchOnTvSetupFlow(engine: VizioSetupEngine, compact: Boolean, back
                 VizioSetupStep.Intro -> VizioSetupIntro(compact, controller::beginSearch)
                 VizioSetupStep.Searching -> VizioSetupSearch(compact, controller)
                 VizioSetupStep.Manual -> VizioSetupManual(compact, controller)
+                VizioSetupStep.NoAccess -> VizioSetupNoAccess(compact, controller)
                 is VizioSetupStep.Pin -> VizioSetupPin(compact, step.tv, controller)
                 is VizioSetupStep.Done -> VizioSetupDone(compact, step.tv, back)
             }
@@ -371,6 +402,14 @@ private fun VizioSetupManual(compact: Boolean, controller: WatchOnTvSetupControl
     controller.manualError?.let { DeviceError(it) }
     DevicePrimaryButton("Connect", controller.manual.isNotBlank() && !controller.busy, controller.busy, controller::connectManual)
     DeviceSecondaryButton("Cancel", controller::cancelManual)
+}
+
+@Composable
+private fun VizioSetupNoAccess(compact: Boolean, controller: WatchOnTvSetupController) {
+    DeviceTile()
+    DeviceTitle("VIPTV can't look for TVs", compact)
+    DeviceSubtitle("Local network access is off for VIPTV. Turn it on in your phone's settings, then come back here.", compact)
+    DevicePrimaryButton("Open phone settings", true, false, controller::openLocalNetworkSettings)
 }
 
 @Composable
