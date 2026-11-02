@@ -38,6 +38,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private var closed = false
     private var opened = false
     private var mediaTransitions = 0
+    private var lastBuffered: List<BufferedRange>? = null
     private var timelineReports = 0
     private val window = Timeline.Window()
     private val listener = object : Player.Listener {
@@ -115,8 +116,13 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         }))
     }
     fun progress() {
-        if (!closed && player.playbackState != Player.STATE_IDLE) emit(input.mediaProgress(player.currentPosition,
+        if (closed || player.playbackState == Player.STATE_IDLE) return
+        emit(input.mediaProgress(player.currentPosition,
             player.duration.takeIf { it != C.TIME_UNSET && it > 0 }, windowOffsetMillis()))
+        // Media3 reports one buffered end: the media it holds from the playhead forward.
+        if (input.live) return
+        val buffered = input.mediaBuffered(listOf(BufferedRange(player.currentPosition, player.bufferedPosition)), windowOffsetMillis()).ranges
+        if (buffered != lastBuffered) { lastBuffered = buffered; emit(PlayerFact.Buffered(buffered)) }
     }
     private fun windowOffsetMillis(): Long = if (input.live || player.currentTimeline.isEmpty) 0 else
         player.currentTimeline.getWindow(player.currentMediaItemIndex, window).positionInFirstPeriodMs.coerceAtLeast(0)
