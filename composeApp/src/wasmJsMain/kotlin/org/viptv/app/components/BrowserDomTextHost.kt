@@ -5,8 +5,6 @@ import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -105,7 +103,7 @@ internal object BrowserDomTextHost : DomTextHost {
                             null
                         }
                     }.also { inputElement = it }
-                }, modifier = inputModifier.fillMaxWidth().height(lineHeight), update = { input ->
+                }, modifier = inputModifier.nativeFormSlot(lineHeight), update = { input ->
                     input.show(spec, fontPx)
                 }, onRelease = { input ->
                     input.oninput = null; input.onkeydown = null; input.onfocus = null; input.onblur = null

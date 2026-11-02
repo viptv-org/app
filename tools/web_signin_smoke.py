@@ -14,6 +14,11 @@ Three fresh visitors each fill the form by clicking where the fields are drawn:
 `enter` presses Enter in Password (app#96), `keyboard` presses Enter in Username
 to move to Password and Enter again to sign in, and `button` clicks Sign in.
 
+The fourth visitor (`password`) signs in, picks the profile, opens
+Settings › Password, reads the boxes and computed visibility of the three native
+fields there (a Compose interop node with no exact width collapses to 0×N and stays
+`visibility: hidden` at 0,0), types into all three, and submits the change.
+
 No real account or server is involved: every /api request is answered here.
 The web app accepts only an HTTPS origin, so the fake serves HTTPS with a
 throwaway self-signed certificate (needs `openssl`) that the browser is told
@@ -61,7 +66,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-SIGNIN_SCENARIOS = ("enter", "keyboard", "button")
+SIGNIN_SCENARIOS = ("enter", "keyboard", "button", "password")
 # scenario: (preview route, opener button, textbox name, text to type, text the page then shows, focused on open)
 FIELD_SCENARIOS = {
     "search":  ("/#ui-preview/Search/Movie", None, "Search", "the wild robot 2024 smoke", None, True),
@@ -73,6 +78,11 @@ FIELD_SCENARIOS = {
 SCENARIOS = SIGNIN_SCENARIOS + tuple(FIELD_SCENARIOS)
 USERNAME = "smoke-visitor"
 PASSWORD = "smoke-password-55"
+CURRENT_PASSWORD = "smoke-current-password-446"
+NEW_PASSWORD = "smoke-new-password-446"
+
+# The change-password form renders three native inputs: current, new, confirmation.
+PASSWORD_FIELDS = (CURRENT_PASSWORD, NEW_PASSWORD, NEW_PASSWORD)
 
 # Any canvas, including ones Compose places inside a shadow root.
 CANVAS_COUNT = """() => {
@@ -103,6 +113,46 @@ def launch(p, args):
         return p.chromium.launch(executable_path=str(newest), **options)
 
 
+def wait_until(page, condition, timeout_ms=30000):
+    for _ in range(max(1, timeout_ms // 250)):
+        if condition():
+            return True
+        page.wait_for_timeout(250)
+    return False
+
+
+def visible_box(locator):
+    """The first matching node that occupies page space; a Compose node can repeat in the semantics DOM."""
+    for index in range(locator.count()):
+        box = locator.nth(index).bounding_box()
+        if box and box["width"] > 0 and box["height"] > 0:
+            return box
+    return None
+
+
+def click_box(page, box, settle):
+    page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_timeout(settle)
+
+
+def click_role(page, check, scenario, role, name, settle):
+    box = visible_box(page.get_by_role(role, name=name))
+    if not check(box is not None, f"[{scenario}] the {role} '{name}' is on the page"):
+        return False
+    click_box(page, box, settle)
+    return True
+
+
+def click_control(page, check, scenario, name, settle):
+    """Compose exposes a clickable as an aria-label, a button or just its text, depending on the modifier."""
+    box = (visible_box(page.get_by_label(name)) or visible_box(page.get_by_role("button", name=name))
+           or visible_box(page.get_by_text(name)))
+    if not check(box is not None, f"[{scenario}] the '{name}' control is on the page"):
+        return False
+    click_box(page, box, settle)
+    return True
+
+
 def login_then_bootstrap(log):
     """The /api/auth/login posts, and whether a /api/bootstrap followed the first one."""
     with LOG_LOCK:
@@ -115,7 +165,7 @@ def login_then_bootstrap(log):
 LOG_LOCK = threading.Lock()
 
 
-def fake_backend(dist: Path, log: list, keys: Path):
+def fake_backend(dist: Path, log: list, keys: Path, session: dict):
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -139,11 +189,16 @@ def fake_backend(dist: Path, log: list, keys: Path):
                 self.record()
                 if path == "/api/auth/status":
                     return self.reply_json(200, {"authenticated": False})
+                # A change-password route that answers a GET with 405 is available; 404 would hide the Password row.
+                if path == "/api/auth/password":
+                    return self.reply_json(405, {"error": "Method not allowed"})
                 if path == "/api/bootstrap":
                     if not login_then_bootstrap(log)[0]:
                         return self.reply_json(401, {"error": "Sign in first"})
-                    return self.reply_json(200, {"identity": {"csrf_token": "smoke-csrf", "profiles": [
-                        {"id": "smoke-profile", "name": "Smoke QA"}]}})
+                    identity = {"csrf_token": "smoke-csrf", "profiles": [{"id": "smoke-profile", "name": "Smoke QA"}]}
+                    if session["profile"]:
+                        identity["profile_id"] = session["profile"]
+                    return self.reply_json(200, {"identity": identity})
                 return self.reply_json(404, {"error": "Not in the smoke fake"})
             file = (dist / path.lstrip("/")).resolve()
             if not file.is_file() or dist not in file.parents:
@@ -164,7 +219,14 @@ def fake_backend(dist: Path, log: list, keys: Path):
             except ValueError:
                 body = raw
             self.record(body)
-            if self.path.split("?", 1)[0] == "/api/auth/login":
+            path = self.path.split("?", 1)[0]
+            if path == "/api/auth/login":
+                session["profile"] = None
+                return self.reply_json(200, {"csrf_token": "smoke-csrf"})
+            if path == "/api/auth/profile":
+                session["profile"] = body.get("profile_id") if isinstance(body, dict) else None
+                return self.reply_json(200, {"csrf_token": "smoke-csrf"})
+            if path == "/api/auth/password":
                 return self.reply_json(200, {"csrf_token": "smoke-csrf"})
             return self.reply_json(404, {"error": "Not in the smoke fake"})
 
@@ -245,6 +307,100 @@ def visit_field(browser, origin, scenario, args, check):
     if shown:
         check(page.get_by_text(shown).count() > 0, f"[{scenario}] the page followed the typed text: '{shown}'")
     check(not errors, f"[{scenario}] no page errors {errors}")
+    context.close()
+
+
+def visit_password(browser, origin, args, log, check):
+    """Settings › Password (app#446): the change-password form is a native form, so read its DOM nodes."""
+    scenario = "password"
+    context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
+    page = context.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(origin + "/")
+    wait_until(page, lambda: page.evaluate(CANVAS_COUNT) > 0 and page.get_by_role("textbox", name="Username").count() > 0)
+    page.wait_for_timeout(1000)
+    shot = lambda name: page.screenshot(path=str(args.out / f"{scenario}-{name}.png"))
+    shot("01-signed-out")
+
+    def sign_in():
+        if not click_role(page, check, scenario, "textbox", "Username", args.settle):
+            return False
+        page.keyboard.type(USERNAME, delay=args.type_delay)
+        if not click_role(page, check, scenario, "textbox", "Password", args.settle):
+            return False
+        page.keyboard.type(PASSWORD, delay=args.type_delay)
+        return click_role(page, check, scenario, "button", "Sign in", args.settle)
+
+    if not sign_in():
+        return context.close()
+    if not check(wait_until(page, lambda: page.get_by_text("Who’s watching?").count() > 0),
+                 f"[{scenario}] the profile picker opened after signing in"):
+        return context.close()
+    if not click_control(page, check, scenario, "Smoke QA", args.settle):
+        return context.close()
+    if not wait_until(page, lambda: page.get_by_label("Profile menu").count() > 0):
+        check(False, f"[{scenario}] the signed-in shell appeared after picking the profile")
+        return context.close()
+    shot("02-home")
+
+    if not click_control(page, check, scenario, "Profile menu", args.settle):
+        return context.close()
+    if not check(wait_until(page, lambda: page.get_by_text("Settings").count() > 0),
+                 f"[{scenario}] the profile menu lists Settings"):
+        shot("03-menu")
+        return context.close()
+    if not click_control(page, check, scenario, "Settings", args.settle):
+        return context.close()
+    if not check(wait_until(page, lambda: page.get_by_text("Password").count() > 0),
+                 f"[{scenario}] Settings lists the Password page"):
+        shot("03-settings")
+        return context.close()
+    if not click_control(page, check, scenario, "Password", args.settle):
+        return context.close()
+
+    inputs = page.locator("input.viptv-cred-input")
+    if not check(wait_until(page, lambda: inputs.count() == len(PASSWORD_FIELDS)),
+                 f"[{scenario}] the change-password form rendered {inputs.count()} native fields"):
+        shot("04-password")
+        return context.close()
+    page.wait_for_timeout(args.settle)
+    shot("04-password")
+
+    placed = []
+    for index, field in enumerate(("current_password", "new_password", "new_password_confirmation")):
+        state = inputs.nth(index).evaluate("el => { const box = el.getBoundingClientRect(); const style = getComputedStyle(el);"
+                                         " return { x: box.x, y: box.y, width: box.width, height: box.height, visibility: style.visibility }; }")
+        placed.append(state["visibility"] == "visible" and state["width"] > 100 and state["height"] > 40 and state["x"] > 0 and state["y"] > 0)
+        check(placed[-1], f"[{scenario}] the {field} field is on the page: {state['visibility']}, "
+                           f"{state['width']:.0f}×{state['height']:.0f} at {state['x']:.0f},{state['y']:.0f}")
+    if not all(placed):
+        return context.close()
+
+    for index, value in enumerate(PASSWORD_FIELDS):
+        inputs.nth(index).click()
+        page.wait_for_timeout(200)
+        page.keyboard.type(value, delay=args.type_delay)
+    page.wait_for_timeout(500)
+    shot("05-filled")
+    typed = [inputs.nth(index).input_value() for index in range(len(PASSWORD_FIELDS))]
+    check(typed == list(PASSWORD_FIELDS), f"[{scenario}] all three fields took what was typed ({typed})")
+
+    submit = page.locator("button.viptv-cred-submit")
+    check(submit.count() == 1 and submit.is_enabled(), f"[{scenario}] Change password is enabled once the three fields are filled")
+    submit.click()
+    posted = lambda: [e for e in log if e["method"] == "POST" and e["path"] == "/api/auth/password"]
+    if not check(wait_until(page, lambda: len(posted()) > 0), f"[{scenario}] Change password posted /api/auth/password"):
+        return context.close()
+    page.wait_for_timeout(1500)
+    shot("06-changed")
+    body = posted()[0]["body"]
+    check(isinstance(body, dict) and body.get("current_password") == CURRENT_PASSWORD and body.get("new_password") == NEW_PASSWORD,
+          f"[{scenario}] the change carried the typed current and new password (fake values; got {body})")
+    check(len(posted()) == 1, f"[{scenario}] the change was posted once ({len(posted())})")
+    check(page.get_by_text("Password changed").count() > 0, f"[{scenario}] Settings confirms the change")
+    check(not errors, f"[{scenario}] no page errors {errors}")
+    print(f"     [{scenario}] requests: " + json.dumps([f'{e["method"]} {e["path"]}' for e in log]))
     context.close()
 
 
@@ -339,7 +495,8 @@ def main():
     args.out.mkdir(parents=True, exist_ok=True)
     log: list = []
     keys = Path(tempfile.mkdtemp(prefix="web-signin-smoke-"))
-    server = fake_backend(dist, log, keys)
+    session = {"profile": None}
+    server = fake_backend(dist, log, keys, session)
     origin = f"https://127.0.0.1:{server.server_port}"
     failures = []
 
@@ -358,8 +515,11 @@ def main():
                 for scenario in args.scenario or SCENARIOS:
                     with LOG_LOCK:
                         log.clear()
+                    session["profile"] = None
                     if scenario in FIELD_SCENARIOS:
                         visit_field(browser, origin, scenario, args, check)
+                    elif scenario == "password":
+                        visit_password(browser, origin, args, log, check)
                     else:
                         visit(browser, origin, scenario, args, log, check)
             browser.close()
