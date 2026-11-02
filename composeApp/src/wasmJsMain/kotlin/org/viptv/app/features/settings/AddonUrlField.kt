@@ -1,12 +1,12 @@
 package org.viptv.app.features.settings
 
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.HtmlElementView
 import kotlinx.browser.document
+import org.viptv.app.components.nativeFormSlot
 import org.w3c.dom.HTMLInputElement
 
 // Native editing avoids the canvas text-input mirror reordering rapid URL keystrokes.
@@ -32,7 +32,7 @@ internal actual fun AddonUrlField(state: TextFieldState, enabled: Boolean, modif
             onfocus = { style.borderColor = "#F5C542"; null }
             onblur = { style.borderColor = "#69696B"; null }
         }
-    }, modifier = modifier.height(56.dp), update = { input ->
+    }, modifier = modifier.nativeFormSlot(56.dp), update = { input ->
         input.disabled = !enabled
         input.style.opacity = if (enabled) "1" else "0.5"
         // Never reset the native caret or composition when mirroring its own input event.
