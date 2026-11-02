@@ -14,7 +14,6 @@ data class AccountDevices(val account: AccountIdentity, val devices: List<Accoun
 
 private val accountCodec = Json { ignoreUnknownKeys = true }
 internal suspend fun RemoteConnection.accountDevices(): AccountDevices {
-    check(accountManagementEnabled) { "Manage devices through the server web dashboard." }
     return try { accountCodec.decodeFromJsonElement<AccountDevices>(call("/api/account/devices")) }
     catch (failure: RemoteFailure) {
         if (failure.status == 404) throw RemoteFailure(404, "Update the server to manage devices here.")

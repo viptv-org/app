@@ -36,6 +36,7 @@ data class ApplicationState(
     val passwordChangeNotice: String? = null,
     val manageAccount: Boolean = false,
     val accountOwner: Boolean = false,
+    val accountRole: String = "member",
     val accountAccess: AccountAccess? = null,
     val profileManagement: ProfileManagement? = null,
     val parentSettings: ProfileManagement? = null,
