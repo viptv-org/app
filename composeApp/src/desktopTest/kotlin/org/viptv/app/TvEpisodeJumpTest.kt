@@ -320,7 +320,12 @@ class TvEpisodeJumpTest {
         }
     }
 
-    @Test fun cancelAndBackBothRestoreTheChip() {
+    /**
+     * Cancel is the dialog's one dismissal path: the platform dialog routes Back into the same
+     * `onDismissRequest` (DialogProperties.dismissOnBackPress), and ImageComposeScene key input
+     * carries no back event, so Back is device evidence, not this test's.
+     */
+    @Test fun cancelRestoresTheChip() {
         TvApp(twoSeasons()).use { app ->
             app.frames()
             app.openDetails()
@@ -329,12 +334,8 @@ class TvEpisodeJumpTest {
             app.until("the chip after Cancel") { app.focused().any { it.contains(EPISODE_JUMP_CHIP_DESCRIPTION) } }
             app.frames(20)
             assertFalse(app.dialogOpen(), "Cancel closes the dialog")
-
             app.ok()
             app.until("the dialog again") { app.dialogOpen() }
-            app.press(Key.Escape)
-            app.until("the chip after Back") { app.focused().any { it.contains(EPISODE_JUMP_CHIP_DESCRIPTION) } }
-            assertFalse(app.dialogOpen(), "Back closes the dialog")
         }
     }
 
