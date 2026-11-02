@@ -270,7 +270,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
         val detailsUnderDrawer = remember(showingSources) { !showingSources || state.sourceReturnScreen == Screen.Details }
         if (!browser || detailsUnderDrawer) DetailsScreen(state.detail, state.busy && state.screen == Screen.Details || state.detailsPending(),
             // A failed first load lands in state.error, which the page must show instead of drawing blank.
-            state.detailPageError ?: (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null || state.detailShell },
+            (if (state.detail == null) state.detailFailure else null) ?: state.error.takeIf { state.detail == null || state.detailShell },
             // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
             if (browser && showingSources) controller::backSources else controller::backDetails,
             if (state.detailShell) controller::playTitle else controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
@@ -283,6 +283,8 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             // Back from a play tap's selector lands episodes on what is being continued; its failed read is the tap's own.
             playTap = state.playTapTitle != null,
             retry = if ((state.playTapTitle != null && state.detail == null || state.detailShell) && state.detailRetryable) controller::retryDetails else null,
+            pageError = state.detailPageError,
+            retryPage = if (state.detailPageError != null) controller::retryDetailPage else null,
             // The drawer over the page owns the keyboard: the dialog must not take its focus.
             closeFocusOnOpen = !(browser && showingSources),
             focus = state.detailFocus)
