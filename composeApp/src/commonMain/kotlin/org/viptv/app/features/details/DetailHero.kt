@@ -67,7 +67,7 @@ private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, 
         if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(220.dp).height(120.dp),
             alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
         else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
-        MediaMetadata(card)
+        MediaMetadata(card, kindFirst = true)
         val resuming = card.progress != null && card.progress > 0f
         Button(onClick = { play(card) }, modifier = Modifier.height(48.dp).widthIn(min = 140.dp),
             shape = RoundedCornerShape(12.dp),

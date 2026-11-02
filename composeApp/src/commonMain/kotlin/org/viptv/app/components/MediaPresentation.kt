@@ -6,6 +6,11 @@ import org.viptv.engine.wire.EpisodeCoordinates
 import org.viptv.engine.wire.NextEpisode
 import kotlin.math.roundToInt
 
+internal fun Card.kindLabel(): String = identity.kind.replaceFirstChar { it.uppercase() }
+
+internal fun Card.heroMetadataParts(): List<String> =
+    listOfNotNull(kindLabel().takeIf { it.isNotBlank() }) + metadataParts()
+
 internal fun Card.metadataParts(): List<String> = metadata?.let { value -> buildList {
     value.year?.let { add(it.toString()) }
     value.runtime_minutes?.takeIf { it > 0 }?.let { add(if (it >= 60) "${it / 60}h ${it % 60}m" else "${it}m") }
