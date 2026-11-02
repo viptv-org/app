@@ -17,8 +17,10 @@ private class DesktopDeviceRecordStore(node: String, private val key: String) : 
 
 private val display by lazy { DesktopDeviceRecordStore("org/viptv/app/tv-display", "tv-display-v1") }
 private val playback by lazy { DesktopDeviceRecordStore("org/viptv/app/device-playback", "playback-v1") }
+private val watchOnTv by lazy { DesktopDeviceRecordStore("org/viptv/app/watch-on-tv", "watch-on-tv-v1") }
 
 internal actual fun deviceRecordStore(context: PlatformContext, record: DeviceRecord): DeviceRecordStore = when (record) {
     DeviceRecord.Display -> display
     DeviceRecord.Playback -> playback
+    DeviceRecord.WatchOnTv -> watchOnTv
 }

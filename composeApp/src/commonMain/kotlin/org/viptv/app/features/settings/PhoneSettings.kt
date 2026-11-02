@@ -24,13 +24,14 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
     profiles: () -> Unit, addons: () -> Unit, leave: () -> Unit, back: () -> Unit, account: (() -> Unit)? = null, devices: (() -> Unit)? = null, stremioImport: (() -> Unit)? = null, preferences: ((String) -> Unit)? = null, parental: (() -> Unit)? = null, information: ((String) -> Unit)? = null, addDevice: (() -> Unit)? = null,
     householdPin: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null, xtreamConnections: (() -> Unit)? = null, password: (() -> Unit)? = null, deleteAccount: (() -> Unit)? = null,
     profilePage: (() -> Unit)? = null, linkedServices: (() -> Unit)? = null, gateways: (() -> Unit)? = null,
-    vodMatches: (() -> Unit)? = null,
+    vodMatches: (() -> Unit)? = null, watchOnTv: Boolean = false, watchOnTvValue: String = "Off", openWatchOnTv: (() -> Unit)? = null,
     listState: LazyListState = rememberLazyListState()) {
     val available = availableRows(parental != null, stremioImport != null, preferences != null, account != null,
         devices != null, addDevice != null, information = information != null,
         householdPin = householdPin != null, sourceIntegrations = sourceIntegrations != null,
         deleteAccount = deleteAccount != null, linkedServices = linkedServices != null, password = password != null,
-        xtreamConnections = xtreamConnections != null, gateways = gateways != null, vodMatches = vodMatches != null)
+        xtreamConnections = xtreamConnections != null, gateways = gateways != null, vodMatches = vodMatches != null,
+        watchOnTv = watchOnTv)
     val open: (SettingsRow) -> Unit = { row ->
         when (row) {
             SettingsRow.Profile -> profilePage?.invoke()
@@ -49,6 +50,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             SettingsRow.XtreamConnections -> xtreamConnections?.invoke()
             SettingsRow.VodMatches -> vodMatches?.invoke()
             SettingsRow.Gateways -> gateways?.invoke()
+            SettingsRow.WatchOnTv -> openWatchOnTv?.invoke()
             SettingsRow.SignOut -> leave()
             SettingsRow.DeleteAccount -> deleteAccount?.invoke()
             else -> Unit
@@ -88,7 +90,8 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
                                 if (index > 0) SettingsDivider()
                                 val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
                                 if (row.dangerous) SettingsDangerItem(label, row.icon) { open(row) }
-                                else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local), action = { open(row) })
+                                else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local),
+                                    value = if (row == SettingsRow.WatchOnTv) watchOnTvValue else null, action = { open(row) })
                             }
                         }
                     }
@@ -102,6 +105,7 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
 private fun SettingsRow.subtitle(addonCount: Int, local: Boolean): String? = when (this) {
     SettingsRow.Account -> if (local) "Using this device locally" else "Connected to a server"
     SettingsRow.Addons -> "$addonCount installed"
+    SettingsRow.WatchOnTv -> watchOnTvSubtitle
     else -> null
 }
 

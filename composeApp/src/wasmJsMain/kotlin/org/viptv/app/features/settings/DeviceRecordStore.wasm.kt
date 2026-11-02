@@ -12,8 +12,10 @@ private class BrowserDeviceRecordStore(private val key: String) : DeviceRecordSt
 
 private val display = BrowserDeviceRecordStore("viptv.tv.display.v1")
 private val playback = BrowserDeviceRecordStore("viptv.device.playback.v1")
+private val watchOnTv = BrowserDeviceRecordStore("viptv.device.watch-on-tv.v1")
 
 internal actual fun deviceRecordStore(context: PlatformContext, record: DeviceRecord): DeviceRecordStore = when (record) {
     DeviceRecord.Display -> display
     DeviceRecord.Playback -> playback
+    DeviceRecord.WatchOnTv -> watchOnTv
 }
