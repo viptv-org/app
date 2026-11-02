@@ -38,7 +38,7 @@ import kotlin.test.*
 
 /**
  * The Android TV episode-row header's `Episode #` chip (app#409, AND-EPISODE-JUMP-001): the
- * chip sits right of the selected season badge, its dialog matches only the selected season
+ * chip ends the season strip, its dialog matches only the selected season
  * by exact episode number, and success scrolls the lazy row to that card instead of composing
  * the season. The real TV App shell over a fake host; the remote is sent as key events.
  */
@@ -169,8 +169,11 @@ class TvEpisodeJumpTest {
         }
         fun openJump() {
             request("Season 1")
-            press(Key.DirectionRight)
-            until("the Episode # chip") { focused().any { it.contains(EPISODE_JUMP_CHIP_DESCRIPTION) } }
+            var steps = 0
+            while (focused().none { it.contains(EPISODE_JUMP_CHIP_DESCRIPTION) }) {
+                check(steps++ < 12) { "the season strip never reached the Episode # chip: ${focused()}" }
+                press(Key.DirectionRight)
+            }
             ok()
             until("the Jump to episode dialog") { dialogOpen() }
             until("the focused Episode number field") { field()?.config?.getOrNull(SemanticsProperties.Focused) == true }
@@ -187,24 +190,22 @@ class TvEpisodeJumpTest {
         }
     }
 
-    @Test fun theChipSitsRightOfTheSelectedSeasonBadge() {
+    @Test fun theChipSitsAfterTheSeasonBadges() {
         TvApp(twoSeasons()).use { app ->
             app.frames()
             app.openDetails()
             val first = requireNotNull(app.chip()) { "the header has no Episode # chip" }
-            val seasonOne = requireNotNull(app.seasonPill(1)) { "the header has no Season 1 badge" }
-            assertTrue(first.boundsInRoot.left >= seasonOne.boundsInRoot.right, "the chip follows Season 1")
-            assertEquals(seasonOne.boundsInRoot.top, first.boundsInRoot.top, 1f, "the chip shares the badge's line")
+            val one = requireNotNull(app.seasonPill(1)) { "the header has no Season 1 badge" }
+            val two = requireNotNull(app.seasonPill(2)) { "the header has no Season 2 badge" }
+            assertTrue(first.boundsInRoot.left >= two.boundsInRoot.right, "the chip follows Season 2")
+            assertTrue(first.boundsInRoot.left >= one.boundsInRoot.right, "the chip follows Season 1")
+            assertEquals(two.boundsInRoot.top, first.boundsInRoot.top, 1f, "the chip shares the badges' line")
             app.request("Season 2")
             app.ok()
-            app.until("the chip to follow Season 2") {
-                val chip = app.chip()?.boundsInRoot
-                val pill = app.seasonPill(2)?.boundsInRoot
-                chip != null && pill != null && chip.left >= pill.right
-            }
+            app.until("Season 2's episodes") { app.episodeCards().any { label(5) in app.text(it) } }
             val second = requireNotNull(app.chip()) { "the chip left with the season badge" }
-            val two = requireNotNull(app.seasonPill(2))
-            assertTrue(second.boundsInRoot.left >= two.boundsInRoot.right, "the chip follows the newly selected Season 2")
+            val moved = requireNotNull(app.seasonPill(2))
+            assertTrue(second.boundsInRoot.left >= moved.boundsInRoot.right, "the chip stays after the selected Season 2")
             assertTrue((app.seasonPill(1)?.boundsInRoot?.right ?: 0f) <= second.boundsInRoot.left, "Season 1 stays left of the chip")
         }
     }
@@ -246,8 +247,8 @@ class TvEpisodeJumpTest {
             assertFalse(app.state.findingSources, "jumping finds no sources")
             assertNull(app.state.sourceTitle, "no source selector was opened")
             app.frames(20)
-            assertTrue(requireNotNull(app.chip()).boundsInRoot.left >= requireNotNull(app.seasonPill(1)).boundsInRoot.right,
-                "season 1 stays selected")
+            assertTrue(app.episodeCards().any { label(3) in app.text(it) }, "Season 1 stays the selected season")
+            assertFalse(app.episodeCards().any { label(2) in app.text(it) }, "the row did not switch to Season 2")
         }
     }
 

@@ -42,14 +42,10 @@ internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float,
             else -> false
         }
     }
-    val jumpAfter = if (openJump == null) -1 else seasons.indexOf(active).takeIf { it >= 0 } ?: seasons.lastIndex
-    val strip = remember(seasons, jumpAfter) { buildList {
-        seasons.forEachIndexed { index, season ->
-            add(SeasonStripEntry.Season(season))
-            if (index == jumpAfter) add(SeasonStripEntry.Jump)
-        }
-        if (jumpAfter < 0 && openJump != null) add(SeasonStripEntry.Jump)
-    } }
+    val strip = buildList {
+        seasons.forEach { add(SeasonStripEntry.Season(it)) }
+        if (openJump != null) add(SeasonStripEntry.Jump)
+    }
 
         LazyRow(modifier = Modifier.onFocusChanged { focusChanged(it.hasFocus) }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             items(strip, key = { entry -> when (entry) {
@@ -74,9 +70,9 @@ internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float,
                         }
                     }
                     SeasonStripEntry.Jump -> {
-                        val open = openJump
+                        val open = openJump ?: return@items
                         var focused by remember { mutableStateOf(false) }
-                        if (open != null) Box(Modifier.height(52.dp * scale)
+                        Box(Modifier.height(52.dp * scale)
                             .then(if (jumpFocus != null) Modifier.focusRequester(jumpFocus) else Modifier)
                             .onFocusChanged { focused = it.isFocused; if (it.isFocused) entered() }
                             .onPreviewKeyEvent(keys).clip(RoundedCornerShape(26.dp * scale))
