@@ -10,17 +10,21 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.BottomBarHeight
 import org.viptv.app.components.BottomNavigation
 import org.viptv.app.components.LocalBottomBarFades
 import org.viptv.app.components.LocalBottomClearance
-import org.viptv.app.components.ScrollEdgeFadeHeight
 import org.viptv.app.components.bottomBarClearance
 import org.viptv.app.connection.AccountDevice
 import org.viptv.app.connection.AccountDevices
@@ -68,10 +72,12 @@ import org.viptv.engine.wire.Scope
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-// Bottom bar at phone size: the shared clearance must let every page's last content clear the bar's fade.
+// Bottom bar at phone size: the shared clearance reserves the bar's box and nothing more, so no page leaves a blank band
+// under it or scrolls its last content behind it.
 @OptIn(ExperimentalComposeUiApi::class)
 class BottomClearanceUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -151,52 +157,86 @@ class BottomClearanceUiTest {
         add(Case("Settings › About") { SettingsInformation("About", false, null) })
     }
 
-    @Test fun everyPageScrollsItsLastContentClearOfTheBottomBarsFade() {
-        val background = Palette.background.toArgb()
-        val fadeHeight = (BottomBarHeight.value + ScrollEdgeFadeHeight.value).roundToInt()
+    @Test fun everyPageReservesTheBarsBoxAndNoMore() {
         val barTop = HEIGHT - BottomBarHeight.value.roundToInt()
         for (case in cases()) {
-            frame = 0
-            val scene = ImageComposeScene(WIDTH, HEIGHT, Density(1f)) {
-                ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                    CompositionLocalProvider(LocalBottomBarFades provides true, LocalBottomClearance provides bottomBarClearance()) {
-                        Box(Modifier.fillMaxSize()) {
-                            case.content()
-                            Box(Modifier.align(Alignment.BottomCenter)) { BottomNavigation(Screen.Home, {}) }
-                        }
+            val unrestrained = end(case, 0.dp)
+            val cleared = end(case, bottomBarClearance())
+            assertTrue(cleared.lowest <= barTop,
+                "${case.name}: the last content at ${cleared.lowest} sits behind the bar whose box starts at $barTop")
+            if (!unrestrained.scrolled) continue
+            val shift = (unrestrained.lowest - cleared.lowest).toFloat()
+            assertTrue(abs(shift - BottomBarHeight.value) <= 1f,
+                "${case.name}: the clearance moves the last content from ${unrestrained.lowest} to ${cleared.lowest}, not by the bar's ${BottomBarHeight.value}")
+        }
+    }
+
+    @Test fun theBarKeepsItsTouchTargetsInsideTheBoxThePageClears() {
+        var barTop = 0f
+        val scene = ImageComposeScene(WIDTH, HEIGHT, Density(1f)) {
+            ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.align(Alignment.BottomCenter).onGloballyPositioned { barTop = it.boundsInRoot().top }) {
+                        BottomNavigation(Screen.Home, {})
                     }
-                } }
+                }
+            } }
+        }
+        try {
+            frames(scene)
+            assertTrue(barTop > 0f, "the bar was not measured")
+            assertEquals(HEIGHT - BottomBarHeight.value, barTop, .5f, "the bar's box starts where the page's clearance ends")
+            val targets = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }
+            assertEquals(5, targets.size, "four tabs and Search")
+            targets.forEach { target ->
+                assertTrue(target.boundsInRoot.top >= barTop, "${label(target)} starts above the bar's box at $barTop")
+                assertTrue(target.size.height >= 44 && target.size.width >= 44,
+                    "${label(target)} is ${target.size}, under the 44 touch target")
             }
-            try {
-                frames(scene)
-                scrollToEnd(scene)
-                frames(scene, 6)
-                val page = scroller(nodes(scene))
-                val fadeTop = page.boundsInRoot.bottom.roundToInt() - fadeHeight
-                scene.render((frame++) * 16_666_667L).use { image ->
-                    Bitmap.makeFromImage(image).use { pixels ->
-                        for (y in fadeTop until barTop step 2) {
-                            for (x in 0 until WIDTH step 2) {
-                                val colour = pixels.getColor(x, y)
-                                assertTrue(distance(colour, background) <= 2,
-                                    "${case.name}: content ${hex(colour)} at ($x,$y) sits above the fade at $fadeTop")
-                            }
+        } finally { scene.close() }
+    }
+
+    private fun label(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }
+        ?: node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty()
+
+    private class End(val lowest: Int, val scrolled: Boolean)
+
+    private fun end(case: Case, clearance: Dp): End {
+        val background = Palette.background.toArgb()
+        frame = 0
+        val scene = ImageComposeScene(WIDTH, HEIGHT, Density(1f)) {
+            ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                CompositionLocalProvider(LocalBottomBarFades provides true, LocalBottomClearance provides clearance) {
+                    case.content()
+                }
+            } }
+        }
+        try {
+            frames(scene)
+            val scrolled = scrollToEnd(scene)
+            frames(scene, 6)
+            scene.render((frame++) * 16_666_667L).use { image ->
+                Bitmap.makeFromImage(image).use { pixels ->
+                    for (y in HEIGHT - 1 downTo 0) {
+                        for (x in 0 until WIDTH step 2) {
+                            if (distance(pixels.getColor(x, y), background) > 2) return End(y, scrolled)
                         }
                     }
                 }
-            } finally { scene.close() }
-        }
+            }
+            return End(HEIGHT, scrolled)
+        } finally { scene.close() }
     }
 
     private fun scroller(all: List<SemanticsNode>) = all.filter { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
         .maxByOrNull { it.boundsInRoot.height } ?: fail("no vertical scroller")
 
-    private fun scrollToEnd(scene: ImageComposeScene) {
+    private fun scrollToEnd(scene: ImageComposeScene): Boolean {
         var before = -1f
         repeat(60) {
             val scroll = scroller(nodes(scene))
             val value = scroll.config[SemanticsProperties.VerticalScrollAxisRange].value()
-            if (value <= before + 0.5f) return
+            if (value <= before + 0.5f) return before > 0f
             before = value
             scroll.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 4000f)
             frames(scene, 6)
@@ -205,7 +245,6 @@ class BottomClearanceUiTest {
     }
 
     private fun distance(a: Int, b: Int) = (0..2).maxOf { abs(((a shr (it * 8)) and 0xFF) - ((b shr (it * 8)) and 0xFF)) }
-    private fun hex(color: Int) = "#" + color.toUInt().toString(16).padStart(8, '0')
 
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }

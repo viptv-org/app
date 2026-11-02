@@ -110,7 +110,7 @@ class LiveEmptyPhoneLayoutTest {
             assertFalse(nodes.any { clickable(it) && text(it) == LiveSetUp }, "no primary")
             assertFalse(nodes.any { clickable(it) && text(it) == LiveAddons }, "no secondary")
             assertTrue(who.top >= single(nodes, LiveNoSourceBody).boundsInRoot.bottom, "the who line takes the action place")
-            assertTrue(who.bottom <= 640f - 108f + .5f, "the who line clears the bottom bar")
+            assertTrue(who.bottom <= 640f - bottomBarClearance().value + .5f, "the who line clears the bottom bar")
             capture(scene, "phone-live-empty-member")
         } finally { scene.close() }
     }
