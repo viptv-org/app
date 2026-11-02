@@ -153,7 +153,7 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                     }
                 }
             }
-            if (phone && current !in listOf(Screen.Connect, Screen.Search, Screen.Details, Screen.Sources, Screen.Settings, Screen.Profiles, Screen.ProfilePin, Screen.Player))
+            if (phone && current !in listOf(Screen.Connect, Screen.Details, Screen.Sources, Screen.Settings, Screen.Profiles, Screen.ProfilePin, Screen.Player))
                 Box(Modifier.align(Alignment.BottomCenter)) { BottomNavigation(current, go) }
         }
     } }

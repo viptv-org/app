@@ -107,7 +107,7 @@ fun App(
             val touch = !television && !browser && !desktopChrome
             val tablet = !compact && touch
             val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
-            val bottomBar = compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)
+            val bottomBar = bottomBarShown(state.screen, compact, browser, desktopChrome)
             val bottomClearance = if (bottomBar) bottomBarClearance() else 0.dp
             val animeAvailable = state.animeAvailable
             val showsGenreChip = touch && state.screen == Screen.Home
@@ -246,6 +246,11 @@ fun App(
     }
     }
 }
+
+private val BOTTOM_BAR_HIDDEN = setOf(Screen.Details, Screen.Sources, Screen.Settings)
+
+internal fun bottomBarShown(screen: Screen, compact: Boolean, browser: Boolean, desktopChrome: Boolean): Boolean =
+    compact && !browser && !desktopChrome && screen !in BOTTOM_BAR_HIDDEN
 
 // Continue Watching has no nav entry, so the SideNavigation highlight resolves it to Home.
 private fun navHighlightPage(detailReturnScreen: Screen): Screen =
