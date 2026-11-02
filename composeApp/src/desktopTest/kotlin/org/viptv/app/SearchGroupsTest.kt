@@ -51,6 +51,16 @@ class SearchGroupsTest {
         assertEquals(listOf("Channel provider"), searchResultGroups(rows, setOf("Channels")).map { it.label })
     }
 
+    @Test fun providersThatCouldNotAnswerSitBelowTheProvidersThatReturnedResults() {
+        val rows = listOf(SearchResultRow("simkl:anime", "Anime", "simkl", state = "Failed"),
+            SearchResultRow("simkl:movie", "Movies", "simkl", state = "Failed"),
+            SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1"))),
+            SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed"))
+        assertEquals(listOf("Cinemeta", "Anime", "Movies", "TV Shows"), searchResultGroups(rows).map { it.label })
+        assertEquals(listOf("Anime", "Movies", "TV Shows"),
+            searchResultGroups(rows.filter { it.state == "Failed" }).map { it.label })
+    }
+
     @Test fun episodeCoordinatesDoNotCollide() {
         val first = card("addon", "series").copy(identity = MediaIdentity("same", "series", emptyList(), EpisodeCoordinates("aired", 1, 1)))
         val second = first.copy(identity = first.identity.copy(episode = EpisodeCoordinates("aired", 1, 2)))

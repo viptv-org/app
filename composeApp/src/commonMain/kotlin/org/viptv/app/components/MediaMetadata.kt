@@ -14,9 +14,10 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun MediaMetadata(card: Card, fontSize: Float = 14f, lineHeight: Float = 20f,
-    badgeSize: Float = 10f, scale: Float = 1f) {
+    badgeSize: Float = 10f, scale: Float = 1f, kindFirst: Boolean = false) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
-        card.metadataParts().takeIf { it.isNotEmpty() }?.let { Text(it.joinToString(" · "), fontSize = (fontSize * scale).sp, lineHeight = (lineHeight * scale).sp, color = Palette.body) }
+        val parts = if (kindFirst) card.heroMetadataParts() else card.metadataParts()
+        parts.takeIf { it.isNotEmpty() }?.let { Text(it.joinToString(" · "), fontSize = (fontSize * scale).sp, lineHeight = (lineHeight * scale).sp, color = Palette.body) }
         card.presentationBadges().forEach { badge ->
             Text(badge, Modifier.border(1.dp * scale, Palette.secondary.copy(alpha = 0.5f), RoundedCornerShape(3.dp * scale))
                 .padding(horizontal = 4.dp * scale, vertical = 2.dp * scale),
