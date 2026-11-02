@@ -32,6 +32,8 @@ internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, sca
                 }
                 skipIntrosRow -> TvSettingsRow(skipIntrosRow, skipIntrosDescription, scale, checked = prefs.skipIntros,
                     requester = requester, left = sidebar) { change(prefs.copy(skipIntros = !prefs.skipIntros)) }
+                rememberedSourceRow -> TvSettingsRow(rememberedSourceRow, rememberedSourceDescription, scale, checked = prefs.rememberSource,
+                    requester = requester, left = sidebar) { change(prefs.copy(rememberSource = !prefs.rememberSource)) }
                 "Default source" -> TvSettingsRow(row, scale = scale, value = prefs.source,
                     requester = requester, left = sidebar) {
                     choose(row, listOf("Best match", "Always ask")) { change(prefs.copy(source = it)) } }

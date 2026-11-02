@@ -192,20 +192,35 @@ class LiveUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun memberAccountSessionSeesSetupActionsAndNoOwnerMessage() {
+    @Test fun ownerAccountSessionSeesTheSetupActionsAndNoWhoLine() {
+        val controller = liveController(livePage(), access = AccountAccess("owner", true))
+        val scene = liveScene(1280, 800, false, controller)
+        try {
+            frames(scene)
+            val texts = nodes(scene).map(::text)
+            assertTrue(texts.contains(LiveSetUp), "the owner gets the primary")
+            assertTrue(texts.contains(LiveAddons), "the owner gets the secondary")
+            assertFalse(texts.contains(LiveMemberWho), "the owner is never told to ask the household owner")
+            assertFalse(texts.contains(LivePairedWho))
+        } finally { scene.close() }
+    }
+
+    @Test fun memberAccountSessionSeesTheWhoLineAndNoSetupActions() {
         val controller = liveController(livePage(), access = AccountAccess("member", true))
         val scene = liveScene(1280, 800, false, controller)
         try {
             frames(scene)
             val texts = nodes(scene).map(::text)
-            assertTrue(texts.contains(LiveSetUp), "a member account session gets the primary")
-            assertTrue(texts.contains(LiveAddons), "a member account session gets the secondary")
-            assertFalse(texts.contains(LiveMemberWho)); assertFalse(texts.contains(LivePairedWho))
+            assertTrue(texts.contains(LiveMemberWho), "a member is told who can set it up")
+            assertFalse(texts.contains(LiveSetUp), "the capability is not the owner rule")
+            assertFalse(texts.contains(LiveAddons))
+            assertFalse(nodes(scene).any { it.config.contains(SemanticsActions.OnClick) }, "nothing in the block is an action")
+            assertFalse(texts.contains(LivePairedWho))
         } finally { scene.close() }
     }
 
     @Test fun memberAndPairedSessionsGetTheWhoLineInsteadOfActions() {
-        for ((access, who) in listOf(AccountAccess("member", false) to LiveMemberWho, AccountAccess("device", false) to LivePairedWho)) {
+        for ((access, who) in listOf(AccountAccess("member", true) to LiveMemberWho, AccountAccess("device", false) to LivePairedWho)) {
             val controller = liveController(livePage(), access = access)
             val scene = liveScene(1280, 800, false, controller)
             try {
@@ -302,6 +317,36 @@ class LiveUiTest {
         }
     }
 
+    @Test fun aMemberOnTheTvGetsNoFocusStopInTheBlock() {
+        val controller = liveController(livePage(), access = AccountAccess("member", true))
+        val focusManager = mutableListOf<androidx.compose.ui.focus.FocusManager>()
+        var frame = 0L
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) {
+            ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                ConfigureImageLoading()
+                focusManager += LocalFocusManager.current
+                val state by controller.state.collectAsState()
+                val navigation = remember { FocusRequester() }
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxWidth().height(132.dp).focusRequester(navigation).focusable())
+                    Box(Modifier.weight(1f)) { LiveRoute(state, controller, true) }
+                }
+                LaunchedEffect(Unit) { navigation.requestFocus() }
+            } }
+        }
+        try {
+            repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            assertTrue(nodes(scene).map(::text).contains(LiveMemberWho))
+            assertFalse(nodes(scene).any { it.config.contains(SemanticsActions.OnClick) }, "the member page has no action to focus")
+            val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
+            scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
+            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
+            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            assertEquals("", focusedText(scene).orEmpty(), "Down stays on the navigation: the block has no focus stop")
+        } finally { scene.close() }
+    }
+
     @Test fun sourceIntegrationsIsAbsentWhenTheViewerCannotManageSources() {
         val controller = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"),
             access = AccountAccess("device", false))
@@ -311,6 +356,19 @@ class LiveUiTest {
             assertTrue(nodes(scene).map(::text).contains(LiveTryAgain))
             assertFalse(nodes(scene).map(::text).contains(LiveSourceIntegrations))
         } finally { scene.close() }
+    }
+
+    @Test fun sourceIntegrationsWaitsForTheOwnerAsTheSetupActionsDo() {
+        for (access in listOf(AccountAccess("owner", true), AccountAccess("member", true))) {
+            val controller = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"),
+                access = access)
+            val scene = liveScene(1280, 800, false, controller)
+            try {
+                frames(scene)
+                val texts = nodes(scene).map(::text)
+                assertEquals(access.role == "owner", texts.contains(LiveSourceIntegrations), "${access.role} reaches Source integrations")
+            } finally { scene.close() }
+        }
     }
 
     @Test fun aSourceAddedElsewhereReplacesTheEmptyStateInPlace() {

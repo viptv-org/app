@@ -45,7 +45,9 @@ internal const val nextEpisodeButtonRow = "Next episode button"
 internal const val nextEpisodeButtonDescription = "Shows during the credits"
 internal const val skipIntrosRow = "Skip intros and recaps"
 internal const val skipIntrosDescription = "Skips them when the show marks where they are"
+internal const val rememberedSourceRow = "Remember source choices"
+internal const val rememberedSourceDescription = "Reuses the source you picked for a title the next time you play it"
 
 internal fun tvPlaybackRows(actualPreferencesOnly: Boolean, deviceRows: Boolean = false): List<String> = listOf(
-    nextEpisodeButtonRow, autoplayNextRow, skipIntrosRow, "Default source", "Preferred quality", "HDR and Dolby Vision", "Match frame rate",
+    nextEpisodeButtonRow, autoplayNextRow, skipIntrosRow, rememberedSourceRow, "Default source", "Preferred quality", "HDR and Dolby Vision", "Match frame rate",
 ).filterNot { actualPreferencesOnly && it in tvPlaceholderPlaybackRows || !deviceRows && it == autoplayNextRow }

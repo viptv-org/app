@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import com.composables.icons.lucide.*
 
@@ -11,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -61,8 +64,12 @@ fun ProfilesScreen(
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
-    if (adding) AlertDialog(onDismissRequest = { adding = false }, title = { Text("Add profile") },
-        text = { OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true) },
-        confirmButton = { TextButton(onClick = { create(name); adding = false; name = "" }, enabled = name.isNotBlank() && !busy) { Text("Add") } },
-        dismissButton = { TextButton(onClick = { adding = false }) { Text("Cancel") } })
+    if (adding) {
+        val nameFocus = remember { FocusRequester() }
+        LaunchedEffect(Unit) { withFrameNanos { }; runCatching { nameFocus.requestFocus() } }
+        AlertDialog(onDismissRequest = { adding = false }, title = { Text("Add profile") },
+            text = { AppTextField(name, { name = it }, label = "Name", modifier = Modifier.focusRequester(nameFocus), onEscape = { adding = false }) },
+            confirmButton = { TextButton(onClick = { create(name); adding = false; name = "" }, enabled = name.isNotBlank() && !busy) { Text("Add") } },
+            dismissButton = { TextButton(onClick = { adding = false }) { Text("Cancel") } })
+    }
 }

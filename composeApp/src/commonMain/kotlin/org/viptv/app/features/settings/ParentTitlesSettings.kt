@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -44,8 +45,7 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 error?.let { Text(it, color = Palette.danger) }
                 state.notice?.let { Text(it, color = Palette.secondary) }
-                OutlinedTextField(query, { query = it.take(200) }, label = { Text("Search titles") },
-                    singleLine = true, enabled = !busy, modifier = Modifier.fillMaxWidth())
+                AppTextField(query, { query = it.take(200) }, label = "Search titles", enabled = !busy, modifier = Modifier.fillMaxWidth())
                 Button({ search(query) }, enabled = !busy && query.isNotBlank()) { Text("Search titles") }
             }
         }

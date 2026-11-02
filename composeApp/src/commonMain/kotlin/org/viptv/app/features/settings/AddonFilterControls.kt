@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -23,8 +24,8 @@ import org.viptv.app.theme.Palette
 internal fun AddonFilterControls(query: String, queryChange: (String) -> Unit, provides: AddonProvides?, select: (AddonProvides?) -> Unit,
     counts: Map<AddonProvides, Int>, shown: Int, total: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedTextField(query, { queryChange(it.take(AddonSearchLimit)) }, Modifier.fillMaxWidth(), singleLine = true,
-            label = { Text("Search add-ons") }, leadingIcon = { Icon(Lucide.Search, null, Modifier.size(18.dp)) },
+        AppTextField(query, { queryChange(it.take(AddonSearchLimit)) }, Modifier.fillMaxWidth(),
+            label = "Search add-ons", leadingIcon = { Icon(Lucide.Search, null, Modifier.size(18.dp)) },
             trailingIcon = if (query.isNotEmpty()) ({ IconButton({ queryChange("") }) { Icon(Lucide.X, "Clear search", Modifier.size(18.dp)) } }) else null,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

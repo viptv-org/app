@@ -70,6 +70,8 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
                         PhonePreferenceSwitchRow(nextEpisodeButtonRow, nextEpisodeButtonDescription, value.next_episode_button) { draft = draft?.copy(next_episode_button = it) }
                         PhonePreferenceDivider()
                         PhonePreferenceSwitchRow(skipIntrosRow, skipIntrosDescription, value.skip_intros) { draft = draft?.copy(skip_intros = it) }
+                        PhonePreferenceDivider()
+                        PhonePreferenceSwitchRow(rememberedSourceRow, rememberedSourceDescription, value.remembered_source_reuse) { draft = draft?.copy(remembered_source_reuse = it) }
                     }
                     Text("Sources", color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

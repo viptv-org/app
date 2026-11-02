@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,14 +49,15 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
                 TextButton(load, enabled = !busy) { Text("Retry the account") }
             }
             else -> {
-                OutlinedTextField(username, { username = it }, Modifier.fillMaxWidth(), enabled = !busy,
-                    label = { Text("Type ${identity.username} to confirm") }, singleLine = true)
-                OutlinedTextField(password, { password = it }, Modifier.fillMaxWidth(), enabled = !busy,
-                    label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                AppTextField(username, { username = it }, Modifier.fillMaxWidth(), enabled = !busy,
+                    label = "Type ${identity.username} to confirm", autocomplete = "username")
+                AppTextField(password, { password = it }, Modifier.fillMaxWidth(), enabled = !busy,
+                    label = "Password", visualTransformation = PasswordVisualTransformation(),
+                    autocomplete = "current-password",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
-                if (pinConfigured != false) OutlinedTextField(pin, { pin = it.filter { c -> c in '0'..'9' }.take(8) },
-                    Modifier.fillMaxWidth(), enabled = !busy, label = { Text("Household PIN") }, singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                if (pinConfigured != false) AppTextField(pin, { pin = it.filter { c -> c in '0'..'9' }.take(8) },
+                    Modifier.fillMaxWidth(), enabled = !busy, label = "Household PIN",
+                    visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button({ if (ready) delete(username, password, if (pin.isEmpty()) null else pin) },

@@ -44,16 +44,17 @@ class LiveEmptyStateTest {
         assertTrue(LiveSpread.NoChannels.showsChannelRows())
     }
 
-    @Test fun whoMayChangeSourcesFollowsTheIdentity() {
+    @Test fun whoMayChangeSourcesFollowsTheHouseholdOwner() {
         assertTrue(AccountAccess("owner", true).managesSources)
-        assertTrue(AccountAccess("member", true).managesSources, "an account session with the capability manages sources")
+        assertFalse(AccountAccess("member", true).managesSources, "the capability is true for a member, the source write is not")
         assertFalse(AccountAccess("device", false).managesSources, "a paired TV is refused by the server")
-        assertFalse(AccountAccess("member", false).managesSources, "no capability, no source writes")
+        assertFalse(AccountAccess("owner", false).managesSources, "the server says this session may not change the account")
         assertTrue(AccountAccess("device", false).pairedDevice)
         assertFalse(AccountAccess("member", false).pairedDevice)
-        assertTrue(AccountAccess("member", false).member)
-        assertFalse(AccountAccess("member", true).member)
-        assertFalse(AccountAccess("device", false).member)
+        assertFalse(AccountAccess("owner", true).pairedDevice)
+        assertTrue(AccountAccess("member", true).member)
+        assertFalse(AccountAccess("owner", true).member, "the owner never reads the member line")
+        assertFalse(AccountAccess("device", true).member)
     }
 
     @Test fun setupActionsOpenSettingsOnTheirOwnSection() = runBlocking<Unit> {
@@ -73,14 +74,14 @@ class LiveEmptyStateTest {
         controller.job?.cancel()
     }
 
-    @Test fun accountAccessReadsTheManageAccountCapability() = runBlocking {
+    @Test fun accountAccessReadsTheRoleAndTheManageAccountCapability() = runBlocking {
         val responses = listOf(
-            """{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"owner","capabilities":{"manage_account":true}}""" to AccountAccess("owner", true),
-            """{"account":{"id":"2","username":"member","name":"Member","role":"member"},"role":"member","capabilities":{"manage_account":true}}""" to AccountAccess("member", true),
-            """{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"device","capabilities":{"manage_account":false}}""" to AccountAccess("device", false),
-            """{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"device"}""" to AccountAccess("device", false),
+            Triple("""{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"owner","capabilities":{"manage_account":true}}""", AccountAccess("owner", true), true),
+            Triple("""{"account":{"id":"2","username":"member","name":"Member","role":"member"},"role":"member","capabilities":{"manage_account":true}}""", AccountAccess("member", true), false),
+            Triple("""{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"device","capabilities":{"manage_account":false}}""", AccountAccess("device", false), false),
+            Triple("""{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"device"}""", AccountAccess("device", false), false),
         )
-        for ((body, expected) in responses) {
+        for ((body, expected, mayManageSources) in responses) {
             val paths = mutableListOf<String>()
             val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
                 paths += request.url.encodedPath
@@ -92,6 +93,7 @@ class LiveEmptyStateTest {
                 controller.loadLiveAccountAccess()
                 withTimeout(10_000) { while (controller.state.value.accountAccess == null) delay(10) }
                 assertEquals(expected, controller.state.value.accountAccess)
+                assertEquals(mayManageSources, controller.state.value.accountAccess!!.managesSources, body)
                 assertEquals(listOf("/api/auth/me"), paths)
                 assertFalse(controller.state.value.busy, "reading the identity never blocks the page")
             } finally { remote.close() }

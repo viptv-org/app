@@ -9,6 +9,7 @@ private val languages = mapOf("English" to "en", "Spanish" to "es", "Portuguese"
 internal fun ProfilePreferences.tvSettings() = TvSettingsPreferences(
     nextEpisode = next_episode_button,
     skipIntros = skip_intros,
+    rememberSource = remembered_source_reuse,
     source = if (source_selection == "best") "Best match" else "Always ask",
     quality = max_quality_height?.let { if (it == 2160) "4K" else "${it}p" } ?: "Auto",
     hdr = hdrPreferenceLabel(hdr_preference),
@@ -24,6 +25,7 @@ internal fun ProfilePreferences.tvSettings() = TvSettingsPreferences(
 internal fun TvSettingsPreferences.profilePreferences(base: ProfilePreferences = ProfilePreferences()) = base.copy(
     next_episode_button = nextEpisode,
     skip_intros = skipIntros,
+    remembered_source_reuse = rememberSource,
     preferred_audio_language = languages[audioLanguage] ?: audioLanguage.takeUnless { it == "Original language" || it == "Original" },
     preferred_subtitle_language = languages[subtitleLanguage] ?: subtitleLanguage.takeUnless { it == "Default" },
     source_selection = if (source == "Best match") "best" else "ask",

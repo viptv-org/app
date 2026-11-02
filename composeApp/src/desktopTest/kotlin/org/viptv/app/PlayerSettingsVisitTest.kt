@@ -30,6 +30,7 @@ class PlayerSettingsVisitTest {
         var heartbeat: (String) -> HttpStatusCode = { HttpStatusCode.OK }
         var preferences = PreferencesSnapshot(revision = 3)
         var gateway = false
+        var rejectPreferences = false
         var offsetSeconds = 0.0
     }
 
@@ -64,9 +65,12 @@ class PlayerSettingsVisitTest {
                         }
                         path == "/api/profiles/profile/preferences" && request.method == HttpMethod.Put -> {
                             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
-                            server.preferences = PreferencesSnapshot(server.preferences.revision + 1,
-                                codec.decodeFromJsonElement(body.getValue("preferences")))
-                            json(codec.encodeToString(server.preferences))
+                            if (server.rejectPreferences) json("""{"error":"unknown field `remembered_source_reuse`"}""", HttpStatusCode.BadRequest)
+                            else {
+                                server.preferences = PreferencesSnapshot(server.preferences.revision + 1,
+                                    codec.decodeFromJsonElement(body.getValue("preferences")))
+                                json(codec.encodeToString(server.preferences))
+                            }
                         }
                         path == "/api/profiles/profile/preferences" -> json(codec.encodeToString(server.preferences))
                         path.endsWith("/progress") -> json("{}")
@@ -166,6 +170,21 @@ class PlayerSettingsVisitTest {
         assertSame(input, playback)
         assertEquals(1.5, playback.preferences.subtitle_font_scale, "The reopened player applies the new size")
         assertEquals("#FFFF00", playback.preferences.subtitle_text_color)
+        controller.closePlayer()
+    }
+
+    @Test fun aRejectedPreferenceSaveShowsAnErrorAndDoesNotKeepTheRejectedValue() = runTest {
+        val server = Server().apply { rejectPreferences = true }
+        val controller = controller(server)
+        val before = assertNotNull(controller.state.value.preferences)
+        controller.updatePreferences(before.preferences.copy(remembered_source_reuse = false)); runCurrent()
+        val state = controller.state.value
+        assertEquals("Could not save profile preferences. Try again.", state.preferencesError)
+        assertNull(state.error, "A rejected save is a preferences error, not a page error")
+        assertNotSame(before, state.preferences, "The snapshot is republished so settings drafts revert to the last saved value")
+        assertEquals(before.revision, state.preferences?.revision)
+        assertTrue(requireNotNull(state.preferences).preferences.remembered_source_reuse, "The rejected off value is not kept")
+        assertFalse(state.busy)
         controller.closePlayer()
     }
 

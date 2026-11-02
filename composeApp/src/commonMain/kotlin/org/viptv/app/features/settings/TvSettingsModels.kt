@@ -29,6 +29,7 @@ internal fun tvSettingsGroups(): List<Pair<SettingsGroup, List<TvSettingsSection
 internal data class TvSettingsPreferences(
     val nextEpisode: Boolean = true,
     val skipIntros: Boolean = false,
+    val rememberSource: Boolean = true,
     val source: String = "Best match",
     val quality: String = "Auto",
     val hdr: String = "No preference",

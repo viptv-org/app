@@ -130,9 +130,9 @@ class ChangePasswordTest {
         } finally { scene.close(); scope.cancel(); remote.close() }
     }
 
-    @Test fun thePasswordRowFollowsTheManageAccountCapability() {
+    @Test fun thePasswordRowIsSelfServiceAndIgnoresTheManageAccountCapability() {
         assertPasswordCapability(manageAccount = true, present = true)
-        assertPasswordCapability(manageAccount = false, present = false)
+        assertPasswordCapability(manageAccount = false, present = true)
     }
 
     private fun assertPasswordCapability(manageAccount: Boolean, present: Boolean) {

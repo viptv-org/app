@@ -179,6 +179,21 @@ class RememberedSourcePlaybackTest {
         } finally { harness.close() }
     }
 
+    @Test fun disablingReuseLeavesAnOrdinaryPlayOnThePicker() = runBlocking<Unit> {
+        val harness = Harness { listOf(row("a", languages = listOf("en"))) }
+        val controller = harness.controller
+        try {
+            remember(harness)
+            controller.updateState { it.copy(preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "ask", remembered_source_reuse = false))) }
+            controller.playTitle(episode(1, 2))
+            settle(controller)
+            assertTrue(harness.opened.isEmpty(), "Disabling reuse never auto-starts a remembered source")
+            assertEquals(Screen.Sources, controller.state.value.screen)
+            assertEquals(listOf("a"), controller.state.value.sources.map { it.id })
+            assertFalse(controller.state.value.findingSources)
+        } finally { harness.close() }
+    }
+
     @Test fun aRememberedStartThatFailsFallsBackOverTheFreshRows() = runBlocking<Unit> {
         val harness = Harness { listOf(row("remembered", provider = "addon:a", languages = listOf("en")), row("backup", provider = "addon:b", languages = listOf("en"))) }
         val controller = harness.controller
