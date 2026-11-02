@@ -49,7 +49,7 @@ class BestMatchFallbackTest {
     }
 
     private suspend fun awaitPlayback(controller: ApplicationController, id: String) =
-        withTimeout(5000) { controller.state.first { it.playingSource?.id == id && it.playback != null } }
+        withTimeout(5000) { controller.state.first { it.playingSource?.id == id && it.playback?.id == id } }
 
     private suspend fun awaitOpened(fake: Fallback, id: String) =
         withTimeout(5000) { while (id !in fake.opened) delay(5) }
