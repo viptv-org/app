@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.background
@@ -101,8 +102,8 @@ private fun NameDialog(profile: Profile?, busy: Boolean, pinAvailable: Boolean, 
     var pin by remember(profile?.id) { mutableStateOf("") }
     AlertDialog(onDismissRequest = dismiss, title = { Text("Name") }, text = {
         Column {
-            OutlinedTextField(name, { if (it.length <= 64) name = it }, singleLine = true)
-            if (profile.requiresLocalPin(pinAvailable)) PinField(pin) { pin = it }
+            AppTextField(name, { if (it.length <= 64) name = it }, onEscape = dismiss)
+            if (profile.requiresLocalPin(pinAvailable)) PinField(pin, onEscape = dismiss) { pin = it }
         }
     }, confirmButton = { TextButton(onClick = { save(name, pin) }, enabled = !busy && name.isNotBlank() && (!profile.requiresLocalPin(pinAvailable) || pin.length in 4..8)) { Text("Save") } },
         dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } })
@@ -114,8 +115,8 @@ private fun PinDialog(profile: Profile?, busy: Boolean, dismiss: () -> Unit, sav
     var next by remember(profile?.id) { mutableStateOf("") }
     AlertDialog(onDismissRequest = dismiss, title = { Text(if (profile?.locked == true) "Change profile PIN" else "Set profile PIN") }, text = {
         Column {
-            if (profile?.locked == true) PinField(old) { old = it }
-            PinField(next, if (profile?.locked == true) "New PIN (blank removes lock)" else "New PIN") { next = it }
+            if (profile?.locked == true) PinField(old, onEscape = dismiss) { old = it }
+            PinField(next, if (profile?.locked == true) "New PIN (blank removes lock)" else "New PIN", onEscape = dismiss) { next = it }
         }
     }, confirmButton = { TextButton(onClick = { save(old, next) },
         enabled = !busy && (profile?.locked != true || old.length in 4..8) && (next.isEmpty() && profile?.locked == true || next.length in 4..8)) { Text("Save") } },
@@ -128,14 +129,14 @@ private fun DeleteProfileDialog(profile: Profile?, busy: Boolean, pinAvailable: 
     AlertDialog(onDismissRequest = dismiss, title = { Text("Delete ${profile?.name}?") },
         text = { Column {
             Text("This removes this profile’s history and add-on choices.")
-            if (profile.requiresLocalPin(pinAvailable)) PinField(pin) { pin = it }
+            if (profile.requiresLocalPin(pinAvailable)) PinField(pin, onEscape = dismiss) { pin = it }
         } },
         confirmButton = { TextButton(onClick = { delete(pin) }, enabled = !busy && (!profile.requiresLocalPin(pinAvailable) || pin.length in 4..8)) { Text("Delete") } },
         dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } })
 }
 
 @Composable
-private fun PinField(value: String, label: String = "Current PIN", change: (String) -> Unit) {
-    OutlinedTextField(value, { if (it.length <= 8 && it.all(Char::isDigit)) change(it) },
-        label = { Text(label) }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
+private fun PinField(value: String, label: String = "Current PIN", onEscape: (() -> Unit)? = null, change: (String) -> Unit) {
+    AppTextField(value, { if (it.length <= 8 && it.all(Char::isDigit)) change(it) },
+        label = label, visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code", onEscape = onEscape)
 }
