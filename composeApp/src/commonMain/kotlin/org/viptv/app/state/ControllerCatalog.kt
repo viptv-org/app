@@ -9,6 +9,8 @@ import org.viptv.engine.wire.RowState
 import org.viptv.engine.wire.SourceCandidate
 
 fun ApplicationController.refresh() = run {
+    val pending = mutable.value.profileToOpen?.takeIf { mutable.value.screen == Screen.Home && mutable.value.home == null }
+    if (pending != null) { openProfile(pending); return@run }
     progressJob?.join()
     val profile = mutable.value.selectedProfile
     val device = local
