@@ -13,7 +13,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PlaybackTimeline(position: Long, duration: Long?, seek: (Long) -> Unit, remaining: Boolean = false,
-    buffered: List<BufferedRange> = emptyList()) {
+    skips: List<TvSkipRange> = emptyList(), buffered: List<BufferedRange> = emptyList()) {
     var scrub by remember { mutableStateOf<Float?>(null) }
     val length = duration?.takeIf { it > 0 }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -21,7 +21,7 @@ internal fun PlaybackTimeline(position: Long, duration: Long?, seek: (Long) -> U
         PlaybackSlider(value = scrub ?: if (length != null) (position.toDouble() / length).toFloat().coerceIn(0f, 1f) else 0f,
             change = { scrub = it }, modifier = Modifier.weight(1f), enabled = length != null,
             finish = { scrub?.let { value -> if (length != null) seek((value * length).toLong()) }; scrub = null },
-            accent = Palette.accent, buffered = buffered, duration = length)
+            accent = Palette.accent, segments = skips.timelineSegments(length), buffered = buffered, duration = length)
         Text(length?.let { if (remaining) "-" + playbackTime((it - position).coerceAtLeast(0)) else playbackTime(it) } ?: "--:--", fontSize = 12.sp, color = Palette.secondary)
     }
 }

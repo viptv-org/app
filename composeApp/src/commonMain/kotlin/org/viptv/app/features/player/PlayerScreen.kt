@@ -220,7 +220,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         Column(Modifier.fillMaxWidth().padding(horizontal = gutter, vertical = 12.dp)) {
                             if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
                                 Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            } else PlaybackTimeline(position, duration, ::seek, remaining = phone, buffered = buffered)
+                            } else PlaybackTimeline(position, duration, ::seek, remaining = phone, skips = tvExtras.skips, buffered = buffered)
                             if (phone) {
                                 if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
                                     color = Palette.secondary, fontSize = 12.sp)

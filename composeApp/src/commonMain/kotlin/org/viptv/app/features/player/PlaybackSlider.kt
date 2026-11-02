@@ -15,26 +15,40 @@ import androidx.compose.ui.semantics.contentDescription
 import org.viptv.app.player.BufferedRange
 import org.viptv.app.theme.Palette
 
+private val TrackHeight = 3.dp
 private val ThumbSize = 12.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PlaybackSlider(value: Float, change: (Float) -> Unit, modifier: Modifier, enabled: Boolean = true,
     finish: (() -> Unit)? = null, accent: Color = Palette.accent, label: String = "Playback position",
-    buffered: List<BufferedRange> = emptyList(), duration: Long? = null) {
+    segments: List<TimelineSegment> = emptyList(), buffered: List<BufferedRange> = emptyList(), duration: Long? = null) {
     val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = accent,
         inactiveTrackColor = Color.White.copy(alpha = 0.3f))
-    val band = bufferedFractions(buffered, duration)
-    Slider(value, change, modifier.semantics { contentDescription = label }, enabled = enabled, onValueChangeFinished = finish, colors = colors,
+    val description = if (segments.isEmpty()) label else "$label. " + segments.joinToString(". ") { it.description }
+    val bands = bufferedFractions(buffered, duration)
+    Slider(value, change, modifier.semantics { contentDescription = description }, enabled = enabled, onValueChangeFinished = finish, colors = colors,
         thumb = { Box(Modifier.size(ThumbSize).background(Color.White, CircleShape)) },
         track = { state ->
-            if (band.isEmpty()) SliderDefaults.Track(state, Modifier.height(3.dp), colors = colors,
-                enabled = enabled, thumbTrackGapSize = 0.dp, drawStopIndicator = null)
-            // Buffered media sits under the played fill, on the bar the thumb travels across.
-            else BoxWithConstraints(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(1.5.dp))
-                .background(colors.inactiveTrackColor)) {
-                BufferedSegments(band, Color.White.copy(alpha = 0.5f))
-                Box(Modifier.fillMaxWidth(state.coercedValueAsFraction.coerceIn(0f, 1f)).fillMaxHeight().background(accent))
+            Box(Modifier.height(TrackHeight)) {
+                val inset = ThumbSize / 2
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val span = maxWidth - ThumbSize
+                    // Buffered media sits under the played fill and under the skip markers.
+                    if (bands.isEmpty()) SliderDefaults.Track(state, Modifier.fillMaxSize(), colors = colors, enabled = enabled,
+                        thumbTrackGapSize = 0.dp, drawStopIndicator = null)
+                    else {
+                        Box(Modifier.fillMaxSize().clip(RoundedCornerShape(TrackHeight / 2)).background(colors.inactiveTrackColor))
+                        BufferedSegments(bands, inset, Color.White.copy(alpha = 0.5f))
+                        Box(Modifier.offset(x = inset).width(span * state.coercedValueAsFraction.coerceIn(0f, 1f))
+                            .fillMaxHeight().background(accent))
+                    }
+                    segments.forEach { segment ->
+                        Box(Modifier.offset(x = inset + span * segment.startFraction)
+                            .width(span * (segment.endFraction - segment.startFraction).coerceAtLeast(0f))
+                            .fillMaxHeight().background(segment.color, RoundedCornerShape(2.dp)))
+                    }
+                }
             }
         })
 }
