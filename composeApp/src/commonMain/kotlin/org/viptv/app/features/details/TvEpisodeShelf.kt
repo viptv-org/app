@@ -77,6 +77,32 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
         targets[focusIndex?.let { visible.getOrNull(it) }?.let(::episodeKey)]?.requestPlacedFocus() == true ||
         visible.firstNotNullOfOrNull { targets[episodeKey(it)] }?.requestPlacedFocus() == true
     val scope = rememberCoroutineScope()
+    val jumpChip = remember { FocusRequester() }
+    var jumpOpen by remember(parent.provider_id, parent.identity, activeSeason) { mutableStateOf(false) }
+    var jumpTarget by remember(parent.provider_id, parent.identity, activeSeason) { mutableStateOf<EpisodeJumpTarget?>(null) }
+    var chipRestore by remember { mutableIntStateOf(0) }
+    fun jump(input: String): Boolean {
+        val index = episodeJumpIndex(visible, activeSeason, input) ?: return false
+        jumpOpen = false
+        jumpTarget = EpisodeJumpTarget(episodeKey(visible[index]), index)
+        return true
+    }
+    LaunchedEffect(jumpTarget, episodeRows) {
+        val target = jumpTarget ?: return@LaunchedEffect
+        episodeRows.scrollToItem(target.index)
+        repeat(TV_FOCUS_RETRY_FRAMES) {
+            if (targets[target.key]?.requestPlacedFocus() == true) { jumpTarget = null; return@LaunchedEffect }
+            withFrameNanos { }
+        }
+        jumpTarget = null
+    }
+    LaunchedEffect(chipRestore) {
+        if (chipRestore == 0) return@LaunchedEffect
+        repeat(TV_FOCUS_RETRY_FRAMES) {
+            if (jumpChip.requestPlacedFocus()) return@LaunchedEffect
+            withFrameNanos { }
+        }
+    }
     fun requestFocus(landing: ShelfLanding): ShelfFocus {
         if (landing == ShelfLanding.Any) return if (focusEpisode() || seasonFocus.requestPlacedFocus()) ShelfFocus.Focused else ShelfFocus.Pending
         val index = when (landing) {
@@ -119,7 +145,8 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
             TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::enterEpisodes,
                 select = { season -> pendingEntry = null; kept = true; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },
                 returnHero = returnToHero, entered = focused,
-                cancelEntry = { pendingEntry = null }, focusChanged = { selectorHasFocus = it; if (!it) pendingEntry = null })
+                cancelEntry = { pendingEntry = null }, focusChanged = { selectorHasFocus = it; if (!it) pendingEntry = null },
+                jumpFocus = jumpChip, openJump = if (visible.isEmpty()) null else ({ jumpOpen = true }))
             Spacer(Modifier.height((if (expanded) 30 else 20).dp * scale))
 
                 LazyRow(state = episodeRows, modifier = Modifier.focusGroup(),
@@ -141,5 +168,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                 }
 
         }
+        if (jumpOpen && visible.isNotEmpty()) EpisodeJumpDialog(
+            dismiss = { jumpOpen = false; chipRestore++ }, submit = ::jump)
     }
 }
