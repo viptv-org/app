@@ -16,7 +16,8 @@ The decision is made once per session in `MpvSession.open()`, from `video-params
 presentation is authorized, so no clipped frame is shown. That property is unset at the
 file-loaded event and arrives with the first decoded frame; the wait is bounded at 3 s, and
 files without a video track skip it. If the runtime lacks zimg's zscale or libavfilter's tonemap,
-the `vf` command fails and playback continues with the clipped image.
+the `vf` command fails and playback continues with the clipped image. Homebrew's `ffmpeg` has no
+zimg, so the macOS bundle (`tools/build_mpv.py`) takes its FFmpeg libraries from `ffmpeg-full`.
 
 The chain runs on CPU frames, so hardware decoding falls back for HDR sources and 4K HDR tone
 mapping is CPU-bound.
