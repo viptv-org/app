@@ -101,7 +101,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                         Text(group.label,
                             Modifier.height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
                             letterSpacing = (-.3f * scale).sp, fontWeight = FontWeight.SemiBold)
-                        (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, fontSize = (22 * scale).sp, color = Palette.secondary) }
+                        group.message?.let { Text(it, fontSize = (22 * scale).sp, color = Palette.secondary) }
 
                         LazyRow(modifier = Modifier.focusRestorer(), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                             itemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->

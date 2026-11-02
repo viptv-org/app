@@ -27,7 +27,7 @@ internal class DesktopPlaybackProbe(private val result: Path?) {
             is PlayerFact.Status -> { status.value = fact.name; println("VIPTV_DESKTOP_QA: state=${fact.name}") }
             is PlayerFact.Presentation -> { proof = fact.proof.name; presented.value = true }
             is PlayerFact.Buffered -> Unit
-            PlayerFact.Failed, PlayerFact.ControlFailed -> failure = true
+            PlayerFact.Failed, PlayerFact.ControlFailed, PlayerFact.Undecodable -> failure = true
         }
     }
     fun diagnostic(value: String) {

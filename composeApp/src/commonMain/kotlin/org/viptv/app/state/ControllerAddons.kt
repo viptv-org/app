@@ -78,6 +78,7 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
         loadAddons(owner)
         updateAddonHome(owner)
         loadSourceIntegrations(owner)
+        reloadLiveIfVisible()
     }
 }
 
@@ -90,6 +91,7 @@ fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
     loadAddons(owner)
     updateAddonHome(owner)
     loadSourceIntegrations(owner)
+    reloadLiveIfVisible()
 }
 
 fun ApplicationController.removeAddon(id: String) = run {
@@ -99,4 +101,5 @@ fun ApplicationController.removeAddon(id: String) = run {
     loadAddons(owner)
     updateAddonHome(owner)
     loadSourceIntegrations(owner)
+    reloadLiveIfVisible()
 }

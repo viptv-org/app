@@ -51,6 +51,8 @@ sealed interface PlayerFact {
     data class Tracks(val options: PlaybackTracks) : PlayerFact
     data object Failed : PlayerFact
     data object ControlFailed : PlayerFact
+    // The clock advances with no presented frame: a stream this device cannot decode.
+    data object Undecodable : PlayerFact
 }
 
 // Milliseconds on the title clock; ranges stay separate so a seek that leaves a gap keeps it.
@@ -59,7 +61,7 @@ data class BufferedRange(val startMillis: Long, val endMillis: Long)
 enum class PresentationProof { BrowserCompositorPresented, AndroidWindowGpuCompleted, AndroidSoftwareDrawCompleted, DesktopDrawCompleted, NativeRendererPresented }
 
 @Composable
-expect fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>)
+expect fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>)
 
 internal fun playbackMimeType(format: String?): String? = when (format?.lowercase()) {
     "hls", "m3u8" -> "application/x-mpegURL"
