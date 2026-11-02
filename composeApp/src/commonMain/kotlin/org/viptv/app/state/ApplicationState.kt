@@ -147,6 +147,9 @@ data class ApplicationState(
     val pendingCrashReport: CrashReport? = null,
 )
 
+internal val ApplicationState.animeAvailable: Boolean
+    get() = browsingConfiguration?.profile?.browsing_plugin?.let { it == "simkl" } ?: true
+
 internal fun ApplicationState.detailsPending(): Boolean =
     detail == null && error == null && detailFailure == null && playTapTitle != null
 

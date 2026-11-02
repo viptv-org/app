@@ -1,10 +1,13 @@
 package org.viptv.app.components
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.composables.icons.lucide.*
 import org.viptv.app.state.Screen
 
 internal data class Destination(val screen: Screen, val label: String, val icon: ImageVector)
+
+internal val LocalAnimeAvailable = compositionLocalOf { true }
 
 internal val desktopDestinations = listOf(
     Destination(Screen.Home, "Home", Lucide.House),
