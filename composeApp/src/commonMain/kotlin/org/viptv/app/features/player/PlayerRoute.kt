@@ -41,7 +41,8 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         fallback = fallbackNotice?.let { PlayerFallbackNotice(it.reason, it.next.label, it.next.fallbackFacts()) },
         stopFallback = if (fallbackNotice != null) controller::stopBestMatchFallback else null,
         audioNotice = state.audioNotice,
-        nextSource = if (state.bestMatch != null) controller::playNextSource else null)
+        nextSource = if (state.bestMatch != null) controller::playNextSource else null,
+        openingSource = state.openingSource)
 }
 
 internal fun playerEpisodes(current: Card?, loaded: List<Card>): List<Card> {

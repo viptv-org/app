@@ -35,7 +35,7 @@ internal fun ApplicationController.startFailed(reason: String, dolbyVision: Bool
 
 fun ApplicationController.stopBestMatchFallback() {
     fallbackJob?.cancel(); fallbackJob = null
-    updateState { it.copy(fallbackNotice = null, bestMatch = null) }
+    updateState { it.copy(fallbackNotice = null, bestMatch = null, openingSource = null) }
 }
 
 fun ApplicationController.playNextSource() {
@@ -80,7 +80,7 @@ private fun ApplicationController.exhaustFallback(session: BestMatchSession) {
     playbackSegmentsJob?.cancel()
     releaseRemotePlayback()
     updateState { it.copy(bestMatch = session.copy(exhausted = true), fallbackNotice = null, audioNotice = null,
-        playback = null, playbackSegments = emptyList(), playingSource = null, paused = false,
+        playback = null, playbackSegments = emptyList(), playingSource = null, openingSource = null, paused = false,
         presentation = null, screen = Screen.Sources, error = null) }
     lastProgress = null
     firstFrameSeen = false

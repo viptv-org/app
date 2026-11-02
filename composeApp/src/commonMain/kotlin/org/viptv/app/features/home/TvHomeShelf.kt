@@ -100,7 +100,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
         LazyRow(state = state, modifier = arrival.focusRestorer(if (lastFocusedKey != null) recover else FocusRequester.Default).focusGroup().onFocusChanged {
                 if (!it.hasFocus && (latestCards.value.any { card -> cardLookupKey(card) == focusedKey } ||
                         focusedKey == endKey && latestEndCard.value != null)) focusedKey = null
-            }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
+            }, contentPadding = PaddingValues(start = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
             when (row.state) {
                 RowState.READY -> {
                     itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->

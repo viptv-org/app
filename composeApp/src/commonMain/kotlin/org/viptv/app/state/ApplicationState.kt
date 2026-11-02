@@ -129,6 +129,7 @@ data class ApplicationState(
     val torrentOnlySources: Int = 0,
     val findingSources: Boolean = false,
     val playingSource: SourceCandidate? = null,
+    val openingSource: SourceCandidate? = null,
     val bestMatch: BestMatchSession? = null,
     val fallbackNotice: BestMatchFallback? = null,
     val audioNotice: String? = null,
