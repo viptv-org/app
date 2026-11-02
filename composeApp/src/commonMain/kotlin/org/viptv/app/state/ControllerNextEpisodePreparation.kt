@@ -10,14 +10,14 @@ internal const val NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS = 45_000L
 internal data class PreparedNextSource(val source: SourceCandidate, val ranked: RankedSources)
 
 internal fun interface NextSourcePreparer {
-    suspend fun prepare(remote: RemoteConnection?, local: LocalConnection?, profile: String, card: Card): PreparedNextSource?
+    suspend fun prepare(remote: RemoteConnection?, local: LocalConnection?, profile: String, card: Card,
+        context: RankingContext): PreparedNextSource?
 
     companion object {
-        val Device = NextSourcePreparer { remote, local, profile, card ->
-            val deviceHeight = deviceMaxVideoHeight()
+        val Device = NextSourcePreparer { remote, local, profile, card, context ->
             val ranked = coroutineScope {
                 val ranking = ProgressiveSourceRanking(this,
-                    rank = { rows -> local?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
+                    rank = { rows -> local?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
                     show = {}, onMatch = {})
                 val outcome = local?.sources(profile, card, ranking::arrived) ?: SourcesOutcome(requireNotNull(remote).sources(card, ranking::arrived))
                 ranking.arrived(outcome.candidates)
@@ -51,7 +51,8 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
     val remote = connection
     val device = local
     nextEpisodePreparationJob = scope.launch {
-        val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) { nextSourcePreparer.prepare(remote, device, key.profile, card) } }
+        val context = rankingContext(seriesMemoryOf(key.profile, card))
+        val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) { nextSourcePreparer.prepare(remote, device, key.profile, card, context) } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { null }
         if (generation != nextEpisodePreparationGeneration) return@launch
