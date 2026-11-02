@@ -10,7 +10,6 @@ import org.viptv.engine.wire.Scope
 import org.viptv.engine.wire.SourceCandidate
 
 internal const val NEXT_EPISODE_PREPARE_WITHIN_MILLIS = 180_000L
-internal const val PREPARED_NEXT_EPISODE_TTL_MILLIS = 15 * 60_000L
 
 enum class NextEpisodePreparationStatus { Preparing, Ready, Unavailable }
 
@@ -21,8 +20,6 @@ data class NextEpisodePreparation(
     val status: NextEpisodePreparationStatus,
     val source: SourceCandidate? = null,
     val ranked: RankedSources? = null,
-    val startedAtMillis: Long = 0,
-    val readyAtMillis: Long? = null,
 )
 
 internal data class NextEpisodePreparationKey(

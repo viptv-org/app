@@ -6,8 +6,24 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
 
 internal const val NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS = 45_000L
+internal const val NEXT_EPISODE_PROMOTE_TIMEOUT_MILLIS = 60_000L
+private const val NEXT_EPISODE_HEARTBEAT_RETRY_MILLIS = 60_000L
+private const val NEXT_EPISODE_HEARTBEAT_MAX_RETRY_MILLIS = 15_000L
 
 internal data class PreparedNextSource(val source: SourceCandidate, val ranked: RankedSources)
+
+internal fun interface NextEpisodeDeliveryPreparer {
+    suspend fun prepare(remote: RemoteConnection?, source: SourceCandidate, profile: String): PreparedPlaybackLease?
+
+    companion object {
+        val Server = NextEpisodeDeliveryPreparer { remote, source, profile ->
+            if (remote == null) null
+            else try { remote.preparePlayback(source, profile) }
+                catch (error: CancellationException) { throw error }
+                catch (_: Exception) { null }
+        }
+    }
+}
 
 internal fun interface NextSourcePreparer {
     suspend fun prepare(remote: RemoteConnection?, local: LocalConnection?, profile: String, card: Card,
@@ -38,10 +54,7 @@ internal fun ApplicationController.maintainNextEpisodePreparation(positionMillis
     val target = state.nextEpisodePreparationTarget()
     if (target == null) { cancelNextEpisodePreparation(); return }
     val key = preparationKeyFor(target, state)
-    val prepared = state.nextEpisodePreparation
-    val expired = prepared != null && prepared.status == NextEpisodePreparationStatus.Ready &&
-        clockMillis() - (prepared.readyAtMillis ?: prepared.startedAtMillis) >= PREPARED_NEXT_EPISODE_TTL_MILLIS
-    if (key == nextEpisodePreparationKey && !expired) return
+    if (key == nextEpisodePreparationKey) return
     cancelNextEpisodePreparation()
     if (nextEpisodePreparationDue(positionMillis, durationMillis)) startNextEpisodePreparation(target, key)
 }
@@ -49,8 +62,7 @@ internal fun ApplicationController.maintainNextEpisodePreparation(positionMillis
 private fun ApplicationController.startNextEpisodePreparation(card: Card, key: NextEpisodePreparationKey) {
     val generation = ++nextEpisodePreparationGeneration
     nextEpisodePreparationKey = key
-    val startedAt = clockMillis()
-    updateState { it.copy(nextEpisodePreparation = NextEpisodePreparation(card, key.profile, NextEpisodePreparationStatus.Preparing, startedAtMillis = startedAt)) }
+    updateState { it.copy(nextEpisodePreparation = NextEpisodePreparation(card, key.profile, NextEpisodePreparationStatus.Preparing)) }
     val remote = connection
     val device = local
     nextEpisodePreparationJob = scope.launch {
@@ -62,22 +74,61 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { null }
         if (generation != nextEpisodePreparationGeneration) return@launch
-        val readyAt = clockMillis()
+        val lease = prepared?.source?.let { source -> nextEpisodeDeliveryPreparer.prepare(remote, source, key.profile) }
+        if (generation != nextEpisodePreparationGeneration) { lease?.let { releaseQuietly(it) }; return@launch }
+        nextEpisodePreparedLease = lease
         updateState { latest ->
             val current = latest.nextEpisodePreparation?.takeIf { cardLookupKey(it.card) == cardLookupKey(card) } ?: return@updateState latest
             latest.copy(nextEpisodePreparation = current.copy(source = prepared?.source, ranked = prepared?.ranked,
-                status = if (prepared?.source != null) NextEpisodePreparationStatus.Ready else NextEpisodePreparationStatus.Unavailable,
-                readyAtMillis = readyAt))
+                status = if (prepared?.source != null) NextEpisodePreparationStatus.Ready else NextEpisodePreparationStatus.Unavailable))
+        }
+        if (lease != null) keepPreparedPlaybackLease(lease)
+    }
+}
+
+private suspend fun ApplicationController.releaseQuietly(lease: PreparedPlaybackLease) {
+    try { lease.release() } catch (_: Exception) { }
+}
+
+internal fun ApplicationController.keepPreparedPlaybackLease(lease: PreparedPlaybackLease) {
+    nextEpisodePreparationRenewal?.cancel()
+    nextEpisodePreparationRenewal = scope.launch {
+        val interval = lease.renewSeconds.coerceIn(1, 30) * 1000
+        while (true) {
+            delay(interval)
+            if (nextEpisodePreparedLease !== lease) return@launch
+            if (!renewPreparedQuietly(lease)) {
+                if (nextEpisodePreparedLease === lease) nextEpisodePreparedLease = null
+                return@launch
+            }
         }
     }
 }
 
-internal fun ApplicationController.cancelNextEpisodePreparation() {
+private suspend fun ApplicationController.renewPreparedQuietly(lease: PreparedPlaybackLease): Boolean {
+    var wait = 1_000L
+    var spent = 0L
+    while (true) {
+        val failure = try { lease.renew(); return true }
+            catch (error: CancellationException) { if (error is TimeoutCancellationException) error else throw error }
+            catch (error: Exception) { error }
+        if (!failure.transientFailure() || spent + wait > NEXT_EPISODE_HEARTBEAT_RETRY_MILLIS) return false
+        delay(wait); spent += wait; wait = (wait * 2).coerceAtMost(NEXT_EPISODE_HEARTBEAT_MAX_RETRY_MILLIS)
+    }
+}
+
+private fun ApplicationController.clearNextEpisodePreparation(releaseLease: Boolean) {
     nextEpisodePreparationGeneration++
     nextEpisodePreparationJob?.cancel(); nextEpisodePreparationJob = null
     nextEpisodePreparationKey = null
+    nextEpisodePreparationRenewal?.cancel(); nextEpisodePreparationRenewal = null
+    val lease = nextEpisodePreparedLease
+    nextEpisodePreparedLease = null
     if (mutable.value.nextEpisodePreparation != null) updateState { it.copy(nextEpisodePreparation = null) }
+    if (releaseLease && lease != null) scope.launch { withContext(NonCancellable) { releaseQuietly(lease) } }
 }
+
+internal fun ApplicationController.cancelNextEpisodePreparation() = clearNextEpisodePreparation(releaseLease = true)
 
 internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean {
     val state = mutable.value
@@ -94,9 +145,46 @@ internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean
 private fun ApplicationController.handOffToPreparedNextEpisode(prepared: NextEpisodePreparation) {
     val source = prepared.source ?: return
     val ranked = prepared.ranked ?: return
-    cancelNextEpisodePreparation()
+    val lease = nextEpisodePreparedLease
+    clearNextEpisodePreparation(releaseLease = false)
     if (!completionSeen) saveProgress(false, final = true)
     updateState { it.copy(sourceTitle = prepared.card, sources = ranked.rows, sourceGroups = ranked.groups,
         torrentOnlySources = 0, playTapTitle = null, detailFailure = null, detailRetryable = true, error = null, errorCode = null) }
-    startBestMatch(ranked, source)
+    if (lease != null) promotePreparedNextEpisode(source, ranked, lease, prepared.card)
+    else startBestMatch(ranked, source)
+}
+
+private fun ApplicationController.promotePreparedNextEpisode(source: SourceCandidate, ranked: RankedSources, lease: PreparedPlaybackLease, card: Card) {
+    updateState { it.copy(bestMatch = BestMatchSession(ranked.rows, tried = listOf(source.id), playingId = source.id),
+        fallbackNotice = null, audioNotice = null, playingSource = source, openingSource = source) }
+    run { promotePreparedDelivery(source, ranked, lease, card) }
+}
+
+private suspend fun ApplicationController.promotePreparedDelivery(source: SourceCandidate, ranked: RankedSources, lease: PreparedPlaybackLease, card: Card) {
+    progressJob?.join()
+    val outgoingId = remotePlayback?.input?.id
+    val (outgoing, settled) = detachRemotePlaybackForPromotion()
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = false) }
+    settled?.join()
+    val profile = requireNotNull(mutable.value.selectedProfile)
+    val promoted = try {
+        withTimeoutOrNull(NEXT_EPISODE_PROMOTE_TIMEOUT_MILLIS) { lease.promote(outgoingId) }
+    } catch (error: CancellationException) { throw error }
+    catch (_: Exception) { null }
+    closePlaybackQuietly(outgoing)
+    if (promoted == null) {
+        fallbackPreparedHandoff(source, ranked)
+        return
+    }
+    if (mutable.value.selectedProfile != profile || mutable.value.sourceTitle?.let(::cardLookupKey) != cardLookupKey(card)) {
+        closePlaybackQuietly(promoted)
+        return
+    }
+    adoptPromotedPlayback(promoted, source, card, profile)
+}
+
+private suspend fun ApplicationController.fallbackPreparedHandoff(source: SourceCandidate, ranked: RankedSources) {
+    updateState { it.copy(bestMatch = BestMatchSession(ranked.rows, tried = listOf(source.id), playingId = source.id),
+        fallbackNotice = null, audioNotice = null, playingSource = source, openingSource = source) }
+    openSourceNow(source, forceGateway = false, positionMillis = null, pausedAfterOpen = false, choice = SourceChoice.None)
 }

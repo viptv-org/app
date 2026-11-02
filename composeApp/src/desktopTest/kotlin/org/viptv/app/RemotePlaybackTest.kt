@@ -269,4 +269,48 @@ class RemotePlaybackTest {
         assertTrue(cancelled.single().startsWith("/api/playback-requests/"))
         connection.close()
     }
+
+    @Test fun preparedDeliveryPreparesWithoutStartAndPromotesWithReplaces() = runBlocking {
+        val calls = mutableListOf<String>()
+        var prepareBody: JsonObject? = null
+        var promoteBody: JsonObject? = null
+        val client = HttpClient(MockEngine { request ->
+            calls += "${request.method.value} ${request.url.encodedPath}"
+            val path = request.url.encodedPath
+            val response = when {
+                path == "/api/playback" && request.method == HttpMethod.Post -> {
+                    prepareBody = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                    """{"id":"prep","status":"prepared","delivery":null,"renew_after_seconds":20,"live":false}"""
+                }
+                path == "/api/playback/prep/promote" -> {
+                    promoteBody = (request.body as? TextContent)?.text?.let { Json.parseToJsonElement(it).jsonObject }
+                    """{"id":"prep","status":"starting"}"""
+                }
+                path == "/api/playback/prep" && request.method == HttpMethod.Get ->
+                    """{"id":"prep","status":"ready","renew_after_seconds":20,
+                        "delivery":{"kind":"direct","url":"https://media.example/next.mp4","position":7.5}}"""
+                else -> "{}"
+            }
+            respond(response, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+        val direct = buildJsonObject { put("platform", "web"); put("can_play_direct", true) }
+        val source = SourceCandidate("next-stream", "addon:1", "Next")
+        val prepared = connection.preparePlayback(source, "profile", direct, torrents = null)
+        assertEquals("prep", prepared.id)
+        assertEquals(20L, prepared.renewSeconds)
+        assertEquals(JsonPrimitive(true), prepareBody?.get("prepare"))
+        assertEquals(JsonPrimitive("next-stream"), prepareBody?.get("stream_id"))
+        assertEquals(JsonPrimitive(true), prepareBody?.get("resume"))
+        prepared.renew()
+        val lease = prepared.promote("current")
+        assertEquals("prep", lease.input.id)
+        assertEquals("https://media.example/next.mp4", lease.input.uri)
+        assertEquals(7_500L, lease.input.positionMillis)
+        assertEquals(JsonPrimitive("current"), promoteBody?.get("replaces"))
+        prepared.release()
+        assertEquals(listOf("POST /api/playback", "POST /api/playback/prep/heartbeat", "POST /api/playback/prep/promote",
+            "GET /api/playback/prep", "DELETE /api/playback/prep"), calls)
+        connection.close()
+    }
 }
