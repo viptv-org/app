@@ -25,6 +25,8 @@ import org.viptv.app.state.*
 import org.viptv.app.connection.browserOrigin
 import org.viptv.app.features.entry.*
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.features.home.CardActions
+import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
@@ -75,7 +77,15 @@ fun App(
     }
     val tvDisplay = rememberTvDisplayState()
     val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
-    CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion) {
+    val localMode = state.localMode
+    val cardActions = remember(controller, localMode) {
+        CardActions(play = controller::playTitle, toggleSave = controller::toggleFavorite,
+            isSaved = { controller.state.value.isSaved(it) },
+            chooseSource = controller::chooseSource, playFromStart = controller::playTitleFromStart,
+            markWatched = if (localMode) null else controller::toggleWatched)
+    }
+    CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
+        LocalCardActions provides cardActions) {
     ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
