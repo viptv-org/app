@@ -2,6 +2,7 @@ package org.viptv.app.connection
 
 import io.ktor.client.*
 import io.ktor.client.engine.darwin.*
+import io.ktor.client.plugins.sse.SSE
 import platform.Foundation.NSBundle
 
 actual fun platformClient(): HttpClient = HttpClient(Darwin) {
@@ -12,6 +13,7 @@ actual fun platformClient(): HttpClient = HttpClient(Darwin) {
     install(io.ktor.client.plugins.HttpTimeout) {
         requestTimeoutMillis = 15_000; connectTimeoutMillis = 8_000; socketTimeoutMillis = 15_000
     }
+    install(SSE)
     followRedirects = false
 }
 
