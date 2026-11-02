@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import androidx.compose.ui.text.input.ImeAction
 import org.viptv.app.components.CredentialFields
 import org.viptv.app.components.autocompleteCurrentPassword
 import org.viptv.app.components.autocompleteName
@@ -14,6 +15,10 @@ class CredentialFieldsTest {
         assertEquals(listOf("username", "password"), fields.map { it.name })
         assertEquals(listOf(autocompleteUsername, autocompleteCurrentPassword), fields.map { it.autocomplete })
         assertEquals(listOf(false, true), fields.map { it.secret })
+    }
+
+    @Test fun signInMovesToPasswordThenSubmits() {
+        assertEquals(listOf(ImeAction.Next, ImeAction.Go), CredentialFields.signIn("someone", "secret").map { it.imeAction })
     }
 
     @Test fun accountCreationUsesNewPasswordForBothPasswordFields() {

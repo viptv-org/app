@@ -1,10 +1,15 @@
 package org.viptv.app.features.player
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.*
@@ -16,6 +21,8 @@ import org.viptv.app.components.Motion
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.DropdownMenuItem
+import org.viptv.app.components.pointerToggleable
+import org.viptv.app.components.pressScale
 
 internal val CompactButtonsBelow = 1000.dp
 private val SourceLabelWidth = 200.dp
@@ -25,7 +32,8 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
     setVolume: (Float) -> Unit, speed: Double, setSpeed: (Double) -> Unit, close: () -> Unit, tracks: () -> Unit, seekEnabled: Boolean = true,
     streams: (() -> Unit)? = null, streamLabel: String? = null,
     next: (() -> Unit)? = null, nextEnabled: Boolean = false,
-    episodes: (() -> Unit)? = null, episodesEnabled: Boolean = false) {
+    episodes: (() -> Unit)? = null, episodesEnabled: Boolean = false,
+    fill: Boolean = false, toggleFill: () -> Unit = {}) {
     var speeds by remember { mutableStateOf(false) }
     val playPause: @Composable () -> Unit = {
         IconButton(onClick = toggle, pressedScale = Motion.control) {
@@ -51,6 +59,9 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
         episodes?.let { action -> TextButton(action, enabled = episodesEnabled, pressedScale = Motion.control) {
             Icon(Lucide.List, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Episodes")
         } }
+    }
+    val episodesIcon: @Composable () -> Unit = {
+        episodes?.let { action -> IconButton(onClick = action, enabled = episodesEnabled, pressedScale = Motion.control) { Icon(Lucide.List, "Episodes", Modifier.size(22.dp)) } }
     }
     val streamsAction: @Composable (Modifier) -> Unit = { modifier ->
         streams?.let { action -> TextButton(onClick = action, modifier = modifier.widthIn(max = SourceLabelWidth), pressedScale = Motion.control) {
@@ -80,15 +91,32 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
                 playPause(); skipBack(); skipForward(); nextAction(); muteAction(); closeAction()
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                episodesAction()
+                episodesIcon()
                 if (streams != null) streamsAction(Modifier.weight(1f)) else Spacer(Modifier.weight(1f))
-                tracksAction(); speedAction()
+                tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill)
             }
         } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             playPause(); skipBack(); skipForward(); nextAction(); muteAction()
             PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
             Spacer(Modifier.weight(1f))
-            episodesAction(); streamsAction(Modifier); tracksAction(); speedAction(); closeAction()
+            episodesAction(); streamsAction(Modifier); tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill); closeAction()
         }
+    }
+}
+
+@Composable
+internal fun PlaybackFitFill(fill: Boolean, toggle: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(if (fill) Palette.accent.copy(alpha = 0.16f) else Color.Transparent)
+            .pressScale(interaction, Motion.control)
+            .pointerToggleable(fill, interaction, null, shape = CircleShape, onValueChange = { toggle() }),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(if (fill) Lucide.Minimize2 else Lucide.Maximize2, if (fill) "Fit video" else "Fill video",
+            Modifier.size(22.dp), tint = if (fill) Palette.accent else Palette.text)
     }
 }
