@@ -54,7 +54,7 @@ class NextEpisodePreparationTest {
                 publish(SourcesOutcome(rows))
                 return SourcesOutcome(rows)
             }
-            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources =
+            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources =
                 RankedSources(sources, SourceGroups.of(sources.map { it.id }, bestMatch), bestMatchFullyMatches = bestMatch != null)
             override suspend fun openSource(id: String) = PlaybackInput(id, "https://media.example/$id", profileId = "profile")
             override suspend fun profilePreferences(profile: String) = PreferencesSnapshot(1, ProfilePreferences(source_selection = "best"))
