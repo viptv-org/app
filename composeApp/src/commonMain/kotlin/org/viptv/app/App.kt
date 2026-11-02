@@ -34,6 +34,11 @@ import org.viptv.app.features.settings.LocalTvDisplayState
 import org.viptv.app.features.settings.rememberSystemReducedMotion
 import org.viptv.app.features.settings.rememberTvDisplayState
 import org.viptv.app.features.settings.reducedMotion
+import org.viptv.app.features.settings.LocalWatchOnTv
+import org.viptv.app.features.settings.rememberWatchOnTvAvailable
+import org.viptv.app.features.settings.rememberWatchOnTvState
+import org.viptv.app.features.remote.RemoteHeaderButton
+import org.viptv.app.features.remote.TvRemoteOverlay
 import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.player.PlayerRoute
@@ -78,6 +83,9 @@ fun App(
     val tvDisplay = rememberTvDisplayState()
     val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
     val localMode = state.localMode
+    val watchOnTvState = rememberWatchOnTvState()
+    val watchOnTvPlatform = rememberWatchOnTvAvailable()
+    var remoteOpen by remember { mutableStateOf(false) }
     val cardActions = remember(controller, localMode) {
         CardActions(play = controller::playTitle, toggleSave = controller::toggleFavorite,
             isSaved = { controller.state.value.isSaved(it) },
@@ -85,7 +93,7 @@ fun App(
             markWatched = if (localMode) null else controller::toggleWatched)
     }
     CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
-        LocalCardActions provides cardActions) {
+        LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState) {
     ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
@@ -146,7 +154,17 @@ fun App(
                       LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar,
                       LocalBottomClearance provides bottomClearance, LocalAnimeAvailable provides animeAvailable) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
-                    else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                    else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
+                        val prefs = watchOnTvState.value
+                        val remoteTvName = prefs.tvName
+                        val remote: (@Composable () -> Unit)? =
+                            if (watchOnTvPlatform && remoteTvName != null && state.screen in listOf(Screen.Discover, Screen.Live, Screen.Library)) {
+                                { RemoteHeaderButton(remoteTvName, showTip = !prefs.tipDismissed, dismissTip = watchOnTvState::dismissRemoteTip, open = { remoteOpen = true }) }
+                            } else null
+                        CompositionLocalProvider(LocalHeaderRemote provides remote) {
+                            PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                        }
+                    }
 
                     Row(Modifier.weight(1f)) {
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
@@ -238,6 +256,17 @@ fun App(
                       BottomNavigation(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate)
                   }
                 }
+            }
+            val remoteTv = watchOnTvState.pairedTv()
+            if (remoteOpen && remoteTv != null && !television && !browser && !desktopChrome) {
+                TvRemoteOverlay(
+                    tv = remoteTv,
+                    receiverUrl = controller.connection?.accountDashboardUrl?.trimEnd('/')?.let { "$it/tv/?platform=vizio" } ?: "",
+                    swipeMode = watchOnTvState.value.remoteSwipe,
+                    onSwipeModeChange = watchOnTvState::setRemoteSwipe,
+                    scope = scope,
+                    onClose = { remoteOpen = false },
+                )
             }
             if (state.pendingCrashReport != null && showsCrashNotice(state.screen)) {
                 CrashReportNotice(television, controller::submitCrashReport, controller::discardCrashReport)

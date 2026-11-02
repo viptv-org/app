@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import coil3.PlatformContext
 import java.net.Inet4Address
-import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,6 +18,8 @@ import org.viptv.app.smartcast.NativeSmartCast
 import org.viptv.app.smartcast.SmartCastClient
 import org.viptv.app.smartcast.SmartCastDiscovery
 import org.viptv.app.smartcast.SmartCastTokenStore
+import org.viptv.app.smartcast.smartCastDeviceId
+import org.viptv.app.smartcast.smartCastDeviceName
 import org.viptv.engine.wire.VizioControllerOutputKind
 import org.viptv.engine.wire.VizioFailureKind
 import org.viptv.engine.wire.VizioPairingChallenge
@@ -44,11 +45,7 @@ private class AndroidVizioSetupEngine(private val context: Context) : VizioSetup
     private val tokens = SmartCastTokenStore(context)
     private val native = NativeSmartCast
     private val discovery = SmartCastDiscovery(native)
-    private val deviceId = context.getSharedPreferences("viptv_smartcast_pairing", Context.MODE_PRIVATE)
-        .let { prefs ->
-            if (!prefs.contains("deviceId")) prefs.edit().putString("deviceId", UUID.randomUUID().toString()).apply()
-            prefs.getString("deviceId", null) ?: UUID.randomUUID().toString()
-        }
+    private val deviceId = smartCastDeviceId(context)
 
     override suspend fun search(limit: Int, onResult: (VizioTv) -> Unit) {
         val subnet = localSubnet() ?: throw VizioNoLocalNetwork()
@@ -58,7 +55,7 @@ private class AndroidVizioSetupEngine(private val context: Context) : VizioSetup
     override suspend fun probe(origin: String): VizioTv? = discovery.probe(origin)
 
     override suspend fun beginPair(tv: VizioTv): VizioPairingChallenge? = withContext(Dispatchers.IO) {
-        val client = SmartCastClient.create(tv.origin, deviceId, "VIPTV phone", tokens)
+        val client = SmartCastClient.create(tv.origin, deviceId, smartCastDeviceName, tokens)
         try {
             val output = client.run("beginPair")
             if (output.kind != VizioControllerOutputKind.COMPLETE) return@withContext null
@@ -69,7 +66,7 @@ private class AndroidVizioSetupEngine(private val context: Context) : VizioSetup
 
     override suspend fun finishPair(tv: VizioTv, challenge: VizioPairingChallenge, pin: String): VizioPairResult =
         withContext(Dispatchers.IO) {
-            val client = SmartCastClient.create(tv.origin, deviceId, "VIPTV phone", tokens)
+            val client = SmartCastClient.create(tv.origin, deviceId, smartCastDeviceName, tokens)
             try {
                 val input = buildJsonObject {
                     put("challengeType", challenge.challengeType)
@@ -83,7 +80,7 @@ private class AndroidVizioSetupEngine(private val context: Context) : VizioSetup
 
     override suspend fun cancelPair(tv: VizioTv) {
         withContext(Dispatchers.IO) {
-            val client = SmartCastClient.create(tv.origin, deviceId, "VIPTV phone", tokens)
+            val client = SmartCastClient.create(tv.origin, deviceId, smartCastDeviceName, tokens)
             try { client.run("cancelPair") } finally { client.close() }
         }
     }
