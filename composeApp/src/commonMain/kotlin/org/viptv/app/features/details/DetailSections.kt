@@ -16,12 +16,16 @@ internal enum class DetailSection(val label: String) {
     Episodes("Episodes"), Related("More like this"), Information("Details")
 }
 
-@Composable
-internal fun DetailSections(selected: DetailSection, episodes: Boolean, related: Boolean,
-    select: (DetailSection) -> Unit, modifier: Modifier = Modifier) {
-    val sections = DetailSection.entries.filter {
-        when (it) { DetailSection.Episodes -> episodes; DetailSection.Related -> related; else -> true }
+internal fun detailSections(episodes: Boolean, related: Boolean, information: Boolean): List<DetailSection> =
+    DetailSection.entries.filter {
+        when (it) { DetailSection.Episodes -> episodes; DetailSection.Related -> related; DetailSection.Information -> information }
     }
+
+@Composable
+internal fun DetailSections(selected: DetailSection, episodes: Boolean, related: Boolean, information: Boolean,
+    select: (DetailSection) -> Unit, modifier: Modifier = Modifier) {
+    val sections = detailSections(episodes, related, information)
+    if (sections.isEmpty()) return
     Column(modifier) {
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), wheelScrollsRow = true) {
             items(sections) { section ->

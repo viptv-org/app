@@ -51,7 +51,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail, focus)
-    var section by remember(detail?.item?.identity, detail?.episodes?.isNotEmpty() == true, detail?.recommendations?.isNotEmpty() == true) { mutableStateOf(
+    val facts = remember(detail) { detail?.detailFacts().orEmpty() }
+    var section by remember(detail?.item?.identity, detail?.episodes?.isNotEmpty() == true, detail?.recommendations?.isNotEmpty() == true, facts.isNotEmpty()) { mutableStateOf(
         when { detail?.episodes?.isNotEmpty() == true -> DetailSection.Episodes
             detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
             else -> DetailSection.Information }) }
@@ -93,15 +94,12 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                         Box(Modifier.padding(horizontal = gutter)) { DetailBelowSkeleton(phone, desktop) }
                     }
                     else -> {
-                        if (!desktop) item(key = "sections") {
-                            DetailSections(section, seasons.isNotEmpty(), value.recommendations.isNotEmpty(),
+                        if (!desktop && detailSections(seasons.isNotEmpty(), value.recommendations.isNotEmpty(), facts.isNotEmpty()).isNotEmpty()) item(key = "sections") {
+                            DetailSections(section, seasons.isNotEmpty(), value.recommendations.isNotEmpty(), facts.isNotEmpty(),
                                 { section = it }, Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value })
                         }
-                        if (!desktop && section == DetailSection.Information) item(key = "information") {
-                            Column(Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value }, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                org.viptv.app.components.MediaMetadata(value.item)
-                                value.item.description?.let { Text(it, color = Palette.body, style = MaterialTheme.typography.bodyLarge) }
-                            }
+                        if (!desktop && section == DetailSection.Information && facts.isNotEmpty()) item(key = "information") {
+                            DetailFacts(facts, Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value })
                         }
                         if ((!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())) selected?.let { season ->
                             item {
