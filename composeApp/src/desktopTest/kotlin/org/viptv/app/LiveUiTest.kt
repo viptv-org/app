@@ -385,6 +385,24 @@ class LiveUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aChosenSourceWithZeroChannelsKeepsTheFilteredLine() {
+        for (television in listOf(false, true)) {
+            val controller = liveController(livePage("m3u:1" to "Playlist", "xtream:2" to "Other feed")).also {
+                it.mutable.value = it.state.value.copy(liveSourceChosen = true, liveQuery = LiveQuery(connection_id = "xtream:2"))
+            }
+            val scene = liveScene(if (television) 1920 else 1280, if (television) 1080 else 800, television, controller)
+            try {
+                frames(scene)
+                val layout = if (television) "TV" else "desktop"
+                val texts = nodes(scene).map(::text)
+                assertFalse(texts.contains(LiveNoChannelsHeadline), "$layout: a chosen source is a filter, not a broken source")
+                assertTrue(texts.contains("No channels are available for this profile."), "$layout: the filtered-empty line")
+                assertTrue(nodes(scene).any { text(it).startsWith("Source:") }, "$layout: the Source chip stays")
+                if (television) capture(scene, "tv-live-source-filtered-empty") else capture(scene, "desktop-live-source-filtered-empty")
+            } finally { scene.close() }
+        }
+    }
+
     private fun liveChannel() = LiveCatalogChannel("one", "m3u:1", Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "Fixture news", badges = emptyList()))
 
     private fun livePage(vararg connections: Pair<String, String>, reason: String? = null, availability: String = "Available") =

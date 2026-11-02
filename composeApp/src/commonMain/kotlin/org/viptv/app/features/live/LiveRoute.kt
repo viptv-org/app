@@ -20,7 +20,7 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 LiveProgram(program.id, program.title, clock.minute(program.start_millis), clock.minute(program.end_millis), program.description)
             })
     }
-    val filtered = state.liveFavoritesOnly || state.liveQuery.group_id != null
+    val filtered = state.liveFavoritesOnly || state.liveQuery.group_id != null || state.liveSourceChosen
     val spread = liveSpread(state.livePage, state.busy, filtered)
     if (spread == LiveSpread.NoSource) {
         LiveNoSourcePage(television, state.accountAccess, state.localMode, state.liveSetupReturnFocus,

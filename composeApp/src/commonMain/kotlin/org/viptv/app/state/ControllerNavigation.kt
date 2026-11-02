@@ -59,6 +59,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
             leavePinFrom = history.leavePinFrom.takeIf { screen == Screen.ProfilePin },
             settingsEntrySection = if (screen == Screen.Settings) state.settingsEntrySection else null,
             liveSetupReturnFocus = state.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
+            liveSourceChosen = if (screen == Screen.Live) false else state.liveSourceChosen,
             settingsReturnsToPlayer = playerVisit,
             settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) state.settingsPage else null,
             passwordChangeNotice = if (screen == Screen.Settings) state.passwordChangeNotice else null)

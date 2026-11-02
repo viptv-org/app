@@ -212,4 +212,20 @@ class LiveControllerTest {
         } finally { old.complete(Unit); f.close() }
     }
 
+    @Test fun aChosenSourceIsAFilterUntilLiveIsReentered() = runTest {
+        val f = Fixture(this, testScheduler) { request -> when {
+            request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":[]}"""
+            request.url.encodedPath.endsWith("/guide") -> guide(if (request.url.encodedPath.contains("/one/")) "one" else "three", false)
+            else -> { val feed = request.url.parameters["connection_id"] ?: "m3u:1"; feedPage(feed, if (feed == "m3u:1") "one" else "three") }
+        } }
+        try {
+            f.controller.mutable.value = f.controller.state.value.copy(livePage = LiveCatalogPage(listOf(channel("one")), connections = connections()))
+            assertFalse(f.controller.state.value.liveSourceChosen)
+            f.controller.selectLiveConnection("xtream:2"); advanceUntilIdle()
+            assertTrue(f.controller.state.value.liveSourceChosen, "picking a source marks the query as a filter")
+            f.controller.navigate(Screen.Live); advanceUntilIdle()
+            assertFalse(f.controller.state.value.liveSourceChosen, "reentering Live falls back to the default source")
+        } finally { f.close() }
+    }
+
 }

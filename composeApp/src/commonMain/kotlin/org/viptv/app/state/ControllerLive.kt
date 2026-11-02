@@ -52,6 +52,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
 
 fun ApplicationController.selectLiveConnection(id: String) {
     if (mutable.value.livePage?.connections?.none { it.id == id && it.enabled } != false) return
+    updateState { next -> next.copy(liveSourceChosen = true) }
     run { loadLive(mutable.value.liveQuery.copy(connection_id = id, group_id = null, offset = 0)) }
 }
 

@@ -48,7 +48,7 @@ internal const val LiveAddonsSection = "Add-ons"
 
 enum class LiveSpread { Channels, Filtered, Loading, NoSource, NoChannels }
 
-// The page's own facts decide the state; a source pick is how a working second connection is reached, so it never masquerades as an empty filter.
+// The page's own facts decide the state; a filter (Favourites, a group or a chosen source) wins over the empty states.
 internal fun liveSpread(page: LiveCatalogPage?, busy: Boolean, filtered: Boolean): LiveSpread = when {
     page != null && page.channels.isNotEmpty() -> LiveSpread.Channels
     filtered -> LiveSpread.Filtered
