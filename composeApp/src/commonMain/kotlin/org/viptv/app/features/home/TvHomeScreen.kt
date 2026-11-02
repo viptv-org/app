@@ -238,6 +238,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                                 rowAlpha = alpha,
                                 onHeightChange = { if (it > measuredShelfHeight) measuredShelfHeight = it; if (index == 0) firstShelfHeight = it },
                                 play = play, state = shelfState,
+                                save = save, saved = saved,
                                 seeAllFor = seeAllFor, openSeeAll = openSeeAll)
                         }
                     }

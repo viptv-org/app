@@ -98,6 +98,7 @@ fun ApplicationController.backSources() {
     restartRequested = false
     val awaitingTitle = mutable.value.let { it.playTapTitle != null && it.detail == null && it.sourceReturnScreen == Screen.Details }
     generation++; job?.cancel()
+    clearBestMatchSession()
     if (!awaitingTitle) cancelSourceDetail()
     updateState { state ->
         state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false, openingSource = null,

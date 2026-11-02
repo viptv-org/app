@@ -37,13 +37,15 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     private var advancingTicks = 0
     init { initial.forEach(::observe) }
 
-    fun checkFirstFrame() {
-        if (hasPresented || failed || undecodable) return
+    fun checkFirstFrame(): Boolean {
+        if (hasPresented || failed || undecodable) return false
         val moved = position != lastPosition
         lastPosition = position
         // Six ticks of advancing audio with no presented frame mean no pictures; a stalled clock is a slow start, not an undecodable stream.
         advancingTicks = if (moved && !buffering) advancingTicks + 1 else 0
-        if (advancingTicks >= 6) undecodable = true
+        if (advancingTicks < 6) return false
+        undecodable = true
+        return true
     }
 
     fun observe(fact: PlayerFact) {
@@ -64,6 +66,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             }
             is PlayerFact.Presentation -> { hasPresented = true; buffering = false; undecodable = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
+            PlayerFact.Undecodable -> { buffering = false; undecodable = true }
             is PlayerFact.ControlFailed -> controlError = playbackControlErrorCopy
         }
     }
@@ -81,7 +84,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             seekTarget = command.positionMillis; position = command.positionMillis
             seekStarted = TimeSource.Monotonic.markNow()
         }
-        commands.tryEmit(command); preview?.invoke(command); interaction++; controlError = null
+        commands.tryEmit(command); preview?.invoke(command); interaction++; if (!command.isAutomatic) controlError = null
     }
     fun step(direction: Int) {
         if (live) return
@@ -96,7 +99,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     fun skip(range: TvSkipRange, automatic: Boolean, preview: ((PlayerCommand) -> Unit)? = null) {
         if (seekTarget != null) return
         if (!skipped.add(range) && automatic) return
-        send(PlayerCommand.Seek(range.endMillis), preview)
+        send(PlayerCommand.Seek(range.endMillis, automatic), preview)
     }
     fun back(close: () -> Unit): Boolean {
         when {
