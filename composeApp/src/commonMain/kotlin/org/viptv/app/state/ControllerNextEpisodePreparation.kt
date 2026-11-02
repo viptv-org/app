@@ -25,9 +25,9 @@ internal fun interface NextSourcePreparer {
                 ranking.finish()
             }
             val matched = ranked ?: return@NextSourcePreparer null
-            // A remembered choice wins over the generic best match; a fresh row in its audio is enough, the memory is the quality signal.
-            val target = remembered?.let { matched.matchingSource(it) }
-                ?: matched.takeIf { it.bestMatchFullyMatches }?.autoplayTarget()
+            // A remembered choice decides alone: a row in another audio never stands in for it, so Next asks like the unprepared path does.
+            val target = if (remembered != null) matched.matchingSource(remembered)
+                else matched.takeIf { it.bestMatchFullyMatches }?.autoplayTarget()
             target?.let { PreparedNextSource(it, matched) }
         }
     }
