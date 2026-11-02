@@ -66,7 +66,7 @@ internal fun launchDesktopTorrentBenchmark() = application {
         input?.let { media ->
             PlayerSurface(media, false, Modifier.fillMaxSize().background(Color.Black), observe = {
                 if (it is PlayerFact.Progress) it.durationMillis?.takeIf { duration -> duration > 0 }?.let { duration -> observedDuration.value = duration }
-                if (it == PlayerFact.Failed || it == PlayerFact.ControlFailed) failed = true
+                if (it == PlayerFact.Failed || it is PlayerFact.ControlFailed) failed = true
             }, commands = commands)
         }
         LaunchedEffect(Unit) {

@@ -99,7 +99,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                 }
                 latestObserve(PlayerFact.Properties(player.volume, player.rate.toDouble(), captionScale))
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), latestObserve) }
         }
     }
     LaunchedEffect(paused, player) {

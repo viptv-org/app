@@ -8,7 +8,7 @@ import org.w3c.dom.*
 
 internal suspend fun selectBrowserSubtitle(input: PlaybackInput, video: HTMLVideoElement, id: Int?,
     tracks: MutableMap<Int, HTMLTrackElement>, blobs: MutableList<String>, cueLine: () -> Int, suppressEmbedded: () -> Unit = {},
-    failed: () -> Unit): String? {
+    failed: (String) -> Unit): String? {
     val candidate = input.providerSubtitle(id)
     if (id != null) requireNotNull(candidate)
     var chosen = id?.let(tracks::get)
@@ -19,7 +19,7 @@ internal suspend fun selectBrowserSubtitle(input: PlaybackInput, video: HTMLVide
         chosen = (document.createElement("track") as HTMLTrackElement).apply {
             kind = "subtitles"; label = candidate.label; srclang = candidate.language; src = uri
             onload = { placeProviderCues(this, input.timelineOffsetMillis / 1000.0, cueLine()); null }
-            onerror = { _, _, _, _, _ -> if (track.mode == TextTrackMode.SHOWING) failed(); null }
+            onerror = { _, _, _, _, _ -> if (track.mode == TextTrackMode.SHOWING) failed("track-load-failed"); null }
             video.appendChild(this)
         }
         tracks[requireNotNull(id)] = chosen

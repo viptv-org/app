@@ -70,7 +70,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var volume by remember { mutableStateOf(1f) }
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
-    var controlError by remember { mutableStateOf<String?>(null) }
+    var controlError by remember(playbackKey) { mutableStateOf<String?>(null) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
     var phonePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
@@ -172,11 +172,12 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (!ended) endHandled = false
             }
             is PlayerFact.Presentation -> Unit
-            PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
+            is PlayerFact.ControlFailed -> controlError = playbackControlErrorCopy
             PlayerFact.Failed -> { buffering = false; failed = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
+    LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), { fact ->

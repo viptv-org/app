@@ -111,11 +111,14 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             else preferredProviderSubtitle(input, candidates)
         if (candidate == null && (!subtitleTouched || requestedSubtitle != null)) return@LaunchedEffect
         val id = candidate?.let { input.providerTrackId(it.id) }
+        val chosen = subtitleTouched
         try {
-            selected = selectBrowserSubtitle(input, video, id, tracks, blobs, { providerCueLine(captionScale) }, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { latestObserve(PlayerFact.ControlFailed) }
+            selected = selectBrowserSubtitle(input, video, id, tracks, blobs, { providerCueLine(captionScale) }, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { cause ->
+                input.controlFailed(PlaybackControl.Track, cause, if (chosen) latestObserve else null)
+            }
             latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
         } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+        catch (error: Exception) { input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) latestObserve else null) }
     }
     LaunchedEffect(video, commands) {
         commands.collect { command ->
@@ -136,7 +139,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                 }
                 latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate, captionScale))
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), latestObserve) }
         }
     }
     LaunchedEffect(paused, video) {

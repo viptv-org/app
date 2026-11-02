@@ -1,5 +1,6 @@
 package org.viptv.app.features.player
 
+import org.viptv.app.player.PlaybackControl
 import org.viptv.app.player.PlayerFact
 
 internal val PlaybackWaitingStatuses = listOf("Opening", "Buffering", "Preparing")
@@ -12,6 +13,7 @@ internal const val SeekAbandonSeconds = 10
 internal fun PlayerFact.settlesSeek(targetMillis: Long?): Boolean = when (this) {
     is PlayerFact.Status -> name in PlaybackSettledStatuses
     is PlayerFact.Progress -> targetMillis != null && positionMillis > targetMillis + SeekClockResumedMillis
-    PlayerFact.Failed, PlayerFact.ControlFailed, is PlayerFact.Presentation -> true
+    PlayerFact.Failed, is PlayerFact.Presentation -> true
+    is PlayerFact.ControlFailed -> control == PlaybackControl.Seek
     is PlayerFact.Properties, is PlayerFact.Tracks -> false
 }

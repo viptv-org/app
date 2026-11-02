@@ -19,7 +19,7 @@ import org.viptv.engine.wire.SubtitleCandidate
 @UnstableApi
 internal class Media3ProviderSubtitles(private val player: ExoPlayer, private val input: PlaybackInput,
     private val scope: CoroutineScope, private val tracks: Media3Tracks, private val positionMillis: () -> Long,
-    private val failed: () -> Unit) {
+    private val failed: (Throwable, Boolean) -> Unit) {
     private var job: Job? = null
     private var generation = 0L
     private var closed = false
@@ -72,7 +72,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
             // Validate and select embedded tracks before clearing a working provider choice.
             tracks.select(PlaybackTrackKind.Subtitle, id)
             clear()
-        } else attach(candidate)
+        } else attach(candidate, chosen = true)
     }
 
     fun autoSelect(values: List<SubtitleCandidate>) {
@@ -124,7 +124,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
             player.trackSelectionParameters = parameters.buildUpon().clearOverridesOfType(C.TRACK_TYPE_TEXT).setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
     }
 
-    private fun attach(candidate: SubtitleCandidate) {
+    private fun attach(candidate: SubtitleCandidate, chosen: Boolean = false) {
         val operation = ++generation
         pending = candidate.id
         job = scope.launch {
@@ -139,7 +139,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
                 tracks.providerSelected(desired)
                 render()
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { if (!closed && generation == operation) failed() }
+            catch (error: Exception) { if (!closed && generation == operation) failed(error, chosen) }
             finally { if (generation == operation) { pending = null; job = null } }
         }
     }

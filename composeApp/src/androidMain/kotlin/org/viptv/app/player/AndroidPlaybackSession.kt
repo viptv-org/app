@@ -28,7 +28,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     var view: PlayerView? = null
         set(value) { field = value; subtitles.bind(value); value?.subtitleView?.profileStyle(input.preferences, subtitleScale) }
     private val tracks = Media3Tracks(player, input, ::emit)
-    private val subtitles = Media3ProviderSubtitles(player, input, scope, tracks, ::titlePositionMillis) { emit(PlayerFact.ControlFailed) }
+    private val subtitles = Media3ProviderSubtitles(player, input, scope, tracks, ::titlePositionMillis) { error, chosen ->
+        input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) ::emit else null)
+    }
     private var audioDecoder = "pending"
     private var videoDecoder = "pending"
     private var presented = false
@@ -144,7 +146,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
                 else tracks.select(command.kind, command.id)
             }
         } } catch (error: kotlinx.coroutines.CancellationException) { throw error }
-        catch (_: Exception) { emit(PlayerFact.ControlFailed) }
+        catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), ::emit) }
     }
     fun sourcesChanged(values: List<SubtitleCandidate>) { tracks.changed(); subtitles.sourcesChanged(values) }
     private var diagnosticFrames = 0

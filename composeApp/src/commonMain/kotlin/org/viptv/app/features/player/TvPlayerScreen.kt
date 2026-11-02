@@ -53,6 +53,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     // A stream whose clock advances without a presented frame is a black screen this TV cannot decode; surface it instead of playing nothing.
     LaunchedEffect(state) { while (true) { delay(1000); state.checkFirstFrame() } }
     LaunchedEffect(externalFacts, state) { externalFacts.collect(state::observe) }
+    LaunchedEffect(state.controlError) { state.controlError?.let { delay(playbackControlErrorVisibleMillis); state.controlError = null } }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
     val skipActive = activeSkip != null && !state.visible
     val creditsReached = extras.skips.firstOrNull { !it.automatic }?.let { state.position >= it.startMillis } == true

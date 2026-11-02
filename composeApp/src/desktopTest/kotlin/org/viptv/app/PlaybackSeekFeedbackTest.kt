@@ -1,6 +1,7 @@
 package org.viptv.app
 
 import org.viptv.app.features.player.*
+import org.viptv.app.player.PlaybackControl
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.player.PlaybackTracks
 import org.viptv.app.player.PresentationProof
@@ -26,9 +27,10 @@ class PlaybackSeekFeedbackTest {
         assertFalse(PlayerFact.Progress(90_000, 300_000).settlesSeek(null))
     }
 
-    @Test fun failureAndARefusedControlResolveTheSeek() {
+    @Test fun failureAndARefusedSeekResolveTheSeek() {
         assertTrue(PlayerFact.Failed.settlesSeek(60_000))
-        assertTrue(PlayerFact.ControlFailed.settlesSeek(60_000))
+        assertTrue(PlayerFact.ControlFailed(PlaybackControl.Seek).settlesSeek(60_000))
+        assertFalse(PlayerFact.ControlFailed(PlaybackControl.Volume).settlesSeek(60_000))
     }
 
     @Test fun propertiesAndTrackFactsNeverResolveTheSeek() {

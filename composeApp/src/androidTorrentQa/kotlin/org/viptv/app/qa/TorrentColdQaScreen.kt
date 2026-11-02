@@ -35,7 +35,7 @@ fun TorrentColdQaScreen(raw: String, files: File, finish: () -> Unit) {
             is PlayerFact.Presentation -> if (fact.proof == PresentationProof.NativeRendererPresented)
                 first.complete(requireNotNull(fact.atNanos))
             is PlayerFact.Progress -> position = fact.positionMillis
-            PlayerFact.Failed, PlayerFact.ControlFailed -> { failed = true; first.completeExceptionally(IllegalStateException("player failed")) }
+            PlayerFact.Failed, is PlayerFact.ControlFailed -> { failed = true; first.completeExceptionally(IllegalStateException("player failed")) }
             else -> Unit
         }
     }, commands = commands) }

@@ -84,12 +84,13 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) { reportNativePlaybackFailure(playbackFailureSummary(input, "mpv_open_failed", error.message ?: "Media could not be opened")); latestObserve(PlayerFact.Failed) }
         }
-        LaunchedEffect(opened, paused) {
-            if (opened) try {
+        LaunchedEffect(paused) {
+            if (!opened) return@LaunchedEffect
+            try {
                 transport.request(paused, state.status)
                 session.property("pause", if (paused) "yes" else "no")
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            catch (error: Exception) { input.controlFailed(PlaybackControl.PlayPause, error.controlCause(), latestObserve) }
         }
         suspend fun attach(candidate: SubtitleCandidate): Int {
             providerIds[candidate.id]?.let { return it }
@@ -120,7 +121,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
             providerIds[candidate.id] = id
             return id
         }
-        fun selectSubtitle(candidate: SubtitleCandidate?, id: Int?) {
+        fun selectSubtitle(candidate: SubtitleCandidate?, id: Int?, chosen: Boolean = false) {
             val previous = subtitleJob
             previous?.cancel()
             subtitleJob = scope.launch {
@@ -130,7 +131,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
                     ensureActive()
                     session.property("sid", target?.toString() ?: "no")
                 } catch (error: CancellationException) { throw error }
-                catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+                catch (error: Exception) { input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) latestObserve else null) }
             }
         }
         LaunchedEffect(commands, session) {
@@ -150,11 +151,11 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
                             session.property("aid", command.id?.toString() ?: "no")
                         } else {
                             subtitleTouched = true
-                            selectSubtitle(input.providerSubtitle(command.id), command.id?.takeIf { it >= 0 })
+                            selectSubtitle(input.providerSubtitle(command.id), command.id?.takeIf { it >= 0 }, chosen = true)
                         }
                     }
                 } catch (error: CancellationException) { throw error }
-                catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+                catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), latestObserve) }
             }
         }
         LaunchedEffect(candidates, opened, subtitleTouched) {

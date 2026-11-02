@@ -48,7 +48,7 @@ sealed interface PlayerFact {
     data class Properties(val volume: Float, val speed: Double, val subtitleSize: Float = 1f) : PlayerFact
     data class Tracks(val options: PlaybackTracks) : PlayerFact
     data object Failed : PlayerFact
-    data object ControlFailed : PlayerFact
+    data class ControlFailed(val control: PlaybackControl) : PlayerFact
 }
 
 enum class PresentationProof { BrowserCompositorPresented, AndroidWindowGpuCompleted, AndroidSoftwareDrawCompleted, DesktopDrawCompleted, NativeRendererPresented }

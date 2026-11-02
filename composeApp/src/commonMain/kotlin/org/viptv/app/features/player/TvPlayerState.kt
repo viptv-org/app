@@ -64,7 +64,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             }
             is PlayerFact.Presentation -> { hasPresented = true; buffering = false; undecodable = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
-            PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
+            is PlayerFact.ControlFailed -> controlError = playbackControlErrorCopy
         }
     }
     fun keepWatching() { showNext = false; visible = false; endHandled = true }
