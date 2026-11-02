@@ -41,7 +41,7 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<String>, local: Boolean, busy: Boolean,
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
-    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true) {
+    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap()) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
@@ -72,7 +72,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                             .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { if (manage) toggle(addon.id, addon.id !in enabled) }) { tint ->
-                            AddonLogoTile(addon.logo, Modifier.size(60.dp * scale).clip(RoundedCornerShape(14.dp * scale))
+                            AddonLogoTile(logos[addon.id], Modifier.size(60.dp * scale).clip(RoundedCornerShape(14.dp * scale))
                                 .background(Color.White.copy(alpha = 0.08f)), Modifier.padding(6.dp * scale)) {
                                 Box(Modifier.fillMaxSize().background(Color(info[addon.id]?.color ?: 0xFF3D6C88)), contentAlignment = Alignment.Center) {
                                     Text(info[addon.id]?.letter ?: addon.name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "A", color = Palette.text, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)

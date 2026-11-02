@@ -317,6 +317,25 @@ class LiveUiTest {
         }
     }
 
+    @Test fun aFailedFirstRequestShowsTheErrorStateNotNoChannels() {
+        for (television in listOf(false, true)) {
+            val layout = if (television) "TV" else "desktop"
+            val reason = "Could not reach your server. Check the connection and try again."
+            val controller = liveController(null, error = reason)
+            val scene = liveScene(if (television) 1920 else 1280, if (television) 1080 else 800, television, controller)
+            try {
+                frames(scene)
+                val texts = nodes(scene).map(::text)
+                assertTrue(texts.contains(LiveLoadFailedHeadline), "$layout: a failed request is an error, not an answered page")
+                assertTrue(texts.contains(reason), "$layout: the failure it read")
+                assertTrue(texts.contains(LiveTryAgain), "$layout: the retry")
+                assertFalse(texts.contains(LiveNoChannelsHeadline), "$layout: no page answered, so no empty list is claimed")
+                assertFalse(texts.contains(LiveNoChannelsBody), "$layout: no page answered, so no source is claimed to be set up")
+                capture(scene, "${if (television) "tv" else "desktop"}-live-first-request-failed")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun aMemberOnTheTvGetsNoFocusStopInTheBlock() {
         val controller = liveController(livePage(), access = AccountAccess("member", true))
         val focusManager = mutableListOf<androidx.compose.ui.focus.FocusManager>()
@@ -399,10 +418,10 @@ class LiveUiTest {
     }
 
     private fun liveController(page: LiveCatalogPage?, access: AccountAccess? = AccountAccess("owner", true), busy: Boolean = false,
-        query: LiveQuery = LiveQuery(), returnFocus: Boolean = false) =
+        query: LiveQuery = LiveQuery(), returnFocus: Boolean = false, error: String? = null) =
         ApplicationController(CoroutineScope(Dispatchers.Unconfined), store).also {
             it.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "12", livePage = page, liveQuery = query,
-                accountAccess = access, busy = busy, liveSetupReturnFocus = returnFocus)
+                accountAccess = access, busy = busy, liveSetupReturnFocus = returnFocus, error = error)
         }
 
     private fun liveScene(width: Int, height: Int, television: Boolean, controller: ApplicationController) =

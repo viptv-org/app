@@ -26,7 +26,7 @@ import org.viptv.app.components.IconButton
 internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
     remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true,
-    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null) {
+    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null, logos: Map<String, String> = emptyMap()) {
     val address = rememberTextFieldState()
     var installing by remember { mutableStateOf(false) }
     var submission by remember { mutableStateOf<Any?>(null) }
@@ -90,7 +90,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
             if (addons.isNotEmpty() && shown.isEmpty()) item { Text("No add-ons match.", color = Palette.secondary) }
             items(shown, key = { it.id }) { addon ->
                 AddonSettingsRow(addon, addon.id in enabledAddonIds, busy, managementAvailable,
-                    { toggle(addon.id, it) }, { removing = addon })
+                    { toggle(addon.id, it) }, { removing = addon }, logos[addon.id])
             }
         }
         PhoneSheet(visible = installing, title = "Add an add-on", dismiss = closeInstall,

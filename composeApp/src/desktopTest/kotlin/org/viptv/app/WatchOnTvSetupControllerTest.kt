@@ -3,6 +3,7 @@ package org.viptv.app
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.viptv.app.features.settings.VizioNoAccess
 import org.viptv.app.features.settings.VizioNoLocalNetwork
 import org.viptv.app.features.settings.VizioPairResult
 import org.viptv.app.features.settings.VizioSetupEngine
@@ -26,6 +27,8 @@ class WatchOnTvSetupControllerTest {
         var beginFn: (VizioTv) -> VizioPairingChallenge? = { VizioPairingChallenge(1, 42L) }
         var finishFn: (String) -> VizioPairResult = { VizioPairResult.Paired }
         var searchThrow: Throwable? = null
+        var probeThrow: Throwable? = null
+        var openedSettings = 0
 
         override suspend fun search(limit: Int, onResult: (VizioTv) -> Unit) {
             searchThrow?.let { throw it }
@@ -34,6 +37,7 @@ class WatchOnTvSetupControllerTest {
         }
 
         override suspend fun probe(origin: String): VizioTv? {
+            probeThrow?.let { throw it }
             probedOrigins += origin
             return probeFn(origin)
         }
@@ -49,6 +53,8 @@ class WatchOnTvSetupControllerTest {
         }
 
         override suspend fun cancelPair(tv: VizioTv) { cancelledOrigins += tv.origin }
+
+        override fun openLocalNetworkSettings() { openedSettings++ }
     }
 
     private val livingRoom = VizioTv("Living Room", "https://192.168.1.20:7345")
@@ -80,6 +86,31 @@ class WatchOnTvSetupControllerTest {
         val controller = controller(engine, this)
         controller.beginSearch(); advanceUntilIdle()
         assertEquals("Connect this phone to the same Wi-Fi as your TV.", controller.searchError)
+    }
+
+    @Test fun aDeniedLocalNetworkPermissionOpensTheRecoveryStep() = runTest {
+        val engine = FakeEngine().apply { searchThrow = VizioNoAccess() }
+        val controller = controller(engine, this)
+        controller.beginSearch(); advanceUntilIdle()
+        assertEquals(VizioSetupStep.NoAccess, controller.step)
+        assertNull(controller.searchError)
+    }
+
+    @Test fun aDeniedLocalNetworkPermissionCannotBeBypassedByManualEntry() = runTest {
+        val engine = FakeEngine().apply { probeThrow = VizioNoAccess() }
+        val controller = controller(engine, this)
+        controller.openManual()
+        controller.manualChanged("192.168.1.20")
+        controller.connectManual(); advanceUntilIdle()
+        assertEquals(VizioSetupStep.NoAccess, controller.step)
+        assertNull(controller.manualError)
+    }
+
+    @Test fun openLocalNetworkSettingsDelegatesToTheEngine() = runTest {
+        val engine = FakeEngine()
+        val controller = controller(engine, this)
+        controller.openLocalNetworkSettings()
+        assertEquals(1, engine.openedSettings)
     }
 
     @Test fun choosingTvBeginsPairingWithAChallenge() = runTest {
@@ -154,6 +185,31 @@ class WatchOnTvSetupControllerTest {
         controller.cancelPin(); advanceUntilIdle()
         assertEquals(VizioSetupStep.Searching, controller.step)
         assertEquals(listOf(livingRoom.origin), engine.cancelledOrigins)
+    }
+
+    @Test fun pairAgainStartsThePinStepAndCancelLeavesSetup() = runTest {
+        val engine = FakeEngine()
+        val controller = controller(engine, this)
+        var left = 0
+        controller.pairAgain(livingRoom) { left++ }
+        assertEquals(VizioSetupStep.Pin(livingRoom), controller.step)
+        advanceUntilIdle()
+        assertTrue(controller.pinReady)
+        assertEquals(listOf(livingRoom), engine.beganTvs)
+        controller.cancelPin(); advanceUntilIdle()
+        assertEquals(1, left)
+    }
+
+    @Test fun pairAgainSuccessReplacesThePairing() = runTest {
+        val engine = FakeEngine()
+        val paired = mutableListOf<VizioTv>()
+        val controller = controller(engine, this, paired)
+        controller.pairAgain(livingRoom) { }
+        advanceUntilIdle()
+        controller.pinChanged("1234"); advanceUntilIdle()
+        assertEquals(listOf("1234"), engine.finishedPins)
+        assertEquals(listOf(livingRoom), paired)
+        assertEquals(VizioSetupStep.Done(livingRoom), controller.step)
     }
 
     @Test fun manualOriginAcceptsPrivateLocalIpv4Addresses() {

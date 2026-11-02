@@ -65,6 +65,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                     }
                 }
                 if (spread == LiveSpread.Loading) LiveChannelSkeletons(true, scale, false)
+                else if (spread == LiveSpread.Failed) LiveLoadFailed(true, scale, false, noChannelsReason, noChannelsRetry, sourceIntegrations)
                 else LiveNoChannels(true, scale, false, noChannelsReason, noChannelsRetry, sourceIntegrations)
             }
             return@BoxWithConstraints

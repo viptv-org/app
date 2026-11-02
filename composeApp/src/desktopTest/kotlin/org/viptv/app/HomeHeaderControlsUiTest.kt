@@ -13,6 +13,7 @@ import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.GenreChoice
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.home.TabletHero
+import org.viptv.app.features.remote.RemoteHeaderButton
 import org.viptv.app.features.settings.PhoneSettings
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.*
@@ -100,6 +101,22 @@ class HomeHeaderControlsUiTest {
             click(scene, "Genres"); click(scene, "Action")
             assertEquals(listOf(genres[0]), chosen)
         } finally { scene.close() }
+    }
+
+    @Test fun tabletHeaderShowsTheRemoteButtonForAPairedTv() {
+        var opened = 0
+        val remote: @Composable () -> Unit = { RemoteHeaderButton("Living Room", showTip = false, dismissTip = {}, open = { opened++ }) }
+        for (width in listOf(800, 1280)) {
+            opened = 0
+            val scene = scene(width, 800, null) { CompositionLocalProvider(LocalHeaderRemote provides remote) { TabletHeader() } }
+            try {
+                frames(scene)
+                val button = nodes(scene).firstOrNull { description(it) == listOf("TV remote: Living Room") && it.config.contains(SemanticsActions.OnClick) }
+                assertNotNull(button, "$width dp tablet header shows the remote button: ${nodes(scene).flatMap(::description)}")
+                assertTrue(button.config[SemanticsActions.OnClick].action!!.invoke())
+                assertEquals(1, opened)
+            } finally { scene.close() }
+        }
     }
 
     @Test fun phoneSettingsHidesRowsWithoutAHandlerInsteadOfOpeningADialog() {

@@ -26,14 +26,20 @@ internal fun decodeWatchOnTv(raw: String?): WatchOnTvPreferences = raw
 internal class WatchOnTvState(private val store: DeviceRecordStore) {
     var value by mutableStateOf(decodeWatchOnTv(runCatching { store.read() }.getOrNull()))
         private set
+    var repairTv by mutableStateOf<VizioTv?>(null)
+        private set
 
-    fun optIn(tvName: String, tvOrigin: String) = change(WatchOnTvPreferences(optedIn = true, tvName = tvName, tvOrigin = tvOrigin))
+    fun optIn(tvName: String, tvOrigin: String) = change(value.copy(optedIn = true, tvName = tvName, tvOrigin = tvOrigin))
 
     fun optOut() = change(WatchOnTvPreferences())
 
     fun dismissRemoteTip() = change(value.copy(tipDismissed = true))
 
     fun setRemoteSwipe(swipe: Boolean) = change(value.copy(remoteSwipe = swipe))
+
+    fun beginRepair(tv: VizioTv) { repairTv = tv }
+
+    fun clearRepair() { repairTv = null }
 
     fun pairedTv(): VizioTv? = value.let { prefs ->
         if (prefs.optedIn && prefs.tvName != null && prefs.tvOrigin != null) VizioTv(prefs.tvName, prefs.tvOrigin) else null

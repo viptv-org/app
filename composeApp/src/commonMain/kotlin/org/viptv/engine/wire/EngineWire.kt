@@ -211,7 +211,6 @@ data class IntegrationConnection(
     val enabled: Boolean,
     val revision: Long,
     val capabilities: List<Capability>,
-    val logo: String? = null,
 )
 
 @Serializable
