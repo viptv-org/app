@@ -10,6 +10,7 @@ import org.viptv.app.preview.UiPreview
 import org.viptv.app.preview.PlaybackQa
 import org.viptv.app.state.DeviceApprovalController
 import org.viptv.app.state.Screen
+import org.viptv.app.state.SourceMemory
 import org.viptv.app.features.entry.DeviceApprovalPage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -25,6 +26,7 @@ import org.viptv.app.theme.ViptvTheme
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    SourceMemory.useDeviceStorage()
     val preview = window.location.hash.startsWith("#ui-preview")
     val previewParts = window.location.hash.removePrefix("#").split("/")
     val screen = runCatching { Screen.valueOf(previewParts.getOrNull(1) ?: "Home") }.getOrDefault(Screen.Home)
