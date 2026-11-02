@@ -38,7 +38,29 @@ class NextEpisodePreparationTest {
     private fun preparedSource(rows: List<SourceCandidate> = listOf(nextSource)) =
         PreparedNextSource(rows.first(), RankedSources(rows, SourceGroups.of(rows.map { it.id }, rows.first().id), bestMatchFullyMatches = true))
 
-    private fun TestScope.controller(initial: ApplicationState = state(), server: IntArray = IntArray(1)): ApplicationController {
+    private class Memory(var raw: String? = null) : SourceMemoryStore {
+        override fun read(): String? = raw
+        override fun write(value: String) { raw = value }
+    }
+
+    private fun row(id: String, languages: List<String> = emptyList()) =
+        SourceCandidate(id, "addon:1", "Source $id", audio_languages = languages)
+
+    // A device store whose discovery, ranking and start are fixed, so preparation and the picker see the same rows.
+    private fun localDevice(fixture: LocalSetupFixture, rows: List<SourceCandidate>, bestMatch: String?) =
+        object : LocalConnection by fixture.local {
+            override suspend fun detail(profile: String, card: Card, offset: Int) = DetailSnapshot(parent, episodes = (1L..4L).map { episode(it) })
+            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome {
+                publish(rows)
+                return SourcesOutcome(rows)
+            }
+            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources =
+                RankedSources(sources, SourceGroups.of(sources.map { it.id }, bestMatch), bestMatchFullyMatches = bestMatch != null)
+            override suspend fun openSource(id: String) = PlaybackInput(id, "https://media.example/$id", profileId = "profile")
+            override suspend fun profilePreferences(profile: String) = PreferencesSnapshot(1, ProfilePreferences(source_selection = "best"))
+        }
+
+    private fun TestScope.controller(initial: ApplicationState = state(), server: IntArray = IntArray(1), local: LocalConnection? = null): ApplicationController {
         val client = HttpClient(MockEngine) {
             engine {
                 dispatcher = StandardTestDispatcher(testScheduler)
@@ -65,6 +87,7 @@ class NextEpisodePreparationTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(backgroundScope, store)
         controller.connection = remote
+        controller.local = local
         controller.leaseOpener = PlaybackLeaseOpener { connection, candidate, profile, forceGateway, position, stage ->
             connection.openPlayback(candidate, profile, buildJsonObject { put("platform", "desktop"); put("can_play_direct", true) },
                 forceGateway, position, torrents = null, stage = stage)
@@ -299,5 +322,43 @@ class NextEpisodePreparationTest {
         assertEquals(RememberedSource("addon:a", listOf("en")), received)
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.closePlayer()
+    }
+
+    @Test fun aRememberedChoiceWithNoRowInItsAudioPreparesNothingAndNextAsks() = runTest {
+        val fixture = LocalSetupFixture()
+        val controller = controller(local = localDevice(fixture, listOf(row("ja-only", languages = listOf("ja"))), bestMatch = "ja-only"))
+        try {
+            controller.sourceMemory = SourceMemoryBook(Memory()).also { it.remember("profile", episode(2), row("remembered", languages = listOf("en"))) }
+            controller.progress(1_300_000); advanceTimeBy(2_000); runCurrent()
+            val prepared = assertNotNull(controller.state.value.nextEpisodePreparation)
+            assertEquals(NextEpisodePreparationStatus.Unavailable, prepared.status, "Another audio never stands in for the remembered choice")
+            assertNull(prepared.source, "No generic best match is readied")
+
+            controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
+            val state = controller.state.value
+            assertEquals(Screen.Sources, state.screen, "Next asks, exactly as an unprepared successor does")
+            assertNull(state.playback, "Nothing starts outside the remembered audio")
+            assertEquals(listOf("ja-only"), state.sources.map { it.id })
+            controller.closePlayer()
+        } finally { fixture.close(controller) }
+    }
+
+    @Test fun aSeriesWithNoRememberedChoiceStillPreparesAndHandsOffTheBestMatch() = runTest {
+        val fixture = LocalSetupFixture()
+        val controller = controller(local = localDevice(fixture, listOf(row("best", languages = listOf("ja"))), bestMatch = "best"))
+        try {
+            controller.sourceMemory = SourceMemoryBook(Memory())
+            controller.progress(1_300_000); advanceTimeBy(2_000); runCurrent()
+            val prepared = assertNotNull(controller.state.value.nextEpisodePreparation)
+            assertEquals(NextEpisodePreparationStatus.Ready, prepared.status)
+            assertEquals("best", prepared.source?.id, "A fully matching best match is prepared as before")
+
+            controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
+            val state = controller.state.value
+            assertEquals(Screen.Player, state.screen)
+            assertEquals("best", state.playingSource?.id)
+            assertNotNull(state.playback)
+            controller.closePlayer()
+        } finally { fixture.close(controller) }
     }
 }
