@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -268,15 +269,13 @@ internal fun StremioImportScreen(session: StremioImportSession?, profileName: St
                     }
                 }
                 add("email") {
-                    OutlinedTextField(email, { email = it.take(254) }, Modifier.fillMaxWidth().focusRequester(emailField), enabled = !busy,
-                        singleLine = true, label = { Text("Stremio email") },
+                    AppTextField(email, { email = it.take(254) }, Modifier.fillMaxWidth().focusRequester(emailField), enabled = !busy, label = "Stremio email",
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrectEnabled = false, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { runCatching { passwordField.requestFocus() } }))
                 }
                 add("password") {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        OutlinedTextField(password, { password = it.take(1024) }, Modifier.fillMaxWidth().focusRequester(passwordField), enabled = !busy,
-                            singleLine = true, label = { Text("Stremio password") },
+                        AppTextField(password, { password = it.take(1024) }, Modifier.fillMaxWidth().focusRequester(passwordField), enabled = !busy, label = "Stremio password",
                             visualTransformation = if (reveal) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false, imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { submit() }),

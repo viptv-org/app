@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,8 +28,8 @@ fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: 
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(pinTitle(profile, leaving), style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(24.dp))
-        OutlinedTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
-            label = { Text("PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
+        AppTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
+            label = "PIN", visualTransformation = PasswordVisualTransformation())
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Row { TextButton(onClick = back) { Text("Back") }; Button(onClick = { submit(pin); pin = "" }, enabled = !busy && pin.length in 4..8) { Text("Continue") } }
     }

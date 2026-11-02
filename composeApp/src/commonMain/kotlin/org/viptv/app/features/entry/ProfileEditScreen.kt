@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,12 +40,12 @@ fun ProfileEditScreen(
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 88.dp, 18.dp)
         TextButton(onClick = { pickingAvatar = true }) { Text("Change avatar") }
-        OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-        if (profile.requiresLocalPin(pinAvailable)) OutlinedTextField(oldPin, { if (it.length <= 8 && it.all(Char::isDigit)) oldPin = it },
-            label = { Text("Current PIN") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
-        if (pinAvailable) { OutlinedTextField(newPin, { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
-            label = { Text(if (profile?.locked == true) "New PIN (blank to remove)" else "Set PIN (optional)") },
-            visualTransformation = PasswordVisualTransformation(), singleLine = true)
+        AppTextField(name, { name = it }, label = "Name")
+        if (profile.requiresLocalPin(pinAvailable)) AppTextField(oldPin, { if (it.length <= 8 && it.all(Char::isDigit)) oldPin = it },
+            label = "Current PIN", visualTransformation = PasswordVisualTransformation())
+        if (pinAvailable) { AppTextField(newPin, { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
+            label = if (profile?.locked == true) "New PIN (blank to remove)" else "Set PIN (optional)",
+            visualTransformation = PasswordVisualTransformation())
         Text("A local PIN keeps profiles separate in the app. The device owner can access local files.", style = MaterialTheme.typography.bodySmall) }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Row {

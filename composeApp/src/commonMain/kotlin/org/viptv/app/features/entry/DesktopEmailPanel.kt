@@ -3,7 +3,6 @@ package org.viptv.app.features.entry
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.AppBasicTextField
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 
@@ -27,7 +27,7 @@ internal fun DesktopEmailPanel(back: () -> Unit) {
         Spacer(Modifier.height(10.dp))
         Text("Email sign-in is unavailable. Use a password or continue in your browser.", color = Palette.secondary, fontSize = 14.sp)
         Spacer(Modifier.height(14.dp))
-        BasicTextField(code, { code = it.filter(Char::isDigit).take(6) }, singleLine = true,
+        AppBasicTextField(code, { code = it.filter(Char::isDigit).take(6) }, label = "Email code",
             decorationBox = { inner ->
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     repeat(6) { index ->

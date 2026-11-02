@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -228,7 +229,7 @@ internal fun ProfileNameDialog(name: String, pinRequired: Boolean, busy: Boolean
     val valid = typed.isNotBlank() && typed != name && (!pinRequired || pin.length in 4..8)
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Name") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(typed, { if (it.length <= 64) typed = it }, label = { Text("Name") }, singleLine = true,
+            AppTextField(typed, { if (it.length <= 64) typed = it }, label = "Name",
                 enabled = !busy, modifier = Modifier.fillMaxWidth())
             if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !busy)
             failure?.let { Text(it, color = Palette.danger) }
@@ -259,8 +260,8 @@ internal fun ProfileLockDialog(locked: Boolean, pinRequired: Boolean, busy: Bool
 
 @Composable
 private fun ProfilePinField(label: String, value: String, change: (String) -> Unit, enabled: Boolean) {
-    OutlinedTextField(value, { change(it.filter(Char::isDigit).take(8)) }, Modifier.fillMaxWidth(), enabled = enabled,
-        label = { Text(label) }, singleLine = true, visualTransformation = PasswordVisualTransformation(),
+    AppTextField(value, { change(it.filter(Char::isDigit).take(8)) }, Modifier.fillMaxWidth(), enabled = enabled,
+        label = label, visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
 }
 

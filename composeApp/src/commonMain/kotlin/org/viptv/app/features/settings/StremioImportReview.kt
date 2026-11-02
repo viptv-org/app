@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -188,8 +189,7 @@ internal fun StremioItemControls(query: StremioItemQuery, items: List<StremioRev
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("${counts["selected"]} review items included · ${excluded.size} excluded · ${items.size} shown in this preview",
             Modifier.semantics { liveRegion = LiveRegionMode.Polite }, fontSize = 14.sp)
-        OutlinedTextField(query.search, { query.search = it.take(120); query.page = 0 }, Modifier.fillMaxWidth(), enabled = !disabled,
-            singleLine = true, label = { Text("Find a title") }, leadingIcon = { Icon(Lucide.Search, null, Modifier.size(18.dp)) },
+        AppTextField(query.search, { query.search = it.take(120); query.page = 0 }, Modifier.fillMaxWidth(), enabled = !disabled, label = "Find a title", leadingIcon = { Icon(Lucide.Search, null, Modifier.size(18.dp)) },
             trailingIcon = if (query.search.isNotEmpty()) ({ IconButton({ query.search = ""; query.page = 0 }, enabled = !disabled) {
                 Icon(Lucide.X, "Clear search", Modifier.size(18.dp)) } }) else null,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false))

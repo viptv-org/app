@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -74,8 +75,8 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
                 enabled = !busy, role = Role.RadioButton, onClick = { apply(key) }), verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(current.equals(key, true), onClick = null, enabled = !busy); Spacer(Modifier.width(8.dp)); Text(label)
             } }
-            if (custom) OutlinedTextField(entry, { entry = it.take(if (language) 32 else 9) }, singleLine = true, enabled = !busy,
-                label = { Text(if (language) "Language tag" else title) }, supportingText = { Text(if (language) "For example en or pt-BR. Empty uses the default."
+            if (custom) AppTextField(entry, { entry = it.take(if (language) 32 else 9) }, enabled = !busy,
+                label = if (language) "Language tag" else title, supportingText = { Text(if (language) "For example en or pt-BR. Empty uses the default."
                     else if (field == PhonePreferenceField.BackgroundColour) "Use #RRGGBB or #AARRGGBB, including transparency." else "Use #RRGGBB.") })
         } } }, confirmButton = {
             if (custom) TextButton({ apply(entry) }, enabled = !busy && valid) { Text("Use value") }

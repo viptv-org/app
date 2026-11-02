@@ -2,15 +2,15 @@ package org.viptv.app.features.entry
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.VisualTransformation
@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.AppBasicTextField
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -32,13 +33,13 @@ internal fun SignInInput(
     secret: Boolean = false,
     trailing: @Composable (() -> Unit)? = null,
 ) {
-    var focused by remember { mutableStateOf(false) }
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
     val shape = RoundedCornerShape(10.dp)
-    BasicTextField(value, change, Modifier.fillMaxWidth().height(height)
-        .onFocusChanged { focused = it.isFocused }
+    AppBasicTextField(value, change, Modifier.fillMaxWidth().height(height)
         .background(Color.White.copy(alpha = .06f), shape)
         .border(if (focused) 2.dp else 1.dp, if (focused) Palette.text else Color.White.copy(alpha = .14f), shape),
-        singleLine = true, visualTransformation = transformation,
+        label = hint, interactionSource = interaction, visualTransformation = transformation,
         keyboardOptions = if (secret) KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false) else KeyboardOptions.Default,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Palette.text, fontSize = fontSize, letterSpacing = 0.sp),
         cursorBrush = SolidColor(Palette.text), decorationBox = { inner ->

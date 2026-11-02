@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -550,7 +549,7 @@ private fun SelectField(text: String, placeholder: String, icon: ImageVector?, m
         horizontalArrangement = Arrangement.spacedBy(if (metrics.tv) 14.dp * metrics.scale else 8.dp)) {
         icon?.let { Icon(it, null, Modifier.size(if (metrics.tv) 22.dp * metrics.scale else 15.dp), tint = Palette.tertiary) }
         val size = if (metrics.tv) (22 * metrics.scale).sp else 14.sp
-        BasicTextField(text, change, modifier.weight(1f), singleLine = true, interactionSource = interaction,
+        AppBasicTextField(text, change, modifier.weight(1f), label = placeholder, interactionSource = interaction,
             textStyle = TextStyle(color = Palette.text, fontSize = size), cursorBrush = SolidColor(Palette.accent),
             keyboardOptions = keyboard, keyboardActions = actions,
             decorationBox = { inner ->

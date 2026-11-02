@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Browser smoke check: a fresh, signed-out visitor can sign in on the web app (app#55).
+"""Browser smoke check: text typed into the web app's fields arrives exactly (app#55, app#105).
 
 Serves a built web distribution next to a fake signed-out backend, opens `/` in a
 fresh Chromium context, and checks that
@@ -36,6 +36,14 @@ this check fails on every run with scrambled characters: that is app#105, a Comp
 Multiplatform defect (queued DOM edits are applied against a text the hidden input
 element has since rewritten), not an app defect. See viptv-org/app#105.
 
+Three more scenarios type into fields other than the sign-in form, in the built-in UI preview
+(no backend involved): `search` types into the Search page field, `settings` types into
+the add-on filter in Settings and checks that the filtered list follows, and `dialog` types
+into the Name field of the Add profile dialog. Both compare the
+field's value with what was typed after the page has settled.
+
+`--repeat N` runs every selected scenario N times, each in a fresh browser context.
+
 Exits 0 when every check passes and writes screenshots to --out.
 """
 import argparse
@@ -53,7 +61,14 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-SCENARIOS = ("enter", "keyboard", "button")
+SIGNIN_SCENARIOS = ("enter", "keyboard", "button")
+# scenario: (preview route, button to press first, textbox name, text to type, text the page then shows)
+FIELD_SCENARIOS = {
+    "search": ("/#ui-preview/Search/Movie", None, "Search", "the wild robot 2024 smoke", None),
+    "settings": ("/#ui-preview/Settings/Addons", None, "Search add-ons", "Add-on B", "Showing 1 of 3 add-ons"),
+    "dialog": ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "Kids Room 01", None),
+}
+SCENARIOS = SIGNIN_SCENARIOS + tuple(FIELD_SCENARIOS)
 USERNAME = "smoke-visitor"
 PASSWORD = "smoke-password-55"
 
@@ -161,6 +176,44 @@ def fake_backend(dist: Path, log: list, keys: Path):
     return server
 
 
+def visit_field(browser, origin, scenario, args, check):
+    """One fresh visitor opens a preview page and types into one text field."""
+    route, opener, name, typed, shown = FIELD_SCENARIOS[scenario]
+    context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
+    page = context.new_page()
+    if args.cpu_throttle != 1:
+        context.new_cdp_session(page).send("Emulation.setCPUThrottlingRate", {"rate": args.cpu_throttle})
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(origin + route)
+    ready = opener and page.get_by_role("button", name=opener) or page.get_by_role("textbox", name=name)
+    for _ in range(120):
+        if page.evaluate(CANVAS_COUNT) > 0 and ready.count() > 0:
+            break
+        page.wait_for_timeout(250)
+    page.wait_for_timeout(1000)
+    if opener:
+        box = ready.bounding_box()
+        page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.get_by_role("textbox", name=name).wait_for(timeout=10000)
+        page.wait_for_timeout(500)
+    field = page.get_by_role("textbox", name=name)
+    if not check(field.count() == 1, f"[{scenario}] the textbox '{name}' is on the page ({field.count()})"):
+        return context.close()
+    field.click()
+    page.wait_for_timeout(args.settle)
+    page.keyboard.press("Control+A")
+    page.keyboard.type(typed, delay=args.type_delay)
+    page.wait_for_timeout(1500)
+    page.screenshot(path=str(args.out / f"{scenario}-typed.png"))
+    got = page.get_by_role("textbox", name=name).input_value()
+    check(got == typed, f"[{scenario}] the field holds exactly what was typed (typed {typed!r}, got {got!r})")
+    if shown:
+        check(page.get_by_text(shown).count() > 0, f"[{scenario}] the page followed the typed text: '{shown}'")
+    check(not errors, f"[{scenario}] no page errors {errors}")
+    context.close()
+
+
 def visit(browser, origin, scenario, args, log, check):
     """One fresh visitor: a new browser context, no cookies, no resize, no prior interaction."""
     context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
@@ -236,6 +289,7 @@ def main():
                         "Xvfb without a GPU needs --browser-arg=--use-angle=swiftshader --browser-arg=--enable-unsafe-swiftshader")
     parser.add_argument("--chromium", help="Chromium executable; default: Playwright's own, else the newest in ~/.cache/ms-playwright")
     parser.add_argument("--scenario", action="append", choices=SCENARIOS, help="Run only these; default: all")
+    parser.add_argument("--repeat", type=int, default=1, help="Run every selected scenario this many times")
     parser.add_argument("--type-delay", type=int, default=20, help="Milliseconds between typed keys")
     parser.add_argument("--settle", type=int, default=300, help="Milliseconds to wait after focusing a field before typing")
     parser.add_argument("--cpu-throttle", type=int, default=1, help="Chrome DevTools CPU slowdown factor. 6 makes app#105 "
@@ -243,8 +297,8 @@ def main():
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     args = parser.parse_args()
-    if args.cpu_throttle < 1:
-        sys.exit("--cpu-throttle is a CPU slowdown factor of 1 or more")
+    if args.cpu_throttle < 1 or args.repeat < 1:
+        sys.exit("--cpu-throttle is a CPU slowdown factor of 1 or more; --repeat counts runs from 1")
     dist = args.dist.resolve()
     if not (dist / "index.html").is_file():
         sys.exit(f"No web build at {dist}; run ./gradlew :composeApp:wasmJsBrowserDistribution")
@@ -264,10 +318,16 @@ def main():
     try:
         with sync_playwright() as p:
             browser = launch(p, args)
-            for scenario in args.scenario or SCENARIOS:
-                with LOG_LOCK:
-                    log.clear()
-                visit(browser, origin, scenario, args, log, check)
+            for run in range(1, args.repeat + 1):
+                if args.repeat > 1:
+                    print(f"--- run {run}/{args.repeat}")
+                for scenario in args.scenario or SCENARIOS:
+                    with LOG_LOCK:
+                        log.clear()
+                    if scenario in FIELD_SCENARIOS:
+                        visit_field(browser, origin, scenario, args, check)
+                    else:
+                        visit(browser, origin, scenario, args, log, check)
             browser.close()
     finally:
         server.shutdown()

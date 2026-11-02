@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -50,7 +51,7 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
         }
     }
     if (serverDialog) AlertDialog(onDismissRequest = { serverDialog = false }, title = { Text("Server address") },
-        text = { OutlinedTextField(server, { server = it }, singleLine = true, label = { Text("HTTPS server address") }) },
+        text = { AppTextField(server, { server = it }, label = "HTTPS server address") },
         confirmButton = { TextButton(onClick = { serverChanged(server); serverDialog = false }) { Text("Done") } })
 }
 

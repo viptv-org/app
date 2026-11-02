@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
@@ -20,6 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.AppBasicTextField
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
@@ -76,13 +76,13 @@ internal fun DeviceCodeInput(
         }
     }
     Box(Modifier.width(0.dp).height(0.dp)) {
-        BasicTextField(
+        AppBasicTextField(
             value = code,
             onValueChange = { raw -> changed(raw.filter(Char::isDigit).take(8)) },
             textStyle = TextStyle(Color.Transparent, fontSize = 1.sp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
-            singleLine = true,
+            label = "Device code",
             modifier = Modifier
                 .focusRequester(focus)
                 .background(Color.Transparent)

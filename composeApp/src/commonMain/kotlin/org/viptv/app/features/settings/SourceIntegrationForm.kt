@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -28,8 +29,7 @@ internal fun SourceIntegrationForm(schema: SourceIntegrationSchema, busy: Boolea
         title = { Text(schema.name) }, text = {
         org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             schema.credential_fields.forEach { field ->
-                OutlinedTextField(values[field.id].orEmpty(), { values[field.id] = it }, label = { Text(field.label) },
-                    singleLine = true, enabled = !busy,
+                AppTextField(values[field.id].orEmpty(), { values[field.id] = it }, label = field.label, enabled = !busy,
                     keyboardOptions = if (field.secret) KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false) else KeyboardOptions.Default,
                     visualTransformation = if (field.secret) PasswordVisualTransformation() else VisualTransformation.None)
             }

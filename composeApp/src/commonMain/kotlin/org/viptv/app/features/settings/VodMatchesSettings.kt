@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -38,8 +39,7 @@ internal fun VodMatchesSettings(state: VodMatchesState, providerChanged: (Long?)
                     SearchableSelect("Type", vodMatchTypeOptions, listOfNotNull(state.type),
                         { ids -> typeChanged(ids.firstOrNull()) }, anyLabel = "All types")
                 }
-                OutlinedTextField(state.query, { search(it.take(128)) }, label = { Text("Search titles") },
-                    singleLine = true, modifier = Modifier.fillMaxWidth())
+                AppTextField(state.query, { search(it.take(128)) }, label = "Search titles", modifier = Modifier.fillMaxWidth())
                 if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 state.error?.let { Text(it, color = Palette.danger) }
                 state.notice?.let { Text(it, color = Palette.secondary) }
@@ -69,8 +69,7 @@ internal fun VodMatchesSettings(state: VodMatchesState, providerChanged: (Long?)
                     Text(form.name, fontWeight = FontWeight.SemiBold)
                     Text(listOfNotNull(vodMatchTypeLabel(form.type), form.providerName).joinToString(" · "),
                         color = Palette.secondary)
-                    OutlinedTextField(form.metadataId, { changeMetadata(it) }, label = { Text("Metadata ID") },
-                        singleLine = true, enabled = !state.saving, modifier = Modifier.fillMaxWidth())
+                    AppTextField(form.metadataId, { changeMetadata(it) }, label = "Metadata ID", enabled = !state.saving, modifier = Modifier.fillMaxWidth())
                     Text("For example tt0111161 or tmdb:550.", color = Palette.secondary,
                         style = MaterialTheme.typography.bodySmall)
                     state.error?.let { Text(it, color = Palette.danger) }
