@@ -21,6 +21,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.tvHold
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -30,7 +31,7 @@ import org.viptv.engine.wire.Card
 @Suppress("UNUSED_PARAMETER")
 internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
     save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
-    saved: Boolean = false, downAction: (() -> Unit)? = null) {
+    saved: Boolean = false, downAction: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
     val series = card.identity.kind == "series"
     org.viptv.app.components.TvRequestedFocus(first, card.identity, requestInitialFocus)
     Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds().onPreviewKeyEvent {
@@ -60,6 +61,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
         Row(Modifier.offset(96.dp * scale, (if (series) 648 else 668).dp * scale),
             horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width((if (extras.resume != null) 420 else 260).dp * scale).height(72.dp * scale)
+                .then(if (hold != null) Modifier.tvHold(onHold = hold) else Modifier)
                 .focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel },
                 scale = scale, primary = true, ring = false, requester = first, activate = play,
                 contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) { tint ->
