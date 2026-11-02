@@ -112,7 +112,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         val claimed = synchronized(runGate) {
             val prior = job
             val current = ++generation
-            updateState { it.copy(busy = true, error = null, errorCode = null, detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true) }
+            updateState { it.copy(busy = true, error = null, errorCode = null, detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true, devicesRetryable = true) }
             val started = scope.launch(start = CoroutineStart.LAZY) {
                 try { prior?.join(); operation() }
                 catch (e: CancellationException) { throw e }
@@ -126,7 +126,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                     } else if (generation == current) {
                         sourceChoice = SourceChoice.None
                         updateState { it.copy(error = failureMessage(e), errorCode = (e as? RemoteFailure)?.code,
-                            detailRetryable = e !is RemoteFailure || !e.metadataNotFound, openingSource = null) }
+                            detailRetryable = e !is RemoteFailure || !e.metadataNotFound,
+                            devicesRetryable = e !is RemoteFailure || !e.deviceListUnavailable, openingSource = null) }
                     }
                 }
             }
