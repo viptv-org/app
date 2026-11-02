@@ -105,7 +105,7 @@ private suspend fun ApplicationController.quietly(owner: QuietOwner, work: suspe
     try { work() }
     catch (error: CancellationException) { throw error }
     catch (error: Exception) {
-        if (error is RemoteFailure && error.status == 401 && current(owner)) expireSession(owner.remote, owner.local)
+        if (error is RemoteFailure && error.sessionExpired && current(owner)) expireSession(owner.remote, owner.local)
     }
 }
 

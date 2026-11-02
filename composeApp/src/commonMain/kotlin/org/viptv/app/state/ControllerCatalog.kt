@@ -73,7 +73,7 @@ fun ApplicationController.homeRowPage(rowId: String) {
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
             if (current()) {
-                if (error is RemoteFailure && error.status == 401 && device == null) {
+                if (error is RemoteFailure && error.sessionExpired && device == null) {
                     releaseRemotePlayback(); remote?.close(); connection = null
                     mutable.value = ApplicationState(error = "Session expired. Sign in again.")
                 } else updateState { it.copy(
@@ -272,7 +272,7 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
 private const val DETAILS_TIMEOUT = "Your server took too long to show this title. Try again."
 
 private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
-    if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return }
+    if (error is RemoteFailure && error.sessionExpired && device == null) { expireSession(remote, device); return }
     val unresolved = (error as? RemoteFailure)?.titleNeedsSearch
     if (unresolved != null) { openTitleSearch(unresolved); return }
     val message = failureMessage(error)

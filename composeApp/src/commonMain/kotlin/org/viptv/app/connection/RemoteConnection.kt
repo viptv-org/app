@@ -37,8 +37,12 @@ data class Profile(val id: String, val name: String, val avatar: String?, val lo
 data class Bootstrap(val profiles: List<Profile>, val selected: String?, val home: HomeSnapshot?, val addons: List<org.viptv.engine.wire.IntegrationConnection> = emptyList(), val enabledAddonIds: Set<String> = emptySet(), val profileManagement: ProfileManagement? = null, val plugins: List<org.viptv.engine.wire.PluginDescriptor> = emptyList(), val library: List<Card>? = null, val preferences: PreferencesSnapshot? = null, val libraryMembership: org.viptv.engine.wire.LibraryMembershipSnapshot? = null, val libraryImport: org.viptv.engine.wire.LibraryImportStatus? = null,
     val continuation: org.viptv.engine.wire.ContinuationPage? = null,
     val revisions: org.viptv.app.state.Revisions? = null)
-class RemoteFailure(val status: Int, message: String, val code: String? = null, val body: String? = null) : Exception(message)
+class RemoteFailure(val status: Int, message: String, val code: String? = null, val body: String? = null,
+    val sessionExpired: Boolean = false) : Exception(message)
 internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && code == "metadata_not_found"
+
+// Only the credential refresh says the session is gone: any other 401 is a failed request the viewer can retry.
+internal fun sessionExpired() = RemoteFailure(401, "Sign in to continue.", sessionExpired = true)
 
 internal class SearchStreamUnavailable : Exception()
 
@@ -106,8 +110,13 @@ open class RemoteConnection(
 
     suspend fun login(username: String, password: String): Bootstrap {
         ensureOpen()
-        val result = requestJson(if (browser) "/api/auth/login" else "/api/auth/device/login", HttpMethod.Post,
-            buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", deviceDisplayName()) })
+        val result = try {
+            requestJson(if (browser) "/api/auth/login" else "/api/auth/device/login", HttpMethod.Post,
+                buildJsonObject { put("username", username.trim()); put("password", password); put("device_name", deviceDisplayName()) })
+        } catch (failure: RemoteFailure) {
+            if (failure.status != 401) throw failure
+            throw RemoteFailure(401, "The username or password is not correct.", failure.code, failure.body)
+        }
         if (!browser) authSession { installDeviceTokens(result.jsonObject) }
         csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull
         return bootstrap()
@@ -278,6 +287,28 @@ open class RemoteConnection(
 
     internal open suspend fun searchEventStream(path: String, onEvent: suspend (String?, String?) -> Unit) {
         if (!client.isSupported(SSECapability)) throw SearchStreamUnavailable()
+        streamWithRetry { streamSearchOnce(path, onEvent) }
+    }
+
+    // An attempt answers true when the server refused it with a 401 before any event arrived.
+    internal suspend fun streamWithRetry(attempt: suspend () -> Boolean) {
+        val version = refreshVersion
+        if (!attempt()) return
+        refreshAfterUnauthorized(version)
+        currentCoroutineContext().ensureActive()
+        ensureOpen()
+        if (attempt()) throw RemoteFailure(401, "Sign in to continue.")
+    }
+
+    private suspend fun refreshAfterUnauthorized(version: Long) = authSession {
+        if (refreshVersion == version) {
+            if (browser) refreshBrowser() else refreshDevice()
+            refreshVersion++
+        }
+    }
+
+    // true when the handshake was refused with a 401 and the stream never started.
+    private suspend fun streamSearchOnce(path: String, onEvent: suspend (String?, String?) -> Unit): Boolean {
         try {
             client.sse(urlString = origin + path, request = {
                 header("x-viptv-image-delivery", if (browser) "proxy" else "direct")
@@ -288,11 +319,17 @@ open class RemoteConnection(
                 incoming.collect { event -> onEvent(event.event, event.data) }
             }
         } catch (error: SSEClientException) {
-            if (error.response?.status?.value == 404) throw SearchStreamUnavailable()
-            error.response?.let { checkStatus(it) }
+            val response = error.response
+            if (response?.status?.value == 404) throw SearchStreamUnavailable()
+            if (response?.status == HttpStatusCode.Unauthorized) {
+                response.bodyAsText()
+                return true
+            }
+            response?.let { checkStatus(it) }
             error.searchStreamTimeout()?.let { throw it }
             throw error
         }
+        return false
     }
 
     private suspend fun authenticatedResponse(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null,
@@ -303,12 +340,7 @@ open class RemoteConnection(
         var response = send(path, method, body, accessToken, csrf, timeoutMillis)
         if (response.status == HttpStatusCode.Unauthorized && path !in setOf("/api/auth/login", "/api/auth/device/login", "/api/auth/logout")) {
             response.bodyAsText()
-            authSession {
-                if (refreshVersion == version) {
-                    if (browser) refreshBrowser() else refreshDevice()
-                    refreshVersion++
-                }
-            }
+            refreshAfterUnauthorized(version)
             currentCoroutineContext().ensureActive()
             ensureOpen()
             response = send(path, method, body, accessToken, csrf, timeoutMillis)
@@ -393,7 +425,7 @@ open class RemoteConnection(
     private suspend fun refreshDevice() = withContext(NonCancellable) {
         try {
             withTimeout(20_000) {
-                val token = refreshToken ?: throw RemoteFailure(401, "Sign in to continue.")
+                val token = refreshToken ?: throw sessionExpired()
                 val response = send("/api/auth/device/refresh", HttpMethod.Post,
                     buildJsonObject { put("refresh_token", token) }, null, null)
                 if (response.status == HttpStatusCode.Unauthorized) {
@@ -401,7 +433,7 @@ open class RemoteConnection(
                     try { sessionStore.clear() }
                     catch (error: CancellationException) { throw error }
                     catch (_: Exception) { }
-                    throw RemoteFailure(401, "Sign in to continue.")
+                    throw sessionExpired()
                 }
                 installDeviceTokens(decode(response).jsonObject)
             }
@@ -415,9 +447,10 @@ open class RemoteConnection(
         try {
             withTimeout(35_000) {
                 val status = requestJson("/api/auth/status").jsonObject
-                if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) throw RemoteFailure(401, "Sign in to continue.")
+                if (status["authenticated"]?.jsonPrimitive?.booleanOrNull != true) throw sessionExpired()
                 csrf = status["csrf_token"]?.jsonPrimitive?.contentOrNull
-                val result = requestJson("/api/auth/refresh", HttpMethod.Post, buildJsonObject {})
+                val result = try { requestJson("/api/auth/refresh", HttpMethod.Post, buildJsonObject {}) }
+                catch (failure: RemoteFailure) { if (failure.status == 401) throw sessionExpired() else throw failure }
                 csrf = result.jsonObject["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
             }
         } catch (error: TimeoutCancellationException) {
