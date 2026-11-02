@@ -36,6 +36,7 @@ internal class MpvSession(input: PlaybackInput) {
     val rendererReady = CompletableDeferred<Unit>()
     @Volatile private var toneMappedValue = false
     val toneMapped: Boolean get() = toneMappedValue
+    @Volatile var renderPath = MpvRenderPath.Software
 
     init {
         try {
@@ -137,7 +138,15 @@ internal class MpvSession(input: PlaybackInput) {
     private suspend fun toneMapHdrSource() {
         if (text("video") == "no") return
         val transfer = withTimeoutOrNull(3_000) { state.first { it.transfer != null || it.error != null }.transfer } ?: return
-        if (mpvNeedsToneMap(transfer)) toneMappedValue = runCatching { command("vf", "set", mpvToneMapFilter) }.isSuccess
+        if (!mpvNeedsToneMap(transfer)) return
+        // The GL path tone maps in mpv's own shaders instead of in a source filter.
+        val filter = mpvSourceFilter(renderPath, transfer)
+        toneMappedValue = filter == null || runCatching { command("vf", "set", filter) }.isSuccess
+    }
+
+    // Runs before the render context exists: mpv reads these when it initialises the video output.
+    fun applyColourOptions(path: MpvRenderPath) {
+        for ((name, value) in mpvColourOptions(path, hdrDisplay = false)) runCatching { api.mpv_set_property_string(handle, name, value) }
     }
     suspend fun selectedAudio(): Int? = withContext(dispatcher) { number("aid")?.toInt() }
     fun closeAfterRenderer() {

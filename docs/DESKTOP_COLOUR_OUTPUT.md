@@ -1,10 +1,9 @@
 # Desktop colour output
 
-The desktop player presents libmpv through the render API's software context: each frame is
-an 8-bit `rgb0` raster handed to Skia and composited as sRGB. mpv's colour management needs
-`--vo=gpu-next` (`--target-colorspace-hint` requires it, and `--target-prim`, `--target-trc`,
-`--target-peak` and `--tone-mapping` have no effect on this path), and `vo=gpu-next` cannot be
-selected under the render API, so the software context does no colour conversion of its own.
+By default the desktop player presents libmpv through the render API's software context: each
+frame is an 8-bit `rgb0` raster handed to Skia and composited as sRGB. That context has no shader
+stage, so mpv does no colour conversion of its own and `mpvToneMapFilter` tone maps PQ/HLG into it.
+The opt-in GL path (`DESKTOP_GPU_RENDER.md`) runs mpv's own tone map instead and skips the filter.
 
 `mpvToneMapFilter` (`MpvColourOutput.kt`) tone maps PQ/HLG sources into that raster: zscale to
 linear at a 100-nit nominal peak, BT.709 gamut, `tonemap=mobius`, BT.709/sRGB, 8-bit 4:2:0. On
@@ -24,12 +23,12 @@ mapping is CPU-bound.
 
 ## HDR output
 
-The player outputs SDR. Passing PQ/BT.2020 to the compositor needs mpv to draw into a GL/Vulkan
-target the Compose scene owns, `--target-colorspace-hint=yes`, and a per-platform HDR query;
-without those the tone map above is the whole HDR story.
+Neither path outputs HDR. `mpvColourOptions` reserves `--target-colorspace-hint=yes` for the GL path
+on an HDR display, but no platform reports one yet, Skiko's GL surface is an RGBA8 sRGB target, and
+the render API's OpenGL context runs `vo_gpu`, which has no colourspace hint to send.
 
 ## Checking it
 
-The scripted desktop player QA reports `tone_map=on|off` beside `path=mpv-software`. `MpvNativeTest`
+The scripted desktop player QA reports `tone_map=on|off` beside `path=`. `MpvNativeTest`
 asserts the packaged runtime accepts the chain, so a runtime without zimg fails the desktop tests
 rather than playback.

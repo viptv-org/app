@@ -50,6 +50,7 @@ internal class MpvRenderHost(private val window: Window) {
         cleanup.add { renderer.destroy() }
         redraw()
     }
+    fun skikoGl(): MpvGlAvailability = layer?.let(::probeSkikoGl) ?: MpvGlAvailability.Unavailable
     fun redraw() { SwingUtilities.invokeLater { if (!closed) layer?.needRender() } }
     fun close() {
         renderers.toList().forEach { it.close() }
