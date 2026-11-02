@@ -100,7 +100,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         val scale = maxWidth / 1920.dp
         Box(Modifier.fillMaxSize()) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), {
+            if (rendering != null) PlayerSurface(rendering, paused || input == null, false, Modifier.fillMaxSize(), {
                 if (input === rendering) { state.observe(it); observe(it) }
             }, state.commands)
         }

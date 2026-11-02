@@ -72,6 +72,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var controlError by remember { mutableStateOf<String?>(null) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
+    var fill by remember(title?.identity) { mutableStateOf(false) }
+    val toggleFill = { fill = !fill; interaction++; visible = true }
     var phonePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
     var nextChoice by remember(playbackKey) { mutableStateOf<Card?>(null) }
     var restorePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
@@ -177,7 +179,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), { fact ->
+        if (rendering != null) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->
             if (input === rendering) { applyFact(fact); observe(fact) }
         }, commands)
         if (!pictureInPicture) {
@@ -221,13 +223,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                                 episodes = openEpisodes,
                                 episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
                                 next = if (episodeTitle) playNext else null,
-                                nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
+                                nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus,
+                                fill = fill, toggleFill = toggleFill)
                         }
                         else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
                             { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
                             streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
                             next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
-                            episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
+                            episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
+                            fill = fill, toggleFill = toggleFill)
                     }
                 }
                 }

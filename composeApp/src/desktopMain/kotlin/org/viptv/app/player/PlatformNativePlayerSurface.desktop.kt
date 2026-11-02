@@ -5,5 +5,5 @@ import androidx.compose.ui.Modifier
 import kotlinx.coroutines.flow.Flow
 
 @Composable
-internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) =
-    MpvPlayerSurface(input, paused, modifier, observe, commands)
+internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) =
+    MpvPlayerSurface(input, paused, fill, modifier, observe, commands)

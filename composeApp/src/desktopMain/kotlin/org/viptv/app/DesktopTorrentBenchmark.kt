@@ -64,7 +64,7 @@ internal fun launchDesktopTorrentBenchmark() = application {
         state = rememberWindowState(width = 1280.dp, height = 720.dp)) {
         org.viptv.app.player.mpv.MpvWindow(window) {
         input?.let { media ->
-            PlayerSurface(media, false, Modifier.fillMaxSize().background(Color.Black), observe = {
+            PlayerSurface(media, false, false, Modifier.fillMaxSize().background(Color.Black), observe = {
                 if (it is PlayerFact.Progress) it.durationMillis?.takeIf { duration -> duration > 0 }?.let { duration -> observedDuration.value = duration }
                 if (it == PlayerFact.Failed || it == PlayerFact.ControlFailed) failed = true
             }, commands = commands)
