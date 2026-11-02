@@ -1,6 +1,6 @@
 package org.viptv.app.player
 
-enum class PlaybackControl { PlayPause, Seek, Volume, Speed, SubtitleSize, Track }
+enum class PlaybackControl { PlayPause, Seek, Volume, Speed, SubtitleSize, Track, Fill }
 
 internal const val playbackControlErrorCopy = "Could not apply this playback control."
 internal const val playbackControlErrorVisibleMillis = 5_000L

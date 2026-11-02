@@ -92,11 +92,15 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) { input.controlFailed(PlaybackControl.PlayPause, error.controlCause(), latestObserve) }
         }
+        var fillSettled by remember { mutableStateOf(false) }
         LaunchedEffect(opened, fill) {
-            if (opened) try {
+            if (!opened) return@LaunchedEffect
+            try {
                 session.property("panscan", if (fill) "1.0" else "0.0")
+                fillSettled = true
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            // The panscan at open is the default, not a viewer command: only a later change is theirs to see.
+            catch (error: Exception) { input.controlFailed(PlaybackControl.Fill, error.controlCause(), if (fillSettled) latestObserve else null) }
         }
         suspend fun attach(candidate: SubtitleCandidate): Int {
             providerIds[candidate.id]?.let { return it }
