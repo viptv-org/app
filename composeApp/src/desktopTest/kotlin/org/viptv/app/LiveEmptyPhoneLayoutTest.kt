@@ -102,7 +102,7 @@ class LiveEmptyPhoneLayoutTest {
     }
 
     @Test fun aViewerWhoCannotSetUpLiveReadsTheWhoLineWhereTheActionsWouldBe() {
-        val scene = scene(360, 640, AccountAccess("member", false))
+        val scene = scene(360, 640, AccountAccess("member", true))
         try {
             frames(scene)
             val nodes = nodes(scene)
