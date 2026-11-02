@@ -22,19 +22,26 @@ import org.viptv.app.theme.Palette
 internal fun BoxScope.TvPlaybackTimeline(state: TvPlayerState, extras: TvPlaybackExtras, scale: Float,
     requester: FocusRequester, up: FocusRequester, previewCommand: ((PlayerCommand) -> Unit)?, live: Boolean = false) {
     val length = state.duration?.takeIf { it > 0 && !live }
+    val segments = extras.skips.timelineSegments(length)
+    val positionDescription = if (segments.isEmpty()) "Position" else "Position. " + segments.joinToString(". ") { it.description }
     val actual = if (length != null) (state.position.toDouble() / length).toFloat().coerceIn(0f, 1f) else 0f
     val current = if (length != null) ((state.scrub ?: state.position).toDouble() / length).toFloat().coerceIn(0f, 1f) else 0f
     BoxWithConstraints(Modifier.align(Alignment.BottomCenter).padding(horizontal = 96.dp * scale, vertical = 116.dp * scale).fillMaxWidth().height(44.dp * scale)) {
         Slider(current, { if (length != null) { state.scrub = (it * length).toLong(); state.reveal() } },
             modifier = Modifier.wrapContentWidth(Alignment.Start, unbounded = true).width(maxWidth + 44.dp * scale).offset(x = (-22).dp * scale).height(44.dp * scale)
                 .focusRequester(requester).onFocusChanged { state.timelineFocused = it.isFocused }.focusProperties { this.up = up }
-                .semantics { contentDescription = "Position"; if (length != null) setProgress { target ->
+                .semantics { contentDescription = positionDescription; if (length != null) setProgress { target ->
                     state.send(PlayerCommand.Seek((target.coerceIn(0f, 1f) * length).toLong()), previewCommand); true } },
             enabled = length != null, onValueChangeFinished = { state.commit(previewCommand) },
             thumb = { Box(Modifier.size(44.dp * scale).background(ColorWhite.copy(alpha = .25f), CircleShape), contentAlignment = Alignment.Center) {
                 Box(Modifier.size(28.dp * scale).background(ColorWhite, CircleShape))
             } },
             track = { BoxWithConstraints(Modifier.fillMaxWidth().height(6.dp * scale).clip(RoundedCornerShape(3.dp * scale)).background(ColorWhite.copy(alpha = .22f))) {
+                segments.forEach { segment ->
+                    Box(Modifier.offset(x = maxWidth * segment.startFraction)
+                        .fillMaxWidth((segment.endFraction - segment.startFraction).coerceAtLeast(0f)).fillMaxHeight()
+                        .background(segment.color))
+                }
                 Box(Modifier.fillMaxWidth(actual).fillMaxHeight().background(Palette.accent))
                 if (state.scrub != null) Box(Modifier.offset(x = maxWidth * minOf(actual, current))
                     .fillMaxWidth(kotlin.math.abs(current - actual)).fillMaxHeight().background(ColorWhite.copy(alpha = .55f)))
