@@ -57,6 +57,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var duration by remember(playbackKey) { mutableStateOf(input?.durationMillis ?: preview?.durationMillis) }
     var tracks by remember(playbackKey) { mutableStateOf(PlaybackTracks()) }
     var seekTarget by remember(playbackKey) { mutableStateOf<Long?>(null) }
+    var seekPending by remember(playbackKey) { mutableStateOf<Long?>(null) }
     var seekMark by remember(playbackKey) { mutableStateOf(kotlin.time.TimeSource.Monotonic.markNow()) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
@@ -140,7 +141,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
     fun seekTo(value: Long, reveal: Boolean) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
-        seekTarget = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
+        seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
         if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target)); interaction++; controlError = null }
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
@@ -155,17 +156,18 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             ?.let { skipSegment(it, automatic = true) }
     }
     fun applyFact(fact: PlayerFact) {
+        seekPending?.let { target -> if (fact.settlesSeek(target) || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) seekPending = null }
         when (fact) {
             is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Progress -> {
                 duration = fact.durationMillis ?: duration
-                if (seekTarget == null || kotlin.math.abs(fact.positionMillis - seekTarget!!) <= 1500 || seekMark.elapsedNow().inWholeSeconds >= 10) {
+                if (seekTarget == null || kotlin.math.abs(fact.positionMillis - seekTarget!!) <= 1500 || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) {
                     position = fact.positionMillis; seekTarget = null
                 }
             }
             is PlayerFact.Status -> {
-                buffering = !failed && fact.name in listOf("Opening", "Buffering", "Preparing")
+                buffering = !failed && fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
                 if (!ended) endHandled = false
             }
@@ -254,7 +256,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
                     "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
                 else {
-                    if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                    if ((buffering || seekPending != null) && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                     (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                 }
                 if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
