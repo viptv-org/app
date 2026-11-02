@@ -63,7 +63,7 @@ class ListRemovalUiTest {
                 LibraryScreen(listOf(libraryCard(1)), available = true, television = false, open = {}, history = {}, home = {})
             }) { scene ->
                 frames(scene)
-                assertEquals(0, moreActions(scene), "$width: a page with nothing to remove keeps its cards bare")
+                assertEquals(0, moreActions(scene), "$width: a card with no menu of its own draws no target")
             }
         }
     }
@@ -73,7 +73,7 @@ class ListRemovalUiTest {
         val scene = ImageComposeScene(400, 500, Density(1f)) { ViptvTheme(pointer = true) {
             Box(Modifier.fillMaxSize()) {
                 CardMenu(libraryCard(1), saved = true,
-                    removal = ListRemoval("Remove from My List", replacesSave = true) { requested++ },
+                    removal = ListRemoval("Remove from My List", replacesSave = true) { requested++ }, actions = null,
                     onDismiss = {}, onPlay = {}, onInfo = {}, onToggleSave = {})
             }
         } }
@@ -89,8 +89,8 @@ class ListRemovalUiTest {
     @Test fun theCardMenuKeepsTheSaveToggleWhereNothingIsBeingRemoved() {
         val scene = ImageComposeScene(400, 500, Density(1f)) { ViptvTheme(pointer = true) {
             Box(Modifier.fillMaxSize()) {
-                CardMenu(libraryCard(1), saved = true, removal = null, onDismiss = {}, onPlay = {}, onInfo = {},
-                    onToggleSave = {})
+                CardMenu(libraryCard(1), saved = true, removal = null, actions = null, onDismiss = {}, onPlay = {},
+                    onInfo = {}, onToggleSave = {})
             }
         } }
         try {

@@ -52,7 +52,7 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
         if (page.loaded) restore.anchor(cards.size) { cardLookupKey(cards[it]) }?.plus(CARDS_AFTER) else null
     })
     var confirming by remember { mutableStateOf<Card?>(null) }
-    val removal = remember(remove) { remove?.let { ListRemoval(REMOVE_CONTINUE_LABEL) { card -> confirming = card } } }
+    val removal = remember(remove) { remove?.let { ListRemoval(REMOVE_CONTINUE_LABEL, continueWatching = true) { card -> confirming = card } } }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val gutter = if (phone) 16.dp else 40.dp
