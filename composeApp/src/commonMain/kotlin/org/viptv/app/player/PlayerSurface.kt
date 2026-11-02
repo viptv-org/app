@@ -48,7 +48,7 @@ sealed interface PlayerFact {
     data class Properties(val volume: Float, val speed: Double, val subtitleSize: Float = 1f) : PlayerFact
     data class Tracks(val options: PlaybackTracks) : PlayerFact
     data object Failed : PlayerFact
-    data object ControlFailed : PlayerFact
+    data class ControlFailed(val control: PlaybackControl) : PlayerFact
     // The clock advances with no presented frame: a stream this device cannot decode.
     data object Undecodable : PlayerFact
 }
