@@ -1,6 +1,7 @@
 package org.viptv.app.state
 
 internal suspend fun ApplicationController.profileConfigurationChanged(owner: AddonOperationOwner? = null) {
+    mutable.value.selectedProfile?.let { startBrowsingConfiguration(it) }
     loadSourceIntegrations(owner)
     requestQuiet(QuietWork.Refresh)
     reloadLiveIfVisible()

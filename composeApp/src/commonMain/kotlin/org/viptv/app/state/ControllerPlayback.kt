@@ -12,22 +12,27 @@ import kotlin.time.Duration.Companion.seconds
 
 fun ApplicationController.playSource(source: SourceCandidate) = playSource(source, forceGateway = false)
 
-fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean) {
+fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean) = playSource(source, forceGateway, SourceChoice.Manual)
+
+internal fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean, choice: SourceChoice) {
     val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
     val restart = restartRequested
     restartRequested = false
     clearBestMatchSession()
-    openSource(current, forceGateway, positionMillis = if (restart) 0L else null)
+    openSource(current, forceGateway, positionMillis = if (restart) 0L else null, choice = choice)
 }
 
-internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false) {
+internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
+    pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None) {
     updateState { next -> next.copy(playingSource = source, openingSource = source) }
-    run { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen) }
+    run { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
 }
 
-internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean) {
+internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean,
+    choice: SourceChoice = SourceChoice.None) {
     progressJob?.join()
     val stopping = releaseRemotePlayback()
+    this.sourceChoice = choice
     updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = false) }
     stopping?.join()
     val store = local
@@ -42,6 +47,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
     // An open outlives the picker that started it: another profile or title meanwhile owns the player.
     if (mutable.value.selectedProfile != profile || mutable.value.sourceTitle?.let(::cardLookupKey) != title?.let(::cardLookupKey)) {
+        sourceChoice = SourceChoice.None
         withContext(NonCancellable) { runCatching { lease?.close() } }
         return
     }
@@ -145,6 +151,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         mutable.value.bestMatch?.let { session ->
             if (!session.started) updateState { next -> next.copy(bestMatch = session.copy(started = true)) }
         }
+        rememberSourceChoice()
         if (!mutable.value.paused) tracking?.transition(PlaybackEvent.Start, lastProgress)
         val capturedInput = mutable.value.playback
         remotePlayback?.let { lease -> frameAcknowledgment = scope.launch {
@@ -174,8 +181,8 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         saveProgress(true)
     }
     if (fact is PlayerFact.Tracks) noticeMissingAudio(fact.options)
-    if (fact is PlayerFact.Undecodable) startFailed(FALLBACK_REASON_UNDECODABLE, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true)
-    if (fact is PlayerFact.Failed) startFailed(FALLBACK_REASON_FAILED)
+    if (fact is PlayerFact.Undecodable) { sourceChoice = SourceChoice.None; startFailed(FALLBACK_REASON_UNDECODABLE, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true) }
+    if (fact is PlayerFact.Failed) { sourceChoice = SourceChoice.None; startFailed(FALLBACK_REASON_FAILED) }
 }
 
 fun ApplicationController.closePlayer() {

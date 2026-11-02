@@ -30,7 +30,7 @@ class DetailsInformationTest {
             year = 2026, runtime_minutes = 44, genres = listOf("Drama", "Mystery"), rating = 8.0, rating_votes = 8_431,
             certification = "TV-MA", alternate_titles = listOf("Oak Street", "The End of Oak Street (US)")),
         metadata_origin = MetadataOrigin("simkl", "addon:21", "2ed4f1b83f8ca47b35d2dbd6f579fa92"))
-    private val metadataLine = "2026 · 44m · Drama / Mystery · ★ 8.0"
+    private val metadataLine = "Series · 2026 · 44m · Drama / Mystery · ★ 8.0"
     private fun episode(season: Long, number: Long) = enriched.copy(
         identity = MediaIdentity("oak-street:$season:$number", "series", emptyList(), EpisodeCoordinates("aired", season, number)),
         parent_identity = enriched.identity, title = "Episode $season-$number", description = null, metadata = null)

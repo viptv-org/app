@@ -79,7 +79,7 @@ class NextEpisodePreparationTest {
     @Test fun theLastThreeMinutesPrepareOneNextSourceAndNextHandsOffToIt() = runTest {
         val opens = IntArray(1); val controller = controller(server = opens)
         var prepared = 0
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ ->
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ ->
             prepared++
             preparedSource()
         }
@@ -108,7 +108,7 @@ class NextEpisodePreparationTest {
     @Test fun seekingIntoTheLastThreeMinutesStartsPreparation() = runTest {
         val controller = controller()
         var prepared = 0
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> prepared++; preparedSource() }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; preparedSource() }
         controller.progress(900_000); runCurrent(); assertEquals(0, prepared)
         controller.progress(1_230_000); runCurrent()
         assertEquals(1, prepared)
@@ -127,7 +127,7 @@ class NextEpisodePreparationTest {
         for ((label, initial, duration) in cases) {
             val controller = controller(initial = initial)
             var prepared = 0
-            controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> prepared++; null }
+            controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; null }
             controller.observePlaybackFor(initial.playback, PlayerFact.Progress(1_350_000, duration))
             runCurrent()
             assertEquals(0, prepared, label)
@@ -138,7 +138,7 @@ class NextEpisodePreparationTest {
 
     @Test fun alwaysAskProfilesPrepareTheControlledSuccessorAndHandItOff() = runTest {
         val opens = IntArray(1); val controller = controller(initial = state(preferences = ProfilePreferences(source_selection = "ask")), server = opens)
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> preparedSource() }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
         controller.progress(1_300_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.playEpisode(episode(2)); runCurrent()
@@ -149,7 +149,7 @@ class NextEpisodePreparationTest {
 
     @Test fun anotherEpisodeFromThePlayerStillAsksForASource() = runTest {
         val controller = controller(initial = state(preferences = ProfilePreferences(source_selection = "ask")))
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> preparedSource() }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
         controller.progress(1_300_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.playEpisode(episode(3)); runCurrent()
@@ -161,7 +161,7 @@ class NextEpisodePreparationTest {
     @Test fun aFailedHandoffStartFallsBackToTheNextPreparedRow() = runTest {
         val opens = IntArray(1); val controller = controller(server = opens)
         val backup = SourceCandidate("backup-stream", "addon:2", "Next 720p")
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> preparedSource(listOf(nextSource, backup)) }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource(listOf(nextSource, backup)) }
         controller.progress(1_300_000); runCurrent()
         controller.playEpisode(episode(2)); runCurrent()
         val first = assertNotNull(controller.state.value.playback)
@@ -180,7 +180,7 @@ class NextEpisodePreparationTest {
     @Test fun aSourcePreferenceChangeReleasesThePreparedSourceAndPreparesAgain() = runTest {
         val controller = controller()
         var prepared = 0
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> prepared++; preparedSource() }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; preparedSource() }
         controller.progress(1_300_000); runCurrent(); assertEquals(1, prepared)
         controller.mutable.value = controller.state.value.copy(preferences = PreferencesSnapshot(2, ProfilePreferences(source_selection = "best")))
         controller.progress(1_310_000); runCurrent()
@@ -197,7 +197,7 @@ class NextEpisodePreparationTest {
         var now = 5_000_000L
         controller.clockMillis = { now }
         var prepared = 0
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> prepared++; preparedSource() }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; preparedSource() }
         controller.progress(1_300_000); runCurrent(); assertEquals(1, prepared)
         now += PREPARED_NEXT_EPISODE_TTL_MILLIS - 1
         controller.progress(1_310_000); runCurrent()
@@ -211,7 +211,7 @@ class NextEpisodePreparationTest {
 
     @Test fun withoutAFullyMatchingSourceNextFallsBackToThePicker() = runTest {
         val controller = controller()
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> null }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> null }
         controller.progress(1_300_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Unavailable, controller.state.value.nextEpisodePreparation?.status)
         assertNull(controller.state.value.nextEpisodePreparation?.source)
@@ -223,7 +223,7 @@ class NextEpisodePreparationTest {
 
     @Test fun aFailedPreparationNeverBreaksTheCurrentEpisode() = runTest {
         val controller = controller()
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> throw java.io.IOException("offline") }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> throw java.io.IOException("offline") }
         val playing = controller.state.value.playback
         controller.progress(1_300_000); runCurrent()
         val state = controller.state.value
@@ -235,7 +235,7 @@ class NextEpisodePreparationTest {
     @Test fun leavingThePlayerReleasesThePreparationAndItsRequest() = runTest {
         val controller = controller()
         val started = CompletableDeferred<Unit>()
-        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _ -> started.complete(Unit); awaitCancellation() }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> started.complete(Unit); awaitCancellation() }
         controller.progress(1_300_000); runCurrent()
         assertTrue(started.isCompleted)
         val job = assertNotNull(controller.nextEpisodePreparationJob)
@@ -282,6 +282,33 @@ class NextEpisodePreparationTest {
         controller.progress(1_300_000); advanceTimeBy(2_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Unavailable, controller.state.value.nextEpisodePreparation?.status)
         assertNull(controller.state.value.nextEpisodePreparation?.source)
+        controller.closePlayer()
+    }
+
+    @Test fun thePreparerReceivesTheRankingContextWithTheSeriesMemory() = runTest {
+        val controller = controller()
+        controller.rememberStartedSource("profile", episode(1), SourceCandidate("row", "addon:a", "EN 1080p", binge_group = "group-1"))
+        var received: RankingContext? = null
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, context -> received = context; preparedSource() }
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(SeriesMemory("addon:a", "group-1"), received?.seriesMemory)
+        assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
+        controller.closePlayer()
+    }
+
+    @Test fun thePreparerReceivesTheProfileAndSeriesRememberedChoice() = runTest {
+        val controller = controller()
+        controller.sourceMemory = SourceMemoryBook(object : SourceMemoryStore {
+            var raw: String? = null
+            override fun read(): String? = raw
+            override fun write(value: String) { raw = value }
+        })
+        controller.sourceMemory.remember("profile", episode(2), SourceCandidate("remembered", "addon:a", "EN 720p", audio_languages = listOf("en")))
+        var received: RememberedSource? = null
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, remembered, _ -> received = remembered; preparedSource() }
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(RememberedSource("addon:a", listOf("en")), received)
+        assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.closePlayer()
     }
 }

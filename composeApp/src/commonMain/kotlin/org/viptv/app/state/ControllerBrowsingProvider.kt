@@ -11,8 +11,7 @@ fun ApplicationController.selectBrowsingProvider(plugin: String) = run {
     } else requireNotNull(owner.remote).selectBrowsingProvider(profile, current, plugin)
     loadAddons(owner)
     updateAddonHome(owner)
-    loadSourceIntegrations(owner)
-    reloadLiveIfVisible()
+    profileConfigurationChanged(owner)
     owner.requireCurrent(this)
     updateState { next -> next.copy(browseControls = null, browseCards = emptyList(), results = emptyList()) }
 }
