@@ -30,13 +30,19 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     val store = local
     val remote = connection
     val profile = requireNotNull(mutable.value.selectedProfile)
+    val title = mutable.value.sourceTitle
     if (mutable.value.preferences == null) loadPreferences()
     val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
     val lease = if (store == null) try {
         leaseOpener.open(requireNotNull(remote), source, profile, forceGateway, positionMillis) { text -> updateState { next -> next.copy(openingStage = text) } }
     } finally { updateState { next -> next.copy(openingStage = null) } } else null
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
-    val card = requireNotNull(mutable.value.sourceTitle)
+    // An open outlives the picker that started it: another profile or title meanwhile owns the player.
+    if (mutable.value.selectedProfile != profile || mutable.value.sourceTitle?.let(::cardLookupKey) != title?.let(::cardLookupKey)) {
+        withContext(NonCancellable) { runCatching { lease?.close() } }
+        return
+    }
+    val card = requireNotNull(title)
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId,
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
