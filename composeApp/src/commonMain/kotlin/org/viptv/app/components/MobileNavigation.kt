@@ -46,7 +46,11 @@ fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
         Box(Modifier.size(64.dp).clip(CircleShape).background(Color(0xFF343333))
             .border(1.dp, Color.White.copy(alpha = .1f), CircleShape).pointerClickable(shape = CircleShape) { navigate(Screen.Search) },
             contentAlignment = Alignment.Center) {
-            Icon(Lucide.Search, "Search", Modifier.size(25.dp), tint = Palette.text)
+            val fill = animateColorAsState(if (selected == Screen.Search) Color.White.copy(alpha = .14f) else Color.Transparent,
+                responseSpec(), label = "Search nav fill").value
+            Box(Modifier.size(52.dp).clip(CircleShape).background(fill), contentAlignment = Alignment.Center) {
+                Icon(Lucide.Search, "Search", Modifier.size(25.dp), tint = Palette.text)
+            }
         }
     }
 }
