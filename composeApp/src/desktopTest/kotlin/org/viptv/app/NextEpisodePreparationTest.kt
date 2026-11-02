@@ -46,21 +46,27 @@ class NextEpisodePreparationTest {
     private fun row(id: String, languages: List<String> = emptyList()) =
         SourceCandidate(id, "addon:1", "Source $id", audio_languages = languages)
 
-    // A device store whose discovery, ranking and start are fixed, so preparation and the picker see the same rows.
-    private fun localDevice(fixture: LocalSetupFixture, rows: List<SourceCandidate>, bestMatch: String?) =
-        object : LocalConnection by fixture.local {
-            override suspend fun detail(profile: String, card: Card, offset: Int) = DetailSnapshot(parent, episodes = (1L..4L).map { episode(it) })
-            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
-                publish(SourcesOutcome(rows))
-                return SourcesOutcome(rows)
-            }
-            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources =
-                RankedSources(sources, SourceGroups.of(sources.map { it.id }, bestMatch), bestMatchFullyMatches = bestMatch != null)
-            override suspend fun openSource(id: String) = PlaybackInput(id, "https://media.example/$id", profileId = "profile")
-            override suspend fun profilePreferences(profile: String) = PreferencesSnapshot(1, ProfilePreferences(source_selection = "best"))
-        }
+    private class PlaybackServer {
+        var prepares = 0
+        var opens = 0
+        var promotes = 0
+        var heartbeats = 0
+        val events = mutableListOf<String>()
+        var replaced = mutableListOf<String>()
+        var failPromote = false
+        var preparedReleased = false
+    }
 
-    private fun TestScope.controller(initial: ApplicationState = state(), server: IntArray = IntArray(1), local: LocalConnection? = null): ApplicationController {
+    private fun serverPreparer(server: PlaybackServer) = NextEpisodeDeliveryPreparer { remote, source, profile ->
+        server.prepares++
+        PreparedPlaybackLease("prep-${server.prepares}", 20, requireNotNull(remote), profile,
+            PlaybackAdmission(buildJsonObject {
+                put("request_id", "req-${server.prepares}"); put("stream_id", source.id)
+                put("force_gateway", false); put("position", 0.0); put("resume", true)
+            }, null, true))
+    }
+
+    private fun TestScope.controller(initial: ApplicationState = state(), server: PlaybackServer = PlaybackServer(), local: LocalConnection? = null): ApplicationController {
         val client = HttpClient(MockEngine) {
             engine {
                 dispatcher = StandardTestDispatcher(testScheduler)
@@ -70,13 +76,33 @@ class NextEpisodePreparationTest {
                         respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
                     when {
                         path == "/api/playback" && request.method == HttpMethod.Post -> {
+                            server.opens++; server.events += "open"
                             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
-                            server[0]++
-                            json("""{"id":"lease-${server[0]}","status":"ready","renew_after_seconds":20,
+                            json("""{"id":"lease-${server.opens}","status":"ready","renew_after_seconds":20,
                                 "delivery":{"kind":"direct","url":"https://media.example/${body.getValue("stream_id").jsonPrimitive.content}.mp4","position":0}}""")
                         }
-                        path.endsWith("/heartbeat") || path == "/api/playback" -> json("{}")
-                        path.startsWith("/api/playback/") && request.method == HttpMethod.Delete -> json("{}")
+                        path.endsWith("/promote") && request.method == HttpMethod.Post -> {
+                            server.promotes++; server.events += "promote"
+                            val id = path.removePrefix("/api/playback/").removeSuffix("/promote")
+                            val body = (request.body as? TextContent)?.text?.takeIf(String::isNotBlank)?.let { Json.parseToJsonElement(it).jsonObject }
+                            body?.get("replaces")?.jsonPrimitive?.contentOrNull?.let { server.replaced += it }
+                            if (server.failPromote) json("""{"id":"$id","status":"failed"}""")
+                            else json("""{"id":"$id","status":"starting"}""")
+                        }
+                        path.endsWith("/heartbeat") && request.method == HttpMethod.Post -> {
+                            server.heartbeats++; server.events += "heartbeat"
+                            if (server.preparedReleased) respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
+                            else json("{}")
+                        }
+                        request.method == HttpMethod.Get && path.startsWith("/api/playback/") && !path.removePrefix("/api/playback/").contains('/') -> {
+                            val id = path.removePrefix("/api/playback/")
+                            json("""{"id":"$id","status":"ready","renew_after_seconds":20,
+                                "delivery":{"kind":"direct","url":"https://media.example/$id.mp4","position":0}}""")
+                        }
+                        request.method == HttpMethod.Delete && path.startsWith("/api/playback/") -> {
+                            server.events += "delete:${path.removePrefix("/api/playback/")}"
+                            json("{}")
+                        }
                         path.endsWith("/progress") -> json("{}")
                         else -> json("{}", HttpStatusCode.NotFound)
                     }
@@ -93,6 +119,7 @@ class NextEpisodePreparationTest {
             connection.openPlayback(candidate, profile, buildJsonObject { put("platform", "desktop"); put("can_play_direct", true) },
                 forceGateway, position, torrents = null, stage = stage)
         }
+        controller.nextEpisodeDeliveryPreparer = serverPreparer(server)
         controller.mutable.value = initial
         return controller
     }
@@ -100,8 +127,13 @@ class NextEpisodePreparationTest {
     private fun ApplicationController.progress(position: Long, duration: Long? = 1_400_000) =
         observePlaybackFor(state.value.playback, PlayerFact.Progress(position, duration))
 
-    @Test fun theLastThreeMinutesPrepareOneNextSourceAndNextHandsOffToIt() = runTest {
-        val opens = IntArray(1); val controller = controller(server = opens)
+    private fun ApplicationController.playingLease() =
+        RemotePlaybackLease(input(), 20, requireNotNull(connection))
+
+    @Test fun theLastThreeMinutesPrepareOneDeliveryAndNextPromotesIt() = runTest {
+        val server = PlaybackServer()
+        val controller = controller(server = server)
+        controller.remotePlayback = controller.playingLease()
         var prepared = 0
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ ->
             prepared++
@@ -117,30 +149,37 @@ class NextEpisodePreparationTest {
         assertEquals(nextSource, ready.source); assertEquals("episode-2", ready.card.identity.id)
         controller.progress(1_300_000); controller.progress(1_320_000); runCurrent()
         assertEquals(1, prepared, "One preparation per episode and preference generation")
-        assertEquals(0, opens[0], "Preparing never opens a source")
+        assertEquals(1, server.prepares, "One server delivery is prepared")
+        assertEquals(0, server.opens, "Preparing never starts playback")
+        assertNotNull(controller.nextEpisodePreparedLease, "The prepared delivery is held for handoff")
 
-        controller.playEpisode(episode(2)); runCurrent()
+        controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
         val state = controller.state.value
         assertEquals(Screen.Player, state.screen, "No source picker")
         assertEquals("episode-2", state.sourceTitle?.identity?.id)
         assertEquals("next-stream", state.playingSource?.id)
-        assertEquals("lease-1", state.playback?.id); assertEquals(1, opens[0], "No duplicate open")
+        assertEquals("prep-1", state.playback?.id); assertEquals(0, server.opens, "The handoff promotes, it never starts fresh")
+        assertEquals(1, server.promotes, "The handoff promotes the prepared delivery")
+        assertEquals(listOf("attempt"), server.replaced, "Promotion releases the outgoing playback first")
         assertNull(state.nextEpisodePreparation, "Handoff consumes the preparation")
         controller.closePlayer()
     }
 
     @Test fun seekingIntoTheLastThreeMinutesStartsPreparation() = runTest {
-        val controller = controller()
+        val server = PlaybackServer()
+        val controller = controller(server = server)
         var prepared = 0
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; preparedSource() }
         controller.progress(900_000); runCurrent(); assertEquals(0, prepared)
         controller.progress(1_230_000); runCurrent()
         assertEquals(1, prepared)
+        assertEquals(1, server.prepares, "A prepared server delivery is admitted alongside the source pick")
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.closePlayer()
     }
 
     @Test fun unknownDurationMoviesLiveStreamsAndFinalesNeverPrepare() = runTest {
+        val server = PlaybackServer()
         val movie = parent.copy(identity = MediaIdentity("movie", "movie", emptyList()))
         val cases = listOf(
             Triple("unknown duration", state(), null),
@@ -149,25 +188,29 @@ class NextEpisodePreparationTest {
             Triple("finale", state(next = null), 1_400_000L),
         )
         for ((label, initial, duration) in cases) {
-            val controller = controller(initial = initial)
+            val controller = controller(initial = initial, server = server)
             var prepared = 0
             controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; null }
             controller.observePlaybackFor(initial.playback, PlayerFact.Progress(1_350_000, duration))
             runCurrent()
             assertEquals(0, prepared, label)
+            assertEquals(0, server.prepares, label)
             assertNull(controller.state.value.nextEpisodePreparation, label)
             controller.closePlayer()
         }
     }
 
     @Test fun alwaysAskProfilesPrepareTheControlledSuccessorAndHandItOff() = runTest {
-        val opens = IntArray(1); val controller = controller(initial = state(preferences = ProfilePreferences(source_selection = "ask")), server = opens)
+        val server = PlaybackServer()
+        val controller = controller(initial = state(preferences = ProfilePreferences(source_selection = "ask")), server = server)
+        controller.remotePlayback = controller.playingLease()
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
         controller.progress(1_300_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
-        controller.playEpisode(episode(2)); runCurrent()
+        controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
         assertEquals(Screen.Player, controller.state.value.screen)
-        assertEquals("lease-1", controller.state.value.playback?.id); assertEquals(1, opens[0])
+        assertEquals("prep-1", controller.state.value.playback?.id)
+        assertEquals(1, server.promotes); assertEquals(0, server.opens)
         controller.closePlayer()
     }
 
@@ -176,33 +219,37 @@ class NextEpisodePreparationTest {
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
         controller.progress(1_300_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
-        controller.playEpisode(episode(3)); runCurrent()
+        controller.playEpisode(episode(3)); advanceTimeBy(2_000); runCurrent()
         assertEquals(Screen.Sources, controller.state.value.screen)
         assertNull(controller.state.value.playback)
         controller.closePlayer()
     }
 
     @Test fun aFailedHandoffStartFallsBackToTheNextPreparedRow() = runTest {
-        val opens = IntArray(1); val controller = controller(server = opens)
+        val server = PlaybackServer()
+        val controller = controller(server = server)
+        controller.remotePlayback = controller.playingLease()
         val backup = SourceCandidate("backup-stream", "addon:2", "Next 720p")
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource(listOf(nextSource, backup)) }
         controller.progress(1_300_000); runCurrent()
-        controller.playEpisode(episode(2)); runCurrent()
+        controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
         val first = assertNotNull(controller.state.value.playback)
+        assertEquals("prep-1", first.id)
         assertEquals("next-stream", controller.state.value.playingSource?.id)
         assertNotNull(controller.state.value.bestMatch, "The handoff opens as a Best match start")
         controller.observePlaybackFor(first, PlayerFact.Failed); runCurrent()
         assertEquals("backup-stream", assertNotNull(controller.state.value.fallbackNotice).next.id)
         advanceTimeBy(2_100); runCurrent()
         assertEquals("backup-stream", controller.state.value.playingSource?.id)
-        assertEquals("lease-2", controller.state.value.playback?.id)
-        assertEquals(2, opens[0])
+        assertEquals("lease-1", controller.state.value.playback?.id)
+        assertEquals(1, server.opens)
         assertNull(controller.state.value.fallbackNotice)
         controller.closePlayer()
     }
 
     @Test fun aSourcePreferenceChangeReleasesThePreparedSourceAndPreparesAgain() = runTest {
-        val controller = controller()
+        val server = PlaybackServer()
+        val controller = controller(server = server)
         var prepared = 0
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; preparedSource() }
         controller.progress(1_300_000); runCurrent(); assertEquals(1, prepared)
@@ -216,30 +263,69 @@ class NextEpisodePreparationTest {
         controller.closePlayer()
     }
 
-    @Test fun anExpiredPreparationIsPreparedAgainBeforeItIsUsed() = runTest {
-        val controller = controller()
-        var now = 5_000_000L
-        controller.clockMillis = { now }
+    @Test fun aPreparedDeliveryIsHeartbeatedAndNeverReprepared() = runTest {
+        val server = PlaybackServer()
+        val controller = controller(server = server)
         var prepared = 0
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> prepared++; preparedSource() }
-        controller.progress(1_300_000); runCurrent(); assertEquals(1, prepared)
-        now += PREPARED_NEXT_EPISODE_TTL_MILLIS - 1
-        controller.progress(1_310_000); runCurrent()
-        assertEquals(1, prepared, "A live preparation is reused")
-        now += 1
-        controller.progress(1_320_000); runCurrent()
-        assertEquals(2, prepared)
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(1, prepared); assertEquals(1, server.prepares)
+        advanceTimeBy(15 * 60_000L); runCurrent()
+        assertEquals(1, prepared, "No client-side refresh timer reprepares the delivery")
+        assertTrue(server.heartbeats >= 1, "The prepared delivery is kept alive by heartbeat")
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.closePlayer()
     }
 
+    @Test fun aFailedPromoteFallsBackToAFreshStart() = runTest {
+        val server = PlaybackServer().also { it.failPromote = true }
+        val controller = controller(server = server)
+        controller.remotePlayback = controller.playingLease()
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(1, server.prepares)
+        controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
+        val state = controller.state.value
+        assertEquals(Screen.Player, state.screen)
+        assertEquals("next-stream", state.playingSource?.id)
+        assertEquals("lease-1", state.playback?.id, "A failed promote starts fresh")
+        assertEquals(1, server.promotes); assertEquals(1, server.opens)
+        val beforeOpen = server.events.takeWhile { it != "open" }
+        assertTrue("delete:attempt" in beforeOpen, "The fallback releases the outgoing playback first")
+        assertTrue("delete:prep-1" in beforeOpen, "The fallback releases the prepared delivery first")
+        controller.closePlayer()
+    }
+
+    @Test fun aReleasedPreparationFallsBackToAFreshStart() = runTest {
+        val server = PlaybackServer()
+        val controller = controller(server = server)
+        controller.remotePlayback = controller.playingLease()
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(1, server.prepares)
+        assertNotNull(controller.nextEpisodePreparedLease)
+        server.preparedReleased = true
+        advanceTimeBy(21_000); runCurrent()
+        assertNull(controller.nextEpisodePreparedLease, "A released delivery is dropped after a failed heartbeat")
+        assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
+
+        controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
+        val state = controller.state.value
+        assertEquals(Screen.Player, state.screen)
+        assertEquals("lease-1", state.playback?.id, "A released preparation falls back to a fresh start")
+        assertEquals(1, server.opens); assertEquals(0, server.promotes)
+        controller.closePlayer()
+    }
+
     @Test fun withoutAFullyMatchingSourceNextFallsBackToThePicker() = runTest {
-        val controller = controller()
+        val server = PlaybackServer()
+        val controller = controller(server = server)
         controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> null }
         controller.progress(1_300_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Unavailable, controller.state.value.nextEpisodePreparation?.status)
         assertNull(controller.state.value.nextEpisodePreparation?.source)
-        controller.playEpisode(episode(2)); runCurrent()
+        assertEquals(0, server.prepares, "No source means no delivery is prepared")
+        controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
         assertEquals(Screen.Sources, controller.state.value.screen)
         assertNull(controller.state.value.playback, "The picker opens instead of a prepared handoff")
         controller.closePlayer()
@@ -294,6 +380,7 @@ class NextEpisodePreparationTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(this, store); controller.connection = remote
         controller.capability = { DeviceCapability() }
+        controller.nextEpisodeDeliveryPreparer = NextEpisodeDeliveryPreparer { _, _, _ -> null }
         controller.mutable.value = state()
         controller.progress(1_300_000); advanceTimeBy(2_000); runCurrent()
         val prepared = assertNotNull(controller.state.value.nextEpisodePreparation)
@@ -336,6 +423,19 @@ class NextEpisodePreparationTest {
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.closePlayer()
     }
+
+    private fun localDevice(fixture: LocalSetupFixture, rows: List<SourceCandidate>, bestMatch: String?) =
+        object : LocalConnection by fixture.local {
+            override suspend fun detail(profile: String, card: Card, offset: Int) = DetailSnapshot(parent, episodes = (1L..4L).map { episode(it) })
+            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
+                publish(SourcesOutcome(rows))
+                return SourcesOutcome(rows)
+            }
+            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources =
+                RankedSources(sources, SourceGroups.of(sources.map { it.id }, bestMatch), bestMatchFullyMatches = bestMatch != null)
+            override suspend fun openSource(id: String) = PlaybackInput(id, "https://media.example/$id", profileId = "profile")
+            override suspend fun profilePreferences(profile: String) = PreferencesSnapshot(1, ProfilePreferences(source_selection = "best"))
+        }
 
     @Test fun aRememberedChoiceWithNoRowInItsAudioPreparesNothingAndNextAsks() = runTest {
         val fixture = LocalSetupFixture()

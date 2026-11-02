@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
+import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
@@ -99,6 +100,52 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
             val snapshot = store?.subtitles(profile, card) ?: requireNotNull(remote).subtitles(card)
             if (mutable.value.playback === input && mutable.value.selectedProfile == profile)
                 input.updateProviderSubtitles(snapshot.candidates)
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { }
+    }
+}
+
+internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePlaybackLease, source: SourceCandidate, card: Card, profile: String) {
+    if (mutable.value.preferences == null) loadPreferences()
+    val remote = requireNotNull(connection)
+    val opened = lease.input
+    val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
+    val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId, opened.revision,
+        timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
+        diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
+        requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent,
+        remoteSeek = if (lease.reopensForSeek) { target ->
+            if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
+                saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)
+            }
+        } else null,
+        subtitleContent = { id -> remote.subtitleContent(id).encodeToByteArray() })
+    remotePlayback = lease
+    CrashFacts.playbackAttempt = playbackAttempt(source, if (lease.gateway) "gateway" else "direct")
+    val events = RemotePlaybackEvents(remote, input, card)
+    tracking = PlaybackTracking(scope, { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }, {
+        if (mutable.value.playback === input) updateState { next -> next.copy(error = "Could not update your tracking account.") }
+    })
+    firstFrameSeen = false
+    keepPlaybackLease(lease, source, forceGateway = false, input)
+    lastProgress = null
+    completionSeen = false
+    progressSavedAt = TimeSource.Monotonic.markNow()
+    val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
+    updateState { next -> next.copy(playback = input, playingSource = source, paused = false, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null) }
+    armStartDeadline(input, source)
+    loadNextEpisode()
+    playbackSegmentsJob?.cancel()
+    playbackSegmentsJob = scope.launch {
+        val segments = try { withTimeoutOrNull(8_000) { lease.segments() } ?: emptyList() }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { emptyList() }
+        if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = segments) }
+    }
+    subtitleDiscovery = scope.launch {
+        try {
+            val snapshot = remote.subtitles(card)
+            if (mutable.value.playback === input && mutable.value.selectedProfile == profile) input.updateProviderSubtitles(snapshot.candidates)
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { }
     }

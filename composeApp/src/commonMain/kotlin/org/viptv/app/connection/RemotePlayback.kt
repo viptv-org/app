@@ -21,13 +21,26 @@ internal class RemotePlaybackLease(val input: PlaybackInput, val renewSeconds: L
     }
 }
 
-internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, profile: String, clientFacts: JsonObject = playbackClientFacts(), forceGateway: Boolean = false, positionMillis: Long? = null,
-    torrents: LocalTorrents? = localTorrents(), stage: (String) -> Unit = {}): RemotePlaybackLease {
+internal class PreparedPlaybackLease(
+    val id: String,
+    val renewSeconds: Long,
+    private val remote: RemoteConnection,
+    private val profile: String,
+    private val admission: PlaybackAdmission,
+) {
+    private val path = "/api/playback/${id.encodeURLPathPart()}"
+    suspend fun renew() { remote.call("$path/heartbeat", HttpMethod.Post) }
+    suspend fun release() { remote.call(path, HttpMethod.Delete) }
+    suspend fun promote(replaces: String?): RemotePlaybackLease =
+        remote.promotePreparedPlayback(id, profile, admission, replaces)
+}
+
+internal class PlaybackAdmission(val request: JsonObject, val native: LocalTorrents?, val directOnly: Boolean)
+
+private suspend fun RemoteConnection.playbackAdmission(source: SourceCandidate, clientFacts: JsonObject, forceGateway: Boolean, positionMillis: Long?, torrents: LocalTorrents?): PlaybackAdmission {
     val requestId = kotlin.uuid.Uuid.random().toString()
-    var playbackId: String? = null
     val negotiatedFacts = if (requiredAudioIndexSupported) clientFacts
         else JsonObject(clientFacts - "supports_required_audio_index")
-    // A target whose own engine plays the URL must never take a server gateway lease.
     val directOnly = clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull == true
     val native = torrents?.takeIf { directOnly && it.negotiate(this) }
     val request = buildJsonObject {
@@ -36,34 +49,20 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
         put("force_gateway", !directOnly && (forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true))
         put("position", (positionMillis ?: 0).coerceAtLeast(0) / 1000.0); put("resume", positionMillis == null)
     }
+    return PlaybackAdmission(request, native, directOnly)
+}
+
+internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, profile: String, clientFacts: JsonObject = playbackClientFacts(), forceGateway: Boolean = false, positionMillis: Long? = null,
+    torrents: LocalTorrents? = localTorrents(), stage: (String) -> Unit = {}): RemotePlaybackLease {
+    val admission = playbackAdmission(source, clientFacts, forceGateway, positionMillis, torrents)
+    val requestId = admission.request.getValue("request_id").jsonPrimitive.content
+    var playbackId: String? = null
     try {
-        // Local torrent acquisition keeps its own 120s budget: this bound only covers admission plus that budget.
-        return withTimeout(if (native == null) 60_000 else 150_000) {
-            var response = call("/api/playback", HttpMethod.Post, request).jsonObject
+        return withTimeout(if (admission.native == null) 60_000 else 150_000) {
+            val response = call("/api/playback", HttpMethod.Post, admission.request).jsonObject
             playbackId = response.getValue("id").jsonPrimitive.content
-            while (response.getValue("status").jsonPrimitive.content != "ready") {
-                if (response.getValue("status").jsonPrimitive.content in listOf("failed", "stopped", "expired"))
-                    throw RemoteFailure(502, "This source could not play through the server gateway.")
-                delay(250)
-                response = call("/api/playback/${requireNotNull(playbackId).encodeURLPathPart()}").jsonObject
-            }
-            val delivery = response.getValue("delivery").jsonObject
-            val kind = delivery.getValue("kind").jsonPrimitive.content
-            if (kind == "native_torrent" && native != null) {
-                val local = native.acquire(this@openPlayback, requireNotNull(playbackId), request, stage)
-                val input = PlaybackInput(requireNotNull(playbackId), local.mediaUrl, positionMillis = (local.positionSeconds * 1000).toLong(), profileId = profile, localTorrent = true)
-                return@withTimeout RemotePlaybackLease(input, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this@openPlayback,
-                    gateway = false, reopensForSeek = false, local = local)
-            }
-            if (kind != if (directOnly) "direct" else "gateway")
-                throw RemoteFailure(502, "This source needs a server gateway that this device does not use.")
-            val headers = delivery["headers"]?.jsonObject?.mapValues { it.value.jsonPrimitive.content }.orEmpty()
-            val input = PlaybackInput(requireNotNull(playbackId), delivery.getValue("url").jsonPrimitive.content,
-                mimeType = org.viptv.app.player.playbackMimeType(delivery["format"]?.jsonPrimitive?.contentOrNull), headers = headers, positionMillis = ((delivery["position"]?.jsonPrimitive?.doubleOrNull ?: 0.0) * 1000).toLong(), profileId = profile, live = delivery["live"]?.jsonPrimitive?.booleanOrNull ?: response["live"]?.jsonPrimitive?.booleanOrNull ?: false,
-                timelineOffsetMillis = ((delivery["timeline_offset_seconds"]?.jsonPrimitive?.doubleOrNull ?: 0.0) * 1000).toLong(),
-                durationMillis = delivery["duration"]?.jsonPrimitive?.doubleOrNull?.takeIf { it.isFinite() && it > 0 }?.let { (it * 1000).toLong() },
-                requiredAudioIndex = if (kind == "direct") delivery.requiredAudioIndex() else null)
-            RemotePlaybackLease(input, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this@openPlayback, gateway = kind == "gateway", reopensForSeek = kind == "gateway" && delivery["format"]?.jsonPrimitive?.contentOrNull != "mp4")
+            val ready = awaitReadyPlayback(requireNotNull(playbackId), response)
+            playbackLease(requireNotNull(playbackId), profile, admission, ready, stage)
         }
     } catch (error: Exception) {
         withContext(NonCancellable) {
@@ -76,4 +75,58 @@ internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, prof
         }
         throw error
     }
+}
+
+internal suspend fun RemoteConnection.preparePlayback(source: SourceCandidate, profile: String, clientFacts: JsonObject = playbackClientFacts(), forceGateway: Boolean = false,
+    positionMillis: Long? = null, torrents: LocalTorrents? = localTorrents()): PreparedPlaybackLease {
+    val admission = playbackAdmission(source, clientFacts, forceGateway, positionMillis, torrents)
+    val request = buildJsonObject {
+        admission.request.forEach { (key, value) -> put(key, value) }
+        put("prepare", true)
+    }
+    val response = call("/api/playback", HttpMethod.Post, request).jsonObject
+    val id = response.getValue("id").jsonPrimitive.content
+    if (response.getValue("status").jsonPrimitive.content != "prepared")
+        throw RemoteFailure(502, "This source could not prepare the next episode.")
+    return PreparedPlaybackLease(id, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this, profile, admission)
+}
+
+private suspend fun RemoteConnection.promotePreparedPlayback(id: String, profile: String, admission: PlaybackAdmission, replaces: String?): RemotePlaybackLease {
+    val body = replaces?.let { buildJsonObject { put("replaces", it) } }
+    val response = call("/api/playback/${id.encodeURLPathPart()}/promote", HttpMethod.Post, body).jsonObject
+    val ready = awaitReadyPlayback(id, response)
+    return playbackLease(id, profile, admission, ready) { }
+}
+
+private suspend fun RemoteConnection.awaitReadyPlayback(id: String, first: JsonObject): JsonObject {
+    var response = first
+    while (true) {
+        when (response.getValue("status").jsonPrimitive.content) {
+            "ready" -> return response
+            "starting" -> {}
+            else -> throw RemoteFailure(502, "This source could not play through the server gateway.")
+        }
+        delay(250)
+        response = call("/api/playback/${id.encodeURLPathPart()}").jsonObject
+    }
+}
+
+private suspend fun RemoteConnection.playbackLease(playbackId: String, profile: String, admission: PlaybackAdmission, response: JsonObject, stage: (String) -> Unit): RemotePlaybackLease {
+    val delivery = response.getValue("delivery").jsonObject
+    val kind = delivery.getValue("kind").jsonPrimitive.content
+    if (kind == "native_torrent" && admission.native != null) {
+        val local = admission.native.acquire(this, playbackId, admission.request, stage)
+        val input = PlaybackInput(playbackId, local.mediaUrl, positionMillis = (local.positionSeconds * 1000).toLong(), profileId = profile, localTorrent = true)
+        return RemotePlaybackLease(input, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this,
+            gateway = false, reopensForSeek = false, local = local)
+    }
+    if (kind != if (admission.directOnly) "direct" else "gateway")
+        throw RemoteFailure(502, "This source needs a server gateway that this device does not use.")
+    val headers = delivery["headers"]?.jsonObject?.mapValues { it.value.jsonPrimitive.content }.orEmpty()
+    val input = PlaybackInput(playbackId, delivery.getValue("url").jsonPrimitive.content,
+        mimeType = org.viptv.app.player.playbackMimeType(delivery["format"]?.jsonPrimitive?.contentOrNull), headers = headers, positionMillis = ((delivery["position"]?.jsonPrimitive?.doubleOrNull ?: 0.0) * 1000).toLong(), profileId = profile, live = delivery["live"]?.jsonPrimitive?.booleanOrNull ?: response["live"]?.jsonPrimitive?.booleanOrNull ?: false,
+        timelineOffsetMillis = ((delivery["timeline_offset_seconds"]?.jsonPrimitive?.doubleOrNull ?: 0.0) * 1000).toLong(),
+        durationMillis = delivery["duration"]?.jsonPrimitive?.doubleOrNull?.takeIf { it.isFinite() && it > 0 }?.let { (it * 1000).toLong() },
+        requiredAudioIndex = if (kind == "direct") delivery.requiredAudioIndex() else null)
+    return RemotePlaybackLease(input, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this, gateway = kind == "gateway", reopensForSeek = kind == "gateway" && delivery["format"]?.jsonPrimitive?.contentOrNull != "mp4")
 }

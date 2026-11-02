@@ -71,7 +71,10 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var nextEpisodePreparationJob: Job? = null
     internal var nextEpisodePreparationKey: NextEpisodePreparationKey? = null
     internal var nextEpisodePreparationGeneration = 0L
+    internal var nextEpisodePreparationRenewal: Job? = null
+    internal var nextEpisodePreparedLease: org.viptv.app.connection.PreparedPlaybackLease? = null
     internal var nextSourcePreparer: NextSourcePreparer = NextSourcePreparer.Device
+    internal var nextEpisodeDeliveryPreparer: NextEpisodeDeliveryPreparer = NextEpisodeDeliveryPreparer.Server
     internal var clockMillis: () -> Long = ::epochMillis
     internal var capability: suspend () -> DeviceCapability = { deviceCapability() }
     internal var playbackSeasonJob: Job? = null

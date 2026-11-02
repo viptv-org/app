@@ -22,6 +22,29 @@ internal fun ApplicationController.releaseRemotePlayback(): Job? {
     return scope.launch(start = CoroutineStart.UNDISPATCHED) { withContext(NonCancellable) { withTimeoutOrNull(5_000) { try { trackingStop?.join(); acknowledgment?.join(); lease.close() } catch (_: Exception) { } } } }
 }
 
+// Detach the outgoing playback without releasing it server-side: promotion's replaces does that in one step with the start.
+internal fun ApplicationController.detachRemotePlaybackForPromotion(): Pair<RemotePlaybackLease?, Job?> {
+    cancelNextEpisode()
+    cancelPlaybackSeason()
+    sourceChoice = SourceChoice.None
+    backgroundPlayback = null
+    resumeAfterRenewal = null
+    val trackingStop = if (firstFrameSeen) tracking?.transition(PlaybackEvent.Stop, lastProgress, ended = completionSeen) else null
+    tracking = null
+    val acknowledgment = frameAcknowledgment
+    acknowledgment?.cancel(); frameAcknowledgment = null
+    subtitleDiscovery?.cancel(); subtitleDiscovery = null
+    playbackRenewal?.cancel(); playbackRenewal = null
+    val lease = remotePlayback ?: return null to null
+    remotePlayback = null
+    return lease to scope.launch(start = CoroutineStart.UNDISPATCHED) { withContext(NonCancellable) { withTimeoutOrNull(5_000) { try { trackingStop?.join(); acknowledgment?.join() } catch (_: Exception) { } } } }
+}
+
+internal suspend fun ApplicationController.closePlaybackQuietly(lease: RemotePlaybackLease?) {
+    if (lease == null) return
+    withContext(NonCancellable) { withTimeoutOrNull(5_000) { try { lease.close() } catch (_: Exception) { } } }
+}
+
 internal fun ApplicationController.saveProgress(completed: Boolean, final: Boolean = false): Job? {
     val input=mutable.value.playback ?: return null
     if (input.live) return null
