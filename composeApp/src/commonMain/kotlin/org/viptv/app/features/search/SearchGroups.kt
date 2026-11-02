@@ -36,7 +36,9 @@ internal fun searchResultGroups(rows: List<SearchResultRow>, filters: Set<String
     }
     SearchGroup(row.id, row.title, cards, message)
 }.let { groups ->
-    if (groups.any { it.cards.isNotEmpty() }) groups.filter { it.cards.isNotEmpty() || it.message != null } else groups
+    if (groups.none { it.cards.isNotEmpty() }) return@let groups
+    val (returned, silent) = groups.filter { it.cards.isNotEmpty() || it.message != null }.partition { it.cards.isNotEmpty() }
+    returned + silent
 }
 
 internal fun Card.matchesSearchFilter(filters: Set<String>): Boolean = filters.isEmpty() || filters.any { filter ->

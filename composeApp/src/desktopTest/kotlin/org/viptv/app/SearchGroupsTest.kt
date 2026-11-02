@@ -34,6 +34,16 @@ class SearchGroupsTest {
         assertEquals(listOf("movie", "series"), groups.first().cards.map { it.identity.kind })
     }
 
+    @Test fun providersThatCouldNotAnswerSitBelowTheProvidersThatReturnedResults() {
+        val rows = listOf(SearchResultRow("simkl:anime", "Anime", "simkl", state = "Failed"),
+            SearchResultRow("simkl:movie", "Movies", "simkl", state = "Failed"),
+            SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1"))),
+            SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed"))
+        assertEquals(listOf("Cinemeta", "Anime", "Movies", "TV Shows"), searchResultGroups(rows).map { it.label })
+        assertEquals(listOf("Anime", "Movies", "TV Shows"),
+            searchResultGroups(rows.filter { it.state == "Failed" }).map { it.label })
+    }
+
     @Test fun allEmptyRowsKeepTheirNamesAndEpisodeCoordinatesDoNotCollide() {
         val rows = listOf(SearchResultRow("one", "One", "simkl"), SearchResultRow("two", "Two", "stremio"))
         assertEquals(listOf("One", "Two"), searchResultGroups(rows).map { it.label })
