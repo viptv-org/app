@@ -16,7 +16,7 @@ internal fun ApplicationController.startFailed(reason: String, dolbyVision: Bool
     val failure = "$reason. Choose another source."
     val session = mutable.value.bestMatch
     val playing = session?.playingId
-    if (session == null || playing == null || session.started || session.exhausted) {
+    if (session == null || playing == null || firstFrameSeen || session.exhausted) {
         updateState { it.copy(error = failure) }
         return
     }

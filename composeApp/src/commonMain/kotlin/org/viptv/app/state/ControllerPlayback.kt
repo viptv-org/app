@@ -148,9 +148,6 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
             rememberStartedSource(profile, mutable.value.sourceTitle, mutable.value.playingSource)
         }
         startDeadlineJob?.cancel(); startDeadlineJob = null
-        mutable.value.bestMatch?.let { session ->
-            if (!session.started) updateState { next -> next.copy(bestMatch = session.copy(started = true)) }
-        }
         rememberSourceChoice()
         if (!mutable.value.paused) tracking?.transition(PlaybackEvent.Start, lastProgress)
         val capturedInput = mutable.value.playback

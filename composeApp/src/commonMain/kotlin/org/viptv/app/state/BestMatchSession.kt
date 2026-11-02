@@ -18,7 +18,6 @@ data class BestMatchSession(
     val failed: List<String> = emptyList(),
     val demoted: List<String> = emptyList(),
     val playingId: String? = null,
-    val started: Boolean = false,
     val exhausted: Boolean = false,
 )
 
