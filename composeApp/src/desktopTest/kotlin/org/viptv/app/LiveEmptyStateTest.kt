@@ -33,7 +33,7 @@ class LiveEmptyStateTest {
         assertEquals(LiveSpread.Loading, liveSpread(page(channels = 0), busy = true, filtered = false))
         assertEquals(LiveSpread.Loading, liveSpread(null, busy = true, filtered = false), "the first request is open before the page exists")
         assertEquals(LiveSpread.NoChannels, liveSpread(page(channels = 0), busy = false, filtered = false))
-        assertEquals(LiveSpread.NoChannels, liveSpread(null, busy = false, filtered = false), "a failed first request is answered with nothing")
+        assertEquals(LiveSpread.Failed, liveSpread(null, busy = false, filtered = false), "a failed first request is an error, not an answered empty page")
     }
 
     @Test fun onlyTheChannelLessStatesHideGroupsAndFavourites() {
@@ -42,6 +42,7 @@ class LiveEmptyStateTest {
         assertFalse(LiveSpread.NoSource.showsChannelRows())
         assertTrue(LiveSpread.Loading.showsChannelRows())
         assertTrue(LiveSpread.NoChannels.showsChannelRows())
+        assertTrue(LiveSpread.Failed.showsChannelRows())
     }
 
     @Test fun whoMayChangeSourcesFollowsTheHouseholdOwner() {

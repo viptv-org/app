@@ -30,7 +30,7 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
             focusTaken = controller::consumeLiveSetupFocus)
         return
     }
-    if (spread == LiveSpread.NoChannels) LaunchedEffect(Unit) { controller.loadLiveAccountAccess() }
+    if (spread == LiveSpread.NoChannels || spread == LiveSpread.Failed) LaunchedEffect(Unit) { controller.loadLiveAccountAccess() }
     CompositionLocalProvider(LocalLiveClock provides clock) {
         Box(Modifier.fillMaxSize()) {
             val empty = channels.isEmpty()

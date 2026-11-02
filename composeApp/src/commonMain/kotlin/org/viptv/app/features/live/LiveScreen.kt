@@ -69,6 +69,8 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                 Box(Modifier.weight(1f)) { LiveChannelSkeletons(false, scale, phone) }
             } else if (visible.isEmpty() && spread == LiveSpread.NoChannels) {
                 LiveNoChannels(false, scale, phone, noChannelsReason, noChannelsRetry, sourceIntegrations)
+            } else if (visible.isEmpty() && spread == LiveSpread.Failed) {
+                LiveLoadFailed(false, scale, phone, noChannelsReason, noChannelsRetry, sourceIntegrations)
             } else if (visible.isEmpty()) {
                 Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else emptyReason ?: "No channels are available for this profile.", color = Palette.secondary)
                 if (favoritesOnly) TextButton({ chooseGroup(null) }) { Text("All channels") }
