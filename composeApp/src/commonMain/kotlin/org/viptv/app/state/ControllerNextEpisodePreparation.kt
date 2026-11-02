@@ -7,7 +7,7 @@ import org.viptv.engine.wire.SourceCandidate
 
 internal const val NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS = 45_000L
 
-internal data class PreparedNextSource(val source: SourceCandidate, val sources: List<SourceCandidate>, val groups: SourceGroups)
+internal data class PreparedNextSource(val source: SourceCandidate, val ranked: RankedSources)
 
 internal fun interface NextSourcePreparer {
     suspend fun prepare(remote: RemoteConnection?, local: LocalConnection?, profile: String, card: Card): PreparedNextSource?
@@ -25,7 +25,7 @@ internal fun interface NextSourcePreparer {
             }
             val matched = ranked?.takeIf { it.bestMatchFullyMatches } ?: return@NextSourcePreparer null
             val target = matched.autoplayTarget() ?: return@NextSourcePreparer null
-            PreparedNextSource(target, matched.rows, matched.groups)
+            PreparedNextSource(target, matched)
         }
     }
 }
@@ -58,8 +58,7 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
         val readyAt = clockMillis()
         updateState { latest ->
             val current = latest.nextEpisodePreparation?.takeIf { cardLookupKey(it.card) == cardLookupKey(card) } ?: return@updateState latest
-            latest.copy(nextEpisodePreparation = current.copy(source = prepared?.source,
-                sources = prepared?.sources.orEmpty(), groups = prepared?.groups ?: SourceGroups(),
+            latest.copy(nextEpisodePreparation = current.copy(source = prepared?.source, ranked = prepared?.ranked,
                 status = if (prepared?.source != null) NextEpisodePreparationStatus.Ready else NextEpisodePreparationStatus.Unavailable,
                 readyAtMillis = readyAt))
         }
@@ -86,9 +85,10 @@ internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean
 
 private fun ApplicationController.handOffToPreparedNextEpisode(prepared: NextEpisodePreparation) {
     val source = prepared.source ?: return
+    val ranked = prepared.ranked ?: return
     cancelNextEpisodePreparation()
     if (!completionSeen) saveProgress(false, final = true)
-    updateState { it.copy(sourceTitle = prepared.card, sources = prepared.sources, sourceGroups = prepared.groups,
+    updateState { it.copy(sourceTitle = prepared.card, sources = ranked.rows, sourceGroups = ranked.groups,
         torrentOnlySources = 0, playTapTitle = null, detailFailure = null, detailRetryable = true, error = null, errorCode = null) }
-    playSource(source)
+    startBestMatch(ranked, source)
 }

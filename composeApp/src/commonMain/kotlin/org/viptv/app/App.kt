@@ -25,6 +25,8 @@ import org.viptv.app.state.*
 import org.viptv.app.connection.browserOrigin
 import org.viptv.app.features.entry.*
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.features.home.CardActions
+import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
@@ -75,7 +77,15 @@ fun App(
     }
     val tvDisplay = rememberTvDisplayState()
     val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
-    CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion) {
+    val localMode = state.localMode
+    val cardActions = remember(controller, localMode) {
+        CardActions(play = controller::playTitle, toggleSave = controller::toggleFavorite,
+            isSaved = { controller.state.value.isSaved(it) },
+            chooseSource = controller::chooseSource, playFromStart = controller::playTitleFromStart,
+            markWatched = if (localMode) null else controller::toggleWatched)
+    }
+    CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
+        LocalCardActions provides cardActions) {
     ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
@@ -263,6 +273,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             // Under the drawer, the dialog's own Escape and dismissal close only the drawer.
             if (browser && showingSources) controller::backSources else controller::backDetails,
             if (state.detailShell) controller::playTitle else controller::chooseSource, television, tablet, browser, save = controller::toggleFavorite, saved = state.isSaved(state.detail?.item), open = controller::open, loadPage = controller::detailPage, playFromStart = controller::playTitleFromStart,
+            chooseSource = controller::chooseSource,
             defaultSourceLabel = state.preferences?.preferences?.source_selection?.let { if (it == "best") "Best match" else "Always ask" },
             // A Calendar row's episode comes first: Details opened from it land on its season.
             continuing = listOfNotNull(state.calendarEpisode) + state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards.orEmpty() +
@@ -275,7 +286,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             closeFocusOnOpen = !(browser && showingSources),
             focus = state.detailFocus)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings) }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, banner = state.sourcesBanner(), failed = state.failedSources()) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }

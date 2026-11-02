@@ -37,7 +37,8 @@ internal data class TvDetailExtras(
 
 @Composable
 internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, sources: (Card) -> Unit,
-    extras: TvDetailExtras = TvDetailExtras(), open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null,
+    extras: TvDetailExtras = TvDetailExtras(), chooseSource: (Card) -> Unit = sources,
+    open: (Card) -> Unit = sources, requestInitialFocus: Boolean = true, save: (Card) -> Unit = {}, saved: Boolean = false, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null,
     back: (() -> Unit)? = null, continuing: List<Card> = emptyList(),
     shown: Boolean = true,
     playTap: Boolean = false,
@@ -127,7 +128,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                         trailer = { notice = "No trailer is available for this title." },
                         restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
                         down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
-                        downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }))
+                        downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }),
+                        hold = { chooseSource(extras.resume ?: detail.item) })
                 }
                 when {
                     !busy && error != null -> item(key = "failure") {

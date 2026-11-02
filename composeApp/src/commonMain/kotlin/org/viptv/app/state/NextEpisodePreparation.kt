@@ -3,7 +3,7 @@ package org.viptv.app.state
 import androidx.compose.runtime.Immutable
 import org.viptv.app.connection.LocalConnection
 import org.viptv.app.connection.RemoteConnection
-import org.viptv.app.connection.SourceGroups
+import org.viptv.app.connection.RankedSources
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.Scope
@@ -20,8 +20,7 @@ data class NextEpisodePreparation(
     val profile: String,
     val status: NextEpisodePreparationStatus,
     val source: SourceCandidate? = null,
-    val sources: List<SourceCandidate> = emptyList(),
-    val groups: SourceGroups = SourceGroups(),
+    val ranked: RankedSources? = null,
     val startedAtMillis: Long = 0,
     val readyAtMillis: Long? = null,
 )

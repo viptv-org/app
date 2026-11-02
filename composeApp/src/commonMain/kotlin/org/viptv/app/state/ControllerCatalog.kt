@@ -343,6 +343,7 @@ internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boole
 
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null, startPlayback: Boolean = false) {
     sourcesScrolled = false
+    clearBestMatchSession()
     sourcesStartPlayback = startPlayback
     updateState { it.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
@@ -365,7 +366,7 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
                 val target = ranked.autoplayTarget() ?: return
                 if (!startPlayback && mutable.value.preferences?.preferences?.source_selection != "best") return
                 playing = true
-                playSource(target)
+                startBestMatch(ranked, target)
             }
             val ranking = ProgressiveSourceRanking(this,
                 rank = { rows -> device?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
