@@ -17,8 +17,10 @@ supplied; it does not imply that every episode has been loaded.
 Next uses the controller's authoritative result, including a title beyond the
 loaded episode page. The Next episode toolbar button plays that episode straight
 away (app#41): it opens the best match whatever the profile's Default source
-says, and closing the player lists that episode's sources. The board-shaped Up
-next prompt opens by itself when the player
+says, and closing the player lists that episode's sources. In the episode's last
+three minutes the player prepares that matching source once, so Next starts it
+without discovering again; a preparation that expires or is not a fully matching
+match falls back to this same path. The board-shaped Up next prompt opens by itself when the player
 reports the end of the episode, drawn over its last frame, on phone and on the
 desktop/web player. Watch credits and Back dismiss it until the episode ends
 again. With Settings › Playback › Autoplay next episode on (the default, stored
