@@ -37,7 +37,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config libmpv-dev mpv patchelf
       - name: Install macOS mpv
         if: runner.os == 'macOS'
-        run: brew install mpv
+        run: brew install mpv ffmpeg-full
       - uses: msys2/setup-msys2@v2
         if: runner.os == 'Windows'
         with:
