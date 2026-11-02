@@ -103,6 +103,7 @@ data class ApplicationState(
     val detailFocus: DetailFocus? = null,
     val detailLoadingOffset: Long? = null,
     val detailPageError: String? = null,
+    val detailPageRetryOffset: Long? = null,
     val detailHistory: List<DetailSnapshot> = emptyList(),
     val localMode: Boolean = false,
     val sessionNotice: String? = null,

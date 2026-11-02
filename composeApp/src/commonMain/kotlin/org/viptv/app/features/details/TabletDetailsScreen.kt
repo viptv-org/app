@@ -32,7 +32,7 @@ import org.viptv.app.components.IconButton
 
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
-    continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null) {
+    continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
@@ -41,7 +41,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth < 800.dp) {
             DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage,
-                continuing = continuing, paging = paging, focus = focus)
+                continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage)
             return@BoxWithConstraints
         }
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
@@ -90,6 +90,9 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                     } }
                     items(season.episodes, key = ::episodeKey) { episode ->
                         DetailEpisodeCard(resume.shown(episode), true, { play(episode) }, Modifier.fillMaxWidth(), tablet = true)
+                    }
+                    if (pageError != null) item(key = "page-failure") {
+                        DetailInlineFailure(pageError, retryPage, Modifier.padding(top = 16.dp))
                     }
                 }
             }
