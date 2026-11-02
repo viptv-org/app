@@ -1,5 +1,7 @@
 package org.viptv.app.state
 
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
@@ -96,36 +98,54 @@ fun ApplicationController.editSearch(edit: (String) -> String) = search(edit(mut
 
 fun ApplicationController.searchFilters(filters: Set<String>) = updateState { it.copy(searchFilters = filters) }
 
-fun ApplicationController.search(term: String) {
-    if (term == lastSearchedTerm) return
-    if (term != mutable.value.searchTerm)
-        updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
-    updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
+fun ApplicationController.retrySearch() = search(mutable.value.searchTerm, retry = true)
+
+fun ApplicationController.search(term: String, retry: Boolean = false) {
+    if (!retry && term == lastSearchedTerm) return
+    val unchanged = term == mutable.value.searchTerm
+    if (!unchanged) updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
+    if (!(retry && unchanged)) updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
     rememberNavigation()
     run {
         val operation = generation
         val profile = mutable.value.selectedProfile
         val remote = connection
         val device = local
+        fun session() = generation == operation && mutable.value.searchTerm == term &&
+            mutable.value.selectedProfile == profile && connection === remote && local === device
+        fun onSearch() = session() && mutable.value.screen == Screen.Search
         delay(300)
         lastSearchedTerm = term
-        val grouped = when {
-            term.isBlank() -> null
-            remote != null -> remote.searchResults(term)
-            device != null -> device.searchResults(requireNotNull(profile), term)
-            else -> null
+        val loaded = try {
+            val grouped = when {
+                term.isBlank() -> null
+                remote != null -> remote.searchResults(term)
+                device != null -> device.searchResults(requireNotNull(profile), term)
+                else -> null
+            }
+            val cards = when {
+                term.isBlank() -> emptyList()
+                grouped != null -> grouped.rows.flatMap { it.cards }
+                device != null -> device.search(requireNotNull(profile), term).cards
+                else -> requireNotNull(remote).search(term).cards
+            }
+            SearchLoaded(cards, grouped?.rows.orEmpty())
+        } catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            if (error is RemoteFailure && error.status == 401 && device == null) throw error
+            if (onSearch()) updateState { it.copy(error = searchFailure(error), errorCode = (error as? RemoteFailure)?.code) }
+            return@run
         }
-        val cards = when {
-            term.isBlank() -> emptyList()
-            grouped != null -> grouped.rows.flatMap { it.cards }
-            device != null -> device.search(requireNotNull(profile), term).cards
-            else -> requireNotNull(remote).search(term).cards
-        }
-        if (generation == operation && mutable.value.searchTerm == term &&
-            mutable.value.selectedProfile == profile && connection === remote && local === device) {
-            updateState { it.copy(results = cards, searchRows = grouped?.rows.orEmpty()) }
-        }
+        if (session()) updateState { it.copy(results = loaded.cards, searchRows = loaded.rows) }
     }
+}
+
+private class SearchLoaded(val cards: List<Card>, val rows: List<SearchResultRow>)
+
+private fun ApplicationController.searchFailure(error: Exception): String = when {
+    error is HttpRequestTimeoutException || error is SocketTimeoutException ->
+        "Your server took too long to answer this search. Try again."
+    else -> failureMessage(error) ?: "Something went wrong. Try again."
 }
 
 private val summaryRequested = mutableSetOf<String>()
