@@ -15,4 +15,5 @@ private class AndroidDeviceRecordStore(private val context: PlatformContext, pri
 internal actual fun deviceRecordStore(context: PlatformContext, record: DeviceRecord): DeviceRecordStore = when (record) {
     DeviceRecord.Display -> AndroidDeviceRecordStore(context, "tv-display", "display-v1")
     DeviceRecord.Playback -> AndroidDeviceRecordStore(context, "device-playback", "playback-v1")
+    DeviceRecord.WatchOnTv -> AndroidDeviceRecordStore(context, "watch-on-tv", "watch-on-tv-v1")
 }

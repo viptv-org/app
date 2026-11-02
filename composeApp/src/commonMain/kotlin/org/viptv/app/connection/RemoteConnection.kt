@@ -3,6 +3,8 @@ package org.viptv.app.connection
 import io.ktor.client.request.*
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.timeout
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.sse.SSECapability
 import io.ktor.client.plugins.sse.SSEClientException
 import io.ktor.client.plugins.sse.sse
@@ -40,6 +42,15 @@ internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && co
 
 internal class SearchStreamUnavailable : Exception()
 
+internal fun Throwable.searchStreamTimeout(): Throwable? {
+    var current: Throwable? = this
+    while (current != null) {
+        if (current is HttpRequestTimeoutException || current is SocketTimeoutException) return current
+        current = current.cause
+    }
+    return null
+}
+
 private val nativeSessionGate = Mutex()
 internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
 
@@ -56,14 +67,17 @@ open class RemoteConnection(
         private set
     internal var accountOwner = false
         private set
+    internal var accountRole = "member"
+        private set
     internal var accountAccessRead = false
         private set
     internal val accountDashboardUrl: String get() = origin + "/"
 
-    internal fun recordAccountAccess(manageAccount: Boolean?, owner: Boolean) {
+    internal fun recordAccountAccess(manageAccount: Boolean?, role: String) {
         accountAccessRead = true
         manageAccount?.let { accountManagementEnabled = it }
-        accountOwner = owner
+        accountRole = role
+        accountOwner = role == "owner"
     }
     internal val origin = validatedRemoteOrigin(rawOrigin)
     private val client = client ?: platformClient()
@@ -272,6 +286,7 @@ open class RemoteConnection(
         } catch (error: SSEClientException) {
             if (error.response?.status?.value == 404) throw SearchStreamUnavailable()
             error.response?.let { checkStatus(it) }
+            error.searchStreamTimeout()?.let { throw it }
             throw error
         }
     }

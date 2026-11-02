@@ -52,8 +52,8 @@ internal suspend fun deviceCapability(): DeviceCapability = probed ?: probeGate.
         .also { probed = it }
 }
 
-internal suspend fun rankingContext(seriesMemory: SeriesMemory?): RankingContext =
-    RankingContext(deviceCapability().copy(maxHeight = deviceMaxVideoHeight()), seriesMemory)
+internal suspend fun rankingContext(seriesMemory: SeriesMemory?, capability: suspend () -> DeviceCapability): RankingContext =
+    RankingContext(capability().copy(maxHeight = deviceMaxVideoHeight()), seriesMemory)
 
 internal fun rankingContextJson(context: RankingContext): JsonObject = buildJsonObject {
     deviceCapabilityJson(context.device)?.let { put("device", it) }

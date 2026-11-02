@@ -51,9 +51,10 @@ class SettingsBackTest {
     }
 
     private fun settings(navBack: List<Screen> = listOf(Screen.Home), localMode: Boolean = true,
-        manageAccount: Boolean = false, accountOwner: Boolean = false) =
+        manageAccount: Boolean = false, accountOwner: Boolean = false,
+        accountRole: String = if (accountOwner) "owner" else "member") =
         ApplicationState(screen = Screen.Settings, navBack = navBack, selectedProfile = "1", localMode = localMode,
-            manageAccount = manageAccount, accountOwner = accountOwner)
+            manageAccount = manageAccount, accountOwner = accountOwner, accountRole = accountRole)
 
     @Test fun backFromEachPhoneSubPageReturnsToTheSettingsList() = Harness(browser = false, settings()).use { ui ->
         assertBackFromEachRow(ui, listOf("Add-ons", "Playback", "Subtitles & audio", "Source integrations", "Parental controls", "Help", "About"))

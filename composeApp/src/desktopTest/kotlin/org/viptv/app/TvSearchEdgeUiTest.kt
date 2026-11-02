@@ -176,6 +176,30 @@ class TvSearchEdgeUiTest {
         }
     }
 
+    @Test fun aFailedSearchOffersATryAgainActionRightAfterTheErrorLine() = ui {
+        var retried = 0
+        Fixture(screenWidth) {
+            SearchScreen("whisper", emptyList(), emptyList(), false,
+                "Your server took too long to answer this search. Try again.", true, {}, {},
+                television = true, editQuery = {}, searchRows = rows, retry = { retried++ })
+        }.use { screen ->
+            screen.settle()
+            screen.capture("search-tv-retry")
+            val nodes = screen.nodes()
+            val error = nodes.single { "took too long" in titles(it) }
+            val action = nodes.single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "Try again" }
+            assertTrue(action.boundsInRoot.top >= error.boundsInRoot.bottom - 1f, "the action sits below the error line")
+            assertTrue(action.config[SemanticsActions.RequestFocus].action!!.invoke(), "the D-pad can reach Try again")
+            screen.settle()
+            assertTrue(titles(screen.focused()) == "Try again", "focus is on the retry action, was ${titles(screen.focused())}")
+            assertEquals(0, retried)
+            assertTrue(action.config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals(1, retried)
+            screen.press(Key.DirectionDown); screen.settle()
+            assertTrue("Result 1" in titles(screen.focused()), "down from Try again enters the results, was ${titles(screen.focused())}")
+        }
+    }
+
     private fun assertFocusedCardFullyOnScreen(screen: Fixture, name: String) {
         val focused = screen.focused()
         assertTrue(name in titles(focused), "focus is on $name, was ${titles(focused)}")

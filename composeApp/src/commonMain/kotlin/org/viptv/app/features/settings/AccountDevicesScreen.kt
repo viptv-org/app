@@ -20,7 +20,8 @@ import org.viptv.app.components.TextButton
 
 @Composable
 internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, error: String?, load: () -> Unit,
-    signOut: (String) -> Unit, signOutAll: () -> Unit, compact: Boolean = false, back: (() -> Unit)? = null) {
+    signOut: (String) -> Unit, signOutAll: () -> Unit, compact: Boolean = false, back: (() -> Unit)? = null,
+    canSignOut: Boolean = true) {
     var removing by remember { mutableStateOf<AccountDevice?>(null) }
     var removingAll by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { load() }
@@ -50,11 +51,11 @@ internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, erro
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = if (first) 14.dp else 0.dp,
                 topEnd = if (first) 14.dp else 0.dp, bottomStart = if (last) 14.dp else 0.dp, bottomEnd = if (last) 14.dp else 0.dp))
                 .background(Palette.text.copy(alpha = .05f))) {
-                AccountDeviceRow(device, busy, compact) { removing = device }
+                AccountDeviceRow(device, busy, compact, canSignOut) { removing = device }
                 if (!last) HorizontalDivider(color = Palette.text.copy(alpha = .08f))
             }
         }
-        if (snapshot?.can_sign_out_all == true) item {
+        if (snapshot?.can_sign_out_all == true && canSignOut) item {
             Spacer(Modifier.height(14.dp))
             Button({ removingAll = true }, Modifier.widthIn(min = 240.dp).height(40.dp), enabled = !busy,
                 shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 18.dp),

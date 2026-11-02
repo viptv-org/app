@@ -29,7 +29,7 @@ internal fun LiveProgramCell(program: LiveProgram, now: Int?, start: Int, televi
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) focus() }.pointerClickable(onClick = activate, shape = RoundedCornerShape((if (television) 10 else 8).dp * scale))) {
         if (television && now != null && now in program.start until program.end) Box(Modifier.fillMaxHeight()
             .fillMaxWidth(liveProgress(program, now)).background(if (focused) Color(0xFF111113).copy(alpha = .08f) else Color.White.copy(alpha = .05f)))
-        Column(Modifier.fillMaxSize().padding(horizontal = (if (television) 18 else 12).dp * scale, vertical = 12.dp * scale),
+        Column(Modifier.fillMaxSize().padding(horizontal = liveProgramPadding(television, scale), vertical = 12.dp * scale),
             verticalArrangement = Arrangement.Center) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 if (television && program.start < start) {

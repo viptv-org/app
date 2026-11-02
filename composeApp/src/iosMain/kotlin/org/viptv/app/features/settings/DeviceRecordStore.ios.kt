@@ -12,8 +12,10 @@ private class IosDeviceRecordStore(private val key: String) : DeviceRecordStore 
 
 private val display = IosDeviceRecordStore("viptv.tv.display.v1")
 private val playback = IosDeviceRecordStore("viptv.device.playback.v1")
+private val watchOnTv = IosDeviceRecordStore("viptv.device.watch-on-tv.v1")
 
 internal actual fun deviceRecordStore(context: PlatformContext, record: DeviceRecord): DeviceRecordStore = when (record) {
     DeviceRecord.Display -> display
     DeviceRecord.Playback -> playback
+    DeviceRecord.WatchOnTv -> watchOnTv
 }

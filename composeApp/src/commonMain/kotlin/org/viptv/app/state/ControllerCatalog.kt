@@ -1,5 +1,7 @@
 package org.viptv.app.state
 
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
@@ -152,7 +154,7 @@ private suspend fun ApplicationController.searchLocal(device: LocalConnection, p
 }
 
 private fun ApplicationController.searchFailure(error: Exception): String = when {
-    error is io.ktor.client.plugins.HttpRequestTimeoutException || error is io.ktor.client.network.sockets.SocketTimeoutException ->
+    error is HttpRequestTimeoutException || error is SocketTimeoutException ->
         "Your server took too long to answer this search. Try again."
     else -> failureMessage(error) ?: "Something went wrong. Try again."
 }
@@ -393,7 +395,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val profile = requireNotNull(mutable.value.selectedProfile)
         val device = local
         val remote = connection
-        val context = rankingContext(seriesMemoryOf(profile, card))
+        val context = rankingContext(seriesMemoryOf(profile, card), capability)
         coroutineScope {
             var playing = false
             fun rememberedStart(ranked: RankedSources, target: SourceCandidate) {

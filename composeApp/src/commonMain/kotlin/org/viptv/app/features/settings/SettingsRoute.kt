@@ -30,16 +30,18 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     }
     val deviceLink by controller.deviceLink.collectAsState()
     val devicePlayback = rememberDevicePlaybackState()
+    val watchOnTvState = rememberWatchOnTvState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
     val passwordPage: (@Composable (() -> Unit) -> Unit)? = remote?.takeIf { state.passwordChangeAvailable }?.let { connection ->
         { back -> ChangePasswordScreen(connection, back) { controller.passwordChanged() } } }
     LaunchedEffect(remote) { if (remote != null) controller.refreshPasswordChangeAvailability() }
-    val manageAccount = state.manageAccount
-    val ownsHousehold = manageAccount && state.accountOwner
+    val accountRole = state.accountRole
+    val ownerWrites = accountRole == "owner" || (state.accountIdentity != null && state.manageAccount)
+    val accountSession = accountRole != "device"
     // The identity loads after the page: until it does, leave the writes to the server rather than flashing an owner note at the owner.
-    val xtreamCanManage = state.accountIdentity == null || state.accountOwner
-    val xtreamManageNote = if (manageAccount) "Only the account owner can change connections." else xtreamManagedElsewhere
+    val xtreamCanManage = state.accountIdentity == null || ownerWrites
+    val xtreamManageNote = if (ownerWrites) "Only the account owner can change connections." else xtreamManagedElsewhere
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
     val escapeReturns = returnsToPlayer && (desktop || browser) && !television
@@ -54,7 +56,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         controller::installAddon, controller::toggleAddon, controller::removeAddon,
         { controller.navigate(Screen.Profiles) }, leave,
         state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
-        initialSection = state.settingsEntrySection ?: if (browser && !compact && manageAccount) "Devices" else null,
+        initialSection = state.settingsEntrySection ?: if (browser && !compact && accountSession) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         desktop = desktop, browser = browser,
         profilePage = { layout -> ProfilePageRoute(state, controller, layout) },
@@ -78,11 +80,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         accountAccessRequested = if (remote != null) controller::refreshAccountAccess else null,
-        householdPin = if (ownsHousehold) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
+        householdPin = if (ownerWrites) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
             controller::unlockParentControls, controller::changeParentPin) }) else null,
-        password = if (manageAccount) passwordPage else null,
-        deleteAccount = if (manageAccount) controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
+        password = if (accountSession) passwordPage else null,
+        deleteAccount = if (accountSession) controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
             DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured,
                 state.busy, state.error, controller::refreshAccountDeletion, cancel,
                 controller::deleteAccount)
@@ -94,7 +96,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
             profileName = state.profiles.find { it.id == state.selectedProfile }?.name,
-            origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar) } },
+            origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar, canManage = ownerWrites) } },
         xtreamConnections = if (state.localMode) null else ({ compact: Boolean, back: (() -> Unit)? ->
             XtreamConnectionsSettings(state.xtreamConnections, state.xtreamDefaultLive, state.busy, state.error, state.xtreamNotice,
                 canManage = xtreamCanManage, manageNote = xtreamManageNote, compact = compact, back = back,
@@ -114,7 +116,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             controller.connection?.takeUnless { state.localMode },
             controller::refreshGateways, controller::checkGateway, controller::setGatewayEnabled, controller::deleteGateway,
             controller::grantGatewayAccess, controller::revokeGatewayAccess, controller::loadGatewayGrants,
-            television = television, scale = scale, first = first, left = sidebar) }) else null,
+            television = television, scale = scale, first = first, left = sidebar, canManage = ownerWrites) }) else null,
         gatewaysRequested = if (!state.localMode) controller::refreshGateways else null,
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->
@@ -123,10 +125,12 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             else ProfilePreferencesSettings(section, state.preferences, state.busy, state.preferencesError ?: state.error,
                 controller::refreshPreferences, controller::updatePreferences, devicePlayback)
         },
-        devices = if (manageAccount) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
-            controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null) }) else null,
+        devices = if (!state.localMode) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
+            controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null,
+            canSignOut = ownerWrites) }) else null,
         addDevice = { compact, changeConnection -> AddDeviceScreen(controller.connection.takeUnless { state.localMode }, compact,
             deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode, changeConnection) },
+        addonsManageable = ownerWrites,
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
             StremioImportRoute(state, controller, compact, if (compact) back else null, manageAddons) }) else null,
         serverAddress = controller.connection?.accountDashboardUrl,
@@ -145,7 +149,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
                 controller::unlockParentControls, controller::changeKidsPolicy,
                 controller::changeProfileLeavePin, controller::openParentTitles,
-                openHouseholdPin = if (ownsHousehold) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null)
+                openHouseholdPin = if (ownerWrites) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null)
             else ParentControlsNative { controller.navigate(Screen.Profiles) }
         },
         tvParental = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
@@ -162,10 +166,12 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
         },
         tvParentalPinAvailable = state.localMode,
-        tvDevices = if (manageAccount) ({ first, sidebar, scale, back ->
+        tvDevices = if (!state.localMode) ({ first, sidebar, scale, back ->
             TvAccountDevices(state.accountDevices, state.busy, state.error, controller::refreshAccountDevices, scale, first, sidebar, back)
         }) else null,
         returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback,
+        watchOnTvValue = watchOnTvValue(watchOnTvState.value),
+        watchOnTvSettings = { WatchOnTvSettings(watchOnTvState.value) },
         vodMatches = if (remote != null) ({ VodMatchesRoute(state, controller) }) else null,
         tvVodMatches = if (remote != null) ({ first, sidebar, scale -> TvVodMatchesRoute(state, controller, scale, first, sidebar) }) else null)
     }

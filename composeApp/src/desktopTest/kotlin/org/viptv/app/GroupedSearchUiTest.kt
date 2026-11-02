@@ -114,6 +114,26 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aFailedSearchOffersTheRetryThatIssuesTheSameQueryAgain() {
+        var retried = 0
+        val scene = ImageComposeScene(600, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("dune", emptyList(), emptyList(), false, "Your server took too long to answer this search. Try again.", false, {}, {},
+                        editQuery = {}, retry = { retried++ })
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val nodes = nodes(scene)
+            assertTrue(nodes.any { text(it).contains("took too long") })
+            val retry = nodes.single { it.config.contains(SemanticsActions.OnClick) && text(it) == "Try again" }
+            assertTrue(retry.config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals(1, retried)
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }

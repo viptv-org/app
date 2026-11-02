@@ -35,7 +35,8 @@ private const val SEARCH_FOCUS_RETRY_FRAMES = 32
 @Composable
 internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean,
     error: String?, query: (String) -> Unit, open: (Card) -> Unit, editQuery: ((String) -> String) -> Unit,
-    suggestions: List<String> = emptyList(), searchRows: List<SearchResultRow> = emptyList(), focusResults: Boolean = false) {
+    suggestions: List<String> = emptyList(), searchRows: List<SearchResultRow> = emptyList(), focusResults: Boolean = false,
+    retry: (() -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val gutter = 96.dp * scale
@@ -95,7 +96,13 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
             }
             LazyColumn(Modifier.weight(1f).bleedHorizontally(left = 0.dp, right = gutter).onFocusChanged { resultsHaveFocus = it.hasFocus }, state = rows, sectionControlled = true, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = gutter)) {
                 if (busy && !hasResults && groups.none { it.message != null }) item { TvSearchLoading(scale) }
-                error?.let { item { Text(it, color = Palette.danger) } }
+                error?.let { item {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                        Text(it, fontSize = (24 * scale).sp, color = Palette.danger)
+                        if (retry != null) TvAction(Modifier.height(52.dp * scale).width(200.dp * scale), scale, primary = true,
+                            activate = retry) { tint -> Text("Try again", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold) }
+                    }
+                } }
                 groups.forEachIndexed { rowIndex, group -> item(key = group.id) {
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp * scale)) {
                         Text(group.label,
