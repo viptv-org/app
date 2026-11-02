@@ -99,7 +99,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                         PageRestore(row, restore, target = { anchoredRow.takeIf { it >= 0 } })
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
-                            (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
+                            group.message?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
                             LazyRow(state = row, contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 rowItemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
                                     val key = searchCardKey(card)
