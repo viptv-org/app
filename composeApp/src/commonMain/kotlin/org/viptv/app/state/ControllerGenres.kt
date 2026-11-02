@@ -14,6 +14,7 @@ private const val HOME_GENRE_TYPE = "movie"
 fun ApplicationController.loadHomeGenres() {
     val state = mutable.value
     val profile = state.selectedProfile ?: return
+    if (state.home == null) return
     val home = state.home?.scope
     val revision = state.home?.revision
     if (state.homeGenres.let { it != null && it.profile == profile && it.home == home && it.homeRevision == revision }) return

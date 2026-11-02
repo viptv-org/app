@@ -179,11 +179,15 @@ class RemoteConnection(
     }
 
     suspend fun selectProfile(id: String, pin: String? = null): Bootstrap {
+        switchProfile(id, pin)
+        return bootstrap()
+    }
+
+    suspend fun switchProfile(id: String, pin: String? = null) {
         call("/api/auth/profile", HttpMethod.Post, buildJsonObject {
             put("profile_id", id)
             pin?.let { put("pin", it) }
         })
-        return bootstrap()
     }
 
     suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
