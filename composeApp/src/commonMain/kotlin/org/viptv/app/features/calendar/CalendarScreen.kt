@@ -118,8 +118,5 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
 
 @Composable
 private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit, modifier: Modifier = Modifier) {
-    Column {
-        CalendarRow(entry,phone,false,if(phone)1f else scale,focus,open,modifier)
-        if(watch!=null)entry.actionLabel()?.let{label->TextButton({watch(entry)}){Text(label)}}
-    }
+    CalendarRow(entry, phone, false, if(phone)1f else scale, focus, open, modifier, watch = watch)
 }
