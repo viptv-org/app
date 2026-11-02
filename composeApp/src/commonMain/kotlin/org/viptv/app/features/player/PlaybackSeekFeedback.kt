@@ -12,11 +12,6 @@ internal const val SeekAbandonSeconds = 10
 internal fun PlayerFact.settlesSeek(targetMillis: Long?): Boolean = when (this) {
     is PlayerFact.Status -> name in PlaybackSettledStatuses
     is PlayerFact.Progress -> targetMillis != null && positionMillis > targetMillis + SeekClockResumedMillis
-<<<<<<< HEAD
-    PlayerFact.Failed, PlayerFact.ControlFailed, is PlayerFact.Presentation -> true
-    is PlayerFact.Properties, is PlayerFact.Tracks, is PlayerFact.Buffered -> false
-=======
     PlayerFact.Failed, PlayerFact.ControlFailed, PlayerFact.Undecodable, is PlayerFact.Presentation -> true
-    is PlayerFact.Properties, is PlayerFact.Tracks -> false
->>>>>>> origin/edge
+    is PlayerFact.Properties, is PlayerFact.Tracks, is PlayerFact.Buffered -> false
 }
