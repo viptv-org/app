@@ -319,7 +319,9 @@ fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
     }
 }
 
-fun ApplicationController.chooseSource(card: Card) {
+fun ApplicationController.chooseSource(card: Card) = chooseSource(card, startPlayback = false)
+
+internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boolean) {
     if (card.unnumberedEpisode()) {
         updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
@@ -331,22 +333,24 @@ fun ApplicationController.chooseSource(card: Card) {
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
             updateState { it.copy(error = error.message) }; return
         }
-        chooseSource(target); return
+        chooseSource(target, startPlayback); return
     }
     cancelSourceDetail()
     releaseRemotePlayback()
-    openSources(card, returnTo = if (mutable.value.detail != null) Screen.Details else mutable.value.screen)
+    openSources(card, returnTo = if (mutable.value.detail != null) Screen.Details else mutable.value.screen, startPlayback = startPlayback)
     run { discoverSources(card) }
 }
 
-private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null) {
+private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null, startPlayback: Boolean = false) {
     sourcesScrolled = false
+    sourcesStartPlayback = startPlayback
     updateState { it.copy(screen = Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
         playTapTitle = playTap, detailFailure = null, detailRetryable = true) }
 }
 
 private suspend fun ApplicationController.discoverSources(card: Card) {
+    val startPlayback = sourcesStartPlayback
     val operation = generation
     try {
         if (mutable.value.preferences == null) loadPreferences()
@@ -359,7 +363,7 @@ private suspend fun ApplicationController.discoverSources(card: Card) {
             fun autoplay(ranked: RankedSources) {
                 if (playing || generation != operation || sourcesScrolled) return
                 val target = ranked.autoplayTarget() ?: return
-                if (mutable.value.preferences?.preferences?.source_selection != "best") return
+                if (!startPlayback && mutable.value.preferences?.preferences?.source_selection != "best") return
                 playing = true
                 playSource(target)
             }

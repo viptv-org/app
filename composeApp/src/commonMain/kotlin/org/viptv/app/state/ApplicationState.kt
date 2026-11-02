@@ -129,6 +129,7 @@ data class ApplicationState(
     val torrentOnlySources: Int = 0,
     val findingSources: Boolean = false,
     val playingSource: SourceCandidate? = null,
+    val openingSource: SourceCandidate? = null,
     val openingStage: String? = null,
     val playback: PlaybackInput? = null,
     val playbackSegments: List<org.viptv.app.features.player.TvSkipRange> = emptyList(),
