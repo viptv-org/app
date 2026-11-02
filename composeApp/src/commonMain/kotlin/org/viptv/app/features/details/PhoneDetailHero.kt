@@ -48,7 +48,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 ,
                 alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
             else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
-            MediaMetadata(card, fontSize = 13f, lineHeight = 19f)
+            MediaMetadata(card, fontSize = 13f, lineHeight = 19f, kindFirst = true)
             val resume = resumeEpisode ?: card.takeIf(::resuming)
             val progress = resume?.progress?.takeIf { resuming(resume) }
             val remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel)
