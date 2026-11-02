@@ -8,7 +8,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 // A page whose cards can leave its list offers this; the page owns the confirmation and the request.
-internal class ListRemoval(val label: String, val replacesSave: Boolean = false, val request: (Card) -> Unit)
+internal class ListRemoval(val label: String, val replacesSave: Boolean = false, val continueWatching: Boolean = false, val request: (Card) -> Unit)
 
 internal val LocalListRemoval = compositionLocalOf<ListRemoval?> { null }
 
