@@ -50,8 +50,10 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
         if (!television && art != null) AsyncImage(art, channel.card.title, Modifier.width(imageWidth).aspectRatio(16f / 9).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
             Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = (if (television) 24 * scale else 14f).sp, color = Palette.secondary)
-            Text(program?.title ?: channel.card.subtitle ?: channel.card.title, fontSize = (if (television) 54 * scale else 28f).sp,
-                lineHeight = (if (television) 62 * scale else 34f).sp, fontWeight = FontWeight.Bold)
+            (program?.title ?: channel.card.subtitle)?.let {
+                Text(it, fontSize = (if (television) 54 * scale else 28f).sp,
+                    lineHeight = (if (television) 62 * scale else 34f).sp, fontWeight = FontWeight.Bold)
+            }
             program?.let {
                 Text("${liveTime(it.start)} – ${liveTime(it.end, period = true)}", fontSize = (if (television) 24 * scale else 14f).sp, color = Palette.body)
                 it.description?.let { description -> Text(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
