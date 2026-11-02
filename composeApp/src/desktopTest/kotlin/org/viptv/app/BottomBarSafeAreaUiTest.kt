@@ -40,7 +40,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-// The root pads every page and the bar once by the window's safe area; the page clears the bar and nothing else.
+// The window's safe area is applied once, around every page and the bar; a page reserves the bar's box and nothing else.
 @OptIn(ExperimentalComposeUiApi::class)
 class BottomBarSafeAreaUiTest {
     @get:Rule val uiThread = UiThreadRule()
@@ -58,7 +58,7 @@ class BottomBarSafeAreaUiTest {
         Card(MediaIdentity("safe-area-$it", "movie", emptyList()), provider_id = "addon:1", title = "Fixture title $it", badges = emptyList())
     }
 
-    @Test fun theBarSitsAboveTheSafeAreaOnceAndThePageClearsItAtEverySize() {
+    @Test fun theBarSitsAboveTheSafeAreaOnceAndThePageReservesOnlyTheBar() {
         for (config in configs) for ((page, content) in pages()) assertBarClearsThePage(config, page, content)
     }
 
@@ -68,38 +68,53 @@ class BottomBarSafeAreaUiTest {
     )
 
     private fun assertBarClearsThePage(config: Config, page: String, content: @Composable () -> Unit) {
-        val height = (config.height.value * config.density).toInt()
-        val expectedBarTop = (config.height.value - config.inset.value - BottomBarHeight.value) * config.density
+        val barHeight = BottomBarHeight.value * config.density
+        val expectedBarTop = (config.height.value - config.inset.value) * config.density - barHeight
         var barTop = 0f
-        val barred = scene(config, content, bar = true) { barTop = it }
+        val barred = scene(config, content, bar = true, clearance = bottomBarClearance()) { barTop = it }
         try {
             frames(barred)
             assertTrue(abs(barTop - expectedBarTop) <= 1f,
                 "${config.name} $page: the bar starts at $barTop, not above the ${config.inset} safe area at $expectedBarTop")
             capture(barred, "bottom-bar-${config.name.replace(' ', '-')}-$page")
+            scrollToEnd(barred)
+            capture(barred, "bottom-end-${config.name.replace(' ', '-')}-$page")
         } finally { barred.close() }
-        frame = 0
-        val bare = scene(config, content, bar = false) {}
-        try {
-            frames(bare)
-            scrollToEnd(bare)
-            frames(bare, 6)
-            val contentBottom = lowestContent(bare, height)
-            assertTrue(contentBottom <= barTop + .5f,
-                "${config.name} $page: the last content at $contentBottom sits behind the bar at $barTop")
-            assertTrue(barTop - contentBottom <= 40f * config.density,
-                "${config.name} $page: the last content at $contentBottom leaves a ${barTop - contentBottom} blank band above the bar at $barTop")
-        } finally { bare.close() }
+
+        val cleared = end(config, content, bottomBarClearance())
+        assertTrue(cleared.lowest <= barTop + .5f,
+            "${config.name} $page: the last content at ${cleared.lowest} sits behind the bar at $barTop")
+        val bare = end(config, content, 0.dp)
+        val bareGap = (config.height.value - config.inset.value) * config.density - bare.lowest
+        val clearedGap = barTop - cleared.lowest
+        assertTrue(clearedGap <= bareGap + 1f,
+            "${config.name} $page: the clearance leaves a $clearedGap band above the bar where the page's own end leaves $bareGap")
+        if (!bare.scrolled) return
+        assertTrue(abs((bare.lowest - cleared.lowest) - barHeight) <= 1f,
+            "${config.name} $page: the clearance moves the last content from ${bare.lowest} to ${cleared.lowest}, not by the bar's $barHeight")
     }
 
-    private fun scene(config: Config, content: @Composable () -> Unit, bar: Boolean,
+    private class End(val lowest: Float, val scrolled: Boolean)
+
+    private fun end(config: Config, content: @Composable () -> Unit, clearance: Dp): End {
+        frame = 0
+        val scene = scene(config, content, bar = false, clearance = clearance) {}
+        try {
+            frames(scene)
+            val scrolled = scrollToEnd(scene)
+            frames(scene, 6)
+            return End(lowestContent(scene, (config.height.value * config.density).toInt()), scrolled)
+        } finally { scene.close() }
+    }
+
+    private fun scene(config: Config, content: @Composable () -> Unit, bar: Boolean, clearance: Dp,
         placeBar: (Float) -> Unit): ImageComposeScene {
         val width = (config.width.value * config.density).toInt()
         val height = (config.height.value * config.density).toInt()
         return ImageComposeScene(width, height, Density(config.density)) {
             ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
                 Box(Modifier.fillMaxSize().padding(bottom = config.inset)) {
-                    CompositionLocalProvider(LocalBottomBarFades provides true, LocalBottomClearance provides bottomBarClearance()) {
+                    CompositionLocalProvider(LocalBottomBarFades provides true, LocalBottomClearance provides clearance) {
                         Box(Modifier.fillMaxSize()) {
                             content()
                             if (bar) Box(Modifier.align(Alignment.BottomCenter).onGloballyPositioned { placeBar(it.boundsInRoot().top) }) {
@@ -129,13 +144,13 @@ class BottomBarSafeAreaUiTest {
         return lowest.toFloat()
     }
 
-    private fun scrollToEnd(scene: ImageComposeScene) {
+    private fun scrollToEnd(scene: ImageComposeScene): Boolean {
         var before = -1f
         repeat(60) {
             val scroll = nodes(scene).filter { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
                 .maxByOrNull { it.boundsInRoot.height } ?: fail("no vertical scroller")
             val value = scroll.config[SemanticsProperties.VerticalScrollAxisRange].value()
-            if (value <= before + 0.5f) return
+            if (value <= before + 0.5f) return before > 0f
             before = value
             scroll.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 3000f)
             frames(scene, 4)
