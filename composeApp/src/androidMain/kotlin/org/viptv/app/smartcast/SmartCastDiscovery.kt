@@ -9,10 +9,9 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import org.viptv.app.features.settings.VizioTv
 import org.viptv.engine.wire.VizioHttpMethod
 import org.viptv.engine.wire.VizioRequest
-
-data class VizioTv(val name: String, val origin: String)
 
 class SmartCastDiscovery(
     private val native: SmartCastNative,
