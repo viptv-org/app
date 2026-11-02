@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -42,7 +43,7 @@ import org.viptv.app.components.pointerClickable
 fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean,
     query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false, editQuery: ((String) -> String) -> Unit,
     searchRows: List<SearchResultRow> = emptyList(), filters: Set<String> = emptySet(), filterChanged: (Set<String>) -> Unit = {},
-    focusResults: Boolean = false) {
+    focusResults: Boolean = false, retry: (() -> Unit)? = null) {
     if (television) {
         TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows, focusResults = focusResults)
         return
@@ -80,7 +81,15 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             }
         } }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-        error?.let { Text(it, color = Palette.danger) }
+        error?.let { message ->
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(message, Modifier.weight(1f, fill = false), color = Palette.danger)
+                if (retry != null) Text("Try again", Modifier
+                    .pointerClickable(onClickLabel = "Try again", shape = RoundedCornerShape(8.dp)) { retry() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
         if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matching titles", color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
