@@ -14,6 +14,11 @@ private suspend fun RemoteConnection.addonConfiguration(profile: String): Remote
         addonCodec.decodeFromJsonElement(response.getValue("connections")))
 }
 
+suspend fun RemoteConnection.browsingConfiguration(profile: String): BrowsingConfiguration {
+    val config = addonConfiguration(profile)
+    return BrowsingConfiguration(config.profile, config.connections)
+}
+
 suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
     val config = addonConfiguration(profile)
     val inventory = mutableListOf<IntegrationConnection>()

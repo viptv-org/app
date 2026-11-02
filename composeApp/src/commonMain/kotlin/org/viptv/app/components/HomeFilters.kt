@@ -28,9 +28,10 @@ internal fun isHomeTab(screen: Screen) = homeTabs.any { it.second == screen }
 @Composable
 internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, gutter: Dp = 0.dp) {
     val genres = LocalHomeGenres.current?.takeIf { it.choices.isNotEmpty() && screen == Screen.Home }
+    val tabs = if (LocalAnimeAvailable.current) homeTabs else homeTabs.filter { it.second != Screen.Anime }
     org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.edgeToEdgeScroll(rememberScrollState(), gutter), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        homeTabs.forEach { (label, destination) ->
+        tabs.forEach { (label, destination) ->
             val selected = destination == screen
             Surface(shape = RoundedCornerShape(20.dp),
                 color = if (selected) Palette.text else Palette.raised.copy(alpha = 0.8f),

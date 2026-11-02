@@ -192,6 +192,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         manageAccount = connection?.accountManagementEnabled == true, accountOwner = connection?.accountOwner == true,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
+    value.selected?.let { startBrowsingConfiguration(it) }
     adoptContinuation(value.continuation)
     discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }

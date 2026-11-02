@@ -3,6 +3,7 @@ package org.viptv.app.state
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
 import org.viptv.app.connection.*
 
 internal suspend fun ApplicationController.loadAddons(operation: AddonOperationOwner? = null) {
@@ -28,6 +29,19 @@ internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrows
     updateState { state -> state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
         browseControls = state.browseControls.takeIf { keepBrowse }, browseCards = if (keepBrowse) state.browseCards else emptyList(),
         browseNext = state.browseNext.takeIf { keepBrowse }) }
+}
+
+internal fun ApplicationController.startBrowsingConfiguration(profile: String) {
+    val device = local
+    val remote = connection
+    scope.launch {
+        val result = try {
+            device?.browsingConfiguration(profile) ?: remote?.browsingConfiguration(profile)
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+        if (mutable.value.selectedProfile == profile && connection === remote && local === device)
+            updateState { it.copy(browsingConfiguration = result) }
+    }
 }
 
 fun ApplicationController.refreshAddons() = run {

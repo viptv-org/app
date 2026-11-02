@@ -99,6 +99,7 @@ fun App(
             val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = compact && !browser && !desktopChrome && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.Search, Screen.Settings)
             val bottomClearance = if (bottomBar) bottomBarClearance() else 0.dp
+            val animeAvailable = state.animeAvailable
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
@@ -133,7 +134,7 @@ fun App(
                 else -> Box(Modifier.fillMaxSize()) {
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
                       LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar,
-                      LocalBottomClearance provides bottomClearance) { Column(Modifier.fillMaxSize()) {
+                      LocalBottomClearance provides bottomClearance, LocalAnimeAvailable provides animeAvailable) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && compact && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
 
