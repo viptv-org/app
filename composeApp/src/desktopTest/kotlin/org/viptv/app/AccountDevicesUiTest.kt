@@ -73,6 +73,19 @@ class AccountDevicesUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aFailureThatCannotSucceedKeepsItsReasonAndOffersNoRetry() {
+        val scene = ImageComposeScene(760, 700, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                AccountDevicesScreen(null, false, "Update the server to manage devices here.", {}, {}, {}, retryable = false)
+            } }
+        }
+        try {
+            val probe = Probe(scene); probe.frames(16)
+            assertTrue(probe.nodes().any { probe.text(it) == "Update the server to manage devices here." })
+            assertFalse(probe.nodes().any { probe.text(it) == "Retry" })
+        } finally { scene.close() }
+    }
+
     @Test fun signOutRequiresConfirmationAndCancelDoesNotPublishAMutation() {
         val signedOut = mutableListOf<String>()
         var all = 0
