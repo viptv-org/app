@@ -22,7 +22,7 @@ class RemoteSourcePresentationTest {
         }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         try {
-            val source = remote.sources(Card(MediaIdentity("title", "movie", emptyList()), provider_id = "simkl", title = "Title", badges = emptyList())).single()
+            val source = remote.sources(Card(MediaIdentity("title", "movie", emptyList()), provider_id = "simkl", title = "Title", badges = emptyList())).candidates.single()
             assertEquals("Movie.1080p.HEVC.mkv\nProvider notes", source.detail)
             assertEquals("Provider", source.presentation?.provider_name)
             assertEquals("hls", source.presentation?.delivery_format)

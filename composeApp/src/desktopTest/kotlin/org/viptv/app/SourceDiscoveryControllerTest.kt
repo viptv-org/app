@@ -156,10 +156,10 @@ class SourceDiscoveryControllerTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val published = mutableListOf<List<String>>()
         try {
-            val sources = remote.sources(title.copy(identity = title.identity.copy(kind = "movie"))) {
-                published += it.map { source -> source.id }
+            val sources = remote.sources(title.copy(identity = title.identity.copy(kind = "movie"))) { progress ->
+                published += progress.candidates.map { source -> source.id }
             }
-            assertEquals(listOf("early", "late"), sources.map { it.id })
+            assertEquals(listOf("early", "late"), sources.candidates.map { it.id })
             assertEquals(listOf(listOf("early"), listOf("early", "late")), published)
             assertFalse(cancelled)
             assertTrue(testScheduler.currentTime > 45_000)
@@ -200,5 +200,44 @@ class SourceDiscoveryControllerTest {
             assertContains(controller.state.value.error.orEmpty(), "Available sources are ready to play")
             assertTrue(cancelled)
         } finally { remote.close() }
+    }
+
+    @Test fun producerOutcomesReachThePickerWithConfiguredNamesAndSurviveUntilDiscoveryEnds() = runBlocking {
+        val pending = CompletableDeferred<Unit>(); val finish = CompletableDeferred<Unit>()
+        val client = HttpClient(MockEngine { request ->
+            val body = when {
+                request.url.encodedPath == "/api/streams" -> """{"id":"job"}"""
+                request.url.encodedPath.endsWith("/source-ranking") -> buildJsonObject {
+                    val ids = Json.parseToJsonElement((request.body as TextContent).text).jsonObject.getValue("ids").jsonArray
+                    put("streams", JsonArray(ids.map { id -> buildJsonObject { put("id", id) } }))
+                }.toString()
+                request.url.parameters["after"] == "0" -> """{"events":[{"source":"addon:1","streams":[{"id":"early","name":"Early"}]}],"done":false}"""
+                else -> { pending.complete(Unit); finish.await()
+                    """{"events":[{"source":"addon:2","streams":[]},{"source":"vsources:3","streams":[],"error_code":"source_format_unsupported"}],"done":true}""" }
+            }
+            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val addon = { id: String, name: String -> IntegrationConnection(id, "stremio", "1", null, name, true, 1, listOf(Capability.SOURCES)) }
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "profile", preferences = PreferencesSnapshot(),
+            addons = listOf(addon("addon:1", "Torrentio"), addon("addon:2", "Comet")),
+            sourceIntegrations = SourceIntegrationSnapshot(connections = listOf(addon("vsources:3", "VIPTV Sources"))))
+        try {
+            controller.chooseSource(title.copy(identity = title.identity.copy(kind = "movie")))
+            withTimeout(5000) { controller.state.first { it.sources.isNotEmpty() } }
+            assertEquals(listOf("addon:1"), controller.state.value.sourceProducers.map { it.providerId }, "a producer is observed as soon as it answers")
+            assertEquals(listOf("Torrentio"), controller.state.value.sourceProducers.map { it.label }, "installed add-ons use their configured name")
+            assertTrue(controller.state.value.findingSources)
+            pending.await()
+            finish.complete(Unit); controller.job!!.join()
+            val producers = controller.state.value.sourceProducers
+            assertEquals(listOf("addon:1", "addon:2", "vsources:3"), producers.map { it.providerId })
+            assertEquals(listOf("Torrentio", "Comet", "VIPTV Sources"), producers.map { it.label })
+            assertNull(producers[1].errorCode, "a zero-result producer reports no failure")
+            assertEquals("source_format_unsupported", producers[2].errorCode)
+            assertFalse(controller.state.value.findingSources)
+        } finally { finish.complete(Unit); controller.job?.cancelAndJoin(); remote.close() }
     }
 }

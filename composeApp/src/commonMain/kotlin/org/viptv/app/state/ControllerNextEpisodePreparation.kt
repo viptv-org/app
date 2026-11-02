@@ -19,7 +19,8 @@ internal fun interface NextSourcePreparer {
                 val ranking = ProgressiveSourceRanking(this,
                     rank = { rows -> local?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
                     show = {}, onMatch = {})
-                val outcome = local?.sources(profile, card, ranking::arrived) ?: SourcesOutcome(requireNotNull(remote).sources(card, ranking::arrived))
+                val observed: (SourcesOutcome) -> Unit = { ranking.arrived(it.candidates) }
+                val outcome = local?.sources(profile, card, observed) ?: requireNotNull(remote).sources(card, observed)
                 ranking.arrived(outcome.candidates)
                 ranking.finish()
             }

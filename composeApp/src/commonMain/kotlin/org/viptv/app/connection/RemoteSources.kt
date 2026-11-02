@@ -8,7 +8,7 @@ import org.viptv.engine.wire.SourceCandidate
 import org.viptv.engine.wire.SourcePresentation
 
 // The host's SDK producer spends up to 10s on metadata plus 45s on providers: poll through that whole interval.
-internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceCandidate>) -> Unit = {}): List<SourceCandidate> = withTimeout(60_000) {
+internal suspend fun RemoteConnection.sources(card: Card, publish: (SourcesOutcome) -> Unit = {}): SourcesOutcome = withTimeout(60_000) {
     val started = call("/api/streams", HttpMethod.Post, buildJsonObject {
         put("type", card.identity.kind); put("id", card.identity.id)
         card.parent_identity?.takeIf { card.identity.kind == "series" }?.let { put("series_id", it.id) }
@@ -23,12 +23,19 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceC
     try {
         val presentationCodec = Json { ignoreUnknownKeys = true }
         val found = linkedMapOf<String, SourceCandidate>()
+        val producers = linkedMapOf<String, SourceProducerOutcome>()
         var after = 0
         while (true) {
             val page = call("/api/streams/$job?after=$after&wait_ms=10000").jsonObject
             val events = page.getValue("events").jsonArray
             events.forEach { raw ->
                 val event = raw.jsonObject
+                event["source"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }?.let { id ->
+                    val prior = producers[id]
+                    producers[id] = SourceProducerOutcome(id, prior?.label.orEmpty(),
+                        event["error_code"]?.jsonPrimitive?.contentOrNull ?: prior?.errorCode,
+                        event["error"]?.jsonPrimitive?.contentOrNull ?: prior?.errorMessage)
+                }
                 event["streams"]?.jsonArray.orEmpty().forEach { stream ->
                     val value = stream.jsonObject
                     val id = value.getValue("id").jsonPrimitive.content
@@ -44,11 +51,11 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (List<SourceC
                 }
             }
             after += events.size
-            if (events.isNotEmpty()) publish(found.values.toList())
+            if (events.isNotEmpty()) publish(SourcesOutcome(found.values.toList(), producers = producers.values.toList()))
             if (page["done"]?.jsonPrimitive?.boolean == true) { completed = true; break }
             if (events.isEmpty()) delay(500)
         }
-        found.values.toList()
+        SourcesOutcome(found.values.toList(), producers = producers.values.toList())
     } finally {
         if (!completed) withContext(NonCancellable) {
             withTimeoutOrNull(2000) { try { call("/api/streams/$job", HttpMethod.Delete) }

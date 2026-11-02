@@ -19,8 +19,8 @@ class BestMatchFallbackTest {
     private class Fallback(fixture: LocalSetupFixture, val rows: List<SourceCandidate>) {
         val opened = mutableListOf<String>()
         val device = object : LocalConnection by fixture.local {
-            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome {
-                publish(rows)
+            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
+                publish(SourcesOutcome(rows))
                 return SourcesOutcome(rows)
             }
             override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources =

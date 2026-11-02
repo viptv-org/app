@@ -50,8 +50,8 @@ class NextEpisodePreparationTest {
     private fun localDevice(fixture: LocalSetupFixture, rows: List<SourceCandidate>, bestMatch: String?) =
         object : LocalConnection by fixture.local {
             override suspend fun detail(profile: String, card: Card, offset: Int) = DetailSnapshot(parent, episodes = (1L..4L).map { episode(it) })
-            override suspend fun sources(profile: String, card: Card, publish: (List<SourceCandidate>) -> Unit): SourcesOutcome {
-                publish(rows)
+            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
+                publish(SourcesOutcome(rows))
                 return SourcesOutcome(rows)
             }
             override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources =

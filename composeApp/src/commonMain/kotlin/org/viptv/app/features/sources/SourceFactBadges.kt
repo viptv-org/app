@@ -13,6 +13,7 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -25,7 +26,7 @@ internal fun SourceTitleLine(label: String, labelStyle: TextStyle, foreground: C
     val style = LocalTextStyle.current.merge(labelStyle).copy(color = foreground)
     val measurer = rememberTextMeasurer()
     Layout({
-        Text(label, Modifier.layoutId("label"), style = style)
+        Text(label, Modifier.layoutId("label"), style = style, maxLines = 1, overflow = TextOverflow.Ellipsis)
         badges.forEach { badge ->
             Text(badge, Modifier.layoutId("badge").background(foreground.copy(alpha = 0.16f), RoundedCornerShape(badgeStyle.radius))
                 .padding(horizontal = badgeStyle.horizontal, vertical = badgeStyle.vertical),
@@ -39,12 +40,14 @@ internal fun SourceTitleLine(label: String, labelStyle: TextStyle, foreground: C
         val tail = measurables.firstOrNull { it.layoutId == "trailing" }?.measure(loose)
         val bounded = constraints.hasBoundedWidth
         val room = if (bounded) (constraints.maxWidth - (tail?.let { it.width + gap } ?: 0)).coerceAtLeast(0) else Constraints.Infinity
-        val text = measurables.first { it.layoutId == "label" }.measure(if (bounded) Constraints.fixedWidth(room) else loose)
-        val lines = measurer.measure(label, style, constraints = Constraints(maxWidth = room.coerceAtLeast(1)))
+        val badgePlaceables = measurables.filter { it.layoutId == "badge" }.map { it.measure(loose) }
+        // The label yields the first badge's width, so a long title never drops every fact.
+        val labelRoom = if (bounded) (room - (badgePlaceables.firstOrNull()?.let { it.width + gap } ?: 0)).coerceAtLeast(0) else room
+        val text = measurables.first { it.layoutId == "label" }.measure(if (bounded) Constraints.fixedWidth(labelRoom) else loose)
+        val lines = measurer.measure(label, style, maxLines = 1, constraints = Constraints(maxWidth = labelRoom.coerceAtLeast(1)))
         val last = (lines.lineCount - 1).coerceAtLeast(0)
         val lastRight = if (label.isEmpty()) 0 else kotlin.math.ceil(lines.getLineRight(last)).toInt()
         val lastTop = lines.getLineTop(last).toInt(); val lastBottom = lines.getLineBottom(last).toInt()
-        val badgePlaceables = measurables.filter { it.layoutId == "badge" }.map { it.measure(loose) }
         val start = if (lastRight == 0) 0 else lastRight + gap
         val shown = if (!bounded) badgePlaceables.indices.toList()
             else sourceFactBadgesThatFit(badgePlaceables.map { it.width }, gap, (room - start).coerceAtLeast(0))

@@ -22,17 +22,26 @@ internal suspend fun NativeLocalConnection.deleteSourceIntegration(profile: Stri
 }
 
 internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: String, card: Card,
-    publish: suspend (List<SourceCandidate>) -> Unit): List<SourceCandidate> {
+    publish: suspend (SourcesOutcome) -> Unit): List<SourceCandidate> {
     val snapshot = readSourceIntegrationSchemas(profile)
-    if (snapshot.schemas.none { it.runtime_enabled && it.state == "Ready" }) return emptyList()
+    val ready = snapshot.schemas.filter { it.runtime_enabled && it.state == "Ready" }
+    if (ready.isEmpty()) return emptyList()
+    val names = snapshot.connections.associate { it.id to it.name }
+    val producers = linkedMapOf<String, SourceProducerOutcome>()
+    ready.forEach { schema ->
+        val id = schema.connection_id ?: return@forEach
+        producers[id] = SourceProducerOutcome(id, names[id] ?: schema.name)
+    }
     var jobId: String? = null
     val found = linkedMapOf<String, SourceCandidate>()
+    fun published() = SourcesOutcome(found.values.toList(), producers = producers.values.toList())
     try {
         val completed = withTimeoutOrNull(45_000) {
             val started = withContext(Dispatchers.IO) {
                 json.parseToJsonElement(engine.startIntegrationSources(profile, json.encodeToString(card))).jsonObject
             }
             jobId = started.getValue("id").jsonPrimitive.content
+            if (producers.isNotEmpty()) publish(published())
             var after = 0L
             while (true) {
                 val page = withContext(Dispatchers.IO) {
@@ -42,7 +51,7 @@ internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: Stri
                     event.sources.forEach { found[it.id] = it }
                     after = maxOf(after, event.seq)
                 }
-                if (page.events.isNotEmpty()) publish(found.values.toList())
+                if (page.events.isNotEmpty()) publish(published())
                 if (page.done) {
                     if (page.error_code != null && found.isEmpty()) throw LocalFailure("Source integration could not complete this title.")
                     break

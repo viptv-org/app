@@ -27,10 +27,10 @@ class SourceDrawerLayoutTest {
     }
 
     private fun render(width: Int, height: Int, television: Boolean = false, busy: Boolean = false, loadingMore: Boolean = false, tablet: Boolean = false,
-        check: (List<SemanticsNode>) -> Unit) {
+        opening: Boolean = false, check: (List<SemanticsNode>) -> Unit) {
         val scene = ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(television) { Box(Modifier.fillMaxSize().background(Palette.background)) {
-                SourcesScreen(title, sources, busy, null, {}, {}, television = television, tablet = tablet, loadingMore = loadingMore)
+                SourcesScreen(title, sources, busy, null, {}, {}, television = television, tablet = tablet, loadingMore = loadingMore, opening = opening)
             } }
         }
         try {
@@ -41,8 +41,12 @@ class SourceDrawerLayoutTest {
     }
 
     private fun texts(nodes: List<SemanticsNode>) = nodes.flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
-    private fun releaseHeight(nodes: List<SemanticsNode>) = nodes.first { node ->
-        node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "$release #1" } }.boundsInRoot.height
+    private fun releaseLines(nodes: List<SemanticsNode>): Int {
+        val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        val node = nodes.first { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "$release #1" } }
+        assertTrue(node.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(results))
+        return results.single().lineCount
+    }
     private fun drawerWidth(nodes: List<SemanticsNode>) = nodes.first { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Choose a source" }.boundsInRoot.width
 
     @Test fun noLayoutShowsTheBestMatchHint() {
@@ -56,10 +60,20 @@ class SourceDrawerLayoutTest {
 
     @Test fun tvKeepsItsLoadingAndOpeningStatus() {
         render(1920, 1080, television = true, loadingMore = true) { nodes ->
-            assertTrue(texts(nodes).any { it.startsWith("Checking add-ons · 3 sources so far") }, texts(nodes).toString())
+            assertTrue(texts(nodes).any { it == "Still checking sources" }, texts(nodes).toString())
         }
         render(1920, 1080, television = true, busy = true) { nodes ->
             assertTrue(texts(nodes).any { it == "Opening stream…" }, texts(nodes).toString())
+        }
+    }
+
+    @Test fun aRowTappedWhileDiscoveryIsPendingShowsTheOpeningStatus() {
+        for (television in listOf(false, true)) {
+            render(if (television) 1920 else 1440, if (television) 1080 else 900, television = television,
+                busy = true, loadingMore = true, opening = true) { nodes ->
+                assertTrue(texts(nodes).any { it.contains("Opening stream…") }, "TV $television: ${texts(nodes)}")
+                assertFalse(texts(nodes).any { it == "Still checking sources" || it == "Finding sources" }, "TV $television: ${texts(nodes)}")
+            }
         }
     }
 
@@ -85,16 +99,16 @@ class SourceDrawerLayoutTest {
     }
 
     @Test fun aLongReleaseLineWrapsLessInTheWiderDrawer() {
-        var wide = 0f
-        var narrow = 0f
+        var wide = 0
+        var narrow = 0
         render(1440, 900) { nodes ->
             assertTrue(drawerWidth(nodes) >= 640f, "the drawer is at least 640 dp at 1440x900, not ${drawerWidth(nodes)}")
-            wide = releaseHeight(nodes)
+            wide = releaseLines(nodes)
         }
         render(800, 900) { nodes ->
             assertEquals(460f, drawerWidth(nodes))
-            narrow = releaseHeight(nodes)
+            narrow = releaseLines(nodes)
         }
-        assertTrue(wide < narrow * 0.75f, "the release line takes fewer lines at 720 dp ($wide px) than at 460 dp ($narrow px)")
+        assertTrue(wide < narrow, "the release wraps in fewer lines at 720 dp ($wide) than at 460 dp ($narrow)")
     }
 }

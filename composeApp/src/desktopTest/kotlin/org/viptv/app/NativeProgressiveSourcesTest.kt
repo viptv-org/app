@@ -52,8 +52,9 @@ class NativeProgressiveSourcesTest {
         Fixture().use { fixture ->
             val first = CompletableDeferred<List<SourceCandidate>>()
             val updates = mutableListOf<List<String>>()
-            val loading = async { fixture.local.fetchLocalSources("default", card) {
-                updates += it.map { source -> source.id }; first.complete(it)
+            val loading = async { fixture.local.fetchLocalSources("default", card) { progress ->
+                updates += progress.candidates.map { source -> source.id }
+                progress.candidates.takeIf { it.isNotEmpty() }?.let { first.complete(it) }
             } }
             try {
                 val partial = withTimeout(3_000) { first.await() }
@@ -72,7 +73,7 @@ class NativeProgressiveSourcesTest {
     @Test fun cancellationStopsLateEmissionAndKeepsAlreadySelectedGrantOpen() = runBlocking<Unit> {
         Fixture().use { fixture ->
             val first = CompletableDeferred<SourceCandidate>(); val updates = mutableListOf<List<String>>()
-            val loading = launch { fixture.local.fetchLocalSources("default", card) { updates += it.map { s -> s.id }; first.complete(it.first()) } }
+            val loading = launch { fixture.local.fetchLocalSources("default", card) { progress -> updates += progress.candidates.map { s -> s.id }; progress.candidates.firstOrNull()?.let { first.complete(it) } } }
             val selected = withTimeout(3_000) { first.await() }; fixture.lateStarted.await()
             loading.cancelAndJoin(); fixture.releaseLate.complete(Unit)
             assertEquals(1, updates.size); assertTrue(fixture.lateCancelled.isCompleted)
@@ -83,7 +84,7 @@ class NativeProgressiveSourcesTest {
     @Test fun integrationRevisionChangeRejectsLateResultsAndEarlierGrants() = runBlocking<Unit> {
         Fixture().use { fixture ->
             val first = CompletableDeferred<SourceCandidate>(); val updates = mutableListOf<List<String>>()
-            val loading = async { runCatching { fixture.local.fetchLocalSources("default", card) { updates += it.map { s -> s.id }; first.complete(it.first()) } } }
+            val loading = async { runCatching { fixture.local.fetchLocalSources("default", card) { progress -> updates += progress.candidates.map { s -> s.id }; progress.candidates.firstOrNull()?.let { first.complete(it) } } } }
             val selected = withTimeout(3_000) { first.await() }; fixture.lateStarted.await()
             fixture.local.engine.setAddonEnabled("default", fixture.providers.last(), false)
             fixture.releaseLate.complete(Unit)
