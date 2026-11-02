@@ -3,6 +3,7 @@ package org.viptv.app.state
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
 import org.viptv.app.connection.*
 
 internal suspend fun ApplicationController.loadAddons(operation: AddonOperationOwner? = null) {
@@ -24,10 +25,29 @@ internal suspend fun ApplicationController.loadAddons(operation: AddonOperationO
     publishAddons(result)
 }
 
+private fun ApplicationController.leaveAnimeIfUnavailable() {
+    if (mutable.value.screen == Screen.Anime && !mutable.value.animeAvailable) navigate(Screen.Home, record = false)
+}
+
 internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrowse: Boolean = false) {
     updateState { state -> state.copy(addons = result.addons, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
         browseControls = state.browseControls.takeIf { keepBrowse }, browseCards = if (keepBrowse) state.browseCards else emptyList(),
         browseNext = state.browseNext.takeIf { keepBrowse }) }
+    leaveAnimeIfUnavailable()
+}
+
+internal fun ApplicationController.startBrowsingConfiguration(profile: String) {
+    val device = local
+    val remote = connection
+    scope.launch {
+        val result = try {
+            device?.browsingConfiguration(profile) ?: remote?.browsingConfiguration(profile)
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+        if (mutable.value.selectedProfile != profile || connection !== remote || local !== device) return@launch
+        updateState { it.copy(browsingConfiguration = result) }
+        leaveAnimeIfUnavailable()
+    }
 }
 
 fun ApplicationController.refreshAddons() = run {
@@ -78,6 +98,7 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
         loadAddons(owner)
         updateAddonHome(owner)
         loadSourceIntegrations(owner)
+        reloadLiveIfVisible()
     }
 }
 
@@ -90,6 +111,7 @@ fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
     loadAddons(owner)
     updateAddonHome(owner)
     loadSourceIntegrations(owner)
+    reloadLiveIfVisible()
 }
 
 fun ApplicationController.removeAddon(id: String) = run {
@@ -99,4 +121,5 @@ fun ApplicationController.removeAddon(id: String) = run {
     loadAddons(owner)
     updateAddonHome(owner)
     loadSourceIntegrations(owner)
+    reloadLiveIfVisible()
 }

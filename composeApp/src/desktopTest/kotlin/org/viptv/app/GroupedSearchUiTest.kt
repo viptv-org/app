@@ -52,6 +52,68 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aFilterThatExcludesEveryProviderShowsOneEmptyState() {
+        val movie = Card(MediaIdentity("only-title", "movie", emptyList()), provider_id = "stremio", title = "Only copy", badges = emptyList())
+        val scene = ImageComposeScene(1440, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("spider", emptyList(), emptyList(), false, null, true, {}, {},
+                        editQuery = {}, filters = setOf("Channels"),
+                        searchRows = listOf(SearchResultRow("addon:1", "First provider", "stremio", addon_id = 1, cards = listOf(movie))))
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
+            assertFalse(texts.any { it == "First provider" })
+            assertFalse(texts.any { it == "Only copy" })
+        } finally { scene.close() }
+    }
+
+    @Test fun anEmptySearchShowsTheDesignEmptyStateCopy() {
+        val scene = ImageComposeScene(1440, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("spider", emptyList(), emptyList(), false, null, true, {}, {}, editQuery = {})
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
+        } finally { scene.close() }
+    }
+
+    @Test fun failedProviderBlocksSitBelowTheProvidersThatReturnedResults() {
+        val result = Card(MediaIdentity("result-id", "movie", emptyList()), provider_id = "addon:1", title = "Returned title", badges = emptyList())
+        val rows = listOf(
+            SearchResultRow("simkl:anime", "Anime", "simkl", state = "Failed"),
+            SearchResultRow("simkl:movie", "Movies", "simkl", state = "Failed"),
+            SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(result)),
+            SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed"))
+        val scene = ImageComposeScene(600, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("dune", emptyList(), emptyList(), false, null, false, {}, {},
+                        editQuery = {}, searchRows = rows)
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val nodes = nodes(scene)
+            val resultTop = nodes.filter { text(it).contains("Returned title") }.minOf { it.boundsInRoot.top }
+            val failedTops = nodes.filter { text(it).contains("This search provider could not respond") }.map { it.boundsInRoot.top }
+            assertEquals(3, failedTops.size)
+            assertTrue(failedTops.all { it > resultTop }, "Failed provider blocks must render below the providers that returned results")
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }

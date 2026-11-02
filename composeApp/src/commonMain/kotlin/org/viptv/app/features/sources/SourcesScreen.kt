@@ -14,21 +14,27 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
 import kotlinx.coroutines.flow.collect
 import org.viptv.app.connection.SourceGroups
+import org.viptv.app.connection.SourceProducerOutcome
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -38,6 +44,7 @@ import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.LocalPointerHover
+import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.components.Motion
 import org.viptv.app.components.SheetHandle
 import org.viptv.app.components.motionSpec
@@ -48,19 +55,26 @@ import org.viptv.app.components.rememberSheetDrag
 fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, error: String?,
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {},
-    errorCode: String? = null, openGateways: (() -> Unit)? = null) {
+    errorCode: String? = null, openGateways: (() -> Unit)? = null, producers: List<SourceProducerOutcome> = emptyList(),
+    banner: String? = null, failed: List<String> = emptyList(), opening: Boolean = false) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
             detail = detail,
             loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders, openingStage = openingStage,
-            groups = groups)
+            groups = groups, producers = producers, banner = banner, failed = failed, opening = opening)
         return
     }
     var quality by remember { mutableStateOf<String?>(null) }
     var provider by remember { mutableStateOf<String?>(null) }
     val visible = sources.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
-    val rows = remember(visible, groups) { sourceListRows(visible, groups) }
+    val producer = sourceProducerFor(producers, provider)
+    val notice = sourceProducerNotice(producer, discoveryPending = loadingMore && !opening, hasRows = visible.isNotEmpty())
+    LaunchedEffect(sources, producers) {
+        val id = provider ?: return@LaunchedEffect
+        if (sources.none { it.sourceFilterId() == id } && producers.none { sourceProducerFilterId(it.providerId) == id }) provider = null
+    }
+    val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
     val listState = rememberLazyListState()
     LaunchedEffect(listState) {
         listState.interactionSource.interactions.collect { interaction ->
@@ -69,6 +83,9 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     }
     var focusedSource by remember { mutableStateOf<String?>(null) }
     val headerHeight = remember { SourceHeaderHeight() }
+    val rowFocus = remember { mutableMapOf<String, FocusRequester>() }
+    var details by remember { mutableStateOf<SourceCandidate?>(null) }
+    var detailsRow by remember { mutableStateOf<FocusRequester?>(null) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         val touch = !television && !LocalPointerHover.current
@@ -94,9 +111,12 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
         }.onSizeChanged { if (phone) sheetHeight = it.height.toFloat() }.nestedScroll(drag.nestedScroll)
             .clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
             topEnd = if (phone) 24.dp else 0.dp)).background(Palette.surface).semantics { paneTitle = "Choose a source" }) {
+            val pending = loadingMore && !opening
             val summary = when {
-                busy -> if (sources.isEmpty()) "Loading sources…" else openingStage ?: "Opening stream…"
-                sources.isEmpty() && loadingMore -> "Loading sources…"
+                opening -> openingStage ?: "Opening stream…"
+                busy && sources.isEmpty() -> "Finding sources"
+                busy -> openingStage ?: "Opening stream…"
+                pending -> if (sources.isEmpty()) "Finding sources" else "Still checking sources"
                 else -> sourceSummary(sources)
             }
             val summaryLine = listOfNotNull(sourceHeading(title, detail), summary).joinToString(" · ")
@@ -106,7 +126,8 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                     Text("Choose a source", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
-                Text(summaryLine, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), color = Palette.secondary, fontSize = 13.sp)
+                SourceSummary(summaryLine, pending, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), 13.sp)
+                banner?.let { SourceFallbackBanner(it, 13.sp, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp)) }
             } else Column(Modifier.padding(horizontal = if (television) 48.dp else 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -114,11 +135,13 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                         fontWeight = FontWeight.Bold)
                     IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
                 }
-                Text(summaryLine, color = Palette.secondary, fontSize = if (television) 20.sp else 13.sp)
+                SourceSummary(summaryLine, pending, fontSize = if (television) 20.sp else 13.sp)
+                banner?.let { SourceFallbackBanner(it, if (television) 20.sp else 13.sp, Modifier.fillMaxWidth()) }
             }
-            SourceFilters(sources, quality, provider, { quality = it }, { provider = it })
+            SourceFilters(sources, quality, provider, { quality = it }, { provider = it }, producers = producers)
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            KeepSourceListPosition(listState, rows, focusedSource, headerHeight, leading = if (error != null) 1 else 0)
+            KeepSourceListPosition(listState, rows, focusedSource, headerHeight,
+                leading = (if (error != null) 1 else 0) + (if (notice != null) 1 else 0))
             LazyColumn(Modifier.weight(1f), state = listState, contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp), topEdgeFade = false) {
                 error?.let {
@@ -132,7 +155,12 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                         }
                     }
                 }
-                if (!busy && !loadingMore && visible.isEmpty() && error == null) item {
+                notice?.let { message ->
+                    item(key = "producer") {
+                        Text(message, Modifier.padding(20.dp).semantics { liveRegion = LiveRegionMode.Polite }, color = Palette.secondary)
+                    }
+                }
+                if (!busy && !loadingMore && visible.isEmpty() && error == null && notice == null) item {
                     val empty = if (torrentOnlyProviders > 0)
                         "${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this device cannot stream directly" else "providers returned torrent links this device cannot stream directly"}. Add a debrid service (for example TorBox) to play them, or try another title."
                     else "No streams found. Enable a provider that supplies sources."
@@ -140,15 +168,35 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 }
                 items(rows, key = { it.source.id }) { row ->
                     SourceRow(row.source, television, choose, enabled = !busy, selected = row.source.id == selectedSource,
-                        header = row.header, bestMatch = row.bestMatch, headerMeasured = { headerHeight.pixels = it },
-                        focusChanged = { has -> if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null })
+                        header = row.header, bestMatch = row.bestMatch, didntStart = row.didntStart, headerMeasured = { headerHeight.pixels = it },
+                        focusChanged = { has -> if (has) focusedSource = row.source.id else if (focusedSource == row.source.id) focusedSource = null },
+                        details = { source ->
+                            detailsRow = rowFocus[source.id].takeIf { focusedSource == source.id }
+                            details = source
+                        }, requester = rowFocus.getOrPut(row.source.id) { FocusRequester() })
                 }
             }
+        }
+        details?.let { shown ->
+            SourceDetailsPanel(shown, television = false, scale = 1f, dismiss = {
+                val back = detailsRow
+                details = null; detailsRow = null
+                back?.requestPlacedFocus()
+            })
         }
     }
 }
 
 internal fun sourceDrawerWidth(window: Dp): Dp = minOf(window, maxOf(460.dp, minOf(720.dp, window * 0.55f)))
+
+@Composable
+private fun SourceSummary(line: String, pending: Boolean, modifier: Modifier = Modifier, fontSize: TextUnit) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (pending) CircularProgressIndicator(Modifier.size(fontSize.value.dp + 3.dp), color = Palette.accent, strokeWidth = 2.dp)
+        Text(line, Modifier.weight(1f, fill = false).semantics { liveRegion = LiveRegionMode.Polite },
+            color = Palette.secondary, fontSize = fontSize)
+    }
+}
 
 internal fun sourceSummary(sources: List<SourceCandidate>): String {
     val addons = sources.map { it.sourceFilterId() }.distinct().size

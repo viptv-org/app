@@ -19,6 +19,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         controller.loadPlaybackSeason()
     }
     val fallback = state.sources.firstOrNull { it.id != state.playingSource?.id } ?: state.playingSource
+    val fallbackNotice = state.fallbackNotice
     val preferences = state.playback?.preferences ?: state.preferences?.preferences
     val title = state.sourceTitle?.let { card ->
         val episode = card.identity.episode
@@ -32,11 +33,16 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
             sourceQuality = state.playingSource?.quality_height?.let { if (it == 2160L) "4K" else "${it}p" } ?: state.playingSource?.presentation?.quality, episodes = episodes,
             skips = state.playbackSegments, skipIntros = preferences?.skip_intros == true,
             nextEpisode = state.nextEpisode.takeIf { preferences?.next_episode_button != false }, fallbackLabel = fallback?.label),
-        chooseSources = controller::closePlayer, playEpisode = { controller.closePlayer(); controller.chooseSource(it) },
+        chooseSources = controller::closePlayer, playEpisode = controller::playEpisode,
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
         trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
-        autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion())
+        autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion(),
+        fallback = fallbackNotice?.let { PlayerFallbackNotice(it.reason, it.next.label, it.next.fallbackFacts()) },
+        stopFallback = if (fallbackNotice != null) controller::stopBestMatchFallback else null,
+        audioNotice = state.audioNotice,
+        nextSource = if (state.bestMatch != null) controller::playNextSource else null,
+        openingSource = state.openingSource)
 }
 
 internal fun playerEpisodes(current: Card?, loaded: List<Card>): List<Card> {

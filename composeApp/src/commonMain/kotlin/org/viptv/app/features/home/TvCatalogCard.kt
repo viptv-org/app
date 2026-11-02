@@ -29,9 +29,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtFailure
+import org.viptv.app.components.tvHold
+import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.LocalNextEpisodes
 import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.components.TvMediaBadge
@@ -55,14 +59,21 @@ import org.viptv.app.components.pointerClickable
 @Composable
 internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier: Modifier = Modifier,
     focused: (Card) -> Unit, open: (Card) -> Unit, showFocus: Boolean = true, focusedCaptions: Boolean = false,
-    onUp: (() -> Unit)? = null, artworkWidth: androidx.compose.ui.unit.Dp? = null) {
+    onUp: (() -> Unit)? = null, artworkWidth: androidx.compose.ui.unit.Dp? = null,
+    info: (Card) -> Unit = open) {
     val focus = remember { mutableStateOf(false) }
+    val actions = LocalCardActions.current
+    val removal = LocalListRemoval.current
+    val menu = actions != null || removal != null
+    val saved = actions?.isSaved?.invoke(card) == true
+    var menuOpen by remember { mutableStateOf(false) }
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
     val nextEpisodes = LocalNextEpisodes.current
     val nextEpisode = remember(card, nextEpisodes) { if (card.isCaughtUp()) nextEpisodes[card] else null }
     val states = remember(card, nextEpisode) { TvCardStates.of(card, nextEpisode) }
     val description = remember(card, states) { cardDescription(card, states) }
     Column(modifier.width(artworkWidth ?: (if (portrait) 232 else 384).dp * scale)
+        .tvHold(enabled = menu, onHold = { menuOpen = true })
         // Clearing semantics also drops the focusable node's own properties, so the focus state is restated here.
         .onPreviewKeyEvent { event ->
             if (onUp != null && event.type == androidx.compose.ui.input.key.KeyEventType.KeyDown &&
@@ -115,6 +126,16 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
         // The caption box holds one meta line; a third clips into the row below.
         if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().height(76.dp * scale)) {
             CardCaptions(card, states, focus, portrait, focusedCaptions, scale)
+        }
+        if (menu && menuOpen) {
+            Popup(onDismissRequest = { menuOpen = false }, popupPositionProvider = remember { TvCardMenuPosition() }, properties = PopupProperties(focusable = true)) {
+                CardMenu(card, saved, removal, actions,
+                    onDismiss = { menuOpen = false },
+                    onPlay = { menuOpen = false; (actions?.play ?: open).invoke(card) },
+                    onInfo = { menuOpen = false; info(card) },
+                    onToggleSave = actions?.let { { menuOpen = false; it.toggleSave(card) } },
+                    scale = scale)
+            }
         }
     }
 }

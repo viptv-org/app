@@ -36,6 +36,9 @@ private fun SourceCandidate.subtitleBadge(): String? = languageBadge(subtitle_la
 internal fun SourceCandidate.releaseDetail(): String? = detail?.takeIf {
     it.isNotBlank() && it.trim() != label.trim() && it.trim() != technicalDetail()?.trim()
 }
+internal fun SourceCandidate.descriptionText(): String? =
+    listOfNotNull(releaseDetail(), technicalDetail()).distinct().takeIf { it.isNotEmpty() }?.joinToString(" · ")
+
 internal fun SourceCandidate.technicalDetail(): String? {
     val fallback = detail?.takeUnless { it.trim() == qualityLabel() }
     val value = presentation ?: return fallback

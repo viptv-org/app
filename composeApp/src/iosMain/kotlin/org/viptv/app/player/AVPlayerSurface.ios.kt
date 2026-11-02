@@ -19,7 +19,7 @@ private class AVPlayerLifetime { var active = false; var playRequest = 0L; var a
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
-actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
+actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
     val player = remember(input.id) { AVPlayer() }
     val lifetime = remember(player) { AVPlayerLifetime() }
     var captionScale by remember { mutableStateOf(input.preferences.subtitle_font_scale.toFloat().takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f) }
@@ -99,7 +99,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                 }
                 latestObserve(PlayerFact.Properties(player.volume, player.rate.toDouble(), captionScale))
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), command.failureObserver(latestObserve)) }
         }
     }
     LaunchedEffect(paused, player) {

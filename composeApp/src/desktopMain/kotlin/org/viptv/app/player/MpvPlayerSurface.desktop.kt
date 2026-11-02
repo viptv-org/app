@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 @Composable
-internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) {
+internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) {
     key(input) {
         val host = mpvHost()
         val result = remember { runCatching { MpvSession(input) } }
@@ -84,12 +84,23 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) { reportNativePlaybackFailure(playbackFailureSummary(input, "mpv_open_failed", error.message ?: "Media could not be opened")); latestObserve(PlayerFact.Failed) }
         }
-        LaunchedEffect(opened, paused) {
-            if (opened) try {
+        LaunchedEffect(paused) {
+            if (!opened) return@LaunchedEffect
+            try {
                 transport.request(paused, state.status)
                 session.property("pause", if (paused) "yes" else "no")
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            catch (error: Exception) { input.controlFailed(PlaybackControl.PlayPause, error.controlCause(), latestObserve) }
+        }
+        var fillSettled by remember { mutableStateOf(false) }
+        LaunchedEffect(opened, fill) {
+            if (!opened) return@LaunchedEffect
+            try {
+                session.property("panscan", if (fill) "1.0" else "0.0")
+                fillSettled = true
+            } catch (error: CancellationException) { throw error }
+            // The panscan at open is the default, not a viewer command: only a later change is theirs to see.
+            catch (error: Exception) { input.controlFailed(PlaybackControl.Fill, error.controlCause(), if (fillSettled) latestObserve else null) }
         }
         suspend fun attach(candidate: SubtitleCandidate): Int {
             providerIds[candidate.id]?.let { return it }
@@ -120,7 +131,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
             providerIds[candidate.id] = id
             return id
         }
-        fun selectSubtitle(candidate: SubtitleCandidate?, id: Int?) {
+        fun selectSubtitle(candidate: SubtitleCandidate?, id: Int?, chosen: Boolean = false) {
             val previous = subtitleJob
             previous?.cancel()
             subtitleJob = scope.launch {
@@ -130,7 +141,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
                     ensureActive()
                     session.property("sid", target?.toString() ?: "no")
                 } catch (error: CancellationException) { throw error }
-                catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+                catch (error: Exception) { input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) latestObserve else null) }
             }
         }
         LaunchedEffect(commands, session) {
@@ -150,11 +161,11 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
                             session.property("aid", command.id?.toString() ?: "no")
                         } else {
                             subtitleTouched = true
-                            selectSubtitle(input.providerSubtitle(command.id), command.id?.takeIf { it >= 0 })
+                            selectSubtitle(input.providerSubtitle(command.id), command.id?.takeIf { it >= 0 }, chosen = true)
                         }
                     }
                 } catch (error: CancellationException) { throw error }
-                catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+                catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), command.failureObserver(latestObserve)) }
             }
         }
         LaunchedEffect(candidates, opened, subtitleTouched) {
@@ -178,7 +189,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
             while (true) {
                 delay(2_000)
                 val value = session.state.value
-                input.diagnostics?.invoke("path=${renderer.path} tone_map=${if (session.toneMapped) "on" else "off"} drawn=${lastDrawn.get()} source_fps=${value.sourceFps} dropped=${value.dropped} hw=${value.hwdec} buffering=${value.buffering} position_ms=${value.positionMs}")
+                input.diagnostics?.invoke("path=${renderer.path} gl=${renderer.glStatus} tone_map=${if (session.toneMapped) "on" else "off"} drawn=${lastDrawn.get()} source_fps=${value.sourceFps} dropped=${value.dropped} hw=${value.hwdec} buffering=${value.buffering} position_ms=${value.positionMs}")
             }
         }
         }

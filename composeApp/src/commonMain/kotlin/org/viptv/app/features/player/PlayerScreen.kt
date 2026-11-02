@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import org.viptv.app.player.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.SourceCandidate
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import org.viptv.app.components.pointerClickable
@@ -45,11 +46,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
-    autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
+    autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null,
+    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
-            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion)
+            trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
+            fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -57,6 +60,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var duration by remember(playbackKey) { mutableStateOf(input?.durationMillis ?: preview?.durationMillis) }
     var tracks by remember(playbackKey) { mutableStateOf(PlaybackTracks()) }
     var seekTarget by remember(playbackKey) { mutableStateOf<Long?>(null) }
+    var seekPending by remember(playbackKey) { mutableStateOf<Long?>(null) }
     var seekMark by remember(playbackKey) { mutableStateOf(kotlin.time.TimeSource.Monotonic.markNow()) }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
@@ -69,9 +73,11 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var volume by remember { mutableStateOf(1f) }
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
-    var controlError by remember { mutableStateOf<String?>(null) }
+    var controlError by remember(playbackKey) { mutableStateOf<String?>(null) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
+    var fill by remember(title?.identity) { mutableStateOf(false) }
+    val toggleFill = { fill = !fill; interaction++; visible = true }
     var phonePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
     var nextChoice by remember(playbackKey) { mutableStateOf<Card?>(null) }
     var restorePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
@@ -138,46 +144,49 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
-    fun seekTo(value: Long, reveal: Boolean) { if (input?.live != true) {
+    fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
-        seekTarget = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
-        if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target)); interaction++; controlError = null }
+        seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
+        if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target, automatic)); interaction++; if (!automatic) controlError = null }
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
     val skipped = remember(playbackKey) { mutableSetOf<TvSkipRange>() }
     fun skipSegment(range: TvSkipRange, automatic: Boolean) {
         if (seekTarget != null) return
         if (!skipped.add(range) && automatic) return
-        seekTo(range.endMillis, reveal = false)
+        seekTo(range.endMillis, reveal = false, automatic = automatic)
     }
     LaunchedEffect(position, tvExtras.skips, tvExtras.skipIntros, paused) {
         if (tvExtras.skipIntros && !paused) tvExtras.skips.firstOrNull { it.automatic && position in it.startMillis until it.endMillis }
             ?.let { skipSegment(it, automatic = true) }
     }
     fun applyFact(fact: PlayerFact) {
+        seekPending?.let { target -> if (fact.settlesSeek(target) || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) seekPending = null }
         when (fact) {
             is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Progress -> {
                 duration = fact.durationMillis ?: duration
-                if (seekTarget == null || kotlin.math.abs(fact.positionMillis - seekTarget!!) <= 1500 || seekMark.elapsedNow().inWholeSeconds >= 10) {
+                if (seekTarget == null || kotlin.math.abs(fact.positionMillis - seekTarget!!) <= 1500 || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) {
                     position = fact.positionMillis; seekTarget = null
                 }
             }
             is PlayerFact.Status -> {
-                buffering = !failed && fact.name in listOf("Opening", "Buffering", "Preparing")
+                buffering = !failed && fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
                 if (!ended) endHandled = false
             }
             is PlayerFact.Presentation -> Unit
-            PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
+            is PlayerFact.ControlFailed -> controlError = playbackControlErrorCopy
             PlayerFact.Failed -> { buffering = false; failed = true }
+            PlayerFact.Undecodable -> { buffering = false; failed = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
+    LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        if (rendering != null) PlayerSurface(rendering, paused || input == null, Modifier.fillMaxSize(), { fact ->
+        if (rendering != null) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->
             if (input === rendering) { applyFact(fact); observe(fact) }
         }, commands)
         if (!pictureInPicture) {
@@ -215,7 +224,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         Column(Modifier.fillMaxWidth().padding(horizontal = gutter, vertical = 12.dp)) {
                             if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
                                 Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            } else PlaybackTimeline(position, duration, ::seek, remaining = phone)
+                            } else PlaybackTimeline(position, duration, ::seek, remaining = phone, skips = tvExtras.skips)
                             if (phone) {
                                 if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
                                     color = Palette.secondary, fontSize = 12.sp)
@@ -223,13 +232,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                                     episodes = openEpisodes,
                                     episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
                                     next = if (episodeTitle) playNext else null,
-                                    nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus)
+                                    nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus,
+                                    fill = fill, toggleFill = toggleFill)
                             }
                             else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
                                 { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
                                 streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
                                 next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
-                                episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null)
+                                episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
+                                fill = fill, toggleFill = toggleFill)
                         }
                     }
                 }
@@ -251,12 +262,24 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
                     }
                 }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
-                if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
-                    "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
-                else {
-                    if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
-                    (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
+                val stopped = failed || error != null
+                when {
+                    stopped && fallback != null -> PhonePlayerFallback(fallback, stopFallback, controlInsets)
+                    stopped && phone -> PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
+                        "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
+                    else -> {
+                        val opening = openingSource?.takeUnless { failed || error != null }
+                        if (opening != null) {
+                            Column(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(Modifier.size(40.dp), color = Palette.text)
+                                Text("Opening ${opening.label}…", Modifier.padding(top = 16.dp), color = Palette.text, fontSize = 14.sp)
+                            }
+                        } else if ((buffering || seekPending != null) && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                        (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
+                    }
                 }
+                if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
                     PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
             }

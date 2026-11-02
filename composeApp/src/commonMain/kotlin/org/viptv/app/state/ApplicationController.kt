@@ -20,7 +20,9 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val playbackDiagnostics: ((String) -> Unit)? = null,
     internal val localFactory: (String) -> LocalConnection = ::localConnection,
     internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) },
-    internal val freshness: Freshness = Freshness()) {
+    internal val freshness: Freshness = Freshness(),
+    internal val bestMatchNoticeMillis: Long = 2_000L,
+    internal val startDeadlineMillis: Long = 20_000L) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
@@ -66,11 +68,17 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var nextEpisodeJob: Job? = null
     internal var nextEpisodeKey: NextEpisodeKey? = null
     internal var nextEpisodeGeneration = 0L
+    internal var nextEpisodePreparationJob: Job? = null
+    internal var nextEpisodePreparationKey: NextEpisodePreparationKey? = null
+    internal var nextEpisodePreparationGeneration = 0L
+    internal var nextSourcePreparer: NextSourcePreparer = NextSourcePreparer.Device
+    internal var clockMillis: () -> Long = ::epochMillis
     internal var playbackSeasonJob: Job? = null
     internal var playbackSeasonKey: PlaybackSeasonKey? = null
     internal var playbackSeasonGeneration = 0L
     internal var sourceDetailJob: Job? = null
     internal var sourcesScrolled = false
+    internal var sourcesStartPlayback = false
     internal var pairingJob: Job? = null
     internal var vodMatchesJob: Job? = null
     internal var vodMatchesRequest = 0L
@@ -79,6 +87,10 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var stremioImport: StremioImportSession? = null
     internal var restartRequested = false
     internal var firstFrameSeen = false
+    internal var fallbackJob: Job? = null
+    internal var startDeadlineJob: Job? = null
+    internal var sourceChoice = SourceChoice.None
+    internal var sourceMemory = SourceMemory.book()
     internal var frameAcknowledgment: Job? = null
     internal var lastProgress: PlayerFact.Progress? = null
     internal var backgroundPlayback: org.viptv.app.player.PlaybackInput? = null
@@ -109,8 +121,11 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                         discardStremioImport()
                         connection?.close(); connection = null
                         mutable.value = ApplicationState(error = "Session expired. Sign in again.")
-                    } else if (generation == current) updateState { it.copy(error = failureMessage(e), errorCode = (e as? RemoteFailure)?.code,
-                        detailRetryable = e !is RemoteFailure || !e.metadataNotFound) }
+                    } else if (generation == current) {
+                        sourceChoice = SourceChoice.None
+                        updateState { it.copy(error = failureMessage(e), errorCode = (e as? RemoteFailure)?.code,
+                            detailRetryable = e !is RemoteFailure || !e.metadataNotFound, openingSource = null) }
+                    }
                 }
             }
             job = started

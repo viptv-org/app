@@ -105,7 +105,12 @@ playback. Desktop tests, Wasm compilation and Android assembly passed.
 
 Since app#41 the panel opens by itself when the player reports the end of a
 series episode with a known next episode, and the Next episode pill plays that
-episode directly. The ended video keeps its last frame full screen behind the
+episode directly. It opens the best match whatever the profile's Default source
+says; the Source pill lists the rest. In the episode's last three minutes the
+player prepares the matching source once, so Next starts it without discovering
+again, as a Best match start: a source that will not start moves to the next
+prepared row, and an expired or not fully matching preparation uses this same
+path. The ended video keeps its last frame full screen behind the
 panel under a dark scrim; it no longer shrinks into the ZIP's 880×495 frame, and
 no app background shows. Keep watching and Back dismiss it until the episode
 ends again. With Autoplay next episode on (app#65, Settings › Playback, stored

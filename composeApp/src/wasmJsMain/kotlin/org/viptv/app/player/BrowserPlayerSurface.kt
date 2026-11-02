@@ -17,11 +17,11 @@ private class BrowserVideoLifetime { var active = false; var playRequest = 0L }
 
 @OptIn(ExperimentalComposeUiApi::class, kotlin.js.ExperimentalWasmJsInterop::class)
 @Composable
-actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
+actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
     val video = remember(input.id) { (document.createElement("video") as HTMLVideoElement).apply {
         controls = false
         preload = "auto"
-        style.width = "100%"; style.height = "100%"; style.objectFit = "contain"
+        style.width = "100%"; style.height = "100%"; style.objectFit = if (fill) "cover" else "contain"
         setAttribute("playsinline", "")
     } }
     val lifetime = remember(video) { BrowserVideoLifetime() }
@@ -36,6 +36,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
     var requestedSubtitle by remember { mutableStateOf<org.viptv.engine.wire.SubtitleCandidate?>(null) }
     var subtitleRequest by remember { mutableStateOf(0L) }
     val latestObserve by rememberUpdatedState(observe)
+    LaunchedEffect(video, fill) { video.style.objectFit = if (fill) "cover" else "contain" }
     LaunchedEffect(captionStyle, captionScale, input.preferences) {
         val declarations = browserCaptionDeclarations(input.preferences, captionScale)
         captionStyle.textContent = if (declarations.isEmpty()) "" else "#$captionId::cue {$declarations}"
@@ -111,11 +112,14 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
             else preferredProviderSubtitle(input, candidates)
         if (candidate == null && (!subtitleTouched || requestedSubtitle != null)) return@LaunchedEffect
         val id = candidate?.let { input.providerTrackId(it.id) }
+        val chosen = subtitleTouched
         try {
-            selected = selectBrowserSubtitle(input, video, id, tracks, blobs, { providerCueLine(captionScale) }, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { latestObserve(PlayerFact.ControlFailed) }
+            selected = selectBrowserSubtitle(input, video, id, tracks, blobs, { providerCueLine(captionScale) }, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { cause ->
+                input.controlFailed(PlaybackControl.Track, cause, if (chosen) latestObserve else null)
+            }
             latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
         } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+        catch (error: Exception) { input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) latestObserve else null) }
     }
     LaunchedEffect(video, commands) {
         commands.collect { command ->
@@ -136,7 +140,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
                 }
                 latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate, captionScale))
             } catch (error: CancellationException) { throw error }
-            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
+            catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), command.failureObserver(latestObserve)) }
         }
     }
     LaunchedEffect(paused, video) {

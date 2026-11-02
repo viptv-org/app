@@ -9,7 +9,9 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -40,6 +42,9 @@ import org.viptv.app.theme.Palette
 
 val LocalPointerHover = staticCompositionLocalOf { false }
 
+// Touch cards carry their own menu target; a pointer right-clicks and TV holds OK instead.
+val LocalCardOverflow = staticCompositionLocalOf { false }
+
 fun Modifier.handCursor(): Modifier = pointerHoverIcon(PointerIcon.Hand)
 
 fun Modifier.pointerClickable(enabled: Boolean = true, onClickLabel: String? = null, role: Role? = null,
@@ -50,8 +55,18 @@ fun Modifier.pointerClickable(enabled: Boolean = true, onClickLabel: String? = n
 
 fun Modifier.pointerClickable(interactionSource: MutableInteractionSource?, indication: Indication?,
     enabled: Boolean = true, onClickLabel: String? = null, role: Role? = null,
-    shape: Shape? = null, hover: Color? = HoverFill.wash, onClick: () -> Unit): Modifier =
-    cursorIf(enabled).clickable(interactionSource, shaped(indication, shape, hover), enabled, onClickLabel, role, onClick)
+    shape: Shape? = null, hover: Color? = HoverFill.wash,
+    longClickLabel: String? = null, onLongClick: (() -> Unit)? = null, onClick: () -> Unit): Modifier {
+    val cursor = cursorIf(enabled)
+    return if (onLongClick == null) cursor.clickable(interactionSource, shaped(indication, shape, hover), enabled, onClickLabel, role, onClick)
+    else cursor.longPressable(interactionSource, enabled, onClickLabel, role, longClickLabel, onLongClick, onClick)
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+private fun Modifier.longPressable(interactionSource: MutableInteractionSource?, enabled: Boolean,
+    onClickLabel: String?, role: Role?, longClickLabel: String?, onLongClick: () -> Unit, onClick: () -> Unit): Modifier =
+    combinedClickable(enabled = enabled, onClickLabel = onClickLabel, role = role, onLongClickLabel = longClickLabel,
+        onLongClick = onLongClick, onDoubleClick = null, interactionSource = interactionSource, onClick = onClick)
 
 fun Modifier.pointerSelectable(selected: Boolean, enabled: Boolean = true, role: Role? = null,
     shape: Shape? = null, hover: Color? = HoverFill.wash, onClick: () -> Unit): Modifier =

@@ -49,7 +49,7 @@ class SidecarPlaybackQaActivity : ComponentActivity() {
                 is PlayerFact.Tracks -> tracks = fact.options
                 is PlayerFact.Properties -> subtitleScale = fact.subtitleSize
                 PlayerFact.Failed -> failures++
-                PlayerFact.ControlFailed -> controlFailures++
+                is PlayerFact.ControlFailed -> controlFailures++
                 else -> Unit
             } }, commands)
         }

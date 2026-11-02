@@ -125,22 +125,31 @@ data class ApplicationState(
     val sourceTitle: Card? = null,
     val sourceReturnScreen: Screen = Screen.Home,
     val sources: List<SourceCandidate> = emptyList(),
+    val sourceProducers: List<org.viptv.app.connection.SourceProducerOutcome> = emptyList(),
     val sourceGroups: org.viptv.app.connection.SourceGroups = org.viptv.app.connection.SourceGroups(),
     val torrentOnlySources: Int = 0,
     val findingSources: Boolean = false,
     val playingSource: SourceCandidate? = null,
+    val openingSource: SourceCandidate? = null,
+    val bestMatch: BestMatchSession? = null,
+    val fallbackNotice: BestMatchFallback? = null,
+    val audioNotice: String? = null,
     val openingStage: String? = null,
     val playback: PlaybackInput? = null,
     val playbackSegments: List<org.viptv.app.features.player.TvSkipRange> = emptyList(),
     val nextEpisode: Card? = null,
     val nextEpisodeStatus: org.viptv.engine.wire.ContinuationStatus? = null,
     val nextEpisodeLoading: Boolean = false,
+    val nextEpisodePreparation: NextEpisodePreparation? = null,
     val playbackSeason: List<Card> = emptyList(),
     val paused: Boolean = false,
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
     val pendingCrashReport: CrashReport? = null,
 )
+
+internal val ApplicationState.animeAvailable: Boolean
+    get() = browsingConfiguration?.profile?.browsing_plugin?.let { it == "simkl" } ?: true
 
 internal fun ApplicationState.detailsPending(): Boolean =
     detail == null && error == null && detailFailure == null && playTapTitle != null

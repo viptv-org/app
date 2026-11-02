@@ -22,6 +22,7 @@ import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
+import org.viptv.app.components.kindLabel
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -75,7 +76,7 @@ private fun DesktopTitleArt(card: Card) {
 private fun DesktopMetaLine(card: Card) {
     val metadata = card.metadata
     val parts = listOfNotNull(
-        card.identity.kind.replaceFirstChar { it.uppercase() },
+        card.kindLabel(),
         metadata?.year?.toString(),
         metadata?.genres?.takeIf { it.isNotEmpty() }?.joinToString(", "),
         metadata?.rating?.let { rating -> "IMDb ${kotlin.math.round(rating * 10) / 10.0}" },
