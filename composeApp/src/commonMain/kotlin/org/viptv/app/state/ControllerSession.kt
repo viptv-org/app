@@ -187,11 +187,13 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
     freshness.reset()
     if (local != null) freshness.unsupported()
     if (value.home != null) freshness.homeBuilt(value.revisions)
+    val switchesProfile = value.selected != null && value.selected != mutable.value.selectedProfile
     mutable.value = ApplicationState(screen = screen ?: if (value.selected == null) Screen.Profiles else Screen.Home, busy = busy,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         manageAccount = connection?.accountManagementEnabled == true, accountOwner = connection?.accountOwner == true,
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
+    if (switchesProfile) value.selected?.let { startBrowsingConfiguration(it) }
     adoptContinuation(value.continuation)
     discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }

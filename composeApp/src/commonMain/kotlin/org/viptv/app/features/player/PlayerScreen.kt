@@ -74,7 +74,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var volume by remember { mutableStateOf(1f) }
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
-    var controlError by remember { mutableStateOf<String?>(null) }
+    var controlError by remember(playbackKey) { mutableStateOf<String?>(null) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
     var fill by remember(title?.identity) { mutableStateOf(false) }
@@ -145,17 +145,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
-    fun seekTo(value: Long, reveal: Boolean) { if (input?.live != true) {
+    fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
-        if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target)); interaction++; controlError = null }
+        if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target, automatic)); interaction++; if (!automatic) controlError = null }
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
     val skipped = remember(playbackKey) { mutableSetOf<TvSkipRange>() }
     fun skipSegment(range: TvSkipRange, automatic: Boolean) {
         if (seekTarget != null) return
         if (!skipped.add(range) && automatic) return
-        seekTo(range.endMillis, reveal = false)
+        seekTo(range.endMillis, reveal = false, automatic = automatic)
     }
     LaunchedEffect(position, tvExtras.skips, tvExtras.skipIntros, paused) {
         if (tvExtras.skipIntros && !paused) tvExtras.skips.firstOrNull { it.automatic && position in it.startMillis until it.endMillis }
@@ -179,12 +179,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (!ended) endHandled = false
             }
             is PlayerFact.Presentation -> Unit
-            PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
+            is PlayerFact.ControlFailed -> controlError = playbackControlErrorCopy
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.Undecodable -> { buffering = false; failed = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
+    LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (rendering != null) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->

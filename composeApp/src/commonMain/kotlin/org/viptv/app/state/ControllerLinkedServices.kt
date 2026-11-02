@@ -25,4 +25,5 @@ fun ApplicationController.unlinkLinkedService() = run {
     val status = remote.simklStatus(profile)
     if (connection === remote && generation == owner && mutable.value.selectedProfile == profile)
         updateState { next -> next.copy(simkl = status, linkedServicesProfile = profile) }
+    profileConfigurationChanged()
 }

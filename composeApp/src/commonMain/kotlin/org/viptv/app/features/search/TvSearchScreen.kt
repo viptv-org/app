@@ -111,7 +111,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                                 if (key == restoreId) LaunchedEffect(Unit) { withFrameNanos { }; requester.requestFocus() }
                                 MediaCard(card, (212 * scale).toInt(), portrait = true, showLabels = true, labelScale = scale * 1.7f,
                                 open = open, onFocus = { focusedId = key; sectionScroll.focus(rowIndex + if (error != null) 1 else 0) }, modifier = Modifier.focusRequester(requester), cornerRadius = 12.dp * scale, focusWidth = 3.dp * scale,
-                                watchedBadgeSize = 34.dp * scale) }
+                                watchedBadgeSize = 34.dp * scale, scale = scale) }
                         }
 
                     }
@@ -131,8 +131,8 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
 
                     }
                 }
-                if (!busy && error == null && !hasResults && groups.none { it.message != null }) item {
-                    Text(if (term.isBlank()) "Search movies, series and channels" else "No matches. Try another search.", fontSize = (24 * scale).sp, color = Palette.secondary)
+                if (!busy && term.isNotBlank() && error == null && !hasResults && groups.none { it.message != null }) item {
+                    Text("No matching titles", fontSize = (24 * scale).sp, color = Palette.secondary)
                 }
             }
         }

@@ -380,10 +380,11 @@ search typography; dedicated supplied boards for these combinations are absent.
 Discovery/filter redesign is deferred. The requested Anime destination reuses the
 current browse screen and provider-declared controls.
 
-Source cards retain the existing design but grow to display the complete label
-and release description. Rendered regression evidence is in
-`evidence/android-tv-fixes-2026-10-15/dynamic-source-rows.png`. This is layout and
-input evidence, not a physical-TV performance acceptance.
+Source rows keep the existing design with one fixed height: the title is one
+ellipsized line, the fact badges yield to it, and the description takes a fixed
+two-line window (SRC-OVERFLOW-001, GAP-066). The earlier growing rows are
+superseded; `evidence/android-tv-fixes-2026-10-15/dynamic-source-rows.png` keeps
+the old layout as history.
 
 ### GAP-060 — Account entry and household controls
 
@@ -489,3 +490,16 @@ the prompt's **Allow updates** copy on the same full screen. The "Updated to
 seconds. The copy is to be recorded in the design repository's `copy.md` and
 in AND-APP-UPDATE-001, kept "proposed" (viptv-org/design#32); layout, type and
 spacing need a board.
+
+### GAP-066 — Source details (SRC-OVERFLOW-001)
+
+app#413 adds a **Source details** view for the full source description on phone,
+tablet, desktop/web and TV. The design specifies the TV full-screen text panel
+(`components.md`, overlays) and the phone/TV sheet entry, but no board: layout,
+type, spacing and the entry gesture are provisional. The surface is
+`features/sources/SourceDetails.kt`: a right-side 820-wide panel at the TV design
+width and a centred 560-wide panel elsewhere, each with a heading, the source
+label, the full description and Close focused on open. Entry is a hold on the row
+(pointer long-press or Enter/Space/D-pad centre), so a press still plays the
+source; Back, Escape, Close and the scrim dismiss it and return focus to the row
+it came from. Copy is the heading `Source details` and `Close`.

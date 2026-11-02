@@ -8,3 +8,13 @@ internal fun mpvNeedsToneMap(transfer: String?): Boolean = when (transfer?.lower
     "pq", "hlg" -> true
     else -> false
 }
+
+// The software context ignores every target-* option, so it gets none.
+internal fun mpvColourOptions(path: MpvRenderPath, hdrDisplay: Boolean): Map<String, String> = when {
+    path == MpvRenderPath.Software -> emptyMap()
+    hdrDisplay -> mapOf("target-colorspace-hint" to "yes")
+    else -> mapOf("target-prim" to "bt.709", "target-trc" to "srgb", "tone-mapping" to "spline")
+}
+
+internal fun mpvSourceFilter(path: MpvRenderPath, transfer: String?): String? =
+    mpvToneMapFilter.takeIf { path == MpvRenderPath.Software && mpvNeedsToneMap(transfer) }

@@ -31,8 +31,9 @@ import org.viptv.app.resources.ic_remote_zip
 @Composable
 fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> Unit, profile: org.viptv.app.connection.Profile? = null) {
     if (television) { TvNavigation(selected, profile, navigate); return }
+    val anime = LocalAnimeAvailable.current
     val destinations = desktopDestinations.filter {
-        it.screen != Screen.History
+        it.screen != Screen.History && (it.screen != Screen.Anime || anime)
     }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
     val collapsed = maxWidth < 1000.dp

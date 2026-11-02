@@ -132,9 +132,33 @@ class TvSearchEdgeUiTest {
         }.use { screen ->
             screen.settle()
             val texts = screen.nodes().flatMap(::texts)
-            assertEquals(1, texts.count { it == "No matches. Try another search." })
-            assertFalse(texts.any { it == "No matches." })
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
             assertFalse(texts.any { it == "First provider" })
+        }
+    }
+
+    @Test fun anEmptySearchShowsTheDesignEmptyStateCopy() = ui {
+        Fixture(screenWidth) {
+            SearchScreen("whisper", emptyList(), emptyList(), false, null, true, {}, {},
+                television = true, editQuery = {})
+        }.use { screen ->
+            screen.settle()
+            val texts = screen.nodes().flatMap(::texts)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it.contains("No matches") })
+        }
+    }
+
+    @Test fun aBlankTermShowsNoEmptyStateCopy() = ui {
+        Fixture(screenWidth) {
+            SearchScreen("", emptyList(), emptyList(), false, null, true, {}, {},
+                television = true, editQuery = {})
+        }.use { screen ->
+            screen.settle()
+            val texts = screen.nodes().flatMap(::texts)
+            assertFalse(texts.any { it == "No matching titles" })
+            assertFalse(texts.any { it == "Search movies, series and channels" })
         }
     }
 

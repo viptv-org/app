@@ -36,9 +36,9 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         Box(Modifier.offset(96.dp * scale, 44.dp * scale)) {
             Brand(44.dp * scale, (32 * scale).sp, 12.dp * scale, (-1.28f * scale).sp, (32 * scale).sp)
         }
-        val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) }
+        val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) && (it.screen != Screen.Anime || LocalAnimeAvailable.current) }
         // One focus target per item, chained left/right: Compose's 2D search would otherwise drop from the nav into a card below.
-        val navFocus = remember { List(destinations.size + 1) { androidx.compose.ui.focus.FocusRequester() } }
+        val navFocus = remember(destinations.size) { List(destinations.size + 1) { androidx.compose.ui.focus.FocusRequester() } }
         val profileFocus = remember { androidx.compose.ui.focus.FocusRequester() }
         Row(Modifier.offset(300.dp * scale, 38.dp * scale).height(56.dp * scale).focusGroup(),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {

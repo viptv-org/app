@@ -15,22 +15,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.pointerHovered
+import org.viptv.app.components.tvHold
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
-import org.viptv.app.components.pointerClickable
+
+private val TvDescriptionFont = 22.sp
+private val TvDescriptionLine = 28.sp
+private val TvTitleHeight = 36.dp
+internal val TvSourceRowHeight = 138.dp
 
 @Composable
 internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Float, requester: FocusRequester?,
     enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null, focusedSource: (String) -> Unit = {},
-    header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, headerMeasured: (Int) -> Unit = {}) {
+    header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, headerMeasured: (Int) -> Unit = {},
+    details: ((SourceCandidate) -> Unit)? = null) {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
+    val interaction = remember { MutableInteractionSource() }
+    val hovered = interaction.pointerHovered()
     Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
         .focusProperties { if (up != null) this.up = up }
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }
-        .pointerClickable(enabled = enabled, interactionSource = remember { MutableInteractionSource() }, indication = null) { choose(source) }) {
+        .tvHold(enabled = details != null) { details?.invoke(source) }
+        .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
+            onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
     header?.let { SourceGroupHeader(it, (22 * scale).sp, Modifier.padding(start = 4.dp * scale, top = 14.dp * scale, bottom = 12.dp * scale), measured = headerMeasured) }
-    Row(Modifier.fillMaxWidth().heightIn(min = 104.dp * scale).clip(RoundedCornerShape(14.dp * scale))
+    Row(Modifier.fillMaxWidth().height(TvSourceRowHeight * scale).clip(RoundedCornerShape(14.dp * scale))
         .background(if (focused) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))
         .padding(horizontal = 28.dp * scale, vertical = 20.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
         Column(Modifier.width(116.dp * scale)) {
@@ -40,7 +52,7 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
             SourceTitleLine(source.label, TextStyle(fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.SemiBold), color,
                 source.factBadges(), SourceBadgeStyle((18 * scale).sp, (20 * scale).sp, radius = 8.dp * scale, horizontal = 10.dp * scale,
-                    vertical = 4.dp * scale, gap = 12.dp * scale), Modifier.fillMaxWidth(),
+                    vertical = 4.dp * scale, gap = 12.dp * scale), Modifier.fillMaxWidth().height(TvTitleHeight * scale),
                 trailing = if (bestMatch || didntStart) ({
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalAlignment = Alignment.CenterVertically) {
                         if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(color, RoundedCornerShape(5.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
@@ -49,8 +61,9 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
                             fontSize = (18 * scale).sp, lineHeight = (20 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }) else null)
-            source.releaseDetail()?.let { Text(it, color = color, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp) }
-            source.technicalDetail()?.let { Text(it, color = color.copy(alpha = 0.75f), fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp) }
+            SourceDescriptionWindow(source.descriptionText(), active = focused || hovered,
+                fontSize = (TvDescriptionFont.value * scale).sp, lineHeight = (TvDescriptionLine.value * scale).sp,
+                color = color.copy(alpha = 0.75f))
         }
         info?.addon?.let { Text(it, Modifier.widthIn(max = 170.dp * scale), maxLines = 1, overflow = TextOverflow.Ellipsis, color = color.copy(alpha = 0.75f), fontSize = (20 * scale).sp) }
     }
