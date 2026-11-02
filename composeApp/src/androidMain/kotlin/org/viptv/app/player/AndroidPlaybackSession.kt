@@ -57,7 +57,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         override fun onTracksChanged(value: Tracks) { tracks.changed(); subtitles.autoSelect(input.providerSubtitles.value) }
         override fun onPlayerError(error: PlaybackException) {
             reportNativePlaybackFailure("Media3 playback error: ${error.errorCodeName}")
-            emit(PlayerFact.Failed)
+            emit(if (media3DecodeFailure(error)) PlayerFact.Undecodable else PlayerFact.Failed)
         }
         override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) = properties()
         override fun onVolumeChanged(volume: Float) = properties()
@@ -172,5 +172,16 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         closed = true; player.removeListener(listener); subtitles.close(); player.release(); view = null
     }
 }
+
+private val media3DecodeFailureCodes = setOf(
+    PlaybackException.ERROR_CODE_DECODER_INIT_FAILED,
+    PlaybackException.ERROR_CODE_DECODER_QUERY_FAILED,
+    PlaybackException.ERROR_CODE_DECODING_FAILED,
+    PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
+    PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+    PlaybackException.ERROR_CODE_DECODING_RESOURCES_RECLAIMED,
+)
+
+internal fun media3DecodeFailure(error: PlaybackException): Boolean = error.errorCode in media3DecodeFailureCodes
 
 private const val LOCAL_TORRENT_READ_TIMEOUT_MS = 60_000
