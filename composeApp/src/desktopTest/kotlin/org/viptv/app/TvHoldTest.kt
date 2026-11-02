@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -32,8 +33,9 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.tvHold
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.app.features.details.TvDetailHero
+import org.viptv.app.features.home.CardActions
+import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.features.home.TvCatalogCard
-import org.viptv.app.features.home.TvTitleMenuActions
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
@@ -79,12 +81,17 @@ class TvHoldTest {
     private fun movieCard() = Card(MediaIdentity("tt1", "movie", emptyList()), provider_id = "simkl",
         title = "Cached title", subtitle = "1h 52m left", badges = listOf("Simkl", "4K"), poster = null)
 
+    private fun cardActions(played: AtomicInteger) = CardActions(
+        play = { played.incrementAndGet() }, toggleSave = {}, isSaved = { false },
+        chooseSource = {}, playFromStart = {}, markWatched = {})
+
     @Test fun shortSelectOnACardOpensTheTitle() = onEdt {
         val opened = AtomicInteger()
         val requester = FocusRequester()
         Scene {
-            TvCatalogCard(movieCard(), 1f, true, Modifier.focusRequester(requester), focused = {}, open = { opened.incrementAndGet() },
-                menu = TvTitleMenuActions(play = {}, info = {}))
+            CompositionLocalProvider(LocalCardActions provides cardActions(AtomicInteger())) {
+                TvCatalogCard(movieCard(), 1f, true, Modifier.focusRequester(requester), focused = {}, open = { opened.incrementAndGet() })
+            }
         }.use { s ->
             s.frames()
             assertTrue(requester.requestFocus(), "the card must be focusable")
@@ -100,14 +107,16 @@ class TvHoldTest {
         val played = AtomicInteger()
         val requester = FocusRequester()
         Scene {
-            TvCatalogCard(movieCard(), 1f, true, Modifier.focusRequester(requester), focused = {}, open = { opened.incrementAndGet() },
-                menu = TvTitleMenuActions(play = { played.incrementAndGet() }, info = { opened.incrementAndGet() }))
+            CompositionLocalProvider(LocalCardActions provides cardActions(played)) {
+                TvCatalogCard(movieCard(), 1f, true, Modifier.focusRequester(requester), focused = {}, open = { opened.incrementAndGet() })
+            }
         }.use { s ->
             s.frames()
             assertTrue(requester.requestFocus(), "the card must be focusable")
             s.frames()
             s.keyDown(Key.DirectionCenter)
             s.waitFor("the title menu to open on hold") { s.has("More info") }
+            assertTrue(s.has("Choose source"), "the shared title menu offers the local actions")
             assertEquals(0, opened.get(), "holding the card must not open the title")
             assertEquals(0, played.get(), "holding the card must not play the title")
         }
@@ -118,8 +127,9 @@ class TvHoldTest {
         val played = AtomicInteger()
         val requester = FocusRequester()
         Scene {
-            TvCatalogCard(movieCard(), 1f, true, Modifier.focusRequester(requester), focused = {}, open = { opened.incrementAndGet() },
-                menu = TvTitleMenuActions(play = { played.incrementAndGet() }, info = { opened.incrementAndGet() }))
+            CompositionLocalProvider(LocalCardActions provides cardActions(played)) {
+                TvCatalogCard(movieCard(), 1f, true, Modifier.focusRequester(requester), focused = {}, open = { opened.incrementAndGet() })
+            }
         }.use { s ->
             s.frames()
             assertTrue(requester.requestFocus(), "the card must be focusable")
