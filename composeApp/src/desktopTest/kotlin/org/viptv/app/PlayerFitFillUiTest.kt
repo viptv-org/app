@@ -22,21 +22,23 @@ class PlayerFitFillUiTest {
         parent_identity = parent, metadata_origin = origin)
 
     @Test fun fitFillTogglesNameAndStateWhileKeepingEveryPhoneActionReachable() {
-        val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = episode(1), phone = true)
-        } }
-        try {
-            frames(scene)
-            assertEquals(ToggleableState.Off, toggleState(scene, "Fill video"))
-            click(scene, "Fill video"); frames(scene)
-            assertEquals(ToggleableState.On, toggleState(scene, "Fit video"))
-            assertNull(fitFillOrNull(scene, "Fill video"))
-            nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.forEach {
-                assertTrue(it.boundsInRoot.left >= 0 && it.boundsInRoot.right <= 390, "Phone action overflows with Fill")
-            }
-            click(scene, "Fit video"); frames(scene)
-            assertEquals(ToggleableState.Off, toggleState(scene, "Fill video"))
-        } finally { scene.close() }
+        for ((width, height) in listOf(320 to 568, 390 to 844)) {
+            val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
+                PlayerScreen(null, true, null, {}, {}, {}, title = episode(1), phone = true)
+            } }
+            try {
+                frames(scene)
+                assertEquals(ToggleableState.Off, toggleState(scene, "Fill video"), "$width×$height starts Fit")
+                click(scene, "Fill video"); frames(scene)
+                assertEquals(ToggleableState.On, toggleState(scene, "Fit video"), "$width×$height toggles to Fill")
+                assertNull(fitFillOrNull(scene, "Fill video"))
+                nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.forEach {
+                    assertTrue(it.boundsInRoot.left >= 0 && it.boundsInRoot.right <= width, "$width×$height: phone action overflows with Fill")
+                }
+                click(scene, "Fit video"); frames(scene)
+                assertEquals(ToggleableState.Off, toggleState(scene, "Fill video"), "$width×$height toggles back to Fit")
+            } finally { scene.close() }
+        }
     }
 
     @Test fun fillPersistsAcrossSourceSwapButResetsForANewEpisode() {

@@ -60,6 +60,9 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
             Icon(Lucide.List, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Episodes")
         } }
     }
+    val episodesIcon: @Composable () -> Unit = {
+        episodes?.let { action -> IconButton(onClick = action, enabled = episodesEnabled, pressedScale = Motion.control) { Icon(Lucide.List, "Episodes", Modifier.size(22.dp)) } }
+    }
     val streamsAction: @Composable (Modifier) -> Unit = { modifier ->
         streams?.let { action -> TextButton(onClick = action, modifier = modifier.widthIn(max = SourceLabelWidth), pressedScale = Motion.control) {
             Icon(Lucide.Layers, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
@@ -88,7 +91,7 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
                 playPause(); skipBack(); skipForward(); nextAction(); muteAction(); closeAction()
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                episodesAction()
+                episodesIcon()
                 if (streams != null) streamsAction(Modifier.weight(1f)) else Spacer(Modifier.weight(1f))
                 tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill)
             }

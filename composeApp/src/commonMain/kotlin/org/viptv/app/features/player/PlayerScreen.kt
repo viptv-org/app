@@ -238,7 +238,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                                 fill = fill, toggleFill = toggleFill)
                         }
                     }
-                    }
                 }
                 }
                 if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
