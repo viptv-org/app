@@ -1,7 +1,6 @@
 @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 package org.viptv.app.components
 
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -149,7 +148,7 @@ internal actual fun CredentialForm(
             }
             form
         },
-        modifier = modifier.height(formHeight),
+        modifier = modifier.nativeFormSlot(formHeight),
         update = { form ->
             fields.forEachIndexed { index, field ->
                 val input = nodes.inputs.getOrNull(index) ?: return@forEachIndexed
