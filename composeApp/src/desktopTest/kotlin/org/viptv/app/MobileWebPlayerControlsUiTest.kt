@@ -67,6 +67,18 @@ class MobileWebPlayerControlsUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun fitFillButtonIsPresentAndInViewAtPhoneAndDesktopWidths() {
+        for ((width, height) in listOf(320 to 568, 390 to 844, 1280 to 720)) {
+            val scene = player(width, height, longLabel)
+            try {
+                frames(scene)
+                val bounds = control(scene, "Fill video").boundsInRoot
+                assertTrue(bounds.left >= -1f && bounds.right <= width + 1f && bounds.top >= -1f && bounds.bottom <= height + 1f,
+                    "$width×$height: the Fill video button at $bounds leaves the ${width}×$height viewport")
+            } finally { scene.close() }
+        }
+    }
+
     private fun assertSourceLabelOnOneLine(scene: ImageComposeScene, label: String, at: String) {
         val bounds = control(scene, label).boundsInRoot
         assertTrue(bounds.height <= 48f, "$at: the source label stays on one line, was ${bounds.height} tall")
