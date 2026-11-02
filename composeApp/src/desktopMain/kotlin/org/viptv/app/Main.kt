@@ -21,8 +21,10 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
 import org.viptv.app.state.ApplicationController
+import org.viptv.app.state.SourceMemory
 
 fun main() {
+    SourceMemory.useDeviceStorage()
     if (System.getenv("VIPTV_MPV_SMOKE_TEST") != null) { org.viptv.app.player.mpv.verifyPackagedMpv(); return }
     if (System.getenv("VIPTV_TORRENT_SMOKE_TEST") != null) { verifyPackagedTorrentRuntime(); return }
     if (System.getenv("VIPTV_TORRENT_BENCH_INPUT") != null) { launchDesktopTorrentBenchmark(); return }

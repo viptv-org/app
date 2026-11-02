@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 @Composable
-internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) {
+internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) {
     key(input) {
         val host = mpvHost()
         val result = remember { runCatching { MpvSession(input) } }
@@ -91,6 +91,12 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, modifier: M
                 session.property("pause", if (paused) "yes" else "no")
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) { input.controlFailed(PlaybackControl.PlayPause, error.controlCause(), latestObserve) }
+        }
+        LaunchedEffect(opened, fill) {
+            if (opened) try {
+                session.property("panscan", if (fill) "1.0" else "0.0")
+            } catch (error: CancellationException) { throw error }
+            catch (_: Exception) { latestObserve(PlayerFact.ControlFailed) }
         }
         suspend fun attach(candidate: SubtitleCandidate): Int {
             providerIds[candidate.id]?.let { return it }

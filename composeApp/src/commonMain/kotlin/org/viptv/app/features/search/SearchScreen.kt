@@ -81,7 +81,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         } }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         error?.let { Text(it, color = Palette.danger) }
-        if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matches. Try another search.", color = Palette.secondary)
+        if (!busy && term.isNotBlank() && !hasResults && error == null && groups.none { it.message != null }) Text("No matching titles", color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
             val column = rememberLazyListState()
@@ -99,7 +99,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                         PageRestore(row, restore, target = { anchoredRow.takeIf { it >= 0 } })
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
-                            (group.message ?: "No matches.".takeIf { group.cards.isEmpty() })?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
+                            group.message?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
                             LazyRow(state = row, contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 rowItemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
                                     val key = searchCardKey(card)

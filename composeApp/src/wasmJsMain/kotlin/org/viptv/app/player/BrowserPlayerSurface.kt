@@ -17,11 +17,11 @@ private class BrowserVideoLifetime { var active = false; var playRequest = 0L }
 
 @OptIn(ExperimentalComposeUiApi::class, kotlin.js.ExperimentalWasmJsInterop::class)
 @Composable
-actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
+actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier, observe: (PlayerFact) -> Unit, commands: kotlinx.coroutines.flow.Flow<PlayerCommand>) {
     val video = remember(input.id) { (document.createElement("video") as HTMLVideoElement).apply {
         controls = false
         preload = "auto"
-        style.width = "100%"; style.height = "100%"; style.objectFit = "contain"
+        style.width = "100%"; style.height = "100%"; style.objectFit = if (fill) "cover" else "contain"
         setAttribute("playsinline", "")
     } }
     val lifetime = remember(video) { BrowserVideoLifetime() }
@@ -36,6 +36,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, modifier: Modifi
     var requestedSubtitle by remember { mutableStateOf<org.viptv.engine.wire.SubtitleCandidate?>(null) }
     var subtitleRequest by remember { mutableStateOf(0L) }
     val latestObserve by rememberUpdatedState(observe)
+    LaunchedEffect(video, fill) { video.style.objectFit = if (fill) "cover" else "contain" }
     LaunchedEffect(captionStyle, captionScale, input.preferences) {
         val declarations = browserCaptionDeclarations(input.preferences, captionScale)
         captionStyle.textContent = if (declarations.isEmpty()) "" else "#$captionId::cue {$declarations}"

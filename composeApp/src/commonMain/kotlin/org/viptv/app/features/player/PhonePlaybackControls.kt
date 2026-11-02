@@ -41,7 +41,8 @@ internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) ->
 @Composable
 internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, lock: () -> Unit, tracks: () -> Unit,
     episodes: (() -> Unit)? = null, episodesEnabled: Boolean = false, next: (() -> Unit)? = null,
-    nextEnabled: Boolean = false, episodesFocus: FocusRequester? = null, nextFocus: FocusRequester? = null) {
+    nextEnabled: Boolean = false, episodesFocus: FocusRequester? = null, nextFocus: FocusRequester? = null,
+    fill: Boolean = false, toggleFill: () -> Unit = {}) {
     var speeds by remember { mutableStateOf(false) }
     val episodeAction: @Composable () -> Unit = {
         if (episodes != null) TextButton(episodes, enabled = episodesEnabled, pressedScale = Motion.control,
@@ -80,9 +81,9 @@ internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, loc
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth < 600.dp) Column {
             Row { episodeAction(); tracksAction() }
-            Row(Modifier.fillMaxWidth()) { speedAction(); lockAction(); Spacer(Modifier.weight(1f)); nextAction() }
+            Row(Modifier.fillMaxWidth()) { speedAction(); lockAction(); PlaybackFitFill(fill, toggleFill); Spacer(Modifier.weight(1f)); nextAction() }
         } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            episodeAction(); tracksAction(); speedAction(); lockAction(); Spacer(Modifier.weight(1f)); nextAction()
+            episodeAction(); tracksAction(); speedAction(); lockAction(); PlaybackFitFill(fill, toggleFill); Spacer(Modifier.weight(1f)); nextAction()
         }
     }
 }
