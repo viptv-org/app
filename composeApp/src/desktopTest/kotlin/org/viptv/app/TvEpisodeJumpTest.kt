@@ -144,13 +144,23 @@ class TvEpisodeJumpTest {
                 .config[SemanticsActions.OnClick].action!!.invoke()
             frames()
         }
-        fun field() = nodes().singleOrNull { it.config.contains(SemanticsActions.SetText) }
+        fun entryField() = nodes().singleOrNull { EPISODE_JUMP_FIELD_LABEL in description(it) && it.config.contains(SemanticsActions.OnClick) }
+        fun editor() = nodes().singleOrNull { it.config.contains(SemanticsActions.SetText) }
+        fun activateField() {
+            val node = requireNotNull(entryField()) { "no Episode number field: ${nodes().map(::text)}" }
+            requireNotNull(node.config[SemanticsActions.OnClick].action) { "the Episode number field is not activatable" }.invoke()
+            frames()
+        }
         fun type(value: String) {
-            requireNotNull(field()) { "no editable field: ${nodes().map(::text)}" }
+            if (editor() == null) {
+                activateField()
+                until("the active editor") { editor() != null }
+            }
+            requireNotNull(editor()) { "no editable field: ${nodes().map(::text)}" }
                 .config[SemanticsActions.SetText].action!!.invoke(AnnotatedString(value))
             frames()
         }
-        fun typed() = field()?.config?.getOrNull(SemanticsProperties.EditableText)?.text
+        fun typed() = editor()?.config?.getOrNull(SemanticsProperties.EditableText)?.text
         fun dialogOpen() = nodes().any { text(it) == EPISODE_JUMP_TITLE }
         fun episodeCards() = nodes().filter { Regex("""\d+\. Episode \d+""").containsMatchIn(text(it)) }
 
@@ -176,7 +186,7 @@ class TvEpisodeJumpTest {
             }
             ok()
             until("the Jump to episode dialog") { dialogOpen() }
-            until("the focused Episode number field") { field()?.config?.getOrNull(SemanticsProperties.Focused) == true }
+            until("the focused Episode number field") { entryField()?.config?.getOrNull(SemanticsProperties.Focused) == true }
         }
         fun assertFocused(expected: String, why: String) {
             frames(30)
@@ -226,11 +236,28 @@ class TvEpisodeJumpTest {
             app.openDetails()
             app.openJump()
             assertTrue(app.dialogOpen())
-            assertEquals("", app.typed(), "the field starts empty")
-            assertTrue(app.field()?.config?.getOrNull(SemanticsProperties.Focused) == true, "the field is focused")
+            assertNull(app.editor(), "the field starts as a focus stop, not an editable text field")
+            assertTrue(app.entryField()?.config?.getOrNull(SemanticsProperties.Focused) == true, "the field is focused")
             assertNotNull(app.nodes().firstOrNull { app.text(it) == EPISODE_JUMP_GO && it.config.contains(SemanticsActions.OnClick) }, "Go")
             assertNotNull(app.nodes().firstOrNull { app.text(it) == EPISODE_JUMP_CANCEL && it.config.contains(SemanticsActions.OnClick) }, "Cancel")
             assertNotNull(app.nodes().firstOrNull { app.text(it) == EPISODE_JUMP_FIELD_LABEL }, "the field is labelled Episode number")
+        }
+    }
+
+    @Test fun theFieldIsAFocusStopUntilOkActivatesEntry() {
+        TvApp(twoSeasons()).use { app ->
+            app.frames()
+            app.openDetails()
+            app.openJump()
+            val field = requireNotNull(app.entryField()) { "the dialog has no Episode number field" }
+            assertNull(app.editor(), "focusing the field must not open an editable text field")
+            assertFalse(field.config.contains(SemanticsActions.SetText), "the field is not an editable text input, so the D-pad is not trapped")
+            assertFalse(field.config.contains(SemanticsProperties.EditableText), "the field is not an editable text input, so focus does not raise the IME")
+            assertTrue(field.config.getOrNull(SemanticsProperties.Focused) == true, "the field starts focused")
+            assertTrue(app.nodes().any { app.text(it) == EPISODE_JUMP_GO && it.config.contains(SemanticsActions.OnClick) }, "Go is D-pad reachable as a click target")
+            assertTrue(app.nodes().any { app.text(it) == EPISODE_JUMP_CANCEL && it.config.contains(SemanticsActions.OnClick) }, "Cancel is D-pad reachable as a click target")
+            app.activateField()
+            app.until("the active editor") { app.editor()?.config?.getOrNull(SemanticsProperties.Focused) == true }
         }
     }
 
@@ -263,7 +290,7 @@ class TvEpisodeJumpTest {
             app.until("the error") { app.nodes().any { app.text(it) == EPISODE_JUMP_ERROR } }
             assertTrue(app.dialogOpen(), "the dialog stays open")
             assertEquals("99", app.typed(), "the typed text stays")
-            assertTrue(app.field()?.config?.getOrNull(SemanticsProperties.Focused) == true, "the field keeps focus")
+            assertTrue(app.editor()?.config?.getOrNull(SemanticsProperties.Focused) == true, "the field keeps focus")
             app.click(EPISODE_JUMP_CANCEL)
             app.until("the chip") { app.focused().any { it.contains(EPISODE_JUMP_CHIP_DESCRIPTION) } }
             assertFalse(app.dialogOpen(), "Cancel closes the dialog")
