@@ -21,7 +21,6 @@ internal class RemotePlaybackLease(val input: PlaybackInput, val renewSeconds: L
     }
 }
 
-// A delivery admitted but not started, held alive by heartbeat until handoff promotes it.
 internal class PreparedPlaybackLease(
     val id: String,
     val renewSeconds: Long,
@@ -93,7 +92,6 @@ internal suspend fun RemoteConnection.preparePlayback(source: SourceCandidate, p
 }
 
 private suspend fun RemoteConnection.promotePreparedPlayback(id: String, profile: String, admission: PlaybackAdmission, replaces: String?): RemotePlaybackLease {
-    // The caller bounds this; a promote that outlives it falls back to a fresh start.
     val body = replaces?.let { buildJsonObject { put("replaces", it) } }
     val response = call("/api/playback/${id.encodeURLPathPart()}/promote", HttpMethod.Post, body).jsonObject
     val ready = awaitReadyPlayback(id, response)

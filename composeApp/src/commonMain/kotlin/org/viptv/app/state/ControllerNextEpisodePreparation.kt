@@ -173,6 +173,7 @@ private suspend fun ApplicationController.promotePreparedDelivery(source: Source
     catch (_: Exception) { null }
     closePlaybackQuietly(outgoing)
     if (promoted == null) {
+        releaseQuietly(lease)
         fallbackPreparedHandoff(source, ranked)
         return
     }

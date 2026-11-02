@@ -51,13 +51,12 @@ class NextEpisodePreparationTest {
         var opens = 0
         var promotes = 0
         var heartbeats = 0
-        var deletes = 0
+        val events = mutableListOf<String>()
         var replaced = mutableListOf<String>()
         var failPromote = false
         var preparedReleased = false
     }
 
-    // The controller seam builds a prepared delivery directly, like the production Server would, but without desktop playback facts or torrent negotiation.
     private fun serverPreparer(server: PlaybackServer) = NextEpisodeDeliveryPreparer { remote, source, profile ->
         server.prepares++
         PreparedPlaybackLease("prep-${server.prepares}", 20, requireNotNull(remote), profile,
@@ -77,13 +76,13 @@ class NextEpisodePreparationTest {
                         respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
                     when {
                         path == "/api/playback" && request.method == HttpMethod.Post -> {
-                            server.opens++
+                            server.opens++; server.events += "open"
                             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
                             json("""{"id":"lease-${server.opens}","status":"ready","renew_after_seconds":20,
                                 "delivery":{"kind":"direct","url":"https://media.example/${body.getValue("stream_id").jsonPrimitive.content}.mp4","position":0}}""")
                         }
                         path.endsWith("/promote") && request.method == HttpMethod.Post -> {
-                            server.promotes++
+                            server.promotes++; server.events += "promote"
                             val id = path.removePrefix("/api/playback/").removeSuffix("/promote")
                             val body = (request.body as? TextContent)?.text?.takeIf(String::isNotBlank)?.let { Json.parseToJsonElement(it).jsonObject }
                             body?.get("replaces")?.jsonPrimitive?.contentOrNull?.let { server.replaced += it }
@@ -91,7 +90,7 @@ class NextEpisodePreparationTest {
                             else json("""{"id":"$id","status":"starting"}""")
                         }
                         path.endsWith("/heartbeat") && request.method == HttpMethod.Post -> {
-                            server.heartbeats++
+                            server.heartbeats++; server.events += "heartbeat"
                             if (server.preparedReleased) respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
                             else json("{}")
                         }
@@ -100,7 +99,10 @@ class NextEpisodePreparationTest {
                             json("""{"id":"$id","status":"ready","renew_after_seconds":20,
                                 "delivery":{"kind":"direct","url":"https://media.example/$id.mp4","position":0}}""")
                         }
-                        request.method == HttpMethod.Delete && path.startsWith("/api/playback/") -> { server.deletes++; json("{}") }
+                        request.method == HttpMethod.Delete && path.startsWith("/api/playback/") -> {
+                            server.events += "delete:${path.removePrefix("/api/playback/")}"
+                            json("{}")
+                        }
                         path.endsWith("/progress") -> json("{}")
                         else -> json("{}", HttpStatusCode.NotFound)
                     }
@@ -288,6 +290,9 @@ class NextEpisodePreparationTest {
         assertEquals("next-stream", state.playingSource?.id)
         assertEquals("lease-1", state.playback?.id, "A failed promote starts fresh")
         assertEquals(1, server.promotes); assertEquals(1, server.opens)
+        val beforeOpen = server.events.takeWhile { it != "open" }
+        assertTrue("delete:attempt" in beforeOpen, "The fallback releases the outgoing playback first")
+        assertTrue("delete:prep-1" in beforeOpen, "The fallback releases the prepared delivery first")
         controller.closePlayer()
     }
 

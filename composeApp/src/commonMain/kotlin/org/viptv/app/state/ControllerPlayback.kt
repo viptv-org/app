@@ -105,7 +105,6 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     }
 }
 
-// Adopt a promoted delivery: the prepared playback already resolved its source, so this only publishes the ready lease.
 internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePlaybackLease, source: SourceCandidate, card: Card, profile: String) {
     if (mutable.value.preferences == null) loadPreferences()
     val remote = requireNotNull(connection)
