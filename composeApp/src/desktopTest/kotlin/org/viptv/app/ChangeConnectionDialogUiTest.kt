@@ -12,6 +12,7 @@ import org.viptv.app.features.settings.TvSettingsScreen
 import org.viptv.app.features.settings.TvSettingsSection
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
+import java.io.File
 import org.junit.Rule
 import kotlin.test.*
 
@@ -29,9 +30,10 @@ class ChangeConnectionDialogUiTest {
         try {
             frames(scene)
             click(scene, "Change connection"); frames(scene)
-            assertTrue(nodes(scene).any { text(it) == "Change connection?" }, texts(scene))
-            assertTrue(nodes(scene).any { text(it) == "Your local library and progress stay on this device. You'll choose a server or local mode next." }, texts(scene))
+            assertTrue(nodes(scene).any { text(it) == "Change connection?" }, texts(scene).toString())
+            assertTrue(nodes(scene).any { text(it) == "Your local library and progress stay on this device. You'll choose a server or local mode next." }, texts(scene).toString())
             assertFalse(nodes(scene).any { text(it) == "Leave" || text(it).startsWith("Leave local mode") }, "the dialog no longer asks about leaving local mode")
+            capture(scene, "change-connection-phone")
             assertEquals(0, leaves)
             click(scene, "Change connection"); frames(scene)
             assertEquals(1, leaves)
@@ -49,14 +51,20 @@ class ChangeConnectionDialogUiTest {
         try {
             frames(scene)
             click(scene, "Change connection"); frames(scene)
-            assertTrue(nodes(scene).any { text(it) == "Change connection?" }, texts(scene))
-            assertTrue(nodes(scene).any { text(it) == "Your local library and progress stay on this TV. You'll choose a server or local mode next." }, texts(scene))
+            assertTrue(nodes(scene).any { text(it) == "Change connection?" }, texts(scene).toString())
+            assertTrue(nodes(scene).any { text(it) == "Your local library and progress stay on this TV. You'll choose a server or local mode next." }, texts(scene).toString())
             assertTrue(nodes(scene).any { text(it) == "Cancel" })
             assertFalse(nodes(scene).any { text(it) == "Leave" || text(it).startsWith("Leave local mode") }, "the dialog no longer asks about leaving local mode")
+            capture(scene, "change-connection-tv")
             assertEquals(0, leaves)
             click(scene, "Change connection"); frames(scene)
             assertEquals(1, leaves)
         } finally { scene.close() }
+    }
+
+    private fun capture(scene: ImageComposeScene, name: String) = System.getenv("VIPTV_CHANGE_CONNECTION_CAPTURE_DIR")?.let { path ->
+        File(path).mkdirs()
+        scene.render(4_000_000_000L).use { image -> image.encodeToData()!!.use { File(path, "$name.png").writeBytes(it.bytes) } }
     }
 
     private fun frames(scene: ImageComposeScene, count: Int = 16) = repeat(count) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
