@@ -85,9 +85,10 @@ class NextEpisodePreparationTest {
             configureTransport()
         }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
-        val controller = ApplicationController(backgroundScope, store)
+        val controller = ApplicationController(this, store)
         controller.connection = remote
         controller.local = local
+        controller.capability = { DeviceCapability() }
         controller.leaseOpener = PlaybackLeaseOpener { connection, candidate, profile, forceGateway, position, stage ->
             connection.openPlayback(candidate, profile, buildJsonObject { put("platform", "desktop"); put("can_play_direct", true) },
                 forceGateway, position, torrents = null, stage = stage)
@@ -291,7 +292,8 @@ class NextEpisodePreparationTest {
             configureTransport()
         }
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
-        val controller = ApplicationController(backgroundScope, store); controller.connection = remote
+        val controller = ApplicationController(this, store); controller.connection = remote
+        controller.capability = { DeviceCapability() }
         controller.mutable.value = state()
         controller.progress(1_300_000); advanceTimeBy(2_000); runCurrent()
         val prepared = assertNotNull(controller.state.value.nextEpisodePreparation)

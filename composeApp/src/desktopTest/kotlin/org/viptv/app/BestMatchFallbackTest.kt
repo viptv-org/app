@@ -2,6 +2,7 @@ package org.viptv.app
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.*
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
@@ -10,6 +11,7 @@ import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class BestMatchFallbackTest {
     private val movie = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "fixture", title = "Movie", badges = emptyList())
 
@@ -33,11 +35,13 @@ class BestMatchFallbackTest {
     }
 
     private fun fallback(rows: List<SourceCandidate>, startDeadlineMillis: Long = 60_000,
-        check: suspend (ApplicationController, Fallback) -> Unit) = runBlocking<Unit> {
+        check: suspend (ApplicationController, Fallback) -> Unit) = runTest {
         val fixture = LocalSetupFixture()
         val fake = Fallback(fixture, rows)
-        val controller = ApplicationController(fixture.scope, fixture.store, localFactory = { fake.device },
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        val controller = ApplicationController(scope, fixture.store, localFactory = { fake.device },
             bestMatchNoticeMillis = 20, startDeadlineMillis = startDeadlineMillis)
+        controller.capability = { DeviceCapability() }
         controller.local = fake.device
         controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
@@ -45,14 +49,14 @@ class BestMatchFallbackTest {
             controller.chooseSource(movie)
             withTimeout(5000) { controller.state.first { it.playback != null } }
             check(controller, fake)
-        } finally { fixture.close(controller) }
+        } finally {
+            fixture.close(controller)
+            scope.cancel()
+        }
     }
 
     private suspend fun awaitPlayback(controller: ApplicationController, id: String) =
         withTimeout(5000) { controller.state.first { it.playingSource?.id == id && it.playback?.id == id } }
-
-    private suspend fun awaitOpened(fake: Fallback, id: String) =
-        withTimeout(5000) { while (id !in fake.opened) delay(5) }
 
     @Test fun aFailedStartShowsTheNoticeThenOpensTheNextRowThatSurvivesTheHardFilters() =
         fallback(listOf(row("a"), row("cam", 2160, "cam"), row("b"))) { controller, fake ->

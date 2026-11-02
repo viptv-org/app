@@ -73,6 +73,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var nextEpisodePreparationGeneration = 0L
     internal var nextSourcePreparer: NextSourcePreparer = NextSourcePreparer.Device
     internal var clockMillis: () -> Long = ::epochMillis
+    internal var capability: suspend () -> DeviceCapability = { deviceCapability() }
     internal var playbackSeasonJob: Job? = null
     internal var playbackSeasonKey: PlaybackSeasonKey? = null
     internal var playbackSeasonGeneration = 0L
