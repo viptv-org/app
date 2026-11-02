@@ -73,7 +73,7 @@ private fun ApplicationController.rereadCalendar(request: CalendarRequest, delay
             val read = try { calendarRead(request.remote, request.window, request.type) }
                 catch (error: CancellationException) { throw error }
                 catch (error: Exception) {
-                    if (error is RemoteFailure && error.status == 401 && current()) expireSession(request.remote, null)
+                    if (error is RemoteFailure && error.sessionExpired && current()) expireSession(request.remote, null)
                     return@launch
                 }
             if (!current() || job?.isActive == true) return@launch

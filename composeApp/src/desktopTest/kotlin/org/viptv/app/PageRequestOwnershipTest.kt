@@ -69,7 +69,7 @@ class PageRequestOwnershipTest {
         controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "one")
         val navigation = controller.navigationGeneration
         controller.run { controller.readCurrentPage<Unit>(navigation) {
-            entered.complete(Unit); release.await(); throw RemoteFailure(401, "Session expired")
+            entered.complete(Unit); release.await(); throw RemoteFailure(401, "Session expired", sessionExpired = true)
         } }
         entered.await(); controller.navigate(Screen.Home); release.complete(Unit); controller.job?.join()
         assertEquals(Screen.Connect, controller.state.value.screen)

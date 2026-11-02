@@ -87,7 +87,23 @@ class AccountDevicesTest {
                 accountDevices = kotlinx.serialization.json.Json.decodeFromString<AccountDevices>(accountFixture))
             controller.refreshAccountDevices(); controller.job?.join()
             assertNull(controller.state.value.accountDevices)
+            assertEquals("Manage this from a signed-in phone, computer or the web dashboard.", controller.state.value.error)
+            assertFalse(controller.state.value.devicesRetryable, "A refusal is never offered a retry")
+        } finally { scope.cancel(); remote.close() }
+    }
+
+    @Test fun aTemporaryDeviceListFailureKeepsTheRetry(): Unit = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val remote = RemoteConnection("https://watch.example",store,HttpClient(MockEngine {
+            respond("{}",HttpStatusCode.ServiceUnavailable,headersOf(HttpHeaders.ContentType,"application/json"))
+        }),browserMode = true)
+        try {
+            val controller = ApplicationController(scope,store)
+            controller.connection = remote
+            controller.mutable.value = ApplicationState(screen = Screen.Settings)
+            controller.refreshAccountDevices(); controller.job?.join()
             assertNotNull(controller.state.value.error)
+            assertTrue(controller.state.value.devicesRetryable, "An outage keeps its retry")
         } finally { scope.cancel(); remote.close() }
     }
 

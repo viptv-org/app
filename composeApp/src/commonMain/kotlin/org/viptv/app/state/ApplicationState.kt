@@ -31,6 +31,7 @@ data class ApplicationState(
     val profileToEdit: String? = null,
     val simkl: SimklLinkStatus? = null,
     val accountDevices: AccountDevices? = null,
+    val devicesRetryable: Boolean = true,
     val accountIdentity: AccountIdentity? = null,
     val passwordChangeAvailable: Boolean = false,
     val passwordChangeNotice: String? = null,

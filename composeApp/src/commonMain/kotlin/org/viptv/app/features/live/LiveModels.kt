@@ -15,6 +15,25 @@ data class LiveChannel(val card: Card, val number: String? = null, val category:
 
 internal fun LiveChannel.key(): String = card.provider_id + ":" + card.identity.id
 
+private val liveMonogramSkip = setOf("uhd", "fhd", "hdr", "4k", "8k")
+
+internal fun liveChannelMonogram(title: String): String? {
+    val words = buildList {
+        val word = StringBuilder()
+        for (character in title.substringAfter('|', title)) {
+            if (character.isLetterOrDigit()) word.append(character)
+            else if (word.isNotEmpty()) { add(word.toString()); word.clear() }
+        }
+        if (word.isNotEmpty()) add(word.toString())
+    }
+    val chosen = words.filter { it.length > 2 && it.lowercase() !in liveMonogramSkip }.ifEmpty { words }
+    return when {
+        chosen.isEmpty() -> null
+        chosen.size == 1 -> chosen.first().take(4).uppercase()
+        else -> chosen.take(3).map { it.first().uppercaseChar() }.joinToString("")
+    }
+}
+
 internal fun liveProgramPadding(television: Boolean, scale: Float) = (if (television) 18 else 12).dp * scale
 
 private val liveProgramLabelWidth = 32.dp

@@ -48,7 +48,7 @@ fun ApplicationController.checkContinueWatching() {
         try { reloadContinueWatching(remote, profile) }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (error is RemoteFailure && error.status == 401 && connection === remote && mutable.value.selectedProfile == profile)
+            if (error is RemoteFailure && error.sessionExpired && connection === remote && mutable.value.selectedProfile == profile)
                 expireSession(remote, null)
         }
     }

@@ -21,7 +21,7 @@ import org.viptv.app.components.TextButton
 @Composable
 internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, error: String?, load: () -> Unit,
     signOut: (String) -> Unit, signOutAll: () -> Unit, compact: Boolean = false, back: (() -> Unit)? = null,
-    canSignOut: Boolean = true) {
+    canSignOut: Boolean = true, retryable: Boolean = true) {
     var removing by remember { mutableStateOf<AccountDevice?>(null) }
     var removingAll by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { load() }
@@ -65,7 +65,7 @@ internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, erro
         }
         item {
             error?.let { Spacer(Modifier.height(14.dp)); Text(it, color = Palette.danger) }
-            if (error != null || snapshot == null && !busy) TextButton(load, enabled = !busy) { Text("Retry") }
+            if (retryable && (error != null || snapshot == null && !busy)) TextButton(load, enabled = !busy) { Text("Retry") }
             if (snapshot != null) TextButton(load, enabled = !busy) { Text("Refresh") }
         }
     }
