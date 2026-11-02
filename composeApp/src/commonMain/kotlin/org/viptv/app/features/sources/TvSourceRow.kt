@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.tvHold
 import org.viptv.app.theme.Palette
@@ -38,7 +39,8 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
         .focusProperties { if (up != null) this.up = up }
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }
         .tvHold(enabled = details != null) { details?.invoke(source) }
-        .sourceRowActivation(interaction, enabled, onHold = details?.let { { it(source) } }, onClick = { choose(source) })) {
+        .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
+            onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
     header?.let { SourceGroupHeader(it, (22 * scale).sp, Modifier.padding(start = 4.dp * scale, top = 14.dp * scale, bottom = 12.dp * scale), measured = headerMeasured) }
     Row(Modifier.fillMaxWidth().height(TvSourceRowHeight * scale).clip(RoundedCornerShape(14.dp * scale))
         .background(if (focused) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))

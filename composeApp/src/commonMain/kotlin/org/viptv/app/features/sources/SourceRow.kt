@@ -24,6 +24,7 @@ import com.composables.icons.lucide.Check
 import org.viptv.app.components.OwnFocusTreatment
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
+import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.tvHold
 import org.viptv.app.theme.Palette
@@ -46,7 +47,8 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
     OwnFocusTreatment { Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
         .onFocusChanged { if (focused != it.isFocused) { focused = it.isFocused; focusChanged(it.isFocused) } }
         .tvHold(enabled = details != null) { details?.invoke(source) }
-        .sourceRowActivation(interaction, enabled, onHold = details?.let { { it(source) } }, onClick = { choose(source) })) {
+        .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
+            onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
         header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp), measured = headerMeasured) }
         Row(Modifier.fillMaxWidth().height(RowHeight).clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
         .background(if (focused) Palette.text else if (television || selected) Palette.raised else Palette.surface)

@@ -1,9 +1,6 @@
 package org.viptv.app.features.sources
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,22 +43,12 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.TextButton
-import org.viptv.app.components.cursorIf
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
 internal const val SOURCE_DETAILS_LABEL = "Source details"
-
-// A press plays the row and a long press opens Source details, so one press never does both.
-@OptIn(ExperimentalFoundationApi::class)
-internal fun Modifier.sourceRowActivation(interaction: MutableInteractionSource, enabled: Boolean,
-    onHold: (() -> Unit)?, onClick: () -> Unit): Modifier = cursorIf(enabled).let { cursor ->
-    if (onHold == null) cursor.clickable(interaction, null, enabled, onClick = onClick)
-    else cursor.combinedClickable(interaction, null, enabled, onClickLabel = null, role = null,
-        onLongClickLabel = SOURCE_DETAILS_LABEL, onLongClick = onHold, onDoubleClick = null, onClick = onClick)
-}
 
 @Composable
 internal fun SourceDetailsPanel(source: SourceCandidate, television: Boolean, scale: Float, dismiss: () -> Unit) {
