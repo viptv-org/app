@@ -19,8 +19,10 @@ fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Bool
     openSource(current, forceGateway, positionMillis = if (restart) 0L else null)
 }
 
-internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false) =
+internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null, pausedAfterOpen: Boolean = false) {
+    updateState { next -> next.copy(playingSource = source, openingSource = source) }
     run { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen) }
+}
 
 internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean) {
     progressJob?.join()
@@ -30,13 +32,19 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     val store = local
     val remote = connection
     val profile = requireNotNull(mutable.value.selectedProfile)
+    val title = mutable.value.sourceTitle
     if (mutable.value.preferences == null) loadPreferences()
     val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
     val lease = if (store == null) try {
         leaseOpener.open(requireNotNull(remote), source, profile, forceGateway, positionMillis) { text -> updateState { next -> next.copy(openingStage = text) } }
     } finally { updateState { next -> next.copy(openingStage = null) } } else null
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
-    val card = requireNotNull(mutable.value.sourceTitle)
+    // An open outlives the picker that started it: another profile or title meanwhile owns the player.
+    if (mutable.value.selectedProfile != profile || mutable.value.sourceTitle?.let(::cardLookupKey) != title?.let(::cardLookupKey)) {
+        withContext(NonCancellable) { runCatching { lease?.close() } }
+        return
+    }
+    val card = requireNotNull(title)
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId,
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
@@ -126,7 +134,7 @@ fun ApplicationController.observePlaybackFor(input: PlaybackInput?, fact: Player
 
 internal fun ApplicationController.observePlayback(fact: PlayerFact) {
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
-        updateState { next -> next.copy(presentation = fact) }
+        updateState { next -> next.copy(presentation = fact, openingSource = null) }
         firstFrameSeen = true
         if (!mutable.value.paused) tracking?.transition(PlaybackEvent.Start, lastProgress)
         val capturedInput = mutable.value.playback
@@ -166,7 +174,7 @@ fun ApplicationController.closePlayer() {
     val live = mutable.value.playback?.live == true
     releaseRemotePlayback()
     if(!completionSeen) saveProgress(false, final = true)
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false, openingSource = null) }
     lastProgress=null
     afterPlayback(live)
 }

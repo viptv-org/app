@@ -92,7 +92,7 @@ class NextEpisodePreparationTest {
         assertEquals(1, prepared, "One preparation per episode and preference generation")
         assertEquals(0, opens[0], "Preparing never opens a source")
 
-        controller.playNextEpisode(episode(2)); runCurrent()
+        controller.playEpisode(episode(2)); runCurrent()
         val state = controller.state.value
         assertEquals(Screen.Player, state.screen, "No source picker")
         assertEquals("episode-2", state.sourceTitle?.identity?.id)
@@ -120,7 +120,6 @@ class NextEpisodePreparationTest {
             Triple("movie", state().let { it.copy(sourceTitle = movie) }, 1_400_000L),
             Triple("live", state(playing = input(live = true)), 1_400_000L),
             Triple("finale", state(next = null), 1_400_000L),
-            Triple("always ask", state(preferences = ProfilePreferences(source_selection = "ask")), 1_400_000L),
         )
         for ((label, initial, duration) in cases) {
             val controller = controller(initial = initial)
@@ -134,6 +133,28 @@ class NextEpisodePreparationTest {
         }
     }
 
+    @Test fun alwaysAskProfilesPrepareTheControlledSuccessorAndHandItOff() = runTest {
+        val opens = IntArray(1); val controller = controller(initial = state(preferences = ProfilePreferences(source_selection = "ask")), server = opens)
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _ -> PreparedNextSource(nextSource, listOf(nextSource), SourceGroups.of(listOf(nextSource.id), nextSource.id)) }
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
+        controller.playEpisode(episode(2)); runCurrent()
+        assertEquals(Screen.Player, controller.state.value.screen)
+        assertEquals("lease-1", controller.state.value.playback?.id); assertEquals(1, opens[0])
+        controller.closePlayer()
+    }
+
+    @Test fun anotherEpisodeFromThePlayerStillAsksForASource() = runTest {
+        val controller = controller(initial = state(preferences = ProfilePreferences(source_selection = "ask")))
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _ -> PreparedNextSource(nextSource, listOf(nextSource), SourceGroups()) }
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
+        controller.playEpisode(episode(3)); runCurrent()
+        assertEquals(Screen.Sources, controller.state.value.screen)
+        assertNull(controller.state.value.playback)
+        controller.closePlayer()
+    }
+
     @Test fun aSourcePreferenceChangeReleasesThePreparedSourceAndPreparesAgain() = runTest {
         val controller = controller()
         var prepared = 0
@@ -145,7 +166,7 @@ class NextEpisodePreparationTest {
         assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
         controller.mutable.value = controller.state.value.copy(preferences = PreferencesSnapshot(3, ProfilePreferences(source_selection = "ask")))
         controller.progress(1_320_000); runCurrent()
-        assertEquals(2, prepared); assertNull(controller.state.value.nextEpisodePreparation)
+        assertEquals(3, prepared, "A source preference change reprepares under the new revision")
         controller.closePlayer()
     }
 
@@ -172,7 +193,7 @@ class NextEpisodePreparationTest {
         controller.progress(1_300_000); runCurrent()
         assertEquals(NextEpisodePreparationStatus.Unavailable, controller.state.value.nextEpisodePreparation?.status)
         assertNull(controller.state.value.nextEpisodePreparation?.source)
-        controller.playNextEpisode(episode(2)); runCurrent()
+        controller.playEpisode(episode(2)); runCurrent()
         assertEquals(Screen.Sources, controller.state.value.screen)
         assertNull(controller.state.value.playback, "The picker opens instead of a prepared handoff")
         controller.closePlayer()

@@ -31,6 +31,11 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         job?.cancel()
         updateState { it.copy(findingSources = false, busy = false) }
     }
+    if (screen != Screen.Sources && screen != Screen.Player && mutable.value.openingSource != null) {
+        generation++
+        job?.cancel()
+        updateState { it.copy(openingSource = null, busy = false) }
+    }
     val playerVisit = screen == Screen.Settings && mutable.value.settingsReturnsToPlayer &&
         previousScreen in listOf(Screen.Player, Screen.Settings)
     if (screen != Screen.Player && !playerVisit && mutable.value.playback != null) {
@@ -93,7 +98,7 @@ fun ApplicationController.backSources() {
     generation++; job?.cancel()
     if (!awaitingTitle) cancelSourceDetail()
     updateState { state ->
-        state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false,
+        state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false, openingSource = null,
             error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
     }
     rememberNavigation()

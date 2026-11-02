@@ -49,7 +49,6 @@ internal fun ApplicationState.nextEpisodePreparationTarget(): Card? {
     if (playing.live || playing.profileId != profile) return null
     val card = sourceTitle ?: return null
     if (card.identity.kind != "series" || card.identity.episode == null || card.parent_identity == null) return null
-    if (preferences?.preferences?.source_selection != "best") return null
     return nextEpisode
 }
 

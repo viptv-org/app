@@ -73,18 +73,18 @@ internal fun ApplicationController.cancelNextEpisodePreparation() {
     if (mutable.value.nextEpisodePreparation != null) updateState { it.copy(nextEpisodePreparation = null) }
 }
 
-fun ApplicationController.playNextEpisode(card: Card) {
+internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean {
     val state = mutable.value
     val prepared = state.nextEpisodePreparation?.takeIf {
         it.status == NextEpisodePreparationStatus.Ready && it.source != null &&
             it.profile == state.selectedProfile && cardLookupKey(it.card) == cardLookupKey(card) &&
             preparationKeyFor(it.card, state) == nextEpisodePreparationKey
-    }
-    if (prepared == null) { closePlayer(); chooseSource(card); return }
-    startPreparedNextEpisode(prepared)
+    } ?: return false
+    handOffToPreparedNextEpisode(prepared)
+    return true
 }
 
-private fun ApplicationController.startPreparedNextEpisode(prepared: NextEpisodePreparation) {
+private fun ApplicationController.handOffToPreparedNextEpisode(prepared: NextEpisodePreparation) {
     val source = prepared.source ?: return
     cancelNextEpisodePreparation()
     if (!completionSeen) saveProgress(false, final = true)
