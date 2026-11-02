@@ -36,11 +36,27 @@ fun ApplicationController.updatePreferences(preferences: ProfilePreferences) = r
     val remote = connection
     val device = local
     val snapshot = mutable.value.preferences ?: throw LocalFailure("Refresh profile preferences first.")
-    val updated = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
-        ?: requireNotNull(remote).updateProfilePreferences(profile, snapshot.revision, preferences)
-    if (ownsProfile(profile, remote, device)) {
-        cancelNextEpisodePreparation()
-        updateState { it.copy(preferences = updated, preferencesError = null) }
+    try {
+        val updated = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
+            ?: requireNotNull(remote).updateProfilePreferences(profile, snapshot.revision, preferences)
+        if (ownsProfile(profile, remote, device)) {
+            cancelNextEpisodePreparation()
+            updateState { it.copy(preferences = updated, preferencesError = null) }
+        }
+    } catch (error: CancellationException) { throw error }
+    catch (error: RemoteFailure) {
+        if (error.status == 401 && device == null) throw error
+        rejectPreferences(profile, remote, device)
+    }
+    catch (_: Exception) { rejectPreferences(profile, remote, device) }
+}
+
+private fun ApplicationController.rejectPreferences(profile: String, remote: RemoteConnection?, device: LocalConnection?) {
+    if (!ownsProfile(profile, remote, device)) return
+    // The server refused the write: republish the last good snapshot so the phone and desktop drafts revert instead of pinning a rejected value.
+    updateState { state ->
+        state.copy(preferencesError = "Could not save profile preferences. Try again.",
+            preferences = state.preferences?.let { saved -> PreferencesSnapshot(saved.revision, saved.preferences.copy()) })
     }
 }
 
