@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import com.composables.icons.lucide.*
 
@@ -62,7 +63,7 @@ fun ProfilesScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
     if (adding) AlertDialog(onDismissRequest = { adding = false }, title = { Text("Add profile") },
-        text = { OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true) },
+        text = { AppTextField(name, { name = it }, label = "Name") },
         confirmButton = { TextButton(onClick = { create(name); adding = false; name = "" }, enabled = name.isNotBlank() && !busy) { Text("Add") } },
         dismissButton = { TextButton(onClick = { adding = false }) { Text("Cancel") } })
 }

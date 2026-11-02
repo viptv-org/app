@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import com.composables.icons.lucide.*
 
 import androidx.compose.foundation.background
@@ -101,7 +102,7 @@ private fun NameDialog(profile: Profile?, busy: Boolean, pinAvailable: Boolean, 
     var pin by remember(profile?.id) { mutableStateOf("") }
     AlertDialog(onDismissRequest = dismiss, title = { Text("Name") }, text = {
         Column {
-            OutlinedTextField(name, { if (it.length <= 64) name = it }, singleLine = true)
+            AppTextField(name, { if (it.length <= 64) name = it })
             if (profile.requiresLocalPin(pinAvailable)) PinField(pin) { pin = it }
         }
     }, confirmButton = { TextButton(onClick = { save(name, pin) }, enabled = !busy && name.isNotBlank() && (!profile.requiresLocalPin(pinAvailable) || pin.length in 4..8)) { Text("Save") } },
@@ -136,6 +137,6 @@ private fun DeleteProfileDialog(profile: Profile?, busy: Boolean, pinAvailable: 
 
 @Composable
 private fun PinField(value: String, label: String = "Current PIN", change: (String) -> Unit) {
-    OutlinedTextField(value, { if (it.length <= 8 && it.all(Char::isDigit)) change(it) },
-        label = { Text(label) }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
+    AppTextField(value, { if (it.length <= 8 && it.all(Char::isDigit)) change(it) },
+        label = label, visualTransformation = PasswordVisualTransformation())
 }

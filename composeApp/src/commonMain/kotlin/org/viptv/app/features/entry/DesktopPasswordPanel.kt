@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -65,7 +66,7 @@ internal fun DesktopPasswordPanel(
             Text(if (changeServer) "Hide server address" else "Use another server",
                 Modifier.pointerClickable { changeServer = !changeServer }, color = Palette.secondary, fontSize = 11.sp)
         }
-        if (changeServer) OutlinedTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
-            label = { Text("Server address") }, singleLine = true, shape = RoundedCornerShape(10.dp))
+        if (changeServer) AppTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
+            label = "Server address", shape = RoundedCornerShape(10.dp))
     }
 }

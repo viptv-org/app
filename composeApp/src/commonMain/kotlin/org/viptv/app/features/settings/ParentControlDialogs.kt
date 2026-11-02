@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -56,8 +57,8 @@ internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, f
 @Composable
 private fun ParentPinField(label: String, value: String, change: (String) -> Unit, enabled: Boolean,
     modifier: Modifier = Modifier, invalid: Boolean = false) {
-    OutlinedTextField(value, { change(it.filter { c -> c in '0'..'9' }.take(8)) }, modifier.fillMaxWidth(),
-        enabled = enabled, label = { Text(label) }, singleLine = true, isError = invalid,
+    AppTextField(value, { change(it.filter { c -> c in '0'..'9' }.take(8)) }, modifier.fillMaxWidth(),
+        enabled = enabled, label = label, isError = invalid,
         visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
 }
 
@@ -112,10 +113,10 @@ internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinCon
                 Switch(enabled, { enabled = it }, enabled = !busy && pinConfigured)
             }
             if (!pinConfigured) Text("Set a parent PIN before enabling kids restrictions.", color = Palette.secondary)
-            OutlinedTextField(age, { age = it.filter { c -> c in '0'..'9' }.take(2) },
-                label = { Text("Maximum age") }, modifier = Modifier.focusRequester(first),
+            AppTextField(age, { age = it.filter { c -> c in '0'..'9' }.take(2) },
+                label = "Maximum age", modifier = Modifier.focusRequester(first),
                 supportingText = { Text("Used for any kind without its own rating limit.") },
-                enabled = editable, singleLine = true, isError = enabled && (parsed == null || parsed !in 0..17),
+                enabled = editable, isError = enabled && (parsed == null || parsed !in 0..17),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             if (policy.ratings.movie.isNotEmpty())
                 RatingChoices("Movies up to", policy.ratings.movie, movie, editable) { movie = it }

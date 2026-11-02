@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import org.viptv.app.connection.validatedRemoteOrigin
@@ -21,8 +22,8 @@ internal fun DevicePairingRequest(server: String, serverChanged: (String) -> Uni
     content({ revision++ }, { cancel(); inputError = null; editing = true })
     if (editing) AlertDialog(onDismissRequest = { if (server.isBlank()) back() else editing = false },
         title = { Text("Server address") },
-        text = { OutlinedTextField(draft, { draft = it; inputError = null }, singleLine = true,
-            label = { Text("HTTPS server address") }, isError = inputError != null,
+        text = { AppTextField(draft, { draft = it; inputError = null },
+            label = "HTTPS server address", isError = inputError != null,
             supportingText = { inputError?.let { Text(it) } }) },
         confirmButton = { TextButton(onClick = {
             val selected = runCatching { validatedRemoteOrigin(draft) }.getOrNull()

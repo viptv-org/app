@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -293,11 +294,10 @@ private fun DeviceField(
     transformation: androidx.compose.ui.text.input.VisualTransformation? = null,
     options: KeyboardOptions = KeyboardOptions.Default,
 ) {
-    OutlinedTextField(
+    AppTextField(
         value,
         changed,
-        label = { Text(label, color = Palette.secondary) },
-        singleLine = true,
+        label = label,
         enabled = enabled,
         visualTransformation = transformation ?: androidx.compose.ui.text.input.VisualTransformation.None,
         keyboardOptions = options,

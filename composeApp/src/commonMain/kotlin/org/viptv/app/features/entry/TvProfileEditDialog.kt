@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,10 +46,10 @@ internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?,
     }) }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (!editable) Text("This connection does not provide this profile preference yet.")
-            if (action == TvProfileEditAction.Name) OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-            if (editable && profile.requiresLocalPin(pinAvailable)) OutlinedTextField(currentPin,
-                { if (it.length <= 8 && it.all(Char::isDigit)) currentPin = it }, label = { Text("Current PIN") },
-                visualTransformation = PasswordVisualTransformation(), singleLine = true)
+            if (action == TvProfileEditAction.Name) AppTextField(name, { name = it }, label = "Name")
+            if (editable && profile.requiresLocalPin(pinAvailable)) AppTextField(currentPin,
+                { if (it.length <= 8 && it.all(Char::isDigit)) currentPin = it }, label = "Current PIN",
+                visualTransformation = PasswordVisualTransformation())
             if (action == TvProfileEditAction.Delete) Text("This removes this profile’s history and add-on choices.")
         }
     }, confirmButton = {

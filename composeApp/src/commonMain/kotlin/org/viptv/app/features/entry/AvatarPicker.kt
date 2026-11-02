@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -11,7 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -95,9 +95,9 @@ private fun ColumnScope.AvatarCatalogPage(catalog: AvatarCatalog, profile: Profi
 
     Text("${catalog.total} avatars. Pick a world, then pick your character.", Modifier.padding(top = metrics.gap / 2),
         color = Palette.secondary, fontSize = metrics.body)
-    if (needsPin) OutlinedTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
-        Modifier.padding(top = metrics.gap).focusRequester(pinField), label = { Text("Current PIN") },
-        visualTransformation = PasswordVisualTransformation(), singleLine = true)
+    if (needsPin) AppTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
+        Modifier.padding(top = metrics.gap).focusRequester(pinField), label = "Current PIN",
+        visualTransformation = PasswordVisualTransformation())
     WorldChips(catalog.worlds, world.style, layout, metrics) { style = it; page = 0 }
     val choices = paging.choices(page).toList()
     Column(Modifier.align(Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(metrics.gap)) {

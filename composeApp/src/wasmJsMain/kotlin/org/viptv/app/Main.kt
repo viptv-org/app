@@ -12,6 +12,9 @@ import org.viptv.app.state.DeviceApprovalController
 import org.viptv.app.state.Screen
 import org.viptv.app.features.entry.DeviceApprovalPage
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import org.viptv.app.components.BrowserDomTextHost
+import org.viptv.app.components.LocalDomTextHost
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -30,11 +33,13 @@ fun main() {
     val screen = runCatching { Screen.valueOf(previewParts.getOrNull(1) ?: "Home") }.getOrDefault(Screen.Home)
     val variant = previewParts.getOrNull(2) ?: "Movie"
     ComposeViewport(document.getElementById("viptv-ui-layer") as HTMLElement) {
-        when {
-            window.location.hash == "#playback-qa" -> PlaybackQa(canvasColor = Color.Transparent)
-            preview -> UiPreview(initialScreen = screen, browser = true, tvDetailVariant = variant)
-            window.location.pathname.trimEnd('/').endsWith("/device") -> DeviceApprovalRoute()
-            else -> BrowserApp()
+        CompositionLocalProvider(LocalDomTextHost provides BrowserDomTextHost) {
+            when {
+                window.location.hash == "#playback-qa" -> PlaybackQa(canvasColor = Color.Transparent)
+                preview -> UiPreview(initialScreen = screen, browser = true, tvDetailVariant = variant)
+                window.location.pathname.trimEnd('/').endsWith("/device") -> DeviceApprovalRoute()
+                else -> BrowserApp()
+            }
         }
     }
 }

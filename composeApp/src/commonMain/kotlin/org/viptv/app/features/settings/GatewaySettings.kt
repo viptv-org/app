@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -128,8 +129,8 @@ private fun GatewayAccessDialog(gateway: Gateway, grantees: List<Long>?, busy: B
                 }
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(accountInput, { accountInput = it }, Modifier.weight(1f), enabled = !busy,
-                    label = { Text("Account ID") }, singleLine = true,
+                AppTextField(accountInput, { accountInput = it }, Modifier.weight(1f), enabled = !busy,
+                    label = "Account ID",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                 Button({ accountInput.toLongOrNull()?.let(grant); accountInput = "" }, enabled = !busy && accountInput.toLongOrNull() != null) { Text("Grant") }
             }
@@ -178,14 +179,14 @@ private fun GatewayForm(existing: Gateway?, remote: RemoteConnection, dismiss: (
     AlertDialog(onDismissRequest = { if (!submitting) dismiss() }, containerColor = Palette.surface,
         title = { Text(if (existing == null) "Register gateway" else "Replace ${existing.name}") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
-            OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = { Text("Name") }, singleLine = true)
-            OutlinedTextField(endpoint, { endpoint = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = { Text("HTTPS endpoint") }, singleLine = true,
+            AppTextField(name, { name = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Name")
+            AppTextField(endpoint, { endpoint = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "HTTPS endpoint",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
-            OutlinedTextField(namespace, { namespace = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = { Text("Namespace") }, singleLine = true)
-            OutlinedTextField(priority, { priority = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = { Text("Priority (0–10000)") }, singleLine = true,
+            AppTextField(namespace, { namespace = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Namespace")
+            AppTextField(priority, { priority = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Priority (0–10000)",
                 isError = !priorityValid, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             if (!priorityValid) Text("Use a priority from 0 to 10000.", color = Palette.danger, fontSize = 13.sp)
-            OutlinedTextField(key, { key = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = { Text("Integration key") }, singleLine = true,
+            AppTextField(key, { key = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Integration key",
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false))
             failure?.let { Text(it, color = Palette.danger) }

@@ -1,5 +1,6 @@
 package org.viptv.app.features.history
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -85,8 +86,7 @@ internal fun ResumePositionDialog(initialSeconds: Long, duration: Double, onDism
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Resume at (seconds)") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                OutlinedTextField(text, { next -> text = next.filter(Char::isDigit).take(9) }, Modifier.fillMaxWidth(),
-                    singleLine = true, label = { Text("Resume at (seconds)") },
+                AppTextField(text, { next -> text = next.filter(Char::isDigit).take(9) }, Modifier.fillMaxWidth(), label = "Resume at (seconds)",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = !valid)
                 if (maxSeconds > 0) Text("Up to $maxSeconds seconds.", color = Palette.secondary, fontSize = 12.sp)
             }

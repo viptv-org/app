@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -202,17 +203,16 @@ private fun rememberXtreamDraft(mode: XtreamFormMode, connection: XtreamConnecti
 
 @Composable
 private fun XtreamFormFields(mode: XtreamFormMode, draft: XtreamDraft, busy: Boolean, error: String?) {
-    if (mode != XtreamFormMode.Password) OutlinedTextField(draft.name, { draft.name = it.take(XtreamMaximumName) },
-        Modifier.fillMaxWidth(), label = { Text("Connection name") }, singleLine = true, enabled = !busy)
+    if (mode != XtreamFormMode.Password) AppTextField(draft.name, { draft.name = it.take(XtreamMaximumName) },
+        Modifier.fillMaxWidth(), label = "Connection name", enabled = !busy)
     if (mode == XtreamFormMode.Create) {
-        OutlinedTextField(draft.url, { draft.url = it.take(2048) }, Modifier.fillMaxWidth(), label = { Text("Server URL") },
-            placeholder = { Text("https://example.com:8080") }, singleLine = true, enabled = !busy,
+        AppTextField(draft.url, { draft.url = it.take(2048) }, Modifier.fillMaxWidth(), label = "Server URL",
+            placeholder = "https://example.com:8080", enabled = !busy,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false))
-        OutlinedTextField(draft.username, { draft.username = it.take(512) }, Modifier.fillMaxWidth(), label = { Text("Username") },
-            singleLine = true, enabled = !busy, keyboardOptions = KeyboardOptions(autoCorrectEnabled = false))
+        AppTextField(draft.username, { draft.username = it.take(512) }, Modifier.fillMaxWidth(), label = "Username", enabled = !busy, keyboardOptions = KeyboardOptions(autoCorrectEnabled = false))
     }
-    if (mode != XtreamFormMode.Edit) OutlinedTextField(draft.password, { draft.password = it.take(2048) }, Modifier.fillMaxWidth(),
-        label = { Text(if (mode == XtreamFormMode.Create) "Password" else "New password") }, singleLine = true, enabled = !busy,
+    if (mode != XtreamFormMode.Edit) AppTextField(draft.password, { draft.password = it.take(2048) }, Modifier.fillMaxWidth(),
+        label = if (mode == XtreamFormMode.Create) "Password" else "New password", enabled = !busy,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
         visualTransformation = PasswordVisualTransformation())
     if (mode != XtreamFormMode.Password) {
