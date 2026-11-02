@@ -74,8 +74,10 @@ def build():
             ffmpeg = (prefix / 'opt/ffmpeg').resolve()
             ffmpeg_full = (prefix / 'opt/ffmpeg-full').resolve()
             assert ffmpeg_full.is_dir(), 'Install ffmpeg-full using Homebrew; it is the FFmpeg build with zimg (zscale)'
-            assert ffmpeg_full.name == ffmpeg.name, f'ffmpeg {ffmpeg.name} and ffmpeg-full {ffmpeg_full.name} must be the same release'
-            files, links, pending = {}, {}, [library]
+            # Homebrew's Cellar directory names carry its own revision, so compare the release only.
+            release = re.sub(r'_\d+$', '', ffmpeg.name)
+            assert release == re.sub(r'_\d+$', '', ffmpeg_full.name), f'ffmpeg {ffmpeg.name} and ffmpeg-full {ffmpeg_full.name} must be the same release'
+            files, links, pending, substituted = {}, {}, [library], 0
             while pending:
                 file = pending.pop()
                 if file.name in files:
@@ -91,10 +93,12 @@ def build():
                         dep = prefix / 'lib' / Path(dependency).name
                     if dep.parent.resolve() == ffmpeg / 'lib':
                         dep = ffmpeg_full / 'lib' / dep.name
+                        substituted += 1
                     assert dep.is_file(), f'Unresolved mpv dependency: {dependency}'
                     if dep.resolve() == file.resolve(): continue
                     links[file.name].append((dependency, dep.name))
                     pending.append(dep)
+            assert substituted, 'mpv links no Homebrew ffmpeg library, so ffmpeg-full was not substituted'
             for filename, file in files.items():
                 output = stage / filename
                 shutil.copy2(file, output); output.chmod(0o755)
