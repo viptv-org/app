@@ -71,6 +71,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var playbackSeasonGeneration = 0L
     internal var sourceDetailJob: Job? = null
     internal var sourcesScrolled = false
+    internal var sourcesStartPlayback = false
     internal var pairingJob: Job? = null
     internal var vodMatchesJob: Job? = null
     internal var vodMatchesRequest = 0L
