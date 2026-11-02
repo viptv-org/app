@@ -58,6 +58,8 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val scale = maxWidth / 1920.dp
             val rowFocus = remember { mutableMapOf<String, FocusRequester>() }
             var focusedSource by remember { mutableStateOf<String?>(null) }
+            var details by remember { mutableStateOf<SourceCandidate?>(null) }
+            var detailsRow by remember { mutableStateOf<FocusRequester?>(null) }
             var navigated by remember { mutableStateOf(false) }
             val headerHeight = remember { SourceHeaderHeight() }
             val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -144,10 +146,14 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     itemsIndexed(rows, key = { _, row -> row.source.id }) { index, row ->
                         TvSourceRow(row.source, info[row.source.id], scale, rowFocus.getOrPut(row.source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
                             up = if (index == 0) filterFocus else null, focusedSource = { focusedSource = it },
-                            header = row.header, bestMatch = row.bestMatch, didntStart = row.didntStart, headerMeasured = { headerHeight.pixels = it })
+                            header = row.header, bestMatch = row.bestMatch, didntStart = row.didntStart, headerMeasured = { headerHeight.pixels = it },
+                            details = { source ->
+                                detailsRow = rowFocus[source.id].takeIf { focusedSource == source.id }
+                                details = source
+                            })
                     }
                     if (finding) items(3) {
-                        Box(Modifier.fillMaxWidth().height(104.dp * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
+                        Box(Modifier.fillMaxWidth().height(TvSourceRowHeight * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
                             .semantics { contentDescription = "Loading source" })
                     }
                     if (!busy && !loadingMore && visible.isEmpty() && error == null && sources.isNotEmpty()) item {
@@ -160,6 +166,13 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                     Text(if (loadingMore || sources.isEmpty()) "Checking add-ons · ${sources.size} sources so far" else openingStage ?: "Opening stream…",
                         color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
                 }
+            }
+            details?.let { shown ->
+                SourceDetailsPanel(shown, television = true, scale = scale, dismiss = {
+                    val back = detailsRow
+                    details = null; detailsRow = null
+                    back?.requestPlacedFocus()
+                })
             }
         }
     }
