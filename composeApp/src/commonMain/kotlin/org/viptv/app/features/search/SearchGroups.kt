@@ -7,6 +7,9 @@ import org.viptv.app.connection.SearchResultRow
 internal data class SearchGroup(val id: String, val label: String, val cards: List<Card>, val message: String? = null)
 internal val searchFilterOptions = listOf("All", "Movies", "Series", "Anime", "Channels")
 
+private const val providerFailed = "This search provider could not respond. Try again."
+private const val noMatchingTitles = "No matching titles"
+
 internal fun searchFiltersFor(type: String?): Set<String> = when (type) {
     "series" -> setOf("Series", "Anime")
     "movie" -> setOf("Movies")
@@ -29,7 +32,7 @@ internal fun searchGroups(cards: List<Card>, addons: List<IntegrationConnection>
 internal fun searchResultGroups(rows: List<SearchResultRow>, filters: Set<String> = emptySet()): List<SearchGroup> = rows.map { row ->
     val cards = row.cards.filter { it.matchesSearchFilter(filters) }.distinctBy(::searchCardKey)
     val message = when (row.state) {
-        "Failed" -> "This search provider could not respond. Try again."
+        "Failed" -> providerFailed
         "Loading", "Pending" -> "Searching…"
         "Ready" -> if (row.message != null) "Some search results are unavailable. Try again." else null
         else -> null
@@ -37,8 +40,11 @@ internal fun searchResultGroups(rows: List<SearchResultRow>, filters: Set<String
     SearchGroup(row.id, row.title, cards, message)
 }.filter { it.cards.isNotEmpty() || it.message != null }.let { groups ->
     val (returned, silent) = groups.partition { it.cards.isNotEmpty() }
-    returned + silent
+    if (returned.isEmpty()) emptyList() else returned + silent
 }
+
+internal fun searchNoResultsCopy(rows: List<SearchResultRow>): String =
+    if (rows.any { it.state == "Failed" } && rows.none { it.cards.isNotEmpty() }) providerFailed else noMatchingTitles
 
 internal fun Card.matchesSearchFilter(filters: Set<String>): Boolean = filters.isEmpty() || filters.any { filter ->
     when (filter) {
