@@ -24,13 +24,22 @@ fun ApplicationController.submitProfilePin(pin: String) = profileMutation {
     openProfile(id)
 }
 
+internal fun ApplicationController.beginHomeTransition(profile: String) {
+    updateState { next -> next.copy(screen = Screen.Home, home = null, profileToOpen = profile,
+        homeGenres = null, homeRowBusy = emptySet(), homeRowErrors = emptyMap(), error = null) }
+}
+
 internal suspend fun ApplicationController.openProfile(id: String, pin: String? = null) {
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
     releaseRemotePlayback()?.join()
-    val result = local?.bootstrap(id) ?: switchRemoteProfile(id, pin) ?: return
+    val device = local
+    val result = if (device != null) {
+        beginHomeTransition(id)
+        device.bootstrap(id)
+    } else switchRemoteProfile(id, pin) ?: return
     restartRequested = false
     accept(result)
-    local?.let { device ->
+    if (device != null) {
         val home = device.refreshHome(id)
         updateState { next -> next.copy(home = home) }
     }
@@ -39,8 +48,9 @@ internal suspend fun ApplicationController.openProfile(id: String, pin: String? 
 
 private suspend fun ApplicationController.switchRemoteProfile(id: String, pin: String?): Bootstrap? {
     val remote = requireNotNull(connection)
+    // The switch is validated before the slow Home bootstrap, so a rejected PIN never shows Home.
     try {
-        return remote.selectProfile(id, pin)
+        remote.switchProfile(id, pin)
     } catch (failure: RemoteFailure) {
         when {
             failure.code == "leave_pin_required" -> {
@@ -53,6 +63,8 @@ private suspend fun ApplicationController.switchRemoteProfile(id: String, pin: S
             else -> throw failure
         }
     }
+    beginHomeTransition(id)
+    return remote.bootstrap()
 }
 
 fun ApplicationController.manageProfiles() { updateState { next -> next.copy(managingProfiles=true,error=null) } }

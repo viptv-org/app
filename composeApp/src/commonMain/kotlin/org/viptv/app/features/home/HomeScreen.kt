@@ -6,14 +6,11 @@ import org.viptv.app.components.pageGutter
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.owner
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -53,18 +50,20 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
             }
             // A preview replaces the featured hero and keeps its footprint, so the rows below never move under the pointer.
             val heroForSlot = carousel.card?.let { preview ?: it }
-            if (heroForSlot != null || (home == null && busy)) item(key = "hero") {
+            if (heroForSlot != null) item(key = "hero") {
                 val hero = heroForSlot
                 Box(Modifier.fillMaxWidth().heightIn(min = with(density) { heroFloor.toDp() })
                     .onGloballyPositioned { heroFloor = maxOf(heroFloor, it.size.height) }) {
                     if (!television && !tablet && !(compact && !desktopChrome)) hero?.landscape?.let { HomeBackdrop(it) }
                     Box(Modifier.padding(start = if (television || tablet) 0.dp else gutter, end = if (television || tablet) 0.dp else gutter, top = if (television || tablet || browser) 0.dp else 12.dp)) {
-                        if (hero != null) Hero(hero, compact && !desktopChrome, television, open, play, tablet, navigate, browser, save, saved(hero),
+                        Hero(hero, compact && !desktopChrome, television, open, play, tablet, navigate, browser, save, saved(hero),
                             if (preview == null) carousel else null, viewportHeight = viewportHeight,
                             label = if (preview != null) continueRow?.title ?: "Continue watching" else "Featured")
-                        else if (home == null && busy) Box(Modifier.fillMaxWidth().height(350.dp).clip(RoundedCornerShape(12.dp)).background(Palette.surface))
                     }
                 }
+            }
+            if (home == null && busy) item(key = "skeleton") {
+                HomeSkeleton(compact, tablet, browser, gutter)
             }
             if (home != null) {
                 val visibleRows = home.rows.filter {
