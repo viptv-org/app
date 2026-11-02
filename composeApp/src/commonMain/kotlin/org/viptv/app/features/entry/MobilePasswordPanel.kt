@@ -1,5 +1,6 @@
 package org.viptv.app.features.entry
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -58,6 +59,6 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     TextButton(onClick = { editServer = !editServer }, modifier = Modifier.fillMaxWidth()) {
         Text("Use another server", color = Palette.secondary, fontSize = 12.sp)
     }
-    if (editServer) OutlinedTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
-        label = { Text("Server address") }, singleLine = true, shape = RoundedCornerShape(12.dp))
+    if (editServer) AppTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
+        label = "Server address", shape = RoundedCornerShape(12.dp))
 }
