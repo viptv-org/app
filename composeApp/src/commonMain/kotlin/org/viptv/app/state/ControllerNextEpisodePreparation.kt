@@ -54,8 +54,9 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
     val remote = connection
     val device = local
     nextEpisodePreparationJob = scope.launch {
-        val remembered = sourceMemory.entry(key.profile, card)
-        val context = rankingContext(seriesMemoryOf(key.profile, card))
+        val remembered = if (mutable.value.preferences.rememberedSourceReuseEnabled())
+            sourceMemory.entry(key.profile, card) else null
+        val context = rankingContext(seriesMemoryOf(key.profile, card), capability)
         val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) {
             nextSourcePreparer.prepare(remote, device, key.profile, card, remembered, context) } }
         catch (error: CancellationException) { throw error }
@@ -80,6 +81,7 @@ internal fun ApplicationController.cancelNextEpisodePreparation() {
 
 internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean {
     val state = mutable.value
+    if (!state.preferences.rememberedSourceReuseEnabled()) return false
     val prepared = state.nextEpisodePreparation?.takeIf {
         it.status == NextEpisodePreparationStatus.Ready && it.source != null &&
             it.profile == state.selectedProfile && cardLookupKey(it.card) == cardLookupKey(card) &&

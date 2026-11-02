@@ -211,7 +211,8 @@ fun ApplicationController.playTitle(card: Card) {
     val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: before.detailReturnScreen
     val keptDetail = before.detail?.takeIf { !before.detailShell && sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
-    val remembered = before.selectedProfile?.let { sourceMemory.entry(it, card) }
+    val remembered = if (before.preferences.rememberedSourceReuseEnabled())
+        before.selectedProfile?.let { sourceMemory.entry(it, card) } else null
     releaseRemotePlayback()
     updateState { it.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null, detailShell = false) }
     openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null }, quiet = remembered != null)
@@ -278,7 +279,7 @@ fun ApplicationController.retryDetails() {
     if (state.screen != Screen.Details) return
     val card = state.playTapTitle ?: state.detail?.item ?: return
     val navigation = navigationGeneration
-    updateState { it.copy(error = null, detailFailure = null, detailPageError = null, detailRetryable = true) }
+    updateState { it.copy(error = null, detailFailure = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true) }
     if (state.playTapTitle != null) {
         if (card.identity.episode != null && card.metadata_origin != null) loadSourceDetail(card, navigation)
         else resolveSourceTarget(card, navigation)
@@ -383,7 +384,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val profile = requireNotNull(mutable.value.selectedProfile)
         val device = local
         val remote = connection
-        val context = rankingContext(seriesMemoryOf(profile, card))
+        val context = rankingContext(seriesMemoryOf(profile, card), capability)
         coroutineScope {
             var playing = false
             fun rememberedStart(ranked: RankedSources, target: SourceCandidate) {

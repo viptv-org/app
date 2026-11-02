@@ -48,6 +48,10 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
                         PhonePreferenceSwitchRow(skipIntrosRow, skipIntrosDescription, value.skip_intros) {
                             draft = draft?.copy(skip_intros = it)
                         }
+                        PhonePreferenceDivider()
+                        PhonePreferenceSwitchRow(rememberedSourceRow, rememberedSourceDescription, value.remembered_source_reuse) {
+                            draft = draft?.copy(remembered_source_reuse = it)
+                        }
                     }
                     Text("Sources", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     PhonePreferenceGroup {

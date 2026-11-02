@@ -29,7 +29,8 @@ internal fun GatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, Gat
     busy: Boolean, error: String?, errorCode: String?, loadError: String?, remote: RemoteConnection?,
     refresh: () -> Unit, check: (String) -> Unit, setEnabled: (String, Boolean) -> Unit, remove: (String) -> Unit,
     grantAccess: (String, Long) -> Unit, revokeAccess: (String, Long) -> Unit, loadGrants: (String) -> Unit,
-    television: Boolean = false, scale: Float = 1f, first: FocusRequester? = null, left: FocusRequester? = null) {
+    television: Boolean = false, scale: Float = 1f, first: FocusRequester? = null, left: FocusRequester? = null,
+    canManage: Boolean = true) {
     if (television) {
         TvGatewaySettings(snapshot, checks, busy, error, errorCode, loadError, refresh, check, setEnabled, scale, first, left)
         return
@@ -52,7 +53,7 @@ internal fun GatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, Gat
         }
         val operationMessage = gatewayCodeMessage(errorCode) ?: error
         operationMessage?.let { Text(it, color = Palette.danger) }
-        Button({ registering = true }, enabled = secretStorageConfigured && !busy) { Text("Register gateway") }
+        if (canManage) Button({ registering = true }, enabled = secretStorageConfigured && !busy) { Text("Register gateway") }
         snapshot?.items.orEmpty().forEach { gateway ->
             GatewayCard(gateway, checks[gateway.id], busy,
                 { check(gateway.id) }, { setEnabled(gateway.id, it) },

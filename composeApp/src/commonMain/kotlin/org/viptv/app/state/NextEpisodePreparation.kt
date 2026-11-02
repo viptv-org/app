@@ -43,6 +43,7 @@ internal fun nextEpisodePreparationDue(positionMillis: Long, durationMillis: Lon
 
 internal fun ApplicationState.nextEpisodePreparationTarget(): Card? {
     if (screen != Screen.Player || nextEpisodeLoading) return null
+    if (preferences?.preferences?.remembered_source_reuse == false) return null
     val playing = playback ?: return null
     val profile = selectedProfile ?: return null
     if (playing.live || playing.profileId != profile) return null

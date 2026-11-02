@@ -22,7 +22,7 @@ private suspend fun ApplicationController.loadAccountIdentity() {
     val owner = generation
     val identity = remote.accountIdentity()
     if (connection === remote && generation == owner) updateState { next -> next.copy(accountIdentity = identity,
-        manageAccount = remote.accountManagementEnabled, accountOwner = remote.accountOwner) }
+        manageAccount = remote.accountManagementEnabled, accountOwner = remote.accountOwner, accountRole = remote.accountRole) }
 }
 
 fun ApplicationController.refreshAccounts() = run { loadAccountIdentity() }

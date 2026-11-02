@@ -41,7 +41,7 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<String>, local: Boolean, busy: Boolean,
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
-    install: () -> Unit, placeholderQr: Boolean = false) {
+    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
@@ -69,9 +69,9 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                         TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
                             .focusProperties { left = sidebar }
                             .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
-                            .semantics { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off }, scale, ring = false, enabled = !busy, keepFocus = true,
+                            .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
-                            activate = { toggle(addon.id, addon.id !in enabled) }) { tint ->
+                            activate = { if (manage) toggle(addon.id, addon.id !in enabled) }) { tint ->
                             AddonLogoTile(addon.logo, Modifier.size(60.dp * scale).clip(RoundedCornerShape(14.dp * scale))
                                 .background(Color.White.copy(alpha = 0.08f)), Modifier.padding(6.dp * scale)) {
                                 Box(Modifier.fillMaxSize().background(Color(info[addon.id]?.color ?: 0xFF3D6C88)), contentAlignment = Alignment.Center) {
@@ -84,13 +84,13 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                                 Text(info[addon.id]?.subtitle ?: if (!addon.enabled) "Disabled for this account" else addon.providesSummary(),
                                     color = tint.copy(alpha = 0.75f), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
-                            TvSettingsSwitch(addon.id in enabled, scale)
+                            if (manage) TvSettingsSwitch(addon.id in enabled, scale)
                         }
                     }
                     if (addons.isNotEmpty() && shown.isEmpty()) item(key = "no-matches") {
                         Text("No add-ons match.", Modifier.padding(horizontal = 24.dp * scale), fontSize = (22 * scale).sp, color = Palette.secondary)
                     }
-                    item(key = "add") { TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
+                    item(key = "add") { if (manage) TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
                         .focusProperties { left = sidebar; down = FocusRequester.Cancel; if (addons.isEmpty()) up = FocusRequester.Cancel }
                         .then(if (shown.isEmpty()) Modifier.focusRequester(initial) else Modifier), scale, ring = false,
                         enabled = !busy, keepFocus = true, activate = { install() }, arrangement = Arrangement.Start,

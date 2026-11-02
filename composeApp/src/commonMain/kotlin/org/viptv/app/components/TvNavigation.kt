@@ -25,10 +25,19 @@ import org.viptv.app.theme.Palette
 internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val scale = maxWidth / 1920.dp
-        Box(Modifier.fillMaxWidth().height(132.dp * scale).focusProperties {
-            onEnter = { if (requestedFocusDirection == FocusDirection.Right) cancelFocusChange() }
-        }.focusGroup()) {
+        val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) && (it.screen != Screen.Anime || LocalAnimeAvailable.current) }
         val initial = remember { FocusRequester() }
+        val onARail = destinations.any { it.screen == selected }
+        // Up from the page lands on the selected rail: Compose's 2D search would pick the left-most icon instead.
+        Box(Modifier.fillMaxWidth().height(132.dp * scale).focusProperties {
+            onEnter = {
+                when (requestedFocusDirection) {
+                    FocusDirection.Right -> cancelFocusChange()
+                    FocusDirection.Up -> if (onARail) initial.requestPlacedFocus()
+                    else -> Unit
+                }
+            }
+        }.focusGroup()) {
         LaunchedEffect(selected) {
             if (selected in listOf(Screen.Movies, Screen.Series, Screen.Anime, Screen.Live, Screen.Calendar, Screen.Library, Screen.History)) initial.requestFocus()
         }
@@ -36,7 +45,6 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         Box(Modifier.offset(96.dp * scale, 44.dp * scale)) {
             Brand(44.dp * scale, (32 * scale).sp, 12.dp * scale, (-1.28f * scale).sp, (32 * scale).sp)
         }
-        val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) && (it.screen != Screen.Anime || LocalAnimeAvailable.current) }
         // One focus target per item, chained left/right: Compose's 2D search would otherwise drop from the nav into a card below.
         val navFocus = remember(destinations.size) { List(destinations.size + 1) { androidx.compose.ui.focus.FocusRequester() } }
         val profileFocus = remember { androidx.compose.ui.focus.FocusRequester() }

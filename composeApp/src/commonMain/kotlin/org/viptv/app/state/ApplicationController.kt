@@ -73,6 +73,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var nextEpisodePreparationGeneration = 0L
     internal var nextSourcePreparer: NextSourcePreparer = NextSourcePreparer.Device
     internal var clockMillis: () -> Long = ::epochMillis
+    internal var capability: suspend () -> DeviceCapability = { deviceCapability() }
     internal var playbackSeasonJob: Job? = null
     internal var playbackSeasonKey: PlaybackSeasonKey? = null
     internal var playbackSeasonGeneration = 0L
@@ -111,7 +112,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         val claimed = synchronized(runGate) {
             val prior = job
             val current = ++generation
-            updateState { it.copy(busy = true, error = null, errorCode = null, detailLoadingOffset = null, detailPageError = null, detailRetryable = true) }
+            updateState { it.copy(busy = true, error = null, errorCode = null, detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true) }
             val started = scope.launch(start = CoroutineStart.LAZY) {
                 try { prior?.join(); operation() }
                 catch (e: CancellationException) { throw e }

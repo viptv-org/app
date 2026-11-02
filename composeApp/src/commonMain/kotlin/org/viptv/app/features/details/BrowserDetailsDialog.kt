@@ -46,7 +46,7 @@ import org.viptv.app.components.rememberEnterLeaveMotion
 
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
-    continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true, focus: DetailFocus? = null) {
+    continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null) {
     var dismissing by remember(detail?.item?.let { it.provider_id to it.identity }) { mutableStateOf(false) }
     val requestDismiss = { if (!dismissing) dismissing = true }
     InitialBrowserEscape(requestDismiss)
@@ -109,6 +109,9 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                             if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp))
                                             else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
                                         }
+                                    }
+                                    if (pageError != null) item(key = "page-failure") {
+                                        DetailInlineFailure(pageError, retryPage, Modifier.padding(horizontal = gutter))
                                     }
                                     if (detail?.recommendations?.isNotEmpty() == true) item(key = "related") { RelatedTitles(detail.recommendations, open, Modifier.padding(vertical = gutter), gutter = gutter) }
                                 }

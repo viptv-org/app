@@ -3,6 +3,7 @@ package org.viptv.app.state
 import kotlin.concurrent.Volatile
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.viptv.app.connection.PreferencesSnapshot
 import org.viptv.app.connection.RankedSources
 import org.viptv.app.connection.failsHardFilter
 import org.viptv.app.player.canonicalLanguageTag
@@ -110,6 +111,9 @@ internal fun languageKey(tag: String): String? = tag.trim().takeIf(String::isNot
     ?.substringBefore('-')?.takeIf(String::isNotEmpty)
 
 internal val rememberedKinds = setOf("movie", "series")
+
+internal fun PreferencesSnapshot?.rememberedSourceReuseEnabled(): Boolean =
+    this?.preferences?.remembered_source_reuse != false
 
 internal fun ApplicationController.rememberSourceChoice() {
     val choice = sourceChoice

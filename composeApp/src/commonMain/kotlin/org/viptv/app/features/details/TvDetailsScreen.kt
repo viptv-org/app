@@ -43,6 +43,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
     shown: Boolean = true,
     playTap: Boolean = false,
     retry: (() -> Unit)? = null,
+    pageError: String? = null,
+    retryPage: (() -> Unit)? = null,
     focus: DetailFocus? = null) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     if (detail == null) {
@@ -142,7 +144,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                                 focused = { episodeMode = true; focusRow(TvDetailRow.Episodes) }, expanded = episodeMode,
                                 resume = resume,
                                 returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,
-                                busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown, detailFocus = focus)
+                                busy = busy, loadPage = loadPage, focus = shelfFocus, paging = shown, detailFocus = focus,
+                                pageError = pageError, retryPage = retryPage)
                         }
                         if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
                             TvRecommendationShelf(extras.recommendations, scale, open,
