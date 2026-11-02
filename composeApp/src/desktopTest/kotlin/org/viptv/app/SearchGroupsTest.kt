@@ -38,9 +38,24 @@ class SearchGroupsTest {
         val rows = listOf(SearchResultRow("one", "One", "simkl"), SearchResultRow("two", "Two", "stremio"))
         assertTrue(searchResultGroups(rows).isEmpty())
         assertTrue(searchResultGroups(rows, setOf("Channels")).isEmpty())
-        val failed = rows.map { it.copy(state = "Failed") }
-        assertEquals(listOf("One", "Two"), searchResultGroups(failed).map { it.label })
-        assertTrue(searchResultGroups(failed).all { it.message != null })
+        assertEquals("No matching titles", searchNoResultsCopy(rows))
+    }
+
+    @Test fun everyProviderFailingLeavesOneFailureStateInsteadOfOneBlockPerProvider() {
+        val rows = listOf(SearchResultRow("movies-search", "Movies Search", "stremio", state = "Failed"),
+            SearchResultRow("series-search", "Series Search", "stremio", state = "Failed"),
+            SearchResultRow("people-movies", "People Search Movies", "stremio", state = "Failed"),
+            SearchResultRow("empty-provider", "Empty provider", "stremio", state = "Empty"))
+        assertTrue(searchResultGroups(rows).isEmpty())
+        assertEquals("This search provider could not respond. Try again.", searchNoResultsCopy(rows))
+        assertEquals("No matching titles", searchNoResultsCopy(rows.filter { it.state != "Failed" }))
+    }
+
+    @Test fun aFilterThatLeavesOnlyFailedProvidersStillSaysNoMatchingTitles() {
+        val rows = listOf(SearchResultRow("movies", "Movie provider", "stremio", state = "Failed"),
+            SearchResultRow("channels", "Channel provider", "stremio", cards = listOf(card("stremio", "movie"))))
+        assertTrue(searchResultGroups(rows, setOf("Channels")).isEmpty())
+        assertEquals("No matching titles", searchNoResultsCopy(rows))
     }
 
     @Test fun aFilterKeepsOnlyTheProvidersItMatches() {
@@ -57,8 +72,7 @@ class SearchGroupsTest {
             SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1"))),
             SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed"))
         assertEquals(listOf("Cinemeta", "Anime", "Movies", "TV Shows"), searchResultGroups(rows).map { it.label })
-        assertEquals(listOf("Anime", "Movies", "TV Shows"),
-            searchResultGroups(rows.filter { it.state == "Failed" }).map { it.label })
+        assertTrue(searchResultGroups(rows.filter { it.state == "Failed" }).isEmpty())
     }
 
     @Test fun episodeCoordinatesDoNotCollide() {
