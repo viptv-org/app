@@ -19,7 +19,7 @@ internal suspend fun ApplicationController.loadPreferences(owner: AddonOperation
     } catch (error: CancellationException) { throw error }
     catch (error: Exception) {
         owner?.requireCurrent(this)
-        if (error is RemoteFailure && error.status == 401) expireSession(remote, device)
+        if (error is RemoteFailure && error.sessionExpired) expireSession(remote, device)
         else if (ownsProfile(profile, remote, device))
             updateState { it.copy(preferencesError = if (error is RemoteFailure && error.status == 403) error.message
                 else "Could not load profile preferences. Try again.") }

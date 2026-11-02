@@ -58,7 +58,8 @@ class RateLimitedSignInTest {
             try {
                 val failure = assertFailsWith<RemoteFailure> { remote.login("member", "wrong-password") }
                 assertEquals(401, failure.status)
-                assertEquals("Sign in to continue.", failure.message)
+                assertEquals("The username or password is not correct.", failure.message)
+                assertFalse(failure.sessionExpired)
             } finally { remote.close() }
         }
     }

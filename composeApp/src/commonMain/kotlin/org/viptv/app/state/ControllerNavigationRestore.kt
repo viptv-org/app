@@ -83,7 +83,7 @@ private fun ApplicationController.restoreDetails(card: Card, returnScreen: Scree
         val detail = try { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (error is RemoteFailure && error.status == 401 && device == null) { expireSession(remote, device); return@launch }
+            if (error is RemoteFailure && error.sessionExpired && device == null) { expireSession(remote, device); return@launch }
             null
         }
         if (navigationGeneration != navigation || mutable.value.screen != Screen.Details ||

@@ -52,7 +52,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
             if (generation != operation || connection !== remote) return@run
             // Release the failed connection before Connect so no token-bearing client survives the restore.
             remote.close(); connection = null
-            updateState { next -> next.copy(error = if (error.status == 401) "Session expired. Sign in again." else error.message) }
+            updateState { next -> next.copy(error = if (error.sessionExpired) "Session expired. Sign in again." else error.message) }
         }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
@@ -77,7 +77,13 @@ fun ApplicationController.connect(origin: String, username: String, password: St
         finishing?.join(); stopping?.join(); priorRemote?.retire(); priorLocal?.close()
         val remote = remoteFactory(origin, sessionStore)
         connection = remote
-        val bootstrap = if (username.isBlank()) remote.bootstrap() else remote.login(username, password)
+        val bootstrap = try {
+            if (username.isBlank()) remote.bootstrap() else remote.login(username, password)
+        } catch (error: Exception) {
+            if (connection === remote) connection = null
+            remote.close()
+            throw error
+        }
         try { withNativeSessionStoreLock {
             if (sessionStore.savedConnection() == SavedConnection.Local) sessionStore.clear()
         } }
@@ -211,7 +217,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
                 updateLibrary(cards, membership = membership)
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (error is RemoteFailure && error.status == 401) expireSession(remote, device)
+            if (error is RemoteFailure && error.sessionExpired) expireSession(remote, device)
         }
     }
 }
