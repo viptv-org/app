@@ -6,6 +6,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
@@ -28,8 +30,11 @@ fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: 
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(pinTitle(profile, leaving), style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(24.dp))
+        val focus = remember { FocusRequester() }
+        LaunchedEffect(Unit) { withFrameNanos { }; runCatching { focus.requestFocus() } }
         AppTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
-            label = "PIN", visualTransformation = PasswordVisualTransformation())
+            label = "PIN", visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code",
+            modifier = Modifier.focusRequester(focus))
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Row { TextButton(onClick = back) { Text("Back") }; Button(onClick = { submit(pin); pin = "" }, enabled = !busy && pin.length in 4..8) { Text("Continue") } }
     }

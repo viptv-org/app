@@ -51,7 +51,7 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
         }
     }
     if (serverDialog) AlertDialog(onDismissRequest = { serverDialog = false }, title = { Text("Server address") },
-        text = { AppTextField(server, { server = it }, label = "HTTPS server address") },
+        text = { AppTextField(server, { server = it }, label = "HTTPS server address", onEscape = { serverDialog = false }) },
         confirmButton = { TextButton(onClick = { serverChanged(server); serverDialog = false }) { Text("Done") } })
 }
 

@@ -40,6 +40,7 @@ internal fun SignInInput(
         .background(Color.White.copy(alpha = .06f), shape)
         .border(if (focused) 2.dp else 1.dp, if (focused) Palette.text else Color.White.copy(alpha = .14f), shape),
         label = hint, interactionSource = interaction, visualTransformation = transformation,
+        autocomplete = if (secret) "current-password" else "username",
         keyboardOptions = if (secret) KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false) else KeyboardOptions.Default,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Palette.text, fontSize = fontSize, letterSpacing = 0.sp),
         cursorBrush = SolidColor(Palette.text), decorationBox = { inner ->

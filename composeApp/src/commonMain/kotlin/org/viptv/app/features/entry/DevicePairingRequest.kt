@@ -24,6 +24,7 @@ internal fun DevicePairingRequest(server: String, serverChanged: (String) -> Uni
         title = { Text("Server address") },
         text = { AppTextField(draft, { draft = it; inputError = null },
             label = "HTTPS server address", isError = inputError != null,
+            onEscape = { if (server.isBlank()) back() else editing = false },
             supportingText = { inputError?.let { Text(it) } }) },
         confirmButton = { TextButton(onClick = {
             val selected = runCatching { validatedRemoteOrigin(draft) }.getOrNull()

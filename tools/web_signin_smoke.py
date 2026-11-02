@@ -62,11 +62,13 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 SIGNIN_SCENARIOS = ("enter", "keyboard", "button")
-# scenario: (preview route, button to press first, textbox name, text to type, text the page then shows)
+# scenario: (preview route, opener button, textbox name, text to type, text the page then shows, focused on open)
 FIELD_SCENARIOS = {
-    "search": ("/#ui-preview/Search/Movie", None, "Search", "the wild robot 2024 smoke", None),
-    "settings": ("/#ui-preview/Settings/Addons", None, "Search add-ons", "Add-on B", "Showing 1 of 3 add-ons"),
-    "dialog": ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "Kids Room 01", None),
+    "search":  ("/#ui-preview/Search/Movie", None, "Search", "the wild robot 2024 smoke", None, True),
+    "settings": ("/#ui-preview/Settings/Addons", None, "Search add-ons", "Add-on B", "Showing 1 of 3 add-ons", False),
+    "dialog":  ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "Kids Room 01", None, True),
+    "escape":  ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "", None, True),
+    "tab":     ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "", None, True),
 }
 SCENARIOS = SIGNIN_SCENARIOS + tuple(FIELD_SCENARIOS)
 USERNAME = "smoke-visitor"
@@ -178,7 +180,7 @@ def fake_backend(dist: Path, log: list, keys: Path):
 
 def visit_field(browser, origin, scenario, args, check):
     """One fresh visitor opens a preview page and types into one text field."""
-    route, opener, name, typed, shown = FIELD_SCENARIOS[scenario]
+    route, opener, name, typed, shown, autofocus = FIELD_SCENARIOS[scenario]
     context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
     page = context.new_page()
     if args.cpu_throttle != 1:
@@ -200,8 +202,40 @@ def visit_field(browser, origin, scenario, args, check):
     field = page.get_by_role("textbox", name=name)
     if not check(field.count() == 1, f"[{scenario}] the textbox '{name}' is on the page ({field.count()})"):
         return context.close()
-    field.click()
+    handle = field.element_handle()
+    if autofocus:
+        check(page.evaluate("(el) => document.activeElement === el", handle),
+              f"[{scenario}] the field '{name}' has DOM focus on open")
+    else:
+        field.click()
+        page.wait_for_timeout(args.settle)
     page.wait_for_timeout(args.settle)
+
+    if scenario == "escape":
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(500)
+        page.screenshot(path=str(args.out / f"{scenario}-escaped.png"))
+        check(page.get_by_role("textbox", name=name).count() == 0,
+              f"[{scenario}] Escape closed the dialog")
+        check(not errors, f"[{scenario}] no page errors {errors}")
+        return context.close()
+
+    if scenario == "tab":
+        page.keyboard.press("Tab")
+        page.wait_for_timeout(300)
+        after_tab = page.evaluate("""() => { const a = document.activeElement;
+            return a ? { tag: a.tagName, label: a.getAttribute('aria-label') } : null; }""")
+        check(page.evaluate("(el) => document.activeElement !== el", handle),
+              f"[{scenario}] Tab moved focus off the field")
+        check(after_tab is not None and after_tab["tag"] != "BODY",
+              f"[{scenario}] Tab landed on a control, not the page body ({after_tab})")
+        page.keyboard.press("Shift+Tab")
+        page.wait_for_timeout(300)
+        check(page.evaluate("(el) => document.activeElement === el", handle),
+              f"[{scenario}] Shift+Tab returned focus to the field")
+        check(not errors, f"[{scenario}] no page errors {errors}")
+        return context.close()
+
     page.keyboard.press("Control+A")
     page.keyboard.type(typed, delay=args.type_delay)
     page.wait_for_timeout(1500)

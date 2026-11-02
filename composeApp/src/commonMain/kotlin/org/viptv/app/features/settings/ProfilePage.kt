@@ -230,8 +230,8 @@ internal fun ProfileNameDialog(name: String, pinRequired: Boolean, busy: Boolean
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Name") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             AppTextField(typed, { if (it.length <= 64) typed = it }, label = "Name",
-                enabled = !busy, modifier = Modifier.fillMaxWidth())
-            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !busy)
+                enabled = !busy, modifier = Modifier.fillMaxWidth(), onEscape = { if (!busy) dismiss() })
+            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !busy, onEscape = { if (!busy) dismiss() })
             failure?.let { Text(it, color = Palette.danger) }
         } },
         confirmButton = { TextButton({ if (!busy && valid) save(typed, pin) }, enabled = !busy && valid) { Text("Save") } },
@@ -248,8 +248,8 @@ internal fun ProfileLockDialog(locked: Boolean, pinRequired: Boolean, busy: Bool
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text(if (locked) "Change profile PIN" else "Set profile PIN") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Ask for a PIN before this profile opens.", color = Palette.secondary)
-            if (needsOld) ProfilePinField("Current PIN", old, { old = it }, !busy)
-            ProfilePinField(if (locked) "New PIN (blank removes the lock)" else "New PIN", next, { next = it }, !busy)
+            if (needsOld) ProfilePinField("Current PIN", old, { old = it }, !busy, onEscape = { if (!busy) dismiss() })
+            ProfilePinField(if (locked) "New PIN (blank removes the lock)" else "New PIN", next, { next = it }, !busy, onEscape = { if (!busy) dismiss() })
             failure?.let { Text(it, color = Palette.danger) }
         } },
         confirmButton = { TextButton({ if (!busy && valid) save(old, next) }, enabled = !busy && valid) {
@@ -259,9 +259,10 @@ internal fun ProfileLockDialog(locked: Boolean, pinRequired: Boolean, busy: Bool
 }
 
 @Composable
-private fun ProfilePinField(label: String, value: String, change: (String) -> Unit, enabled: Boolean) {
+private fun ProfilePinField(label: String, value: String, change: (String) -> Unit, enabled: Boolean, onEscape: (() -> Unit)? = null) {
     AppTextField(value, { change(it.filter(Char::isDigit).take(8)) }, Modifier.fillMaxWidth(), enabled = enabled,
-        label = label, visualTransformation = PasswordVisualTransformation(),
+        label = label, visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code",
+        onEscape = onEscape,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
 }
 
@@ -273,7 +274,7 @@ internal fun DeleteProfileDialog(name: String, pinRequired: Boolean, busy: Boole
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Delete $name?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("This permanently removes this profile’s watch history, favorites and preferences.")
-            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !busy)
+            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !busy, onEscape = { if (!busy) dismiss() })
             failure?.let { Text(it, color = Palette.danger) }
         } },
         confirmButton = { TextButton({ if (!busy && valid) delete(pin) }, enabled = !busy && valid) {

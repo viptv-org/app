@@ -76,7 +76,7 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
                 RadioButton(current.equals(key, true), onClick = null, enabled = !busy); Spacer(Modifier.width(8.dp)); Text(label)
             } }
             if (custom) AppTextField(entry, { entry = it.take(if (language) 32 else 9) }, enabled = !busy,
-                label = if (language) "Language tag" else title, supportingText = { Text(if (language) "For example en or pt-BR. Empty uses the default."
+                label = if (language) "Language tag" else title, onEscape = { if (!busy) close() }, supportingText = { Text(if (language) "For example en or pt-BR. Empty uses the default."
                     else if (field == PhonePreferenceField.BackgroundColour) "Use #RRGGBB or #AARRGGBB, including transparency." else "Use #RRGGBB.") })
         } } }, confirmButton = {
             if (custom) TextButton({ apply(entry) }, enabled = !busy && valid) { Text("Use value") }

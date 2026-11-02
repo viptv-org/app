@@ -277,8 +277,8 @@ private fun DeviceSignInCard(busy: Boolean, error: String?, signIn: (String, Str
     DeviceSubtitle("Approve the TV with your VIPTV account.")
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    DeviceField(username, { username = it }, "Username", !busy)
-    DeviceField(password, { password = it }, "Password", !busy, PasswordVisualTransformation(), KeyboardOptions(keyboardType = KeyboardType.Password))
+    DeviceField(username, { username = it }, "Username", !busy, autocomplete = "username")
+    DeviceField(password, { password = it }, "Password", !busy, PasswordVisualTransformation(), KeyboardOptions(keyboardType = KeyboardType.Password), autocomplete = "current-password")
     error?.let { DeviceError(it) }
     DevicePrimaryButton("Sign in", !busy && username.isNotBlank() && password.isNotBlank(), busy) {
         signIn(username.trim(), password)
@@ -293,6 +293,7 @@ private fun DeviceField(
     enabled: Boolean,
     transformation: androidx.compose.ui.text.input.VisualTransformation? = null,
     options: KeyboardOptions = KeyboardOptions.Default,
+    autocomplete: String = "off",
 ) {
     AppTextField(
         value,
@@ -301,6 +302,7 @@ private fun DeviceField(
         enabled = enabled,
         visualTransformation = transformation ?: androidx.compose.ui.text.input.VisualTransformation.None,
         keyboardOptions = options,
+        autocomplete = autocomplete,
         shape = RoundedCornerShape(10.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Palette.text,

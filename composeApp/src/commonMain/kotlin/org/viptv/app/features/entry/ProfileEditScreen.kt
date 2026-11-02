@@ -42,10 +42,10 @@ fun ProfileEditScreen(
         TextButton(onClick = { pickingAvatar = true }) { Text("Change avatar") }
         AppTextField(name, { name = it }, label = "Name")
         if (profile.requiresLocalPin(pinAvailable)) AppTextField(oldPin, { if (it.length <= 8 && it.all(Char::isDigit)) oldPin = it },
-            label = "Current PIN", visualTransformation = PasswordVisualTransformation())
+            label = "Current PIN", visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code")
         if (pinAvailable) { AppTextField(newPin, { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
             label = if (profile?.locked == true) "New PIN (blank to remove)" else "Set PIN (optional)",
-            visualTransformation = PasswordVisualTransformation())
+            visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code")
         Text("A local PIN keeps profiles separate in the app. The device owner can access local files.", style = MaterialTheme.typography.bodySmall) }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Row {

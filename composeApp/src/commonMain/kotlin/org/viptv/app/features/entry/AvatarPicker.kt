@@ -97,7 +97,7 @@ private fun ColumnScope.AvatarCatalogPage(catalog: AvatarCatalog, profile: Profi
         color = Palette.secondary, fontSize = metrics.body)
     if (needsPin) AppTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
         Modifier.padding(top = metrics.gap).focusRequester(pinField), label = "Current PIN",
-        visualTransformation = PasswordVisualTransformation())
+        visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code")
     WorldChips(catalog.worlds, world.style, layout, metrics) { style = it; page = 0 }
     val choices = paging.choices(page).toList()
     Column(Modifier.align(Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(metrics.gap)) {

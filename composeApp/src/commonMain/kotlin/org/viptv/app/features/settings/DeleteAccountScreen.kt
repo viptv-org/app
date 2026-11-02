@@ -50,13 +50,14 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
             }
             else -> {
                 AppTextField(username, { username = it }, Modifier.fillMaxWidth(), enabled = !busy,
-                    label = "Type ${identity.username} to confirm")
+                    label = "Type ${identity.username} to confirm", autocomplete = "username")
                 AppTextField(password, { password = it }, Modifier.fillMaxWidth(), enabled = !busy,
                     label = "Password", visualTransformation = PasswordVisualTransformation(),
+                    autocomplete = "current-password",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
                 if (pinConfigured != false) AppTextField(pin, { pin = it.filter { c -> c in '0'..'9' }.take(8) },
                     Modifier.fillMaxWidth(), enabled = !busy, label = "Household PIN",
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button({ if (ready) delete(username, password, if (pin.isEmpty()) null else pin) },

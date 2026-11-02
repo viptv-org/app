@@ -1,13 +1,19 @@
 package org.viptv.app.components
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -40,6 +46,7 @@ private fun inputMode(type: KeyboardType): String? = when (type) {
 
 private fun HTMLInputElement.show(spec: DomTextSpec, fontPx: Float) {
     type = if (spec.secret) "password" else "text"
+    setAttribute("autocomplete", spec.autocomplete)
     inputMode(spec.keyboardType)?.let { setAttribute("inputmode", it) } ?: removeAttribute("inputmode")
     setAttribute("aria-label", spec.label)
     placeholder = spec.placeholder.orEmpty()
@@ -60,13 +67,18 @@ internal object BrowserDomTextHost : DomTextHost {
         val fontPx = with(density) { spec.fontSize.toDp().value }
         val lineHeight = with(density) { (spec.fontSize.toDp() * 1.5f) }
         val focus = remember { mutableListOf<FocusInteraction.Focus>() }
-        Box(modifier) {
+        val composeFocus = remember { MutableInteractionSource() }
+        val composeFocused by composeFocus.collectIsFocusedAsState()
+        var inputElement by remember { mutableStateOf<HTMLInputElement?>(null) }
+        LaunchedEffect(composeFocused) {
+            if (composeFocused) inputElement?.focus()
+        }
+        Box(modifier.focusable(interactionSource = composeFocus)) {
             decoration { inputModifier ->
                 HtmlElementView(factory = {
                     ensureDomTextStyle()
                     (document.createElement("input") as HTMLInputElement).apply {
                         className = "viptv-dom-text"
-                        setAttribute("autocomplete", "off")
                         setAttribute("autocapitalize", "off")
                         setAttribute("autocorrect", "off")
                         setAttribute("spellcheck", "false")
@@ -77,6 +89,8 @@ internal object BrowserDomTextHost : DomTextHost {
                             val enter = latest.onEnter
                             if (event.key == "Enter" && !event.isComposing && enter != null) {
                                 event.preventDefault(); enter()
+                            } else if (event.key == "Escape" && latest.onEscape != null) {
+                                event.preventDefault(); event.stopPropagation(); latest.onEscape?.invoke()
                             }
                             null
                         }
@@ -90,11 +104,12 @@ internal object BrowserDomTextHost : DomTextHost {
                             focus.removeFirstOrNull()?.let { latest.interactionSource?.tryEmit(FocusInteraction.Unfocus(it)) }
                             null
                         }
-                    }
+                    }.also { inputElement = it }
                 }, modifier = inputModifier.fillMaxWidth().height(lineHeight), update = { input ->
                     input.show(spec, fontPx)
                 }, onRelease = { input ->
                     input.oninput = null; input.onkeydown = null; input.onfocus = null; input.onblur = null
+                    if (inputElement == input) inputElement = null
                 })
             }
         }

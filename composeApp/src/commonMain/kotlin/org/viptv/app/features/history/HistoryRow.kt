@@ -87,7 +87,7 @@ internal fun ResumePositionDialog(initialSeconds: Long, duration: Double, onDism
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 AppTextField(text, { next -> text = next.filter(Char::isDigit).take(9) }, Modifier.fillMaxWidth(), label = "Resume at (seconds)",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = !valid)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = !valid, onEscape = onDismiss)
                 if (maxSeconds > 0) Text("Up to $maxSeconds seconds.", color = Palette.secondary, fontSize = 12.sp)
             }
         },

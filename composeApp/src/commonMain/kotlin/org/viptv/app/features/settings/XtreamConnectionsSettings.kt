@@ -149,7 +149,7 @@ internal fun XtreamConnectionsSettings(connections: List<XtreamConnection>?, def
         if (sheet) PhoneSheet(visible = true, title = xtreamFormTitle(form), dismiss = closeForm, touch = true,
             closeEnabled = !busy, closeLabel = "Close connection form", dragEnabled = !busy) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                XtreamFormFields(form, draft, busy, error)
+                XtreamFormFields(form, draft, busy, error, onEscape = closeForm)
                 Button(save, Modifier.fillMaxWidth().heightIn(min = 44.dp), enabled = draft.valid && !busy,
                     shape = RoundedCornerShape(12.dp)) { Text(xtreamFormAction(form), fontWeight = FontWeight.Bold) }
                 TextButton(closeForm, enabled = !busy) { Text("Cancel") }
@@ -157,7 +157,7 @@ internal fun XtreamConnectionsSettings(connections: List<XtreamConnection>?, def
         } else AlertDialog(onDismissRequest = closeForm, title = { Text(xtreamFormTitle(form)) },
             text = { TvFocusScroll(horizontal = false) {
                 Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    XtreamFormFields(form, draft, busy, error)
+                    XtreamFormFields(form, draft, busy, error, onEscape = { if (!busy) closeForm() })
                 } } },
             confirmButton = { TextButton(save, enabled = draft.valid && !busy) { Text(xtreamFormAction(form)) } },
             dismissButton = { TextButton(closeForm, enabled = !busy) { Text("Cancel") } })
@@ -202,17 +202,18 @@ private fun rememberXtreamDraft(mode: XtreamFormMode, connection: XtreamConnecti
     remember(mode, connection) { XtreamDraft(mode, connection) }
 
 @Composable
-private fun XtreamFormFields(mode: XtreamFormMode, draft: XtreamDraft, busy: Boolean, error: String?) {
+private fun XtreamFormFields(mode: XtreamFormMode, draft: XtreamDraft, busy: Boolean, error: String?, onEscape: (() -> Unit)? = null) {
     if (mode != XtreamFormMode.Password) AppTextField(draft.name, { draft.name = it.take(XtreamMaximumName) },
-        Modifier.fillMaxWidth(), label = "Connection name", enabled = !busy)
+        Modifier.fillMaxWidth(), label = "Connection name", enabled = !busy, onEscape = onEscape)
     if (mode == XtreamFormMode.Create) {
         AppTextField(draft.url, { draft.url = it.take(2048) }, Modifier.fillMaxWidth(), label = "Server URL",
-            placeholder = "https://example.com:8080", enabled = !busy,
+            placeholder = "https://example.com:8080", enabled = !busy, onEscape = onEscape,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false))
-        AppTextField(draft.username, { draft.username = it.take(512) }, Modifier.fillMaxWidth(), label = "Username", enabled = !busy, keyboardOptions = KeyboardOptions(autoCorrectEnabled = false))
+        AppTextField(draft.username, { draft.username = it.take(512) }, Modifier.fillMaxWidth(), label = "Username", enabled = !busy, autocomplete = "username", onEscape = onEscape, keyboardOptions = KeyboardOptions(autoCorrectEnabled = false))
     }
     if (mode != XtreamFormMode.Edit) AppTextField(draft.password, { draft.password = it.take(2048) }, Modifier.fillMaxWidth(),
         label = if (mode == XtreamFormMode.Create) "Password" else "New password", enabled = !busy,
+        autocomplete = "new-password", onEscape = onEscape,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
         visualTransformation = PasswordVisualTransformation())
     if (mode != XtreamFormMode.Password) {

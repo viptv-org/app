@@ -74,6 +74,8 @@ internal fun AppTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    autocomplete: String = "off",
+    onEscape: (() -> Unit)? = null,
     shape: Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 ) {
@@ -106,8 +108,8 @@ internal fun AppTextField(
         else -> colors.unfocusedLabelColor
     }
     val spec = DomTextSpec(value, onValueChange, label ?: placeholder.orEmpty(), placeholder, enabled,
-        visualTransformation is PasswordVisualTransformation, keyboardOptions.keyboardType,
-        keyboardActions.enterAction(keyboardOptions.imeAction), textColor, textStyle.fontSize.takeIf { it.isSpecified } ?: 16.sp, interaction)
+        visualTransformation is PasswordVisualTransformation, autocomplete, keyboardOptions.keyboardType,
+        keyboardActions.enterAction(keyboardOptions.imeAction), onEscape, textColor, textStyle.fontSize.takeIf { it.isSpecified } ?: 16.sp, interaction)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         label?.let { Text(it, color = labelColor, fontSize = 12.sp) }
         host.Field(spec, Modifier.fillMaxWidth().height(webFieldHeight)
@@ -135,6 +137,8 @@ internal fun AppBasicTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    autocomplete: String = "off",
+    onEscape: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
     decorationBox: @Composable (innerTextField: @Composable () -> Unit) -> Unit = { it() },
 ) {
@@ -146,7 +150,7 @@ internal fun AppBasicTextField(
         return
     }
     val spec = DomTextSpec(value, onValueChange, label, null, enabled, visualTransformation is PasswordVisualTransformation,
-        keyboardOptions.keyboardType, keyboardActions.enterAction(keyboardOptions.imeAction), textStyle.color.takeOrElse { Color.White },
+        autocomplete, keyboardOptions.keyboardType, keyboardActions.enterAction(keyboardOptions.imeAction), onEscape, textStyle.color.takeOrElse { Color.White },
         textStyle.fontSize.takeIf { it.isSpecified } ?: 16.sp, interactionSource)
     host.Field(spec, modifier) { input -> decorationBox { input(Modifier) } }
 }

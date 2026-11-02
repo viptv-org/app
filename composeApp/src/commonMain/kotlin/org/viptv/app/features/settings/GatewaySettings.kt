@@ -130,7 +130,7 @@ private fun GatewayAccessDialog(gateway: Gateway, grantees: List<Long>?, busy: B
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AppTextField(accountInput, { accountInput = it }, Modifier.weight(1f), enabled = !busy,
-                    label = "Account ID",
+                    label = "Account ID", onEscape = { if (!busy) dismiss() },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                 Button({ accountInput.toLongOrNull()?.let(grant); accountInput = "" }, enabled = !busy && accountInput.toLongOrNull() != null) { Text("Grant") }
             }
@@ -179,14 +179,14 @@ private fun GatewayForm(existing: Gateway?, remote: RemoteConnection, dismiss: (
     AlertDialog(onDismissRequest = { if (!submitting) dismiss() }, containerColor = Palette.surface,
         title = { Text(if (existing == null) "Register gateway" else "Replace ${existing.name}") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
-            AppTextField(name, { name = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Name")
-            AppTextField(endpoint, { endpoint = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "HTTPS endpoint",
+            AppTextField(name, { name = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Name", onEscape = { if (!submitting) dismiss() })
+            AppTextField(endpoint, { endpoint = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "HTTPS endpoint", onEscape = { if (!submitting) dismiss() },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
-            AppTextField(namespace, { namespace = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Namespace")
-            AppTextField(priority, { priority = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Priority (0–10000)",
+            AppTextField(namespace, { namespace = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Namespace", onEscape = { if (!submitting) dismiss() })
+            AppTextField(priority, { priority = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Priority (0–10000)", onEscape = { if (!submitting) dismiss() },
                 isError = !priorityValid, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             if (!priorityValid) Text("Use a priority from 0 to 10000.", color = Palette.danger, fontSize = 13.sp)
-            AppTextField(key, { key = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Integration key",
+            AppTextField(key, { key = it }, Modifier.fillMaxWidth(), enabled = !submitting, label = "Integration key", onEscape = { if (!submitting) dismiss() },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false))
             failure?.let { Text(it, color = Palette.danger) }

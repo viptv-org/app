@@ -27,7 +27,7 @@ internal fun DesktopEmailPanel(back: () -> Unit) {
         Spacer(Modifier.height(10.dp))
         Text("Email sign-in is unavailable. Use a password or continue in your browser.", color = Palette.secondary, fontSize = 14.sp)
         Spacer(Modifier.height(14.dp))
-        AppBasicTextField(code, { code = it.filter(Char::isDigit).take(6) }, label = "Email code",
+        AppBasicTextField(code, { code = it.filter(Char::isDigit).take(6) }, label = "Email code", autocomplete = "one-time-code",
             decorationBox = { inner ->
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     repeat(6) { index ->

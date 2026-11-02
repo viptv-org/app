@@ -83,6 +83,7 @@ internal fun DeviceCodeInput(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
             label = "Device code",
+            autocomplete = "one-time-code",
             modifier = Modifier
                 .focusRequester(focus)
                 .background(Color.Transparent)
