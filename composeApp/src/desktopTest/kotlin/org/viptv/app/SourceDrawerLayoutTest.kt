@@ -56,7 +56,7 @@ class SourceDrawerLayoutTest {
 
     @Test fun tvKeepsItsLoadingAndOpeningStatus() {
         render(1920, 1080, television = true, loadingMore = true) { nodes ->
-            assertTrue(texts(nodes).any { it.startsWith("Checking add-ons · 3 sources so far") }, texts(nodes).toString())
+            assertTrue(texts(nodes).any { it == "Still checking sources" }, texts(nodes).toString())
         }
         render(1920, 1080, television = true, busy = true) { nodes ->
             assertTrue(texts(nodes).any { it == "Opening stream…" }, texts(nodes).toString())
