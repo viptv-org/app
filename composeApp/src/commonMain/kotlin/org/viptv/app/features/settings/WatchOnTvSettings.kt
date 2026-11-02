@@ -3,8 +3,9 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -13,7 +14,18 @@ import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun WatchOnTvSettings(state: WatchOnTvPreferences) {
+internal fun WatchOnTvSettings(state: WatchOnTvState, compact: Boolean, back: () -> Unit) {
+    val engine = rememberVizioSetupEngine()
+    val startingPaired = remember { state.value.optedIn }
+    if (startingPaired || engine == null) {
+        WatchOnTvStatus(state.value)
+        return
+    }
+    WatchOnTvSetupFlow(engine, compact, back) { tv -> state.optIn(tv.name, tv.origin) }
+}
+
+@Composable
+private fun WatchOnTvStatus(state: WatchOnTvPreferences) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Watch on TV", fontSize = 20.sp, fontWeight = FontWeight.Bold)

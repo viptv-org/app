@@ -3,6 +3,7 @@ package org.viptv.app.smartcast
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.viptv.app.features.settings.VizioTv
 import org.viptv.engine.wire.VizioDiscoveryCandidate
 import org.viptv.engine.wire.VizioFailure
 import org.viptv.engine.wire.VizioFailureKind

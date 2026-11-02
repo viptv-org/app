@@ -171,7 +171,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         }) else null,
         returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback,
         watchOnTvValue = watchOnTvValue(watchOnTvState.value),
-        watchOnTvSettings = { WatchOnTvSettings(watchOnTvState.value) },
+        watchOnTvSettings = { compact, back -> WatchOnTvSettings(watchOnTvState, compact, back) },
         vodMatches = if (remote != null) ({ VodMatchesRoute(state, controller) }) else null,
         tvVodMatches = if (remote != null) ({ first, sidebar, scale -> TvVodMatchesRoute(state, controller, scale, first, sidebar) }) else null)
     }

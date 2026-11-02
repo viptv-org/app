@@ -48,7 +48,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     vodMatches: (@Composable (Boolean) -> Unit)? = null,
     tvVodMatches: (@Composable (androidx.compose.ui.focus.FocusRequester, androidx.compose.ui.focus.FocusRequester, Float) -> Unit)? = null,
     watchOnTvValue: String = "Off",
-    watchOnTvSettings: (@Composable () -> Unit)? = null,
+    watchOnTvSettings: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     addonsManageable: Boolean = true) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
@@ -145,7 +145,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()
                     }
                     section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) { leaving = true } }
-                    section == "Watch on TV" && watchOnTvSettings != null -> SettingsDetailContent(compact, back) { watchOnTvSettings.invoke() }
+                    section == "Watch on TV" && watchOnTvSettings != null -> SettingsDetailContent(compact, back) { watchOnTvSettings.invoke(compact, back) }
                     section in listOf("Help", "About") -> SettingsDetailContent(compact, back) {
                         SettingsInformation(requireNotNull(section), local, serverAddress)
                     }
