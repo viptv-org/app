@@ -123,7 +123,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
             Spacer(Modifier.height((if (expanded) 30 else 20).dp * scale))
 
                 LazyRow(state = episodeRows, modifier = Modifier.focusGroup(),
-                    contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                    contentPadding = PaddingValues(start = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     itemsIndexed(visible, key = { _, episode -> episodeKey(episode) }) { index, episode ->
                         val requester = remember { FocusRequester() }
                         DisposableEffect(episodeKey(episode), targets) {

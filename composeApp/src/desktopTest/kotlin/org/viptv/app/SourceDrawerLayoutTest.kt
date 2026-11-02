@@ -27,10 +27,10 @@ class SourceDrawerLayoutTest {
     }
 
     private fun render(width: Int, height: Int, television: Boolean = false, busy: Boolean = false, loadingMore: Boolean = false, tablet: Boolean = false,
-        check: (List<SemanticsNode>) -> Unit) {
+        opening: Boolean = false, check: (List<SemanticsNode>) -> Unit) {
         val scene = ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(television) { Box(Modifier.fillMaxSize().background(Palette.background)) {
-                SourcesScreen(title, sources, busy, null, {}, {}, television = television, tablet = tablet, loadingMore = loadingMore)
+                SourcesScreen(title, sources, busy, null, {}, {}, television = television, tablet = tablet, loadingMore = loadingMore, opening = opening)
             } }
         }
         try {
@@ -60,6 +60,22 @@ class SourceDrawerLayoutTest {
         }
         render(1920, 1080, television = true, busy = true) { nodes ->
             assertTrue(texts(nodes).any { it == "Opening stream…" }, texts(nodes).toString())
+        }
+    }
+
+    @Test fun aRowTappedWhileDiscoveryIsPendingShowsTheOpeningStatus() {
+        for (television in listOf(false, true)) {
+            render(if (television) 1920 else 1440, if (television) 1080 else 900, television = television,
+                busy = true, loadingMore = true, opening = true) { nodes ->
+                assertTrue(texts(nodes).any { it.contains("Opening stream…") }, "TV $television: ${texts(nodes)}")
+                assertFalse(texts(nodes).any { it == "Still checking sources" || it == "Finding sources" }, "TV $television: ${texts(nodes)}")
+            }
+        }
+    }
+
+    @Test fun theWebDrawerShowsItsOpeningStatus() {
+        render(1440, 900, busy = true) { nodes ->
+            assertTrue(texts(nodes).any { it.contains("Opening stream…") }, texts(nodes).toString())
         }
     }
 

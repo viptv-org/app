@@ -37,13 +37,15 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     private var advancingTicks = 0
     init { initial.forEach(::observe) }
 
-    fun checkFirstFrame() {
-        if (hasPresented || failed || undecodable) return
+    fun checkFirstFrame(): Boolean {
+        if (hasPresented || failed || undecodable) return false
         val moved = position != lastPosition
         lastPosition = position
         // Six ticks of advancing audio with no presented frame mean no pictures; a stalled clock is a slow start, not an undecodable stream.
         advancingTicks = if (moved && !buffering) advancingTicks + 1 else 0
-        if (advancingTicks >= 6) undecodable = true
+        if (advancingTicks < 6) return false
+        undecodable = true
+        return true
     }
 
     fun observe(fact: PlayerFact) {
@@ -58,12 +60,13 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             is PlayerFact.Tracks -> tracks = fact.options
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> {
-                buffering = fact.name in listOf("Opening", "Buffering", "Preparing")
+                buffering = fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
                 if (!ended) endHandled = false
             }
             is PlayerFact.Presentation -> { hasPresented = true; buffering = false; undecodable = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
+            PlayerFact.Undecodable -> { buffering = false; undecodable = true }
             PlayerFact.ControlFailed -> controlError = "Could not apply this playback control."
         }
     }

@@ -79,7 +79,14 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     if (deleteAccount) add(SettingsRow.DeleteAccount)
 }
 
-internal fun signOutLabel(local: Boolean) = if (local) "Change connection" else "Sign out"
+internal const val changeConnectionTitle = "Change connection?"
+
+internal const val changeConnectionAction = "Change connection"
+
+internal fun changeConnectionBody(television: Boolean) =
+    "Your local library and progress stay on ${if (television) "this TV" else "this device"}. You'll choose a server or local mode next."
+
+internal fun signOutLabel(local: Boolean) = if (local) changeConnectionAction else "Sign out"
 
 internal enum class SettingsLayout(val groupLabelSize: TextUnit, val groupLabelTracking: Float,
     val groupLabelHorizontal: Dp, val groupLabelAbove: Dp, val groupLabelBelow: Dp) {

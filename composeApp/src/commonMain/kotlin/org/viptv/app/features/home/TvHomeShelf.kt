@@ -55,6 +55,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
     appending: Boolean = false, appendError: String? = null, resume: FocusRequester? = null,
     rowAlpha: androidx.compose.animation.core.Animatable<Float, androidx.compose.animation.core.AnimationVector1D>? = null,
     onHeightChange: ((Int) -> Unit)? = null, play: (Card) -> Unit = open, state: LazyListState = rememberLazyListState(),
+    save: ((Card) -> Unit)? = null, saved: (Card) -> Boolean = { false },
     seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
@@ -100,7 +101,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
         LazyRow(state = state, modifier = arrival.focusRestorer(if (lastFocusedKey != null) recover else FocusRequester.Default).focusGroup().onFocusChanged {
                 if (!it.hasFocus && (latestCards.value.any { card -> cardLookupKey(card) == focusedKey } ||
                         focusedKey == endKey && latestEndCard.value != null)) focusedKey = null
-            }, contentPadding = PaddingValues(horizontal = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
+            }, contentPadding = PaddingValues(start = 96.dp * scale), horizontalArrangement = Arrangement.spacedBy((if (portrait) 16 else 20).dp * scale)) {
             when (row.state) {
                 RowState.READY -> {
                     itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> if (portrait) "portrait" else "wide" }) { index, card ->
@@ -111,7 +112,8 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                             .then(if (index == 0) Modifier.focusProperties { if (rtl) right = FocusRequester.Cancel else left = FocusRequester.Cancel } else Modifier)
                         TvCatalogCard(card, scale, portrait, entry,
                             { lastFocusedIndex = index; lastFocusedKey = cardLookupKey(it); focusedKey = lastFocusedKey; focus(it) }, activate, showFocus, focusedCaptions = portrait,
-                            onUp = up, artworkWidth = (if (portrait) 255.2f else 422.4f).dp * scale)
+                            onUp = up, artworkWidth = (if (portrait) 255.2f else 422.4f).dp * scale,
+                            menu = TvTitleMenuActions(play, open, save, saved))
                     }
                     if (endCard != null) item(key = endKey, contentType = "see-all") {
                         TvSeeAllCard(endCard, scale, { openSeeAll(endCard) }, Modifier
