@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,11 +39,11 @@ internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, f
         title = { Text(when (mode) { "unlock" -> "Unlock parental controls"; "remove" -> "Remove parent PIN?"; else -> if (configured) "Change parent PIN" else "Set parent PIN" }) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (mode == "remove") Text("The household PIN will be removed. Kids restrictions must be off for every profile.")
-            if (needsCurrent) ParentPinField(if (mode == "unlock") "Parent PIN" else "Current PIN", current, { current = it }, !busy, Modifier.focusRequester(first))
+            if (needsCurrent) ParentPinField(if (mode == "unlock") "Parent PIN" else "Current PIN", current, { current = it }, !busy, Modifier.focusRequester(first), onEscape = { if (!busy) dismiss() })
             if (changesPin) {
-                ParentPinField("New PIN", next, { next = it }, !busy, if (needsCurrent) Modifier else Modifier.focusRequester(first))
+                ParentPinField("New PIN", next, { next = it }, !busy, if (needsCurrent) Modifier else Modifier.focusRequester(first), onEscape = { if (!busy) dismiss() })
                 ParentPinField("Confirm new PIN", confirmation, { confirmation = it }, !busy,
-                    if (mismatch) Modifier.semantics { error("PINs do not match") } else Modifier, mismatch)
+                    if (mismatch) Modifier.semantics { error("PINs do not match") } else Modifier, mismatch, onEscape = { if (!busy) dismiss() })
                 Text(if (mismatch) "PINs do not match." else "Use 4 to 8 digits. Keep your parent PIN private.", color = if (mismatch) Palette.danger else Palette.secondary)
             }
             failure?.let { Text(it, color = Palette.danger) }
@@ -55,10 +56,10 @@ internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, f
 
 @Composable
 private fun ParentPinField(label: String, value: String, change: (String) -> Unit, enabled: Boolean,
-    modifier: Modifier = Modifier, invalid: Boolean = false) {
-    OutlinedTextField(value, { change(it.filter { c -> c in '0'..'9' }.take(8)) }, modifier.fillMaxWidth(),
-        enabled = enabled, label = { Text(label) }, singleLine = true, isError = invalid,
-        visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
+    modifier: Modifier = Modifier, invalid: Boolean = false, onEscape: (() -> Unit)? = null) {
+    AppTextField(value, { change(it.filter { c -> c in '0'..'9' }.take(8)) }, modifier.fillMaxWidth(),
+        enabled = enabled, label = label, isError = invalid,
+        visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code", onEscape = onEscape, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
 }
 
 @Composable
@@ -76,10 +77,10 @@ internal fun LeavePinDialog(profileName: String, configured: Boolean, busy: Bool
         title = { Text(if (configured) "Change ${profileName}’s leave PIN" else "Set ${profileName}’s leave PIN") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("Ask for this PIN before leaving ${profileName}’s profile.", color = Palette.secondary)
-            if (configured) ParentPinField("Current PIN", current, { current = it }, !busy, Modifier.focusRequester(first))
-            ParentPinField("New PIN", next, { next = it }, !busy, if (configured) Modifier else Modifier.focusRequester(first))
+            if (configured) ParentPinField("Current PIN", current, { current = it }, !busy, Modifier.focusRequester(first), onEscape = { if (!busy) dismiss() })
+            ParentPinField("New PIN", next, { next = it }, !busy, if (configured) Modifier else Modifier.focusRequester(first), onEscape = { if (!busy) dismiss() })
             ParentPinField("Confirm new PIN", confirmation, { confirmation = it }, !busy,
-                if (mismatch) Modifier.semantics { error("PINs do not match") } else Modifier, mismatch)
+                if (mismatch) Modifier.semantics { error("PINs do not match") } else Modifier, mismatch, onEscape = { if (!busy) dismiss() })
             Text(if (mismatch) "PINs do not match." else "Use 4 to 8 digits.", color = if (mismatch) Palette.danger else Palette.secondary)
             failure?.let { Text(it, color = Palette.danger) }
         } },
@@ -112,11 +113,11 @@ internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinCon
                 Switch(enabled, { enabled = it }, enabled = !busy && pinConfigured)
             }
             if (!pinConfigured) Text("Set a parent PIN before enabling kids restrictions.", color = Palette.secondary)
-            OutlinedTextField(age, { age = it.filter { c -> c in '0'..'9' }.take(2) },
-                label = { Text("Maximum age") }, modifier = Modifier.focusRequester(first),
+            AppTextField(age, { age = it.filter { c -> c in '0'..'9' }.take(2) },
+                label = "Maximum age", modifier = Modifier.focusRequester(first),
                 supportingText = { Text("Used for any kind without its own rating limit.") },
-                enabled = editable, singleLine = true, isError = enabled && (parsed == null || parsed !in 0..17),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                enabled = editable, isError = enabled && (parsed == null || parsed !in 0..17),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), onEscape = { if (!busy) dismiss() })
             if (policy.ratings.movie.isNotEmpty())
                 RatingChoices("Movies up to", policy.ratings.movie, movie, editable) { movie = it }
             if (policy.ratings.series.isNotEmpty())

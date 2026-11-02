@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,6 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.viptv.app.components.AppTextField
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.theme.Palette
@@ -63,11 +63,11 @@ internal fun EpisodeJumpDialog(dismiss: () -> Unit, submit: (String) -> Boolean)
     }
     AlertDialog(onDismissRequest = dismiss, title = { Text(EPISODE_JUMP_TITLE) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(text, { text = it.take(EPISODE_JUMP_INPUT_LIMIT); failed = false },
+            AppTextField(text, { text = it.take(EPISODE_JUMP_INPUT_LIMIT); failed = false },
                 Modifier.fillMaxWidth().focusRequester(field).semantics { if (failed) error(EPISODE_JUMP_ERROR) },
-                label = { Text(EPISODE_JUMP_FIELD_LABEL) }, singleLine = true, isError = failed,
+                label = EPISODE_JUMP_FIELD_LABEL, isError = failed,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Go),
-                keyboardActions = KeyboardActions(onGo = { go() }))
+                keyboardActions = KeyboardActions(onGo = { go() }), onEscape = dismiss)
             if (failed) Text(EPISODE_JUMP_ERROR, Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 color = Palette.danger)
         } },
