@@ -10,10 +10,10 @@ internal const val NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS = 45_000L
 internal data class PreparedNextSource(val source: SourceCandidate, val ranked: RankedSources)
 
 internal fun interface NextSourcePreparer {
-    suspend fun prepare(remote: RemoteConnection?, local: LocalConnection?, profile: String, card: Card): PreparedNextSource?
+    suspend fun prepare(remote: RemoteConnection?, local: LocalConnection?, profile: String, card: Card, remembered: RememberedSource?): PreparedNextSource?
 
     companion object {
-        val Device = NextSourcePreparer { remote, local, profile, card ->
+        val Device = NextSourcePreparer { remote, local, profile, card, remembered ->
             val deviceHeight = deviceMaxVideoHeight()
             val ranked = coroutineScope {
                 val ranking = ProgressiveSourceRanking(this,
@@ -24,9 +24,11 @@ internal fun interface NextSourcePreparer {
                 ranking.arrived(outcome.candidates)
                 ranking.finish()
             }
-            val matched = ranked?.takeIf { it.bestMatchFullyMatches } ?: return@NextSourcePreparer null
-            val target = matched.autoplayTarget() ?: return@NextSourcePreparer null
-            PreparedNextSource(target, matched)
+            val matched = ranked ?: return@NextSourcePreparer null
+            // A remembered choice wins over the generic best match; a fresh row in its audio is enough, the memory is the quality signal.
+            val target = remembered?.let { matched.matchingSource(it) }
+                ?: matched.takeIf { it.bestMatchFullyMatches }?.autoplayTarget()
+            target?.let { PreparedNextSource(it, matched) }
         }
     }
 }
@@ -52,7 +54,7 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
     val remote = connection
     val device = local
     nextEpisodePreparationJob = scope.launch {
-        val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) { nextSourcePreparer.prepare(remote, device, key.profile, card) } }
+        val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) { nextSourcePreparer.prepare(remote, device, key.profile, card, sourceMemory.entry(key.profile, card)) } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { null }
         if (generation != nextEpisodePreparationGeneration) return@launch
