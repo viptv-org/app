@@ -40,7 +40,7 @@ class RememberedSourcePlaybackTest {
                 publish(SourcesOutcome(candidates))
                 return SourcesOutcome(candidates)
             }
-            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources =
+            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources =
                 RankedSources(sources, interimSourceGroups(sources))
             override suspend fun openSource(id: String): PlaybackInput {
                 opened += id

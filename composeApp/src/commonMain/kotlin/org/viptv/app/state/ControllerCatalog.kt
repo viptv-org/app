@@ -363,7 +363,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val profile = requireNotNull(mutable.value.selectedProfile)
         val device = local
         val remote = connection
-        val deviceHeight = org.viptv.app.connection.deviceMaxVideoHeight()
+        val context = rankingContext(seriesMemoryOf(profile, card))
         coroutineScope {
             var playing = false
             fun rememberedStart(ranked: RankedSources, target: SourceCandidate) {
@@ -380,7 +380,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
             }
             fun rememberedMatch(ranked: RankedSources) = reuse?.let { ranked.matchingSource(it) }
             val ranking = ProgressiveSourceRanking(this,
-                rank = { rows -> device?.rankSources(profile, rows, deviceHeight) ?: requireNotNull(remote).rankSources(profile, rows, deviceHeight) },
+                rank = { rows -> device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
                 show = { ranked -> if (generation == operation) updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups) } },
                 onMatch = { if (reuse == null) autoplay(it) })
             val observed: (SourcesOutcome) -> Unit = { outcome ->

@@ -144,6 +144,9 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
         updateState { next -> next.copy(presentation = fact, openingSource = null) }
         firstFrameSeen = true
+        mutable.value.selectedProfile?.let { profile ->
+            rememberStartedSource(profile, mutable.value.sourceTitle, mutable.value.playingSource)
+        }
         startDeadlineJob?.cancel(); startDeadlineJob = null
         mutable.value.bestMatch?.let { session ->
             if (!session.started) updateState { next -> next.copy(bestMatch = session.copy(started = true)) }

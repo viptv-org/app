@@ -26,7 +26,7 @@ class BestMatchesDiscoveryTest {
                 publish(SourcesOutcome(firstBatch + secondBatch))
                 return SourcesOutcome(firstBatch + secondBatch)
             }
-            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, deviceMaxHeight: Int?): RankedSources {
+            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources {
                 rankingCalls += sources.map { it.id }
                 if (rankingFails && rankingCalls.size > 1) throw LocalFailure("ranking unavailable")
                 val ranked = sources.sortedWith(compareBy<SourceCandidate> { it.release_type == "cam" }.thenByDescending { it.quality_height })
