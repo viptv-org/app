@@ -30,7 +30,7 @@ fun ApplicationController.configureSourceIntegration(plugin: String, configurati
     val revision = mutable.value.sourceIntegrations.revision
     owner.device?.configureSourceIntegration(profile, revision, plugin, configuration)
         ?: requireNotNull(owner.remote).configureSourceIntegration(profile, revision, plugin, configuration)
-    loadSourceIntegrations(owner)
+    profileConfigurationChanged(owner)
 }
 
 fun ApplicationController.removeSourceIntegration(connectionId: String) = run {
@@ -39,5 +39,5 @@ fun ApplicationController.removeSourceIntegration(connectionId: String) = run {
     val revision = mutable.value.sourceIntegrations.revision
     owner.device?.removeSourceIntegration(profile, revision, connectionId)
         ?: requireNotNull(owner.remote).removeSourceIntegration(profile, revision, connectionId)
-    loadSourceIntegrations(owner)
+    profileConfigurationChanged(owner)
 }
