@@ -14,13 +14,13 @@ import org.viptv.app.components.TextButton
 @Composable
 internal fun SettingsLeaveDialog(local: Boolean, compact: Boolean, busy: Boolean, error: String?, dismiss: () -> Unit, confirm: () -> Unit) {
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, containerColor = Palette.surface, shape = RoundedCornerShape(24.dp),
-        title = { Text(if (local) "Leave local mode on this device?" else if (compact) "Sign out of VIPTV on this phone?" else "Sign out of VIPTV on this device?",
+        title = { Text(if (local) changeConnectionTitle else if (compact) "Sign out of VIPTV on this phone?" else "Sign out of VIPTV on this device?",
             fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(if (local) "Your profiles and progress stay on this device." else "Your profiles and progress stay on your account.")
+            Text(if (local) changeConnectionBody(television = false) else "Your profiles and progress stay on your account.")
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             error?.let { Text(it, color = Palette.danger) }
         } },
-        confirmButton = { TextButton(onClick = confirm, enabled = !busy) { Text(if (local) "Leave" else "Sign out", color = Palette.danger) } },
+        confirmButton = { TextButton(onClick = confirm, enabled = !busy) { Text(if (local) changeConnectionAction else "Sign out", color = Palette.danger) } },
         dismissButton = { TextButton(onClick = dismiss, enabled = !busy) { Text("Cancel") } })
 }
