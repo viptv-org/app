@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import org.viptv.app.player.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.SourceCandidate
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import org.viptv.app.components.pointerClickable
@@ -45,7 +46,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
-    autoplayNext: Boolean = false, reduceMotion: Boolean = false) {
+    autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
@@ -251,7 +252,14 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (phone && (failed || error != null)) PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
                     "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
                 else {
-                    if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                    val opening = openingSource?.takeUnless { failed || error != null }
+                    if (opening != null) {
+                        Column(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(Modifier.size(40.dp), color = Palette.text)
+                            Text("Opening ${opening.label}…", Modifier.padding(top = 16.dp), color = Palette.text, fontSize = 14.sp)
+                        }
+                    } else if (buffering && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                     (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                 }
                 if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
