@@ -5,6 +5,7 @@ import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.search.searchNoResultsCopy
 import org.viptv.app.features.search.searchResultGroups
 import org.viptv.app.state.*
 import uniffi.viptv_core.SecretStore
@@ -71,13 +72,14 @@ class NativeSearchRecoveryTest {
         }
     }
 
-    @Test fun allFailedNativeProvidersRemainNamedFailuresInsteadOfNoMatchesAndRetryRecovers() = runBlocking<Unit> {
+    @Test fun allFailedNativeProvidersShowOneFailureStateInsteadOfProviderBlocksAndRetryRecovers() = runBlocking<Unit> {
         Fixture().use { fixture ->
             fixture.failAll = true
             val failed = requireNotNull(fixture.local.searchResults("default", "fixture"))
             assertEquals(4, failed.rows.size); assertTrue(failed.complete)
             assertTrue(failed.rows.all { it.state == "Failed" && it.cards.isEmpty() })
-            assertTrue(searchResultGroups(failed.rows).all { it.message != null })
+            assertTrue(searchResultGroups(failed.rows).isEmpty())
+            assertEquals("This search provider could not respond. Try again.", searchNoResultsCopy(failed.rows))
             fixture.failAll = false
             val recovered = requireNotNull(fixture.local.searchResults("default", "fixture"))
             assertEquals(1, recovered.rows.sumOf { it.cards.size })

@@ -124,6 +124,21 @@ class TvSearchEdgeUiTest {
         }
     }
 
+    @Test fun aQueryWhereEveryProviderFailedShowsOneFailureLineInsteadOfProviderBlocks() = ui {
+        val rows = listOf("Movies Search", "Series Search", "People Search Movies", "People Search Series")
+            .map { SearchResultRow(it.lowercase().replace(' ', '-'), it, "stremio", state = "Failed") }
+        Fixture(screenWidth) {
+            SearchScreen("zzzqx", emptyList(), emptyList(), false, null, true, {}, {},
+                television = true, editQuery = {}, searchRows = rows)
+        }.use { screen ->
+            screen.settle()
+            val texts = screen.nodes().flatMap(::texts)
+            assertEquals(1, texts.count { it == "This search provider could not respond. Try again." })
+            assertFalse(texts.any { it == "Movies Search" || it == "People Search Series" })
+            assertFalse(texts.any { it == "No matching titles" })
+        }
+    }
+
     @Test fun aResultWithNoCardsInAnyProviderShowsOneEmptyState() = ui {
         Fixture(screenWidth) {
             SearchScreen("whisper", emptyList(), emptyList(), false, null, true, {}, {},

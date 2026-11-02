@@ -41,7 +41,7 @@ class SidecarPlaybackQaActivity : ComponentActivity() {
                     .forEach { diagnostics[it[0]] = it[1] }
             })
         setContent {
-            if (surfaceVisible) PlayerSurface(input, paused, Modifier.layout { child, constraints ->
+            if (surfaceVisible) PlayerSurface(input, paused, false, Modifier.layout { child, constraints ->
                 val measured = child.measure(constraints.copy(minWidth = constraints.maxWidth, minHeight = constraints.maxHeight))
                 layout(measured.width, measured.height) { measured.place(0, 0) }
             }, { fact -> when (fact) {
