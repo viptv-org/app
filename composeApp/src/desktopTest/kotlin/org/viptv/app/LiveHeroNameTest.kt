@@ -71,6 +71,8 @@ class LiveHeroNameTest {
         try {
             assertEquals(bounds(noProgramme, "Favourite channel").top, bounds(withProgramme, "Favourite channel").top, 1f,
                 "the favourite stays put when the headline is omitted")
+            assertEquals(bounds(noProgramme, "OK to watch").top, bounds(withProgramme, "OK to watch").top, 1f,
+                "the artwork stays put when the headline is omitted")
         } finally { noProgramme.close(); withProgramme.close() }
     }
 
