@@ -26,16 +26,16 @@ internal fun TvLeaveConfirmation(local: Boolean, scale: Float, confirm: () -> Un
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.75f)), contentAlignment = Alignment.Center) {
             Column(Modifier.offset(y = (-57).dp * scale).width(800.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Color(0xFF202023))
                 .padding(horizontal = 48.dp * scale, vertical = 44.dp * scale)) {
-                Text(if (local) "Leave local mode on this TV?" else "Sign out of this TV?", fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp,
+                Text(if (local) changeConnectionTitle else "Sign out of this TV?", fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp,
                     letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(16.dp * scale))
-                Text(if (local) "Your profiles and progress stay on this TV." else "Your profiles, My List and progress stay on your account.",
+                Text(if (local) changeConnectionBody(television = true) else "Your profiles, My List and progress stay on your account.",
                     fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, color = Palette.secondary)
                 Spacer(Modifier.height(36.dp * scale))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                     TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, primary = true, ring = false, requester = initial, activate = confirm) {
                         Icon(Lucide.LogOut, null, Modifier.size(28.dp * scale), Color(0xFFCE211D)); Spacer(Modifier.width(12.dp * scale))
-                        Text(if (local) "Leave" else "Sign out", color = Color(0xFFCE211D), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                        Text(if (local) changeConnectionAction else "Sign out", color = Color(0xFFCE211D), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                     TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, ring = false, activate = dismiss) {
                         Text("Cancel", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
