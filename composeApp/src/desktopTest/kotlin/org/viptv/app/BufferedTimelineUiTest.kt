@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.skia.Bitmap
 import org.junit.Rule
+import org.viptv.app.features.player.PlaybackSlider
 import org.viptv.app.features.player.PlaybackTimeline
 import org.viptv.app.features.player.PlayerScreen
+import org.viptv.app.features.player.TimelineSegment
 import org.viptv.app.features.player.TvPlaybackExtras
 import org.viptv.app.features.player.TvPlaybackTimeline
 import org.viptv.app.features.player.TvPlayerScene
@@ -99,6 +101,30 @@ class BufferedTimelineUiTest {
         } finally { scene.close() }
     }
 
+    // One mapping for the played fill, the buffered band, the skip marker and the thumb: the bar the thumb
+    // travels across. A boundary at 0 %, 50 % and 100 % must land on the thumb's own x there.
+    @Test fun theBandTheMarkerAndTheThumbShareOneMapping() {
+        val scene = sliderScene(.25f, buffered = listOf(BufferedRange(0, 120_000)), segments = listOf(marker(120_000, 180_000)))
+        val track = scene.rendered { frames(it); track(it) }
+        assertSameFraction(track, track.bands.single().last + 1, .5f, "the band ends at the thumb centre: $track")
+        assertSameFraction(track, track.marker.first, .5f, "the marker starts at the thumb centre: $track", 3)
+        assertTrue(track.row.take(track.start).all { (it and 0xFFFFFF) == 0 }, "no layer paints left of the bar: $track")
+        for (fraction in listOf(0f, .5f, 1f)) {
+            assertSameFraction(track, sliderScene(fraction).rendered { frames(it); track(it) }.playhead, fraction, "the thumb sits at $fraction")
+        }
+    }
+
+    @Test fun theTvBandTheMarkerAndTheThumbShareOneMapping() {
+        val track = tvScene(60_000, buffered = listOf(BufferedRange(0, 120_000)), skips = listOf(TvSkipRange(120_000, 180_000)))
+            .rendered { frames(it); track(it, tvBase, tvBand) }
+        assertSameFraction(track, track.bands.single().last + 1, .5f, "the band ends at the thumb centre: $track")
+        assertSameFraction(track, track.marker.first, .5f, "the marker starts at the thumb centre: $track", 3)
+        for (fraction in listOf(0f, .5f, 1f)) {
+            val thumb = tvScene((240_000 * fraction).toLong()).rendered { frames(it); track(it, tvBase, tvBand) }.playhead
+            assertSameFraction(track, thumb, fraction, "the thumb sits at $fraction")
+        }
+    }
+
     @Test fun theBandDoesNotChangeSeeking() {
         for (buffered in listOf(emptyList<BufferedRange>(), listOf(BufferedRange(0, 120_000)))) {
             var target: Long? = null
@@ -175,10 +201,25 @@ class BufferedTimelineUiTest {
         PlaybackTimeline(60_000, 240_000, {}, buffered = buffered)
     }
 
+    private fun marker(startMillis: Long, endMillis: Long) = TimelineSegment(startMillis, endMillis, TvSkipKind.Intro, 240_000)
+
+    private fun sliderScene(value: Float, buffered: List<BufferedRange> = emptyList(), segments: List<TimelineSegment> = emptyList()) = scene(400, 100) {
+        PlaybackSlider(value, {}, Modifier.fillMaxSize(), segments = segments, buffered = buffered, duration = 240_000)
+    }
+
+    private fun tvScene(position: Long, buffered: List<BufferedRange> = emptyList(), skips: List<TvSkipRange> = emptyList()): ImageComposeScene {
+        val state = TvPlayerState(PlaybackInput("tv", "https://media.example/clip", durationMillis = 240_000),
+            listOf(PlayerFact.Progress(position, 240_000), PlayerFact.Buffered(buffered)), TvPlayerScene.Controls)
+        return scene(1920, 1080) {
+            Box(Modifier.fillMaxSize()) { TvPlaybackTimeline(state, TvPlaybackExtras(skips = skips), 1f, FocusRequester(), FocusRequester(), null) }
+        }
+    }
+
     private fun scene(width: Int, height: Int, content: @Composable () -> Unit) =
         ImageComposeScene(width, height, Density(1f)) { ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Color.Black) { content() } } }
 
-    private data class Track(val start: Int, val playhead: Int, val end: Int, val bands: List<IntRange>, val row: List<Int>)
+    private data class Track(val start: Int, val playhead: Int, val end: Int, val bands: List<IntRange>, val row: List<Int>,
+        val marker: IntRange = IntRange.EMPTY, val knob: IntRange = IntRange.EMPTY, val fill: IntRange = IntRange.EMPTY)
 
     private fun track(scene: ImageComposeScene, base: Int = pointerBase, band: Int = pointerBand): Track {
         val (width, colors) = pixels(scene)
@@ -189,10 +230,19 @@ class BufferedTimelineUiTest {
         val pixels = (0 until width).map { colors[row * width + it] }
         val fill = runs(pixels) { near(it, accent) }.maxByOrNull { it.last - it.first }
         val held = runs(pixels) { near(it, base) }.filter { it.last - it.first >= 8 }
-        val knob = runs(pixels) { near(it, 0xFFFFFFFF.toInt(), 2) }.maxByOrNull { it.last - it.first }
-        assertTrue(held.isNotEmpty(), "no timeline bar to measure")
-        return Track(fill?.first ?: held.minOf { it.first }, knob?.let { (it.first + it.last) / 2 } ?: -1,
-            held.maxOf { it.last }, runs(pixels) { near(it, band, 5) }.filter { it.last - it.first >= 8 }, pixels)
+        val bands = runs(pixels) { near(it, band, 5) }.filter { it.last - it.first >= 8 }
+        val knob = runs(pixels) { near(it, 0xFFFFFFFF.toInt(), 2) }.maxByOrNull { it.last - it.first } ?: IntRange.EMPTY
+        val painted = listOfNotNull(fill) + held + bands
+        assertTrue(painted.isNotEmpty(), "no timeline bar to measure")
+        return Track(fill?.first ?: painted.minOf { it.first }, (knob.first + knob.last + 1) / 2, painted.maxOf { it.last }, bands, pixels,
+            runs(pixels) { near(it, Palette.segmentIntro.toArgb()) }.maxByOrNull { it.last - it.first } ?: IntRange.EMPTY, knob,
+            fill ?: IntRange.EMPTY)
+    }
+
+    // A boundary and the thumb's centre agree at density 1; a marker's 2 dp rounded start costs 3 px.
+    private fun assertSameFraction(track: Track, actual: Int, fraction: Float, what: String, tolerance: Int = 2) {
+        val expected = track.start + (track.end - track.start) * fraction
+        assertTrue(abs(actual - expected) <= tolerance, "$what: expected x=${expected.toInt()} at ${fraction * 100}%, was $actual (bar ${track.start}..${track.end})")
     }
 
     private fun assertFraction(track: Track, actual: Int, fraction: Float, what: String) {

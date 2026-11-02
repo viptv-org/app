@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import org.viptv.app.player.BufferedRange
 
 // A length the timeline cannot place draws nothing: no duration and no band.
@@ -21,10 +23,11 @@ internal fun bufferedFractions(ranges: List<BufferedRange>, duration: Long?): Li
     }
 }
 
-// The bar the thumb travels across, so a band starts exactly where the played fill ends.
+// The one mapping every layer of the bar shares: the Material track slot already runs half a thumb in from the
+// slider's ends, so its full width is the path the thumb's centre travels.
 @Composable
-internal fun BoxWithConstraintsScope.BufferedSegments(fractions: List<Pair<Float, Float>>, color: Color) {
-    fractions.forEach { (start, end) ->
-        Box(Modifier.offset(x = maxWidth * start).fillMaxWidth(end - start).fillMaxHeight().background(color))
-    }
+internal fun BoxWithConstraintsScope.TimelineBarSpan(start: Float, end: Float, color: Color, shape: Shape = RectangleShape) {
+    val from = start.coerceIn(0f, 1f)
+    val to = end.coerceIn(from, 1f)
+    Box(Modifier.offset(x = maxWidth * from).width(maxWidth * (to - from)).fillMaxHeight().background(color, shape))
 }

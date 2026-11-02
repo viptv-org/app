@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.semantics
@@ -30,22 +29,16 @@ internal fun PlaybackSlider(value: Float, change: (Float) -> Unit, modifier: Mod
     Slider(value, change, modifier.semantics { contentDescription = description }, enabled = enabled, onValueChangeFinished = finish, colors = colors,
         thumb = { Box(Modifier.size(ThumbSize).background(Color.White, CircleShape)) },
         track = { state ->
-            Box(Modifier.height(TrackHeight)) {
-                val inset = ThumbSize / 2
+            Box(Modifier.fillMaxWidth().height(TrackHeight)) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
-                    val span = maxWidth - ThumbSize
                     // Buffered media sits under the played fill and under the skip markers.
-                    if (bands.isEmpty()) SliderDefaults.Track(state, Modifier.fillMaxSize(), colors = colors, enabled = enabled,
+                    if (bands.isEmpty() && segments.isEmpty()) SliderDefaults.Track(state, Modifier.fillMaxSize(), colors = colors, enabled = enabled,
                         thumbTrackGapSize = 0.dp, drawStopIndicator = null)
                     else {
-                        Box(Modifier.fillMaxSize().clip(RoundedCornerShape(TrackHeight / 2)).background(colors.inactiveTrackColor))
-                        BufferedSegments(bands, Color.White.copy(alpha = 0.5f))
-                        Box(Modifier.fillMaxWidth(state.coercedValueAsFraction.coerceIn(0f, 1f)).fillMaxHeight().background(accent))
-                    }
-                    segments.forEach { segment ->
-                        Box(Modifier.offset(x = inset + span * segment.startFraction)
-                            .width(span * (segment.endFraction - segment.startFraction).coerceAtLeast(0f))
-                            .fillMaxHeight().background(segment.color, RoundedCornerShape(2.dp)))
+                        TimelineBarSpan(0f, 1f, colors.inactiveTrackColor, RoundedCornerShape(TrackHeight / 2))
+                        bands.forEach { (start, end) -> TimelineBarSpan(start, end, Color.White.copy(alpha = 0.5f)) }
+                        TimelineBarSpan(0f, state.coercedValueAsFraction, accent)
+                        segments.forEach { segment -> TimelineBarSpan(segment.startFraction, segment.endFraction, segment.color, RoundedCornerShape(2.dp)) }
                     }
                 }
             }

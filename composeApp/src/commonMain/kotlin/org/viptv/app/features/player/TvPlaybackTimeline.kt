@@ -37,15 +37,10 @@ internal fun BoxScope.TvPlaybackTimeline(state: TvPlayerState, extras: TvPlaybac
                 Box(Modifier.size(28.dp * scale).background(ColorWhite, CircleShape))
             } },
             track = { BoxWithConstraints(Modifier.fillMaxWidth().height(6.dp * scale).clip(RoundedCornerShape(3.dp * scale)).background(ColorWhite.copy(alpha = .22f))) {
-                BufferedSegments(bufferedFractions(state.buffered, length), ColorWhite.copy(alpha = .5f))
-                segments.forEach { segment ->
-                    Box(Modifier.offset(x = maxWidth * segment.startFraction)
-                        .fillMaxWidth((segment.endFraction - segment.startFraction).coerceAtLeast(0f)).fillMaxHeight()
-                        .background(segment.color))
-                }
-                Box(Modifier.fillMaxWidth(actual).fillMaxHeight().background(Palette.accent))
-                if (state.scrub != null) Box(Modifier.offset(x = maxWidth * minOf(actual, current))
-                    .fillMaxWidth(kotlin.math.abs(current - actual)).fillMaxHeight().background(ColorWhite.copy(alpha = .55f)))
+                bufferedFractions(state.buffered, length).forEach { (start, end) -> TimelineBarSpan(start, end, ColorWhite.copy(alpha = .5f)) }
+                segments.forEach { segment -> TimelineBarSpan(segment.startFraction, segment.endFraction, segment.color) }
+                TimelineBarSpan(0f, actual, Palette.accent)
+                if (state.scrub != null) TimelineBarSpan(minOf(actual, current), maxOf(actual, current), ColorWhite.copy(alpha = .55f))
             } })
         state.scrub?.let { point ->
             val image = extras.thumbnails.firstOrNull { point in it.startMillis until it.endMillis }?.image
