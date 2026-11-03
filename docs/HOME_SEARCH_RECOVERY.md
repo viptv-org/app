@@ -12,6 +12,6 @@ An unreadable saved vault now produces a safe connection error without clearing 
 
 Verification includes actual Rust/SQLite/UniFFI search planning and projection with only provider HTTP substituted; real partial/all-failed add-on cases; controller cache/busy/retry/navigation/cancellation checks; and Compose renderer focus, disabled actions, empty states, cached shelves and initial sign-in messages. Captures are under `evidence/home-search-recovery-2026-10-15/captures`. These are provisional recovery states, not certification of supplied-design parity. The final combined gate has 287 passing desktop tests with zero failures/errors/skips; artifact and runtime receipts remain separate.
 
-Related work: [integration settings recovery](INTEGRATION_SETTINGS_RECOVERY.md), [local startup and refresh handoff](LOCAL_CONNECTION_STARTUP.md), and [remaining work](REMAINING_KMP_WORK.md).
+Related work: [integration settings recovery](INTEGRATION_SETTINGS_RECOVERY.md) and [local startup and refresh handoff](LOCAL_CONNECTION_STARTUP.md).
 
 Secret source credentials and native password fields now request a password keyboard with autocorrect disabled, including while Show password is active. Actual IME editor classification and provider-free draft cancellation are recorded in the final integration recovery receipt. Browsing-provider settings now explain that text search uses all enabled search integrations.

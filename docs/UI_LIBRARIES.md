@@ -17,7 +17,7 @@ Sources: [Compose Foundation window source](https://github.com/JetBrains/compose
 Android playback uses AndroidX Media3 1.11.1 with a native SurfaceView, HLS/DASH/progressive
 media, and the shared Compose controls. The platform adapter handles seeking, paused state,
 audio/embedded/provider subtitles, volume, speed, gateway timeline offsets and scoped content headers.
-Desktop playback uses the bundled libmpv runtime ([desktop player](DESKTOP_MPV_2026_10_23.md));
+Desktop playback uses the bundled libmpv runtime;
 browser playback remains HTML video/HLS.
 
 On the physical Onn 4K Pro, the integrated Media3 adapter and shared Compose controls

@@ -116,8 +116,8 @@ frame) rather than in layout.
 This section adds **no frame numbers**. All six items are still **unmeasured**; what
 follows is what each one must satisfy, the exact row that gets pasted into this file
 once it has been run, and which experiments are queued but *not applied*. Where an
-`ISSUES.md` acceptance criterion contradicts a measurement already recorded in this
-file, the conflict is stated rather than resolved silently.
+acceptance criterion contradicts a measurement already recorded in this file, the
+conflict is stated rather than resolved silently.
 
 Run rules are unchanged and apply to every item: **release APK only**
 (`./gradlew :androidApp:assembleRelease --max-workers=2`, installed via
@@ -170,7 +170,7 @@ Paste when run:
 | PERF-05 | release <sha256:8> | <trace file> (40 presses) | measures/no-scroll-press=<n> | measures/scroll-press=<n> | layout p50=<n> p99=<n> ms | frame max=<n> ms | PASS or FAIL |
 ```
 
-**Conflict to settle first:** the AC in `ISSUES.md` (“no LazyRow measure attributable
+**Conflict to settle first:** the AC “no LazyRow measure attributable
 to a focus move”) contradicts the hoisting experiment that was measured slower on
 this GPU and rejected (the table earlier in this file). If the no-scroll window is
 clean and the scroll window stays inside the budget, the honest closure is

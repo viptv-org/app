@@ -42,5 +42,4 @@ two synthetic same-ID catalogs, selects the second owner, reads two pages with
 one request each, rejects an unadvertised choice without provider IO, then switches
 to a search-only catalog without forwarding the prior genres. Add-on refresh
 invalidates cached controls/cards/cursors without loading a catalog. No test
-fixture is a normal app data fallback. TV-web/Roku multiple-choice presentation
-remains migration work.
+fixture is a normal app data fallback.

@@ -106,5 +106,4 @@ subtitle `24px` in `#B6B4AF`, gap `8px`, `34px` to content.
 - **Torrent support** must work on every platform (the torrent panel copy differs when the
   viewer has no debrid account).
 - **Desktop and mobile are local-playback only**: no gateway path may be reachable there.
-- **Auth refresh + storage** must be correct on every KMP target (see
-  `docs/KMP_COMPLETION_RECORD.md` for the current claim; needs an audit per platform).
+- **Auth refresh + storage** must be correct on every KMP target.
