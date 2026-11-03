@@ -9,7 +9,11 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.unit.Density
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.Rule
@@ -64,18 +68,42 @@ class PhoneSeriesRenderTest {
     @Test fun render() = runBlocking {
         val dir = System.getenv("VIPTV_560_RENDER_DIR")?.let(::File) ?: return@runBlocking
         dir.mkdirs()
-        var detail by mutableStateOf(this@PhoneSeriesRenderTest.detail)
-        val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme(false) {
+
+        val scrollTop = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme(false) {
             Surface(color = Palette.background, modifier = Modifier.fillMaxSize()) {
                 DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, continuing = resuming,
                     sourcePreview = preview)
             }
         } }
         var frame = 0L
-        repeat(16) { scene.render(frame++ * 16_666_667L).close(); yield() }
-        scene.render(frame * 16_666_667L).use { image ->
+        suspend fun frames(count: Int = 12) = repeat(count) { scrollTop.render(frame++ * 16_666_667L).close(); yield() }
+        frames(); delay(250); frames()
+        scrollTopNode(scrollTop)
+        frames()
+        scrollTop.render(frame++ * 16_666_667L).use { image ->
             image.encodeToData()!!.use { File(dir, "phone-series-after.png").writeBytes(it.bytes) }
         }
-        scene.close()
+        scrollTop.close()
+
+        val scrolled = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme(false) {
+            Surface(color = Palette.background, modifier = Modifier.fillMaxSize()) {
+                DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, continuing = resuming,
+                    sourcePreview = preview)
+            }
+        } }
+        var scrolledFrame = 0L
+        repeat(12) { scrolled.render(scrolledFrame++ * 16_666_667L).close(); yield() }
+        delay(250)
+        repeat(12) { scrolled.render(scrolledFrame++ * 16_666_667L).close(); yield() }
+        scrolled.render(scrolledFrame++ * 16_666_667L).use { image ->
+            image.encodeToData()!!.use { File(dir, "phone-series-after-scrolled.png").writeBytes(it.bytes) }
+        }
+        scrolled.close()
+    }
+
+    private fun scrollTopNode(scene: ImageComposeScene) {
+        val node = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
+            .firstOrNull { it.config.contains(SemanticsActions.ScrollToIndex) }
+        node?.config?.getOrNull(SemanticsActions.ScrollToIndex)?.action?.invoke(0)
     }
 }
