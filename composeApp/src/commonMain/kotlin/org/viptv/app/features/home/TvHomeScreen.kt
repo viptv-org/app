@@ -169,7 +169,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             if (browsing) heroTimerEnabled = false
             else { delay(450); heroTimerEnabled = true }
         }
-        val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope?.owner())
+        val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope?.owner(), parkAfterPass = true)
         val portraitSelection = { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" }
         // The exact request the browse plane's SoftArtwork makes, so the settle swap finds it warm.
         val softPlane = remember(viewport, scale, density) {
