@@ -54,7 +54,7 @@ class WatchOnTvSetupUiTest {
             probe.click("Living Room")
             probe.await("the PIN step") { probe.has("New PIN") }
             assertTrue(probe.has("Enter the PIN on your TV"), probe.texts().toString())
-            assertTrue(probe.has("Pairs as soon as all 4 digits are in."), probe.texts().toString())
+            probe.await("the ready PIN step") { probe.has("Pairs as soon as all 4 digits are in.") }
         } finally { scene.close() }
     }
 

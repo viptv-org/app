@@ -237,7 +237,7 @@ internal class WatchOnTvSetupController(
         pairJob?.cancel()
         pin = ""; pinError = null; challenge = null; pinReady = false
         busy = true
-        pairJob = scope.launch {
+        val job = scope.launch {
             try {
                 pendingPair?.let { cancelPairBestEffort(it) }
                 pendingPair = tv
@@ -253,8 +253,10 @@ internal class WatchOnTvSetupController(
             catch (_: Exception) {
                 pendingPair = null
                 pinError = "Can't reach ${tv.name}. Check the TV is on the same Wi-Fi and try again."
-            } finally { if (pairJob === coroutineContext[Job]) { pairJob = null; busy = false } }
+            }
         }
+        pairJob = job
+        job.invokeOnCompletion { if (pairJob === job) { pairJob = null; busy = false } }
     }
 
     private fun submitPin() {
@@ -265,7 +267,7 @@ internal class WatchOnTvSetupController(
         pin = ""
         busy = true
         pairJob?.cancel()
-        pairJob = scope.launch {
+        val job = scope.launch {
             try {
                 when (val result = engine.finishPair(tv, challenge, entered)) {
                     VizioPairResult.Paired -> {
@@ -280,8 +282,10 @@ internal class WatchOnTvSetupController(
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 pinError = "Can't reach ${tv.name}. Check the TV is on the same Wi-Fi and try again."
-            } finally { if (pairJob === coroutineContext[Job]) { pairJob = null; busy = false } }
+            }
         }
+        pairJob = job
+        job.invokeOnCompletion { if (pairJob === job) { pairJob = null; busy = false } }
     }
 
     private fun cancelPairing(tv: VizioTv) {
