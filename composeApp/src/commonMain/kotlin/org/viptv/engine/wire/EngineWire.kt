@@ -65,6 +65,7 @@ data class CardMetadata(
     val rating_votes: Long? = null,
     val certification: String? = null,
     val alternate_titles: List<String> = emptyList(),
+    val cast: List<String> = emptyList(),
 )
 
 @Serializable
