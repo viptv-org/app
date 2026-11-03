@@ -45,9 +45,14 @@ internal class HeroProgress {
 
 /** Artwork must be decoded before its eight-second display interval starts. */
 @Composable
-internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey: Any?): HeroCarousel {
-    var index by remember(scopeKey) { mutableIntStateOf(0) }
-    var anchor by remember(scopeKey) { mutableStateOf<Any?>(null) }
+internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey: Any?, parkAfterPass: Boolean = false): HeroCarousel {
+    var epoch by remember(scopeKey) { mutableIntStateOf(0) }
+    if (parkAfterPass) {
+        LaunchedEffect(enabled) { if (enabled) epoch++ }
+    }
+    var index by remember(scopeKey, epoch) { mutableIntStateOf(0) }
+    var anchor by remember(scopeKey, epoch) { mutableStateOf<Any?>(null) }
+    var parked by remember(scopeKey, epoch) { mutableStateOf(false) }
     val anchored = anchor?.let { shown -> cards.indexOfFirst { org.viptv.app.connection.cardLookupKey(it) == shown }.takeIf { it >= 0 } }
     val active = if (cards.isEmpty()) 0 else anchored ?: (index % cards.size)
     val card = cards.getOrNull(active)
@@ -58,11 +63,18 @@ internal fun rememberHeroCarousel(cards: List<Card>, enabled: Boolean, scopeKey:
     val progress = remember(scopeKey) { HeroProgress() }
     val context = LocalPlatformContext.current
     LaunchedEffect(progress, key) { progress.bind(key) }
-    LaunchedEffect(key, enabled, ready, cards.size) {
-        if (enabled && ready && cards.size > 1) {
+    LaunchedEffect(key, enabled, ready, cards.size, epoch) {
+        if (enabled && ready && cards.size > 1 && !parked) {
             progress.run(key)
-            val next = (active + 1) % cards.size
-            anchor = org.viptv.app.connection.cardLookupKey(cards[next]); index = next
+            if (active + 1 < cards.size) {
+                val next = active + 1
+                anchor = org.viptv.app.connection.cardLookupKey(cards[next]); index = next
+            } else if (parkAfterPass) {
+                parked = true
+            } else {
+                val next = (active + 1) % cards.size
+                anchor = org.viptv.app.connection.cardLookupKey(cards[next]); index = next
+            }
         }
     }
     LaunchedEffect(key, enabled, ready, cards.size) {
