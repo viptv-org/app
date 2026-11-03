@@ -11,7 +11,11 @@ private const val providerFailed = "This search provider could not respond. Try 
 private const val noMatchingTitles = "No matching titles"
 private const val needsCredentials = "This add-on needs valid credentials to search."
 
-private fun SearchResultRow.errored(): Boolean = state == "Failed" && message != needsCredentials
+private fun SearchResultRow.errored(): Boolean = state == "Failed" && when (error_code) {
+    "search_failed" -> true
+    "credentials_required" -> false
+    else -> message != needsCredentials
+}
 
 internal fun searchFiltersFor(type: String?): Set<String> = when (type) {
     "series" -> setOf("Series", "Anime")

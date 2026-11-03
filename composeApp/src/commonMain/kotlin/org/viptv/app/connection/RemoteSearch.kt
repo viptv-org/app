@@ -20,6 +20,7 @@ data class SearchResultRow(
     val state: String = "Ready",
     val cards: List<Card> = emptyList(),
     val message: String? = null,
+    val error_code: String? = null,
 )
 
 @Serializable
