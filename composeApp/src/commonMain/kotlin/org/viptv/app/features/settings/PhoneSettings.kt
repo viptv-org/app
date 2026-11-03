@@ -57,47 +57,47 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             else -> Unit
         }
     }
-    LazyColumn(Modifier.fillMaxSize(), listState, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
-        item {
-            Box(Modifier.fillMaxWidth().height(56.dp)) {
-                BackControl(back, Modifier.align(Alignment.CenterStart))
-                Text("Settings", Modifier.align(Alignment.Center), fontSize = 17.sp, fontWeight = FontWeight.Bold)
-            }
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp)) {
+            BackControl(back, Modifier.align(Alignment.CenterStart))
+            Text("Settings", Modifier.align(Alignment.Center), fontSize = 17.sp, fontWeight = FontWeight.Bold)
         }
-        item {
-            Spacer(Modifier.height(18.dp))
-            Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) {
-                Row(Modifier.fillMaxWidth().pointerClickable(onClick = profiles).padding(14.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    ProfileAvatar(profile, 56.dp, 12.dp)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(profile?.name ?: "Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Switch profile", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Palette.secondary)
+        LazyColumn(Modifier.weight(1f), listState, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
+            item {
+                Spacer(Modifier.height(18.dp))
+                Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) {
+                    Row(Modifier.fillMaxWidth().pointerClickable(onClick = profiles).padding(14.dp), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        ProfileAvatar(profile, 56.dp, 12.dp)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(profile?.name ?: "Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text("Switch profile", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Palette.secondary)
+                        }
+                        Icon(Lucide.ChevronRight, null, Modifier.size(20.dp), tint = Palette.tertiary)
                     }
-                    Icon(Lucide.ChevronRight, null, Modifier.size(20.dp), tint = Palette.tertiary)
                 }
             }
-        }
-        notice?.let { item { Text(it, Modifier.padding(top = 18.dp), color = Palette.danger) } }
-        settingsSections(available).forEach { section ->
-            item(key = section.key) {
-                Column {
-                    SettingsGroupLabel(section.group.label, SettingsLayout.Phone)
-                    Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
-                        Column {
-                            section.rows.forEachIndexed { index, row ->
-                                if (index > 0) SettingsDivider()
-                                val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
-                                if (row.dangerous) SettingsDangerItem(label, row.icon) { open(row) }
-                                else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local),
-                                    value = if (row == SettingsRow.WatchOnTv) watchOnTvValue else null, action = { open(row) })
+            notice?.let { item { Text(it, Modifier.padding(top = 18.dp), color = Palette.danger) } }
+            settingsSections(available).forEach { section ->
+                item(key = section.key) {
+                    Column {
+                        SettingsGroupLabel(section.group.label, SettingsLayout.Phone)
+                        Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
+                            Column {
+                                section.rows.forEachIndexed { index, row ->
+                                    if (index > 0) SettingsDivider()
+                                    val label = if (row == SettingsRow.SignOut) signOutLabel(local) else row.label
+                                    if (row.dangerous) SettingsDangerItem(label, row.icon) { open(row) }
+                                    else SettingsItem(label, row.icon, subtitle = row.subtitle(addonCount, local),
+                                        value = if (row == SettingsRow.WatchOnTv) watchOnTvValue else null, action = { open(row) })
+                                }
                             }
                         }
                     }
                 }
             }
+            item { Spacer(Modifier.height(24.dp)) }
         }
-        item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
