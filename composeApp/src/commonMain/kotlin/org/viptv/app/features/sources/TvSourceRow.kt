@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +14,7 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -23,6 +25,10 @@ import org.viptv.app.components.tvHold
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
+private val TvQualitySize = 30.sp
+private val TvQualityLine = 36.sp
+private val TvQualityColumn = 116.dp
+private val TvQualityWidths = listOf("1080p", "4K", "—")
 private val TvDescriptionFont = 22.sp
 private val TvDescriptionLine = 28.sp
 private val TvLabelSize = 28.sp
@@ -37,6 +43,15 @@ internal fun tvSourceRowHeight(scale: Float): Dp {
     val title = with(LocalDensity.current) { (TvLabelLine.value * scale).sp.toPx().toDp() }
     return maxOf(TvSourceRowHeight * scale, maxOf(TvTitleHeight * scale, title) + TvSpacing * scale +
         sourceDescriptionWindowHeight((TvDescriptionLine.value * scale).sp) + TvPadding * 2 * scale)
+}
+
+@Composable
+private fun tvQualityColumnWidth(scale: Float): Dp {
+    val measurer = rememberTextMeasurer()
+    val style = LocalTextStyle.current.merge(TextStyle(fontSize = (TvQualitySize.value * scale).sp, lineHeight = (TvQualityLine.value * scale).sp,
+        fontWeight = FontWeight.ExtraBold))
+    val widest = TvQualityWidths.maxOf { measurer.measure(it, style, maxLines = 1, softWrap = false).size.width }
+    return maxOf(TvQualityColumn * scale, with(LocalDensity.current) { widest.toDp() })
 }
 
 @Composable
@@ -58,8 +73,9 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
     Row(Modifier.fillMaxWidth().heightIn(min = tvSourceRowHeight(scale)).clip(RoundedCornerShape(14.dp * scale))
         .background(if (focused) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))
         .padding(horizontal = 28.dp * scale, vertical = TvPadding * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-        Column(Modifier.width(116.dp * scale)) {
-            Text(info?.quality ?: "—", color = color, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, fontWeight = FontWeight.ExtraBold)
+        Column(Modifier.width(tvQualityColumnWidth(scale))) {
+            Text(info?.quality ?: "—", color = color, fontSize = (TvQualitySize.value * scale).sp, lineHeight = (TvQualityLine.value * scale).sp,
+                fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
             info?.format?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, color = color.copy(alpha = 0.75f), fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(TvSpacing * scale)) {

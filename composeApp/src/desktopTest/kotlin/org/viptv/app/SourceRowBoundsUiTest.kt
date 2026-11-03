@@ -84,6 +84,37 @@ class SourceRowBoundsUiTest {
             "$context: the label paints to $inkRight but its first fact badge starts at $badgeLeft")
     }
 
+    @Test fun qualityLabelsStayOnOneLineAndShareOneColumn() {
+        for (scale in listOf(0.5f, 1f)) for (fontScale in listOf(1f, 1.3f, 1.6f)) {
+            val scene = scene(960, 720, fontScale) {
+                Column(Modifier.padding(16.dp)) {
+                    TvSourceRow(short("a"), TvSourceInfo("1080p", "MKV", "PenguPlay"), scale, null, true, {})
+                    TvSourceRow(short("b"), TvSourceInfo("4K"), scale, null, true, {})
+                    TvSourceRow(short("c"), TvSourceInfo("720p"), scale, null, true, {})
+                    TvSourceRow(short("d"), TvSourceInfo(null, "MKV"), scale, null, true, {})
+                }
+            }
+            try {
+                frames(scene)
+                val where = "TV scale=$scale fontScale=$fontScale"
+                val rows = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }
+                assertEquals(4, rows.size)
+                for ((quality, row) in listOf("1080p", "4K", "720p", "—").zip(rows)) {
+                    val node = nodes(scene).single { text(it) == quality }
+                    val layout = layoutOf(node)
+                    assertEquals(1, layout.lineCount, "$where: the $quality quality label stays on one line")
+                    assertTrue(ceil(layout.getLineRight(0)) <= node.size.width,
+                        "$where: the $quality quality label paints inside its own bounds (ink ${layout.getLineRight(0)}, width ${node.size.width})")
+                    assertTrue(node.boundsInRoot.left >= row.boundsInRoot.left && node.boundsInRoot.right <= row.boundsInRoot.right,
+                        "$where: the $quality quality label stays inside its row")
+                }
+                val titles = nodes(scene).filter { text(it) == "Short release" }.map { it.boundsInRoot.left }
+                assertEquals(1, titles.distinct().size, "$where: every quality label column is the same width")
+                capture(scene, "tv-quality-$scale-$fontScale")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun everyGlyphOfTheTwoDescriptionLinesIsPainted() {
         for (scale in listOf(0.5f, 1f)) for (fontScale in listOf(1f, 1.3f, 1.6f)) {
             val fontSize = 22.sp * scale
