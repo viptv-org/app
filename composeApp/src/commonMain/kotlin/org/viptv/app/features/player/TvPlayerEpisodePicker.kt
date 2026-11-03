@@ -1,6 +1,7 @@
 package org.viptv.app.features.player
 
 import org.viptv.app.components.FocusLazyRow as LazyRow
+import org.viptv.app.components.requestPlacedFocus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -40,8 +41,11 @@ internal fun TvPlayerEpisodePicker(episodes: List<Card>, scale: Float, current: 
         }
         LaunchedEffect(Unit) {
             if (episodes.isEmpty()) return@LaunchedEffect
-            if (currentIndex > 0) { withFrameNanos { }; list.scrollToItem(currentIndex) }
-            initial.requestFocus()
+            if (currentIndex > 0) list.requestScrollToItem(currentIndex)
+            repeat(30) {
+                if (initial.requestPlacedFocus()) return@LaunchedEffect
+                withFrameNanos { }
+            }
         }
     }
 }
