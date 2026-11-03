@@ -1,22 +1,17 @@
 package org.viptv.app.features.details
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.ChevronLeft
-import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
 import org.viptv.app.connection.epochMillis
@@ -25,7 +20,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
 import org.viptv.app.components.BackControl
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.PinnedHeaderSurface
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
 
@@ -91,7 +86,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
         LazyColumn(Modifier.fillMaxSize(), state = listState,
             contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
+            verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp),
+            topEdgeFade = false) {
             if (busy && !phone) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             detail?.let { value ->
                 item(key = "hero") {
@@ -148,8 +144,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         if (busy && phone) Box(Modifier.align(Alignment.TopCenter).fillMaxWidth()) {
             LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         }
-        if (phone) Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(56.dp)
-            .background(if (scrolled) Palette.background.copy(alpha = .88f) else Color.Transparent)) {
+        if (phone) PinnedHeaderSurface(scrolled, Modifier.align(Alignment.TopStart).fillMaxWidth()) {
             BackControl(back, Modifier.align(Alignment.CenterStart).offset(x = 16.dp), glass = true)
             if (scrolled) detail?.item?.title?.let { Text(it, Modifier.align(Alignment.Center).widthIn(max = 220.dp),
                 fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
