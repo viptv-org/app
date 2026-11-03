@@ -75,6 +75,24 @@ class DetailsHeroResumeTest {
         assertEquals("Resume S1 E3", detailExtras(firstPage, emptyList()).resumeLabel)
     }
 
+    @Test fun tvHeroExtrasProjectTheBoundedStarringLine() {
+        val cast = firstPage.copy(item = series.copy(metadata = CardMetadata(cast = listOf("Subaru Natsuki", "Emilia", "Rem"))))
+        assertEquals("Subaru Natsuki, Emilia, Rem", detailExtras(cast, emptyList()).cast)
+        assertNull(detailExtras(firstPage, emptyList()).cast)
+    }
+
+    @Test fun phoneHeroRendersStarringOnlyWhenCastIsSupplied() = onEdt {
+        val cast = DetailSnapshot(series.copy(metadata = CardMetadata(cast = listOf("Subaru Natsuki", "Emilia", "Rem"))), episodes = emptyList())
+        Details(390, 844, cast, continuing = emptyList()).use { page ->
+            page.settle()
+            assertTrue(page.nodes().flatMap(page::texts).any { it == "Starring Subaru Natsuki, Emilia, Rem" })
+        }
+        Details(390, 844, DetailSnapshot(series, episodes = emptyList()), continuing = emptyList()).use { page ->
+            page.settle()
+            assertFalse(page.nodes().flatMap(page::texts).any { it.startsWith("Starring") })
+        }
+    }
+
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private inner class Details(val width: Int, val height: Int, initial: DetailSnapshot, val continuing: List<Card> = listOf(resume),

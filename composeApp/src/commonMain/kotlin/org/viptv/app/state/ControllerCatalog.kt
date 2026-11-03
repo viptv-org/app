@@ -202,16 +202,32 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
         return
     }
     val pendingSeason = mutable.value.pendingDetailSeason
-    updateState { it.copy(detail = read.detail.withCardArt(card).withOpenedProgress(card),
+    updateState { it.copy(detail = read.detail.withCardPresentation(card).withOpenedProgress(card),
         detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus,
         pendingDetailSeason = null, detailShell = false) }
     rememberNavigation()
 }
 
-// A sparse meta must not wipe the art the card already has: the details hero would render a black page.
-internal fun org.viptv.engine.wire.DetailSnapshot.withCardArt(card: Card): org.viptv.engine.wire.DetailSnapshot {
-    val merged = item.copy(landscape = item.landscape ?: card.landscape, poster = item.poster ?: card.poster, logo = item.logo ?: card.logo)
+// A later, sparser meta keeps the first-painted art and never removes the better description.
+internal fun org.viptv.engine.wire.DetailSnapshot.withCardPresentation(card: Card): org.viptv.engine.wire.DetailSnapshot {
+    val merged = item.copy(
+        description = bestDescription(item.description, card.description),
+        landscape = card.landscape ?: item.landscape,
+        poster = card.poster ?: item.poster,
+        logo = card.logo ?: item.logo,
+    )
     return if (merged == item) this else copy(item = merged)
+}
+
+private fun bestDescription(loaded: String?, card: String?): String? {
+    val loaded = loaded?.takeIf { it.isNotBlank() }
+    val card = card?.takeIf { it.isNotBlank() }
+    return when {
+        loaded == null -> card
+        card == null -> loaded
+        loaded.length > card.length -> loaded
+        else -> card
+    }
 }
 
 internal fun org.viptv.engine.wire.DetailSnapshot.withOpenedProgress(card: Card): org.viptv.engine.wire.DetailSnapshot {
@@ -255,7 +271,7 @@ fun ApplicationController.playTitle(card: Card) {
 }
 
 private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire.DetailSnapshot, card: Card, target: Card) {
-    updateState { it.copy(detail = detail.withCardArt(card).withOpenedProgress(card), sourceReturnScreen = Screen.Details, sourceTitle = target, detailShell = false) }
+    updateState { it.copy(detail = detail.withCardPresentation(card).withOpenedProgress(card), sourceReturnScreen = Screen.Details, sourceTitle = target, detailShell = false) }
 }
 
 private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Long, reuse: RememberedSource? = null) {
