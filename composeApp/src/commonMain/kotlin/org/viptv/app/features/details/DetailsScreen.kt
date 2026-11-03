@@ -169,7 +169,7 @@ internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
 internal fun remainingMinutesLabel(card: Card): String? {
     val progress = card.progress ?: 0.0
     val runtime = card.metadata?.runtime_minutes ?: return null
-    val remaining = kotlin.math.round((1.0 - progress) * runtime)
+    val remaining = kotlin.math.round((1.0 - progress) * runtime).toLong()
     return if (remaining > 0) "${remaining}m left" else "Almost done"
 }
 
