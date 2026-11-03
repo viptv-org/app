@@ -17,8 +17,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
 import org.viptv.app.smartcast.NativeSmartCast
 import org.viptv.app.smartcast.SmartCastClient
@@ -33,9 +32,16 @@ import org.viptv.engine.wire.VizioPairingChallenge
 internal actual fun vizioSetupEngine(context: PlatformContext): VizioSetupEngine? = AndroidVizioSetupEngine(context)
 
 internal fun vizioChallenge(result: Map<String, JsonElement>?): VizioPairingChallenge? {
-    val challengeType = (result?.get("challengeType") as? JsonPrimitive)?.intOrNull ?: return null
-    val token = (result?.get("token") as? JsonPrimitive)?.longOrNull ?: return null
-    return VizioPairingChallenge(challengeType, token)
+    val challengeType = (result?.get("challengeType") as? JsonPrimitive)?.wholeNumber() ?: return null
+    val token = (result?.get("token") as? JsonPrimitive)?.wholeNumber() ?: return null
+    if (challengeType !in 0..65535L || token !in 0..4294967295L) return null
+    return VizioPairingChallenge(challengeType.toInt(), token)
+}
+
+private fun JsonPrimitive.wholeNumber(): Long? {
+    val value = doubleOrNull ?: return null
+    val long = value.toLong()
+    return if (long.toDouble() == value) long else null
 }
 
 internal fun vizioFinishResult(kind: VizioControllerOutputKind, failure: VizioFailureKind?): VizioPairResult = when (kind) {
