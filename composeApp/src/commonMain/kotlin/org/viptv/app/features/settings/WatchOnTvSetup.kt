@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.PlatformContext
@@ -34,6 +35,7 @@ import com.composables.icons.lucide.Lucide
 import kotlinx.coroutines.*
 import org.viptv.app.components.AppBasicTextField
 import org.viptv.app.components.AppTextField
+import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.pointerClickable
@@ -363,18 +365,35 @@ private fun VizioPoint(text: String) {
 }
 
 @Composable
+private fun BusyRing(size: Dp, strokeWidth: Dp) {
+    if (LocalReducedMotion.current) {
+        CircularProgressIndicator(progress = { 0.25f }, Modifier.size(size), color = Palette.secondary, strokeWidth = strokeWidth)
+    } else {
+        CircularProgressIndicator(Modifier.size(size), color = Palette.secondary, strokeWidth = strokeWidth)
+    }
+}
+
+@Composable
+private fun SearchLinearProgress() {
+    if (LocalReducedMotion.current) {
+        LinearProgressIndicator(progress = { 0.25f }, Modifier.fillMaxWidth().height(3.dp), color = Palette.accent, trackColor = Palette.raised)
+    } else {
+        LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = Palette.accent, trackColor = Palette.raised)
+    }
+}
+
+@Composable
 private fun VizioSetupSearch(compact: Boolean, controller: WatchOnTvSetupController) {
     DeviceTile()
     DeviceTitle("Choose your TV", compact)
     when {
         controller.searching && controller.results.isEmpty() -> {
-            CircularProgressIndicator(Modifier.size(28.dp), color = Palette.secondary, strokeWidth = 3.dp)
+            BusyRing(28.dp, 3.dp)
             DeviceSubtitle("Looking for Vizio TVs on your Wi-Fi…", compact)
         }
         controller.results.isNotEmpty() -> {
             SurfaceList(controller.results) { controller.choose(it) }
-            if (controller.searching) LinearProgressIndicator(
-                Modifier.fillMaxWidth().height(3.dp), color = Palette.accent, trackColor = Palette.raised)
+            if (controller.searching) SearchLinearProgress()
         }
         else -> Unit
     }
@@ -434,7 +453,7 @@ private fun VizioSetupPin(compact: Boolean, tv: VizioTv, controller: WatchOnTvSe
     DeviceTitle("Enter the PIN on your TV", compact)
     DeviceSubtitle("${tv.name} is showing a 4-digit PIN.", compact)
     if (!controller.pinReady && controller.busy) {
-        CircularProgressIndicator(Modifier.size(28.dp), color = Palette.secondary, strokeWidth = 3.dp)
+        BusyRing(28.dp, 3.dp)
         DeviceSubtitle("Connecting to ${tv.name}…", compact)
         DeviceSecondaryButton("Cancel") { controller.cancelPin() }
     } else if (!controller.pinReady) {
@@ -444,7 +463,7 @@ private fun VizioSetupPin(compact: Boolean, tv: VizioTv, controller: WatchOnTvSe
     } else {
         VizioPinBoxes(controller.pin, enabled = !controller.busy, error = controller.pinError != null) { controller.pinChanged(it) }
         if (controller.busy) {
-            CircularProgressIndicator(Modifier.size(20.dp), color = Palette.secondary, strokeWidth = 2.dp)
+            BusyRing(20.dp, 2.dp)
             Text("Pairing…", color = Palette.secondary, fontSize = 14.sp, textAlign = TextAlign.Center)
         } else {
             Text("Pairs as soon as all 4 digits are in.", color = Palette.tertiary, fontSize = 13.sp, textAlign = TextAlign.Center)

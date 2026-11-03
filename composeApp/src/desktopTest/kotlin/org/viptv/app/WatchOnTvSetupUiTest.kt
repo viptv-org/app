@@ -2,6 +2,7 @@ package org.viptv.app
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
@@ -13,6 +14,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.CompletableDeferred
+import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.features.settings.VizioPairResult
 import org.viptv.app.features.settings.VizioSetupEngine
 import org.viptv.app.features.settings.VizioTv
@@ -149,6 +151,28 @@ class WatchOnTvSetupUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun reducedMotionKeepsAStaticProgressIndicator() {
+        val gate = CompletableDeferred<Unit>()
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            CompositionLocalProvider(LocalReducedMotion provides true) {
+                ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    WatchOnTvSetupFlow(engine(search = { _, _ -> gate.await() }), compact = true, back = {}, onPaired = {})
+                } }
+            }
+        }
+        val probe = Probe(scene)
+        try {
+            probe.frames(12)
+            probe.click("Set up a TV")
+            probe.frames(4)
+            assertTrue(probe.has("Looking for Vizio TVs on your Wi-Fi…"), probe.texts().toString())
+            assertFalse(probe.hasProgress(), "reduced motion drops the looping indicator: ${probe.texts()}")
+            assertTrue(probe.hasProgressBar(), "a static status marker remains: ${probe.texts()}")
+            gate.complete(Unit)
+            probe.frames(4)
+        } finally { scene.close() }
+    }
+
     private fun scene(engine: VizioSetupEngine) = ImageComposeScene(390, 844, Density(1f)) {
         ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
             WatchOnTvSetupFlow(engine, compact = true, back = {}, onPaired = {})
@@ -175,6 +199,7 @@ class WatchOnTvSetupUiTest {
         fun texts() = nodes().flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }
         fun has(value: String) = value in texts()
         fun hasProgress() = nodes().any { it.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo) == ProgressBarRangeInfo.Indeterminate }
+        fun hasProgressBar() = nodes().any { it.config.contains(SemanticsProperties.ProgressBarRangeInfo) }
         fun setText(value: String) {
             val field = nodes().single { it.config.contains(SemanticsActions.SetText) }
             assertTrue(field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString(value)), "Could not type \"$value\"")
