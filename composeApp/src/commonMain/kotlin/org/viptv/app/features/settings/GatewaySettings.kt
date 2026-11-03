@@ -40,11 +40,14 @@ internal fun GatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, Gat
     var deleting by remember { mutableStateOf<Gateway?>(null) }
     var granting by remember { mutableStateOf<Gateway?>(null) }
     val secretStorageConfigured = snapshot?.secret_storage_configured != false
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Playback gateways", style = MaterialTheme.typography.titleLarge)
-            TextButton(refresh, enabled = !busy) { Text("Refresh") }
-        }
+    BoxWithConstraints {
+        val compact = maxWidth < 640.dp
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (compact) TextButton(refresh, enabled = !busy) { Text("Refresh") }
+            else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Playback gateways", style = MaterialTheme.typography.titleLarge)
+                TextButton(refresh, enabled = !busy) { Text("Refresh") }
+            }
         Text("Gateways transcode and deliver streams this device cannot play directly. Gateways are shared across the account.", color = Palette.secondary)
         if (!secretStorageConfigured) Text("The server's encryption keyring is not configured, so no gateway can be registered until the operator configures it.", color = Palette.danger)
         loadError?.let {
@@ -60,6 +63,7 @@ internal fun GatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, Gat
                 { replacing = gateway }, { deleting = gateway }, { granting = gateway })
         }
         if (snapshot != null && snapshot.items.isEmpty() && loadError == null) Text("No gateways are configured for your account.", color = Palette.secondary)
+        }
     }
     if (registering) {
         val remoteConnection = remote

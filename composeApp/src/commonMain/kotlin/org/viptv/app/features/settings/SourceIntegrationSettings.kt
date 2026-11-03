@@ -41,9 +41,11 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
         deleting?.let { target -> TvSourceRemoveConfirmation(target, profileName, busy, tvScale,
             confirm = { target.connection_id?.let(remove); deleting = null },
             dismiss = { if (!busy) deleting = null }) }
-    } else
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    } else BoxWithConstraints {
+        val compact = maxWidth < 640.dp
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (compact) TextButton(retry, enabled = !busy) { Text("Refresh") }
+        else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Source integrations", style = MaterialTheme.typography.titleLarge)
             TextButton(retry, enabled = !busy) { Text("Refresh") }
         }
@@ -67,6 +69,7 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
                     if (schema.connection_id != null) TextButton({ deleting = schema }, enabled = !busy) { Text("Remove") }
                 }
             }
+        }
         }
     }
     if (!television) editing?.let { schema ->

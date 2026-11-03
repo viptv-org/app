@@ -33,7 +33,7 @@ internal fun LinkedServicesSettings(status: SimklLinkStatus?, profileName: Strin
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
         .padding(horizontal = if (compact) 16.dp else 32.dp, vertical = 8.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Linked services", Modifier.padding(top = 16.dp), fontSize = if (compact) 22.sp else 26.sp, fontWeight = FontWeight.Bold)
+        if (!compact) Text("Linked services", Modifier.padding(top = 16.dp), fontSize = 26.sp, fontWeight = FontWeight.Bold)
         profileName?.let { Text("For $it", color = Palette.secondary, fontSize = 13.sp) }
         Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
             Column {
