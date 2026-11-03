@@ -35,21 +35,21 @@ internal class PreparedPlaybackLease(
         remote.promotePreparedPlayback(id, profile, admission, replaces)
 }
 
-internal class PlaybackAdmission(val request: JsonObject, val native: LocalTorrents?, val directOnly: Boolean)
+internal class PlaybackAdmission(val request: JsonObject, val native: LocalTorrents?, val canPlayDirect: Boolean)
 
 private suspend fun RemoteConnection.playbackAdmission(source: SourceCandidate, clientFacts: JsonObject, forceGateway: Boolean, positionMillis: Long?, torrents: LocalTorrents?): PlaybackAdmission {
     val requestId = kotlin.uuid.Uuid.random().toString()
     val negotiatedFacts = if (requiredAudioIndexSupported) clientFacts
         else JsonObject(clientFacts - "supports_required_audio_index")
-    val directOnly = clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull == true
-    val native = torrents?.takeIf { directOnly && it.negotiate(this) }
+    val canPlayDirect = clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull == true
+    val native = torrents?.takeIf { canPlayDirect && it.negotiate(this) }
     val request = buildJsonObject {
         put("request_id", requestId); put("stream_id", source.id)
         put("client", if (native == null) negotiatedFacts else JsonObject(negotiatedFacts + ("native_torrent" to native.capability)))
-        put("force_gateway", !directOnly && (forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true))
+        put("force_gateway", !canPlayDirect && (forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true))
         put("position", (positionMillis ?: 0).coerceAtLeast(0) / 1000.0); put("resume", positionMillis == null)
     }
-    return PlaybackAdmission(request, native, directOnly)
+    return PlaybackAdmission(request, native, canPlayDirect)
 }
 
 internal suspend fun RemoteConnection.openPlayback(source: SourceCandidate, profile: String, clientFacts: JsonObject = playbackClientFacts(), forceGateway: Boolean = false, positionMillis: Long? = null,
@@ -120,7 +120,7 @@ private suspend fun RemoteConnection.playbackLease(playbackId: String, profile: 
         return RemotePlaybackLease(input, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this,
             gateway = false, reopensForSeek = false, local = local)
     }
-    if (kind != if (admission.directOnly) "direct" else "gateway")
+    if (kind != "gateway" && !(kind == "direct" && admission.canPlayDirect))
         throw RemoteFailure(502, "This source needs a server gateway that this device does not use.")
     val headers = delivery["headers"]?.jsonObject?.mapValues { it.value.jsonPrimitive.content }.orEmpty()
     val input = PlaybackInput(playbackId, delivery.getValue("url").jsonPrimitive.content,
