@@ -18,6 +18,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
@@ -33,7 +34,13 @@ import org.viptv.engine.wire.SourceCandidate
 private val RowDescriptionFont = 12.sp
 private val RowDescriptionLine = 16.sp
 private val RowTitleHeight = 24.dp
+private val RowSpacing = 6.dp
+private val RowPadding = 18.dp
 private val RowHeight = 98.dp
+
+@Composable
+private fun sourceRowHeight(): Dp = maxOf(RowHeight,
+    RowTitleHeight + RowSpacing + sourceDescriptionWindowHeight(RowDescriptionLine) + RowPadding * 2)
 
 @Composable
 internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false,
@@ -50,20 +57,20 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
             onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
         header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp), measured = headerMeasured) }
-        Row(Modifier.fillMaxWidth().height(RowHeight).clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
+        Row(Modifier.fillMaxWidth().heightIn(min = sourceRowHeight()).clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
         .background(if (focused) Palette.text else if (television || selected) Palette.raised else Palette.surface)
         .indication(interaction, LocalIndication.current)
-        .padding(horizontal = if (television) 28.dp else 20.dp, vertical = 18.dp),
+        .padding(horizontal = if (television) 28.dp else 20.dp, vertical = RowPadding),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.widthIn(min = 56.dp)) {
             Text(source.qualityLabel() ?: "—", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = foreground,
                 maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
             source.formatLabel()?.let { Text(it, fontSize = 10.sp, maxLines = 1, softWrap = false, color = foreground.copy(alpha = .7f)) }
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(RowSpacing)) {
             SourceTitleLine(source.label, TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), foreground,
                 source.factBadges(), SourceBadgeStyle(10.sp, 13.sp, 4.dp, 5.dp, 2.dp, 6.dp),
-                Modifier.fillMaxWidth().height(RowTitleHeight), trailing = if (bestMatch || didntStart) ({
+                Modifier.fillMaxWidth().heightIn(min = RowTitleHeight), trailing = if (bestMatch || didntStart) ({
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (bestMatch) Text(BEST_MATCH_MARKER, color = if (focused) Palette.background else Palette.accent, fontSize = 11.sp,
                             lineHeight = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
