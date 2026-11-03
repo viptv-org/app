@@ -116,6 +116,39 @@ class PageBackControlTest {
         }
     }
 
+    @Test fun settingsListPinsItsBackSlotWhileScrolling() {
+        val scene = scene(390, 480, pointer = false) {
+            PhoneSettings(profile, 0, true, null,
+                profiles = {}, addons = {}, leave = {}, back = {},
+                account = {}, devices = {}, stremioImport = {}, preferences = { _ -> }, parental = {},
+                information = { _ -> }, addDevice = {}, householdPin = {}, sourceIntegrations = {},
+                xtreamConnections = {}, password = {}, deleteAccount = {}, profilePage = {},
+                linkedServices = {}, gateways = {}, vodMatches = {}, watchOnTv = true, openWatchOnTv = {})
+        }
+        try {
+            frames(scene)
+            fun list() = nodes(scene).first { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
+            fun title() = nodes(scene).first { it.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Settings" } == true }
+            val startOffset = list().config[SemanticsProperties.VerticalScrollAxisRange].value()
+            val slot = back(scene).boundsInRoot
+            val titleSlot = title().boundsInRoot
+            capture(scene, "settings-list-pinned-top-390")
+            list().config[SemanticsActions.ScrollBy].action!!.invoke(0f, 2000f)
+            frames(scene)
+            assertTrue(list().config[SemanticsProperties.VerticalScrollAxisRange].value() > startOffset,
+                "the Settings list must scroll past its pinned back slot")
+            assertTrue(abs(slot.left - back(scene).boundsInRoot.left) <= 1f &&
+                abs(slot.top - back(scene).boundsInRoot.top) <= 1f &&
+                abs(slot.right - back(scene).boundsInRoot.right) <= 1f &&
+                abs(slot.bottom - back(scene).boundsInRoot.bottom) <= 1f,
+                "the Settings back control must stay put while the list scrolls: ${back(scene).boundsInRoot} vs $slot")
+            assertTrue(abs(titleSlot.left - title().boundsInRoot.left) <= 1f &&
+                abs(titleSlot.top - title().boundsInRoot.top) <= 1f,
+                "the Settings title must stay put while the list scrolls: ${title().boundsInRoot} vs $titleSlot")
+            capture(scene, "settings-list-pinned-scrolled-390")
+        } finally { scene.close() }
+    }
+
     @Test fun desktopEditAndPinShareOneChevron() {
         val pages: List<Pair<String, @Composable () -> Unit>> = listOf(
             "Profile edit" to { ProfileEditScreen(profile, 1, false, null, compact = false, back = {},
