@@ -17,17 +17,17 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
     television: Boolean = false, backChanged: ((() -> Unit)?) -> Unit = {},
     pairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
     cancelPairing: () -> Unit = {},
-    register: ((String, String, String) -> Unit)? = null, recover: ((String, String, String) -> Unit)? = null) {
+    register: ((String, String, String) -> Unit)? = null, recover: ((String, String, String) -> Unit)? = null, retry: (() -> Unit)? = null) {
     if (television) {
-        TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing)
+        TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing, retry = retry)
         return
     }
     if (phone) {
-        MobileSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
+        MobileSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged, retry)
         return
     }
     if (desktop || !browser && !phone) {
-        DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged)
+        DesktopSignIn(origin, busy, error, local, connect, pairing, startPairing, cancelPairing, backChanged, retry)
         return
     }
     var accountMode by remember { mutableStateOf<String?>(null) }
@@ -62,6 +62,7 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
                 showProgress = false,
                 storePasswordOnSuccess = true,
             )
+            if (retry != null) TextButton(onClick = retry, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Try again") }
             if (browser && register != null && recover != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton({ accountMode = "register" }, enabled = !busy) { Text("Create account") }
                 TextButton({ accountMode = "recover" }, enabled = !busy) { Text("Use recovery code") }

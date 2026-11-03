@@ -29,7 +29,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, error: String? = null) {
+internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, error: String? = null, retry: (() -> Unit)? = null) {
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { first.requestFocus() }
     TvWelcomeBackdrop(scale)
@@ -41,7 +41,7 @@ internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, e
             Text("Your shows, channels and progress. All in one place.", color = Palette.text, fontSize = (34 * scale).sp, lineHeight = (42 * scale).sp)
         }
         Row(Modifier.fillMaxWidth().offset(y = 584.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale, Alignment.CenterHorizontally)) {
-            TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, primary = true, requester = first, activate = signIn) {
+            TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, primary = true, requester = if (retry == null) first else null, activate = signIn) {
                 Text("Sign in", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
             if (local != null) TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, activate = local) {
@@ -52,6 +52,11 @@ internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, e
             Box(Modifier.fillMaxWidth().offset(y = 720.dp * scale).padding(horizontal = 96.dp * scale), contentAlignment = Alignment.Center) {
                 Text(message, color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp,
                     textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        if (retry != null) Box(Modifier.fillMaxWidth().offset(y = 852.dp * scale), contentAlignment = Alignment.Center) {
+            TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, primary = true, requester = first, activate = retry) {
+                Text("Try again", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
         if (local != null) Box(Modifier.fillMaxWidth().offset(y = 960.dp * scale), contentAlignment = Alignment.Center) {
