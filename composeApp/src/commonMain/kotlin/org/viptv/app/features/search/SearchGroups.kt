@@ -9,6 +9,9 @@ internal val searchFilterOptions = listOf("All", "Movies", "Series", "Anime", "C
 
 private const val providerFailed = "This search provider could not respond. Try again."
 private const val noMatchingTitles = "No matching titles"
+private const val needsCredentials = "This add-on needs valid credentials to search."
+
+private fun SearchResultRow.errored(): Boolean = state == "Failed" && message != needsCredentials
 
 internal fun searchFiltersFor(type: String?): Set<String> = when (type) {
     "series" -> setOf("Series", "Anime")
@@ -31,10 +34,10 @@ internal fun searchGroups(cards: List<Card>, addons: List<IntegrationConnection>
 
 internal fun searchResultGroups(rows: List<SearchResultRow>, filters: Set<String> = emptySet()): List<SearchGroup> = rows.map { row ->
     val cards = row.cards.filter { it.matchesSearchFilter(filters) }.distinctBy(::searchCardKey)
-    val message = when (row.state) {
-        "Failed" -> providerFailed
-        "Loading", "Pending" -> "Searching…"
-        "Ready" -> if (row.message != null) "Some search results are unavailable. Try again." else null
+    val message = when {
+        row.errored() -> providerFailed
+        row.state == "Loading" || row.state == "Pending" -> "Searching…"
+        row.state == "Ready" && row.message != null -> "Some search results are unavailable. Try again."
         else -> null
     }
     SearchGroup(row.id, row.title, cards, message)
@@ -44,7 +47,7 @@ internal fun searchResultGroups(rows: List<SearchResultRow>, filters: Set<String
 }
 
 internal fun searchNoResultsCopy(rows: List<SearchResultRow>): String =
-    if (rows.any { it.state == "Failed" } && rows.none { it.cards.isNotEmpty() }) providerFailed else noMatchingTitles
+    if (rows.any { it.errored() } && rows.none { it.cards.isNotEmpty() }) providerFailed else noMatchingTitles
 
 internal fun Card.matchesSearchFilter(filters: Set<String>): Boolean = filters.isEmpty() || filters.any { filter ->
     when (filter) {

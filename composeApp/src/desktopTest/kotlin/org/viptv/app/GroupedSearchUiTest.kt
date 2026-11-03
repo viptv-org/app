@@ -173,6 +173,52 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aProviderThatNeedsCredentialsShowsTheEmptyStateNotAPerProviderBlock() {
+        val rows = listOf(
+            SearchResultRow("movies-search", "Movies Search", "stremio", state = "Empty"),
+            SearchResultRow("tv-shows", "TV Shows", "stremio", state = "Failed",
+                message = "This add-on needs valid credentials to search."))
+        val scene = ImageComposeScene(600, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("zzzqx", emptyList(), emptyList(), false, null, false, {}, {},
+                        editQuery = {}, searchRows = rows)
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it == "TV Shows" })
+            assertFalse(texts.any { it.contains("could not respond") })
+        } finally { scene.close() }
+    }
+
+    @Test fun oneGenuineFailureAmongWorkingProvidersShowsOnlyThatGroupsError() {
+        val result = Card(MediaIdentity("result-id", "movie", emptyList()), provider_id = "addon:1", title = "Returned title", badges = emptyList())
+        val rows = listOf(
+            SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(result)),
+            SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed"))
+        val scene = ImageComposeScene(600, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("dog", emptyList(), emptyList(), false, null, false, {}, {},
+                        editQuery = {}, searchRows = rows)
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertTrue(texts.any { it == "Returned title" })
+            assertEquals(1, texts.count { it == "This search provider could not respond. Try again." })
+            assertTrue(texts.any { it == "Cinemeta" })
+            assertTrue(texts.any { it == "TV Shows" })
+            assertFalse(texts.any { it == "No matching titles" })
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }

@@ -75,6 +75,26 @@ class SearchGroupsTest {
         assertTrue(searchResultGroups(rows.filter { it.state == "Failed" }).isEmpty())
     }
 
+    @Test fun aProviderThatNeedsCredentialsIsOmittedNotAnError() {
+        val rows = listOf(
+            SearchResultRow("movies-search", "Movies Search", "stremio", state = "Empty"),
+            SearchResultRow("series-search", "Series Search", "stremio", state = "Empty"),
+            SearchResultRow("tv-shows", "TV Shows", "stremio", state = "Failed",
+                message = "This add-on needs valid credentials to search."))
+        assertTrue(searchResultGroups(rows).isEmpty())
+        assertEquals("No matching titles", searchNoResultsCopy(rows))
+    }
+
+    @Test fun aGenuineFailureAmongWorkingProvidersErrorsOnlyThatGroup() {
+        val returned = SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1")))
+        val failed = SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed")
+        val groups = searchResultGroups(listOf(returned, failed))
+        assertEquals(listOf("Cinemeta", "TV Shows"), groups.map { it.label })
+        assertNull(groups[0].message)
+        assertEquals("This search provider could not respond. Try again.", groups[1].message)
+        assertTrue(groups[1].cards.isEmpty())
+    }
+
     @Test fun episodeCoordinatesDoNotCollide() {
         val first = card("addon", "series").copy(identity = MediaIdentity("same", "series", emptyList(), EpisodeCoordinates("aired", 1, 1)))
         val second = first.copy(identity = first.identity.copy(episode = EpisodeCoordinates("aired", 1, 2)))
