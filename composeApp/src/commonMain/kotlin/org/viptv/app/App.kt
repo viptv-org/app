@@ -118,6 +118,7 @@ fun App(
             val bottomBar = bottomBarShown(state.screen, compact, browser, desktopChrome)
             val bottomClearance = if (bottomBar) bottomBarClearance() else 0.dp
             val animeAvailable = state.animeAvailable
+            val phoneScroll = remember { PhoneScroll() }
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
@@ -160,7 +161,7 @@ fun App(
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
                       LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar,
                       LocalBottomClearance provides bottomClearance, LocalAnimeAvailable provides animeAvailable,
-                      LocalHeaderRemote provides remote) { Column(Modifier.fillMaxSize()) {
+                      LocalHeaderRemote provides remote, LocalPhoneScroll provides phoneScroll) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
                         if (compact) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
