@@ -37,6 +37,8 @@ class DetailsHeroResumeTest {
         parent_identity = MediaIdentity(show, "series", emptyList()))
     private val firstPage = DetailSnapshot(series, episodes = (1L..25L).map { episode(1, it, progress = if (it == 3L) 0.3 else null) },
         next_cursor = "25", seasons = listOf(EpisodeSeason(1, 25, 0), EpisodeSeason(2, 24, 25), EpisodeSeason(3, 16, 49)))
+    private val starring = listOf("Subaru Natsuki", "Emilia", "Rem")
+    private fun castDetail() = DetailSnapshot(series.copy(metadata = CardMetadata(cast = starring)), episodes = emptyList())
 
     private fun assertScopedResume(card: Card?, layout: String) {
         assertNotNull(card, "$layout: the hero played something")
@@ -76,18 +78,28 @@ class DetailsHeroResumeTest {
     }
 
     @Test fun tvHeroExtrasProjectTheBoundedStarringLine() {
-        val cast = firstPage.copy(item = series.copy(metadata = CardMetadata(cast = listOf("Subaru Natsuki", "Emilia", "Rem"))))
+        val cast = firstPage.copy(item = series.copy(metadata = CardMetadata(cast = starring)))
         assertEquals("Subaru Natsuki, Emilia, Rem", detailExtras(cast, emptyList()).cast)
         assertNull(detailExtras(firstPage, emptyList()).cast)
     }
 
-    @Test fun phoneHeroRendersStarringOnlyWhenCastIsSupplied() = onEdt {
-        val cast = DetailSnapshot(series.copy(metadata = CardMetadata(cast = listOf("Subaru Natsuki", "Emilia", "Rem"))), episodes = emptyList())
-        Details(390, 844, cast, continuing = emptyList()).use { page ->
+    @Test fun phoneHeroRendersStarringOnlyWhenTheDetailCarriesCast() = onEdt {
+        Details(390, 844, castDetail(), continuing = emptyList()).use { page ->
             page.settle()
             assertTrue(page.nodes().flatMap(page::texts).any { it == "Starring Subaru Natsuki, Emilia, Rem" })
         }
         Details(390, 844, DetailSnapshot(series, episodes = emptyList()), continuing = emptyList()).use { page ->
+            page.settle()
+            assertFalse(page.nodes().flatMap(page::texts).any { it.startsWith("Starring") })
+        }
+    }
+
+    @Test fun tvHeroRendersStarringOnlyWhenTheDetailCarriesCast() = onEdt {
+        Details(1920, 1080, castDetail(), continuing = emptyList(), television = true).use { page ->
+            page.settle()
+            assertTrue(page.nodes().flatMap(page::texts).any { it == "Starring Subaru Natsuki, Emilia, Rem" })
+        }
+        Details(1920, 1080, DetailSnapshot(series, episodes = emptyList()), continuing = emptyList(), television = true).use { page ->
             page.settle()
             assertFalse(page.nodes().flatMap(page::texts).any { it.startsWith("Starring") })
         }
