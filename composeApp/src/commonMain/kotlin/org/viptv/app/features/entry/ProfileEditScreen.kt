@@ -35,7 +35,7 @@ fun ProfileEditScreen(
     var confirmingDelete by remember(profile?.id) { mutableStateOf(false) }
     var pickingAvatar by remember(profile?.id) { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
-        BackControl(back, Modifier.align(androidx.compose.ui.Alignment.TopStart).padding(start = 24.dp, top = 24.dp), desktop = true)
+        BackControl(back, Modifier.align(androidx.compose.ui.Alignment.TopStart).offset(x = 24.dp, y = 24.dp), desktop = true)
         Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center,
             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
             Column(Modifier.widthIn(max = 560.dp).fillMaxWidth(), verticalArrangement = Arrangement.Center) {

@@ -167,7 +167,7 @@ internal const val xtreamConnectionsSection = "Xtream connections"
 @Composable
 private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, backLabel: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        if (compact || backLabel != null) Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (compact) 16.dp else 24.dp),
+        if (compact || backLabel != null) Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (compact) 16.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically) {
             BackControl(back, label = backLabel, desktop = !compact)
         }

@@ -29,7 +29,7 @@ fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: 
         return
     }
     Box(Modifier.fillMaxSize()) {
-        BackControl(back, Modifier.align(Alignment.TopStart).padding(start = 24.dp, top = 24.dp), desktop = true)
+        BackControl(back, Modifier.align(Alignment.TopStart).offset(x = 24.dp, y = 24.dp), desktop = true)
         Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Text(pinTitle(profile, leaving), style = MaterialTheme.typography.headlineLarge)
             Spacer(Modifier.height(24.dp))

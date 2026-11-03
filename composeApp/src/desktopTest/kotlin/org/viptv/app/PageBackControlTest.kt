@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.Density
 import kotlin.math.abs
 import org.junit.Rule
 import org.viptv.app.components.PageBackTag
+import org.viptv.app.components.PageBackGlyphTag
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
 import org.viptv.app.features.continuewatching.ContinueWatchingScreen
@@ -65,6 +66,12 @@ class PageBackControlTest {
         return node
     }
 
+    private fun glyph(scene: ImageComposeScene): SemanticsNode {
+        val glyphs = nodes(scene).filter { it.config.getOrNull(SemanticsProperties.TestTag) == PageBackGlyphTag }
+        assertEquals(1, glyphs.size, "each page must have exactly one chevron glyph; found ${glyphs.size}")
+        return glyphs.single()
+    }
+
     private fun assertNoBareBackText(scene: ImageComposeScene) {
         assertFalse(nodes(scene).any { node ->
             node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Back" } == true
@@ -102,6 +109,9 @@ class PageBackControlTest {
                     abs(expected.right - node.boundsInRoot.right) <= 1f &&
                     abs(expected.bottom - node.boundsInRoot.bottom) <= 1f,
                     "$name puts the back control in a different slot: ${node.boundsInRoot} vs $expected")
+                assertTrue(abs(glyph(scene).boundsInRoot.left - 16f) <= 1f,
+                    "$name glyph must sit on the 16dp page gutter, was ${glyph(scene).boundsInRoot.left}")
+                if (name == "Settings list") capture(scene, "phone-settings-list-390")
             } finally { scene.close() }
         }
     }
@@ -126,6 +136,8 @@ class PageBackControlTest {
                     abs(expected.width - node.boundsInRoot.width) <= 1f &&
                     abs(expected.height - node.boundsInRoot.height) <= 1f,
                     "$name desktop back is out of slot: ${node.boundsInRoot} vs $expected")
+                assertTrue(abs(glyph(scene).boundsInRoot.left - 24f) <= 1f,
+                    "$name desktop glyph must sit on its 24dp inset, was ${glyph(scene).boundsInRoot.left}")
             } finally { scene.close() }
         }
     }
@@ -144,6 +156,9 @@ class PageBackControlTest {
                 assertEquals("Back to player", node.config.getOrNull(SemanticsProperties.ContentDescription)?.single(),
                     "the web sub-page names its way back to the player at $width")
                 assertEquals(44f, node.boundsInRoot.height, "$width: the back slot keeps a fixed height")
+                val title = nodes(scene).first { it.config.getOrNull(SemanticsProperties.Text)?.any { t -> t.text.contains("Playback preferences") } == true }
+                assertTrue(abs(glyph(scene).boundsInRoot.left - title.boundsInRoot.left) <= 1f,
+                    "$width: the glyph must line up with the page content edge, was ${glyph(scene).boundsInRoot.left} vs title ${title.boundsInRoot.left}")
                 capture(scene, "web-settings-sub-page-$width")
             } finally { scene.close() }
         }
