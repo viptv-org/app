@@ -85,6 +85,24 @@ class SearchGroupsTest {
         assertEquals("No matching titles", searchNoResultsCopy(rows))
     }
 
+    @Test fun aCredentialsErrorCodeIsOmittedWithoutTheMessage() {
+        val rows = listOf(
+            SearchResultRow("movies-search", "Movies Search", "stremio", state = "Empty"),
+            SearchResultRow("tv-shows", "TV Shows", "stremio", state = "Failed",
+                error_code = "credentials_required"))
+        assertTrue(searchResultGroups(rows).isEmpty())
+        assertEquals("No matching titles", searchNoResultsCopy(rows))
+    }
+
+    @Test fun anErrorCodeBeatsTheMessageFallback() {
+        val returned = SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1")))
+        val failed = SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed",
+            message = "This add-on needs valid credentials to search.",
+            error_code = "search_failed")
+        val groups = searchResultGroups(listOf(returned, failed))
+        assertEquals("This search provider could not respond. Try again.", groups.last().message)
+    }
+
     @Test fun aGenuineFailureAmongWorkingProvidersErrorsOnlyThatGroup() {
         val returned = SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1")))
         val failed = SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed")
