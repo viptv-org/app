@@ -52,6 +52,7 @@ data class Card(
     val badges: List<String>,
     val parent_identity: MediaIdentity? = null,
     val added_at_millis: Long? = null,
+    val released_at_millis: Long? = null,
     val metadata_origin: MetadataOrigin? = null,
 )
 
@@ -65,6 +66,7 @@ data class CardMetadata(
     val rating_votes: Long? = null,
     val certification: String? = null,
     val alternate_titles: List<String> = emptyList(),
+    val cast: List<String> = emptyList(),
 )
 
 @Serializable

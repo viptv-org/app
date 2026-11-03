@@ -11,6 +11,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
@@ -27,16 +28,19 @@ fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: 
             { pin = pin.dropLast(1) }, { if (pin.length in 4..8) { submit(pin); pin = "" } }, back, leaving)
         return
     }
-    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(pinTitle(profile, leaving), style = MaterialTheme.typography.headlineLarge)
-        Spacer(Modifier.height(24.dp))
-        val focus = remember { FocusRequester() }
-        LaunchedEffect(Unit) { withFrameNanos { }; runCatching { focus.requestFocus() } }
-        AppTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
-            label = "PIN", visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code",
-            modifier = Modifier.focusRequester(focus))
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Row { TextButton(onClick = back) { Text("Back") }; Button(onClick = { submit(pin); pin = "" }, enabled = !busy && pin.length in 4..8) { Text("Continue") } }
+    Box(Modifier.fillMaxSize()) {
+        BackControl(back, Modifier.align(Alignment.TopStart).offset(x = 24.dp, y = 24.dp), desktop = true)
+        Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(pinTitle(profile, leaving), style = MaterialTheme.typography.headlineLarge)
+            Spacer(Modifier.height(24.dp))
+            val focus = remember { FocusRequester() }
+            LaunchedEffect(Unit) { withFrameNanos { }; runCatching { focus.requestFocus() } }
+            AppTextField(pin, { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
+                label = "PIN", visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code",
+                modifier = Modifier.focusRequester(focus))
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Row { Button(onClick = { submit(pin); pin = "" }, enabled = !busy && pin.length in 4..8) { Text("Continue") } }
+        }
     }
 }
 

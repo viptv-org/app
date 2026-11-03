@@ -33,23 +33,30 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
 
+private val PhoneHeroArt = 300.dp
+private val PhoneHeroHeader = 76.dp
+private val PhoneHeroMetaLine = 19.dp
+
 @Composable
 internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
     resumeEpisode: Card? = null, sourcePreview: DetailSourcePreview? = null, chooseSource: (Card) -> Unit = play) {
-    val hasArtwork = card.landscape != null || card.poster != null
-    Column(verticalArrangement = Arrangement.spacedBy(if (hasArtwork) (-60).dp else 0.dp)) {
-        if (hasArtwork) Box(Modifier.fillMaxWidth().height(300.dp)) {
-            AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxWidth().height(300.dp), contentScale = ContentScale.Crop)
-            Box(Modifier.fillMaxWidth().height(300.dp).background(Brush.verticalGradient(
-                0f to Palette.background.copy(alpha = .55f), .3f to Color.Transparent,
-                .55f to Color.Transparent, 1f to Palette.background)))
-        } else Spacer(Modifier.height(64.dp))
+    val art = card.landscape ?: card.poster
+    Column(verticalArrangement = Arrangement.spacedBy((-60).dp)) {
+        Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
+            if (art != null) {
+                AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+                    0f to Palette.background.copy(alpha = .55f), .3f to Color.Transparent,
+                    .55f to Color.Transparent, 1f to Palette.background)))
+            } else Box(Modifier.fillMaxSize().background(Palette.raised))
+        }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(240.dp).height(76.dp)
-                ,
-                alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-            else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
-            MediaMetadata(card, fontSize = 13f, lineHeight = 19f, kindFirst = true)
+            Box(Modifier.fillMaxWidth().height(PhoneHeroHeader), contentAlignment = Alignment.CenterStart) {
+                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
+                    Modifier.width(240.dp).height(PhoneHeroHeader), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
+                else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+            }
+            Box(Modifier.fillMaxWidth().heightIn(min = PhoneHeroMetaLine)) { MediaMetadata(card, fontSize = 13f, lineHeight = 19f, kindFirst = true) }
             val resume = resumeEpisode ?: card.takeIf(::resuming)
             val progress = resume?.progress?.takeIf { resuming(resume) }
             val remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel)
@@ -94,6 +101,11 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             }
             card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+            card.metadata?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
+                Text("Starring ${cast.joinToString(", ")}", fontSize = 14.sp, lineHeight = 21.sp,
+                    color = Palette.secondary, maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
         }
     }
 }

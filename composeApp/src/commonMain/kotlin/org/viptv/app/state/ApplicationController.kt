@@ -22,7 +22,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) },
     internal val freshness: Freshness = Freshness(),
     internal val bestMatchNoticeMillis: Long = 2_000L,
-    internal val startDeadlineMillis: Long = 20_000L) {
+    internal val startDeadlineMillis: Long = 20_000L,
+    internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L)) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
@@ -109,6 +110,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var freshnessWatcher: Job? = null
     internal var addonOperation: Job? = null
     internal var crashReportChecked = false
+    internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
 
     internal fun run(operation: suspend () -> Unit) {
@@ -116,7 +118,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         val claimed = synchronized(runGate) {
             val prior = job
             val current = ++generation
-            updateState { it.copy(busy = true, error = null, errorCode = null, detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true, devicesRetryable = true) }
+            updateState { it.copy(busy = true, error = null, errorCode = null, startupRetryable = false, detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true, devicesRetryable = true) }
             val started = scope.launch(start = CoroutineStart.LAZY) {
                 try { prior?.join(); operation() }
                 catch (e: CancellationException) { throw e }

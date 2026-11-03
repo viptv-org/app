@@ -14,6 +14,8 @@ import org.viptv.app.state.Screen
 
 internal val LocalHeaderRemote = compositionLocalOf<(@Composable () -> Unit)?> { null }
 
+internal val PhoneBrowseTitleGap = 8.dp
+
 @Composable
 internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
     val remote = LocalHeaderRemote.current
@@ -26,7 +28,7 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
             ProfileMenuButton(profile, navigate, RoundedCornerShape(10.dp), Modifier.size(40.dp)) { ProfileAvatar(profile, 28.dp, 7.dp) }
         }
         if (isHomeTab(screen)) {
-            Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
+            Box(Modifier.padding(horizontal = 16.dp)) {
                 HomeFilters(screen, navigate, gutter = 16.dp)
             }
         }

@@ -44,11 +44,17 @@ internal fun SourceTitleLine(label: String, labelStyle: TextStyle, foreground: C
         // The label yields the first badge's width, so a long title never drops every fact.
         val labelRoom = if (bounded) (room - (badgePlaceables.firstOrNull()?.let { it.width + gap } ?: 0)).coerceAtLeast(0) else room
         val text = measurables.first { it.layoutId == "label" }.measure(if (bounded) Constraints.fixedWidth(labelRoom) else loose)
-        val lines = measurer.measure(label, style, maxLines = 1, constraints = Constraints(maxWidth = labelRoom.coerceAtLeast(1)))
+        val lines = measurer.measure(label, style, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            constraints = Constraints(maxWidth = labelRoom.coerceAtLeast(1)))
         val last = (lines.lineCount - 1).coerceAtLeast(0)
         val lastRight = if (label.isEmpty()) 0 else kotlin.math.ceil(lines.getLineRight(last)).toInt()
         val lastTop = lines.getLineTop(last).toInt(); val lastBottom = lines.getLineBottom(last).toInt()
-        val start = if (lastRight == 0) 0 else lastRight + gap
+        val start = when {
+            label.isEmpty() -> 0
+            // An ellipsized label can fill its whole box, so badges start past the box, not past the last word.
+            bounded && lines.hasVisualOverflow -> labelRoom + gap
+            else -> lastRight + gap
+        }
         val shown = if (!bounded) badgePlaceables.indices.toList()
             else sourceFactBadgesThatFit(badgePlaceables.map { it.width }, gap, (room - start).coerceAtLeast(0))
         val used = shown.sumOf { badgePlaceables[it].width } + gap * (shown.size - 1).coerceAtLeast(0)

@@ -19,10 +19,12 @@ import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.epochMillis
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
@@ -54,6 +56,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage); return }
     if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
+    val airDateNow = remember { epochMillis() }
+    val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail, focus)
@@ -88,7 +92,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         LazyColumn(Modifier.fillMaxSize(), state = listState,
             contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
-            if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
+            if (busy && !phone) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             detail?.let { value ->
                 item(key = "hero") {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode, sourcePreview = sourcePreview, chooseSource = chooseSource)
@@ -122,9 +126,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                                 }
                             }
                             if (phone) itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                                DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value })
+                                DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                             } else itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                                DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value })
+                                DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                             }
                         }
                         if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {
@@ -141,12 +145,12 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 }
             }
         }
-        if (phone) Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(48.dp)
+        if (busy && phone) Box(Modifier.align(Alignment.TopCenter).fillMaxWidth()) {
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+        }
+        if (phone) Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(56.dp)
             .background(if (scrolled) Palette.background.copy(alpha = .88f) else Color.Transparent)) {
-            IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).padding(horizontal = 10.dp)
-                .size(40.dp).background(Color.White.copy(alpha = .12f), CircleShape)) {
-                Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
-            }
+            BackControl(back, Modifier.align(Alignment.CenterStart).offset(x = 16.dp), glass = true)
             if (scrolled) detail?.item?.title?.let { Text(it, Modifier.align(Alignment.Center).widthIn(max = 220.dp),
                 fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
@@ -172,7 +176,7 @@ internal fun remainingMinutesLabel(card: Card): String? {
 internal fun detailExtras(detail: DetailSnapshot?, continuing: List<Card>): TvDetailExtras {
     if (detail == null) return TvDetailExtras()
     val resume = detailResume(detail, continuing).heroEpisode(detail) ?: detail.item.takeIf(::resuming)
-    return TvDetailExtras(resume = resume, resumeLabel = resume?.let(::heroPlayLabel),
+    return TvDetailExtras(cast = detail.item.metadata?.cast?.takeIf { it.isNotEmpty() }?.joinToString(", "), resume = resume, resumeLabel = resume?.let(::heroPlayLabel),
         remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel), recommendations = detail.recommendations)
 }
 

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
@@ -33,9 +34,11 @@ fun ProfileEditScreen(
     var newPin by remember(profile?.id) { mutableStateOf("") }
     var confirmingDelete by remember(profile?.id) { mutableStateOf(false) }
     var pickingAvatar by remember(profile?.id) { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center,
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-        Column(Modifier.widthIn(max = 560.dp).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
+    Box(Modifier.fillMaxSize()) {
+        BackControl(back, Modifier.align(androidx.compose.ui.Alignment.TopStart).offset(x = 24.dp, y = 24.dp), desktop = true)
+        Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center,
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+            Column(Modifier.widthIn(max = 560.dp).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
         Text("Edit profile", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 88.dp, 18.dp)
@@ -49,7 +52,6 @@ fun ProfileEditScreen(
         Text("A local PIN keeps profiles separate in the app. The device owner can access local files.", style = MaterialTheme.typography.bodySmall) }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Row {
-            TextButton(onClick = back) { Text("Back") }
             Button(onClick = { rename(name, oldPin) }, enabled = !busy && name.isNotBlank() && name != profile?.name) { Text("Save name") }
         }
         if (pinAvailable) Button(onClick = { setPin(oldPin, newPin); oldPin = ""; newPin = "" },
@@ -59,6 +61,7 @@ fun ProfileEditScreen(
         TextButton({ guidance = true }, enabled = !busy) { Text("Audio & subtitles") }
         TextButton({ guidance = false }, enabled = !busy) { Text("Maturity rating") }
         if (count > 1 && profile?.canDelete != false) TextButton(onClick = { confirmingDelete = true }, enabled = !busy) { Text("Delete profile") }
+            }
         }
     }
     if (confirmingDelete) AlertDialog(onDismissRequest = { confirmingDelete = false },

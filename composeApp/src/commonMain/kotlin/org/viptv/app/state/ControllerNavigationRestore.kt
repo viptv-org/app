@@ -93,6 +93,6 @@ private fun ApplicationController.restoreDetails(card: Card, returnScreen: Scree
                 detailHistory = emptyList(), navBack = emptyList(), playTapTitle = null, detailFailure = null) }
             return@launch
         }
-        updateState { next -> next.copy(detail = detail.withCardArt(card)) }
+        updateState { next -> next.copy(detail = detail.withCardPresentation(card)) }
     }
 }

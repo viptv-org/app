@@ -1,7 +1,9 @@
 package org.viptv.app
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.viptv.app.features.settings.VizioNoAccess
 import org.viptv.app.features.settings.VizioNoLocalNetwork
@@ -24,7 +26,7 @@ class WatchOnTvSetupControllerTest {
         val cancelledOrigins = mutableListOf<String>()
         var searchResults = emptyList<VizioTv>()
         var probeFn: (String) -> VizioTv? = { null }
-        var beginFn: (VizioTv) -> VizioPairingChallenge? = { VizioPairingChallenge(1, 42L) }
+        var beginFn: suspend (VizioTv) -> VizioPairingChallenge? = { VizioPairingChallenge(1, 42L) }
         var finishFn: (String) -> VizioPairResult = { VizioPairResult.Paired }
         var searchThrow: Throwable? = null
         var probeThrow: Throwable? = null
@@ -113,6 +115,35 @@ class WatchOnTvSetupControllerTest {
         assertEquals(1, engine.openedSettings)
     }
 
+    @Test fun retryAfterDenialRechecksPermissionAndRunsTheSearchAgain() = runTest {
+        val engine = FakeEngine().apply { searchThrow = VizioNoAccess(); searchResults = listOf(livingRoom) }
+        val controller = controller(engine, this)
+        controller.beginSearch(); advanceUntilIdle()
+        assertEquals(VizioSetupStep.NoAccess, controller.step)
+
+        engine.searchThrow = null
+        controller.retry(); advanceUntilIdle()
+
+        assertEquals(VizioSetupStep.Searching, controller.step)
+        assertEquals(listOf(livingRoom), controller.results)
+        assertEquals(listOf(16), engine.searchedLimits)
+    }
+
+    @Test fun retryAfterManualDenialProbesAgain() = runTest {
+        val engine = FakeEngine().apply { probeThrow = VizioNoAccess(); probeFn = { livingRoom } }
+        val controller = controller(engine, this)
+        controller.openManual()
+        controller.manualChanged("192.168.1.20")
+        controller.connectManual(); advanceUntilIdle()
+        assertEquals(VizioSetupStep.NoAccess, controller.step)
+
+        engine.probeThrow = null
+        controller.retry(); advanceUntilIdle()
+
+        assertEquals(VizioSetupStep.Pin(livingRoom), controller.step)
+        assertEquals(listOf("https://192.168.1.20:7345"), engine.probedOrigins)
+    }
+
     @Test fun choosingTvBeginsPairingWithAChallenge() = runTest {
         val engine = FakeEngine()
         val controller = controller(engine, this)
@@ -154,6 +185,24 @@ class WatchOnTvSetupControllerTest {
         controller.newPin(); advanceUntilIdle()
         assertEquals(listOf(livingRoom.origin), engine.cancelledOrigins)
         assertEquals(listOf(livingRoom, livingRoom), engine.beganTvs)
+    }
+
+    @Test fun aSupersededBeginPairDoesNotClobberTheLatestAttempt() = runTest {
+        val gate = CompletableDeferred<VizioPairingChallenge>()
+        val engine = FakeEngine().apply { beginFn = { gate.await() } }
+        val controller = controller(engine, this)
+        controller.choose(livingRoom)
+        runCurrent()
+
+        controller.newPin()
+        runCurrent()
+        assertTrue(controller.busy)
+
+        gate.complete(VizioPairingChallenge(1, 42L))
+        advanceUntilIdle()
+        assertTrue(controller.pinReady)
+        assertEquals(listOf(livingRoom, livingRoom), engine.beganTvs)
+        assertFalse(controller.busy)
     }
 
     @Test fun manualConnectProbesTheAddressAndThenPairs() = runTest {

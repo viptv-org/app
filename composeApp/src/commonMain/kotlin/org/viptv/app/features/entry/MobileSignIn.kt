@@ -17,12 +17,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 
 @Composable
 internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?,
     connect: (String, String, String) -> Unit, pairing: org.viptv.app.connection.DevicePairingDisplay? = null,
     startPairing: ((String) -> Unit)? = null, cancelPairing: () -> Unit = {}, backChanged: ((() -> Unit)?) -> Unit = {},
+    retry: (() -> Unit)? = null,
 ) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
     var server by remember(origin) { mutableStateOf(origin) }
@@ -42,6 +45,10 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
                 error?.let {
                     Spacer(Modifier.height(12.dp))
                     Text(it, color = Palette.danger, fontSize = 15.sp, lineHeight = 20.sp)
+                }
+                if (retry != null) {
+                    Spacer(Modifier.height(4.dp))
+                    TextButton(onClick = retry, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Try again") }
                 }
                 Spacer(Modifier.height(18.dp))
                 MobileSignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
@@ -64,7 +71,7 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
 @Composable
 internal fun SignInBackBar(back: () -> Unit) {
     Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.CenterStart) {
-        Icon(Lucide.ChevronLeft, "All sign-in options", Modifier.size(24.dp).pointerClickable(onClick = back), tint = Palette.text)
+        BackControl(back)
     }
 }
 

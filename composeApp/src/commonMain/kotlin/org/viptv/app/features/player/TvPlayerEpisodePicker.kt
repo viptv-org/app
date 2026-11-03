@@ -33,7 +33,7 @@ internal fun TvPlayerEpisodePicker(episodes: List<Card>, scale: Float, current: 
                     itemsIndexed(episodes, key = { _, card -> card.provider_id + ":" + card.identity.id }) { index, card ->
                         TvEpisodeCard(card, scale, play = { choose(card) }, onFocus = {},
                             requester = if (index == currentIndex.coerceAtLeast(0)) initial else null,
-                            up = FocusRequester.Default, playing = index == currentIndex)
+                            up = FocusRequester.Default, playing = index == currentIndex, showAirDate = false)
                     }
                 }
             }

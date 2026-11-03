@@ -11,7 +11,7 @@ internal enum class TvSignInStep { Welcome, Choice, Phone, Browser, Password }
 internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?, connect: (String, String, String) -> Unit,
     backChanged: ((() -> Unit)?) -> Unit, initialStep: TvSignInStep = TvSignInStep.Welcome, pairing: TvPairingSession? = null,
     remotePairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
-    cancelPairing: () -> Unit = {}) {
+    cancelPairing: () -> Unit = {}, retry: (() -> Unit)? = null) {
     var step by remember { mutableStateOf(initialStep) }
     var server by remember(origin) { mutableStateOf(origin) }
     val back = { step = when (step) { TvSignInStep.Choice -> TvSignInStep.Welcome; else -> TvSignInStep.Choice } }
@@ -22,7 +22,7 @@ internal fun TvSignIn(origin: String, busy: Boolean, error: String?, local: (() 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         when (step) {
-            TvSignInStep.Welcome -> TvWelcome(scale, { step = TvSignInStep.Choice }, local, error)
+            TvSignInStep.Welcome -> TvWelcome(scale, { step = TvSignInStep.Choice }, local, error, retry)
             TvSignInStep.Choice -> TvSignInChoice(scale, local) { step = it }
             TvSignInStep.Password -> TvPasswordPanel(server, busy, error, scale, connect, serverChanged = { server = it })
             TvSignInStep.Phone, TvSignInStep.Browser -> if (startPairing == null) TvPairingSignIn(scale, pairing)

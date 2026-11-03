@@ -25,15 +25,19 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.epochMillis
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
     continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
+    val airDateNow = remember { epochMillis() }
+    val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail, focus)
@@ -76,8 +80,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         if (detail.recommendations.isNotEmpty()) item(key = "related") { RelatedTitles(detail.recommendations, open, gutter = 32.dp) }
                     }
                 }
-                IconButton(onClick = back, modifier = Modifier.padding(start = 24.dp, top = 36.dp).size(44.dp)
-                    .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
+                BackControl(back, Modifier.offset(x = 24.dp, y = 36.dp), glass = true)
                 if (busy) LinearProgressIndicator(Modifier.align(Alignment.TopCenter).fillMaxWidth(), color = Palette.accent)
                 error?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 72.dp, start = 32.dp, end = 32.dp), color = Palette.danger) }
             }
@@ -89,7 +92,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
                     } }
                     items(season.episodes, key = ::episodeKey) { episode ->
-                        DetailEpisodeCard(resume.shown(episode), true, { play(episode) }, Modifier.fillMaxWidth(), tablet = true)
+                        DetailEpisodeCard(resume.shown(episode), true, { play(episode) }, Modifier.fillMaxWidth(), tablet = true, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                     }
                     if (pageError != null) item(key = "page-failure") {
                         DetailInlineFailure(pageError, retryPage, Modifier.padding(top = 16.dp))
