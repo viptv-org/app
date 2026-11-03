@@ -27,7 +27,8 @@ fun ApplicationController.appForeground(foreground: Boolean) {
 
 fun ApplicationController.foregroundObserver(onReturn: () -> Unit = {}) = LifecycleEventObserver { _, event ->
     when (event) {
-        Lifecycle.Event.ON_START -> { appForeground(true); onReturn() }
+        // freshness is behind only after a stop, so a start that sees it behind is a return to the app, not the launch.
+        Lifecycle.Event.ON_START -> { val returning = !freshness.active(); appForeground(true); if (returning) retryStartup(); onReturn() }
         Lifecycle.Event.ON_RESUME -> freshen()
         Lifecycle.Event.ON_STOP -> appForeground(false)
         else -> Unit

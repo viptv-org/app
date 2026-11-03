@@ -33,6 +33,7 @@ import org.viptv.engine.wire.SourceCandidate
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
@@ -212,7 +213,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
                     Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        IconButton(onClick = close) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
+                        BackControl(close, desktop = !phone)
                         Column {
                             Text(title?.title ?: "Playback", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                             title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }

@@ -16,6 +16,7 @@ enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, H
     ContinueWatching }
 data class ApplicationState(
     val starting: Boolean = false,
+    val startupRetryable: Boolean = false,
     val recoveryKit: RecoveryKit? = null,
     val screen: Screen = Screen.Connect,
     val navBack: List<Screen> = emptyList(),

@@ -22,7 +22,8 @@ class PhoneSettingsRoutingTest {
         fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
         fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node)+node.children.flatMap(::flatten)
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
-        fun matches(node: SemanticsNode, value: String) = node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == value } == true
+        fun matches(node: SemanticsNode, value: String) = node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == value } == true ||
+            node.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(value) == true
         fun click(value: String) {
             val node = nodes().first { matches(it,value) && it.config.contains(SemanticsActions.OnClick) }
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); render()

@@ -33,6 +33,7 @@ import org.viptv.app.connection.epochMillis
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
@@ -71,7 +72,7 @@ internal fun StremioImportScreen(session: StremioImportSession?, profileName: St
     fun add(key: String, content: @Composable () -> Unit) { entries += Entry(key, content) }
     var bar: (@Composable () -> Unit)? = null
 
-    back?.let { add("back") { TextButton(it) { Text("Back to settings") } } }
+    back?.let { add("back") { BackControl(it, label = "Back to settings", desktop = !compact) } }
     add("title") {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Import from Stremio", fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = (-.48).sp)

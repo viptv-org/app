@@ -20,6 +20,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.rememberArriveFade
 
@@ -29,11 +30,9 @@ internal fun PhonePlayerFailure(description: String, fallbackLabel: String?, ret
     val initial = remember { FocusRequester() }
     val reveal = rememberArriveFade()
     Box(Modifier.fillMaxSize().alpha(reveal).background(Color.Black.copy(alpha = .8f)).windowInsetsPadding(insets)) {
-        Row(Modifier.align(Alignment.TopStart).padding(start = 44.dp, end = 48.dp, top = 14.dp),
+        Row(Modifier.align(Alignment.TopStart).fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            IconButton(close, Modifier.size(44.dp).then(if (retry == null && choose == null) Modifier.focusRequester(initial) else Modifier)) {
-                Icon(Lucide.ChevronLeft, "Back", Modifier.size(24.dp))
-            }
+            BackControl(close, Modifier.then(if (retry == null && choose == null) Modifier.focusRequester(initial) else Modifier))
             Column(Modifier.weight(1f)) {
                 title?.let { Text(it.title, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }

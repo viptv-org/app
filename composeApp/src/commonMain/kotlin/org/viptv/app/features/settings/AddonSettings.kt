@@ -17,6 +17,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.LocalPointerHover
 import org.viptv.app.components.PhoneSheet
 import org.viptv.app.components.TextButton
@@ -57,14 +58,15 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
     val shown = filter.filtered(addons)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
-        LazyColumn(Modifier.widthIn(max = 824.dp).fillMaxSize(), contentPadding = PaddingValues(if (compact) 16.dp else 32.dp),
+        LazyColumn(Modifier.widthIn(max = 824.dp).fillMaxSize(), contentPadding = PaddingValues(start = if (compact) 16.dp else 32.dp,
+            end = if (compact) 16.dp else 32.dp, bottom = if (compact) 16.dp else 32.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
             item {
-                if (compact) Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
-                    back?.let { IconButton(onClick = it, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Lucide.ChevronLeft, "Back to settings") } }
+                if (compact) Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
+                    back?.let { BackControl(it, Modifier.align(Alignment.CenterStart)) }
                     Text("Add-ons", fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    back?.let { IconButton(onClick = it) { Icon(Lucide.ChevronLeft, "Back to settings") } }
+                    back?.let { BackControl(it, desktop = true) }
                     Text("Add-ons", fontSize = 28.sp, fontWeight = FontWeight.Bold)
                 }
             }
