@@ -2,6 +2,12 @@ package org.viptv.app.features.browse
 
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.connection.cardLookupKey
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -41,6 +47,9 @@ import org.viptv.app.components.pageGutter
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
 import org.viptv.app.components.Motion
+import org.viptv.app.components.LocalPhoneScroll
+import org.viptv.app.components.PhoneBrowseTitleGap
+import org.viptv.app.components.motionSpec
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.pressScale
 
@@ -88,32 +97,34 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         val loading = busy || (loadedCards == null && home == null)
         val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
             controls?.controls?.any { it.id == "sort" } == true
-        Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(screen.name, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            if (loading && controls == null) BrowseHeaderSkeleton()
-            else BrowseFilterBar(controls, query, screen == Screen.Discover, filterChanged, multipleChanged, applyQuery,
-                catalogOpen, gutter = gutter) {
-                if (!serverSort) item(key = "local:sort") {
-                    SearchableSelect("Sort", LocalSorts, listOf(sort), { sort = it.firstOrNull() ?: sort }, anyLabel = null)
+        Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = if (compact) PhoneBrowseTitleGap else 24.dp)) {
+            if (compact) BrowseTitleCollapsing(screen.name)
+            else Text(screen.name, Modifier.padding(bottom = 12.dp), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (loading && controls == null) BrowseHeaderSkeleton()
+                else BrowseFilterBar(controls, query, screen == Screen.Discover, filterChanged, multipleChanged, applyQuery,
+                    catalogOpen, gutter = gutter) {
+                    if (!serverSort) item(key = "local:sort") {
+                        SearchableSelect("Sort", LocalSorts, listOf(sort), { sort = it.firstOrNull() ?: sort }, anyLabel = null)
+                    }
                 }
-            }
-            if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
-            val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
-            val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
-            if (error != null && cards.isEmpty()) BrowseErrorState(label, catalog?.connection_name, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
-            else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Fixed(columns), Modifier.weight(1f))
-            else if (cards.isEmpty()) BrowseEmptyState(source, applied, Modifier.weight(1f)) { applyQuery(clearedFilters(query)) }
-            else LazyVerticalGrid(GridCells.Fixed(columns),
-                state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
-                verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)) {
-                itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
-                    val key = cardLookupKey(card)
-                    MediaCard(card, width = 0, portrait = true, showLabels = true,
-                        open = { restore.mark(key, index); open(it) },
-                        modifier = Modifier.fillMaxWidth().pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate),
-                        showFocusOutline = !compact || !browser)
+                if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
+                val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
+                val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
+                if (error != null && cards.isEmpty()) BrowseErrorState(label, catalog?.connection_name, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
+                else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Fixed(columns), Modifier.weight(1f))
+                else if (cards.isEmpty()) BrowseEmptyState(source, applied, Modifier.weight(1f)) { applyQuery(clearedFilters(query)) }
+                else LazyVerticalGrid(GridCells.Fixed(columns),
+                    state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)) {
+                    itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                        val key = cardLookupKey(card)
+                        MediaCard(card, width = 0, portrait = true, showLabels = true,
+                            open = { restore.mark(key, index); open(it) },
+                            modifier = Modifier.fillMaxWidth().pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate),
+                            showFocusOutline = !compact || !browser)
+                    }
                 }
             }
         }
@@ -121,6 +132,20 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
 }
 
 private val LocalSorts = listOf("Popular", "A–Z", "Z–A").map { SelectOption(it, it) }
+
+@Composable
+private fun BrowseTitleCollapsing(title: String) {
+    val collapsed = LocalPhoneScroll.current?.scrolled == true
+    AnimatedVisibility(
+        visible = !collapsed,
+        enter = expandVertically(animationSpec = motionSpec(tween(Motion.arrive, easing = Motion.standard))) +
+            fadeIn(animationSpec = motionSpec(tween(Motion.arrive, easing = Motion.standard))),
+        exit = shrinkVertically(animationSpec = motionSpec(tween(Motion.leave, easing = Motion.exit))) +
+            fadeOut(animationSpec = motionSpec(tween(Motion.leave, easing = Motion.exit))),
+    ) {
+        Text(title, Modifier.padding(bottom = 12.dp), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+    }
+}
 
 @Composable
 private fun BrowseHeaderSkeleton() {
