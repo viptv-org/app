@@ -33,39 +33,54 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
             return@run
         }
         val saved = (savedConnection as? SavedConnection.Remote)?.session ?: return@run
-        val remote = try { remoteFactory(saved.origin, sessionStore) }
-        catch (_: IllegalArgumentException) {
-            withNativeSessionStoreLock {
-                if (sessionStore.savedConnection() == savedConnection) sessionStore.clear()
+        var attempt = 0
+        while (true) {
+            val remote = try { remoteFactory(saved.origin, sessionStore) }
+            catch (_: IllegalArgumentException) {
+                withNativeSessionStoreLock {
+                    if (sessionStore.savedConnection() == savedConnection) sessionStore.clear()
+                }
+                return@run
             }
-            return@run
-        }
-        connection = remote
-        try {
-            val restored = remote.restoreFromStore()
-            currentCoroutineContext().ensureActive()
-            if (generation == operation && connection === remote) {
-                accept(restored)
-                resumeNavigation()
+            connection = remote
+            val failure = try {
+                val restored = remote.restoreFromStore()
+                currentCoroutineContext().ensureActive()
+                if (generation == operation && connection === remote) {
+                    accept(restored)
+                    resumeNavigation()
+                }
+                return@run
             }
-        }
-        catch (error: RemoteFailure) {
-            currentCoroutineContext().ensureActive()
-            if (generation != operation || connection !== remote) return@run
-            // Release the failed connection before Connect so no token-bearing client survives the restore.
-            remote.close(); connection = null
-            updateState { next -> next.copy(startupRetryable = !error.sessionExpired,
-                error = if (error.sessionExpired) "Session expired. Sign in again." else error.message) }
-        }
-        catch (error: CancellationException) { throw error }
-        catch (error: Exception) {
-            if (generation == operation && connection === remote) {
+            catch (error: CancellationException) { throw error }
+            catch (error: Exception) {
+                currentCoroutineContext().ensureActive()
+                if (generation != operation || connection !== remote) return@run
+                // Release the failed connection before the next attempt or Connect so no token-bearing client survives the restore.
                 remote.close(); connection = null
-                updateState { it.copy(startupRetryable = true) }
+                error
             }
-            throw error
+            if (!failure.retriesStartup() || attempt >= startupRetryDelays.size) {
+                when (failure) {
+                    is RemoteFailure -> updateState { next -> next.copy(startupRetryable = !failure.sessionExpired,
+                        error = if (failure.sessionExpired) "Session expired. Sign in again." else failure.message) }
+                    else -> {
+                        if (failure.retriesStartup()) updateState { it.copy(startupRetryable = true) }
+                        throw failure
+                    }
+                }
+                return@run
+            }
+            delay(startupRetryDelays[attempt++])
         }
     }
+}
+
+// A launch can beat the device's network back: transport and server failures get a few quiet attempts before Connect shows the reason.
+private fun Exception.retriesStartup(): Boolean = when (this) {
+    is RemoteFailure -> !sessionExpired && status >= 500
+    is LocalFailure, is kotlinx.serialization.SerializationException, is IllegalArgumentException -> false
+    else -> true
 }
 
 // A saved session the server or the network failed to reach is retried from here: no sign-in and no new process.
