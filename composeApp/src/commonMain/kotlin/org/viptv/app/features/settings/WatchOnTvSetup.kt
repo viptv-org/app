@@ -124,6 +124,7 @@ internal class WatchOnTvSetupController(
     private var pendingPair: VizioTv? = null
     private var pinReturnToSearch = true
     private var pinCancel: (() -> Unit)? = null
+    private var noAccessRetry: () -> Unit = ::beginSearch
 
     fun beginSearch() {
         if (searchJob != null) return
@@ -137,7 +138,7 @@ internal class WatchOnTvSetupController(
             } catch (_: TimeoutCancellationException) {
                 // Partial results are already published.
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: VizioNoAccess) { step = VizioSetupStep.NoAccess }
+            catch (_: VizioNoAccess) { noAccessRetry = ::beginSearch; step = VizioSetupStep.NoAccess }
             catch (_: VizioNoLocalNetwork) { searchError = "Connect this phone to the same Wi-Fi as your TV." }
             catch (_: Exception) { searchError = "Could not search for TVs. Enter the IP address instead." }
             finally { searching = false; searchJob = null }
@@ -172,7 +173,7 @@ internal class WatchOnTvSetupController(
                 if (tv == null) manualError = "Can't reach that TV. Check the address is on the same Wi-Fi and try again."
                 else beginPin(tv)
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: VizioNoAccess) { busy = false; step = VizioSetupStep.NoAccess }
+            catch (_: VizioNoAccess) { busy = false; noAccessRetry = ::connectManual; step = VizioSetupStep.NoAccess }
             catch (_: Exception) { manualError = "Can't reach that TV. Check the address is on the same Wi-Fi and try again." }
             finally {
                 probeJob = null
@@ -206,6 +207,8 @@ internal class WatchOnTvSetupController(
     }
 
     fun openLocalNetworkSettings() = engine.openLocalNetworkSettings()
+
+    fun retry() = noAccessRetry()
 
     fun cancelPin() {
         val tv = (step as? VizioSetupStep.Pin)?.tv ?: return
@@ -410,6 +413,7 @@ private fun VizioSetupNoAccess(compact: Boolean, controller: WatchOnTvSetupContr
     DeviceTitle("VIPTV can't look for TVs", compact)
     DeviceSubtitle("Local network access is off for VIPTV. Turn it on in your phone's settings, then come back here.", compact)
     DevicePrimaryButton("Open phone settings", true, false, controller::openLocalNetworkSettings)
+    DeviceSecondaryButton("Try again", controller::retry)
 }
 
 @Composable

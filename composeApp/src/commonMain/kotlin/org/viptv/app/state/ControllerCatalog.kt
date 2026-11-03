@@ -202,7 +202,7 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
         return
     }
     val pendingSeason = mutable.value.pendingDetailSeason
-    updateState { it.copy(detail = read.detail.withCardArt(card),
+    updateState { it.copy(detail = read.detail.withCardArt(card).withOpenedProgress(card),
         detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus,
         pendingDetailSeason = null, detailShell = false) }
     rememberNavigation()
@@ -212,6 +212,23 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
 internal fun org.viptv.engine.wire.DetailSnapshot.withCardArt(card: Card): org.viptv.engine.wire.DetailSnapshot {
     val merged = item.copy(landscape = item.landscape ?: card.landscape, poster = item.poster ?: card.poster, logo = item.logo ?: card.logo)
     return if (merged == item) this else copy(item = merged)
+}
+
+internal fun org.viptv.engine.wire.DetailSnapshot.withOpenedProgress(card: Card): org.viptv.engine.wire.DetailSnapshot {
+    val progress = card.progress?.takeIf { it > 0.0 && it < 1.0 } ?: return this
+    val coordinates = card.identity.episode
+    if (coordinates == null && card.identity.kind != "series") {
+        val item = this.item
+        if (item.identity.kind == card.identity.kind && item.identity.id == card.identity.id && (item.progress ?: 0.0) <= 0.0)
+            return copy(item = item.copy(progress = progress))
+        return this
+    }
+    if (coordinates == null) return this
+    val marked = episodes.map { existing ->
+        val same = existing.identity.episode?.let { it.season == coordinates.season && it.episode == coordinates.episode } == true
+        if (same && (existing.progress ?: 0.0) <= 0.0) existing.copy(progress = progress) else existing
+    }
+    return if (marked == episodes) this else copy(episodes = marked)
 }
 
 fun ApplicationController.playTitle(card: Card) {
@@ -238,7 +255,7 @@ fun ApplicationController.playTitle(card: Card) {
 }
 
 private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire.DetailSnapshot, card: Card, target: Card) {
-    updateState { it.copy(detail = detail.withCardArt(card), sourceReturnScreen = Screen.Details, sourceTitle = target, detailShell = false) }
+    updateState { it.copy(detail = detail.withCardArt(card).withOpenedProgress(card), sourceReturnScreen = Screen.Details, sourceTitle = target, detailShell = false) }
 }
 
 private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Long, reuse: RememberedSource? = null) {
