@@ -7,3 +7,7 @@ import platform.Foundation.dateWithTimeIntervalSince1970
 internal actual fun airDateLabel(atMillis: Long): String =
     NSDateFormatter().apply { dateFormat = "MMM d" }
         .stringFromDate(NSDate.dateWithTimeIntervalSince1970(atMillis / 1000.0))
+
+internal actual fun airDateWithYearLabel(atMillis: Long): String =
+    NSDateFormatter().apply { dateFormat = "MMM d, yyyy" }
+        .stringFromDate(NSDate.dateWithTimeIntervalSince1970(atMillis / 1000.0))

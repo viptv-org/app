@@ -36,6 +36,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.epochMillis
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
@@ -52,6 +53,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     InitialBrowserEscape(requestDismiss)
     val closeFocus = remember { FocusRequester() }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
+    val airDateNow = remember { epochMillis() }
+    val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
     val resume = remember(detail, continuing) { detailResume(detail, continuing) }
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail, focus)
@@ -106,8 +109,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                         } }
                                         items(season.episodes, key = ::episodeKey) { episode ->
                                             val shown = resume.shown(episode)
-                                            if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp))
-                                            else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp))
+                                            if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp), comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                                            else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp), comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                                         }
                                     }
                                     if (pageError != null) item(key = "page-failure") {
