@@ -48,7 +48,8 @@ internal fun HomeFilters(screen: Screen, navigate: (Screen) -> Unit, gutter: Dp 
 private fun GenresChip(genres: HomeGenrePicker) {
     var open by remember { mutableStateOf(false) }
     Box {
-        Surface(onClick = { open = true }, shape = RoundedCornerShape(20.dp), color = Palette.raised.copy(alpha = 0.8f)) {
+        Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised.copy(alpha = 0.8f),
+            modifier = Modifier.pointerClickable(role = Role.Button, shape = RoundedCornerShape(20.dp)) { open = true }) {
             Row(Modifier.padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(Lucide.ChevronDown, null, Modifier.size(14.dp).rotate(if (open) 180f else 0f))

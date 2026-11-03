@@ -14,10 +14,14 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
+import org.viptv.app.components.HomeGenrePicker
+import org.viptv.app.components.LocalHomeGenres
 import org.viptv.app.components.LocalPhoneScroll
 import org.viptv.app.components.PhoneBrowseTitleGap
 import org.viptv.app.components.PhoneHeader
 import org.viptv.app.components.PhoneScroll
+import org.viptv.app.connection.BrowseQuery
+import org.viptv.app.connection.GenreChoice
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.browse.BrowseScreen
 import org.viptv.app.features.home.HomeScreen
@@ -38,11 +42,12 @@ import kotlin.test.*
 class PhoneBrowseHeaderUiTest {
     @get:Rule val uiThread = UiThreadRule()
     private val profile = Profile("qa", "QA profile", null, avatarId = "initial-blue")
+    private val genres = HomeGenrePicker(listOf("Action", "Comedy", "Science Fiction").map { GenreChoice(it, BrowseQuery("movie", genre = it)) }) {}
 
     @Test fun pillsSitAtTheSameSpotOnEveryScope() {
         val expected = tabRect(scene(Screen.Home, browse = false))
         for (screen in listOf(Screen.Movies, Screen.Series, Screen.Anime)) {
-            val rect = tabRect(scene(screen, browse = false))
+            val rect = tabRect(scene(screen, browse = true))
             assertEquals(expected.top, rect.top, 1f, "$screen pills' top")
             assertEquals(expected.bottom, rect.bottom, 1f, "$screen pills' bottom")
         }
@@ -77,11 +82,11 @@ class PhoneBrowseHeaderUiTest {
         } finally { s.close() }
     }
 
-    @Test fun capturesHomeAndAnimeForThePr() {
+    @Test fun capturesHomeAndMoviesForThePr() {
         var s = scene(Screen.Home, browse = false)
-        try { frames(s); capture(s, "home-top"); scrollDown(s); frames(s, 32); capture(s, "home-scrolled") } finally { s.close() }
-        s = scene(Screen.Anime, browse = true)
-        try { frames(s); capture(s, "anime-top"); scrollDown(s); frames(s, 40); capture(s, "anime-scrolled") } finally { s.close() }
+        try { frames(s); capture(s, "home") } finally { s.close() }
+        s = scene(Screen.Movies, browse = true)
+        try { frames(s); capture(s, "movies") } finally { s.close() }
     }
 
     private fun capture(scene: ImageComposeScene, name: String) = System.getenv("VIPTV_BROWSE_HEADER_CAPTURE_DIR")?.let { path ->
@@ -93,7 +98,7 @@ class PhoneBrowseHeaderUiTest {
         frame = 0
         return ImageComposeScene(390, 844, Density(1f)) {
             ViptvTheme(false) {
-                CompositionLocalProvider(LocalPhoneScroll provides PhoneScroll()) {
+                CompositionLocalProvider(LocalPhoneScroll provides PhoneScroll(), LocalHomeGenres provides genres) {
                     Surface(Modifier.fillMaxSize(), color = Palette.background) {
                         Column {
                             PhoneHeader(screen, profile) {}
