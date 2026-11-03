@@ -5,9 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,10 +73,7 @@ internal fun PhoneSheet(
                     SheetHandle(touch, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp))
                     Row(Modifier.fillMaxWidth().height(48.dp).padding(start = 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(title, Modifier.weight(1f).semantics { heading() }, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Box(Modifier.size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = .14f))
-                            .pointerClickable(enabled = closeEnabled, onClick = dismiss, shape = CircleShape), contentAlignment = Alignment.Center) {
-                            Icon(Lucide.X, closeLabel, Modifier.size(16.dp))
-                        }
+                        AccessibleIconButton(Lucide.X, closeLabel, dismiss, enabled = closeEnabled)
                     }
                 }
                 content()

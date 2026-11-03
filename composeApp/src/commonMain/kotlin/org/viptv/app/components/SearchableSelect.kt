@@ -305,10 +305,7 @@ private fun SelectSheet(visible: Boolean, title: String, dismiss: () -> Unit, co
                     SheetHandle(touch, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp))
                     Row(Modifier.fillMaxWidth().height(48.dp).padding(start = 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(title, Modifier.weight(1f).semantics { heading() }, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Box(Modifier.size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = .14f))
-                            .pointerClickable(onClick = dismiss, shape = CircleShape), contentAlignment = Alignment.Center) {
-                            Icon(Lucide.X, "Close", Modifier.size(16.dp))
-                        }
+                        AccessibleIconButton(Lucide.X, "Close", dismiss)
                     }
                 }
                 // Grabber, title and padding take about 120 dp of the sheet.
