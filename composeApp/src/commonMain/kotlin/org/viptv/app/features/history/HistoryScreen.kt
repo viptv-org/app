@@ -24,6 +24,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.connection.HistoryCorrection
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 
 internal sealed interface HistoryLine {
@@ -91,17 +92,23 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
             line?.plus(heading)
         })
         LazyColumn(Modifier.widthIn(max = 1080.dp).fillMaxSize(), state = list,
-            contentPadding = PaddingValues(horizontal = if (phone) 16.dp else 40.dp, vertical = if (phone) 8.dp else 24.dp),
+            contentPadding = PaddingValues(start = if (phone) 16.dp else 40.dp, end = if (phone) 16.dp else 40.dp,
+                bottom = if (phone) 8.dp else 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item(key = "heading") {
-                Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (phone) IconButton(onClick = back, modifier = Modifier.size(32.dp)) {
-                        Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
+                if (phone) Box(Modifier.fillMaxWidth().height(56.dp)) {
+                    BackControl(back, Modifier.align(Alignment.CenterStart))
+                    Text("History", Modifier.align(Alignment.Center), fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    TextButton(onClick = { confirm = true }, modifier = Modifier.align(Alignment.CenterEnd),
+                        enabled = !busy && history.isNotEmpty()) {
+                        Text("Clear", fontSize = 13.sp)
                     }
-                    Text("History", Modifier.weight(1f), fontSize = if (phone) 16.sp else 28.sp,
-                        fontWeight = FontWeight.Bold, textAlign = if (phone) androidx.compose.ui.text.style.TextAlign.Center else androidx.compose.ui.text.style.TextAlign.Start)
+                } else Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("History", Modifier.weight(1f), fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Start)
                     TextButton(onClick = { confirm = true }, enabled = !busy && history.isNotEmpty()) {
-                        Text(if (phone) "Clear" else "Clear history", fontSize = 13.sp)
+                        Text("Clear history", fontSize = 13.sp)
                     }
                 }
             }

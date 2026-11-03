@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
@@ -40,8 +41,8 @@ internal fun MobilePinScreen(
 ) {
     var forgot by remember { mutableStateOf(false) }
     org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = back) { androidx.compose.material3.Icon(Lucide.X, "Back", Modifier.size(24.dp)) }
+        Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            BackControl(back)
         }
         Spacer(Modifier.height(16.dp))
         ProfileAvatar(profile, 72.dp, 16.dp)

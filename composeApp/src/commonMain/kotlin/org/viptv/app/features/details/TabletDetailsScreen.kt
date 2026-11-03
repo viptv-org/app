@@ -28,6 +28,7 @@ import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 
 @Composable
@@ -76,8 +77,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         if (detail.recommendations.isNotEmpty()) item(key = "related") { RelatedTitles(detail.recommendations, open, gutter = 32.dp) }
                     }
                 }
-                IconButton(onClick = back, modifier = Modifier.padding(start = 24.dp, top = 36.dp).size(44.dp)
-                    .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp)) }
+                BackControl(back, Modifier.offset(x = 24.dp, y = 36.dp), glass = true)
                 if (busy) LinearProgressIndicator(Modifier.align(Alignment.TopCenter).fillMaxWidth(), color = Palette.accent)
                 error?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 72.dp, start = 32.dp, end = 32.dp), color = Palette.danger) }
             }
