@@ -30,12 +30,7 @@ qualification remain incomplete, alongside playback and settings qualification.
 The implemented screens still have typography, focus/motion and data-contract
 checks outstanding. `design-coverage.json` records each supplied board separately.
 
-The dedicated TV player and scoped real-video checks are described in `TV_PLAYER.md`.
-
 Dedicated TV settings and their unavailable contract limits are described in `TV_SETTINGS.md`.
-
-Home, loading and Movies implementation progress and remaining qualification
-are described in `TV_HOME.md`.
 
 Dedicated My List layout and its missing persistent data contract are described
 in `TV_LIBRARY.md`.
@@ -58,12 +53,6 @@ in `TV_PIN.md`.
 Rapid search-input handling, bounded caret and shared loading placeholders are
 described in `TV_SEARCH.md`.
 
-Password-entry keyboard/layout qualification and remaining connection limits
-are described in `TV_PASSWORD.md`.
-
-Dedicated email-entry layout and its unavailable-code/phone boundaries are
-described in `TV_EMAIL.md`.
-
 IPTV-entry layout and missing provider/storage integration are described in
 `TV_IPTV.md`.
 
@@ -73,9 +62,6 @@ by Home, focused summaries, details, Live and next-episode metadata. At 1920×10
 Home/Details/Live/Next preview captures confirmed 22 px badge text lines inside
 those containers. Desktop tests, Wasm compilation and Android assembly passed.
 These scoped checks do not certify complete board parity or connected metadata.
-
-Email-code layout and missing verification/session integration are described in
-`TV_EMAIL_CODE.md`.
 
 The supplied startup splash and controller flag are described in `TV_SPLASH.md`.
 

@@ -19,5 +19,5 @@ Series → Anime with the top heading visible, and returned from details to the
 same selected result. Screenshots are retained in the private local device
 artifacts. These checks do not certify every query, channel source or design board.
 
-The 2026-10-15 continuation preserves failed/partial native add-on rows rather than
-flattening failures into no matches; see [Home/search recovery](HOME_SEARCH_RECOVERY.md).
+Failed/partial native add-on rows are preserved rather than flattened into no
+matches.

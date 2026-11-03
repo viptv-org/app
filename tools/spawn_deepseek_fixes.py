@@ -114,8 +114,8 @@ Scope: NAV-05, NAV-07, NAV-08. Read features/details/DetailsScreen.kt phone bran
 Produce patches: full metadata in More info with the rail scrimmed, track picker shows the current selection and a close affordance, and one focus treatment style per screen (ring, not shape change). Cite the exact anchors.
 """),
 ("FIX-25 Perf + docs", """
-Scope: PERF-05..10, TEST-04..10, DOC-01/03. Read docs/TV_FRAME_BUDGET.md, tools/tv_ab.sh, tools/tv_frames.sh, tools/tv_cadence.sh, features/home/TvHomeScreen.kt, TvHomeShelf.kt, TvHomeBackdrop.kt.
-Produce: (1) the exact measurement procedure per PERF item (build type, command, threshold, what to paste into TV_FRAME_BUDGET.md), (2) any code-level fix you can justify for shelf re-measure/decoding without a measurement first — mark it EXPERIMENT and require before/after, (3) the DOC-01/DOC-03 text to append. Do not claim numbers.
+Scope: PERF-05..10, TEST-04..10, DOC-01/03. Read tools/tv_ab.sh, tools/tv_frames.sh, tools/tv_cadence.sh, features/home/TvHomeScreen.kt, TvHomeShelf.kt, TvHomeBackdrop.kt.
+Produce: (1) the exact measurement procedure per PERF item (build type, command, threshold, where to record the raw output), (2) any code-level fix you can justify for shelf re-measure/decoding without a measurement first — mark it EXPERIMENT and require before/after, (3) the DOC-01/DOC-03 text to append. Do not claim numbers.
 """),
 ]
 

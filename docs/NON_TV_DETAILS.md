@@ -80,5 +80,4 @@ DOM pointer dispatch, so QA uses accessibility locators to find geometry and
 sends actual pointer events to the canvas. Menu entries expose button semantics.
 
 Browser phone (390×844) season-sheet selection also passed with zero page errors,
-failed requests or API calls. Its screenshot is `browser-phone-seasons.png` in the
-same evidence directory.
+failed requests or API calls.

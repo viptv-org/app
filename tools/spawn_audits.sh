@@ -4,7 +4,7 @@
 set -u
 cd /mnt/ALPH/code/viptv-org || exit 1
 
-BASE="READ-ONLY AUDIT. Do not edit repository files. Do not run gradle, adb, emulator, or any build. Work by reading source, docs and design boards only. Write your report to the one path named at the end, then print that path and a 6-line summary. Repo: /mnt/ALPH/code/viptv-org (app = /mnt/ALPH/code/viptv-org/app). Design boards: /mnt/ALPH/code/viptv-org/design/viptv-design-system/reference/screens/{html,img}/<platform>/<id>; tool 'python3 tools/board_spec.py <BoardId>' prints exact geometry. Issue list context: app/docs/OPEN_TASKS.md and app/docs/UI_INVENTORY.md. The working tree is being edited concurrently, so cite file:line as you find it and never rely on a stale build artefact."
+BASE="READ-ONLY AUDIT. Do not edit repository files. Do not run gradle, adb, emulator, or any build. Work by reading source, docs and design boards only. Write your report to the one path named at the end, then print that path and a 6-line summary. Repo: /mnt/ALPH/code/viptv-org (app = /mnt/ALPH/code/viptv-org/app). Design boards: /mnt/ALPH/code/viptv-org/design/viptv-design-system/reference/screens/{html,img}/<platform>/<id>; tool 'python3 tools/board_spec.py <BoardId>' prints exact geometry. Issue list context: app/docs/UI_INVENTORY.md. The working tree is being edited concurrently, so cite file:line as you find it and never rely on a stale build artefact."
 
 spawn() { # title provider out prompt
   local title="$1" provider="$2" out="$3" body="$4"
@@ -65,9 +65,9 @@ case "${1:-1}" in
   spawn "AUTH/session" pi /tmp/audit-auth-session.md \
     "Domain: auth (AUTH-01..04). Read connection/RemoteConnection.kt and platform secret stores (androidMain/AndroidSecrets.kt, desktopMain/DesktopSecrets.kt, iosMain, wasmJsMain), controller session files. Audit refresh-token rotation, 401 refresh on every transport, clean sign-out with message, restore-on-restart without login flash, and multi-profile token/preference scoping. file:line + concrete failure mode."
   spawn "PERF/budget" pi /tmp/audit-perf-budget.md \
-    "Domain: performance claims (PERF-05..10, R3). Read docs/TV_FRAME_BUDGET.md, tools/tv_ab.sh, TvHomeScreen.kt, TvHomeShelf.kt, TvCatalogCard.kt, HomeBackdrop/TvHomeBackdrop, images/*. Identify what is measured vs asserted, which of PERF-05..10 have no evidence, and exactly how to measure each (command, build type, pass/fail threshold). Do not run builds."
+    "Domain: performance claims (PERF-05..10, R3). Read tools/tv_ab.sh, TvHomeScreen.kt, TvHomeShelf.kt, TvCatalogCard.kt, HomeBackdrop/TvHomeBackdrop, images/*. Identify what is measured vs asserted, which of PERF-05..10 have no evidence, and exactly how to measure each (command, build type, pass/fail threshold). Do not run builds."
   spawn "TEST/gates" pi /tmp/audit-test-gates.md \
-    "Domain: testing/gates (TEST-01..10). Read build.gradle.kts, composeApp/build.gradle.kts, composeApp/src/desktopTest, androidApp, iosApp, tools/*.sh, .pi workspace gates. Map each TEST item to an actual command and current coverage; list which are red/unverified and which device passes have no saved evidence. Also audit docs/OPEN_TASKS.md, docs/UI_INVENTORY.md, docs/TV_FRAME_BUDGET.md for stale claims (DOC-01..04)."
+    "Domain: testing/gates (TEST-01..10). Read build.gradle.kts, composeApp/build.gradle.kts, composeApp/src/desktopTest, androidApp, iosApp, tools/*.sh, .pi workspace gates. Map each TEST item to an actual command and current coverage; list which are red/unverified and which device passes have no saved evidence. Also audit docs/UI_INVENTORY.md for stale claims (DOC-01..04)."
   ;;
 *)
   echo "usage: $0 1|2|3|4" >&2; exit 2;;

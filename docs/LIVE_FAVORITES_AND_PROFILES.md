@@ -10,4 +10,4 @@ Temporary guide failures can retry; successful/unsupported guide results have a 
 
 Local profile deletion atomically removes exact profile-private database resources, preserves shared account installs and other profiles, cancels scoped jobs and invalidates grants/metadata. Vault pruning is best effort after commit. A minimal last-revision tombstone prevents a recreated profile ID authorizing old work. A wrong PIN leaves existing resources valid. Deleting the selected profile also clears private controller data before returning to Profiles.
 
-Source/native adoption, test results and packaging status are recorded in [native-live-profile-build-2026-10-15.json](evidence/native-live-profile-build-2026-10-15.json). The final origin overlay now includes rebuilt desktop and all three Android JNI packaging inputs; current qualification is tracked in [native-origin-build-2026-10-15.json](evidence/native-origin-build-2026-10-15.json). No physical device or live service was changed.
+No physical device or live service was changed.

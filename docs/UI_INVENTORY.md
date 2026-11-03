@@ -2,7 +2,7 @@
 
 Source of truth for boards:
 `design/viptv-design-system/reference/screens/{html,img}/<platform>/<id>`.
-Board counts at this export (`reference/screens/index.json`, 273 entries): TV 56,
+Board counts at this export (273 entries): TV 56,
 phone 69, tablet 18, desktop 55, web 40, `simkl` 26 = **264 screen boards**, plus 9
 `components` sheets (`CmpPhone1-3`, `CmpDesk1-3`, `CmpTv1-3`). The 26 `simkl` boards
 are the ones this inventory used to omit; "264-board export" elsewhere in the docs
@@ -106,5 +106,4 @@ subtitle `24px` in `#B6B4AF`, gap `8px`, `34px` to content.
 - **Torrent support** must work on every platform (the torrent panel copy differs when the
   viewer has no debrid account).
 - **Desktop and mobile are local-playback only**: no gateway path may be reachable there.
-- **Auth refresh + storage** must be correct on every KMP target (see
-  `docs/KMP_COMPLETION_RECORD.md` for the current claim; needs an audit per platform).
+- **Auth refresh + storage** must be correct on every KMP target.
