@@ -105,7 +105,7 @@ class PhoneAddonSettingsUiTest {
             busy = false; error = "The add-on could not be installed. Check the manifest and secure storage."; frames(scene)
             invoke(descriptionAction(scene, "Close add-on form")); frames(scene, 45)
             assertFalse(nodes(scene).any { it.config.contains(SemanticsActions.SetText) }); assertEquals(0, backs)
-            invoke(descriptionAction(scene, "Back to settings")); assertEquals(1, backs)
+            invoke(descriptionAction(scene, "Back")); assertEquals(1, backs)
         } finally { scene.close() }
     }
 

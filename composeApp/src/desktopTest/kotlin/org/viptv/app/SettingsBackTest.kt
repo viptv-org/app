@@ -112,7 +112,7 @@ class SettingsBackTest {
             assertEquals(SettingsPage("Add-ons", subpage = true), ui.controller.state.value.settingsPage)
             val systemBack = assertNotNull(ui.systemBack, "Android Back is not routed into the open sub-page")
             when (route) {
-                "in-page arrow" -> ui.click("Back to settings")
+                "in-page arrow" -> ui.click("Back")
                 "Android Back" -> { systemBack(); ui.render() }
                 else -> { ui.controller.navigateBack(); ui.render() }
             }
