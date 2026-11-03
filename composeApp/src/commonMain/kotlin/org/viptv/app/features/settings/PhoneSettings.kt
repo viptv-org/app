@@ -17,6 +17,7 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 
 @Composable
@@ -56,12 +57,10 @@ internal fun PhoneSettings(profile: Profile?, addonCount: Int, local: Boolean, n
             else -> Unit
         }
     }
-    LazyColumn(Modifier.fillMaxSize(), listState, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), listState, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
         item {
-            Box(Modifier.fillMaxWidth().height(48.dp)) {
-                IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).size(44.dp)) {
-                    Icon(Lucide.ChevronLeft, "Back", Modifier.size(26.dp))
-                }
+            Box(Modifier.fillMaxWidth().height(56.dp)) {
+                BackControl(back, Modifier.align(Alignment.CenterStart))
                 Text("Settings", Modifier.align(Alignment.Center), fontSize = 17.sp, fontWeight = FontWeight.Bold)
             }
         }

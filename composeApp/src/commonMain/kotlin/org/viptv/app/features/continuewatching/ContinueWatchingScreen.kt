@@ -20,6 +20,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.ListRemovalConfirmation
@@ -67,18 +68,18 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
         }
         CompositionLocalProvider(LocalListRemoval provides removal) {
             LazyVerticalGrid(GridCells.Fixed(columns), Modifier.fillMaxSize(), state = grid,
-                contentPadding = PaddingValues(start = gutter, end = gutter, top = if (phone) 8.dp else 24.dp, bottom = 24.dp),
+                contentPadding = PaddingValues(start = gutter, end = gutter, top = if (phone) 0.dp else 24.dp, bottom = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(gap), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 item(TITLE_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = TITLE_KEY) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-                            if (phone) IconButton(onClick = back, modifier = Modifier.size(32.dp)) {
-                                Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
-                            }
-                            Text("Continue Watching", Modifier.weight(1f), fontSize = if (phone) 16.sp else 28.sp,
-                                letterSpacing = if (phone) 0.sp else (-0.56).sp, fontWeight = FontWeight.Bold,
-                                textAlign = if (phone) TextAlign.Center else TextAlign.Start)
-                            if (phone) Spacer(Modifier.size(32.dp))
+                        if (phone) Box(Modifier.fillMaxWidth().height(56.dp)) {
+                            BackControl(back, Modifier.align(Alignment.CenterStart))
+                            Text("Continue Watching", Modifier.align(Alignment.Center), fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                        } else Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("Continue Watching", Modifier.weight(1f), fontSize = 28.sp,
+                                letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Start)
                         }
                         if (page.busy && page.loaded) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                         page.error?.let { Text(it, color = Palette.danger) }

@@ -22,6 +22,7 @@ import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
@@ -132,12 +133,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 }
             }
         }
-        if (phone) Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(48.dp)
+        if (phone) Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(56.dp)
             .background(if (scrolled) Palette.background.copy(alpha = .88f) else Color.Transparent)) {
-            IconButton(onClick = back, modifier = Modifier.align(Alignment.CenterStart).padding(horizontal = 10.dp)
-                .size(40.dp).background(Color.White.copy(alpha = .12f), CircleShape)) {
-                Icon(Lucide.ChevronLeft, "Back", Modifier.size(22.dp))
-            }
+            BackControl(back, Modifier.align(Alignment.CenterStart).offset(x = 16.dp), glass = true)
             if (scrolled) detail?.item?.title?.let { Text(it, Modifier.align(Alignment.Center).widthIn(max = 220.dp),
                 fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }

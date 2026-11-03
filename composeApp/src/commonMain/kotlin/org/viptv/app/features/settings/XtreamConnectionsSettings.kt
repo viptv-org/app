@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.Checkbox
 import org.viptv.app.components.FocusLazyColumn
 import org.viptv.app.components.IconButton
@@ -72,14 +73,15 @@ internal fun XtreamConnectionsSettings(connections: List<XtreamConnection>?, def
     val open: (XtreamFormMode, XtreamConnection?) -> Unit = { next, connection -> editing = connection; mode = next }
     val closeForm = { if (!busy) { mode = null; editing = null } }
     val sheet = !LocalPointerHover.current && compact
-    FocusLazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(if (compact) 16.dp else 32.dp),
+    FocusLazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = if (compact) 16.dp else 32.dp,
+        end = if (compact) 16.dp else 32.dp, bottom = if (compact) 16.dp else 32.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
-            if (compact) Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
-                back?.let { IconButton(onClick = it, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Lucide.ChevronLeft, "Back to settings") } }
+            if (compact) Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
+                back?.let { BackControl(it, Modifier.align(Alignment.CenterStart)) }
                 Text(xtreamConnectionsSection, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                back?.let { IconButton(onClick = it) { Icon(Lucide.ChevronLeft, "Back to settings") } }
+                back?.let { BackControl(it, desktop = true) }
                 Text(xtreamConnectionsSection, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             }
         }

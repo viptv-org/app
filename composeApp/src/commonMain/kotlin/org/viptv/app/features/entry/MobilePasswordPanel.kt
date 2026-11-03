@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
@@ -26,11 +27,7 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     var password by remember { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
     var editServer by remember { mutableStateOf(origin.isBlank()) }
-    Row(Modifier.height(28.dp).pointerClickable(onClick = back), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Lucide.ChevronLeft, null, Modifier.size(16.dp), tint = Palette.secondary)
-        Spacer(Modifier.width(5.dp))
-        Text("All sign-in options", color = Palette.secondary, fontSize = 14.sp)
-    }
+    BackControl(back, label = "All sign-in options")
     Spacer(Modifier.height(16.dp))
     Text("Sign in with a password", color = Palette.text, fontSize = 25.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold)
     Spacer(Modifier.height(18.dp))
