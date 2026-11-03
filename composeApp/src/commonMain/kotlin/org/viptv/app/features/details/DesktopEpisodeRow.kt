@@ -6,6 +6,10 @@ import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,16 +21,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.components.pointerClickable
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
-import org.viptv.app.components.pointerClickable
 
 @Composable
-internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boolean = false, modifier: Modifier = Modifier) {
+internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boolean = false, modifier: Modifier = Modifier, comingUp: Boolean = false, showAirDate: Boolean = true) {
     val number = episode.identity.episode?.episode?.toString().orEmpty()
     val watched = (episode.progress ?: 0.0) >= 1.0 || episode.badges.contains("Watched")
+    var showUpcoming by remember { mutableStateOf(false) }
     Row(modifier.fillMaxWidth().clip(RoundedCornerShape(if (browser) 10.dp else 12.dp))
-        .pointerClickable(shape = RoundedCornerShape(if (browser) 10.dp else 12.dp)) { play(episode) }
+        .pointerClickable(shape = RoundedCornerShape(if (browser) 10.dp else 12.dp)) { if (comingUp) showUpcoming = true else play(episode) }
         .background(if (browser) Color.Transparent else Color.Unspecified)
         .padding(horizontal = if (browser) 12.dp else 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(if (browser) 16.dp else 18.dp)) {
@@ -44,10 +49,14 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (browser) 4.dp else 6.dp)) {
-            Text(episode.title, fontSize = if (browser) 15.sp else 16.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(episode.title, fontSize = if (browser) 15.sp else 16.sp, fontWeight = FontWeight.Bold, maxLines = 2,
+                color = if (comingUp) Palette.secondary else Color.Unspecified, overflow = TextOverflow.Ellipsis)
             if (browser && watched) EpisodeWatchedPill(television = false)
             episode.description?.let { Text(it, color = Palette.secondary, fontSize = if (browser) 13.sp else 14.sp,
                 lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+            if (showAirDate) Text(if (comingUp) episode.episodeUpcomingText() else episode.episodeDateText().orEmpty(),
+                fontSize = 13.sp, lineHeight = 19.sp, minLines = 1, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = if (comingUp) Palette.accent else Palette.secondary)
         }
         if (!browser) {
             val runtime = episode.metadata?.runtime_minutes
@@ -58,6 +67,7 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             }, fontSize = 13.sp, color = Palette.secondary)
         }
     }
+    if (showUpcoming) EpisodeUpcomingDialog(episode) { showUpcoming = false }
 }
 
 private fun formatMinutes(minutes: Long): String =

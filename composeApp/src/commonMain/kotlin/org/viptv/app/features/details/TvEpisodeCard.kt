@@ -31,11 +31,14 @@ import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFocus: () -> Unit, requester: FocusRequester?, up: FocusRequester,
-    playing: Boolean = false) {
+    playing: Boolean = false, comingUp: Boolean = false, showAirDate: Boolean = true) {
     var focused by remember { mutableStateOf(false) }
+    var showUpcoming by remember { mutableStateOf(false) }
     Column(Modifier.width(448.dp * scale).then(if (requester != null) Modifier.focusRequester(requester) else Modifier).focusProperties { this.up = up }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
-        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { play(card) }) {
+        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+            if (comingUp) showUpcoming = true else play(card)
+        }) {
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
             val art = card.landscape ?: card.poster
@@ -54,7 +57,7 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
                 .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale), color = Palette.text,
                 fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
             org.viptv.app.components.FocusOutline(focused, 12.dp * scale, 3.dp * scale, Modifier.matchParentSize())
-            if (focused) {
+            if (focused && !comingUp) {
                 Box(Modifier.align(Alignment.Center).size(72.dp * scale).background(Palette.text.copy(alpha = 0.2f), CircleShape), contentAlignment = Alignment.Center) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(30.dp * scale), tint = Palette.text)
                 }
@@ -64,14 +67,19 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         }
         Spacer(Modifier.height(14.dp * scale))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-            Text(card.identity.episode?.let { "${it.episode}. ${card.title}" } ?: card.title, Modifier.weight(1f, fill = false), color = if (focused) Palette.text else Palette.body,
+            Text(card.identity.episode?.let { "${it.episode}. ${card.title}" } ?: card.title, Modifier.weight(1f, fill = false),
+                color = if (comingUp) Palette.secondary else if (focused) Palette.text else Palette.body,
                 fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (card.watchedEpisode()) EpisodeWatchedPill(television = true, scale = scale)
         }
+        if (showAirDate) Text(if (comingUp) card.episodeUpcomingText() else card.episodeDateText().orEmpty(), fontSize = (20 * scale).sp,
+            lineHeight = (26 * scale).sp, minLines = 1, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            color = if (comingUp) Palette.accent else Palette.secondary)
         if (playing) Text(NOW_PLAYING, Modifier.padding(top = 4.dp * scale), color = Palette.accent, fontSize = (20 * scale).sp,
             lineHeight = (26 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary) }
         card.description?.let { Text(it, Modifier.padding(top = 8.dp * scale), fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp,
             color = Palette.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis) }
     }
+    if (showUpcoming) EpisodeUpcomingDialog(card) { showUpcoming = false }
 }

@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import coil3.compose.AsyncImage
 import org.viptv.app.components.*
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.epochMillis
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import kotlinx.coroutines.launch
@@ -46,6 +47,8 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     busy: Boolean = false, loadPage: (Long) -> Unit = {}, focus: ShelfFocusHandle = remember { ShelfFocusHandle() },
     paging: Boolean = true, detailFocus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null) {
     val groups = remember(episodes, seasonIndex) { detailSeasons(episodes, seasonIndex) }
+    val airDateNow = remember { epochMillis() }
+    val latestReleased = remember(episodes) { lastReleasedOrder(episodes, airDateNow) }
     val seasons = groups.map { it.number }
     var kept by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf(false) }
     var selected by rememberSaveable(parent.provider_id, parent.identity.kind, parent.identity.id) { mutableStateOf<Long?>(null) }
@@ -164,7 +167,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                                 if (!kept) { kept = true; selected = activeSeason }
                                 focused()
                             },
-                            requester, seasonFocus)
+                            requester, seasonFocus, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                     }
                     if (pageError != null) item(key = "page-failure") {
                         TvEpisodePageFailure(scale, pageError, retryPage)
