@@ -66,10 +66,17 @@ class SearchPhoneNavTest {
 
             app.scrollToEnd()
             app.frames()
+            assertTrue(app.barHidden(), "${width}dp: the bar hides at the end of Search (Home tab top=${app.homeTabTop().roundToInt()}, page bottom=${app.height})")
             val results = app.nodes().filter { app.text(it).startsWith("Result ") }
             assertTrue(results.isNotEmpty(), "${width}dp: Search shows results: ${app.texts()}")
             val lowest = results.maxOf { it.boundsInRoot.bottom }
-            assertTrue(lowest <= bar, "${width}dp: the last row of results ends above the bar (${lowest.roundToInt()} vs ${bar.roundToInt()})")
+            assertTrue(lowest >= bar, "${width}dp: the last row fills the former bar region once the bar is gone (${lowest.roundToInt()} vs bar ${bar.roundToInt()})")
+
+            app.scrollBy(-48f); app.frames(80)
+            assertFalse(app.barHidden(), "${width}dp: a 48 dp scroll up brings the bar back (Home tab top=${app.homeTabTop().roundToInt()}, page bottom=${app.height})")
+            val homeTop = app.homeTabTop()
+            assertTrue(homeTop >= bar - 1f && homeTop <= app.height - 1f,
+                "${width}dp: the bar sits back in its slot with the 80 dp padding restored (${homeTop.roundToInt()} vs bar ${bar.roundToInt()})")
         }
     }
 
@@ -134,6 +141,8 @@ class SearchPhoneNavTest {
         }
 
         fun barTop() = height - BottomBarHeight.value.roundToInt().toFloat()
+        fun homeTabTop() = (clickable("Home") ?: fail("no Home tab: ${texts()}")).boundsInRoot.top
+        fun barHidden() = homeTabTop() >= height - 1f
         fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
@@ -155,6 +164,12 @@ class SearchPhoneNavTest {
                 check(System.nanoTime() < deadline) { "timed out waiting for $what (screen=${controller.state.value.screen})" }
                 frames(2)
             }
+        }
+
+        fun scrollBy(delta: Float) {
+            val scroll = nodes().filter { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
+                .maxByOrNull { it.boundsInRoot.height } ?: fail("no vertical scroller: ${texts()}")
+            scroll.config[SemanticsActions.ScrollBy].action!!.invoke(0f, delta)
         }
 
         fun scrollToEnd() {
