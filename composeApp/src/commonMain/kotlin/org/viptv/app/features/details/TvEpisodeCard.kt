@@ -72,9 +72,7 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
                 fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (card.watchedEpisode()) EpisodeWatchedPill(television = true, scale = scale)
         }
-        if (showAirDate) Text(if (comingUp) card.episodeUpcomingText() else card.episodeDateText().orEmpty(), fontSize = (20 * scale).sp,
-            lineHeight = (26 * scale).sp, minLines = 1, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            color = if (comingUp) Palette.accent else Palette.secondary)
+        if (showAirDate) EpisodeAirDateLine(card, comingUp, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp)
         if (playing) Text(NOW_PLAYING, Modifier.padding(top = 4.dp * scale), color = Palette.accent, fontSize = (20 * scale).sp,
             lineHeight = (26 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary) }

@@ -54,9 +54,7 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             if (browser && watched) EpisodeWatchedPill(television = false)
             episode.description?.let { Text(it, color = Palette.secondary, fontSize = if (browser) 13.sp else 14.sp,
                 lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
-            if (showAirDate) Text(if (comingUp) episode.episodeUpcomingText() else episode.episodeDateText().orEmpty(),
-                fontSize = 13.sp, lineHeight = 19.sp, minLines = 1, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                color = if (comingUp) Palette.accent else Palette.secondary)
+            if (showAirDate) EpisodeAirDateLine(episode, comingUp)
         }
         if (!browser) {
             val runtime = episode.metadata?.runtime_minutes

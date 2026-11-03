@@ -62,9 +62,7 @@ private fun EpisodeCaption(episode: Card, modifier: Modifier, phone: Boolean, pl
         if (playing) Text(NOW_PLAYING, color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         if (episode.watchedEpisode()) EpisodeWatchedPill(television = false)
         episode.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-        if (showAirDate) Text(if (comingUp) episode.episodeUpcomingText() else episode.episodeDateText().orEmpty(),
-            fontSize = 13.sp, lineHeight = 19.sp, minLines = 1, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            color = if (comingUp) Palette.accent else Palette.secondary)
+        if (showAirDate) EpisodeAirDateLine(episode, comingUp)
     }
 }
 
