@@ -14,6 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,13 @@ private fun Modifier.pageEdgeFades(state: ScrollableState, top: Boolean, bottom:
 // Only the page's own list draws the fades; a list nested inside one keeps its edges.
 @Composable
 private fun pageFadesUnderBottomBar(): Boolean = LocalBottomBarFades.current && !LocalVerticalPage.current
+
+@Composable
+private fun observePhoneScroll(state: ScrollableState) {
+    val phoneScroll = LocalPhoneScroll.current ?: return
+    val backward = remember(state) { derivedStateOf { state.canScrollBackward } }.value
+    SideEffect { phoneScroll.onScroll(backward) }
+}
 
 // Only the page's own scroller clears the bar; a scroller nested inside one keeps its edges.
 @Composable
@@ -93,6 +101,7 @@ internal fun FocusLazyColumn(
 ) {
     val bottomBar = pageFadesUnderBottomBar()
     val paddedContent = contentPadding.withPageBottomClearance()
+    observePhoneScroll(state)
     TvFocusScroll(contentPadding = paddedContent, reverseLayout = reverseLayout, sectionControlled = sectionControlled) {
         val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
             state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
@@ -122,6 +131,7 @@ internal fun FocusLazyVerticalGrid(
     val focus = if (LocalTvFocusAnchoring.current) remember(state, scope) { TvGridFocus(state, scope) } else null
     val bottomBar = pageFadesUnderBottomBar()
     val paddedContent = contentPadding.withPageBottomClearance()
+    observePhoneScroll(state)
     DisposableEffect(focus) { onDispose { focus?.cancel() } }
     TvFocusScroll(contentPadding = paddedContent, reverseLayout = reverseLayout) {
         CompositionLocalProvider(LocalTvGridFocus provides focus, LocalVerticalPage provides true) {
