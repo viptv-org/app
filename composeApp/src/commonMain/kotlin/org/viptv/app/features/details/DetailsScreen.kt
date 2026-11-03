@@ -79,7 +79,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         LazyColumn(Modifier.fillMaxSize(), state = listState,
             contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(if (phone) 18.dp else 24.dp)) {
-            if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
+            if (busy && !phone) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             detail?.let { value ->
                 item(key = "hero") {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode)
@@ -131,6 +131,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     DetailInlineFailure(pageError, retryPage, Modifier.padding(horizontal = gutter, vertical = if (phone) 12.dp else 0.dp))
                 }
             }
+        }
+        if (busy && phone) Box(Modifier.align(Alignment.TopCenter).fillMaxWidth()) {
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         }
         if (phone) Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(48.dp)
             .background(if (scrolled) Palette.background.copy(alpha = .88f) else Color.Transparent)) {
