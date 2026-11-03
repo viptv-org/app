@@ -14,11 +14,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import kotlin.math.roundToInt
@@ -27,6 +29,10 @@ import org.viptv.app.components.LocalReducedMotion
 internal const val SOURCE_DESCRIPTION_LINES = 2
 internal const val SOURCE_DESCRIPTION_DWELL_MILLIS = 1_500L
 internal const val SOURCE_DESCRIPTION_LINE_MILLIS = 1_500L
+
+@Composable
+internal fun sourceDescriptionWindowHeight(lineHeight: TextUnit): Dp =
+    with(LocalDensity.current) { (lineHeight.toPx() * SOURCE_DESCRIPTION_LINES).toDp() }
 
 internal fun sourceDescriptionOffset(elapsedMillis: Long, overflowLines: Int, linePx: Float): Float {
     if (overflowLines <= 0 || linePx <= 0f) return 0f
@@ -58,11 +64,11 @@ internal fun SourceDescriptionWindow(description: String?, active: Boolean, font
             offset = sourceDescriptionOffset((now - start) / 1_000_000, overflowLines, linePx)
         }
     }
-    Box(modifier.fillMaxWidth().height(with(density) { lineHeight.toDp() * SOURCE_DESCRIPTION_LINES })
+    Box(modifier.fillMaxWidth().height(sourceDescriptionWindowHeight(lineHeight))
         // Clipping at draw time keeps every wrapped line in layout and semantics.
         .drawWithContent { clipRect { this@drawWithContent.drawContent() } }) {
         if (description.isNullOrEmpty()) return@Box
-        Text(description, Modifier.fillMaxWidth().wrapContentHeight(unbounded = true)
+        Text(description, Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true)
             .offset { IntOffset(0, -offset.roundToInt()) },
             fontSize = fontSize, lineHeight = lineHeight, color = color,
             onTextLayout = { layout -> overflowLines = (layout.lineCount - SOURCE_DESCRIPTION_LINES).coerceAtLeast(0) })

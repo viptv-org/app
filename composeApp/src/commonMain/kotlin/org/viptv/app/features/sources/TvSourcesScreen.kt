@@ -170,7 +170,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                             })
                     }
                     if (finding) items(3) {
-                        Box(Modifier.fillMaxWidth().height(TvSourceRowHeight * scale).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
+                        Box(Modifier.fillMaxWidth().height(tvSourceRowHeight(scale)).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)
                             .semantics { contentDescription = "Loading source" })
                     }
                     if (!busy && !loadingMore && visible.isEmpty() && error == null && sources.isNotEmpty() && notice == null) item {
