@@ -12,12 +12,17 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid as FoundationLazyV
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 
@@ -39,13 +44,29 @@ private fun Modifier.pageEdgeFades(state: ScrollableState, top: Boolean, bottom:
 
 // Only the page's own list draws the fades; a list nested inside one keeps its edges.
 @Composable
-private fun pageFadesUnderBottomBar(): Boolean = LocalBottomBarFades.current && !LocalVerticalPage.current
+private fun pageFadesUnderBottomBar(): Boolean =
+    LocalBottomBarFades.current && !LocalVerticalPage.current && LocalPhoneScroll.current?.barHidden != true
 
 @Composable
 private fun observePhoneScroll(state: ScrollableState) {
     val phoneScroll = LocalPhoneScroll.current ?: return
-    val backward = remember(state) { derivedStateOf { state.canScrollBackward } }.value
-    SideEffect { phoneScroll.onScroll(backward) }
+    LaunchedEffect(state, phoneScroll) {
+        snapshotFlow { state.canScrollBackward }.collect { phoneScroll.onScrolled(it) }
+    }
+}
+
+@Composable
+private fun Modifier.phoneScrollDirection(): Modifier {
+    val phoneScroll = LocalPhoneScroll.current ?: return this
+    val connection = remember(phoneScroll) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y != 0f) phoneScroll.onScrollDelta(available.y)
+                return Offset.Zero
+            }
+        }
+    }
+    return nestedScroll(connection)
 }
 
 // Only the page's own scroller clears the bar; a scroller nested inside one keeps its edges.
@@ -103,7 +124,7 @@ internal fun FocusLazyColumn(
     val paddedContent = contentPadding.withPageBottomClearance()
     observePhoneScroll(state)
     TvFocusScroll(contentPadding = paddedContent, reverseLayout = reverseLayout, sectionControlled = sectionControlled) {
-        val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
+        val anchored = modifier.phoneScrollDirection().tvCollectionUpdates(state, horizontal = false) {
             state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
         }.pageEdgeFades(state, topEdgeFade, bottomBar)
         CompositionLocalProvider(LocalVerticalPage provides true) {
@@ -135,7 +156,7 @@ internal fun FocusLazyVerticalGrid(
     DisposableEffect(focus) { onDispose { focus?.cancel() } }
     TvFocusScroll(contentPadding = paddedContent, reverseLayout = reverseLayout) {
         CompositionLocalProvider(LocalTvGridFocus provides focus, LocalVerticalPage provides true) {
-            val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
+            val anchored = modifier.phoneScrollDirection().tvCollectionUpdates(state, horizontal = false) {
                 state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
             }.pageEdgeFades(state, topEdgeFade, bottomBar)
             FoundationLazyVerticalGrid(columns, anchored,

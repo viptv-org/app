@@ -2,6 +2,7 @@ package org.viptv.app
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -18,6 +19,7 @@ import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
@@ -116,9 +118,15 @@ fun App(
             val tablet = !compact && touch
             val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = bottomBarShown(state.screen, compact, browser, desktopChrome)
-            val bottomClearance = if (bottomBar) bottomBarClearance() else 0.dp
-            val animeAvailable = state.animeAvailable
             val phoneScroll = remember { PhoneScroll() }
+            val density = LocalDensity.current
+            SideEffect { phoneScroll.revealAtPx(with(density) { PhoneBarReveal.toPx() }) }
+            val bottomClearance by animateDpAsState(
+                if (bottomBar && !phoneScroll.barHidden) bottomBarClearance() else 0.dp,
+                animationSpec = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
+                label = "bottom clearance",
+            )
+            val animeAvailable = state.animeAvailable
             val showsGenreChip = touch && state.screen == Screen.Home
             LaunchedEffect(showsGenreChip, state.selectedProfile, state.home?.scope, state.home?.revision) { if (showsGenreChip) controller.loadHomeGenres() }
             val homeGenres = remember(controller, state.homeGenres, showsGenreChip, state.selectedProfile) {
@@ -255,7 +263,7 @@ fun App(
                     }
                   } }
                   if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
-                      BottomNavigation(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate)
+                      PhoneBottomBar(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate, hidden = phoneScroll.barHidden)
                   }
                 }
             }
