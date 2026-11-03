@@ -9,9 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -21,15 +18,21 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import org.jetbrains.skia.Bitmap
 import org.viptv.app.components.FocusLazyVerticalGrid
 import org.viptv.app.components.LocalBottomBarFades
 import org.viptv.app.components.LocalBottomClearance
 import org.viptv.app.components.LocalPhoneScroll
 import org.viptv.app.components.PhoneBottomBar
+import org.viptv.app.components.PhoneHeader
 import org.viptv.app.components.PhoneScroll
+import org.viptv.app.connection.Profile
+import org.viptv.app.features.browse.BrowseScreen
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
+import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.MediaIdentity
 import java.io.File
 import org.junit.Rule
 import kotlin.test.*
@@ -37,6 +40,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PhoneBottomBarTest {
     @get:Rule val uiThread = UiThreadRule()
+    private val profile = Profile("qa", "QA profile", null, avatarId = "initial-blue")
 
     @Test fun theBarHidesOnScrollDownAndShowsOnASmallScrollUp() {
         val scroll = PhoneScroll()
@@ -57,7 +61,7 @@ class PhoneBottomBarTest {
     @Test fun scrollingAPhoneGridDrivesTheBar() {
         val scroll = PhoneScroll()
         scroll.revealAtPx(48f)
-        val scene = scene(scroll) { scroll.barHidden }
+        val scene = animePage(scroll, colored = true)
         try {
             frames(scene)
             assertFalse(scroll.barHidden, "the bar starts visible at the top")
@@ -68,41 +72,23 @@ class PhoneBottomBarTest {
         } finally { scene.close() }
     }
 
-    @Test fun hidingTheBarNeverMovesTheContent() {
+    @Test fun noOpaqueBandCoversTheBarRegionWhileHidden() {
         val scroll = PhoneScroll()
         scroll.revealAtPx(48f)
-        var hidden by mutableStateOf(false)
-        val scene = ImageComposeScene(390, 844, Density(1f)) {
-            ViptvTheme(false) {
-                CompositionLocalProvider(LocalPhoneScroll provides scroll,
-                    LocalBottomBarFades provides true, LocalBottomClearance provides 80.dp) {
-                    Box(Modifier.fillMaxSize()) {
-                        Column(Modifier.fillMaxSize()) {
-                            FocusLazyVerticalGrid(GridCells.Fixed(3), Modifier.fillMaxSize()) {
-                                items(90) { Box(Modifier.fillMaxWidth().height(160.dp).background(Palette.raised)) }
-                            }
-                        }
-                        Box(Modifier.align(Alignment.BottomCenter)) {
-                            PhoneBottomBar(Screen.Home, {}, hidden = hidden)
-                        }
-                    }
-                }
-            }
-        }
+        val scene = animePage(scroll, colored = true)
         try {
             frames(scene)
-            val gridTop = gridNode(scene).boundsInRoot.top
-            hidden = true; frames(scene, 8)
-            assertEquals(gridTop, gridNode(scene).boundsInRoot.top, 1f, "hiding the bar must not move the page")
-            hidden = false; frames(scene, 8)
-            assertEquals(gridTop, gridNode(scene).boundsInRoot.top, 1f, "showing the bar must not move the page")
+            scrollTo(scene, 4000f); frames(scene, 40)
+            assertTrue(scroll.barHidden, "the bar hides after scrolling down")
+            val colour = pixel(scene, 195, 800)
+            assertTrue(isLight(colour), "content reaches the bar region once hidden: #${colour.toUInt().toString(16)}")
         } finally { scene.close() }
     }
 
     @Test fun capturesTheBarForThePr() {
         val scroll = PhoneScroll()
         scroll.revealAtPx(48f)
-        val scene = scene(scroll) { scroll.barHidden }
+        val scene = animePage(scroll, colored = false)
         try {
             frames(scene); capture(scene, "bar-visible-top")
             scrollTo(scene, 900f); frames(scene, 24); capture(scene, "bar-hidden")
@@ -110,30 +96,35 @@ class PhoneBottomBarTest {
         } finally { scene.close() }
     }
 
-    private fun capture(scene: ImageComposeScene, name: String) = System.getenv("VIPTV_BOTTOM_BAR_CAPTURE_DIR")?.let { path ->
-        File(path).mkdirs()
-        scene.render(4_000_000_000L).use { image -> image.encodeToData()!!.use { File(path, "$name.png").writeBytes(it.bytes) } }
-    }
-
-    private fun scene(scroll: PhoneScroll, hiddenProvider: () -> Boolean): ImageComposeScene {
+    private fun animePage(scroll: PhoneScroll, colored: Boolean): ImageComposeScene {
         frame = 0
         return ImageComposeScene(390, 844, Density(1f)) {
             ViptvTheme(false) {
+                val clearance = if (scroll.barHidden) 0.dp else 80.dp
                 CompositionLocalProvider(LocalPhoneScroll provides scroll,
-                    LocalBottomBarFades provides true, LocalBottomClearance provides 80.dp) {
+                    LocalBottomBarFades provides true, LocalBottomClearance provides clearance) {
                     Box(Modifier.fillMaxSize()) {
                         Column(Modifier.fillMaxSize()) {
-                            FocusLazyVerticalGrid(GridCells.Fixed(3), Modifier.fillMaxSize()) {
-                                items(90) { Box(Modifier.fillMaxWidth().height(160.dp).background(Palette.raised)) }
+                            if (colored) {
+                                FocusLazyVerticalGrid(GridCells.Fixed(3), Modifier.fillMaxSize()) {
+                                    items(90) { Box(Modifier.fillMaxWidth().height(160.dp).background(Palette.text)) }
+                                }
+                            } else {
+                                PhoneHeader(Screen.Anime, profile) {}
+                                BrowseScreen(Screen.Anime, null, false, {}, loadedCards = animeCards, controls = null, busy = false)
                             }
                         }
                         Box(Modifier.align(Alignment.BottomCenter)) {
-                            PhoneBottomBar(Screen.Home, {}, hidden = hiddenProvider())
+                            PhoneBottomBar(Screen.Home, {}, hidden = scroll.barHidden)
                         }
                     }
                 }
             }
         }
+    }
+
+    private val animeCards = (1..40).map { i ->
+        Card(MediaIdentity("anime$i", "anime", emptyList()), category = "anime", provider_id = "simkl", title = "Anime $i", badges = emptyList())
     }
 
     private fun scrollTo(scene: ImageComposeScene, delta: Float) {
@@ -142,6 +133,16 @@ class PhoneBottomBarTest {
 
     private fun gridNode(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
         .maxByOrNull { it.boundsInRoot.height } ?: fail("no scrolling page")
+
+    private fun capture(scene: ImageComposeScene, name: String) = System.getenv("VIPTV_BOTTOM_BAR_CAPTURE_DIR")?.let { path ->
+        File(path).mkdirs()
+        scene.render(4_000_000_000L).use { image -> image.encodeToData()!!.use { File(path, "$name.png").writeBytes(it.bytes) } }
+    }
+
+    private fun pixel(scene: ImageComposeScene, x: Int, y: Int): Int =
+        scene.render(frame++ * 16_666_667L).use { image -> Bitmap.makeFromImage(image).use { it.getColor(x, y) } }
+
+    private fun isLight(color: Int) = ((color shr 16) and 0xFF) > 200 && ((color shr 8) and 0xFF) > 200 && (color and 0xFF) > 200
 
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 12) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }

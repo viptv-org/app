@@ -40,7 +40,8 @@ private fun Modifier.pageEdgeFades(state: ScrollableState, top: Boolean, bottom:
 
 // Only the page's own list draws the fades; a list nested inside one keeps its edges.
 @Composable
-private fun pageFadesUnderBottomBar(): Boolean = LocalBottomBarFades.current && !LocalVerticalPage.current
+private fun pageFadesUnderBottomBar(): Boolean =
+    LocalBottomBarFades.current && !LocalVerticalPage.current && LocalPhoneScroll.current?.barHidden != true
 
 @Composable
 private fun observePhoneScroll(state: ScrollableState, position: () -> Int) {
