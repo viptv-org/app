@@ -40,7 +40,7 @@ internal fun TvPlayerEpisodePicker(episodes: List<Card>, scale: Float, current: 
         }
         LaunchedEffect(Unit) {
             if (episodes.isEmpty()) return@LaunchedEffect
-            if (currentIndex > 0) list.scrollToItem(currentIndex)
+            if (currentIndex > 0) { withFrameNanos { }; list.scrollToItem(currentIndex) }
             initial.requestFocus()
         }
     }

@@ -77,6 +77,7 @@ private fun RestorePage(restore: PageRestoreState, claimOnEntry: Boolean, target
     val input = LocalInputModeManager.current
     LaunchedEffect(restore) {
         val index = snapshotFlow { latest.value() }.first { it != null } ?: return@LaunchedEffect
+        withFrameNanos { }
         place(index)
         val claims = claimOnEntry || (restore.lastKey != null && input.inputMode == InputMode.Keyboard)
         if (!claims) return@LaunchedEffect
