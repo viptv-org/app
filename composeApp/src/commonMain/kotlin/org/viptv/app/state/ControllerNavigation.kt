@@ -22,6 +22,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     }
     if (screen != Screen.Details) cancelDetailPaging()
     if (screen !in listOf(Screen.Details, Screen.Sources, Screen.Player)) {
+        cancelDetailSourcePreview()
         cancelSourceDetail()
         if (mutable.value.playTapTitle != null || mutable.value.detailFailure != null || mutable.value.detailShell)
             updateState { it.copy(playTapTitle = null, detailFailure = null, detail = if (it.detailShell) null else it.detail, detailShell = false) }
@@ -96,6 +97,7 @@ fun ApplicationController.backDetails() {
 fun ApplicationController.backSources() {
     // A restart the viewer never started must not move a later title to 0:00.
     restartRequested = false
+    sourcePreviewSession?.adopted = false
     val awaitingTitle = mutable.value.let { it.playTapTitle != null && it.detail == null && it.sourceReturnScreen == Screen.Details }
     generation++; job?.cancel()
     clearBestMatchSession()

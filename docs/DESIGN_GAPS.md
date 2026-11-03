@@ -20,6 +20,7 @@
 | GAP-017 | Phone settings capability notices | Settings rows without an operation | Resolved: every row in `features/settings/PhoneSettings.kt` opens a real page, a row without a handler is hidden instead of showing a notice (app#15), and no settings row reports an unavailable connection |
 | GAP-016 | Unavailable header capabilities | Casting, TV remote control and provider genre controls lack connected contracts | Phone and tablet Cast/Remote buttons removed until they work (app#15); the Home Genres chip lists the discovery controls' genres and opens Browse filtered to one; desktop Cast/Remote/Forward buttons are disabled when no operation exists |
 | GAP-015 | My List unavailable notice | Earlier missing shared list operation | Resolved by persisted local/remote My List; capability-dependent action variants remain in GAP-045 |
+| GAP-067 | Phone title action row, Starring line and header shortcuts | `M3Title` draws Cast/Share, four secondary actions and a Starring line; only My List has an operation and cast facts are not in the wire model | Back, My List and the AND-043 source summary only; see below |
 | GAP-014 | Custom server selection in desktop password flow | The supplied password board assumes one server | Use another server expands the address field in `DesktopPasswordPanel.kt`; capture `docs/evidence/desktop-signin-password.png` |
 
 Provisional surfaces are recorded with their source locations and available review captures. No provisional surface is recorded as supplied-design parity.
@@ -503,3 +504,16 @@ label, the full description and Close focused on open. Entry is a hold on the ro
 (pointer long-press or Enter/Space/D-pad centre), so a press still plays the
 source; Back, Escape, Close and the scrim dismiss it and return focus to the row
 it came from. Copy is the heading `Source details` and `Close`.
+
+### GAP-067 — Phone title actions, Starring line and header shortcuts
+
+`M3Title` draws a header Cast/Share pair, four secondary actions and a Starring
+line. The phone title page shows Back in the header and My List as its only
+secondary action, centred in the board's 76-wide slot so a later action does not
+move it: casting and sharing have no title-page contract (GAP-016 removed the
+phone Cast and Remote buttons), no trailer or rating operation exists, and
+`CardMetadata` carries no cast. The Starring line needs a cast projection in
+core/backend; a trailer, rating or share action needs its own contract. Neither
+is shown until one exists. The source summary below the primary button follows
+AND-043.
+

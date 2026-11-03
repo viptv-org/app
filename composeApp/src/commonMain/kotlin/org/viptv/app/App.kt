@@ -327,7 +327,10 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             retryPage = if (state.detailPageError != null) controller::retryDetailPage else null,
             // The drawer over the page owns the keyboard: the dialog must not take its focus.
             closeFocusOnOpen = !(browser && showingSources),
-            focus = state.detailFocus)
+            focus = state.detailFocus,
+            sourcePreview = state.detailSourcePreview,
+            previewSources = controller::previewDetailSources,
+            cancelSourcesPreview = controller::cancelDetailSourcePreview)
         if (drawerShown) {
             val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null) }
             // Over the Details dialog the drawer needs a window layer of its own.

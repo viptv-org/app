@@ -376,16 +376,19 @@ internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boole
     }
     cancelSourceDetail()
     releaseRemotePlayback()
-    openSources(card, returnTo = if (mutable.value.detail != null) Screen.Details else mutable.value.screen, startPlayback = startPlayback)
-    run { discoverSources(card) }
+    val preview = if (startPlayback) null else adoptDetailSourcePreview(card)
+    openSources(card, returnTo = if (mutable.value.detail != null) Screen.Details else mutable.value.screen, startPlayback = startPlayback, seed = preview)
+    if (preview == null) run { discoverSources(card) }
 }
 
-private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null, startPlayback: Boolean = false, quiet: Boolean = false) {
+private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null, startPlayback: Boolean = false, quiet: Boolean = false,
+    seed: DetailSourcePreview? = null) {
     sourcesScrolled = false
     clearBestMatchSession()
     sourcesStartPlayback = startPlayback
     updateState { it.copy(screen = if (quiet) it.screen else Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
-        sources = emptyList(), sourceProducers = emptyList(), sourceGroups = SourceGroups(), torrentOnlySources = 0, findingSources = true, navForward = emptyList(),
+        sources = seed?.rows.orEmpty(), sourceProducers = seed?.producers.orEmpty(), sourceGroups = seed?.groups ?: SourceGroups(),
+        torrentOnlySources = seed?.torrentOnly ?: 0, findingSources = seed?.settled != true, navForward = emptyList(),
         playTapTitle = playTap, detailFailure = null, detailRetryable = true) }
 }
 
@@ -453,7 +456,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
 
 internal fun ApplicationController.markSourcesScrolled() { sourcesScrolled = true }
 
-private fun ApplicationController.producersLabelled(producers: List<SourceProducerOutcome>): List<SourceProducerOutcome> {
+internal fun ApplicationController.producersLabelled(producers: List<SourceProducerOutcome>): List<SourceProducerOutcome> {
     if (producers.none { it.label.isBlank() }) return producers
     val state = mutable.value
     val names = state.addons.associate { it.id to it.name } + state.sourceIntegrations.connections.associate { it.id to it.name }

@@ -103,6 +103,7 @@ data class ApplicationState(
     val detail: DetailSnapshot? = null,
     val detailShell: Boolean = false,
     val detailFocus: DetailFocus? = null,
+    val detailSourcePreview: DetailSourcePreview? = null,
     val detailLoadingOffset: Long? = null,
     val detailPageError: String? = null,
     val detailPageRetryOffset: Long? = null,

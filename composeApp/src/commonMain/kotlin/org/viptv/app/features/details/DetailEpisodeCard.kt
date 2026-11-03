@@ -52,9 +52,15 @@ private fun EpisodeCaption(episode: Card, modifier: Modifier, phone: Boolean, pl
             maxLines = if (phone) 2 else 1, overflow = TextOverflow.Ellipsis)
         if (playing) Text(NOW_PLAYING, color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         if (episode.watchedEpisode()) EpisodeWatchedPill(television = false)
-        episode.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        val caption = if (phone) episode.phoneCaption() ?: episode.subtitle else episode.subtitle
+        caption?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
 }
+
+internal fun Card.phoneCaption(): String? = listOfNotNull(
+    metadata?.runtime_minutes?.takeIf { it > 0 }?.let { if (it >= 60) "${it / 60}h ${it % 60}m" else "${it}m" },
+    remainingMinutesLabel(this).takeIf { resuming(this) },
+).joinToString(" · ").ifEmpty { null }
 
 @Composable
 private fun EpisodeArtwork(episode: Card, modifier: Modifier) {
