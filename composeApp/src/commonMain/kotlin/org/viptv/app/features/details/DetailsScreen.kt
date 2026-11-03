@@ -20,6 +20,7 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
 import org.viptv.app.connection.epochMillis
+import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
@@ -38,7 +39,10 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     pageError: String? = null,
     retryPage: (() -> Unit)? = null,
     closeFocusOnOpen: Boolean = true,
-    focus: DetailFocus? = null) {
+    focus: DetailFocus? = null,
+    sourcePreview: DetailSourcePreview? = null,
+    previewSources: ((Card) -> Unit)? = null,
+    cancelSourcesPreview: (() -> Unit)? = null) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, chooseSource = chooseSource, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
             continuing = continuing, shown = paging, playTap = playTap, retry = retry, pageError = pageError, retryPage = retryPage, focus = focus)
@@ -72,6 +76,11 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val gutter = if (phone) 16.dp else 40.dp
         val listState = rememberLazyListState()
         val desktop = !phone && !tablet
+        val previewCard = detail?.let { heroEpisode ?: it.item }
+        if (phone && previewCard != null) DisposableEffect(previewCard.identity, previewCard.provider_id) {
+            previewSources?.invoke(previewCard)
+            onDispose { cancelSourcesPreview?.invoke() }
+        }
         val episodesShown = detail != null && (!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())
         val landing = if (!episodesShown) null else (resume.indexIn(selected?.episodes) ?: focus.episodeIn(selected))
         val resumeIndex = landing?.let { episode ->
@@ -86,7 +95,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             if (busy && !phone) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent) }
             detail?.let { value ->
                 item(key = "hero") {
-                    if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode)
+                    if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode, sourcePreview = sourcePreview, chooseSource = chooseSource)
                     else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
                         DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
                             sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
@@ -160,7 +169,7 @@ internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
 internal fun remainingMinutesLabel(card: Card): String? {
     val progress = card.progress ?: 0.0
     val runtime = card.metadata?.runtime_minutes ?: return null
-    val remaining = kotlin.math.round((1.0 - progress) * runtime)
+    val remaining = kotlin.math.round((1.0 - progress) * runtime).toLong()
     return if (remaining > 0) "${remaining}m left" else "Almost done"
 }
 

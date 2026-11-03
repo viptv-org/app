@@ -82,6 +82,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var playbackSeasonKey: PlaybackSeasonKey? = null
     internal var playbackSeasonGeneration = 0L
     internal var sourceDetailJob: Job? = null
+    internal var sourcePreviewSession: DetailSourcePreviewSession? = null
     internal var sourcesScrolled = false
     internal var sourcesStartPlayback = false
     internal var pairingJob: Job? = null

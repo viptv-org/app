@@ -83,6 +83,11 @@ class DetailsInformationTest {
         }
         fun tab(text: String) = assertNotNull(clickable(text), "\"$text\" is a tab: " + nodes().flatMap(::texts))
         fun open(text: String) = assertTrue(tab(text).config[SemanticsActions.OnClick].action!!.invoke())
+        fun scrollToEnd() {
+            val scroll = merged().firstOrNull { it.config.contains(SemanticsActions.ScrollBy) }
+            assertNotNull(scroll, "the page scrolls: " + nodes().flatMap(::texts))
+            scroll.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 4000f)
+        }
         override fun close() = scene.close()
     }
 
@@ -95,6 +100,8 @@ class DetailsInformationTest {
             page.settle()
             assertEquals(1, page.shown(metadataLine), "the Details tab does not repeat the metadata line")
             assertEquals(1, page.shown(description), "the Details tab does not repeat the description")
+            page.scrollToEnd()
+            page.settle()
             for (fact in listOf("Seasons" to "2", "Episodes" to "18", "Votes" to "8,431",
                 "Also known as" to "Oak Street · The End of Oak Street (US)")) {
                 assertTrue(page.fact(fact.first, fact.second), "the facts list shows ${fact.first} \u2192 ${fact.second}: " +

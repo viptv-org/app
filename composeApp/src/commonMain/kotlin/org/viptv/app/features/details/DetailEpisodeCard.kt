@@ -32,17 +32,17 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Unit, modifier: Modifier = Modifier, tablet: Boolean = false,
-    playing: Boolean = false, comingUp: Boolean = false, showAirDate: Boolean = true) {
+    playing: Boolean = false, comingUp: Boolean = false, showAirDate: Boolean = true, stateCaption: Boolean = true) {
     var showUpcoming by remember { mutableStateOf(false) }
     Column(modifier.clip(RoundedCornerShape(8.dp)).pointerClickable(shape = RoundedCornerShape(8.dp)) {
         if (comingUp) showUpcoming = true else play(episode)
     }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (phone) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             EpisodeArtwork(episode, Modifier.width(if (tablet) 176.dp else 136.dp).aspectRatio(16f / 9), comingUp)
-            EpisodeCaption(episode, Modifier.weight(1f), true, playing, comingUp, showAirDate)
+            EpisodeCaption(episode, Modifier.weight(1f), true, playing, comingUp, showAirDate, stateCaption)
         } else {
             EpisodeArtwork(episode, Modifier.fillMaxWidth().aspectRatio(16f / 9), comingUp)
-            EpisodeCaption(episode, Modifier.fillMaxWidth(), false, playing, comingUp, showAirDate)
+            EpisodeCaption(episode, Modifier.fillMaxWidth(), false, playing, comingUp, showAirDate, stateCaption)
         }
         episode.description?.takeIf { it.isNotBlank() }?.let {
             Text(it, color = Palette.secondary, fontSize = 13.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -52,7 +52,7 @@ internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Un
 }
 
 @Composable
-private fun EpisodeCaption(episode: Card, modifier: Modifier, phone: Boolean, playing: Boolean = false, comingUp: Boolean = false, showAirDate: Boolean = true) {
+private fun EpisodeCaption(episode: Card, modifier: Modifier, phone: Boolean, playing: Boolean = false, comingUp: Boolean = false, showAirDate: Boolean = true, stateCaption: Boolean = true) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
         val number = episode.identity.episode?.episode
         val label = number?.let { "$it. ${episode.title}" } ?: episode.title
@@ -61,10 +61,16 @@ private fun EpisodeCaption(episode: Card, modifier: Modifier, phone: Boolean, pl
             maxLines = if (phone) 2 else 1, overflow = TextOverflow.Ellipsis)
         if (playing) Text(NOW_PLAYING, color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         if (episode.watchedEpisode()) EpisodeWatchedPill(television = false)
-        episode.subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        val caption = if (phone && stateCaption) episode.phoneCaption() ?: episode.subtitle else episode.subtitle
+        caption?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         if (showAirDate) EpisodeAirDateLine(episode, comingUp)
     }
 }
+
+internal fun Card.phoneCaption(): String? = listOfNotNull(
+    metadata?.runtime_minutes?.takeIf { it > 0 }?.let { if (it >= 60) "${it / 60}h ${it % 60}m" else "${it}m" },
+    remainingMinutesLabel(this).takeIf { resuming(this) },
+).joinToString(" · ").ifEmpty { null }
 
 @Composable
 private fun EpisodeArtwork(episode: Card, modifier: Modifier, comingUp: Boolean) {
