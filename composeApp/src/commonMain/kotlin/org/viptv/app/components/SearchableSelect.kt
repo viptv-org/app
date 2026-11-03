@@ -382,6 +382,7 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
         val info = list.layoutInfo
         if (keyboardMoves == 0 || active !in rows.indices || info.visibleItemsInfo.isEmpty()) return@LaunchedEffect
         val item = info.visibleItemsInfo.firstOrNull { it.index == active }
+        withFrameNanos { }
         when {
             item == null && active < list.firstVisibleItemIndex -> list.scrollToItem(active)
             item == null -> { list.scrollToItem(active); list.scrollBy(-(info.viewportEndOffset - rowPx)) }
@@ -466,7 +467,7 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
     // Open on the current option, scrolled into view; its focus is retried per frame until the requester is placed.
     LaunchedEffect(Unit) {
         val current = rows.indexOfFirst { if (it == null) selected.isEmpty() else it.id in selected }.coerceAtLeast(0)
-        if (current > 0) list.scrollToItem((current - 2).coerceAtLeast(0))
+        if (current > 0) { withFrameNanos { }; list.scrollToItem((current - 2).coerceAtLeast(0)) }
         repeat(30) {
             withFrameNanos { }
             if (requesters[key(rows.getOrNull(current))]?.requestFocus() == true) return@LaunchedEffect

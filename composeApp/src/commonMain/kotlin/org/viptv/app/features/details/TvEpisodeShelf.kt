@@ -68,6 +68,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     val landingIndex = visible.indexOfFirst { episodeKey(it) == lastFocused }.takeIf { it >= 0 } ?: resume.indexIn(visible) ?: focusIndex
     LaunchedEffect(episodeRows, landingIndex) {
         if (landingIndex == null || landed) return@LaunchedEffect
+        withFrameNanos { }
         episodeRows.scrollToItem(landingIndex)
         landed = true; kept = true; selected = activeSeason
     }
@@ -93,6 +94,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     }
     LaunchedEffect(jumpTarget, episodeRows) {
         val target = jumpTarget ?: return@LaunchedEffect
+        withFrameNanos { }
         episodeRows.scrollToItem(target.index)
         repeat(TV_FOCUS_RETRY_FRAMES) {
             if (targets[target.key]?.requestPlacedFocus() == true) { jumpTarget = null; return@LaunchedEffect }

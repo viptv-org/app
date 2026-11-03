@@ -97,6 +97,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                 ?.takeIf { it >= 0 } ?: activeRow.coerceIn(visibleRows.indices)
             activeRow = target
             activeRowId = visibleRows[target].id
+            withFrameNanos { }
             rows.scrollToItem(target)
             focusWhenPlaced(resumeShelf) { rows.layoutInfo.visibleItemsInfo.any { it.index == target } }
         }
@@ -109,6 +110,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     }
     LaunchedEffect(home?.scope?.profile_id, visibleRows.getOrNull(firstReadyRow)?.id, featured.isEmpty(), error) {
         if (!initialShelfFocusClaimed && featured.isEmpty() && home?.complete == true && error == null && firstReadyRow >= 0) {
+            withFrameNanos { }
             rows.scrollToItem(firstReadyRow)
             initialShelfFocusClaimed = focusWhenPlaced(firstCard) { firstReadyAttached }
         }
@@ -144,6 +146,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
             val fallback = activeRow.coerceIn(visibleRows.indices)
             activeRow = fallback
             activeRowId = visibleRows[fallback].id
+            withFrameNanos { }
             rows.scrollToItem(fallback)
             // Let the removed shelf leave composition before focusing its replacement: the shared resume requester can still point at the old node.
             withFrameNanos { }
