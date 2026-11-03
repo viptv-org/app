@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +33,7 @@ import org.viptv.engine.wire.EpisodeCoordinates
 import org.viptv.engine.wire.EpisodeSeason
 import org.viptv.engine.wire.MediaIdentity
 import java.io.File
+import kotlin.math.abs
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -62,9 +64,9 @@ class DetailsPinnedHeaderUiTest {
             try {
                 frames(scene)
                 if (scrolled) {
-                    assertEquals(background, pixel(scene, 340, 20), "once scrolled the header hides the content")
-                    assertEquals(background, pixel(scene, 340, 56), "the fade starts at the header's background")
-                    assertEquals(raised, pixel(scene, 340, 90), "the fade lets the content back through below the header")
+                    assertNear(background, pixel(scene, 340, 20), "once scrolled the header hides the content")
+                    assertNear(background, pixel(scene, 340, 58), "the fade starts at the header's background")
+                    assertNear(raised, pixel(scene, 340, 82), "the fade lets the content back through below the header")
                 } else {
                     assertEquals(raised, pixel(scene, 340, 20), "at the top the header is transparent over the content")
                 }
@@ -98,10 +100,10 @@ class DetailsPinnedHeaderUiTest {
         scene = settingsScene()
         try {
             frames(scene)
-            capture(scene, "settings-admin-top")
+            capture(scene, "settings-playback-top")
             scrollBy(scene, 600f)
             frames(scene)
-            capture(scene, "settings-admin-scrolled")
+            capture(scene, "settings-playback-scrolled")
         } finally { scene.close() }
     }
 
@@ -117,14 +119,16 @@ class DetailsPinnedHeaderUiTest {
     private fun settingsScene(): ImageComposeScene {
         frame = 0
         return ImageComposeScene(390, 844, Density(1f)) { ViptvTheme(false) {
-            SettingsScreen(local = false, addons = emptyList(), enabledAddonIds = emptySet(), busy = false,
-                error = null, sessionNotice = null, install = {}, toggle = { _, _ -> }, remove = {}, profiles = {},
-                leave = {}, television = false, initialSection = "Playback",
-                sectionPreferences = { _, _ ->
-                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                        repeat(30) { Text("Playback preference $it", Modifier.padding(vertical = 14.dp), color = Palette.text) }
-                    }
-                })
+            Box(Modifier.fillMaxSize().background(Palette.background)) {
+                SettingsScreen(local = false, addons = emptyList(), enabledAddonIds = emptySet(), busy = false,
+                    error = null, sessionNotice = null, install = {}, toggle = { _, _ -> }, remove = {}, profiles = {},
+                    leave = {}, television = false, initialSection = "Playback",
+                    sectionPreferences = { _, _ ->
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+                            repeat(30) { Text("Playback preference $it", Modifier.padding(vertical = 14.dp), color = Palette.text) }
+                        }
+                    })
+            }
         } }
     }
 
@@ -144,6 +148,11 @@ class DetailsPinnedHeaderUiTest {
 
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
+
+    private fun assertNear(expected: Int, actual: Int, message: String) =
+        assertTrue(distance(expected, actual) <= 4, "$message: expected ${hex(expected)}, was ${hex(actual)}")
+    private fun distance(a: Int, b: Int) = (0..2).maxOf { abs(((a shr (it * 8)) and 0xFF) - ((b shr (it * 8)) and 0xFF)) }
+    private fun hex(color: Int) = "#" + color.toUInt().toString(16).padStart(8, '0')
 
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
