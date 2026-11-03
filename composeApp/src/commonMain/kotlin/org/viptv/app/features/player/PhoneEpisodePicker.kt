@@ -61,7 +61,7 @@ internal fun PhoneEpisodePicker(current: Card?, episodes: List<Card>, choose: (C
                                 latestEpisodes.find { cardLookupKey(it) == cardLookupKey(card) }?.let(latestChoose)
                             }, modifier = Modifier.fillMaxWidth().then(if (position == index) Modifier.focusRequester(initial) else Modifier)
                                 .semantics { selected = active }.background(if (active) Palette.raised else Color.Transparent, RoundedCornerShape(8.dp)),
-                                playing = active, showAirDate = false)
+                                playing = active, showAirDate = false, stateCaption = false)
                         }
                     }
                 }
