@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -132,9 +133,10 @@ internal fun SearchableSelect(
     highlighted: Boolean = anyLabel != null && selected.isNotEmpty(),
     open: MutableState<Boolean> = remember { mutableStateOf(false) },
     chipFocus: FocusRequester? = null,
+    down: FocusRequester? = null,
 ) {
     val distinct = remember(options) { options.distinctBy { it.id } }
-    SelectChip(title, selectTriggerValue(distinct, selected, placeholder), selected.isNotEmpty(), highlighted, modifier, open, chipFocus) { metrics, close ->
+    SelectChip(title, selectTriggerValue(distinct, selected, placeholder), selected.isNotEmpty(), highlighted, modifier, open, chipFocus, down) { metrics, close ->
         SelectPanel(distinct, selected, multiple, maximumSelections, anyLabel, anyTrailing, searchPlaceholder, metrics, onChange, close)
     }
 }
@@ -174,12 +176,13 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
 }
 
 @Composable
-internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, modifier: Modifier = Modifier, down: FocusRequester? = null) {
     val metrics = chipMetrics()
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
     Row(modifier.chipFrame(false, focused, metrics, shape, bordered = false)
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
+        .then(if (down == null) Modifier else Modifier.focusProperties { this.down = down })
         .pointerClickable(role = Role.Button, shape = shape, onClick = onClick)
         .padding(horizontal = metrics.actionInset), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
@@ -218,7 +221,7 @@ private fun Modifier.chipFrame(set: Boolean, focused: Boolean, metrics: ChipMetr
 
 @Composable
 private fun SelectChip(title: String, value: String, valueSet: Boolean, highlighted: Boolean, modifier: Modifier,
-    open: MutableState<Boolean>, entry: FocusRequester?, panel: @Composable (SelectMetrics, () -> Unit) -> Unit) {
+    open: MutableState<Boolean>, entry: FocusRequester?, down: FocusRequester? = null, panel: @Composable (SelectMetrics, () -> Unit) -> Unit) {
     val presentation = LocalSelectPresentation.current
     val metrics = chipMetrics()
     val close = { open.value = false }
@@ -231,7 +234,7 @@ private fun SelectChip(title: String, value: String, valueSet: Boolean, highligh
         else if (wasOpen) runCatching { chipFocus.requestFocus() }
     }
     Box(modifier) {
-        SelectTrigger(title, value, valueSet, highlighted, metrics, chipFocus.takeIf { metrics.tv }) { open.value = true }
+        SelectTrigger(title, value, valueSet, highlighted, metrics, chipFocus.takeIf { metrics.tv }, down) { open.value = true }
         when (presentation) {
             SelectPresentation.Sheet -> SelectSheet(open.value, title, close) { listMax ->
                 panel(SelectMetrics(48.dp, listMax, sheet = true), close) }
@@ -244,12 +247,14 @@ private fun SelectChip(title: String, value: String, valueSet: Boolean, highligh
 
 @Composable
 private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highlighted: Boolean, metrics: ChipMetrics,
-    focus: FocusRequester?, onClick: () -> Unit) {
+    focus: FocusRequester?, down: FocusRequester?, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
     val ink = if (focused) Palette.background else if (valueSet) Palette.text else Palette.secondary
     Row(Modifier.widthIn(max = if (metrics.tv) 420.dp * metrics.scale else ChipMaxWidth)
-        .then(if (focus == null) Modifier else Modifier.focusRequester(focus).onFocusChanged { focused = it.isFocused }
+        .then(if (focus == null) Modifier else Modifier.focusRequester(focus)
+            .then(if (down == null) Modifier else Modifier.focusProperties { this.down = down })
+            .onFocusChanged { focused = it.isFocused }
             .tvFocusOutline(focused, metrics.corner, metrics.scale))
         .chipFrame(highlighted, focused, metrics, shape)
         .pointerClickable(role = Role.DropdownList, shape = shape, onClick = onClick)

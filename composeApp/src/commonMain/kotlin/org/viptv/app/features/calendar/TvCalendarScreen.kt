@@ -57,7 +57,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             CompositionLocalProvider(LocalTvScale provides scale) {
                 CalendarControls(type,week,true,scale,categoryChanged,weekChanged,
                     range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
-                    filter = filter, filterChanged = filterChanged, entry = typeChip)
+                    filter = filter, filterChanged = filterChanged, entry = typeChip, down = date)
             }
         }
         // onEnter also catches the restore's focus request; only a first visit sends it to the day rail.
