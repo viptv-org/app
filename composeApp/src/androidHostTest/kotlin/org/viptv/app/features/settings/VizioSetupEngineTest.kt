@@ -17,6 +17,18 @@ class VizioSetupEngineTest {
         assertNull(vizioChallenge(buildJsonObject { put("challengeType", 1) }))
     }
 
+    @Test fun parsesAChallengeFromDecimalNumbers() {
+        val challenge = vizioChallenge(buildJsonObject { put("challengeType", 1.0); put("token", 4294967295.0) })
+        assertEquals(VizioPairingChallenge(1, 4294967295L), challenge)
+    }
+
+    @Test fun rejectsANonIntegralOrOutOfRangeChallenge() {
+        assertNull(vizioChallenge(buildJsonObject { put("challengeType", 1.5); put("token", 42.0) }))
+        assertNull(vizioChallenge(buildJsonObject { put("challengeType", 65536.0); put("token", 42.0) }))
+        assertNull(vizioChallenge(buildJsonObject { put("challengeType", 1.0); put("token", 4294967296.0) }))
+        assertNull(vizioChallenge(buildJsonObject { put("challengeType", 1.0); put("token", -1.0) }))
+    }
+
     @Test fun mapsPairingOutcomesToResults() {
         assertEquals(VizioPairResult.Paired, vizioFinishResult(VizioControllerOutputKind.COMPLETE, null))
         assertEquals(VizioPairResult.Rejected, vizioFinishResult(VizioControllerOutputKind.ERROR, VizioFailureKind.AUTHENTICATION))

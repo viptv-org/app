@@ -248,7 +248,7 @@ internal class WatchOnTvSetupController(
             catch (_: Exception) {
                 pendingPair = null
                 pinError = "Can't reach ${tv.name}. Check the TV is on the same Wi-Fi and try again."
-            } finally { pairJob = null; busy = false }
+            } finally { if (pairJob === coroutineContext[Job]) { pairJob = null; busy = false } }
         }
     }
 
@@ -275,7 +275,7 @@ internal class WatchOnTvSetupController(
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 pinError = "Can't reach ${tv.name}. Check the TV is on the same Wi-Fi and try again."
-            } finally { pairJob = null; busy = false }
+            } finally { if (pairJob === coroutineContext[Job]) { pairJob = null; busy = false } }
         }
     }
 
