@@ -21,7 +21,6 @@ import org.viptv.app.features.settings.*
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.ApplicationState
 import org.viptv.app.state.Screen
-import org.viptv.app.state.refreshPasswordChangeAvailability
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,61 +43,18 @@ class ChangePasswordTest {
     private val NEW = 1
     private val CONFIRM = 2
 
-    @Test fun theRouteProbeOnlyAsksWhetherTheServerHasTheEndpoint() = runBlocking {
-        val methods = mutableListOf<HttpMethod>()
-        val absent = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
-            methods += request.method
-            respond("{}", HttpStatusCode.NotFound, json)
-        }) { configureTransport() }, browserMode = true)
-        val present = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
-            methods += request.method
-            respond("""{"error":"Method not allowed"}""", HttpStatusCode.MethodNotAllowed, json)
-        }) { configureTransport() }, browserMode = true)
-        try {
-            assertFalse(absent.passwordChangeAvailable(), "a 404 means the server predates the route")
-            assertTrue(present.passwordChangeAvailable(), "a POST-only route answers 405 to this probe and is there")
-            assertEquals(listOf(HttpMethod.Get, HttpMethod.Get), methods, "the probe must not offer a password")
-        } finally { absent.close(); present.close() }
+    @Test fun thePasswordRowIsOfferedWithoutProbingTheServerRoute() {
+        assertPasswordRow()
     }
 
-    @Test fun aServerWithoutTheRouteClearsAPreviouslyOfferedRow() = runBlocking {
-        assertEquals(false, probed(HttpStatusCode.NotFound, previouslyOffered = true))
-        assertEquals(true, probed(HttpStatusCode.MethodNotAllowed, previouslyOffered = false))
-    }
-
-    private suspend fun probed(status: HttpStatusCode, previouslyOffered: Boolean): Boolean {
+    private fun assertPasswordRow() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-        val asked = AtomicBoolean(false)
-        val remote = RemoteConnection(origin, store, HttpClient(MockEngine {
-            asked.set(true)
-            respond("{}", status, json)
-        }) { configureTransport() }, browserMode = true)
-        try {
-            val controller = ApplicationController(scope, store)
-            controller.connection = remote
-            controller.mutable.value = ApplicationState(screen = Screen.Settings, passwordChangeAvailable = previouslyOffered)
-            controller.refreshPasswordChangeAvailability()
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while ((!asked.get() || controller.state.value.passwordChangeAvailable == previouslyOffered) && System.nanoTime() < deadline)
-                delay(5)
-            return controller.state.value.passwordChangeAvailable
-        } finally { scope.cancel(); remote.close() }
-    }
-
-    @Test fun thePasswordRowIsAbsentWhenTheServerReportsTheRouteMissingAndPresentWhenItDoesNot() {
-        assertRow(HttpStatusCode.NotFound, present = false)
-        assertRow(HttpStatusCode.MethodNotAllowed, present = true)
-    }
-
-    private fun assertRow(status: HttpStatusCode, present: Boolean) {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-        val asked = AtomicBoolean(false)
+        val passwordAsked = AtomicBoolean(false)
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             when (request.url.encodedPath) {
                 "/api/auth/password" -> {
-                    assertEquals(HttpMethod.Get, request.method)
-                    asked.set(true)
-                    respond("{}", status, json)
+                    passwordAsked.set(true)
+                    respond("{}", HttpStatusCode.MethodNotAllowed, json)
                 }
                 "/api/auth/me" -> respond(accountIdentityFixture(manageAccount = true), HttpStatusCode.OK, json)
                 else -> respond("{}", HttpStatusCode.NotFound, json)
@@ -116,26 +72,23 @@ class ChangePasswordTest {
         }
         val probe = Probe(scene)
         try {
-            probe.await("the screen to ask about the route") { asked.get() }
+            probe.await("the Password row") { probe.hasPrefix("Password") }
+            assertFalse(passwordAsked.get(), "the route is never probed before the row is offered")
+            probe.click("Password")
+            assertTrue(probe.has("Change password"), probe.texts().toString())
+            probe.click("Cancel")
             probe.frames()
-            assertEquals(present, probe.hasPrefix("Password"), "the row follows the route the server has")
-            if (present) {
-                probe.click("Password")
-                assertTrue(probe.has("Change password"), probe.texts().toString())
-                probe.click("Cancel")
-                probe.frames()
-                assertFalse(probe.has("Change password"), "Cancel leaves the page without changing anything")
-                assertTrue(probe.hasPrefix("Password"), "the row stays in the Account group")
-            }
+            assertFalse(probe.has("Change password"), "Cancel leaves the page without changing anything")
+            assertTrue(probe.hasPrefix("Password"), "the row stays in the Account group")
         } finally { scene.close(); scope.cancel(); remote.close() }
     }
 
     @Test fun thePasswordRowIsSelfServiceAndIgnoresTheManageAccountCapability() {
-        assertPasswordCapability(manageAccount = true, present = true)
-        assertPasswordCapability(manageAccount = false, present = true)
+        assertPasswordCapability(manageAccount = true)
+        assertPasswordCapability(manageAccount = false)
     }
 
-    private fun assertPasswordCapability(manageAccount: Boolean, present: Boolean) {
+    private fun assertPasswordCapability(manageAccount: Boolean) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val meAsked = AtomicBoolean(false)
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
@@ -144,7 +97,6 @@ class ChangePasswordTest {
                     meAsked.set(true)
                     respond(accountIdentityFixture(manageAccount), HttpStatusCode.OK, json)
                 }
-                "/api/auth/password" -> respond("{}", HttpStatusCode.MethodNotAllowed, json)
                 else -> respond("{}", HttpStatusCode.NotFound, json)
             }
         }) { configureTransport() }, browserMode = false)
@@ -160,15 +112,9 @@ class ChangePasswordTest {
         }
         val probe = Probe(scene)
         try {
-            if (present) {
-                probe.await("the account capability") { meAsked.get() }
-                probe.await("the Password row") { probe.hasPrefix("Password") }
-                assertTrue(probe.hasPrefix("Password"), "a capable session offers the password row")
-            } else {
-                probe.await("the account capability") { meAsked.get() }
-                probe.frames()
-                assertFalse(probe.hasPrefix("Password"), "a session without the capability hides the password row")
-            }
+            probe.await("the account capability") { meAsked.get() }
+            probe.await("the Password row") { probe.hasPrefix("Password") }
+            assertTrue(probe.hasPrefix("Password"), "a session offers the password row regardless of the manage-account capability")
         } finally { scene.close(); scope.cancel(); remote.close() }
     }
 

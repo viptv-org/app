@@ -33,9 +33,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     val watchOnTvState = LocalWatchOnTv.current ?: rememberWatchOnTvState()
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
-    val passwordPage: (@Composable (() -> Unit) -> Unit)? = remote?.takeIf { state.passwordChangeAvailable }?.let { connection ->
+    val passwordPage: (@Composable (() -> Unit) -> Unit)? = remote?.let { connection ->
         { back -> ChangePasswordScreen(connection, back) { controller.passwordChanged() } } }
-    LaunchedEffect(remote) { if (remote != null) controller.refreshPasswordChangeAvailability() }
     val accountRole = state.accountRole
     val ownerWrites = accountRole == "owner" || (state.accountIdentity != null && state.manageAccount)
     val accountSession = accountRole != "device"
@@ -135,7 +134,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
             StremioImportRoute(state, controller, compact, if (compact) back else null, manageAddons) }) else null,
         serverAddress = controller.connection?.accountDashboardUrl,
-        tvAccount = (state.accountIdentity ?: state.accountDevices?.account)?.let { TvAccountInfo(it.name, it.username, it.role, password = state.passwordChangeAvailable) },
+        tvAccount = (state.accountIdentity ?: state.accountDevices?.account)?.let { TvAccountInfo(it.name, it.username, it.role, password = true) },
         accountRequested = if (!state.localMode) controller::refreshAccountIdentity else null,
         accountDashboard = controller.connection?.accountDashboardUrl?.let { url -> { org.viptv.app.connection.openAccountAuthorization(url) } },
         tvPreferences = state.preferences?.preferences?.tvSettings(),
