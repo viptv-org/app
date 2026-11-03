@@ -30,8 +30,6 @@ qualification remain incomplete, alongside playback and settings qualification.
 The implemented screens still have typography, focus/motion and data-contract
 checks outstanding. `design-coverage.json` records each supplied board separately.
 
-The dedicated TV player and scoped real-video checks are described in `TV_PLAYER.md`.
-
 Dedicated TV settings and their unavailable contract limits are described in `TV_SETTINGS.md`.
 
 Dedicated My List layout and its missing persistent data contract are described

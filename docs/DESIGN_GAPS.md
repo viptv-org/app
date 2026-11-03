@@ -2,26 +2,26 @@
 
 | ID | Surface | Reason | Status |
 | --- | --- | --- | --- |
-| GAP-001 | Local/remote connection selection | Native local mode; browser remains remote-only | Initial provisional implementation: `features/entry/ConnectScreen.kt`; capture `docs/provisional/connection-desktop.png` |
-| GAP-002 | Profile integration assignment | One browsing integration; multiple sources/subtitles | Initial per-profile add-on switch in `features/settings/SettingsScreen.kt`; capture `docs/provisional/addon-settings-android.png`; full capability controls pending |
+| GAP-001 | Local/remote connection selection | Native local mode; browser remains remote-only | Initial provisional implementation: `features/entry/ConnectScreen.kt` |
+| GAP-002 | Profile integration assignment | One browsing integration; multiple sources/subtitles | Initial per-profile add-on switch in `features/settings/SettingsScreen.kt`; full capability controls pending |
 | GAP-003 | Simkl TV connection | Dashboard linking replaces direct provider PIN flow | Implemented native explanation and browser linking in `features/settings/LinkedAccounts.kt`; supplied-design review pending |
-| GAP-004 | Server and integration failures | Empty, unauthorized and unavailable are distinct | Supported Home/server/source/account recovery implemented and render-tested; safe401 retirement,403 permission copy, cached retry, linked-account Retry and initial connection errors. See HOME_SEARCH_RECOVERY.md and INTEGRATION_SETTINGS_RECOVERY.md; full visual parity remains unqualified. |
+| GAP-004 | Server and integration failures | Empty, unauthorized and unavailable are distinct | Supported Home/server/source/account recovery implemented and render-tested; safe401 retirement,403 permission copy, cached retry, linked-account Retry and initial connection errors. Full visual parity remains unqualified. |
 | GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Browser device management implemented from W3Account; broader administration remains pending |
-| GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt`; settings capture `docs/provisional/addon-settings-android.png` |
+| GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt` |
 | GAP-007 | Local History clear confirmation | Current History boards show Clear without its confirmation state | Provisional confirmation in `features/history/HistoryScreen.kt` |
-| GAP-008 | Local profile creation dialog | Current profile picker shows Add profile, but no local creation form | Provisional dialog in `features/entry/ProfilesScreen.kt`; capture `docs/evidence/android-profiles.png` |
-| GAP-009 | Confirming a 5–8 digit local PIN | The supplied phone PIN keypad has four indicators and no confirmation key | Provisional OK key in `features/entry/MobilePinScreen.kt`; capture `docs/evidence/android-profile-pin.png` |
+| GAP-008 | Local profile creation dialog | Current profile picker shows Add profile, but no local creation form | Provisional dialog in `features/entry/ProfilesScreen.kt` |
+| GAP-009 | Confirming a 5–8 digit local PIN | The supplied phone PIN keypad has four indicators and no confirmation key | Provisional OK key in `features/entry/MobilePinScreen.kt` |
 | GAP-010 | Local forgotten-PIN explanation | The supplied PIN board has Forgot PIN? without a local recovery state | Provisional explanation in `features/entry/MobilePinScreen.kt`; no credential recovery or reset flow |
-| GAP-011 | Avatar picker | The current edit board has Change avatar but no selection sheet | Resolved (app#8): `features/entry/AvatarPicker.kt` follows design ADM-004 with the bundled 624-avatar catalog (`AvatarCatalog.kt`, design pin in `AVATAR_CATALOG_REF`): world chips, 15 per page on phones and 18 on TV/desktop, wrapping Previous/Next, check badge on the saved pick. Captures `docs/evidence/2026-10-26-avatar-picker/` (phone, desktop, TV) |
+| GAP-011 | Avatar picker | The current edit board has Change avatar but no selection sheet | Resolved (app#8): `features/entry/AvatarPicker.kt` follows design ADM-004 with the bundled 624-avatar catalog (`AvatarCatalog.kt`, design pin in `AVATAR_CATALOG_REF`): world chips, 15 per page on phones and 18 on TV/desktop, wrapping Previous/Next, check badge on the saved pick. |
 | GAP-012 | Secure-storage warning for remote sessions | The current Settings boards do not show a failed OS-vault state | Provisional warning in `features/settings/SettingsScreen.kt` when a native device session can only live in memory |
-| GAP-013 | Linux desktop window controls | The current desktop ZIP shows Windows and macOS chrome, with no Linux board | Provisional Linux variant follows the Windows control placement in `desktopMain/DesktopTitleBar.kt`; capture `docs/evidence/desktop-titlebar-linux.png` |
+| GAP-013 | Linux desktop window controls | The current desktop ZIP shows Windows and macOS chrome, with no Linux board | Provisional Linux variant follows the Windows control placement in `desktopMain/DesktopTitleBar.kt` |
 | GAP-019 | Unavailable channel favourites and calendar filters | Normal connections currently lack the save/filter operations | The favourite star and filter are hidden when the connection cannot save favourites (app#32); the phone header's calendar filter button was removed until filtering exists (app#15); preview guide/calendar captures cover the surrounding layouts |
-| GAP-018 | Confirming a 5–8 digit TV PIN | The supplied TV keypad has four slots and no confirmation key | Provisional OK key in `features/entry/TvPinScreen.kt`; `docs/evidence/android-tv-pin-preview.png` records preview input |
+| GAP-018 | Confirming a 5–8 digit TV PIN | The supplied TV keypad has four slots and no confirmation key | Provisional OK key in `features/entry/TvPinScreen.kt` |
 | GAP-017 | Phone settings capability notices | Settings rows without an operation | Resolved: every row in `features/settings/PhoneSettings.kt` opens a real page, a row without a handler is hidden instead of showing a notice (app#15), and no settings row reports an unavailable connection |
 | GAP-016 | Unavailable header capabilities | Casting, TV remote control and provider genre controls lack connected contracts | Phone and tablet Cast/Remote buttons removed until they work (app#15); the Home Genres chip lists the discovery controls' genres and opens Browse filtered to one; desktop Cast/Remote/Forward buttons are disabled when no operation exists |
 | GAP-015 | My List unavailable notice | Earlier missing shared list operation | Resolved by persisted local/remote My List; capability-dependent action variants remain in GAP-045 |
 | GAP-067 | Phone title action row, Starring line and header shortcuts | `M3Title` draws Cast/Share, four secondary actions and a Starring line; only My List has an operation and cast facts are not in the wire model | Back, My List and the AND-043 source summary only; see below |
-| GAP-014 | Custom server selection in desktop password flow | The supplied password board assumes one server | Use another server expands the address field in `DesktopPasswordPanel.kt`; capture `docs/evidence/desktop-signin-password.png` |
+| GAP-014 | Custom server selection in desktop password flow | The supplied password board assumes one server | Use another server expands the address field in `DesktopPasswordPanel.kt` |
 
 Provisional surfaces are recorded with their source locations and available review captures. No provisional surface is recorded as supplied-design parity.
 
@@ -234,8 +234,8 @@ Compact native Playback and Subtitles & audio now use separate supported board
 forms with a live style preview, size/colour/background controls and languages.
 Wide desktop and Web retain the provisional shared form. TV retains the supplied
 settings geometry with real profile persistence; failed loads now expose the
-actual safe error and focused retry. Six focused common Compose tests and three
-inspected captures are recorded in `PREFERENCE_SETTINGS_COMPLETION.md`.
+actual safe error and focused retry. Six focused common Compose tests cover the
+compact forms.
 
 The current eight fields support persisted subtitle styling and profile source/
 language preferences. Explicit next prompts are also implemented in the player.
@@ -294,13 +294,6 @@ creating/expired/error states, variable server-address text and failed browser
 opening have no individually supplied boards. The new controls and dynamic copy
 are provisional; normal supplied layouts are not certified as exact parity.
 
-`docs/evidence/native-pairing-desktop-{device,browser}.png` shows the packaged
-Linux layout. `native-pairing-phone-{device,browser}.png` shows common phone layout
-at 390×844 in an isolated desktop renderer; it does not prove Android input or OS
-chrome. These fixtures use `.invalid` links and never open an actual browser.
-Both generated QR images decode to the complete expected link/code. Real protocol
-approval/restore/Home evidence remains separate from these layout captures.
-
 ### GAP-056 — Native IPTV setup and profile selection
 
 Phone/tablet/desktop and TV entry now submit M3U/Xtream credentials to the local
@@ -311,18 +304,6 @@ states, empty fields and independent tab drafts have no exact supplied boards.
 The profile-storage explanation replaces the board's keychain/add-on wording
 because the engine encrypts credentials using its platform-backed vault and this
 entry currently opens Live channels. Xtream VOD entry is not implied.
-
-`native-iptv-{desktop,phone}-{xtream,m3u}.png` under `docs/evidence` shows the
-packaged Linux/common-phone layout with reserved-domain fixtures. Phone captures
-are 390×844 common layouts, not Android keyboard/status-bar qualification. Review
-uses Skiko SOFTWARE_COMPAT on an isolated Xvfb display. All four image files
-contain their headings and back links. A separate windowless Compose scene
-rendered 12 frames with an active-tab pointer press/release; the header's decoded
-pixels were identical in every frame. An earlier visual inspection incorrectly
-marked the M3U heading missing; the image pixels contradict that diagnosis.
-No rendering workaround was retained. These captures do not qualify Android
-input, OS keyboard/status-bar placement or default desktop GPU performance.
-No device app was replaced.
 
 ### GAP-057 — Provider discovery selection sheets
 
@@ -335,24 +316,19 @@ the filter trigger after closing. Rapid Apply input submits once.
 The sheet, count/limit/required/default copy, disabled choices at the limit, catalog labels
 with friendly connection names, and missing-required-filter errors have no exact
 supplied boards. These are provisional states; no full design parity is claimed.
-`docs/evidence/discovery-multichoice-{desktop,phone,tv}.png` shows isolated common
-Compose layouts with synthetic genre choices, not a live Simkl capability.
 Three real Compose input/focus checks cover Apply/limit behavior, required catalog search input and TV initial focus;
 Android input, physical TV rendering and browser popup placement remain separate.
 
 ### GAP-058 — Browser account device management
 
 The browser Devices page follows `W3Account` for sidebar/content geometry, device
-rows, typography and sign-out controls. Its loaded browser layout is recorded in
-`docs/evidence/account-devices-browser.png`. The host returns browser and paired
+rows, typography and sign-out controls. The host returns browser and paired
 app families with a current-session marker. The current browser has no per-device
 sign-out action; the separate all-devices action includes it after confirmation.
 
 Per-device/all-device confirmation, initial skeleton/loading, busy/error/retry, no-session and old-server
 states, the Refresh action, keyboard focus treatment and narrow-screen adaptation
-have no individually supplied boards. These variants remain provisional. The
-phone common-layout and all-devices confirmation captures are also recorded in
-`docs/evidence`. Creation time is labeled “Signed in …”; last activity, browser OS
+have no individually supplied boards. These variants remain provisional. Creation time is labeled “Signed in …”; last activity, browser OS
 and app device class are not fabricated. Unknown kinds use a generic device icon.
 New native sign-ins send a readable platform/model label without hardware IDs.
 No existing session names are rewritten.
@@ -364,10 +340,8 @@ only that known row without refetching the account. Parent PIN administration an
 remaining operator/account-management screens are separate unfinished dashboard
 work; this surface does not establish complete dashboard or browser design parity.
 
-The browser Devices surface additionally has real production-Wasm/HTTPS fixture
-captures: `browser-account-real.png`, `browser-account-parent-refusal.png` and
-`browser-account-confirmation.png`. Browser Settings opens Devices without loading
-unrelated configuration. Loaded rows and their supplied geometry were inspected;
+Browser Settings opens Devices without loading unrelated configuration. Loaded
+rows and their supplied geometry were inspected;
 permission/refusal and confirmation variants remain provisional. Synthetic account
 records do not establish provider metadata or general browser/OS parity.
 
@@ -383,9 +357,7 @@ current browse screen and provider-declared controls.
 
 Source rows keep the existing design with one fixed height: the title is one
 ellipsized line, the fact badges yield to it, and the description takes a fixed
-two-line window (SRC-OVERFLOW-001, GAP-066). The earlier growing rows are
-superseded; `evidence/android-tv-fixes-2026-10-15/dynamic-source-rows.png` keeps
-the old layout as history.
+two-line window (SRC-OVERFLOW-001, GAP-066).
 
 ### GAP-060 — Account entry and household controls
 
@@ -393,9 +365,7 @@ Browser registration, one-time recovery-code acknowledgment, recovery, parent PI
 and per-profile age restriction forms use the existing entry/settings tokens.
 There are no exact supplied boards for recovery-code safety, retry after a lost
 bootstrap, parent authorization or age-policy errors. These states are provisional.
-Real desktop and phone production-Wasm evidence is recorded in
-`evidence/browser-account-entry-2026-10-15`; code/password screens are deliberately
-excluded from committed images. This does not establish complete board parity.
+This does not establish complete board parity.
 
 Account identity now displays actual server data; native account administration
 opens the connected dashboard. General, Help, About, bundled license and Watch on
@@ -404,8 +374,7 @@ spacing and navigation components; fresh routing/visual qualification remains.
 Restricted-profile device approval reuses the same PIN dialog and retries the
 explicit pending action. Real phone browser checks now cover incorrect PIN,
 lookup retry without approval, grant expiry before explicit approval, and
-truthful sign-out refusal/retry with zero page errors. Evidence is in
-`evidence/browser-device-approval-2026-10-15`.
+truthful sign-out refusal/retry with zero page errors.
 
 ### GAP-061 — Per-title parent approvals
 
@@ -417,12 +386,10 @@ still be removed without guessing a provider. Source authority is never inferred
 from preview text.
 
 The screen uses existing Material typography, surfaces, spacing and dialogs; it
-has no exact supplied design board. `evidence/parent-title-approvals-2026-10-15/`
-records its inspected common Compose layout. Three UI tests cover the parent
+has no exact supplied design board. Three UI tests cover the parent
 forms, compact controls, and approval/cancel behavior; six controller tests cover
 typed transport, unsupported results, revocation cache invalidation, expired
-authority, canceled navigation and paging. Real provider-backed/private-origin browser qualification is recorded separately
-in `evidence/parent-title-approvals-2026-10-15/final/`.
+authority, canceled navigation and paging.
 
 The approved-title page additionally has a real390px browser capture and routing
 proof for current-profile list loading, no-provider search, Help, application/font
@@ -434,8 +401,7 @@ the selected restricted child had no provider assignments, while a different
 managed child alone had the private synthetic provider. The actual household PIN
 unlock, target-profile search, incarnation/expected-Card approval, authoritative
 saved-list reload and exact revoke all passed. The selected profile stayed
-unchanged; 12 UI API calls and zero page errors. The inspected capture and
-sanitized proof are in the `final/` subdirectory. The backend normal all-target
+unchanged; 12 UI API calls and zero page errors. The backend normal all-target
 gate passed503 tests (8 existing ignored), and SDK runtime passed505 (9 existing
 ignored), with no failures. This closes that functional qualification gap; exact
 supplied-board parity remains open.
@@ -443,8 +409,8 @@ supplied-board parity remains open.
 ### GAP-062 — Phone player episode and capability states
 
 `M3Player`, `M3PlayerNext` and `M3PlayerError` now have actual phone episode/next
-and recovery actions, with inspected common Compose captures and six passing
-focus/dispatch/isolation regressions. See `PHONE_PLAYER_ACTIONS.md`. The supplied
+and recovery actions, and six passing focus/dispatch/isolation regressions. The
+supplied
 player has an Episodes entry but no exact phone player episode-picker board;
 the loaded-episode side panel is provisional. Pending/unavailable Next status,
 portrait wrapping and failure states without retry/source capabilities are also
@@ -484,8 +450,7 @@ app#139 adds the full-screen Updating screen (docs/APP_UPDATES.md) without a
 design board. The provisional surface is `updates/AppUpdatingScreen.kt`: a
 centred V mark, **Updating VIPTV to {versionName}…**, a progress bar with a
 percent, the write/confirm line and the restart line on the phone 390-wide and
-TV 1920 layouts (renders in
-`docs/evidence/2026-10-28-app-updating-screen/`). The permission step reuses
+TV 1920 layouts. The permission step reuses
 the prompt's **Allow updates** copy on the same full screen. The "Updated to
 {versionName}" confirmation is a small raised bar at the bottom for six
 seconds. The copy is to be recorded in the design repository's `copy.md` and

@@ -65,9 +65,9 @@ case "${1:-1}" in
   spawn "AUTH/session" pi /tmp/audit-auth-session.md \
     "Domain: auth (AUTH-01..04). Read connection/RemoteConnection.kt and platform secret stores (androidMain/AndroidSecrets.kt, desktopMain/DesktopSecrets.kt, iosMain, wasmJsMain), controller session files. Audit refresh-token rotation, 401 refresh on every transport, clean sign-out with message, restore-on-restart without login flash, and multi-profile token/preference scoping. file:line + concrete failure mode."
   spawn "PERF/budget" pi /tmp/audit-perf-budget.md \
-    "Domain: performance claims (PERF-05..10, R3). Read docs/TV_FRAME_BUDGET.md, tools/tv_ab.sh, TvHomeScreen.kt, TvHomeShelf.kt, TvCatalogCard.kt, HomeBackdrop/TvHomeBackdrop, images/*. Identify what is measured vs asserted, which of PERF-05..10 have no evidence, and exactly how to measure each (command, build type, pass/fail threshold). Do not run builds."
+    "Domain: performance claims (PERF-05..10, R3). Read tools/tv_ab.sh, TvHomeScreen.kt, TvHomeShelf.kt, TvCatalogCard.kt, HomeBackdrop/TvHomeBackdrop, images/*. Identify what is measured vs asserted, which of PERF-05..10 have no evidence, and exactly how to measure each (command, build type, pass/fail threshold). Do not run builds."
   spawn "TEST/gates" pi /tmp/audit-test-gates.md \
-    "Domain: testing/gates (TEST-01..10). Read build.gradle.kts, composeApp/build.gradle.kts, composeApp/src/desktopTest, androidApp, iosApp, tools/*.sh, .pi workspace gates. Map each TEST item to an actual command and current coverage; list which are red/unverified and which device passes have no saved evidence. Also audit docs/UI_INVENTORY.md, docs/TV_FRAME_BUDGET.md for stale claims (DOC-01..04)."
+    "Domain: testing/gates (TEST-01..10). Read build.gradle.kts, composeApp/build.gradle.kts, composeApp/src/desktopTest, androidApp, iosApp, tools/*.sh, .pi workspace gates. Map each TEST item to an actual command and current coverage; list which are red/unverified and which device passes have no saved evidence. Also audit docs/UI_INVENTORY.md for stale claims (DOC-01..04)."
   ;;
 *)
   echo "usage: $0 1|2|3|4" >&2; exit 2;;

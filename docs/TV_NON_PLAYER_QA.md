@@ -18,5 +18,4 @@ focus. Dynamic refresh cases, every shelf and all supplied boards still need
 rendered acceptance evidence. No additional provider/authentication success is
 implied by UI fixtures.
 
-Native video blur evidence and current APK qualification are recorded separately
-in `TV_PLAYER.md`. The test device was emulator-5582; no physical device was used.
+The test device was emulator-5582; no physical device was used.
