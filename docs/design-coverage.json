@@ -16,8 +16,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "docs/TV_HOME.md",
-    "capture": "docs/evidence/android-tv-home-rows.png"
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeScreen.kt",
+    "capture": null
   },
   {
     "id": "Tv3Splash",
@@ -27,7 +27,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_SPLASH.md",
-    "capture": "docs/evidence/android-tv-splash.png"
+    "capture": null
   },
   {
     "id": "Tv3Welcome",
@@ -37,7 +37,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvWelcome.kt",
-    "capture": "docs/evidence/android-tv-welcome.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -48,7 +48,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvSignInChoice.kt",
-    "capture": "docs/evidence/android-tv-signin-choice.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -59,7 +59,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_PAIRING.md",
-    "capture": "docs/evidence/android-tv-pairing.png"
+    "capture": null
   },
   {
     "id": "Tv3SignInEmail",
@@ -88,8 +88,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "docs/TV_PASSWORD.md",
-    "capture": "docs/evidence/android-tv-password.png",
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/TvPasswordPanel.kt",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -100,7 +100,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_IPTV.md",
-    "capture": "docs/evidence/android-tv-iptv.png"
+    "capture": null
   },
   {
     "id": "Tv3SignedIn",
@@ -110,7 +110,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_SIGNED_IN.md",
-    "capture": "docs/evidence/android-tv-signed-in.png"
+    "capture": null
   },
   {
     "id": "Tv3Profiles",
@@ -120,7 +120,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_PROFILES.md",
-    "capture": "docs/evidence/android-tv-profiles.png"
+    "capture": null
   },
   {
     "id": "Tv3Pin",
@@ -130,7 +130,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_PIN.md",
-    "capture": "docs/evidence/android-tv-pin.png"
+    "capture": null
   },
   {
     "id": "Tv3ProfileEdit",
@@ -140,7 +140,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_PROFILE_EDIT.md",
-    "capture": "docs/evidence/android-tv-profile-edit.png"
+    "capture": null
   },
   {
     "id": "Tv3HomeLoading",
@@ -149,8 +149,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "docs/TV_HOME.md",
-    "capture": "docs/evidence/android-tv-home-loading.png"
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeScreen.kt",
+    "capture": null
   },
   {
     "id": "Tv3Home",
@@ -159,8 +159,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "docs/TV_HOME.md",
-    "capture": "docs/evidence/android-tv-home.png"
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeScreen.kt",
+    "capture": null
   },
   {
     "id": "Tv3Browse",
@@ -180,7 +180,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_SEARCH.md",
-    "capture": "docs/evidence/android-tv-search.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -190,8 +190,8 @@
     "width": 1920,
     "height": 1080,
     "status": "in_progress",
-    "implementation": "docs/TV_HOME.md",
-    "capture": "docs/evidence/android-tv-movies.png"
+    "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TvHomeScreen.kt",
+    "capture": null
   },
   {
     "id": "Tv3Live",
@@ -201,7 +201,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_LIVE.md",
-    "capture": "docs/evidence/android-tv-live.png"
+    "capture": null
   },
   {
     "id": "Tv3MyList",
@@ -211,7 +211,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_LIBRARY.md",
-    "capture": "docs/evidence/android-tv-library.png"
+    "capture": null
   },
   {
     "id": "Tv3Title",
@@ -221,7 +221,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/details/TvDetailsScreen.kt",
-    "capture": "docs/evidence/android-tv-series.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -232,7 +232,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/details/TvEpisodeShelf.kt",
-    "capture": "docs/evidence/android-tv-episodes.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -243,7 +243,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/details/TvDetailsScreen.kt",
-    "capture": "docs/evidence/android-tv-movie.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render; source summary and full connected parity unfinished"
   },
   {
@@ -254,7 +254,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/sources/TvSourcesScreen.kt",
-    "capture": "docs/evidence/android-tv-sources.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -265,7 +265,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/sources/TvSourcesScreen.kt",
-    "capture": "docs/evidence/android-tv-sources-loading.png",
+    "capture": null,
     "verification": "1920x1080 Android TV fixture render and scoped remote interaction checks; full parity remains unproven"
   },
   {
@@ -276,7 +276,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerStates.kt",
-    "capture": "docs/evidence/android-tv-player-buffer.png",
+    "capture": null,
     "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
@@ -287,7 +287,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerControls.kt",
-    "capture": "docs/evidence/android-tv-player-controls.png",
+    "capture": null,
     "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
@@ -298,7 +298,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlaybackTimeline.kt",
-    "capture": "docs/evidence/android-tv-player-scrub.png",
+    "capture": null,
     "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
@@ -309,7 +309,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerStates.kt",
-    "capture": "docs/evidence/android-tv-player-skip.png",
+    "capture": null,
     "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
@@ -320,7 +320,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlaybackTrackPicker.kt",
-    "capture": "docs/evidence/android-tv-player-tracks.png",
+    "capture": null,
     "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
@@ -331,7 +331,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvNextEpisode.kt",
-    "capture": "docs/evidence/android-tv-player-next.png",
+    "capture": null,
     "verification": "1920x1080 fixture render; Keep watching dismisses without advance; final typography and connected next-source playback unqualified"
   },
   {
@@ -342,7 +342,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/TvPlayerStates.kt",
-    "capture": "docs/evidence/android-tv-player-error.png",
+    "capture": null,
     "verification": "1920x1080 fixture render and scoped remote interaction checks; native transport qualified only with public MP4; full parity remains unproven"
   },
   {
@@ -353,7 +353,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvPlaybackSettings.kt",
-    "capture": "docs/evidence/android-tv-settings-playback.png",
+    "capture": null,
     "verification": "1920x1080 isolated fixture render and scoped D-pad checks; persistence/account/pairing contracts and final parity unqualified"
   },
   {
@@ -364,7 +364,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSubtitleSettings.kt",
-    "capture": "docs/evidence/android-tv-settings-subs.png",
+    "capture": null,
     "verification": "1920x1080 isolated fixture render and scoped D-pad checks; persistence/account/pairing contracts and final parity unqualified"
   },
   {
@@ -375,7 +375,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvAddonSettings.kt",
-    "capture": "docs/evidence/android-tv-settings-addons.png",
+    "capture": null,
     "verification": "1920x1080 isolated fixture render and scoped D-pad checks; persistence/account/pairing contracts and final parity unqualified"
   },
   {
@@ -386,7 +386,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/TvSettingsDialogs.kt",
-    "capture": "docs/evidence/android-tv-settings-signout.png",
+    "capture": null,
     "verification": "1920x1080 remote-style fixture confirmation; Cancel passed; real account sign-out and final typography unqualified"
   },
   {
@@ -517,7 +517,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilesScreen.kt",
-    "capture": "docs/evidence/android-profiles.png"
+    "capture": null
   },
   {
     "id": "M3Pin",
@@ -527,7 +527,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfilePinScreen.kt",
-    "capture": "docs/evidence/android-profile-pin.png"
+    "capture": null
   },
   {
     "id": "M3ProfileEdit",
@@ -537,7 +537,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/ProfileEditScreen.kt",
-    "capture": "docs/evidence/android-profile-edit.png"
+    "capture": null
   },
   {
     "id": "M3HomeLoading",
@@ -637,7 +637,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/library/LibraryScreen.kt",
-    "capture": "docs/evidence/android-library-preview.png"
+    "capture": null
   },
   {
     "id": "M3MyListSort",
@@ -737,8 +737,8 @@
     "height": 390,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PlayerScreen.kt",
-    "capture": "docs/evidence/phone-player-actions-2026-10-15/phone-player-controls.png",
-    "previous_capture": "docs/evidence/android-player-controls.png",
+    "capture": null,
+    "previous_capture": null,
     "verification": "Six actual common Compose UI/focus/dispatch regressions pass; inspected844x390 captures. Physical phone/decoder and complete board parity remain unproven."
   },
   {
@@ -789,7 +789,7 @@
     "height": 390,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhoneNextEpisode.kt",
-    "capture": "docs/evidence/phone-player-actions-2026-10-15/phone-player-next.png",
+    "capture": null,
     "verification": "Six actual common Compose UI/focus/dispatch regressions pass; inspected844x390 captures. Physical phone/decoder and complete board parity remain unproven."
   },
   {
@@ -810,7 +810,7 @@
     "height": 390,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PhonePlayerFailure.kt",
-    "capture": "docs/evidence/phone-player-actions-2026-10-15/phone-player-source-failure.png",
+    "capture": null,
     "verification": "Six actual common Compose UI/focus/dispatch regressions pass; inspected844x390 captures. Physical phone/decoder and complete board parity remain unproven."
   },
   {
@@ -861,7 +861,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneSettings.kt",
-    "capture": "docs/evidence/android-settings-preview.png"
+    "capture": null
   },
   {
     "id": "M3SetPlayback",
@@ -871,7 +871,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneProfilePreferences.kt",
-    "capture": "docs/evidence/preference-settings-2026-10-15/phone-playback-preferences.png",
+    "capture": null,
     "verification": "Six common Compose preferences focus/draft/routing cases pass; supplied Sources fields implemented. Unavailable board-only preferences omitted; physical phone/full parity unproven."
   },
   {
@@ -882,7 +882,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/PhoneSubtitlePreferences.kt",
-    "capture": "docs/evidence/preference-settings-2026-10-15/phone-subtitle-preferences.png",
+    "capture": null,
     "verification": "Actual common Compose preview/style/draft dispatch verified; eight current wire fields preserved. Shadow has no stored field; physical phone/full parity unproven."
   },
   {
@@ -893,7 +893,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AddonSettings.kt",
-    "capture": "docs/evidence/addon-account-recovery-2026-10-15/common-captures/phone-addons-populated.png",
+    "capture": null,
     "verification": "Supported list/add/remove/switch flow, primary action before advanced controls, explicit install completion and native failure/retry/success/blank reopen verified. Full pixel parity and unprovided manifest-preview/pairing contracts remain unqualified."
   },
   {
@@ -904,7 +904,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AddonSettings.kt",
-    "capture": "docs/evidence/addon-account-recovery-2026-10-15/common-captures/phone-add-addon-sheet.png",
+    "capture": null,
     "verification": "Supported list/add/remove/switch flow, primary action before advanced controls, explicit install completion and native failure/retry/success/blank reopen verified. Full pixel parity and unprovided manifest-preview/pairing contracts remain unqualified."
   },
   {
@@ -935,7 +935,7 @@
     "height": 834,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home/TabletHero.kt",
-    "capture": "docs/evidence/android-tablet-home-preview.png"
+    "capture": null
   },
   {
     "id": "T3HomePortrait",
@@ -1045,7 +1045,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
-    "capture": "docs/evidence/desktop-titlebar-linux.png"
+    "capture": null
   },
   {
     "id": "D3HomeMac",
@@ -1075,7 +1075,7 @@
     "height": 800,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/home",
-    "capture": "docs/evidence/desktop-titlebar-narrow.png"
+    "capture": null
   },
   {
     "id": "D3HomeUltra",
@@ -1205,7 +1205,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchScreen.kt",
-    "capture": "docs/evidence/desktop-search-shell.png"
+    "capture": null
   },
   {
     "id": "D3Browse",
@@ -1215,7 +1215,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/browse/BrowseScreen.kt",
-    "capture": "docs/evidence/desktop-browse-shell.png"
+    "capture": null
   },
   {
     "id": "D3Live",
@@ -1325,7 +1325,7 @@
     "height": 720,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
-    "capture": "docs/evidence/desktop-signin-choice.png"
+    "capture": null
   },
   {
     "id": "D3SignInWaiting",
@@ -1355,7 +1355,7 @@
     "height": 720,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopSignIn.kt",
-    "capture": "docs/evidence/desktop-signin-password.png"
+    "capture": null
   },
   {
     "id": "D3SignInDevice",
@@ -1385,7 +1385,7 @@
     "height": 720,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/entry/DesktopProfiles.kt",
-    "capture": "docs/evidence/desktop-profiles.png"
+    "capture": null
   },
   {
     "id": "D3SetGeneral",
@@ -1675,7 +1675,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/search/SearchScreen.kt",
-    "capture": "docs/evidence/web-search-preview.png"
+    "capture": null
   },
   {
     "id": "W3Live",
@@ -1685,7 +1685,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/live/LiveScreen.kt",
-    "capture": "docs/evidence/web-live-guide-preview.png"
+    "capture": null
   },
   {
     "id": "W3MyList",
@@ -1705,7 +1705,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/player/PlayerScreen.kt",
-    "capture": "docs/evidence/web-player-transport.png"
+    "capture": null
   },
   {
     "id": "W3PlayerAudio",
@@ -1725,7 +1725,7 @@
     "height": 900,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/settings/AccountDevicesScreen.kt",
-    "capture": "docs/evidence/browser-account-real.png",
+    "capture": null,
     "verification": "Common geometry and actual production Chromium/HTTPS account flow passed on a fresh synthetic host; screenshots inspected; full design/OS/media parity not certified"
   },
   {
@@ -1926,7 +1926,7 @@
     "height": 844,
     "status": "in_progress",
     "implementation": "composeApp/src/commonMain/kotlin/org/viptv/app/features/calendar/CalendarScreen.kt",
-    "capture": "docs/evidence/android-calendar-preview.png"
+    "capture": null
   },
   {
     "id": "SkMUpNext",
@@ -1976,7 +1976,7 @@
     "height": 1080,
     "status": "in_progress",
     "implementation": "docs/TV_CALENDAR.md",
-    "capture": "docs/evidence/android-tv-calendar.png"
+    "capture": null
   },
   {
     "id": "SkTvFilters",

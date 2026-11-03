@@ -433,7 +433,7 @@ core#12 supply it, the app uses the interim rule in `connection/SourceRanking.kt
 
 ### GAP-064 — Android update prompt and About update rows
 
-app#64 adds automatic updates on Android (docs/APP_UPDATES.md) without a
+app#64 adds automatic updates on Android (APP_UPDATES.md) without a
 design board. The provisional surfaces are in `updates/AppUpdatePrompt.kt`: a
 bottom banner on phone and tablet (title, one line, Later · Install) and a
 small top-right TV card in the About-panel colours, without a dimmed page (Install focused after
@@ -446,14 +446,14 @@ copy; layout, type and spacing need a board.
 
 ### GAP-065 — Updating screen while an Android update installs
 
-app#139 adds the full-screen Updating screen (docs/APP_UPDATES.md) without a
+app#139 adds the full-screen Updating screen (APP_UPDATES.md) without a
 design board. The provisional surface is `updates/AppUpdatingScreen.kt`: a
 centred V mark, **Updating VIPTV to {versionName}…**, a progress bar with a
 percent, the write/confirm line and the restart line on the phone 390-wide and
 TV 1920 layouts. The permission step reuses
 the prompt's **Allow updates** copy on the same full screen. The "Updated to
 {versionName}" confirmation is a small raised bar at the bottom for six
-seconds. The copy is to be recorded in the design repository's `copy.md` and
+seconds. The copy is to be recorded in the design repository's copy spec and
 in AND-APP-UPDATE-001, kept "proposed" (viptv-org/design#32); layout, type and
 spacing need a board.
 
@@ -461,7 +461,7 @@ spacing need a board.
 
 app#413 adds a **Source details** view for the full source description on phone,
 tablet, desktop/web and TV. The design specifies the TV full-screen text panel
-(`components.md`, overlays) and the phone/TV sheet entry, but no board: layout,
+(the component spec's overlays) and the phone/TV sheet entry, but no board: layout,
 type, spacing and the entry gesture are provisional. The surface is
 `features/sources/SourceDetails.kt`: a right-side 820-wide panel at the TV design
 width and a centred 560-wide panel elsewhere, each with a heading, the source

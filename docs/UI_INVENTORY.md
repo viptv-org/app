@@ -2,7 +2,7 @@
 
 Source of truth for boards:
 `design/viptv-design-system/reference/screens/{html,img}/<platform>/<id>`.
-Board counts at this export (`reference/screens/index.json`, 273 entries): TV 56,
+Board counts at this export (273 entries): TV 56,
 phone 69, tablet 18, desktop 55, web 40, `simkl` 26 = **264 screen boards**, plus 9
 `components` sheets (`CmpPhone1-3`, `CmpDesk1-3`, `CmpTv1-3`). The 26 `simkl` boards
 are the ones this inventory used to omit; "264-board export" elsewhere in the docs

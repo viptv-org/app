@@ -199,5 +199,4 @@ is visual evidence only; screen recording was disabled for frame measurements.
 The existing `tools/tv_ab.sh` final qualification also completed three horizontal bursts
 after proving actual shelf displacement: 432 frames, 10 missed vsync (2.3%), median
 p90 31 ms, and 16.7% Android janky frames. This aggregate uses a different catalog
-starting card from the same-shelf tuning samples above. The installed APK hash was
-compared against the built release and recorded in `final-receipt.json`.
+starting card from the same-shelf tuning samples above. The installed APK hash was compared against the built release.

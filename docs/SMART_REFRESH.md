@@ -77,8 +77,8 @@ There is no ETag, `If-None-Match` or `Last-Modified`. Every `/api` response is
 
 ### Design constraints
 
-Approved spec `design/specs/behavior/home-addon-refresh.md` (HOME-ADDON-001)
-already requires:
+Approved design-repository spec HOME-ADDON-001 already
+requires:
 
 - an opaque revision check on Home entry and on foreground return, then every
   15 s while Home is visible and the app is in the foreground;
@@ -89,7 +89,7 @@ already requires:
 - the hero follows the retained selection;
 - a failure keeps the current shelves.
 
-`ANDROID_DESIGN.md` AND-041 adds:
+Design spec AND-041 adds:
 
 - foreground return must not refetch all Home rows;
 - coalesce repeated callbacks.

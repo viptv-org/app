@@ -31,6 +31,4 @@ absolute+exact mpv seek; there is no source interrupt and no path that reads
 unverified bytes.
 
 The strict Stremio performance gate is still failed; Android qualification and
-runtime pin promotion remain gated. See the sibling playback-gateway
-`docs/TORRENT_PERFORMANCE_2026_10_22.md` and its numeric evidence for measurements and
-scope. This task does not claim production rollout or native Windows/macOS playback.
+runtime pin promotion remain gated. This task does not claim production rollout or native Windows/macOS playback.
