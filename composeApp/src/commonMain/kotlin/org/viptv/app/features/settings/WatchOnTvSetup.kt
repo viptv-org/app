@@ -9,7 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -23,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.PlatformContext
@@ -32,6 +35,7 @@ import com.composables.icons.lucide.Lucide
 import kotlinx.coroutines.*
 import org.viptv.app.components.AppBasicTextField
 import org.viptv.app.components.AppTextField
+import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.pointerClickable
@@ -235,7 +239,7 @@ internal class WatchOnTvSetupController(
         pairJob?.cancel()
         pin = ""; pinError = null; challenge = null; pinReady = false
         busy = true
-        pairJob = scope.launch {
+        val job = scope.launch {
             try {
                 pendingPair?.let { cancelPairBestEffort(it) }
                 pendingPair = tv
@@ -251,8 +255,10 @@ internal class WatchOnTvSetupController(
             catch (_: Exception) {
                 pendingPair = null
                 pinError = "Can't reach ${tv.name}. Check the TV is on the same Wi-Fi and try again."
-            } finally { if (pairJob === coroutineContext[Job]) { pairJob = null; busy = false } }
+            }
         }
+        pairJob = job
+        job.invokeOnCompletion { if (pairJob === job) { pairJob = null; busy = false } }
     }
 
     private fun submitPin() {
@@ -263,7 +269,7 @@ internal class WatchOnTvSetupController(
         pin = ""
         busy = true
         pairJob?.cancel()
-        pairJob = scope.launch {
+        val job = scope.launch {
             try {
                 when (val result = engine.finishPair(tv, challenge, entered)) {
                     VizioPairResult.Paired -> {
@@ -278,8 +284,10 @@ internal class WatchOnTvSetupController(
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 pinError = "Can't reach ${tv.name}. Check the TV is on the same Wi-Fi and try again."
-            } finally { if (pairJob === coroutineContext[Job]) { pairJob = null; busy = false } }
+            }
         }
+        pairJob = job
+        job.invokeOnCompletion { if (pairJob === job) { pairJob = null; busy = false } }
     }
 
     private fun cancelPairing(tv: VizioTv) {
@@ -357,13 +365,36 @@ private fun VizioPoint(text: String) {
 }
 
 @Composable
+private fun BusyRing(size: Dp, strokeWidth: Dp) {
+    if (LocalReducedMotion.current) {
+        CircularProgressIndicator(progress = { 0.25f }, Modifier.size(size), color = Palette.secondary, strokeWidth = strokeWidth)
+    } else {
+        CircularProgressIndicator(Modifier.size(size), color = Palette.secondary, strokeWidth = strokeWidth)
+    }
+}
+
+@Composable
+private fun SearchLinearProgress() {
+    if (LocalReducedMotion.current) {
+        LinearProgressIndicator(progress = { 0.25f }, Modifier.fillMaxWidth().height(3.dp), color = Palette.accent, trackColor = Palette.raised)
+    } else {
+        LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = Palette.accent, trackColor = Palette.raised)
+    }
+}
+
+@Composable
 private fun VizioSetupSearch(compact: Boolean, controller: WatchOnTvSetupController) {
     DeviceTile()
     DeviceTitle("Choose your TV", compact)
     when {
-        controller.searching && controller.results.isEmpty() ->
+        controller.searching && controller.results.isEmpty() -> {
+            BusyRing(28.dp, 3.dp)
             DeviceSubtitle("Looking for Vizio TVs on your Wi-Fi…", compact)
-        controller.results.isNotEmpty() -> SurfaceList(controller.results) { controller.choose(it) }
+        }
+        controller.results.isNotEmpty() -> {
+            SurfaceList(controller.results) { controller.choose(it) }
+            if (controller.searching) SearchLinearProgress()
+        }
         else -> Unit
     }
     if (controller.results.isEmpty() && !controller.searching) {
@@ -422,14 +453,21 @@ private fun VizioSetupPin(compact: Boolean, tv: VizioTv, controller: WatchOnTvSe
     DeviceTitle("Enter the PIN on your TV", compact)
     DeviceSubtitle("${tv.name} is showing a 4-digit PIN.", compact)
     if (!controller.pinReady && controller.busy) {
+        BusyRing(28.dp, 3.dp)
         DeviceSubtitle("Connecting to ${tv.name}…", compact)
+        DeviceSecondaryButton("Cancel") { controller.cancelPin() }
     } else if (!controller.pinReady) {
         controller.pinError?.let { DeviceError(it) }
         DeviceSecondaryButton("Try again") { controller.newPin() }
         DeviceSecondaryButton("Cancel") { controller.cancelPin() }
     } else {
         VizioPinBoxes(controller.pin, enabled = !controller.busy, error = controller.pinError != null) { controller.pinChanged(it) }
-        Text("Pairs as soon as all 4 digits are in.", color = Palette.tertiary, fontSize = 13.sp, textAlign = TextAlign.Center)
+        if (controller.busy) {
+            BusyRing(20.dp, 2.dp)
+            Text("Pairing…", color = Palette.secondary, fontSize = 14.sp, textAlign = TextAlign.Center)
+        } else {
+            Text("Pairs as soon as all 4 digits are in.", color = Palette.tertiary, fontSize = 13.sp, textAlign = TextAlign.Center)
+        }
         controller.pinError?.let { DeviceError(it) }
         DeviceSecondaryButton("New PIN") { controller.newPin() }
         DeviceSecondaryButton("Cancel") { controller.cancelPin() }
