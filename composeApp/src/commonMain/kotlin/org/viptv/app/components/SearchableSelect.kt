@@ -566,8 +566,13 @@ private fun SelectField(text: String, placeholder: String, icon: ImageVector?, m
                     inner()
                 }
             })
-        if (text.isNotEmpty()) Icon(Lucide.X, "Clear text", Modifier.size(if (metrics.tv) 22.dp * metrics.scale else 16.dp)
-            .pointerClickable(shape = CircleShape) { change("") }, tint = Palette.secondary)
+        if (text.isNotEmpty()) {
+            if (metrics.tv) {
+                Icon(Lucide.X, "Clear text", Modifier.size(22.dp * metrics.scale).pointerClickable(shape = CircleShape) { change("") }, tint = Palette.secondary)
+            } else {
+                AccessibleIconButton(Lucide.X, "Clear text", { change("") }, iconSize = 16.dp, tint = Palette.secondary, wash = null)
+            }
+        }
     }
 }
 
