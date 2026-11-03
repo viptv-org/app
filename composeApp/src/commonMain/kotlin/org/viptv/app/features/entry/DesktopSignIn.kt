@@ -39,6 +39,7 @@ internal fun DesktopSignIn(
     startPairing: ((String) -> Unit)? = null,
     cancelPairing: () -> Unit = {},
     backChanged: ((() -> Unit)?) -> Unit = {},
+    retry: (() -> Unit)? = null,
 ) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
     var server by remember(origin) { mutableStateOf(origin) }
@@ -61,6 +62,7 @@ internal fun DesktopSignIn(
                         Spacer(Modifier.height(12.dp))
                         Text(it, color = Palette.danger, fontSize = 14.sp, lineHeight = 20.sp)
                     }
+                    if (retry != null) TextButton(retry, modifier = Modifier.fillMaxWidth(), enabled = !busy) { Text("Try again") }
                     Spacer(Modifier.height(16.dp))
                     SignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
                     SignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }

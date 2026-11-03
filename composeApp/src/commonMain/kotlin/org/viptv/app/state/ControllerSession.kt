@@ -4,6 +4,8 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 
 fun ApplicationController.restore(localDatabase: String? = null) = run {
+    startupDatabase = localDatabase
+    updateState { it.copy(starting = true) }
     val operation = generation
     val origin = browserOrigin()
     if (origin != null) {
@@ -52,16 +54,25 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
             if (generation != operation || connection !== remote) return@run
             // Release the failed connection before Connect so no token-bearing client survives the restore.
             remote.close(); connection = null
-            updateState { next -> next.copy(error = if (error.sessionExpired) "Session expired. Sign in again." else error.message) }
+            updateState { next -> next.copy(startupRetryable = !error.sessionExpired,
+                error = if (error.sessionExpired) "Session expired. Sign in again." else error.message) }
         }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (generation == operation && connection === remote) { remote.close(); connection = null }
+            if (generation == operation && connection === remote) {
+                remote.close(); connection = null
+                updateState { it.copy(startupRetryable = true) }
+            }
             throw error
         }
     }
 }
 
+// A saved session the server or the network failed to reach is retried from here: no sign-in and no new process.
+fun ApplicationController.retryStartup() {
+    if (!mutable.value.startupRetryable || mutable.value.busy) return
+    restore(startupDatabase)
+}
 
 fun ApplicationController.connect(origin: String, username: String, password: String) {
     discardStremioImport()

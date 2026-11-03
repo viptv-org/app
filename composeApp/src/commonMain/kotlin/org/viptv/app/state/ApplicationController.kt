@@ -108,6 +108,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var freshnessWatcher: Job? = null
     internal var addonOperation: Job? = null
     internal var crashReportChecked = false
+    internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
 
     internal fun run(operation: suspend () -> Unit) {
@@ -115,7 +116,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
         val claimed = synchronized(runGate) {
             val prior = job
             val current = ++generation
-            updateState { it.copy(busy = true, error = null, errorCode = null, detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true, devicesRetryable = true) }
+            updateState { it.copy(busy = true, error = null, errorCode = null, startupRetryable = false, detailLoadingOffset = null, detailPageError = null, detailPageRetryOffset = null, detailRetryable = true, devicesRetryable = true) }
             val started = scope.launch(start = CoroutineStart.LAZY) {
                 try { prior?.join(); operation() }
                 catch (e: CancellationException) { throw e }

@@ -228,6 +228,13 @@ session and a line that the app will restart. Nothing behind it can be touched.
 (`UPDATE_NOTICE_MILLIS`). A device that refuses to start the app falls back to
 the Updating screen having said to open it again.
 
+The first launch on the new build restores the saved connection like any other
+launch. If the server or the network cannot be reached at that moment, the
+failure is not final: the sign-in screen the app lands on offers **Try again**,
+and returning to the app retries the saved connection by itself. Either way it
+restores without a restart and without signing in again; only an expired
+session asks for a sign-in.
+
 ## Testing an upgrade locally
 
 On the TV emulator, without the real server:
