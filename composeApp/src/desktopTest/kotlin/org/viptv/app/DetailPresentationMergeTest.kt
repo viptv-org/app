@@ -59,4 +59,9 @@ class DetailPresentationMergeTest {
         val loaded = DetailSnapshot(item = card(), episodes = emptyList())
         assertSame(loaded, loaded.withCardPresentation(card()))
     }
+
+    @Test fun theMergeKeepsTheDetailsMetadata() {
+        val loaded = DetailSnapshot(item = card().copy(metadata = CardMetadata(cast = listOf("A", "B", "C"))), episodes = emptyList())
+        assertEquals(listOf("A", "B", "C"), loaded.withCardPresentation(card()).item.metadata?.cast)
+    }
 }
