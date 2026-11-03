@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.components.FilterBar
@@ -44,12 +45,12 @@ internal fun clearedFilters(query: BrowseQuery): BrowseQuery =
 @Composable
 internal fun BrowseFilterBar(controls: DiscoveryControls?, query: BrowseQuery, showType: Boolean,
     changed: (String, String) -> Unit, multipleChanged: (String, List<String>) -> Unit, applyQuery: (BrowseQuery) -> Unit,
-    catalogOpen: MutableState<Boolean>, modifier: Modifier = Modifier, gutter: Dp = 0.dp, extra: LazyListScope.() -> Unit = {}) {
+    catalogOpen: MutableState<Boolean>, modifier: Modifier = Modifier, gutter: Dp = 0.dp, down: FocusRequester? = null, extra: LazyListScope.() -> Unit = {}) {
     val facets = remember(controls, query, showType) { browseFacets(controls, query, showType) }
     val applied = remember(facets, query) { appliedFacets(facets, query) }
     val peers = remember(controls, query.type) { controls?.catalogs?.filter { it.type == query.type }.orEmpty() }
     val catalog = controls?.selectedCatalog(query)
-    FilterBar(modifier, gutter, clear = if (applied.isNotEmpty()) ({ applyQuery(clearedFilters(query)) }) else null) {
+    FilterBar(modifier, gutter, clear = if (applied.isNotEmpty()) ({ applyQuery(clearedFilters(query)) }) else null, down = down) {
         if (peers.isNotEmpty()) {
             item(key = "catalog") { CatalogSelect(peers, catalog, catalogOpen) { applyQuery(query.forCatalog(it)) } }
             if (facets.isNotEmpty()) item(key = "catalog:divider") { FilterDivider() }

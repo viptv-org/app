@@ -2,6 +2,7 @@ package org.viptv.app.features.library
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
 import org.viptv.app.components.FilterBar
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
@@ -11,9 +12,9 @@ private val LocalSorts = listOf("Date added", "A–Z", "Z–A").map { SelectOpti
 
 @Composable
 internal fun LibraryControls(filter: String, setFilter: (String) -> Unit, sort: String, setSort: (String) -> Unit,
-    watchedAvailable: Boolean = false) {
+    watchedAvailable: Boolean = false, down: FocusRequester? = null) {
     val sorts = remember(watchedAvailable) { LocalSorts + if (watchedAvailable) listOf(SelectOption("Last watched", "Last watched")) else emptyList() }
-    FilterBar(clear = if (filter != "All" || sort != "Date added") ({ setFilter("All"); setSort("Date added") }) else null) {
+    FilterBar(clear = if (filter != "All" || sort != "Date added") ({ setFilter("All"); setSort("Date added") }) else null, down = down) {
         item(key = "type") {
             SearchableSelect("Type", LocalTypes, listOf(filter), { it.firstOrNull()?.let(setFilter) }, anyLabel = null,
                 highlighted = filter != "All")

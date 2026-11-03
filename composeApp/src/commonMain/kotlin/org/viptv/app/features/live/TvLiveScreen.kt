@@ -102,7 +102,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
             CompositionLocalProvider(LocalTvScale provides scale) {
                 LiveFilters(groups, activeCategory.takeUnless { it == AllGroups }, { category = it ?: AllGroups; groupChanged?.invoke(it) },
                     favoritesOnly, favoritesFilter, { category = AllGroups; groupChanged?.invoke(null) },
-                    sources, selectedSource, sourceChanged, entry = chip)
+                    sources, selectedSource, sourceChanged, entry = chip, down = first)
             }
         }
     }
