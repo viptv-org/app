@@ -94,7 +94,7 @@ internal fun LandOnResume(choice: SeasonChoice, list: LazyListState, index: Int?
     LaunchedEffect(choice, list, index) {
         if (index == null || choice.landed) return@LaunchedEffect
         landing = true
-        try { withFrameNanos { }; list.scrollToItem(index, -clearancePx.toInt()) } finally { landing = false }
+        try { list.requestScrollToItem(index, -clearancePx.toInt()) } finally { landing = false }
         choice.keep(shown)
     }
     LaunchedEffect(choice, list) {
