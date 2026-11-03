@@ -34,9 +34,9 @@ internal fun CalendarControls(type: String, week: Int, television: Boolean, scal
     down: FocusRequester? = null) {
     val changed = type != CALENDAR_DEFAULT_TYPE || (filter != null && filter != CALENDAR_DEFAULT_FILTER)
     val clear = if (changed) ({ category(CALENDAR_DEFAULT_TYPE); filterChanged(CALENDAR_DEFAULT_FILTER) }) else null
-    val filters: LazyListScope.() -> Unit = { calendarFilters(type, filter, category, filterChanged, entry, down) }
-    val weeks: LazyListScope.() -> Unit = { calendarWeeks(week, shift, television, scale, range, down) }
-    if (!phone) { FilterBar(modifier, gutter, bleed, clear = clear) { filters(); weeks() }; return }
+    val filters: LazyListScope.() -> Unit = { calendarFilters(type, filter, category, filterChanged, entry) }
+    val weeks: LazyListScope.() -> Unit = { calendarWeeks(week, shift, television, scale, range) }
+    if (!phone) { FilterBar(modifier, gutter, bleed, clear = clear, down = down) { filters(); weeks() }; return }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterBar(gutter = gutter, bleed = bleed, content = weeks)
         FilterBar(gutter = gutter, bleed = bleed, clear = clear, content = filters)
@@ -44,22 +44,22 @@ internal fun CalendarControls(type: String, week: Int, television: Boolean, scal
 }
 
 private fun LazyListScope.calendarFilters(type: String, filter: CalendarFilter?, category: (String) -> Unit,
-    filterChanged: (CalendarFilter) -> Unit, entry: FocusRequester?, down: FocusRequester?) {
+    filterChanged: (CalendarFilter) -> Unit, entry: FocusRequester?) {
     item(key = "type") {
         SearchableSelect("Type", CalendarTypes, listOf(type), { category(it.firstOrNull() ?: type) },
-            anyLabel = null, highlighted = type != CALENDAR_DEFAULT_TYPE, chipFocus = entry, down = down)
+            anyLabel = null, highlighted = type != CALENDAR_DEFAULT_TYPE, chipFocus = entry)
     }
     if (filter != null) item(key = "source") {
         SearchableSelect("Shows", CalendarSources, if (filter == CalendarFilter.YourShows) listOf(YourShows) else emptyList(),
             { ids -> filterChanged(if (YourShows in ids) CalendarFilter.YourShows else CalendarFilter.All) },
-            anyLabel = "All", highlighted = filter != CALENDAR_DEFAULT_FILTER, down = down)
+            anyLabel = "All", highlighted = filter != CALENDAR_DEFAULT_FILTER)
     }
 }
 
-private fun LazyListScope.calendarWeeks(week: Int, shift: (Int) -> Unit, television: Boolean, scale: Float, range: String?, down: FocusRequester?) {
-    if (week > -CALENDAR_WEEK_LIMIT) item(key = "previous-week") { ActionChip("Previous week", Lucide.ChevronLeft, { shift(-1) }, down = down) }
-    item(key = "this-week") { ActionChip("This week", null, { shift(0) }, down = down) }
-    if (week < CALENDAR_WEEK_LIMIT) item(key = "next-week") { ActionChip("Next week", Lucide.ChevronRight, { shift(1) }, down = down) }
+private fun LazyListScope.calendarWeeks(week: Int, shift: (Int) -> Unit, television: Boolean, scale: Float, range: String?) {
+    if (week > -CALENDAR_WEEK_LIMIT) item(key = "previous-week") { ActionChip("Previous week", Lucide.ChevronLeft, { shift(-1) }) }
+    item(key = "this-week") { ActionChip("This week", null, { shift(0) }) }
+    if (week < CALENDAR_WEEK_LIMIT) item(key = "next-week") { ActionChip("Next week", Lucide.ChevronRight, { shift(1) }) }
     range?.let { label -> item(key = "range") {
         Text(label, color = Palette.secondary, fontSize = if (television) (18 * scale).sp else 12.sp, maxLines = 1)
     } }

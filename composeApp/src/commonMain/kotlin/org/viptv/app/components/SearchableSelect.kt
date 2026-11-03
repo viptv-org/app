@@ -72,6 +72,8 @@ internal enum class SelectPresentation { Popover, Sheet, Panel }
 
 internal val LocalSelectPresentation = staticCompositionLocalOf { SelectPresentation.Popover }
 
+internal val LocalFilterChipDown = staticCompositionLocalOf<FocusRequester?> { null }
+
 internal const val SearchRowLimit = 8
 
 internal fun selectTriggerLabel(title: String, options: List<SelectOption>, selected: List<String>, placeholder: String): String =
@@ -161,11 +163,13 @@ internal fun TextSelect(
 internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier,
     chipFocus: FocusRequester? = null) {
     val metrics = chipMetrics()
+    val chipDown = LocalFilterChipDown.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
     Row(modifier.chipFrame(on, focused, metrics, shape)
         .then(if (chipFocus == null) Modifier else Modifier.focusRequester(chipFocus))
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
+        .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
         .pointerToggleable(on, role = Role.Switch, shape = shape, onValueChange = onChange)
         .padding(start = if (on) metrics.startInset - 2.dp else metrics.startInset, end = metrics.endInset),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
@@ -178,11 +182,12 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
 @Composable
 internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, modifier: Modifier = Modifier, down: FocusRequester? = null) {
     val metrics = chipMetrics()
+    val chipDown = down ?: LocalFilterChipDown.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
     Row(modifier.chipFrame(false, focused, metrics, shape, bordered = false)
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
-        .then(if (down == null) Modifier else Modifier.focusProperties { this.down = down })
+        .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
         .pointerClickable(role = Role.Button, shape = shape, onClick = onClick)
         .padding(horizontal = metrics.actionInset), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
@@ -249,11 +254,12 @@ private fun SelectChip(title: String, value: String, valueSet: Boolean, highligh
 private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highlighted: Boolean, metrics: ChipMetrics,
     focus: FocusRequester?, down: FocusRequester?, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
+    val chipDown = down ?: LocalFilterChipDown.current
     var focused by remember { mutableStateOf(false) }
     val ink = if (focused) Palette.background else if (valueSet) Palette.text else Palette.secondary
     Row(Modifier.widthIn(max = if (metrics.tv) 420.dp * metrics.scale else ChipMaxWidth)
         .then(if (focus == null) Modifier else Modifier.focusRequester(focus)
-            .then(if (down == null) Modifier else Modifier.focusProperties { this.down = down })
+            .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
             .onFocusChanged { focused = it.isFocused }
             .tvFocusOutline(focused, metrics.corner, metrics.scale))
         .chipFrame(highlighted, focused, metrics, shape)

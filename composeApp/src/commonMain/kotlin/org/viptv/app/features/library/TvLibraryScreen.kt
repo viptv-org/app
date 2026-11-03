@@ -37,6 +37,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf(if (lastWatched.isEmpty()) "Date added" else "Last watched") }
     val selectedFilter = remember { FocusRequester() }
+    val gridFocus = remember { FocusRequester() }
     val removeFocus = remember { FocusRequester() }
     // The bar below the grid acts on the card the viewer last stood on, so it survives the move onto the bar.
     var lastFocused by remember { mutableStateOf<Card?>(null) }
@@ -61,8 +62,8 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
             Column(Modifier.fillMaxSize().focusGroup()
                 .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
                 Box(Modifier.focusGroup().focusRequester(selectedFilter)) {
-                    if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
-                    else LibraryControls(filter, { filter = it }, sort, { sort = it }, watchedAvailable = lastWatched.isNotEmpty())
+                    if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery, down = gridFocus)
+                    else LibraryControls(filter, { filter = it }, sort, { sort = it }, watchedAvailable = lastWatched.isNotEmpty(), down = gridFocus)
                 }
                 Spacer(Modifier.height(32.dp * scale))
                 if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
@@ -82,6 +83,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                         itemsIndexed(visible, key = { _, card -> cardLookupKey(card) }) { index, card ->
                             val key = cardLookupKey(card)
                             TvCatalogCard(card, scale, true, Modifier.tvGridItem(index)
+                                .then(if (index == 0) Modifier.focusRequester(gridFocus) else Modifier)
                                 .pageAnchor(restore, key, index, target = anchored == index)
                                 .focusProperties {
                                     if (index < 7) up = selectedFilter

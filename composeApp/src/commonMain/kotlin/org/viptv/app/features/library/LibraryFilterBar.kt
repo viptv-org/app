@@ -3,6 +3,7 @@ package org.viptv.app.features.library
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.components.FilterBar
@@ -19,7 +20,7 @@ internal fun LibraryQuery.reset(): LibraryQuery = defaultLibraryQuery().copy(sou
 
 @Composable
 internal fun LibraryFilterBar(snapshot: LibrarySnapshot, query: LibraryQuery, change: (LibraryQuery) -> Unit,
-    modifier: Modifier = Modifier, gutter: Dp = 0.dp) {
+    modifier: Modifier = Modifier, gutter: Dp = 0.dp, down: FocusRequester? = null) {
     val values = query.values()
     val defaults = remember(query.source, query.limit) { query.reset().values() }
     val controls = remember(snapshot.controls) {
@@ -28,7 +29,7 @@ internal fun LibraryFilterBar(snapshot: LibrarySnapshot, query: LibraryQuery, ch
     val lists = remember(snapshot.sources) {
         snapshot.sources.map { SelectOption(it.id, it.label, enabled = it.availability == Availability.AVAILABLE) }
     }
-    FilterBar(modifier, gutter, clear = if (values != defaults) ({ change(query.reset()) }) else null) {
+    FilterBar(modifier, gutter, clear = if (values != defaults) ({ change(query.reset()) }) else null, down = down) {
         if (lists.size >= 2) {
             item(key = "list") {
                 SearchableSelect("List", lists, listOf(query.source), { id -> id.firstOrNull()?.let { change(query.forList(it)) } },

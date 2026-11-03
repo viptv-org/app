@@ -42,6 +42,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     val restore = rememberPageRestore("browse")
     val anchored = restore.landing(selected.size) { cardLookupKey(selected[it]) }
     val chromeFocus = remember { FocusRequester() }
+    val gridFocus = remember { FocusRequester() }
     val grid = rememberLazyGridState()
     PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(selected.size) { cardLookupKey(selected[it]) } })
     AutomaticPage(selected.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -53,7 +54,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                     val catalogOpen = remember { mutableStateOf(false) }
                     Box(Modifier.focusGroup().focusRequester(chromeFocus).focusProperties { onEnter = { chromeFocus.requestFocus() } }) {
                         BrowseFilterBar(controls, query, showType = false, changed = filterChanged, multipleChanged = multipleChanged,
-                            applyQuery = applyQuery, catalogOpen = catalogOpen)
+                            applyQuery = applyQuery, catalogOpen = catalogOpen, down = gridFocus)
                     }
                 }
                 Spacer(Modifier.height(40.dp * scale))
@@ -79,6 +80,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                                 val key = cardLookupKey(card)
                                 TvCatalogCard(card, scale, true,
                                     Modifier.tvGridItem(index)
+                                        .then(if (index == 0) Modifier.focusRequester(gridFocus) else Modifier)
                                         .pageAnchor(restore, key, index, target = anchored == index)
                                         .focusProperties {
                                             if (index < 7) up = chromeFocus

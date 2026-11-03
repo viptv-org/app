@@ -3,6 +3,7 @@ package org.viptv.app.features.sources
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.engine.wire.SourceCandidate
@@ -30,11 +31,11 @@ internal fun sourceProviderOptions(sources: List<SourceCandidate>, producers: Li
 internal fun SourceFilters(sources: List<SourceCandidate>, quality: String?, provider: String?,
     qualityChanged: (String?) -> Unit, providerChanged: (String?) -> Unit,
     modifier: Modifier = Modifier, gutter: Dp = 20.dp, bleed: Boolean = false,
-    producers: List<SourceProducerOutcome> = emptyList()) {
+    producers: List<SourceProducerOutcome> = emptyList(), down: FocusRequester? = null) {
     val qualities = remember(sources) { sourceQualityOptions(sources) }
     val providers = remember(sources, producers) { sourceProviderOptions(sources, producers) }
     FilterBar(modifier, gutter = gutter, bleed = bleed,
-        clear = if (quality != null || provider != null) ({ qualityChanged(null); providerChanged(null) }) else null) {
+        clear = if (quality != null || provider != null) ({ qualityChanged(null); providerChanged(null) }) else null, down = down) {
         item(key = "quality") {
             SearchableSelect("Quality", qualities, listOfNotNull(quality), { qualityChanged(it.firstOrNull()) },
                 anyLabel = "All", anyTrailing = sources.size.toString())

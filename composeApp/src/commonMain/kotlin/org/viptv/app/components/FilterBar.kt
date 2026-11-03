@@ -24,7 +24,7 @@ private val PhoneWidth = 640.dp
 
 @Composable
 internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: Boolean = true, clear: (() -> Unit)? = null,
-    content: LazyListScope.() -> Unit) {
+    down: FocusRequester? = null, content: LazyListScope.() -> Unit) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val phone = !LocalPointerHover.current && maxWidth + (if (bleed) gutter * 2 else 0.dp) < PhoneWidth
         val tv = LocalTvFocusAnchoring.current
@@ -38,7 +38,7 @@ internal fun FilterBar(modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: 
         val row = remember { FocusRequester() }
         // A TV ring is drawn outside the chip; the scrolling row would clip it at either end.
         val reach = if (tv) tvRingReach(scale) else 0.dp
-        CompositionLocalProvider(LocalSelectPresentation provides presentation) {
+        CompositionLocalProvider(LocalSelectPresentation provides presentation, LocalFilterChipDown provides down) {
             FocusLazyRow(Modifier.fillMaxWidth().then(if (tv) Modifier.tvRingRoom(reach, vertical = false) else Modifier)
                 .bleedHorizontally(if (bleed) gutter else 0.dp)
                 .then(if (tv) Modifier.focusRequester(row).focusGroup() else Modifier),

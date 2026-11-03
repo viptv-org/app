@@ -77,6 +77,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 if (sources.none { it.sourceFilterId() == id } && producers.none { sourceProducerFilterId(it.providerId) == id }) provider = null
             }
             val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
+            val firstRowFocus = rows.firstOrNull()?.source?.id?.let { rowFocus.getOrPut(it) { FocusRequester() } }
             val finding = loadingMore || busy && sources.isEmpty()
             val shimmer = if (finding) rememberTvLoadingShimmer(scale) else Modifier
             val torrentOnly = !busy && !loadingMore && error == null && sources.isEmpty() && torrentOnlyProviders > 0
@@ -142,7 +143,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         CompositionLocalProvider(LocalTvScale provides scale) {
                             SourceFilters(sources, quality, provider,
                                 { quality = it; navigated = true }, { provider = it; navigated = true },
-                                Modifier.fillMaxWidth(), gutter = 0.dp, producers = producers)
+                                Modifier.fillMaxWidth(), gutter = 0.dp, producers = producers, down = firstRowFocus)
                         }
                     }
                 }
