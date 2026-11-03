@@ -23,13 +23,13 @@ private val vodMatchTypeOptions = listOf(SelectOption("movie", "Movies"), Select
 @Composable
 internal fun VodMatchesSettings(state: VodMatchesState, providerChanged: (Long?) -> Unit, typeChanged: (String?) -> Unit,
     search: (String) -> Unit, loadMore: () -> Unit, retry: () -> Unit, openForm: (VodMatchRow) -> Unit,
-    closeForm: () -> Unit, changeMetadata: (String) -> Unit, save: () -> Unit) {
+    closeForm: () -> Unit, changeMetadata: (String) -> Unit, save: () -> Unit, compact: Boolean = false) {
     val providers = remember(state.providers) { state.providers.map { SelectOption(it.id.toString(), it.name) } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("VOD matches", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                if (!compact) Text("VOD matches", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text("Provider titles without a metadata match. Set the metadata ID a title should resolve to.",
                     color = Palette.secondary)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

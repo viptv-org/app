@@ -10,9 +10,9 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 
 @Composable
-internal fun ParentControlsNative(profiles: () -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(32.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        Text("Parental controls", style = MaterialTheme.typography.headlineMedium, fontSize = 28.sp)
+internal fun ParentControlsNative(profiles: () -> Unit, compact: Boolean = false) {
+    Column(Modifier.fillMaxWidth().padding(if (compact) 16.dp else 32.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        if (!compact) Text("Parental controls", style = MaterialTheme.typography.headlineMedium, fontSize = 28.sp)
         Text("Manage each local profile’s PIN in Profiles.", color = Palette.secondary, fontSize = 16.sp)
         Button(profiles) { Text("Manage profiles") }
     }

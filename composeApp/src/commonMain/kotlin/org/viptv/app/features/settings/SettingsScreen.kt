@@ -4,10 +4,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import org.viptv.app.components.pageBottomClearance
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.state.SettingsPage
 import org.viptv.engine.wire.IntegrationConnection
@@ -118,26 +121,26 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         logos = addonLogos,
                         installWithCompletion = installWithCompletion)
                     section == "Profile" && profileTitles != null -> SettingsDetailContent(compact, profileTitlesBack ?: back) { profileTitles(compact) }
-                    section == "Profile" && profilePage != null -> SettingsDetailContent(compact, back) { profilePage(layout) }
-                    section == "Linked services" && linkedServices != null -> SettingsDetailContent(compact, back) { linkedServices(compact) }
-                    section == "Parental controls" && parental != null -> SettingsDetailContent(compact, parentalBack ?: back, content = parental)
-                    section == "Account" && account != null -> SettingsDetailContent(compact, back, content = account)
-                    section == "Password" && password != null -> SettingsDetailContent(compact, back) {
+                    section == "Profile" && profilePage != null -> SettingsDetailContent(compact, back, title = "Profile") { profilePage(layout) }
+                    section == "Linked services" && linkedServices != null -> SettingsDetailContent(compact, back, title = "Linked services") { linkedServices(compact) }
+                    section == "Parental controls" && parental != null -> SettingsDetailContent(compact, parentalBack ?: back, title = if (parentalBack == null) "Parental controls" else null, content = parental)
+                    section == "Account" && account != null -> SettingsDetailContent(compact, back, title = "Account", content = account)
+                    section == "Password" && password != null -> SettingsDetailContent(compact, back, title = "Change password") {
                         password(if (compact) back else ({ open("Account") }))
                     }
-                    section == "Household PIN" && householdPin != null -> SettingsDetailContent(compact, back, content = householdPin)
-                    section == "Delete account" && deleteAccount != null -> SettingsDetailContent(compact, back) {
+                    section == "Household PIN" && householdPin != null -> SettingsDetailContent(compact, back, title = "Household PIN", content = householdPin)
+                    section == "Delete account" && deleteAccount != null -> SettingsDetailContent(compact, back, title = "Delete account") {
                         val cancel: () -> Unit = if (compact) back else ({ open("Account") })
                         deleteAccount(cancel)
                     }
-                    section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back) {
+                    section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back, title = "Source integrations") {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance()) {
                             phoneSourceIntegrations.invoke()
                         }
                     }
                     section == xtreamConnectionsSection && xtreamConnections != null -> xtreamConnections(compact, if (compact) back else null)
-                    section == "VOD matches" && vodMatches != null -> SettingsDetailContent(compact, back) { vodMatches(compact) }
-                    section == "Gateways" && phoneGateways != null -> SettingsDetailContent(compact, back) {
+                    section == "VOD matches" && vodMatches != null -> SettingsDetailContent(compact, back, title = "VOD matches") { vodMatches(compact) }
+                    section == "Gateways" && phoneGateways != null -> SettingsDetailContent(compact, back, title = "Playback gateways") {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {
                             phoneGateways.invoke()
                         }
@@ -146,13 +149,13 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section == stremioImportSection && stremioImport != null -> Box(if (!compact && !webAccount) Modifier.padding(32.dp) else Modifier) {
                         stremioImport(compact, { if (compact) back() else open("Account") }) { open("Add-ons") }
                     }
-                    section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, back, backLabel) {
+                    section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, back, title = requireNotNull(section), backLabel = backLabel) {
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()
                     }
                     section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) { leaving = true } }
-                    section == "Watch on TV" && watchOnTvSettings != null -> SettingsDetailContent(compact, back) { watchOnTvSettings.invoke(compact, back) }
-                    section in listOf("Help", "About") -> SettingsDetailContent(compact, back) {
-                        SettingsInformation(requireNotNull(section), local, serverAddress)
+                    section == "Watch on TV" && watchOnTvSettings != null -> SettingsDetailContent(compact, back, title = "Watch on TV") { watchOnTvSettings.invoke(compact, back) }
+                    section in listOf("Help", "About") -> SettingsDetailContent(compact, back, title = if (section == "About") "About VIPTV" else "Help") {
+                        SettingsInformation(requireNotNull(section), local, serverAddress, compact)
                     }
                 }
             }
@@ -165,9 +168,19 @@ internal const val stremioImportSection = "Import from Stremio"
 internal const val xtreamConnectionsSection = "Xtream connections"
 
 @Composable
-private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, backLabel: String? = null, content: @Composable () -> Unit) {
+internal fun SettingsPageHeader(compact: Boolean, back: () -> Unit, title: String, backLabel: String? = null) {
+    if (!compact && backLabel == null) return
+    Box(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (compact) 16.dp else 0.dp)) {
+        BackControl(back, Modifier.align(Alignment.CenterStart), label = backLabel, desktop = !compact)
+        if (compact) Text(title, Modifier.align(Alignment.Center), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, title: String? = null, backLabel: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        if (compact || backLabel != null) Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (compact) 16.dp else 0.dp),
+        if (title != null) SettingsPageHeader(compact, back, title, backLabel)
+        else if (compact || backLabel != null) Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (compact) 16.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically) {
             BackControl(back, label = backLabel, desktop = !compact)
         }

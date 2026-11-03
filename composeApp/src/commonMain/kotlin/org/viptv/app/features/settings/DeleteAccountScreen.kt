@@ -23,7 +23,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Boolean?, busy: Boolean, error: String?,
-    load: () -> Unit, back: () -> Unit, delete: (String, String, String?) -> Unit) {
+    load: () -> Unit, back: () -> Unit, delete: (String, String, String?) -> Unit, compact: Boolean = false) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
@@ -35,9 +35,9 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
         false -> true
     }
     val ready = confirmed && password.isNotEmpty() && pinOk && !busy
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(),
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Text("Delete account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = Palette.danger)
+        if (!compact) Text("Delete account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = Palette.danger)
         Text(if (identity != null) "This deletes ${identity.name}’s account, its profiles, their history, My List, add-ons and paired devices. It cannot be undone."
             else "This deletes the account, its profiles, their history, My List, add-ons and paired devices. It cannot be undone.",
             fontSize = 14.sp, lineHeight = 21.sp, color = Palette.secondary)

@@ -26,7 +26,7 @@ internal const val passwordRateLimitedMessage = "Too many attempts. Wait a minut
 internal const val passwordFailedMessage = "Could not change your password. Try again."
 
 @Composable
-internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, changed: () -> Unit) {
+internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, changed: () -> Unit, compact: Boolean = false) {
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }
@@ -54,8 +54,8 @@ internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, ch
             finally { busy = false }
         }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Text("Change password", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        if (!compact) Text("Change password", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
         CredentialForm(
             fields = CredentialFields.changePassword(current, currentError, next, confirmation, if (mismatch) passwordMismatchMessage else null),
             submitLabel = "Change password",

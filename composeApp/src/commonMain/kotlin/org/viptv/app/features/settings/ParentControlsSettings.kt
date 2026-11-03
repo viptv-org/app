@@ -19,15 +19,15 @@ import org.viptv.app.components.TextButton
 internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<String, ParentProfileControls>,
     busy: Boolean, error: String?, notice: String?, saved: Long, load: () -> Unit, unlock: (String) -> Unit,
     policy: (String, KidsPolicy) -> Unit, leavePin: (String, String, String) -> Unit,
-    titles: (String) -> Unit, openHouseholdPin: (() -> Unit)? = null) {
+    titles: (String) -> Unit, openHouseholdPin: (() -> Unit)? = null, compact: Boolean = false) {
     var unlocking by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<ServerProfile?>(null) }
     var leavePinFor by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(saved) { unlocking = false; editing = null; leavePinFor = null }
-    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp).pageBottomClearance(),
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(if (compact) 16.dp else 32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        Text("Parental controls", style = MaterialTheme.typography.headlineMedium)
+        if (!compact) Text("Parental controls", style = MaterialTheme.typography.headlineMedium)
         Text("The household PIN is required to leave a restricted profile or manage settings from it. Each profile has its own age limit.", color = Palette.secondary)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         error?.let {

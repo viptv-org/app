@@ -7,7 +7,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.pageBottomClearance
@@ -40,7 +39,6 @@ internal fun WatchOnTvSettings(state: WatchOnTvState, compact: Boolean, back: ()
 private fun WatchOnTvStatus(state: WatchOnTvPreferences) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Watch on TV", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(watchOnTvValue(state), color = Palette.secondary, fontSize = 15.sp)
         Text(watchOnTvSubtitle, color = Palette.tertiary, fontSize = 13.sp)
     }

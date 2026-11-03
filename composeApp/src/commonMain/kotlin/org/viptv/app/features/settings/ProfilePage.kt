@@ -129,7 +129,7 @@ internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, erro
     val horizontal = if (layout == SettingsLayout.Phone) 16.dp else 32.dp
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = horizontal, vertical = 8.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Profile", Modifier.padding(top = 16.dp), fontSize = if (layout == SettingsLayout.Phone) 22.sp else 26.sp,
+        if (layout != SettingsLayout.Phone) Text("Profile", Modifier.padding(top = 16.dp), fontSize = 26.sp,
             fontWeight = FontWeight.Bold)
         Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
             Column {

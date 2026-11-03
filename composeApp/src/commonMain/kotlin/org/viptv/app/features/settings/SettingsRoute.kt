@@ -34,7 +34,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
     val leave = { if (state.localMode) controller.leaveLocal() else controller.signOut() }
     val remote = controller.connection.takeUnless { state.localMode }
     val passwordPage: (@Composable (() -> Unit) -> Unit)? = remote?.let { connection ->
-        { back -> ChangePasswordScreen(connection, back) { controller.passwordChanged() } } }
+        { back -> ChangePasswordScreen(connection, back, changed = { controller.passwordChanged() }, compact = compact) } }
     val accountRole = state.accountRole
     val ownerWrites = accountRole == "owner" || (state.accountIdentity != null && state.manageAccount)
     val accountSession = accountRole != "device"
@@ -81,15 +81,15 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         accountAccessRequested = if (remote != null) controller::refreshAccountAccess else null,
         householdPin = if (ownerWrites) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
-            controller::unlockParentControls, controller::changeParentPin) }) else null,
+            controller::unlockParentControls, controller::changeParentPin, compact = compact) }) else null,
         password = if (accountSession) passwordPage else null,
         deleteAccount = if (accountSession) controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
             DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured,
                 state.busy, state.error, controller::refreshAccountDeletion, cancel,
-                controller::deleteAccount)
+                controller::deleteAccount, compact = compact)
         } } else null,
         account = if (state.localMode) null else ({ AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account,
-            state.busy, state.error, controller::refreshAccounts, notice = state.passwordChangeNotice) }),
+            state.busy, state.error, controller::refreshAccounts, notice = state.passwordChangeNotice, compact = compact) }),
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale, left = sidebar)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
@@ -149,8 +149,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
                 controller::unlockParentControls, controller::changeKidsPolicy,
                 controller::changeProfileLeavePin, controller::openParentTitles,
-                openHouseholdPin = if (ownerWrites) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null)
-            else ParentControlsNative { controller.navigate(Screen.Profiles) }
+                openHouseholdPin = if (ownerWrites) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null, compact = compact)
+            else ParentControlsNative({ controller.navigate(Screen.Profiles) }, compact = compact)
         },
         tvParental = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
             if (state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
@@ -173,7 +173,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         returnToPlayer = if (returnsToPlayer) controller::navigateBack else null, tvDevicePlayback = devicePlayback,
         watchOnTvValue = watchOnTvValue(watchOnTvState.value),
         watchOnTvSettings = { compact, back -> WatchOnTvSettings(watchOnTvState, compact, back) },
-        vodMatches = if (remote != null) ({ VodMatchesRoute(state, controller) }) else null,
+        vodMatches = if (remote != null) ({ pageCompact -> VodMatchesRoute(state, controller, pageCompact) }) else null,
         tvVodMatches = if (remote != null) ({ first, sidebar, scale -> TvVodMatchesRoute(state, controller, scale, first, sidebar) }) else null)
     }
     }
@@ -183,7 +183,7 @@ internal fun stremioImportAvailable(state: ApplicationState, television: Boolean
     !television && !desktop && !state.localMode
 
 @Composable
-private fun VodMatchesRoute(state: ApplicationState, controller: ApplicationController) {
+private fun VodMatchesRoute(state: ApplicationState, controller: ApplicationController, compact: Boolean = false) {
     LaunchedEffect(Unit) { controller.openVodMatches() }
     DisposableEffect(Unit) { onDispose { controller.closeVodMatches() } }
     val page = state.vodMatches
@@ -191,7 +191,7 @@ private fun VodMatchesRoute(state: ApplicationState, controller: ApplicationCont
     else VodMatchesSettings(page, controller::updateVodMatchProvider, controller::updateVodMatchType,
         controller::searchVodMatches, controller::loadMoreVodMatches, controller::refreshVodMatches,
         controller::openVodMatchForm, controller::closeVodMatchForm, controller::changeVodMatchMetadata,
-        controller::saveVodMatch)
+        controller::saveVodMatch, compact = compact)
 }
 
 @Composable
