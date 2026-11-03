@@ -466,7 +466,7 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
     // Open on the current option, scrolled into view; its focus is retried per frame until the requester is placed.
     LaunchedEffect(Unit) {
         val current = rows.indexOfFirst { if (it == null) selected.isEmpty() else it.id in selected }.coerceAtLeast(0)
-        if (current > 0) list.scrollToItem((current - 2).coerceAtLeast(0))
+        if (current > 0) list.requestScrollToItem((current - 2).coerceAtLeast(0))
         repeat(30) {
             withFrameNanos { }
             if (requesters[key(rows.getOrNull(current))]?.requestFocus() == true) return@LaunchedEffect

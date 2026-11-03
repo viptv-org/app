@@ -59,14 +59,14 @@ internal fun Modifier.pageAnchor(restore: PageRestoreState, key: String, index: 
 @Composable
 internal fun PageRestore(grid: LazyGridState, restore: PageRestoreState, claimOnEntry: Boolean = false, target: () -> Int?) {
     RestorePage(restore, claimOnEntry, target) { index ->
-        if (grid.layoutInfo.visibleItemsInfo.none { it.index == index }) grid.scrollToItem(index)
+        if (grid.layoutInfo.visibleItemsInfo.none { it.index == index }) grid.requestScrollToItem(index)
     }
 }
 
 @Composable
 internal fun PageRestore(list: LazyListState, restore: PageRestoreState, claimOnEntry: Boolean = false, target: () -> Int?) {
     RestorePage(restore, claimOnEntry, target) { index ->
-        if (list.layoutInfo.visibleItemsInfo.none { it.index == index }) list.scrollToItem(index)
+        if (list.layoutInfo.visibleItemsInfo.none { it.index == index }) list.requestScrollToItem(index)
     }
 }
 
