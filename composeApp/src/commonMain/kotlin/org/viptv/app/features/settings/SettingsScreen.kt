@@ -8,6 +8,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -16,6 +20,9 @@ import org.viptv.app.state.SettingsPage
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.BackControl
+import org.viptv.app.components.LocalBarsFadeContent
+import org.viptv.app.components.ScrollEdge
+import org.viptv.app.components.ScrollEdgeFade
 import org.viptv.app.components.pageGutter
 
 @Composable
@@ -178,12 +185,28 @@ internal fun SettingsPageHeader(compact: Boolean, back: () -> Unit, title: Strin
 
 @Composable
 private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, title: String? = null, backLabel: String? = null, content: @Composable () -> Unit) {
+    val scrolled = remember { mutableStateOf(false) }
+    val connection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < 0f) scrolled.value = true
+                return Offset.Zero
+            }
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 0f) scrolled.value = false
+                return Offset.Zero
+            }
+        }
+    }
     Column(Modifier.fillMaxSize()) {
         if (title != null) SettingsPageHeader(compact, back, title, backLabel)
         else if (compact || backLabel != null) Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (compact) 16.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically) {
             BackControl(back, label = backLabel, desktop = !compact)
         }
-        Box(Modifier.weight(1f)) { content() }
+        Box(Modifier.weight(1f).nestedScroll(connection)) {
+            content()
+            if (LocalBarsFadeContent.current && scrolled.value) ScrollEdgeFade(ScrollEdge.Top, Modifier.align(Alignment.TopCenter))
+        }
     }
 }
