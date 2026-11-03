@@ -26,6 +26,7 @@ import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.ChevronLeft
 import androidx.compose.material3.Icon
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
@@ -36,14 +37,9 @@ internal fun MobileProfiles(
     back: (() -> Unit)? = null, add: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().height(62.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            back?.let { goBack ->
-                IconButton(onClick = goBack, modifier = Modifier.size(44.dp)) {
-                    Icon(Lucide.ChevronLeft, "Back", Modifier.size(24.dp))
-                }
-            }
-            Spacer(Modifier.weight(1f))
-            if (local) TextButton(onClick = if (managing) done else manage, enabled = !busy) {
+        Box(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp)) {
+            back?.let { goBack -> BackControl(goBack, Modifier.align(Alignment.CenterStart)) }
+            if (local) TextButton(onClick = if (managing) done else manage, modifier = Modifier.align(Alignment.CenterEnd), enabled = !busy) {
                 Text(if (managing) "Done" else "Edit", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }

@@ -5,12 +5,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import org.viptv.app.components.pageBottomClearance
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
 import org.viptv.app.state.SettingsPage
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.pageGutter
 
 @Composable
@@ -165,7 +167,10 @@ internal const val xtreamConnectionsSection = "Xtream connections"
 @Composable
 private fun SettingsDetailContent(compact: Boolean, back: () -> Unit, backLabel: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        if (compact || backLabel != null) TextButton(back) { androidx.compose.material3.Text(backLabel ?: "Back") }
+        if (compact || backLabel != null) Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (compact) 16.dp else 24.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            BackControl(back, label = backLabel, desktop = !compact)
+        }
         Box(Modifier.weight(1f)) { content() }
     }
 }
