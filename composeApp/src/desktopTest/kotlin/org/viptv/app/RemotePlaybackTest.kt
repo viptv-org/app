@@ -196,16 +196,30 @@ class RemotePlaybackTest {
         connection.close()
     }
 
-    @Test fun gatewayDeliveryOnDirectDeviceIsAPlaybackFailure() = runBlocking {
+    @Test fun gatewayDeliveryOnDirectDevicePlaysThroughGateway() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             respond(if (request.method == HttpMethod.Delete) "{}" else
                 """{"id":"lease","status":"ready","delivery":{"kind":"gateway","url":"https://media.example/index.m3u8"}}""",
                 headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
-        assertFailsWith<RemoteFailure> {
-            connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", androidFacts, torrents = null)
-        }
+        val lease = connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", androidFacts, torrents = null)
+        assertTrue(lease.gateway)
+        assertFalse(lease.input.localTorrent)
+        assertEquals("https://media.example/index.m3u8", lease.input.uri)
+        connection.close()
+    }
+
+    @Test fun liveGatewayDeliveryOnDirectDevicePlaysThroughGateway() = runBlocking {
+        val client = HttpClient(MockEngine { request ->
+            respond(if (request.method == HttpMethod.Delete) "{}" else
+                """{"id":"lease","status":"ready","delivery":{"kind":"gateway","url":"https://media.example/live.m3u8","live":true}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+        val lease = connection.openPlayback(SourceCandidate("opaque-live", "addon:1", "Live"), "profile", androidFacts, torrents = null)
+        assertTrue(lease.gateway)
+        assertTrue(lease.input.live)
         connection.close()
     }
 
