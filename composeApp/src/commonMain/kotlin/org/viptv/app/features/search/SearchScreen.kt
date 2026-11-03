@@ -1,6 +1,5 @@
 package org.viptv.app.features.search
 
-import org.viptv.app.components.bleedHorizontally
 import org.viptv.app.components.responseSpec
 import org.viptv.app.components.edgeToEdgeScroll
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
@@ -57,10 +56,11 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     BoxWithConstraints(Modifier.fillMaxSize()) {
     val phone = maxWidth < 640.dp
     val gutter = if (phone) 16.dp else 40.dp
-    Column(Modifier.fillMaxSize().imePadding().padding(horizontal = gutter, vertical = if (phone) 8.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp)) {
+    Column(Modifier.fillMaxSize().imePadding().padding(vertical = if (phone) 8.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp)) {
         if (!phone) Text(if (desktop && term.isNotBlank()) "Results for “$term”" else "Search",
+            Modifier.padding(horizontal = gutter),
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
-        if (!desktop) SearchField(term, query)
+        if (!desktop) Box(Modifier.fillMaxWidth().padding(horizontal = gutter)) { SearchField(term, query) }
         org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             searchFilterOptions.forEach { tab ->
@@ -81,9 +81,9 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         } }
-        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
         error?.let { message ->
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(message, Modifier.weight(1f, fill = false), color = Palette.danger)
                 if (retry != null) Text("Try again", Modifier
                     .pointerClickable(onClickLabel = "Try again", shape = RoundedCornerShape(8.dp)) { retry() }
@@ -91,15 +91,15 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
-        if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows), color = Palette.secondary)
-        if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows), Modifier.padding(horizontal = gutter), color = Palette.secondary)
+        if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (searchRows.isNotEmpty() || groups.size > 1) {
             val column = rememberLazyListState()
             val anchorGroup = remember(restore.lastKey, groups) {
                 groups.indexOfFirst { group -> group.cards.any { searchCardKey(it) == restore.lastKey } }
             }
             PageRestore(column, restore, target = { anchorGroup.takeIf { it >= 0 } })
-            LazyColumn(Modifier.weight(1f).bleedHorizontally(gutter), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+            LazyColumn(Modifier.weight(1f), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
                 groups.forEach { group ->
                     item(key = group.id) {
                         val anchoredRow = remember(group.cards, restore.lastKey) {
@@ -126,7 +126,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             val grid = rememberLazyGridState()
             val anchored = restore.anchor(visible.size) { searchCardKey(visible[it]) }
             PageRestore(grid, restore, target = { restore.anchor(visible.size) { searchCardKey(visible[it]) } })
-            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), state = grid, horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), state = grid, horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(start = gutter, end = gutter, bottom = 24.dp)) {
                 gridItemsIndexed(visible, key = { _, card -> searchCardKey(card) }) { index, card ->
                     val key = searchCardKey(card)
                     MediaCard(card, width = if (phone) 112 else 172, portrait = true, showLabels = true,
