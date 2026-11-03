@@ -113,6 +113,35 @@ class WatchOnTvSetupControllerTest {
         assertEquals(1, engine.openedSettings)
     }
 
+    @Test fun retryAfterDenialRechecksPermissionAndRunsTheSearchAgain() = runTest {
+        val engine = FakeEngine().apply { searchThrow = VizioNoAccess(); searchResults = listOf(livingRoom) }
+        val controller = controller(engine, this)
+        controller.beginSearch(); advanceUntilIdle()
+        assertEquals(VizioSetupStep.NoAccess, controller.step)
+
+        engine.searchThrow = null
+        controller.retry(); advanceUntilIdle()
+
+        assertEquals(VizioSetupStep.Searching, controller.step)
+        assertEquals(listOf(livingRoom), controller.results)
+        assertEquals(listOf(16), engine.searchedLimits)
+    }
+
+    @Test fun retryAfterManualDenialProbesAgain() = runTest {
+        val engine = FakeEngine().apply { probeThrow = VizioNoAccess(); probeFn = { livingRoom } }
+        val controller = controller(engine, this)
+        controller.openManual()
+        controller.manualChanged("192.168.1.20")
+        controller.connectManual(); advanceUntilIdle()
+        assertEquals(VizioSetupStep.NoAccess, controller.step)
+
+        engine.probeThrow = null
+        controller.retry(); advanceUntilIdle()
+
+        assertEquals(VizioSetupStep.Pin(livingRoom), controller.step)
+        assertEquals(listOf("https://192.168.1.20:7345"), engine.probedOrigins)
+    }
+
     @Test fun choosingTvBeginsPairingWithAChallenge() = runTest {
         val engine = FakeEngine()
         val controller = controller(engine, this)

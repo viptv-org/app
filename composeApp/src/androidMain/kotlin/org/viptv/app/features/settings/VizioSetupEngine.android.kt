@@ -1,10 +1,13 @@
 package org.viptv.app.features.settings
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import coil3.PlatformContext
 import java.net.Inet4Address
@@ -44,10 +47,11 @@ internal fun vizioFinishResult(kind: VizioControllerOutputKind, failure: VizioFa
     else -> VizioPairResult.Failed
 }
 
-private class AndroidVizioSetupEngine(private val context: Context) : VizioSetupEngine {
+internal class AndroidVizioSetupEngine(
+    private val context: Context,
+    private val discovery: SmartCastDiscovery = SmartCastDiscovery(NativeSmartCast),
+) : VizioSetupEngine {
     private val tokens = SmartCastTokenStore(context)
-    private val native = NativeSmartCast
-    private val discovery = SmartCastDiscovery(native)
     private val deviceId = smartCastDeviceId(context)
 
     override suspend fun search(limit: Int, onResult: (VizioTv) -> Unit) {
@@ -99,10 +103,8 @@ private class AndroidVizioSetupEngine(private val context: Context) : VizioSetup
     }
 
     private fun localNetworkDenied(): Boolean {
-        val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return false
-        val network = connectivity.activeNetwork ?: return false
-        val capabilities = connectivity.getNetworkCapabilities(network) ?: return false
-        return !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return false
+        return context.checkSelfPermission(Manifest.permission.ACCESS_LOCAL_NETWORK) != PackageManager.PERMISSION_GRANTED
     }
 
     private fun localSubnet(): String? {
