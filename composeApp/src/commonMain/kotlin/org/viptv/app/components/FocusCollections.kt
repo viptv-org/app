@@ -12,9 +12,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid as FoundationLazyV
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,10 +43,13 @@ private fun Modifier.pageEdgeFades(state: ScrollableState, top: Boolean, bottom:
 private fun pageFadesUnderBottomBar(): Boolean = LocalBottomBarFades.current && !LocalVerticalPage.current
 
 @Composable
-private fun observePhoneScroll(state: ScrollableState) {
+private fun observePhoneScroll(state: ScrollableState, position: () -> Int) {
     val phoneScroll = LocalPhoneScroll.current ?: return
-    val backward = remember(state) { derivedStateOf { state.canScrollBackward } }.value
-    SideEffect { phoneScroll.onScroll(backward) }
+    LaunchedEffect(state, phoneScroll) {
+        snapshotFlow { state.canScrollBackward to position() }.collect { (backward, top) ->
+            phoneScroll.onPosition(backward, top.toFloat())
+        }
+    }
 }
 
 // Only the page's own scroller clears the bar; a scroller nested inside one keeps its edges.
@@ -101,7 +105,7 @@ internal fun FocusLazyColumn(
 ) {
     val bottomBar = pageFadesUnderBottomBar()
     val paddedContent = contentPadding.withPageBottomClearance()
-    observePhoneScroll(state)
+    observePhoneScroll(state) { state.firstVisibleItemIndex * PhoneScrollStep + state.firstVisibleItemScrollOffset }
     TvFocusScroll(contentPadding = paddedContent, reverseLayout = reverseLayout, sectionControlled = sectionControlled) {
         val anchored = modifier.tvCollectionUpdates(state, horizontal = false) {
             state.layoutInfo.let { it.totalItemsCount to it.visibleItemsInfo.map { item -> item.index to item.key } }
@@ -131,7 +135,7 @@ internal fun FocusLazyVerticalGrid(
     val focus = if (LocalTvFocusAnchoring.current) remember(state, scope) { TvGridFocus(state, scope) } else null
     val bottomBar = pageFadesUnderBottomBar()
     val paddedContent = contentPadding.withPageBottomClearance()
-    observePhoneScroll(state)
+    observePhoneScroll(state) { state.firstVisibleItemIndex * PhoneScrollStep + state.firstVisibleItemScrollOffset }
     DisposableEffect(focus) { onDispose { focus?.cancel() } }
     TvFocusScroll(contentPadding = paddedContent, reverseLayout = reverseLayout) {
         CompositionLocalProvider(LocalTvGridFocus provides focus, LocalVerticalPage provides true) {
