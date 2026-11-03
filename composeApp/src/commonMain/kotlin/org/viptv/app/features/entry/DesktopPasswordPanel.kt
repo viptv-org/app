@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import com.composables.icons.lucide.*
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
 import androidx.compose.foundation.shape.CircleShape
 
@@ -33,8 +34,7 @@ internal fun DesktopPasswordPanel(
     var showPassword by remember { mutableStateOf(false) }
     var changeServer by remember { mutableStateOf(initialOrigin.isBlank()) }
     SignInPanel(440.dp, verticalPadding = 24.dp) {
-        Text("‹  All sign-in options", Modifier.height(20.dp).pointerClickable(onClick = back),
-            color = Palette.text, fontSize = 13.sp)
+        BackControl(back, label = "All sign-in options", desktop = true)
         Spacer(Modifier.height(8.dp))
         Text("Sign in with a password", color = Palette.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))

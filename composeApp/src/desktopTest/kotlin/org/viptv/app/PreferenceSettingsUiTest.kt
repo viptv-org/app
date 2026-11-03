@@ -102,7 +102,7 @@ class PreferenceSettingsUiTest {
         try {
             frames(scene); click(scene, "Playback"); frames(scene, 20)
             assertTrue(nodes(scene).any { text(it) == "Sources" }); assertFalse(nodes(scene).any { text(it) == "Size" })
-            click(scene, "Back"); frames(scene, 40); click(scene, "Subtitles & audio"); frames(scene, 60)
+            back(scene); frames(scene, 40); click(scene, "Subtitles & audio"); frames(scene, 60)
             assertTrue(nodes(scene).any { text(it) == "Size" }); assertFalse(nodes(scene).any { text(it) == "Sources" })
         } finally { scene.close() }
     }
@@ -160,6 +160,10 @@ class PreferenceSettingsUiTest {
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
     private fun action(scene: ImageComposeScene, label: String) = nodes(scene).single { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
     private fun click(scene: ImageComposeScene, label: String) { assertTrue(action(scene, label).config[SemanticsActions.OnClick].action!!.invoke()) }
+    private fun back(scene: ImageComposeScene) {
+        val node = nodes(scene).single { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains("Back") == true && it.config.contains(SemanticsActions.OnClick) }
+        assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
+    }
     private fun colour(scene: ImageComposeScene, label: String) { nodes(scene).single {
         it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true && it.config.contains(SemanticsActions.OnClick)
     }.config[SemanticsActions.OnClick].action!!.invoke() }

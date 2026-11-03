@@ -13,15 +13,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AppBasicTextField
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.TextButton
 
 @Composable
 internal fun DesktopEmailPanel(back: () -> Unit) {
     var code by remember { mutableStateOf("") }
     SignInPanel(440.dp) {
-        TextButton(onClick = back, contentPadding = PaddingValues(0.dp)) {
-            Text("‹  All sign-in options", color = Palette.text, fontSize = 13.sp)
-        }
+        BackControl(back, label = "All sign-in options", desktop = true)
         Spacer(Modifier.height(12.dp))
         Text("Enter the code", color = Palette.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))

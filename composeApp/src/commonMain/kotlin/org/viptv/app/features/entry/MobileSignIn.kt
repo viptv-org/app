@@ -19,6 +19,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 
 @Composable
 internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?,
@@ -70,7 +71,7 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
 @Composable
 internal fun SignInBackBar(back: () -> Unit) {
     Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.CenterStart) {
-        Icon(Lucide.ChevronLeft, "All sign-in options", Modifier.size(24.dp).pointerClickable(onClick = back), tint = Palette.text)
+        BackControl(back)
     }
 }
 

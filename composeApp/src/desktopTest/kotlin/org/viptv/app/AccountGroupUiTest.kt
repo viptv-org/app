@@ -85,7 +85,8 @@ class AccountGroupUiTest {
         assertNotNull(nodes(scene).firstOrNull { labelled(it, label) && it.config.contains(SemanticsActions.OnClick) }, "no clickable '$label'")
     private fun labelled(node: SemanticsNode, label: String): Boolean {
         val held = text(node)
-        return held == label || held.startsWith("$label ")
+        return held == label || held.startsWith("$label ") ||
+            node.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true
     }
     private fun click(scene: ImageComposeScene, label: String) { assertTrue(clickable(scene, label).config[SemanticsActions.OnClick].action!!.invoke()) }
 }

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 
@@ -36,12 +37,10 @@ internal fun MobileProfileEdit(
     var editingPin by remember(profile?.id) { mutableStateOf(false) }
     var confirmingDelete by remember(profile?.id) { mutableStateOf(false) }
     org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-        Row(Modifier.fillMaxWidth().height(62.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = back) { Icon(Lucide.ChevronLeft, "Back", Modifier.size(24.dp)) }
-            Spacer(Modifier.weight(1f))
-            Text("Edit profile", fontSize = 17.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.weight(1f))
-            TextButton(onClick = back) { Text("Done", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        Box(Modifier.fillMaxWidth().height(56.dp)) {
+            BackControl(back, Modifier.align(Alignment.CenterStart))
+            Text("Edit profile", Modifier.align(Alignment.Center), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            TextButton(onClick = back, Modifier.align(Alignment.CenterEnd)) { Text("Done", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
         }
         Spacer(Modifier.height(12.dp))
         Column(Modifier.fillMaxWidth().pointerClickable(enabled = !busy) { pickingAvatar = true },

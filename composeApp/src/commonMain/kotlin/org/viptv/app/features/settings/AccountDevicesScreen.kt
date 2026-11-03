@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -16,6 +17,7 @@ import org.viptv.app.connection.AccountDevice
 import org.viptv.app.connection.AccountDevices
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
+import org.viptv.app.components.BackControl
 import org.viptv.app.components.TextButton
 
 @Composable
@@ -29,10 +31,14 @@ internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, erro
         if (snapshot == null) removingAll = false
         if (removing != null && snapshot?.devices?.none { it.id == removing?.id } != false) removing = null
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = if (compact) PaddingValues(16.dp) else PaddingValues(0.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = if (compact) PaddingValues(start = 16.dp, end = 16.dp) else PaddingValues(0.dp)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                back?.let { TextButton(it) { Text("Back") } }
+                if (compact) {
+                    Box(Modifier.fillMaxWidth().height(56.dp)) {
+                        back?.let { BackControl(it, Modifier.align(Alignment.CenterStart)) }
+                    }
+                }
                 Text("Devices", fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = (-.48).sp)
                 Text("Everywhere ${snapshot?.account?.name?.let { "${it}’s account" } ?: "your account"} is signed in. Signing a device out doesn’t delete anything from the account.",
                     fontSize = 14.sp, lineHeight = 20.sp, color = Palette.secondary)

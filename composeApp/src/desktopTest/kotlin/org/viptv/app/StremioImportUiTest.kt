@@ -385,7 +385,7 @@ class StremioImportUiTest {
             val before = probe.pixels(probe.progress()); probe.frames(18)
             assertNotEquals(before, probe.pixels(probe.progress()), "The indeterminate bar moves")
             assertTrue(probe.has("You can leave this screen. Details keep filling in the background."))
-            assertFalse(probe.disabled("Start another preview")); assertFalse(probe.disabled("Back to settings"))
+            assertFalse(probe.disabled("Start another preview")); assertFalse(probe.described("Back to settings")!!.config.contains(SemanticsProperties.Disabled))
             probe.capture("phone-details-starting")
 
             status = StremioDetailsStatus(true, 40, 162); probe.frames(12)
@@ -406,7 +406,7 @@ class StremioImportUiTest {
             assertNull(probe.progressOrNull(), "The bar goes once the fill is finished")
             probe.assertInside(390, "details ready")
             probe.capture("phone-details-ready")
-            probe.click("Back to settings"); assertEquals(1, left)
+            probe.clickDescription("Back to settings"); assertEquals(1, left)
         } finally { scene.close() }
     }
 
@@ -505,7 +505,7 @@ class StremioImportUiTest {
             val probe = Probe(scene); probe.frames(12)
             probe.click(stremioImportSection)
             assertTrue(probe.has("Import into: Synthetic profile"))
-            probe.click("Back to settings")
+            probe.clickDescription("Back to settings")
             assertTrue(probe.has("Settings")); assertFalse(probe.has("Import into: Synthetic profile"))
         } finally { scene.close() }
     }
