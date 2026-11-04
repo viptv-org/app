@@ -58,9 +58,7 @@ private fun DeviceApprovalRoute() {
             val initialCode = remember { window.location.search.removePrefix("?").split("&")
                 .firstNotNullOfOrNull { it.split("=", limit = 2).takeIf { parts -> parts.size == 2 && parts[0] == "code" } }
                 ?.let { parts -> parts[1] } ?: "" }
-            DeviceApprovalPage(compact, controller, initialCode) {
-                window.location.href = "/"
-            }
+            DeviceApprovalPage(compact, controller, initialCode)
         }
     }
 }
