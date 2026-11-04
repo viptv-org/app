@@ -40,9 +40,9 @@ class ClampedTextOverflowTest {
     @get:Rule val uiThread = UiThreadRule()
 
     private val overflows = listOf(
-        "The enormously long running series title that keeps going well past the point where a single line could ever contain it comfortably and surely beyond a second line as well",
-        "这是一个极其之长的中文标题它远远超出单行乃至两行所能容纳的字符数量从而必然会触发省略号而不是生硬地裁剪掉后半部分这个长度在任何宽度的界面下都应当能够稳定地产生溢出",
-        "🎬🍿📺🎞️🎥🍕🎉🏆🥇🎬🍿📺🎞️🎥🍕🎉🏆🥇🎬🍿📺🎞️🎥🍕🎉🏆🥇🎬🍿📺🎞️🎥🍕🎉🏆🥇🎬🍿📺🎞️🎥🍕🎉🏆🥇🎬🍿📺🎞️🎥🍕🎉🏆🥇🎬🍿📺🎞️🎥🍕🎉🏆🥇🎬🍿📺🎞️🎥🍕🎉🏆🥇",
+        "A long running title that keeps going far past any single line. ".repeat(10),
+        "这是一个极长的标题用来稳定地触发省略号而不是生硬裁剪".repeat(10),
+        "🎬🍿📺🎞️🎥🍕🎉🏆🥇".repeat(30),
     )
 
     @Test fun everyClampedSurfaceEllipsizesInsteadOfClippingMidGlyph() {
