@@ -42,18 +42,44 @@ internal fun SourceCandidate.trackerLabel(): String? = parseTracker(detail)
 
 internal fun SourceCandidate.seasonPack(): Boolean = detail?.let { SEASON_PACK.containsMatchIn(it) } == true
 
-internal fun SourceCandidate.cacheLabel(): String? = when (delivery) {
-    "direct" -> "Instant"
-    "torrent" -> "Not cached"
-    else -> null
+internal enum class CacheKind { Instant, NotCached }
+internal data class CacheChip(val kind: CacheKind, val service: String?)
+internal data class LanguageChip(val label: String, val dashed: Boolean)
+
+internal fun SourceCandidate.cacheStatus(): CacheChip? = cacheChip(label, delivery)
+
+internal fun cacheChip(label: String, delivery: String?): CacheChip? {
+    val tag = DEBRID_TAG.find(label)
+        ?: return if (delivery == "direct") CacheChip(CacheKind.Instant, null) else null
+    val service = DEBRID_SERVICES[tag.groupValues[1]]
+        ?: return if (delivery == "direct") CacheChip(CacheKind.Instant, null) else null
+    val marker = tag.groupValues[2]
+    val kind = if (marker.contains('+') || marker.contains('⚡')) CacheKind.Instant else CacheKind.NotCached
+    return CacheChip(kind, service)
 }
 
 internal fun SourceCandidate.releaseGroupLabel(): String = parseReleaseGroup(detail) ?: providerLabel()
 
-internal fun SourceCandidate.audioSubsSummary(): String {
-    val audio = languageTags(audio_languages).joinToString(" ").ifEmpty { "not listed" }
-    val subs = languageTags(subtitle_languages).joinToString(" ").ifEmpty { if (subbed) "yes" else "not listed" }
-    return "🔊 Audio $audio · Subs $subs"
+internal fun SourceCandidate.audioChips(): List<LanguageChip>? {
+    val codes = languageTags(audio_languages)
+    val dubbed = "dubbed" in audio_flags
+    val dual = "dual" in audio_flags
+    if (codes.isEmpty() && !dubbed && !dual) return null
+    val chips = mutableListOf<LanguageChip>()
+    when {
+        dubbed && "EN" in codes -> chips += LanguageChip("EN dub", dashed = false)
+        dubbed -> chips += LanguageChip("EN dub", dashed = true)
+        "EN" in codes -> chips += LanguageChip("EN", dashed = false)
+    }
+    codes.filter { it != "EN" }.forEach { chips += LanguageChip(it, dashed = false) }
+    if (dual && chips.none { it.label != "EN dub" }) chips += LanguageChip("JA", dashed = true)
+    return chips.ifEmpty { null }
+}
+
+internal fun SourceCandidate.subtitleChips(): List<LanguageChip>? {
+    val codes = languageTags(subtitle_languages)
+    if (codes.isNotEmpty()) return codes.map { LanguageChip(it, dashed = false) }
+    return if (subbed) listOf(LanguageChip("Subs", dashed = true)) else null
 }
 
 internal fun SourceCandidate.factItems(addon: String? = null): List<String> = listOfNotNull(
@@ -62,7 +88,7 @@ internal fun SourceCandidate.factItems(addon: String? = null): List<String> = li
     seeders?.let { "↑$it" },
     trackerLabel(),
     addon?.takeIf { it.isNotBlank() } ?: providerLabel(),
-    "Season pack".takeIf { seasonPack() },
+    SEASON_PACK_LABEL.takeIf { seasonPack() },
 ).distinct()
 
 internal fun SourceCandidate.factBadges(): List<String> = listOfNotNull(
@@ -79,6 +105,11 @@ private val TRAILING_EXTENSION = Regex("""\.\w{2,5}$""")
 private val TRAILING_GROUP = Regex("""-([A-Za-z][A-Za-z0-9._-]*)$""")
 private val BIT_DEPTH = Regex("""(?i)\b10[ ._-]*bit""")
 private val SEASON_PACK = Regex("""(?i)\(batch\)|\bseason\s*(?:pack|full|complete)\b""")
+internal const val SEASON_PACK_LABEL = "Season pack"
+private val DEBRID_TAG = Regex("""\[(TB|RD|AD|PM|DL)\s*([^\]]*?)]""")
+private val DEBRID_SERVICES = mapOf(
+    "TB" to "TorBox", "RD" to "Real-Debrid", "AD" to "AllDebrid", "PM" to "Premiumize", "DL" to "Debrid-Link",
+)
 
 internal fun parseReleaseGroup(text: String?): String? {
     val lines = text.orEmpty().lineSequence().map { it.trim() }.filter { it.isNotEmpty() }

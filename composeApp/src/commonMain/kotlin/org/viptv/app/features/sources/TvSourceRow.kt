@@ -30,13 +30,10 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,23 +94,14 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
                 Text(source.releaseGroupLabel(), fontSize = (TvNameSize.value * scale).sp, lineHeight = (TvNameLine.value * scale).sp,
                     fontWeight = FontWeight.SemiBold, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                source.cacheLabel()?.let { Text(it, Modifier.background(color.copy(alpha = 0.12f), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
-                    color = color.copy(alpha = 0.85f), fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false) }
-                if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.text else color, RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
-                    color = if (inverted) Palette.background else color, fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                source.cacheStatus()?.let { SourceCacheChip(it, (16 * scale).sp, (14 * scale).dp, (9 * scale).dp, (4 * scale).dp, (6 * scale).dp, (5 * scale).dp) }
+                if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else color.copy(alpha = 0.16f), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
+                    color = if (inverted) Palette.text else Palette.accent, fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger,
                     fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
             }
-            Text(source.audioSubsSummary(), fontSize = (TvDetailSize.value * scale).sp, color = color.copy(alpha = 0.55f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            source.factItems().takeIf { it.isNotEmpty() }?.let { facts ->
-                Text(buildAnnotatedString {
-                    val size = source.sizeLabel()
-                    facts.forEachIndexed { index, item ->
-                        if (index > 0) append("  ·  ")
-                        if (item == size) withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(item) } else append(item)
-                    }
-                }, fontSize = (TvDetailSize.value * scale).sp, color = color.copy(alpha = 0.75f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
+            SourceAudioSubsLine(source, color, (TvDetailSize.value * scale).sp, (15 * scale).sp, (16 * scale).dp, (8 * scale).dp, (3 * scale).dp, (10 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
+            SourceFactsRow(source, null, color, (TvDetailSize.value * scale).sp, (16 * scale).dp, (10 * scale).dp)
         }
         if (inverted) Box(Modifier.size(28.dp * scale).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
             Icon(Lucide.Check, "Selected source", Modifier.size(18.dp * scale), tint = Palette.text)
