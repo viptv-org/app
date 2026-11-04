@@ -29,7 +29,7 @@ object Palette {
 @Composable
 fun ViptvTheme(television: Boolean = false,
     // Desktop and web only: hover visuals follow the mouse, never on TV.
-    pointer: Boolean = false, content: @Composable () -> Unit) {
+    pointer: Boolean = false, activationKeys: Boolean = true, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = viptvColorScheme(),
         typography = viptvTypography(), content = {
@@ -39,6 +39,7 @@ fun ViptvTheme(television: Boolean = false,
                 val scaledDensity = if (television && textScale != 1f) Density(density.density, density.fontScale * textScale) else density
                 CompositionLocalProvider(LocalContentColor provides Palette.text,
                     LocalDensity provides scaledDensity,
+                    org.viptv.app.components.LocalActivationKeys provides activationKeys,
                     org.viptv.app.components.LocalPointerHover provides (pointer && !television),
                     org.viptv.app.components.LocalCardOverflow provides (!pointer && !television)) {
                     if (television) CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(letterSpacing = 0.sp), content = content)

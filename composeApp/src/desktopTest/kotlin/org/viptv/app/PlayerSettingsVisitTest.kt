@@ -88,7 +88,7 @@ class PlayerSettingsVisitTest {
             connection.openPlayback(candidate, profile, facts, forceGateway, position, torrents = null, stage = stage)
         }
         controller.mutable.value = ApplicationState(screen = Screen.Sources, selectedProfile = "profile", sources = listOf(source),
-            sourceTitle = title, preferences = server.preferences, navBack = listOf(Screen.Home), detailReturnScreen = Screen.Home)
+            sourceTitle = title, preferences = server.preferences, navBack = listOf(BackEntry(Screen.Home)), detailReturnScreen = Screen.Home)
         return controller
     }
 
@@ -112,7 +112,7 @@ class PlayerSettingsVisitTest {
         assertTrue(state.paused, "Opening Settings pauses playback")
         assertSame(input, state.playback, "Playback waits behind Settings")
         assertEquals(emptyList(), server.released, "The server lease is kept while Settings is open")
-        assertEquals(listOf(Screen.Home), state.navBack, "The visit is not a history entry")
+        assertEquals(listOf(Screen.Home), state.navBack.map { it.screen }, "The visit is not a history entry")
         controller.closePlayer()
     }
 
@@ -133,7 +133,7 @@ class PlayerSettingsVisitTest {
         assertNull(state.settingsEntrySection)
         assertNull(state.error)
         assertEquals(1, server.opens.size, "Returning does not reopen the source")
-        assertEquals(listOf(Screen.Home), state.navBack)
+        assertEquals(listOf(Screen.Home), state.navBack.map { it.screen })
         controller.closePlayer()
     }
 

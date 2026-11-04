@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import io.ktor.http.content.TextContent
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.player.nextEpisodeAfter
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.state.*
@@ -121,6 +122,24 @@ class NextEpisodeControllerTest {
             assertEquals(Screen.Sources, controller.state.value.screen)
         } finally { controller.cancelNextEpisode(); remote.close() }
     }
+    @Test fun theNextButtonStillResolvesFromTheEpisodesListWhenTheContinuationIsUnavailable() = runBlocking<Unit> {
+        val client = HttpClient(MockEngine {
+            respond("""{"status":"Unavailable","item":null}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val controller = ApplicationController(this, store); controller.connection = remote
+        val current = episode(2)
+        controller.prepare(input(), current)
+        try {
+            controller.loadNextEpisode(); controller.nextEpisodeJob!!.join()
+            assertNull(controller.state.value.nextEpisode)
+            assertEquals(ContinuationStatus.UNAVAILABLE, controller.state.value.nextEpisodeStatus)
+            val loaded = controller.state.value.detail!!.episodes + controller.state.value.playbackSeason
+            assertEquals("episode-3", nextEpisodeAfter(current, loaded)?.identity?.id,
+                "the episode selector's list still resolves the next episode")
+        } finally { controller.cancelNextEpisode(); remote.close() }
+    }
+
     @Test fun endOfPlaybackRetriesAnUnavailableNextWithoutStartingIt() = runBlocking<Unit> {
         var requests = 0
         val client = HttpClient(MockEngine {

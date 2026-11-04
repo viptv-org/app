@@ -14,7 +14,9 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
     phone: Boolean, browser: Boolean, backChanged: ((() -> Unit)?) -> Unit,
     fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null) {
     val detail = state.detail
-    val episodes = playerEpisodes(state.sourceTitle, detail?.episodes.orEmpty() + state.playbackSeason)
+    val loaded = detail?.episodes.orEmpty() + state.playbackSeason
+    val episodes = playerEpisodes(state.sourceTitle, loaded)
+    val nextEpisode = nextEpisodeAfter(state.sourceTitle, loaded)
     LaunchedEffect(state.playback, state.selectedProfile, state.sourceTitle?.identity, state.sourceTitle?.provider_id, state.sourceTitle?.parent_identity) {
         controller.loadNextEpisode()
         controller.loadPlaybackSeason()
@@ -33,10 +35,10 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.label,
             sourceQuality = state.playingSource?.quality_height?.let { if (it == 2160L) "4K" else "${it}p" } ?: state.playingSource?.presentation?.quality, episodes = episodes,
             skips = state.playbackSegments, skipIntros = preferences?.skip_intros == true,
-            nextEpisode = state.nextEpisode.takeIf { preferences?.next_episode_button != false }, fallbackLabel = fallback?.label),
+            nextEpisode = nextEpisode.takeIf { preferences?.next_episode_button != false }, fallbackLabel = fallback?.label),
         chooseSources = controller::closePlayer, playEpisode = controller::playEpisode,
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
-        playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
+        playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity,
         trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
         preferences = state.preferences?.preferences, updatePreferences = controller::savePlaybackPreferences,
         autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion(),

@@ -79,28 +79,28 @@ class BackArrowsUiTest {
         assertEquals(1, results.distinct().size, "$name: the inputs disagree: $results")
     }
 
-    private fun signedIn(screen: Screen, navBack: List<Screen>) = ApplicationState(screen = screen, navBack = navBack,
+    private fun signedIn(screen: Screen, navBack: List<BackEntry>) = ApplicationState(screen = screen, navBack = navBack,
         selectedProfile = "1", profiles = profiles, localMode = true)
 
     @Test fun historyGoesBackToThePageItCameFrom() =
-        assertSameStep("History", signedIn(Screen.History, listOf(Screen.Home, Screen.Library)), Screen.Library) {
-            assertEquals(listOf(Screen.Home), it.navBack)
+        assertSameStep("History", signedIn(Screen.History, listOf(BackEntry(Screen.Home), BackEntry(Screen.Library))), Screen.Library) {
+            assertEquals(listOf(Screen.Home), it.navBack.map { it.screen })
         }
 
     @Test fun theSettingsListGoesBackToThePageItCameFrom() =
-        assertSameStep("Settings", signedIn(Screen.Settings, listOf(Screen.Calendar)).copy(settingsPage = SettingsPage()), Screen.Calendar)
+        assertSameStep("Settings", signedIn(Screen.Settings, listOf(BackEntry(Screen.Calendar))).copy(settingsPage = SettingsPage()), Screen.Calendar)
 
     @Test fun theProfileSwitcherGoesBackToThePageItCameFrom() =
-        assertSameStep("Profiles", signedIn(Screen.Profiles, listOf(Screen.Home, Screen.Live)), Screen.Live) {
-            assertEquals(listOf(Screen.Home), it.navBack)
+        assertSameStep("Profiles", signedIn(Screen.Profiles, listOf(BackEntry(Screen.Home), BackEntry(Screen.Live))), Screen.Live) {
+            assertEquals(listOf(Screen.Home), it.navBack.map { it.screen })
         }
 
     @Test fun theProfilePinAndEditorGoUpToProfiles() {
-        assertSameStep("ProfilePin", signedIn(Screen.ProfilePin, listOf(Screen.Home)).copy(profileToOpen = "2"), Screen.Profiles) {
-            assertEquals(listOf(Screen.Home), it.navBack, "the PIN pad must not become a history entry")
+        assertSameStep("ProfilePin", signedIn(Screen.ProfilePin, listOf(BackEntry(Screen.Home))).copy(profileToOpen = "2"), Screen.Profiles) {
+            assertEquals(listOf(Screen.Home), it.navBack.map { it.screen }, "the PIN pad must not become a history entry")
         }
-        assertSameStep("ProfileEdit", signedIn(Screen.ProfileEdit, listOf(Screen.Home)).copy(profileToEdit = "2", managingProfiles = true), Screen.Profiles) {
-            assertEquals(listOf(Screen.Home), it.navBack, "the editor must not become a history entry")
+        assertSameStep("ProfileEdit", signedIn(Screen.ProfileEdit, listOf(BackEntry(Screen.Home))).copy(profileToEdit = "2", managingProfiles = true), Screen.Profiles) {
+            assertEquals(listOf(Screen.Home), it.navBack.map { it.screen }, "the editor must not become a history entry")
         }
     }
 }
