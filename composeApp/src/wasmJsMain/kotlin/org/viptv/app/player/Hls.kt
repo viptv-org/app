@@ -3,7 +3,7 @@ package org.viptv.app.player
 
 import org.w3c.dom.HTMLMediaElement
 
-external interface HlsEvents : JsAny { val ERROR: String }
+external interface HlsEvents : JsAny { val ERROR: String; val AUDIO_TRACKS_UPDATED: String; val AUDIO_TRACK_SWITCHED: String }
 
 @JsModule("hls.js")
 external class Hls : JsAny {

@@ -35,6 +35,8 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
     var subtitleTouched by remember { mutableStateOf(false) }
     var requestedSubtitle by remember { mutableStateOf<org.viptv.engine.wire.SubtitleCandidate?>(null) }
     var subtitleRequest by remember { mutableStateOf(0L) }
+    var audioTracks by remember(video) { mutableStateOf<List<PlaybackTrack>>(emptyList()) }
+    var audioLanguage by remember(video) { mutableStateOf<String?>(null) }
     val latestObserve by rememberUpdatedState(observe)
     LaunchedEffect(video, fill) { video.style.objectFit = if (fill) "cover" else "contain" }
     LaunchedEffect(captionStyle, captionScale, input.preferences) {
@@ -44,7 +46,15 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
         latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate, captionScale))
     }
     val candidates by input.providerSubtitles.collectAsState()
-    LaunchedEffect(video, candidates) { latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected)))) }
+    fun refreshAudio(hls: Hls?) {
+        val current = hls?.let { readHlsAudioTracks(it) } ?: emptyList()
+        audioLanguage = current.firstOrNull { it.selected }?.language
+        audioTracks = current
+    }
+    fun publishTracks() {
+        latestObserve(PlayerFact.Tracks(PlaybackTracks(audio = audioTracks, subtitles = input.providerTracks(selected))))
+    }
+    LaunchedEffect(video, candidates, audioTracks) { publishTracks() }
     Box(modifier)
     DisposableEffect(video) {
         val container = requireNotNull(document.getElementById("viptv-video-layer") as? HTMLElement)
@@ -54,6 +64,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
         lifetime.active = true
         var disposed = false
         var removeHlsErrors: (() -> Unit)? = null
+        var removeHlsAudioListeners: (() -> Unit)? = null
         var reportedBuffered: List<BufferedRange>? = null
         fun reportBuffered() {
             if (disposed) return
@@ -92,11 +103,20 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
                     if (!disposed) latestObserve(PlayerFact.Failed)
                 }
                 removeHlsErrors = { removeHlsErrorListener(controller, event, listener) }
-                it.subtitleDisplay = (input.preferences.subtitleMode != "never")
+                it.subtitleDisplay = subtitleModeEnabled(input.preferences.subtitleMode, input.preferences.preferred_audio_language, null)
+                val audioUpdated = Hls.Events.AUDIO_TRACKS_UPDATED
+                val audioSwitched = Hls.Events.AUDIO_TRACK_SWITCHED
+                val audioUpdatedListener = listenForHlsEvent(controller, audioUpdated) { if (!disposed) refreshAudio(controller) }
+                val audioSwitchedListener = listenForHlsEvent(controller, audioSwitched) { if (!disposed) refreshAudio(controller) }
+                removeHlsAudioListeners = {
+                    removeHlsListener(controller, audioUpdated, audioUpdatedListener)
+                    removeHlsListener(controller, audioSwitched, audioSwitchedListener)
+                }
+                refreshAudio(controller)
                 it.loadSource(input.uri); it.attachMedia(video)
             }
         } else { video.src = input.uri }
-        latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(null))))
+        latestObserve(PlayerFact.Tracks(PlaybackTracks(audio = audioTracks, subtitles = input.providerTracks(null))))
         onDispose {
             disposed = true
             lifetime.active = false; lifetime.playRequest++
@@ -110,24 +130,33 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
             video.onprogress = null
             video.onplay = null; video.onpause = null; video.onwaiting = null; video.oncanplay = null
             removeHlsErrors?.invoke(); removeHlsErrors = null
+            removeHlsAudioListeners?.invoke(); removeHlsAudioListeners = null
             hlsController?.destroy(); hlsController = null
             video.pause(); video.removeAttribute("src"); video.load()
             container.removeChild(video)
             container.removeChild(captionStyle)
         }
     }
+    // Only foreign mode re-decides embedded display after the audio is known; a provider pick suppresses it directly.
+    LaunchedEffect(hlsController, input, audioLanguage) {
+        val hls = hlsController ?: return@LaunchedEffect
+        if (input.preferences.subtitleMode == "foreign")
+            hls.subtitleDisplay = audioIsForeign(audioLanguage, input.preferences.preferred_audio_language)
+    }
     // One effect owns subtitle selection, including cancellation while captions load; the explicit choice survives a seek.
-    LaunchedEffect(video, input, candidates, subtitleTouched, requestedSubtitle, subtitleRequest) {
+    LaunchedEffect(video, input, candidates, audioLanguage, subtitleTouched, requestedSubtitle, subtitleRequest) {
+        val subtitlesOn = subtitleModeEnabled(input.preferences.subtitleMode, input.preferences.preferred_audio_language, audioLanguage)
         val candidate = if (subtitleTouched) requestedSubtitle?.let { matchingProviderSubtitle(it, candidates) }
-            else preferredProviderSubtitle(input, candidates)
-        if (candidate == null && (!subtitleTouched || requestedSubtitle != null)) return@LaunchedEffect
+            else if (subtitlesOn) preferredProviderSubtitle(input, candidates) else null
+        val apply = candidate != null || (subtitleTouched && requestedSubtitle == null) || (!subtitleTouched && !subtitlesOn && selected != null)
+        if (!apply) return@LaunchedEffect
         val id = candidate?.let { input.providerTrackId(it.id) }
         val chosen = subtitleTouched
         try {
             selected = selectBrowserSubtitle(input, video, id, tracks, blobs, { providerCueLine(captionScale) }, suppressEmbedded = { hlsController?.subtitleDisplay = false }) { cause ->
                 input.controlFailed(PlaybackControl.Track, cause, if (chosen) latestObserve else null)
             }
-            latestObserve(PlayerFact.Tracks(PlaybackTracks(subtitles = input.providerTracks(selected))))
+            publishTracks()
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) { input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) latestObserve else null) }
     }
@@ -139,12 +168,14 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
                         else video.currentTime = command.positionMillis.coerceAtLeast(0) / 1000.0
                     is PlayerCommand.Volume -> video.volume = command.value.coerceIn(0f, 1f).toDouble()
                     is PlayerCommand.SubtitleSize -> captionScale = command.value.takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f
-                    is PlayerCommand.SelectTrack -> {
-                        require(command.kind == PlaybackTrackKind.Subtitle)
-                        val candidate = command.id?.let { requireNotNull(input.providerSubtitle(it)) }
-                        requestedSubtitle = candidate
-                        subtitleTouched = true
-                        subtitleRequest++
+                    is PlayerCommand.SelectTrack -> when (command.kind) {
+                        PlaybackTrackKind.Subtitle -> {
+                            val candidate = command.id?.let { requireNotNull(input.providerSubtitle(it)) }
+                            requestedSubtitle = candidate
+                            subtitleTouched = true
+                            subtitleRequest++
+                        }
+                        PlaybackTrackKind.Audio -> if (command.id != null) hlsController?.let { selectHlsAudioTrack(it, command.id) }
                     }
                     is PlayerCommand.Speed -> video.playbackRate = command.value.coerceIn(0.25, 2.0)
                 }
