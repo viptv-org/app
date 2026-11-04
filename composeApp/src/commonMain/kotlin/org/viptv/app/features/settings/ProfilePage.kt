@@ -194,16 +194,19 @@ internal fun ProfileDialogsContent(dialogs: ProfileDialogs, values: ProfilePageV
     actions: ProfilePageActions, avatarLayout: AvatarPickerLayout) {
     val mutations = LocalPendingMutation.current
     if (dialogs.name) ProfileNameDialog(values.profile.name, values.pinRequired, busy, error,
-        { if (!busy) dialogs.name = false }, pending = mutations.isPending(profileMutationTarget(PROFILE_RENAME))) { name, pin -> actions.rename(name, pin) }
+        dismiss = { if (!busy) dialogs.name = false }, save = { name, pin -> actions.rename(name, pin) },
+        pending = mutations.isPending(profileMutationTarget(PROFILE_RENAME)))
     if (dialogs.avatar) AvatarPicker(values.profile, busy, avatarLayout, { if (!busy) dialogs.avatar = false },
         choose = { pick, pin -> actions.avatar(pick, pin) })
     if (dialogs.lock) ProfileLockDialog(values.profile.locked, values.pinRequired, busy, error,
-        { if (!busy) dialogs.lock = false }, pending = mutations.isPending(profileMutationTarget(PROFILE_PIN))) { old, next -> actions.lock(old, next) }
+        dismiss = { if (!busy) dialogs.lock = false }, save = { old, next -> actions.lock(old, next) },
+        pending = mutations.isPending(profileMutationTarget(PROFILE_PIN)))
     if (dialogs.maturity) MaturityLimitDialog(values, busy, error,
         { if (!busy) dialogs.maturity = false }) { movie, series, unrated ->
         dialogs.chooseMaturity(MaturitySelection(movie, series, unrated), values, actions) }
     if (dialogs.delete) DeleteProfileDialog(values.profile.name, values.pinRequired, busy, error,
-        { if (!busy) dialogs.delete = false }, pending = mutations.isPending(profileMutationTarget(PROFILE_DELETE))) { pin -> actions.delete(pin) }
+        dismiss = { if (!busy) dialogs.delete = false }, delete = { pin -> actions.delete(pin) },
+        pending = mutations.isPending(profileMutationTarget(PROFILE_DELETE)))
     if (dialogs.kidsPin) HouseholdPinDialog("Turn on Kids profile", busy, error, { if (!busy) dialogs.kidsPin = false }) { pin ->
         actions.kids(true, pin)
     }
