@@ -21,6 +21,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.ClampedText
 import org.viptv.app.components.Button
 
 @Composable
@@ -56,7 +57,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
             }
             program?.let {
                 Text("${liveTime(it.start)} – ${liveTime(it.end, period = true)}", fontSize = (if (television) 24 * scale else 14f).sp, color = Palette.body)
-                it.description?.let { description -> Text(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
+                it.description?.let { description -> ClampedText(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
                 Button(watch, Modifier.height(40.dp * if (television) scale * 1.5f else 1f), shape = RoundedCornerShape(12.dp),

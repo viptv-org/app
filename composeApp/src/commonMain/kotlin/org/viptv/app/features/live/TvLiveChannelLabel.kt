@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.ClampedText
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.theme.Palette
@@ -26,7 +27,7 @@ internal fun TvLiveChannelLabel(channel: LiveChannel, scale: Float, first: Focus
         channel.number?.let { number -> Text(number, Modifier.width(34.dp * scale), fontSize = (22 * scale).sp,
             lineHeight = (26 * scale).sp, color = if (it == Palette.background) it else Palette.secondary, fontWeight = FontWeight.SemiBold) }
         Spacer(Modifier.width(16.dp * scale))
-        Text(channel.card.title, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, letterSpacing = (-.6f * scale).sp, color = it,
+        ClampedText(channel.card.title, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, letterSpacing = (-.6f * scale).sp, color = it,
             fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold, maxLines = 1)
     }
 }
