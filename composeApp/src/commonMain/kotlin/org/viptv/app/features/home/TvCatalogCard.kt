@@ -56,6 +56,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.NextEpisode
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 
 @Composable
 internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier: Modifier = Modifier,
@@ -123,7 +125,12 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
                 Modifier.align(Alignment.BottomStart).padding(18.dp * scale).fillMaxWidth(.62f).height(56.dp * scale),
                 contentScale = ContentScale.Fit, alignment = Alignment.BottomStart)
             CardFocusRing(focus, showFocus, scale, Modifier.matchParentSize())
-            if (!portrait) CardPlayBadge(focus, showFocus, scale, Modifier.align(Alignment.Center))
+            if (!portrait && !card.isPlayPending()) CardPlayBadge(focus, showFocus, scale, Modifier.align(Alignment.Center))
+            if (card.isPlayPending()) {
+                Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
+                    PendingActionSpinner(Modifier.size(64.dp * scale), size = 64.dp * scale, strokeWidth = 5.dp * scale)
+                }
+            }
         }
         // The caption box holds one meta line; a third clips into the row below.
         if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().height(76.dp * scale)) {

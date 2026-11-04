@@ -108,7 +108,8 @@ fun App(
     CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
         LocalAccent provides accent, LocalShowRatings provides ratings,
         LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
-        LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState) {
+        LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState,
+        LocalPendingAction provides state.pendingAction) {
     ViptvTheme(television, pointer = browser || desktopChrome, activationKeys = surface.bindsActivationKeys) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.

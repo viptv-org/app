@@ -136,6 +136,7 @@ data class ApplicationState(
     val findingSources: Boolean = false,
     val playingSource: SourceCandidate? = null,
     val openingSource: SourceCandidate? = null,
+    val pendingAction: String? = null,
     val bestMatch: BestMatchSession? = null,
     val fallbackNotice: BestMatchFallback? = null,
     val audioNotice: String? = null,

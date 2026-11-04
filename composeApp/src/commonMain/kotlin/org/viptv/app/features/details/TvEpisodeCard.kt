@@ -28,6 +28,8 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 
 @Composable
 internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFocus: () -> Unit, requester: FocusRequester?, up: FocusRequester,
@@ -57,7 +59,11 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
                 .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale), color = Palette.text,
                 fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
             org.viptv.app.components.FocusOutline(focused, 12.dp * scale, 3.dp * scale, Modifier.matchParentSize())
-            if (focused && !comingUp) {
+            if (card.isPlayPending()) {
+                Box(Modifier.matchParentSize().background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
+                    PendingActionSpinner(Modifier.size(72.dp * scale), size = 72.dp * scale, strokeWidth = 5.dp * scale)
+                }
+            } else if (focused && !comingUp) {
                 Box(Modifier.align(Alignment.Center).size(72.dp * scale).background(Palette.text.copy(alpha = 0.2f), CircleShape), contentAlignment = Alignment.Center) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(30.dp * scale), tint = Palette.text)
                 }
