@@ -41,7 +41,7 @@ class HomeRowPagingUiTest {
         try {
             frames(scene)
             assertTextFits(scene, "Couldn’t load more")
-            assertTextFits(scene, "Try again")
+            assertTextFits(scene, "Retry")
         } finally { scene.close() }
     }
 
@@ -52,8 +52,12 @@ class HomeRowPagingUiTest {
         val results = mutableListOf<TextLayoutResult>()
         assertTrue(node.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(results))
         val layout = results.single()
-        assertTrue(layout.size.width + 0.5f >= layout.getLineRight(layout.lineCount - 1),
-            "'$expected' is truncated: layout ${layout.size.width}px but content reaches ${layout.getLineRight(layout.lineCount - 1)}px")
+        for (line in 0 until layout.lineCount) {
+            assertTrue(layout.getLineRight(line) <= layout.size.width + 0.5f,
+                "'$expected' line $line is cut horizontally (${layout.getLineRight(line)}px in a ${layout.size.width}px box)")
+        }
+        assertTrue(layout.size.height + 0.5f >= layout.getLineBottom(layout.lineCount - 1),
+            "'$expected' is cut vertically")
     }
 
     private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render((it + 1) * 16_666_667L).close() }

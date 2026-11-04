@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,7 +30,6 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.ListEntrance
 import org.viptv.app.components.listItemEntrance
-import org.viptv.app.components.Button
 import kotlinx.coroutines.flow.first
 import org.viptv.app.state.RowSeeAll
 
@@ -163,9 +163,18 @@ private fun RowSkeletonCard(width: Int, portrait: Boolean) {
 private fun RowMessageCard(width: Int, portrait: Boolean, retry: () -> Unit) {
     Column(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
         .clip(RoundedCornerShape(9.dp)).background(Palette.surface).padding(10.dp),
-        verticalArrangement = Arrangement.SpaceBetween) {
-        Text("Couldn’t load more", fontSize = 10.sp, lineHeight = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Button({ retry() }, Modifier.fillMaxWidth().height(34.dp)) { Text("Try again", fontSize = 13.sp) }
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center) {
+        Text("Couldn’t load more", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center, maxLines = 2)
+        Spacer(Modifier.height(12.dp))
+        Box(Modifier.size(48.dp).clip(CircleShape).background(Palette.raised)
+            .pointerClickable(onClickLabel = "Retry", role = androidx.compose.ui.semantics.Role.Button, shape = CircleShape, onClick = retry),
+            contentAlignment = Alignment.Center) {
+            Icon(Lucide.RotateCw, "Retry", Modifier.size(20.dp), tint = Palette.text)
+        }
+        Spacer(Modifier.height(6.dp))
+        Text("Retry", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Palette.secondary)
     }
 }
 
