@@ -24,6 +24,8 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.bleedHorizontally
 import org.viptv.app.components.requestPlacedFocus
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -137,6 +139,11 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                             }
 
                     }
+                }
+                if (busy && hasResults) item(key = "footer") {
+                    ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                } else if (!busy && error == null && hasResults) item(key = "footer") {
+                    ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                 }
                 if (!busy && term.isNotBlank() && error == null && !hasResults) item {
                     Text(searchNoResultsCopy(searchRows), fontSize = (24 * scale).sp, color = Palette.secondary)

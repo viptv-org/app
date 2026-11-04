@@ -217,7 +217,7 @@ fun App(
                                 routes.SaveableStateProvider("${state.selectedProfile}:browse:${current.name}") {
                                     if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
                                     else BrowseScreen(current, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
-                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
+                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse, pageError = state.browsePageError)
                                 }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,

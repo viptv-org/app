@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.rememberPageRestore
@@ -87,7 +89,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             }
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
-        error?.let { message ->
+        if (!hasResults) error?.let { message ->
             Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(message, Modifier.weight(1f, fill = false), color = Palette.danger)
                 if (retry != null) Text("Try again", Modifier
@@ -98,6 +100,12 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         }
         if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows), Modifier.padding(horizontal = gutter), color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        val footer: (@Composable (Modifier) -> Unit)? = when {
+            !busy && error != null && hasResults -> { { ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
+            busy && hasResults -> { { ListEndFooter(loading = true, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
+            !busy && error == null && hasResults -> { { ListEndFooter(ended = true, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
+            else -> null
+        }
         if (term.isBlank() && !busy && error == null) {
             SearchIdle(recentSearches, trendingSearches, gutter, query, clearRecents, Modifier.weight(1f))
         } else if (searchRows.isNotEmpty() || groups.size > 1) {
@@ -128,6 +136,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                         }
                     }
                 }
+                footer?.let { render -> item(key = "footer") { render(Modifier.fillMaxWidth().padding(horizontal = gutter)) } }
             }
         } else {
             val grid = rememberLazyGridState()
@@ -140,6 +149,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                         open = { restore.mark(key, index); open(it) },
                         modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                 }
+                footer?.let { render -> item(span = { GridItemSpan(maxLineSpan) }, key = "footer") { render(Modifier.fillMaxWidth()) } }
             }
         }
     }
