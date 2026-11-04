@@ -49,6 +49,7 @@ class TvEpisodeShelfTitleTest {
                 val layout = layout(node)
                 assertTrue(layout.lineCount in 1..2, "the title stays within two complete lines, got ${layout.lineCount}")
                 assertLineFits(layout)
+                assertTitleGeometry(layout, node)
                 scene.render(3_000_000_000L).use { shot ->
                     assertTrue(textInk(Bitmap.makeFromImage(shot), node) > 40, "the dead logo never blanks the title text")
                 }
@@ -61,10 +62,12 @@ class TvEpisodeShelfTitleTest {
             logo.title = overflowTitle
             withScene(logo) { scene ->
                 settle(scene)
-                val layout = layout(titleNode(scene, logo.card()))
+                val node = titleNode(scene, logo.card())
+                val layout = layout(node)
                 assertEquals(2, layout.lineCount, "an over-long title is capped at two complete lines")
                 assertTrue(layout.hasVisualOverflow, "the text really overflows into the ellipsis path")
                 assertLineFits(layout)
+                assertTitleGeometry(layout, node)
             }
         }
     }
@@ -151,6 +154,15 @@ class TvEpisodeShelfTitleTest {
         val last = layout.lineCount - 1
         assertTrue(layout.size.width + 0.5f >= layout.getLineRight(last),
             "the last line is truncated mid-word at right=${layout.getLineRight(last)} width=${layout.size.width}")
+    }
+
+    private fun assertTitleGeometry(layout: TextLayoutResult, node: SemanticsNode) {
+        if (layout.lineCount == 2) {
+            assertTrue(layout.getLineTop(1) >= layout.getLineBottom(0),
+                "the two title lines overlap: line 2 top=${layout.getLineTop(1)} line 1 bottom=${layout.getLineBottom(0)}")
+        }
+        assertTrue(node.boundsInRoot.right <= 1920f - 96f + 0.5f,
+            "the title runs past the 96 px right safe inset at right=${node.boundsInRoot.right}")
     }
 
     private fun textInk(bitmap: Bitmap, node: SemanticsNode): Int {

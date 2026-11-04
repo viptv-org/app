@@ -138,11 +138,12 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     BoxWithConstraints(Modifier.fillMaxWidth()) {
 
         Column(Modifier.fillMaxWidth().heightIn(min = if (expanded) 656.dp * scale else 460.dp * scale)) {
-            if (expanded) Box(Modifier.fillMaxWidth().height(154.dp * scale).padding(start = 96.dp * scale, top = 56.dp * scale)) {
+            if (expanded) Box(Modifier.fillMaxWidth().height(154.dp * scale)
+                .padding(start = 96.dp * scale, end = 96.dp * scale, top = 56.dp * scale)) {
                 TitleLogo(parent.logo, parent.title, Modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart,
                     logoModifier = Modifier.height(64.dp * scale).width(260.dp * scale)) {
-                    Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold,
-                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, lineHeight = (44 * scale).sp,
+                        fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
             TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::enterEpisodes,
