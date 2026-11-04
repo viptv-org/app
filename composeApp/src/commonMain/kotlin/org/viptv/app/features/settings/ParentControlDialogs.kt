@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.Switch
@@ -26,7 +27,8 @@ import org.viptv.app.components.TvFocusScroll
 
 @Composable
 internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, failure: String?, dismiss: () -> Unit,
-    submit: (String, String) -> Unit) {
+    submit: (String, String) -> Unit, pending: Boolean = false) {
+    val blocked = busy || pending
     SecureWindow(dialog = true)
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
@@ -37,7 +39,7 @@ internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, f
     val mismatch = confirmation.isNotEmpty() && next != confirmation
     val valid = (!needsCurrent || validParentPin(current)) && (!changesPin || validParentPin(next) && next == confirmation)
     LaunchedEffect(Unit) { withFrameNanos { }; first.requestFocus() }
-    AlertDialog(onDismissRequest = { if (!busy) dismiss() },
+    AlertDialog(onDismissRequest = { if (!blocked) dismiss() },
         title = { Text(when (mode) { "unlock" -> "Unlock parental controls"; "remove" -> "Remove parent PIN?"; else -> if (configured) "Change parent PIN" else "Set parent PIN" }) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (mode == "remove") Text("The household PIN will be removed. Kids restrictions must be off for every profile.")
@@ -50,10 +52,11 @@ internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, f
             }
             failure?.let { Text(it, color = Palette.danger) }
         } },
-        confirmButton = { TextButton({ if (!busy && valid) submit(current, if (changesPin) next else "") }, enabled = !busy && valid) {
-            Text(when (mode) { "unlock" -> "Unlock"; "remove" -> "Remove PIN"; else -> "Save PIN" })
+        confirmButton = { TextButton({ if (!blocked && valid) submit(current, if (changesPin) next else "") }, enabled = !blocked && valid) {
+            if (pending) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Saving…") }
+            else Text(when (mode) { "unlock" -> "Unlock"; "remove" -> "Remove PIN"; else -> "Save PIN" })
         } },
-        dismissButton = { TextButton(dismiss, enabled = !busy) { Text("Cancel") } })
+        dismissButton = { TextButton(dismiss, enabled = !blocked) { Text("Cancel") } })
 }
 
 @Composable
@@ -66,7 +69,8 @@ private fun ParentPinField(label: String, value: String, change: (String) -> Uni
 
 @Composable
 internal fun LeavePinDialog(profileName: String, configured: Boolean, busy: Boolean, failure: String?,
-    dismiss: () -> Unit, submit: (String, String) -> Unit) {
+    dismiss: () -> Unit, submit: (String, String) -> Unit, pending: Boolean = false) {
+    val blocked = busy || pending
     SecureWindow(dialog = true)
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
@@ -76,7 +80,7 @@ internal fun LeavePinDialog(profileName: String, configured: Boolean, busy: Bool
     val canSave = (!configured || validParentPin(current)) && validParentPin(next) && next == confirmation
     val canRemove = !configured || validParentPin(current)
     LaunchedEffect(Unit) { withFrameNanos { }; first.requestFocus() }
-    AlertDialog(onDismissRequest = { if (!busy) dismiss() },
+    AlertDialog(onDismissRequest = { if (!blocked) dismiss() },
         title = { Text(if (configured) "Change ${profileName}’s leave PIN" else "Set ${profileName}’s leave PIN") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("Ask for this PIN before leaving ${profileName}’s profile.", color = Palette.secondary)
@@ -87,18 +91,21 @@ internal fun LeavePinDialog(profileName: String, configured: Boolean, busy: Bool
             Text(if (mismatch) "PINs do not match." else "Use 4 to 8 digits.", color = if (mismatch) Palette.danger else Palette.secondary)
             failure?.let { Text(it, color = Palette.danger) }
         } },
-        confirmButton = { TextButton({ if (!busy && canSave) submit(current, next) }, enabled = !busy && canSave) { Text("Save PIN") } },
+        confirmButton = { TextButton({ if (!blocked && canSave) submit(current, next) }, enabled = !blocked && canSave) {
+            if (pending) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Saving…") } else Text("Save PIN")
+        } },
         dismissButton = { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (configured) TextButton({ if (!busy && canRemove) submit(current, "") }, enabled = !busy && canRemove) {
-                Text("Remove PIN", color = if (!busy && canRemove) Palette.danger else Palette.tertiary)
+            if (configured) TextButton({ if (!blocked && canRemove) submit(current, "") }, enabled = !blocked && canRemove) {
+                Text("Remove PIN", color = if (!blocked && canRemove) Palette.danger else Palette.tertiary)
             }
-            TextButton(dismiss, enabled = !busy) { Text("Cancel") }
+            TextButton(dismiss, enabled = !blocked) { Text("Cancel") }
         } })
 }
 
 @Composable
 internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinConfigured: Boolean, busy: Boolean,
-    failure: String?, dismiss: () -> Unit, save: (KidsPolicy) -> Unit) {
+    failure: String?, dismiss: () -> Unit, save: (KidsPolicy) -> Unit, pending: Boolean = false) {
+    val blocked = busy || pending
     var enabled by remember(profile.id, policy) { mutableStateOf(policy.enabled) }
     var age by remember(profile.id, policy) { mutableStateOf(policy.max_age.toString()) }
     var movie by remember(profile.id, policy) { mutableStateOf(policy.movie_rating) }
@@ -109,7 +116,7 @@ internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinCon
     val editable = !busy && enabled
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { withFrameNanos { }; first.requestFocus() }
-    AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Restrictions for ${profile.name}") },
+    AlertDialog(onDismissRequest = { if (!blocked) dismiss() }, title = { Text("Restrictions for ${profile.name}") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Kids restrictions")
@@ -135,9 +142,11 @@ internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinCon
             }
             failure?.let { Text(it, color = Palette.danger) }
         } }, confirmButton = { TextButton({
-            if (valid && !busy) save(KidsPolicy(enabled, requireNotNull(parsed), movie, series, unrated))
-        }, enabled = valid && !busy) { Text("Save restrictions") } },
-        dismissButton = { TextButton(dismiss, enabled = !busy) { Text("Cancel") } })
+            if (valid && !blocked) save(KidsPolicy(enabled, requireNotNull(parsed), movie, series, unrated))
+        }, enabled = valid && !blocked) {
+            if (pending) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Saving…") } else Text("Save restrictions")
+        } },
+        dismissButton = { TextButton(dismiss, enabled = !blocked) { Text("Cancel") } })
 }
 
 @Composable
