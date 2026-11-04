@@ -7,7 +7,8 @@ import org.viptv.app.state.*
 internal fun ContinueWatchingRoute(state: ApplicationState, controller: ApplicationController, television: Boolean) {
     val list = state.continueWatching?.takeIf { it.profile == state.selectedProfile }
     val more = if (list?.next != null) controller::continueWatchingMore else null
-    val page = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy, error = state.error)
+    val page = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy, error = state.error,
+        pageError = state.continueWatchingPageError)
     val remove = if (state.localMode) null else controller::removeFromContinueWatching
     val undo = state.continueUndo?.takeIf { it.profile == state.selectedProfile }
     val undoRemove = controller::undoRemoveFromContinueWatching
@@ -18,7 +19,7 @@ internal fun ContinueWatchingRoute(state: ApplicationState, controller: Applicat
 }
 
 internal data class ContinueWatchingPage(val cards: List<org.viptv.engine.wire.Card>, val loaded: Boolean,
-    val busy: Boolean = false, val error: String? = null) {
+    val busy: Boolean = false, val error: String? = null, val pageError: String? = null) {
     val loading get() = !loaded && error == null
     val empty get() = loaded && cards.isEmpty() && error == null
 }

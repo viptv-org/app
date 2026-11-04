@@ -18,7 +18,12 @@ import org.viptv.app.connection.AccountDevices
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 import org.viptv.app.components.BackControl
+import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.TextButton
+import org.viptv.app.state.MutationKind
+import org.viptv.app.state.MutationTarget
+import org.viptv.app.state.SIGN_OUT_ALL_TARGET
+import org.viptv.app.state.signOutDeviceTarget
 
 @Composable
 internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, error: String?, load: () -> Unit,
@@ -77,8 +82,15 @@ internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, erro
             if (snapshot != null) TextButton(load, enabled = !busy) { Text("Refresh") }
         }
     }
-    removing?.let { device -> AccountDeviceConfirmation(device.displayName(), false, busy, error,
-        { removing = null }, { signOut(device.id) }) }
-    if (removingAll) AccountDeviceConfirmation(null, true, busy, error,
-        { removingAll = false }, signOutAll)
+    val mutations = LocalPendingMutation.current
+    removing?.let { device ->
+        val target = MutationTarget(MutationKind.Account, signOutDeviceTarget(device.id))
+        AccountDeviceConfirmation(device.displayName(), false, busy, mutations.failure(target) ?: error,
+            { removing = null }, { signOut(device.id) }, pending = mutations.isPending(target))
+    }
+    if (removingAll) {
+        val target = MutationTarget(MutationKind.Account, SIGN_OUT_ALL_TARGET)
+        AccountDeviceConfirmation(null, true, busy, mutations.failure(target) ?: error,
+            { removingAll = false }, signOutAll, pending = mutations.isPending(target))
+    }
 }

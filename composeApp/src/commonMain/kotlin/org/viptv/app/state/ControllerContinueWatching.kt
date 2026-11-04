@@ -67,6 +67,7 @@ private suspend fun ApplicationController.reloadContinueWatching(remote: RemoteC
     if (connection !== remote || mutable.value.selectedProfile != profile) return
     val current = mutable.value.continueWatching?.takeIf { it.profile == profile }
     updateState { next -> next.copy(continueWatching = current.refreshedBy(profile, page, limit),
+        continueWatchingPageError = null,
         continueNext = next.continueNext.announced(page.entries)) }
 }
 
@@ -83,6 +84,7 @@ internal fun ApplicationController.loadContinueWatching(navigation: Long = navig
         val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
         val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
         updateState { next -> next.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
+            continueWatchingPageError = null,
             continueNext = next.continueNext.announced(page.entries)) }
     }
 }
@@ -95,12 +97,19 @@ fun ApplicationController.continueWatchingMore() {
     val remote = connection ?: return
     val navigation = navigationGeneration
     runPage {
-        val page = readCurrentPage(navigation) { remote.continueWatching(profile, offset, CONTINUE_PAGE) } ?: return@runPage
-        val shown = mutable.value.continueWatching?.takeIf { it.profile == profile && it.next == cursor } ?: return@runPage
-        val merged = (shown.cards + page.entries.map { it.card }).distinctBy(::cardLookupKey)
-        val next = page.next_cursor?.takeIf { merged.size > shown.cards.size && it != cursor }
-        updateState { current -> current.copy(continueWatching = shown.copy(cards = merged, next = next),
-            continueNext = current.continueNext.announced(page.entries)) }
+        try {
+            val page = readCurrentPage(navigation) { remote.continueWatching(profile, offset, CONTINUE_PAGE) } ?: return@runPage
+            val shown = mutable.value.continueWatching?.takeIf { it.profile == profile && it.next == cursor } ?: return@runPage
+            val merged = (shown.cards + page.entries.map { it.card }).distinctBy(::cardLookupKey)
+            val next = page.next_cursor?.takeIf { merged.size > shown.cards.size && it != cursor }
+            updateState { current -> current.copy(continueWatching = shown.copy(cards = merged, next = next),
+                continueWatchingPageError = null,
+                continueNext = current.continueNext.announced(page.entries)) }
+        } catch (e: CancellationException) { throw e }
+        catch (e: Exception) {
+            if (e is RemoteFailure && e.sessionExpired) throw e
+            updateState { it.copy(continueWatchingPageError = failureMessage(e) ?: "Could not load more.") }
+        }
     }
 }
 

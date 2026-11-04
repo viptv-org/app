@@ -19,6 +19,7 @@ import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.theme.Palette
 
@@ -30,7 +31,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null,
     spread: LiveSpread = LiveSpread.Channels, noChannelsReason: String? = null, noChannelsRetry: (() -> Unit)? = null,
     sourceIntegrations: (() -> Unit)? = null,
-    restore: PageRestoreState = rememberPageRestore("live")) {
+    restore: PageRestoreState = rememberPageRestore("live"), pageError: String? = null) {
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
     val groups = if (groupLabels.isNotEmpty()) groupLabels else categories.distinct().associateWith { it }
@@ -90,7 +91,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                     }
                 } else if (hasGuide) {
                     LiveGuide(visible, start!!, now, true, scale,
-                    { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, chip.takeIf { hasFilters }, more = more, busy = busy, restore = restore)
+                    { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, chip.takeIf { hasFilters }, more = more, busy = busy, restore = restore, pageError = pageError)
                 }
                 else {
                     PageRestore(channelList, restore, claimOnEntry = true, target = { restore.landing(visible.size) { visible[it].key() } })
@@ -100,6 +101,13 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                             TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) chip.takeIf { hasFilters } else null,
                                 { channel = item; program = item.current(now); guideRequested(item) }, { restore.mark(item.key(), index); watch(item) },
                                 modifier = Modifier.pageAnchor(restore, item.key(), index, target = anchored == index))
+                        }
+                        if (visible.isNotEmpty() && !busy && pageError != null) item(key = "footer") {
+                            ListEndFooter(failed = true, retry = more, noun = "channels", modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                        } else if (visible.isNotEmpty() && busy) item(key = "footer") {
+                            ListEndFooter(loading = true, noun = "channels", modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                        } else if (visible.isNotEmpty() && !busy && pageError == null && more == null) item(key = "footer") {
+                            ListEndFooter(ended = true, noun = "channels", modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         }
                     }
                 }

@@ -31,7 +31,7 @@ class ProfileAdministrationTest {
     }
     @Test fun remotePinActionExplainsAccountPolicyWithoutAnyPerProfilePinRequest()=runBlocking<Unit>{
         var requests=0;val client=HttpClient(MockEngine{requests++;error("No per-profile PIN API")}){configureTransport()};val remote=RemoteConnection("https://fixture.example",client=client,browserMode=true);val c=ApplicationController(this, store);c.connection=remote;c.mutable.value=ApplicationState(screen=Screen.ProfileEdit,profileToEdit="one")
-        try{c.setProfilePin("","1234");c.job?.join();assertEquals(0,requests);assertTrue(c.state.value.error.orEmpty().contains("account parent PIN"));assertFalse(c.state.value.error.orEmpty().contains("HTTPS"))}finally{remote.close()}
+        try{c.setProfilePin("","1234");c.job?.join();assertEquals(0,requests);assertTrue(c.state.value.mutations.failure(profileMutationTarget(PROFILE_PIN)).orEmpty().contains("account parent PIN"));assertFalse(c.state.value.mutations.failure(profileMutationTarget(PROFILE_PIN)).orEmpty().contains("HTTPS"))}finally{remote.close()}
     }
     @Test fun existingSettingsEntryPreservesProfileScopeAndResetsOnOrdinaryNavigation()=runBlocking<Unit>{
         val client=HttpClient(MockEngine{error("Existing preferences need no transport")}){configureTransport()};val remote=RemoteConnection("https://fixture.example",client=client,browserMode=true);val c=ApplicationController(this, store);c.connection=remote

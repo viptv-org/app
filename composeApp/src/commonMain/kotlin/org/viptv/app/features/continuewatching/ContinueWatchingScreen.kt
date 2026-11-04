@@ -30,6 +30,8 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.cardLookupKey
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.state.ContinueUndo
 import org.viptv.app.theme.Palette
@@ -81,7 +83,6 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
                                 letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Start)
                         }
-                        if (page.busy && page.loaded) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                         page.error?.let { Text(it, color = Palette.danger) }
                         if (undo != null) RemovedNotice(undo, undoRemove)
                     }
@@ -96,14 +97,23 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
                     page.empty -> item(span = { GridItemSpan(maxLineSpan) }) {
                         PageMessage("Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, phone)
                     }
-                    else -> itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> CARD_TYPE }) { index, card ->
-                        val key = cardLookupKey(card)
-                        val activate = continueWatchingActivation(play, open)
-                        MediaCard(card, cardWidth, portrait = false,
-                            open = { restore.mark(key, index); open(it) },
-                            select = { restore.mark(key, index); activate(it) },
-                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index),
-                            showFocusOutline = !phone)
+                    else -> {
+                        itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> CARD_TYPE }) { index, card ->
+                            val key = cardLookupKey(card)
+                            val activate = continueWatchingActivation(play, open)
+                            MediaCard(card, cardWidth, portrait = false,
+                                open = { restore.mark(key, index); open(it) },
+                                select = { restore.mark(key, index); activate(it) },
+                                modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index),
+                                showFocusOutline = !phone)
+                        }
+                        if (page.loaded && !page.busy && page.pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(failed = true, retry = more ?: retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth())
+                        } else if (page.loaded && page.busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth())
+                        } else if (page.loaded && !page.busy && page.pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth())
+                        }
                     }
                 }
             }
