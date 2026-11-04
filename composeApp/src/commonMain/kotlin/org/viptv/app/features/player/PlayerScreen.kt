@@ -165,7 +165,10 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, id))
     }
     fun retrySubtitle() { subtitleError?.let { chooseSubtitle(it.idOrNull) } }
-    fun chooseAudio(id: Int) { pendingAudio = id; audioError = null; controlError = null; send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, id)) }
+    fun chooseAudio(id: Int) {
+        if (pendingAudio == id) return
+        pendingAudio = id; audioError = null; controlError = null; send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, id))
+    }
     fun retryAudio() { audioError?.let(::chooseAudio) }
     fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
