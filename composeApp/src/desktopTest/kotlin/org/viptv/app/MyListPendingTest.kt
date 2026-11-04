@@ -2,6 +2,7 @@ package org.viptv.app
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
+import io.ktor.client.request.HttpRequestData
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
