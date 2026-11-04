@@ -27,6 +27,8 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.Button
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextAlign
 
@@ -116,12 +118,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                 }
             }
             if (busy) item(key = "busy") { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-            error?.let {
-                item(key = "error") {
-                    if (history.isEmpty()) HistoryFailure(it, retry)
-                    else Text(it, color = Palette.danger)
-                }
-            }
+            if (error != null && history.isEmpty()) item(key = "error") { HistoryFailure(error, retry) }
             if (localMode) item(key = "server") { Text("Progress corrections need a server.", color = Palette.secondary) }
             if (!busy && history.isEmpty() && error == null) item(key = "empty") { Text("Nothing watched yet.", color = Palette.secondary) }
             itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
@@ -135,6 +132,13 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                             modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                     }
                 }
+            }
+            if (history.isNotEmpty() && !busy && error != null) item(key = "footer") {
+                ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+            } else if (history.isNotEmpty() && busy) item(key = "footer") {
+                ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+            } else if (history.isNotEmpty() && !busy && error == null) item(key = "footer") {
+                ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
             }
         }
     }

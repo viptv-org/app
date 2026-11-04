@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.LibraryQuery
+import kotlinx.coroutines.CancellationException
 
 fun ApplicationController.libraryQuery(query: LibraryQuery) {
     updateState { next -> next.copy(libraryQuery = query.copy(offset = 0)) }
@@ -19,7 +20,16 @@ fun ApplicationController.retryLibrary() {
 }
 internal suspend fun ApplicationController.loadLibraryPage(query: LibraryQuery = mutable.value.libraryQuery, append: Boolean = false, refresh: Boolean = false) {
     val profile = requireNotNull(mutable.value.selectedProfile)
-    val page = local?.libraryPage(profile, query) ?: requireNotNull(connection).libraryPage(profile, query)
+    val page = try {
+        local?.libraryPage(profile, query) ?: requireNotNull(connection).libraryPage(profile, query)
+    } catch (e: CancellationException) { throw e }
+    catch (e: Exception) {
+        if (append && !(e is RemoteFailure && e.sessionExpired)) {
+            updateState { it.copy(libraryPageError = failureMessage(e) ?: "Could not load more.") }
+            return
+        }
+        throw e
+    }
     val previous = mutable.value.libraryPage
     val retainPages = refresh && previous != null && previous.cards.size > query.limit && page.next_cursor != null
     val combined = when {
@@ -31,5 +41,5 @@ internal suspend fun ApplicationController.loadLibraryPage(query: LibraryQuery =
             statistics = (page.statistics + previous.statistics).distinctBy(::libraryStatisticsKey))
         else -> page
     }
-    updateState { next -> next.copy(libraryQuery = page.query.copy(offset = 0), libraryPage = combined) }
+    updateState { next -> next.copy(libraryQuery = page.query.copy(offset = 0), libraryPage = combined, libraryPageError = null) }
 }

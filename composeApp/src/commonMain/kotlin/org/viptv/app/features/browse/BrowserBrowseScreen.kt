@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
@@ -64,14 +67,15 @@ internal fun BrowserBrowseRoute(state: ApplicationState, controller: Application
     BrowserBrowseScreen(state.screen, cards, state.browseControls, state.browseQuery, state.busy, state.error,
         more = if (state.browseNext != null) controller::browseMore else null,
         open = controller::open, changed = controller::browseFilter,
-        multipleChanged = controller::browseSelections, applyQuery = controller::applyBrowse, retry = controller::retryBrowse)
+        multipleChanged = controller::browseSelections, applyQuery = controller::applyBrowse, retry = controller::retryBrowse,
+        pageError = state.browsePageError)
 }
 
 @Composable
 internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: DiscoveryControls?, query: BrowseQuery,
     busy: Boolean, error: String?, more: (() -> Unit)?, open: (Card) -> Unit,
     changed: (String, String) -> Unit, multipleChanged: (String, List<String>) -> Unit,
-    applyQuery: (BrowseQuery) -> Unit, retry: () -> Unit = {}) {
+    applyQuery: (BrowseQuery) -> Unit, retry: () -> Unit = {}, pageError: String? = null) {
     val grid = rememberLazyGridState()
     val restore = rememberPageRestore("browse")
     val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
@@ -91,7 +95,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
         Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
             if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
-            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+            if (busy && cards.isEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog, retry)
             else if (cards.isEmpty()) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
             LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
@@ -102,6 +106,13 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
                     MediaCard(card, width = 172, portrait = true, showLabels = true, showFocusOutline = false,
                         open = { restore.mark(key, index); open(it) },
                         modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                }
+                if (cards.isNotEmpty() && !busy && pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                    ListEndFooter(failed = true, retry = more ?: retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+                } else if (cards.isNotEmpty() && busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                    ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+                } else if (cards.isNotEmpty() && !busy && pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                    ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
                 }
             }
         }

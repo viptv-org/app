@@ -53,6 +53,7 @@ data class Card(
     val parent_identity: MediaIdentity? = null,
     val added_at_millis: Long? = null,
     val released_at_millis: Long? = null,
+    val released_at_date: String? = null,
     val metadata_origin: MetadataOrigin? = null,
 )
 
@@ -396,6 +397,7 @@ data class MetadataOrigin(
 data class NextEpisode(
     val identity: MediaIdentity,
     val released_at_millis: Long? = null,
+    val released_at_date: String? = null,
 )
 
 @Serializable

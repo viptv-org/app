@@ -7,6 +7,8 @@ import org.viptv.engine.wire.IntegrationConnection
 import kotlin.test.*
 
 class AddonInstallCompletionTest {
+    private fun installTarget() = MutationTarget(MutationKind.Addon, ADDON_INSTALL_TARGET)
+
     @Test fun failureReleasesForRetryAndSuccessPrecedesAncillaryRefreshFailure() = runBlocking {
         val fixture = LocalSetupFixture()
         var attempts = 0
@@ -31,10 +33,10 @@ class AddonInstallCompletionTest {
         try {
             controller.installAddon("https://fixture.invalid/manifest.json", results::add); controller.job!!.join()
             assertEquals(listOf(false), results); assertFalse(controller.state.value.busy)
-            assertEquals("Install failed. Try again.", controller.state.value.error)
+            assertEquals("Install failed. Try again.", controller.state.value.mutations.failure(installTarget()))
             controller.installAddon("https://fixture.invalid/manifest.json", results::add); controller.job!!.join()
             assertEquals(2, attempts); assertEquals(listOf(false, true), results)
-            assertEquals("Installed, but inventory could not refresh.", controller.state.value.error)
+            assertEquals("Installed, but inventory could not refresh.", controller.state.value.mutations.failure(installTarget()))
             assertFalse(controller.state.value.busy)
         } finally { fixture.close(controller) }
     }

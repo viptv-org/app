@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.connection.*
+import kotlinx.coroutines.CancellationException
 
 fun ApplicationController.browseFilter(id: String, value: String) {
     val prior = mutable.value.browseQuery
@@ -59,13 +60,23 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
     } else query
     val selected = scopedQuery.withDefaultCatalog(scoped)
     updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
-        browseCards = if (append) next.browseCards else emptyList(), browseNext = if (append) next.browseNext else null) }
+        browseCards = if (append) next.browseCards else emptyList(), browseNext = if (append) next.browseNext else null,
+        browsePageError = null) }
     val required = scoped.missingRequired(selected)
     if (required.isNotEmpty()) {
         updateState { next -> next.copy(error = "Choose the required filters: ${required.joinToString()}.") }
         return
     }
-    val page = local?.browse(profile, selected) ?: requireNotNull(connection).browse(selected, scoped)
+    val page = try {
+        local?.browse(profile, selected) ?: requireNotNull(connection).browse(selected, scoped)
+    } catch (e: CancellationException) { throw e }
+    catch (e: Exception) {
+        if (append && !(e is RemoteFailure && e.sessionExpired)) {
+            updateState { it.copy(browsePageError = failureMessage(e) ?: "Could not load more.") }
+            return
+        }
+        throw e
+    }
     updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
         browseCards = ((if (append) next.browseCards else emptyList()) + page.cards).distinctBy(::cardLookupKey),
         browseNext = page.next_cursor) }
