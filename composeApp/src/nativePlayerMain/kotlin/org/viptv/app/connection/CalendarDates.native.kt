@@ -4,21 +4,13 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import org.viptv.app.features.calendar.CalendarDay
 
-/**
- * The clock that decides the calendar's "today" and which releases have aired. Tests fix
- * it, so their fixtures do not depend on the date or time of day they run at (app#106).
- * Null is the system clock in the current default zone, read on every use.
- */
-@Volatile internal var calendarClock: Clock? = null
-private fun clock(): Clock = calendarClock ?: Clock.systemDefaultZone()
-
 internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
     val today = LocalDate.now(clock())
     val center = today.plusDays(offsetDays.toLong())
     val days = (-CALENDAR_VISIBLE_DAYS_PER_SIDE.toLong()..CALENDAR_VISIBLE_DAYS_PER_SIDE.toLong()).map { offset ->
         val day = center.plusDays(offset)
-        CalendarDay(day.toString(), day.format(DateTimeFormatter.ofPattern("EEE")), day.dayOfMonth.toString(),
-            if (day == today) "Today" else day.format(DateTimeFormatter.ofPattern("EEEE")), day.format(DateTimeFormatter.ofPattern("MMM d, yyyy")))
+        CalendarDay(day.toString(), day.format(DateTimeFormatter.ofPattern("EEE", appDateLocale)), day.dayOfMonth.toString(),
+            if (day == today) "Today" else day.format(DateTimeFormatter.ofPattern("EEEE", appDateLocale)), day.format(DateTimeFormatter.ofPattern("MMM d, yyyy", appDateLocale)))
     }
     val range = calendarRequestRange(center.toString())
     return CalendarWindow(range.start, range.end, days)

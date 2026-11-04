@@ -333,9 +333,9 @@ internal object MergedCalendarWire {
 
     fun fixedClock() = org.junit.rules.TestRule { base, _ -> object : org.junit.runners.model.Statement() {
         override fun evaluate() {
-            val previous = calendarClock
-            calendarClock = java.time.Clock.fixed(now.toInstant(), now.zone)
-            try { base.evaluate() } finally { calendarClock = previous }
+            val previous = appDateClock
+            appDateClock = java.time.Clock.fixed(now.toInstant(), now.zone)
+            try { base.evaluate() } finally { appDateClock = previous }
         }
     } }
 

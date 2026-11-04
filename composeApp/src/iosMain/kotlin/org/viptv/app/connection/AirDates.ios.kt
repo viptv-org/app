@@ -15,12 +15,12 @@ private fun dateOnlyDate(value: String): NSDate? {
 
 internal actual fun airDateLabel(atMillis: Long, dateOnly: String?): String =
     dateOnly?.takeIf(::isDateOnly)?.let(::dateOnlyDate)?.let { date ->
-        NSDateFormatter().apply { dateFormat = "MMM d" }.stringFromDate(date)
-    } ?: NSDateFormatter().apply { dateFormat = "MMM d" }
+        NSDateFormatter().apply { dateFormat = "MMM d"; locale = appDateLocale }.stringFromDate(date)
+    } ?: NSDateFormatter().apply { dateFormat = "MMM d"; locale = appDateLocale }
         .stringFromDate(NSDate.dateWithTimeIntervalSince1970(atMillis / 1000.0))
 
 internal actual fun airDateWithYearLabel(atMillis: Long, dateOnly: String?): String =
     dateOnly?.takeIf(::isDateOnly)?.let(::dateOnlyDate)?.let { date ->
-        NSDateFormatter().apply { dateFormat = "MMM d, yyyy" }.stringFromDate(date)
-    } ?: NSDateFormatter().apply { dateFormat = "MMM d, yyyy" }
+        NSDateFormatter().apply { dateFormat = "MMM d, yyyy"; locale = appDateLocale }.stringFromDate(date)
+    } ?: NSDateFormatter().apply { dateFormat = "MMM d, yyyy"; locale = appDateLocale }
         .stringFromDate(NSDate.dateWithTimeIntervalSince1970(atMillis / 1000.0))
