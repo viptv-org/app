@@ -16,7 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
-import org.viptv.app.connection.AddonFailure
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.AddonFailureNotice

@@ -34,7 +34,7 @@ import org.viptv.app.connection.configureTransport
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
-import org.viptv.app.connection.AddonFailure
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.Scope
 import java.io.File

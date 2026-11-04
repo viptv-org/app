@@ -26,7 +26,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
-import org.viptv.app.connection.AddonFailure
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.app.connection.epochMillis
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot

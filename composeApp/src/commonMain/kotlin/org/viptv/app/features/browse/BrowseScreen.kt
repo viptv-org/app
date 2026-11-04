@@ -56,7 +56,7 @@ import org.viptv.app.components.motionSpec
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.pressScale
 import org.viptv.app.components.AddonFailureNotice
-import org.viptv.app.connection.AddonFailure
+import org.viptv.engine.wire.AddonFailure
 
 @Composable
 fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, loadedCards: List<Card>? = null, controls: org.viptv.app.connection.DiscoveryControls? = null,

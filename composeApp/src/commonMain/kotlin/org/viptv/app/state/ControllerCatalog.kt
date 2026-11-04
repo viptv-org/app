@@ -260,7 +260,7 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
     updateState { it.copy(detail = read.detail.withCardPresentation(card).withOpenedProgress(card),
         detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus
             ?: card.identity.episode?.let { coordinates -> DetailFocus(coordinates.season, coordinates.episode) },
-        pendingDetailSeason = null, detailShell = false, detailFailures = read.failures) }
+        pendingDetailSeason = null, detailShell = false, detailFailures = read.detail.failures) }
     rememberNavigation()
 }
 

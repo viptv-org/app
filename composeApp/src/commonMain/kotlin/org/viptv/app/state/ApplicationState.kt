@@ -3,6 +3,7 @@ package org.viptv.app.state
 import org.viptv.app.components.NextEpisodes
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.HomeSnapshot
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.IntegrationConnection

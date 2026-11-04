@@ -69,7 +69,7 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
         return
     }
     val read = try {
-        local?.let { BrowsePage(it.browse(profile, selected), emptyList()) }
+        local?.let { it.browse(profile, selected) }
             ?: requireNotNull(connection).browse(selected, scoped)
     } catch (e: CancellationException) { throw e }
     catch (e: Exception) {
@@ -80,7 +80,7 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
         throw e
     }
     updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
-        browseCards = ((if (append) next.browseCards else emptyList()) + read.page.cards).distinctBy(::cardLookupKey),
-        browseNext = read.page.next_cursor,
+        browseCards = ((if (append) next.browseCards else emptyList()) + read.cards).distinctBy(::cardLookupKey),
+        browseNext = read.next_cursor,
         browseFailures = if (append) next.browseFailures else read.failures) }
 }
