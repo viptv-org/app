@@ -18,7 +18,8 @@ import org.viptv.engine.wire.SubtitleCandidate
 // Sidecars never replace the primary MediaSource: its rolling HLS origin and audio stay intact.
 @UnstableApi
 internal class Media3ProviderSubtitles(private val player: ExoPlayer, private val input: PlaybackInput,
-    private val scope: CoroutineScope, private val tracks: Media3Tracks, private val positionMillis: () -> Long,
+    private val scope: CoroutineScope, private val tracks: Media3Tracks, private val captionStyle: Media3CaptionStyle,
+    private val positionMillis: () -> Long,
     private val failed: (Throwable, Boolean) -> Unit) {
     private var job: Job? = null
     private var generation = 0L
@@ -36,14 +37,16 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         override fun onCues(cueGroup: CueGroup) { embeddedLayer?.setStackedCues(cueGroup.cues) }
     }
     private var shown: List<Cue>? = null
-    private var scale = input.preferences.subtitle_font_scale.toFloat().coerceIn(.5f, 2f)
     private val ticker = scope.launch { while (isActive) { delay(25); render() } }
     init { player.addListener(embeddedCues) }
 
     fun bind(value: PlayerView?) {
         if (view === value) return
         view?.subtitleView?.visibility = View.VISIBLE
-        layers().forEach { (it.parent as? ViewGroup)?.removeView(it) }
+        layers().forEach { layer ->
+            captionStyle.detach(layer)
+            (layer.parent as? ViewGroup)?.removeView(layer)
+        }
         view = value
         overlay = value?.let { owner -> subtitleLayer(owner, requireNotNull(owner.overlayFrameLayout)) }
         // Same parent as PlayerView's own view: the video's frame, where positioned and bitmap cues belong.
@@ -57,13 +60,11 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
 
     private fun subtitleLayer(owner: PlayerView, parent: ViewGroup) = SubtitleView(owner.context).also { layer ->
         layer.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        layer.profileStyle(input.preferences, scale)
+        captionStyle.attach(layer)
         parent.addView(layer, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     }
 
     private fun layers() = listOfNotNull(overlay, embeddedLayer)
-
-    fun size(value: Float) { scale = value; layers().forEach { it.profileStyle(input.preferences, scale) } }
 
     suspend fun select(id: Int?) {
         touched = true

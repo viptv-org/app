@@ -33,6 +33,7 @@ import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.connection.catalogSource
 import org.viptv.app.connection.catalogTitle
+import org.viptv.app.connection.selections
 import org.viptv.app.connection.selectedCatalog
 import org.viptv.app.state.Screen
 import org.viptv.app.components.AutomaticPage
@@ -89,7 +90,8 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         val gutter = pageGutter(television = false, tablet = false, browser = false, maxWidth = width)
         val catalogOpen = remember { mutableStateOf(false) }
         val facets = remember(controls, query, screen) { browseFacets(controls, query, screen == Screen.Discover) }
-        val applied = remember(facets, query) { appliedFacets(facets, query).size }
+        val applied = remember(facets, query) { appliedChips(facets, query) }
+        val noun = browseNoun(screen)
         val catalog = controls?.selectedCatalog(query)
         val peers = controls?.catalogs.orEmpty()
         val label = catalog?.catalogTitle(peers)
@@ -113,7 +115,9 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                 val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
                 if (error != null && cards.isEmpty()) BrowseErrorState(label, catalog?.connection_name, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
                 else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Fixed(columns), Modifier.weight(1f))
-                else if (cards.isEmpty()) BrowseEmptyState(source, applied, Modifier.weight(1f)) { applyQuery(clearedFilters(query)) }
+                else if (cards.isEmpty()) BrowseEmptyState(source, applied, noun, Modifier.weight(1f),
+                    clearAll = { applyQuery(clearedFilters(query)) },
+                    remove = { chip -> if (chip.multiple) multipleChanged(chip.id, query.selections(chip.id) - chip.value) else filterChanged(chip.id, "") })
                 else LazyVerticalGrid(GridCells.Fixed(columns),
                     state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
                     verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
@@ -165,21 +169,29 @@ private fun BrowseSkeletonGrid(columns: GridCells, modifier: Modifier) {
 }
 
 @Composable
-private fun BrowseEmptyState(source: String?, filters: Int, modifier: Modifier, clearAll: () -> Unit) {
+private fun BrowseEmptyState(source: String?, chips: List<AppliedChip>, noun: String, modifier: Modifier,
+    clearAll: () -> Unit, remove: (AppliedChip) -> Unit) {
+    val newest = chips.lastOrNull()
     Column(modifier.fillMaxWidth().padding(top = 90.dp, start = 20.dp, end = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Lucide.Search, null, Modifier.size(30.dp))
-        Text("Nothing matches", fontSize = 22.sp, lineHeight = 25.sp, letterSpacing = (-0.44).sp,
-            fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-        Text(emptyBody(source, filters), color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp,
-            textAlign = TextAlign.Center)
-        BoardAction("Clear all filters", primary = true, run = clearAll)
+        if (newest == null) {
+            Text("No titles yet", fontSize = 22.sp, lineHeight = 25.sp, letterSpacing = (-0.44).sp,
+                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        } else {
+            Text("Nothing matches", fontSize = 22.sp, lineHeight = 25.sp, letterSpacing = (-0.44).sp,
+                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            val single = chips.size == 1
+            Text(if (single) source?.let { "$it has no $noun matching “${newest.label}”." }
+                    ?: "No $noun match “${newest.label}”."
+                else source?.let { "$it has no $noun with all ${chips.size} filters. Removing the newest one usually helps." }
+                    ?: "No $noun are available for these filters.",
+                color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
+            BoardAction(if (newest.label.length > 24) "Remove filter" else "Remove “${newest.label}”", primary = true, run = { remove(newest) })
+            if (!single) BoardAction("Clear all filters", primary = false, run = clearAll)
+        }
     }
 }
-
-private fun emptyBody(source: String?, filters: Int): String =
-    if (source != null && filters > 0) "$source has no titles with all $filters filters. Removing the newest one usually helps."
-    else "No titles match these filters. Removing the newest one usually helps."
 
 @Composable
 private fun BrowseErrorState(title: String?, source: String?, error: String, modifier: Modifier,

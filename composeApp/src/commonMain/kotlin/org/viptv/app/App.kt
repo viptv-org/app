@@ -99,6 +99,7 @@ fun App(
     val watchOnTvState = rememberWatchOnTvState()
     val watchOnTvPlatform = rememberWatchOnTvAvailable()
     var remoteOpen by remember { mutableStateOf(false) }
+    val pendingMutation = remember(controller, state.mutations) { org.viptv.app.components.PendingMutationUi(state.mutations, controller::retryMutation) }
     val cardActions = remember(controller, localMode) {
         CardActions(play = controller::playTitle, toggleSave = controller::toggleFavorite,
             isSaved = { controller.state.value.isSaved(it) },
@@ -109,7 +110,8 @@ fun App(
         LocalAccent provides accent, LocalShowRatings provides ratings,
         LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
         LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState,
-        LocalPendingAction provides state.pendingAction) {
+        LocalPendingAction provides state.pendingAction,
+        org.viptv.app.components.LocalPendingMutation provides pendingMutation) {
     ViptvTheme(television, pointer = browser || desktopChrome, activationKeys = surface.bindsActivationKeys) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
@@ -206,7 +208,8 @@ fun App(
                                 val homeContent: @Composable () -> Unit = { HomeScreen(state.home, television, controller::open, controller::refresh, desktopChrome, busy = state.busy, error = state.error,
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
                                 summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent,
-                                seeAllFor = { state.rowSeeAll(it) }, openSeeAll = { controller.navigate(it.screen) }) }
+                                seeAllFor = { state.rowSeeAll(it) }, openSeeAll = { controller.navigate(it.screen) },
+                                moreRow = controller::homeRowPage, rowBusy = state.homeRowBusy, rowErrors = state.homeRowErrors) }
                                 // Kept per profile on every layout, so Back finds the row and focus it left.
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
@@ -359,7 +362,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             previewSources = controller::previewDetailSources,
             cancelSourcesPreview = controller::cancelDetailSourcePreview)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources) }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }

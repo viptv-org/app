@@ -49,7 +49,7 @@ class PlaceholderControlsTest {
         var retries = 0
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
             SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
-                television = true, initialSection = "Playback", tvPreferences = null, changeTvPreferences = {},
+                television = true, initialSection = "Playback", tvPreferences = null, changeTvPreferences = { _, _ -> },
                 retryPreferences = { retries++ })
         } }
         try {

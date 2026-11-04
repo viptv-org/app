@@ -198,6 +198,11 @@ fun ApplicationController.showSettingsPage(page: SettingsPage) {
     if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page) updateState { it.copy(settingsPage = page) }
 }
 
+fun ApplicationController.openAddonsSettings() {
+    updateState { it.copy(settingsEntrySection = "Add-ons", settingsPage = null) }
+    navigate(Screen.Settings)
+}
+
 private fun ApplicationController.backWithinSettings(): Boolean {
     val state = mutable.value
     if (!state.settingsLevelOpen()) return false

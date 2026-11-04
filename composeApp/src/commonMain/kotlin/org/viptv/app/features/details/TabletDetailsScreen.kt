@@ -21,6 +21,7 @@ import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -64,9 +65,9 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp)) {
                         item {
                             Column(Modifier.padding(horizontal = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(300.dp).height(92.dp),
-                                    alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-                                else Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+                                TitleLogo(card.logo, card.title, logoModifier = Modifier.width(300.dp).height(92.dp)) {
+                                    Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+                                }
                                 MediaMetadata(card, kindFirst = true)
                                 card.description?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
                                 Button(onClick = { play(heroEpisode ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
