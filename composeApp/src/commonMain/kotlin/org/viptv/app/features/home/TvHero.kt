@@ -17,6 +17,8 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -44,7 +46,9 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             // The hero's leading edge dead-ends Left: geometric search would otherwise reach the profile avatar in the nav.
             TvAction(Modifier.width(220.dp * scale).height(72.dp * scale).focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel }, scale, ring = false,
                 primary = true, requester = first, activate = { play(presented) }, contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) {
-                Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
+                if (presented.isPlayPending()) PendingActionSpinner(Modifier.size(24.dp * scale), size = 24.dp * scale, strokeWidth = 3.dp * scale, color = it)
+                else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it)
+                Spacer(Modifier.width(12.dp * scale))
                 Text("Play", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
             val mutations = LocalPendingMutation.current

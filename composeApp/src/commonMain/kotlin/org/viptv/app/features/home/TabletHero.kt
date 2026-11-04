@@ -27,6 +27,8 @@ import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 
 @Composable
 internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {
@@ -54,7 +56,9 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                         Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Button(onClick = { play(shown) }, modifier = Modifier.size(160.dp, 48.dp), shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-                                Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp))
+                                if (shown.isPlayPending()) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Palette.background)
+                                else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
+                                Spacer(Modifier.width(8.dp))
                                 Text("Play", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             }
                             val mutations = LocalPendingMutation.current

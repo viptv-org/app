@@ -81,6 +81,8 @@ import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.saveTarget
 import org.viptv.app.components.LocalListRemoval
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.LocalCardOverflow
 import org.viptv.app.components.LocalPointerHover
@@ -189,6 +191,11 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                     drawRoundRect(Palette.raised.copy(alpha = 0.9f), cornerRadius = CornerRadius(bar / 2), size = Size(size.width, bar))
                     if (p > 0f) drawRoundRect(accent, cornerRadius = CornerRadius(bar / 2), size = Size(size.width * p, bar))
                 })
+            }
+            if (card.isPlayPending()) {
+                Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
+                    PendingActionSpinner(size = 40.dp, strokeWidth = 3.dp)
+                }
             }
             // A focused card draws only its focus outline, never the hover ring as well.
             if (ringFade > 0f) CardHoverRing(cornerRadius, Modifier.matchParentSize().graphicsLayer { alpha = ringFade })

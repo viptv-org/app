@@ -16,6 +16,7 @@ env:
 jobs:
   compile-android:
     name: compile Android main
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -30,7 +31,7 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
@@ -52,7 +53,7 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0'
@@ -74,7 +75,7 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
@@ -171,7 +172,7 @@ jobs:
           python-version: '3.13'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
@@ -195,7 +196,7 @@ jobs:
           VIPTV_NATIVE_PREBUILT: '1'
         run: |
           total=$(tools/desktop-test-shards.sh count)
-          mapfile -t classes < <(SHARDS=4 SHARD=${{ matrix.shard }} tools/desktop-test-shards.sh list)
+          mapfile -t classes < <(SHARDS=${{ strategy.job-total }} SHARD=${{ matrix.shard }} tools/desktop-test-shards.sh list)
           printf 'shard %d: %d of %d desktop test classes\n' "${{ matrix.shard }}" "${#classes[@]}" "$total"
           args=()
           for class in "${classes[@]}"; do args+=(--tests "$class"); done
@@ -234,7 +235,8 @@ jobs:
           results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.compile-android-app.result }} ${{ needs.native-prep.result }} ${{ needs.desktop-test.result }}'
           echo "parallel jobs: $results"
           for result in $results; do
-            if [[ "$result" != "success" ]]; then
+            # compile-android is push-only; every other job must pass.
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
               echo "a parallel job did not succeed: $results" >&2
               exit 1
             fi

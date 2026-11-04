@@ -33,6 +33,8 @@ import org.viptv.app.components.Button
 import org.viptv.app.state.saveTarget
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 
 @Composable
 internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
@@ -109,6 +111,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
     val progress = resumeCard?.progress
     val partway = resuming(resumeCard)
     val remaining = if (partway) remainingMinutes(resumeCard ?: card) else null
+    val pending = (resumeCard ?: card).isPlayPending()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Box {
@@ -116,7 +119,8 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 18.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Color(0xFF111113))) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Lucide.Play, null, Modifier.size(15.dp))
+                        if (pending) PendingActionSpinner(Modifier.size(15.dp), size = 15.dp, strokeWidth = 2.dp, color = Color(0xFF111113))
+                        else Icon(Lucide.Play, null, Modifier.size(15.dp))
                         Text(heroPlayLabel(resumeCard),
                             fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (remaining != null) {
