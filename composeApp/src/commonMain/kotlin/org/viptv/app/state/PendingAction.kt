@@ -4,9 +4,7 @@ import org.viptv.app.connection.cardLookupKey
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
 
-// One in-flight action per app, keyed by its identity. Starting the same identity again reverts it
-// instead of doubling up; a different identity replaces it. Playback is the first user; toggles,
-// dialogs and retries reuse the same record so the tapped element always shows its own feedback.
+// One in-flight action per app. Repeating a pending card cancels it; repeating a pending source is a no-op.
 internal fun ApplicationState.hasPending(key: String): Boolean = pendingAction != null && pendingAction == key
 
 internal fun ApplicationState.playPending(card: Card): Boolean = hasPending(cardLookupKey(card))
@@ -24,7 +22,11 @@ internal fun ApplicationController.beginPendingAction(key: String): Boolean {
 
 internal fun ApplicationController.beginPendingPlayback(card: Card): Boolean = beginPendingAction(cardLookupKey(card))
 
-internal fun ApplicationController.beginPendingSource(source: SourceCandidate): Boolean = beginPendingAction(source.id)
+internal fun ApplicationController.beginPendingSource(source: SourceCandidate): Boolean {
+    if (mutable.value.pendingAction == source.id) return false
+    updateState { it.copy(pendingAction = source.id) }
+    return true
+}
 
 internal fun ApplicationController.cancelPendingAction() {
     sourceDetailJob?.cancel(); sourceDetailJob = null
