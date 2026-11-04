@@ -1,5 +1,7 @@
 package org.viptv.app.features.live
 
+import org.viptv.app.format.formatTimeOfDay
+import org.viptv.app.format.is24HourTime
 import platform.Foundation.*
 
 internal actual fun liveClock(): LiveClock {
@@ -17,9 +19,6 @@ internal actual fun liveClock(): LiveClock {
 
 internal actual fun liveTimeAt(atMillis: Long, period: Boolean): String {
     val date = NSDate.dateWithTimeIntervalSince1970(atMillis / 1000.0)
-    val hourFormat = NSDateFormatter().apply { dateFormat = "h:mm" }
-    val time = hourFormat.stringFromDate(date)
-    if (!period) return time
-    val amPm = NSDateFormatter().apply { dateFormat = "a" }
-    return "$time ${amPm.stringFromDate(date)}"
+    val components = NSCalendar.currentCalendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, fromDate = date)
+    return formatTimeOfDay(components.hour.toInt(), components.minute.toInt(), is24HourTime(), period)
 }
