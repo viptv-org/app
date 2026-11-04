@@ -197,6 +197,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
                     Key.Escape -> { if (phone) latestPhoneBack() else if (phonePanel != null) dismissPanel() else close(); true }
                     Key.Spacebar, Key.MediaPlayPause -> { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true }
+                    Key.MediaFastForward -> { seek(position + MediaSkipMillis); true }
+                    Key.MediaRewind -> { seek(position - MediaSkipMillis); true }
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {

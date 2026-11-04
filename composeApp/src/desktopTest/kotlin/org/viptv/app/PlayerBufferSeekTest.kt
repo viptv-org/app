@@ -54,4 +54,39 @@ class PlayerBufferSeekTest {
         state.observe(PlayerFact.Progress(180_100, 300_000))
         assertEquals(180_100, state.position)
     }
+
+    @Test fun mediaKeysSkipAheadTenSecondsInVod() {
+        val state = state()
+        var command: PlayerCommand? = null
+        state.skip(MediaSkipMillis) { command = it }
+        assertEquals(PlayerCommand.Seek(70_000), command)
+        assertEquals(70_000, state.position)
+        assertNull(state.scrub)
+    }
+
+    @Test fun mediaKeysSkipBackTenSecondsInVod() {
+        val state = state()
+        var command: PlayerCommand? = null
+        state.skip(-MediaSkipMillis) { command = it }
+        assertEquals(PlayerCommand.Seek(50_000), command)
+        assertEquals(50_000, state.position)
+    }
+
+    @Test fun mediaKeysDoNotSeekLive() {
+        val state = TvPlayerState(PlaybackInput("live", "https://media.example/live.m3u8", live = true,
+            positionMillis = 60_000, durationMillis = 300_000), emptyList(), TvPlayerScene.Controls)
+        var command: PlayerCommand? = null
+        state.skip(MediaSkipMillis) { command = it }
+        assertNull(command)
+        assertEquals(60_000, state.position)
+    }
+
+    @Test fun mediaKeysClampToTheMediaLength() {
+        val state = TvPlayerState(PlaybackInput("lease", "https://media.example/movie.mp4",
+            positionMillis = 295_000, durationMillis = 300_000), emptyList(), TvPlayerScene.Controls)
+        var command: PlayerCommand? = null
+        state.skip(MediaSkipMillis) { command = it }
+        assertEquals(PlayerCommand.Seek(300_000), command)
+        assertEquals(300_000, state.position)
+    }
 }

@@ -88,6 +88,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         else if (event.type != KeyEventType.KeyDown) false else when (event.key) {
             Key.Escape -> { back(); true }
             Key.Spacebar, Key.MediaPlayPause -> { if (!state.failed) { state.reveal(); toggle() }; true }
+            Key.MediaFastForward -> { if (!state.failed) state.skip(MediaSkipMillis, previewCommand); true }
+            Key.MediaRewind -> { if (!state.failed) state.skip(-MediaSkipMillis, previewCommand); true }
             Key.DirectionLeft, Key.DirectionRight -> if (!state.failed && !state.showNext && (state.timelineFocused || state.rootFocused || !state.visible)) {
                 state.step(if (event.key == Key.DirectionLeft) -1 else 1); true
             } else false
