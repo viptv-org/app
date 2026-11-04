@@ -137,7 +137,6 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
             container.removeChild(captionStyle)
         }
     }
-    // Only foreign mode re-decides embedded display after the audio is known; a provider pick suppresses it directly.
     LaunchedEffect(hlsController, input, audioLanguage) {
         val hls = hlsController ?: return@LaunchedEffect
         if (input.preferences.subtitleMode == "foreign")

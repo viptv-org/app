@@ -24,11 +24,20 @@ class BrowserSubtitleDecisionTest {
     @Test fun twoAudioRenditionsBothList() {
         val tracks = PlaybackTracks(audio = listOf(
             browserAudioTrack(0, "English", "eng", false),
-            browserAudioTrack(1, "Japanese", "jpn", true),
+            browserAudioTrack(1, "Japanese description", "jpn", true),
         ))
-        assertEquals(listOf("English · eng", "Japanese · jpn"), tracks.audio.map { it.label })
+        assertEquals(listOf("English", "Japanese description"), tracks.audio.map { it.label })
         assertEquals(listOf("eng", "jpn"), tracks.audio.map { it.language })
         assertEquals(listOf(false, true), tracks.audio.map { it.selected })
+    }
+
+    @Test fun unnamedRenditionUsesTheLanguageDisplayName() {
+        val tracks = PlaybackTracks(audio = listOf(
+            browserAudioTrack(0, null, "eng", false),
+            browserAudioTrack(1, "", "jpn", true),
+        ))
+        assertEquals(listOf("English", "Japanese"), tracks.audio.map { it.label })
+        assertEquals(listOf("eng", "jpn"), tracks.audio.map { it.language })
     }
 
     @Test fun unnamedRenditionFallsBackToOrdinalAndUnknownLanguageIsNull() {

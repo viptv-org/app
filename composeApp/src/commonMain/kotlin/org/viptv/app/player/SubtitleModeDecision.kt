@@ -33,7 +33,6 @@ internal fun audioIsForeign(audioLanguage: String?, preferredAudio: String?): Bo
     return audio != (subtitleModeLanguage(preferredAudio) ?: "en")
 }
 
-// The enable/disable half of subtitleModeChoice; unknown audio is not foreign, so foreign-only stays off.
 internal fun subtitleModeEnabled(mode: String, preferredAudio: String?, audioLanguage: String?): Boolean = when (mode) {
     "always" -> true
     "foreign" -> audioIsForeign(audioLanguage, preferredAudio)
