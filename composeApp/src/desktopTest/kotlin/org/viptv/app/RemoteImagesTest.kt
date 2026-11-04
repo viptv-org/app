@@ -30,4 +30,23 @@ class RemoteImagesTest {
             connection.close()
         }
     }
+
+    @Test fun unchangedSubtreesAreSharedInsteadOfCopied() {
+        val unchanged = buildJsonObject {
+            put("title", "A show")
+            putJsonArray("tags") { add("new"); add(JsonObject(emptyMap())) }
+        }
+        assertSame(unchanged, unchanged.resolveRemoteImages("https://watch.example"))
+
+        val meta = buildJsonObject { put("title", "A show") }
+        val withImage = buildJsonObject {
+            put("poster", "/api/images/p.webp")
+            put("meta", meta)
+        }
+        val rewritten = withImage.resolveRemoteImages("https://watch.example")
+        assertNotSame(withImage, rewritten)
+        assertSame(meta, rewritten.jsonObject.getValue("meta"), "unchanged siblings keep their identity")
+        assertEquals("https://watch.example/api/images/p.webp",
+            rewritten.jsonObject.getValue("poster").jsonPrimitive.content)
+    }
 }
