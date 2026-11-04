@@ -60,7 +60,7 @@ kotlin {
                 implementation("net.java.dev.jna:jna:5.17.0@aar")
                 implementation(project(":media3-ffmpeg"))
                 implementation("com.squareup.okhttp3:okhttp:4.12.0")
-                listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-exoplayer-dash", "media3-ui").forEach { implementation("androidx.media3:$it:1.11.1") }
+                listOf("media3-exoplayer", "media3-exoplayer-hls", "media3-exoplayer-dash", "media3-ui", "media3-session").forEach { implementation("androidx.media3:$it:1.11.1") }
             }
         }
         val desktopMain by getting {

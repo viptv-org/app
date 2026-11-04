@@ -5,6 +5,10 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <!-- App updates (docs/APP_UPDATES.md): install a newer build of this app, signed with the same key. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Media controls: the notification that carries lock-screen and headset transport for the one player. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <queries>
         <!-- The updater opens this app's "Install unknown apps" screen where the device has one. -->
         <intent>
@@ -31,6 +35,9 @@
         </activity>
         <!-- Shared torrent runtime (native transport v2): app-private worker process, never exported. -->
         <service android:name="org.viptv.experiment.TorrentRuntimeService" android:process=":torrent_runtime" android:exported="false" android:stopWithTask="true" />
+        <service android:name="org.viptv.app.player.AndroidMediaSessionService" android:exported="true" android:foregroundServiceType="mediaPlayback">
+            <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
+        </service>
         <!-- app#139: Android replaced the app with a newer build; reopen it so the viewer lands back in VIPTV. -->
         <receiver android:name="org.viptv.app.updates.UpdateRelaunchReceiver" android:exported="false">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
