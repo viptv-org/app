@@ -37,7 +37,9 @@ class SubtitleRenderingTest {
     private fun glyphRows(cues: List<Cue>, width: Int = 2400, height: Int = 1080,
         preferences: ProfilePreferences = ProfilePreferences(), scale: Float = 1f, capture: String? = null, stack: Boolean = true): GlyphRows {
         val view = SubtitleView(RuntimeEnvironment.getApplication())
-        view.profileStyle(preferences, scale)
+        val caption = Media3CaptionStyle(preferences)
+        caption.attach(view)
+        caption.size(scale)
         if (stack) view.setStackedCues(cues) else view.setCues(cues)
         view.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
