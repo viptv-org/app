@@ -93,6 +93,17 @@ class AccessibilitySemanticsTest {
         }
     }
 
+    @Test fun calendarDateChipsExposeTabRoleAndSelection() {
+        Shell().use { shell ->
+            shell.show(screens.getValue("Calendar"))
+            shell.frames()
+            val chips = shell.nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.Tab }
+            assertEquals(7, chips.size, "seven date chips, not ${chips.size}")
+            assertEquals(1, chips.count { it.config.getOrNull(SemanticsProperties.Selected) == true },
+                "exactly one date chip is selected")
+        }
+    }
+
     @Test fun theSheetCloseButtonsExposeA48dpButtonRole() {
         var closed = false
         val phone = ImageComposeScene(390, 844, Density(1f)) {
