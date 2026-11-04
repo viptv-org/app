@@ -11,6 +11,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
+import android.util.Log
 import android.util.Rational
 import androidx.media3.common.C
 import androidx.media3.common.Player
@@ -39,6 +40,7 @@ object AndroidPictureInPicture {
     }
 
     private var attached: Attached? = null
+    private var pipFailureLogged = false
 
     private val listener = object : Player.Listener {
         override fun onVideoSizeChanged(videoSize: VideoSize) = refresh()
@@ -85,7 +87,11 @@ object AndroidPictureInPicture {
         val value = attached ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return
         if (blocker(value) != null) return
-        value.activity.enterPictureInPictureMode(params(value))
+        try {
+            value.activity.enterPictureInPictureMode(params(value))
+        } catch (e: IllegalArgumentException) {
+            logPipFailure(e)
+        }
     }
 
     internal fun bind(session: AndroidPlaybackSession) {
@@ -108,7 +114,17 @@ object AndroidPictureInPicture {
     private fun refresh() {
         val value = attached ?: return
         if (value.television) return
-        value.activity.setPictureInPictureParams(params(value))
+        try {
+            value.activity.setPictureInPictureParams(params(value))
+        } catch (e: IllegalArgumentException) {
+            logPipFailure(e)
+        }
+    }
+
+    private fun logPipFailure(throwable: IllegalArgumentException) {
+        if (pipFailureLogged) return
+        pipFailureLogged = true
+        Log.w("VIPTV_PIP", "Picture-in-Picture rejected the params", throwable)
     }
 
     private fun params(value: Attached): PictureInPictureParams {
@@ -137,7 +153,7 @@ object AndroidPictureInPicture {
 
     private fun aspectRatio(value: Attached): Rational? {
         val size = value.session?.player?.videoSize ?: return null
-        return if (size.width > 0 && size.height > 0) Rational(size.width, size.height) else null
+        return clampPipAspectRatio(size.width, size.height)
     }
 
     private fun actions(value: Attached): List<RemoteAction> {
@@ -158,5 +174,19 @@ object AndroidPictureInPicture {
         val value = attached ?: return
         val session = value.session ?: return
         value.scope.launch { session.skip(deltaMillis) }
+    }
+}
+
+private val MIN_PIP_ASPECT_RATIO = Rational(100, 239)
+private val MAX_PIP_ASPECT_RATIO = Rational(239, 100)
+private val DEFAULT_PIP_ASPECT_RATIO = Rational(16, 9)
+
+internal fun clampPipAspectRatio(width: Int, height: Int): Rational {
+    if (width <= 0 || height <= 0) return DEFAULT_PIP_ASPECT_RATIO
+    val ratio = Rational(width, height)
+    return when {
+        ratio < MIN_PIP_ASPECT_RATIO -> MIN_PIP_ASPECT_RATIO
+        ratio > MAX_PIP_ASPECT_RATIO -> MAX_PIP_ASPECT_RATIO
+        else -> ratio
     }
 }
