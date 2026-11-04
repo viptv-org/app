@@ -27,6 +27,7 @@ import org.viptv.app.components.IconButton
 import org.viptv.app.components.LocalPointerHover
 import org.viptv.app.components.PhoneSheet
 import org.viptv.app.components.SearchableSelect
+import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.SelectOption
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.TvFocusScroll
@@ -137,6 +138,7 @@ internal fun XtreamConnectionsSettings(connections: List<XtreamConnection>?, def
     val form = mode
     if (form != null) {
         val draft = rememberXtreamDraft(form, editing)
+        SecureWindow(secure = form != XtreamFormMode.Edit)
         val save = {
             if (draft.valid && !busy) {
                 val target = editing

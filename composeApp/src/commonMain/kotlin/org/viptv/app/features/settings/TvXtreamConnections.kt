@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.LocalTvColumnFocus
+import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.pointerClickable
@@ -180,6 +181,7 @@ private fun TvXtreamPage(connection: XtreamConnection?, creating: Boolean, defau
         mode == TvXtreamMode.Edit -> name.isNotBlank()
         else -> false
     }
+    SecureWindow(secure = creating || mode == TvXtreamMode.Password)
     LaunchedEffect(mode) {
         repeat(4) {
             withFrameNanos { }
