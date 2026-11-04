@@ -18,11 +18,10 @@ fun ApplicationController.signOutDevice(id: String) {
         optimistic = { state -> state.copy(accountDevices = state.accountDevices?.let { devices ->
             devices.copy(devices = devices.devices.filterNot { it.id == id }) }) },
         revert = { it.copy(accountDevices = before.accountDevices) },
-        prepare = { state ->
-            val device = state.accountDevices?.devices?.singleOrNull { it.id == id }
-                ?: throw LocalFailure("Refresh the device list and try again.")
-            if (device.current || !device.can_sign_out) throw LocalFailure("Use Sign out to leave this browser.")
-        }) {
+        message = { failure -> (failure as? LocalFailure)?.message ?: failureMessage(failure) }) {
+        val device = mutable.value.accountDevices?.devices?.singleOrNull { it.id == id }
+            ?: throw LocalFailure("Refresh the device list and try again.")
+        if (device.current || !device.can_sign_out) throw LocalFailure("Use Sign out to leave this browser.")
         val remote = requireNotNull(connection)
         val owner = generation
         accountDeviceRequest { it.signOutDevice(id) }
@@ -33,8 +32,8 @@ fun ApplicationController.signOutDevice(id: String) {
 }
 
 fun ApplicationController.signOutAllDevices() = mutate(MutationTarget(MutationKind.Account, SIGN_OUT_ALL_TARGET),
-    message = { failure -> (failure as? LocalFailure)?.message ?: failureMessage(failure) },
-    prepare = { state -> if (state.accountDevices?.can_sign_out_all != true) throw LocalFailure("Refresh the device list and try again.") }) {
+    message = { failure -> (failure as? LocalFailure)?.message ?: failureMessage(failure) }) {
+    if (mutable.value.accountDevices?.can_sign_out_all != true) throw LocalFailure("Refresh the device list and try again.")
     val remote = requireNotNull(connection)
     val owner = generation
     accountDeviceRequest { it.signOutAllDevices() }
