@@ -20,8 +20,9 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun DesktopAppWindow(onCloseRequest: () -> Unit, title: String, state: WindowState, framed: Boolean,
+    visible: Boolean = true,
     onPreviewKeyEvent: (KeyEvent) -> Boolean = { false }, content: @Composable FrameWindowScope.() -> Unit) {
-    Window(onCloseRequest = onCloseRequest, title = title, state = state, undecorated = true,
+    Window(onCloseRequest = onCloseRequest, title = title, state = state, visible = visible, undecorated = true,
         icon = painterResource("viptv-app-icon.png"),
         onPreviewKeyEvent = onPreviewKeyEvent) {
         // A supporting window sits behind the pointer until it is activated; the activating press is consumed before Compose sees it.
