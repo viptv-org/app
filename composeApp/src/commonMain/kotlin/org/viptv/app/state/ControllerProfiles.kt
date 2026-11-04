@@ -3,7 +3,7 @@ package org.viptv.app.state
 import org.viptv.app.connection.*
 
 fun ApplicationController.selectProfile(id: String) {
-    if (mutable.value.busy) return
+    if (mutable.value.busy || mutable.value.mutations.running(MutationKind.Profile)) return
     if (mutable.value.profiles.any { it.id == id && it.locked }) {
         updateState { next -> next.copy(screen = Screen.ProfilePin, profileToOpen = id, leavePinFrom = null, error = null) }
         return
@@ -116,8 +116,11 @@ fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = profil
 }
 
 // The dialog that was confirmed names the write, so its button draws the pending state and a repeat press is dropped.
-internal fun ApplicationController.profileMutation(action: String, operation: suspend () -> Unit) =
-    mutate(profileMutationTarget(action), operation = operation)
+internal fun ApplicationController.profileMutation(action: String, operation: suspend () -> Unit) {
+    // One profile write at a time: a second dialog must not stack on, or replace, the write already running.
+    if (mutable.value.mutations.running(MutationKind.Profile)) return
+    mutate(profileMutationTarget(action), ownsControllerJob = true, operation = operation)
+}
 
 internal fun profileMutationTarget(action: String) = MutationTarget(MutationKind.Profile, action)
 

@@ -18,8 +18,10 @@ fun ApplicationController.signOutDevice(id: String) {
         optimistic = { state -> state.copy(accountDevices = state.accountDevices?.let { devices ->
             devices.copy(devices = devices.devices.filterNot { it.id == id }) }) },
         revert = { it.copy(accountDevices = before.accountDevices) },
-        message = { failure -> (failure as? LocalFailure)?.message ?: failureMessage(failure) }) {
-        val device = mutable.value.accountDevices?.devices?.singleOrNull { it.id == id }
+        message = { failure -> (failure as? LocalFailure)?.message ?: failureMessage(failure) },
+        ownsControllerJob = true) {
+        // The optimistic removal already dropped the row, so the write decides from the list the press saw.
+        val device = before.accountDevices?.devices?.singleOrNull { it.id == id }
             ?: throw LocalFailure("Refresh the device list and try again.")
         if (device.current || !device.can_sign_out) throw LocalFailure("Use Sign out to leave this browser.")
         val remote = requireNotNull(connection)
@@ -32,7 +34,8 @@ fun ApplicationController.signOutDevice(id: String) {
 }
 
 fun ApplicationController.signOutAllDevices() = mutate(MutationTarget(MutationKind.Account, SIGN_OUT_ALL_TARGET),
-    message = { failure -> (failure as? LocalFailure)?.message ?: failureMessage(failure) }) {
+    message = { failure -> (failure as? LocalFailure)?.message ?: failureMessage(failure) },
+    ownsControllerJob = true) {
     if (mutable.value.accountDevices?.can_sign_out_all != true) throw LocalFailure("Refresh the device list and try again.")
     val remote = requireNotNull(connection)
     val owner = generation

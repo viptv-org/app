@@ -28,7 +28,7 @@ class AccountDevicePendingTest {
             engine { dispatcher = StandardTestDispatcher(scheduler); addHandler(reply) }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = true)
         val controller = ApplicationController(scope, store).also {
             it.connection = remote
             it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1",

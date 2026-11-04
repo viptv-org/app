@@ -14,7 +14,7 @@ fun ApplicationController.refreshAccountDeletion() = run {
 fun ApplicationController.deleteAccount(username: String, password: String, pin: String?) =
     mutate(MutationTarget(MutationKind.Account, DELETE_ACCOUNT_TARGET), message = { failure ->
         (failure as? LocalFailure)?.message ?: failureMessage(failure) ?: "Could not delete your account. Nothing was changed. Try again."
-    }) {
+    }, ownsControllerJob = true) {
         val remote = connection ?: throw LocalFailure("Connect to your account to delete it.")
         val owner = generation
         try {
