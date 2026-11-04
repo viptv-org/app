@@ -110,6 +110,19 @@ class StreamedSearchTest {
         } finally { remote.close() }
     }
 
+    @Test fun aRawServerErrorStringNeverReachesTheUi() = runBlocking {
+        val remote = StreamedRemote(store) { _, emit ->
+            emit("error", """{"status":500,"error":"internal: GET /api/search panicked at src/main.rs:42"}""")
+        }
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Search, selectedProfile = "profile")
+        try {
+            controller.search("dune"); controller.job!!.join()
+            assertEquals("The search could not finish. Try again.", controller.state.value.error)
+        } finally { remote.close() }
+    }
+
     @Test fun aServerWithoutTheStreamFallsBackToTheSnapshotEndpoint() = runBlocking {
         val snapshot = SearchSnapshot(listOf(fast), true)
         val remote = StreamedRemote(store, snapshot = Json.encodeToString(snapshot)) { path, _ ->
