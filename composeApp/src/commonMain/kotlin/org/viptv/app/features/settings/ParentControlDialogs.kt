@@ -141,7 +141,7 @@ internal fun KidsPolicyDialog(profile: ServerProfile, policy: KidsPolicy, pinCon
 }
 
 @Composable
-private fun RatingChoices(title: String, labels: List<RatingLabel>, selected: String?, enabled: Boolean,
+internal fun RatingChoices(title: String, labels: List<RatingLabel>, selected: String?, enabled: Boolean,
     choose: (String?) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(title)

@@ -17,14 +17,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.Switch
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.pointerSelectable
 import org.viptv.app.components.pointerToggleable
+import org.viptv.app.connection.KidsPolicy
+import org.viptv.app.connection.KidsRatings
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.AvatarPick
 import org.viptv.app.features.entry.AvatarPicker
@@ -44,16 +44,21 @@ internal data class ProfilePageValues(
     val audioLanguage: String? = null,
     val subtitleLanguage: String? = null,
     val canDelete: Boolean = true,
+    val movieRating: String? = null,
+    val seriesRating: String? = null,
+    val allowUnrated: Boolean = false,
+    val ratings: KidsRatings = KidsRatings(),
 ) {
     val pinRequired get() = profile.requiresLocalPin(local)
     val householdPinRequired get() = householdPinConfigured && !householdUnlocked
+    fun kidsPolicy() = KidsPolicy(kids, maxAge ?: 12, movieRating, seriesRating, allowUnrated, ratings)
 }
 
 internal data class ProfilePageActions(
     val rename: (String, String) -> Unit = { _, _ -> },
     val avatar: (AvatarPick, String) -> Unit = { _, _ -> },
     val kids: (Boolean, String) -> Unit = { _, _ -> },
-    val maturity: (Int, String) -> Unit = { _, _ -> },
+    val maturity: (String?, String?, Boolean, String) -> Unit = { _, _, _, _ -> },
     val approvedTitles: () -> Unit = {},
     val lock: (String, String) -> Unit = { _, _ -> },
     val parentalControls: () -> Unit = {},
@@ -61,15 +66,15 @@ internal data class ProfilePageActions(
     val delete: (String) -> Unit = {},
 )
 
-internal data class MaturityLimit(val age: Int, val label: String)
-
-internal val maturityLimits = listOf(MaturityLimit(0, "G · TV-Y"), MaturityLimit(7, "TV-Y7"), MaturityLimit(10, "PG · TV-PG"),
-    MaturityLimit(13, "PG-13"), MaturityLimit(14, "TV-14"), MaturityLimit(17, "R"))
+internal data class MaturitySelection(val movie: String?, val series: String?, val unrated: Boolean)
 
 internal fun maturityLimitValue(values: ProfilePageValues): String = when {
     !values.kids -> "All ratings"
-    else -> maturityLimits.firstOrNull { it.age == values.maxAge }?.label
-        ?: values.maxAge?.let { "Up to age $it" } ?: "All ratings"
+    values.movieRating == null && values.seriesRating == null -> "All ratings"
+    else -> listOfNotNull(
+        values.movieRating?.let { "Movies up to $it" },
+        values.seriesRating?.let { "Series up to $it" },
+    ).joinToString(" · ")
 }
 
 internal fun languageSummary(audio: String?, subtitle: String?): String {
@@ -84,7 +89,7 @@ internal class ProfileDialogs {
     var maturity by mutableStateOf(false)
     var delete by mutableStateOf(false)
     var kidsPin by mutableStateOf(false)
-    var maturityPin by mutableStateOf<Int?>(null)
+    var maturityPin by mutableStateOf<MaturitySelection?>(null)
 
     fun close() {
         name = false; avatar = false; lock = false; maturity = false; delete = false
@@ -99,9 +104,10 @@ internal class ProfileDialogs {
         }
     }
 
-    fun chooseMaturity(age: Int, values: ProfilePageValues, actions: ProfilePageActions) {
+    fun chooseMaturity(selection: MaturitySelection, values: ProfilePageValues, actions: ProfilePageActions) {
         maturity = false
-        if (values.householdPinRequired) maturityPin = age else actions.maturity(age, "")
+        if (values.householdPinRequired) maturityPin = selection
+        else actions.maturity(selection.movie, selection.series, selection.unrated, "")
     }
 }
 
@@ -186,15 +192,16 @@ internal fun ProfileDialogsContent(dialogs: ProfileDialogs, values: ProfilePageV
         choose = { pick, pin -> actions.avatar(pick, pin) })
     if (dialogs.lock) ProfileLockDialog(values.profile.locked, values.pinRequired, busy, error,
         { if (!busy) dialogs.lock = false }) { old, next -> actions.lock(old, next) }
-    if (dialogs.maturity) MaturityLimitDialog(values.maxAge.takeIf { values.kids }, busy, error,
-        { if (!busy) dialogs.maturity = false }) { age -> dialogs.chooseMaturity(age, values, actions) }
+    if (dialogs.maturity) MaturityLimitDialog(values, busy, error,
+        { if (!busy) dialogs.maturity = false }) { movie, series, unrated ->
+        dialogs.chooseMaturity(MaturitySelection(movie, series, unrated), values, actions) }
     if (dialogs.delete) DeleteProfileDialog(values.profile.name, values.pinRequired, busy, error,
         { if (!busy) dialogs.delete = false }) { pin -> actions.delete(pin) }
     if (dialogs.kidsPin) HouseholdPinDialog("Turn on Kids profile", busy, error, { if (!busy) dialogs.kidsPin = false }) { pin ->
         actions.kids(true, pin)
     }
-    dialogs.maturityPin?.let { age -> HouseholdPinDialog("Change the maturity limit", busy, error,
-        { if (!busy) dialogs.maturityPin = null }) { pin -> actions.maturity(age, pin) } }
+    dialogs.maturityPin?.let { selection -> HouseholdPinDialog("Change the maturity limit", busy, error,
+        { if (!busy) dialogs.maturityPin = null }) { pin -> actions.maturity(selection.movie, selection.series, selection.unrated, pin) } }
 }
 
 @Composable
@@ -284,24 +291,29 @@ internal fun DeleteProfileDialog(name: String, pinRequired: Boolean, busy: Boole
 }
 
 @Composable
-internal fun MaturityLimitDialog(current: Int?, busy: Boolean, failure: String?, dismiss: () -> Unit, choose: (Int) -> Unit) {
-    var selected by remember(current) { mutableStateOf(current) }
+internal fun MaturityLimitDialog(values: ProfilePageValues, busy: Boolean, failure: String?, dismiss: () -> Unit,
+    save: (String?, String?, Boolean) -> Unit) {
+    var movie by remember(values.movieRating, values.seriesRating, values.allowUnrated) { mutableStateOf(values.movieRating) }
+    var series by remember(values.movieRating, values.seriesRating, values.allowUnrated) { mutableStateOf(values.seriesRating) }
+    var unrated by remember(values.movieRating, values.seriesRating, values.allowUnrated) { mutableStateOf(values.allowUnrated) }
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Maturity limit") },
-        text = { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        text = { Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("Titles above this rating are hidden for this profile", color = Palette.secondary)
-            maturityLimits.forEach { limit ->
-                val checked = selected == limit.age
-                Row(Modifier.fillMaxWidth().pointerSelectable(checked, enabled = !busy, role = Role.RadioButton,
-                    shape = RoundedCornerShape(10.dp)) { selected = limit.age }
-                    .heightIn(min = 44.dp).padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(limit.label, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                    if (checked) Icon(Lucide.Check, null, Modifier.size(18.dp))
+            if (values.ratings.movie.isNotEmpty())
+                RatingChoices("Movies up to", values.ratings.movie, movie, !busy) { movie = it }
+            if (values.ratings.series.isNotEmpty())
+                RatingChoices("Series up to", values.ratings.series, series, !busy) { series = it }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Allow titles with no rating")
+                    Text("Unrated titles and titles whose ratings disagree stay hidden unless you allow them.",
+                        color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
                 }
+                Switch(unrated, { unrated = it }, enabled = !busy)
             }
             failure?.let { Text(it, color = Palette.danger) }
         } },
-        confirmButton = { TextButton({ selected?.let(choose) }, enabled = !busy && selected != null) { Text("Save") } },
+        confirmButton = { TextButton({ if (!busy) save(movie, series, unrated) }, enabled = !busy) { Text("Save") } },
         dismissButton = { TextButton(dismiss, enabled = !busy) { Text("Cancel") } })
 }
 

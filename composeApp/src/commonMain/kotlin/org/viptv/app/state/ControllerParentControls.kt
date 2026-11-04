@@ -118,7 +118,7 @@ private suspend fun ApplicationController.parentRequest(notice: String? = null, 
     }
 }
 
-private suspend fun ApplicationController.loadParentControls(remote: RemoteConnection,
+internal suspend fun ApplicationController.loadParentControls(remote: RemoteConnection,
     management: ProfileManagement): Map<String, ParentProfileControls> {
     if (management.parent.restricted && !management.parent.unlocked) return mutable.value.parentControls
     val pins = management.profilePinAvailable

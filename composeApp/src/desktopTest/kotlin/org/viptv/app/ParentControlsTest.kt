@@ -255,6 +255,68 @@ class ParentControlsTest {
         } finally { release.complete(Unit); remote.close() }
     }
 
+    @Test fun profilePageLoadsThePerTypeRatingsForTheMaturityRow() = runBlocking<Unit> {
+        val remote = RemoteConnection("https://watch.example", store, client { request ->
+            when (request.url.encodedPath) {
+                "/api/profiles" -> respond(Json.encodeToString(parentFixture(kids = true)),
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                "/api/profiles/1/kids" -> respond(Json.encodeToString(parentKids(false, 12)),
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                "/api/profiles/2/kids" -> respond(Json.encodeToString(parentKids(true, 10, "PG-13", "TV-14", false)),
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                "/api/profiles/2/approvals" -> respond("{\"items\":[]}",
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                else -> respond("{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+        }, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "2")
+        try {
+            controller.refreshProfilePage(); controller.job!!.join()
+            val policy = controller.state.value.parentControls.getValue("2").policy
+            assertEquals("PG-13", policy.movie_rating)
+            assertEquals("TV-14", policy.series_rating)
+            assertNull(controller.state.value.error)
+        } finally { remote.close() }
+    }
+
+    @Test fun profilePageKidsSaveKeepsRatingLimitsAndTheUnratedToggle() = runBlocking<Unit> {
+        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val remote = RemoteConnection("https://watch.example", store, client { request ->
+            when {
+                request.method == HttpMethod.Put -> {
+                    writes += request.url.encodedPath to Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                    respond(Json.encodeToString(parentKids(true, 10, "R", "TV-MA", true)),
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                }
+                request.url.encodedPath == "/api/profiles" ->
+                    respond(Json.encodeToString(parentFixture(kids = true)), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                request.url.encodedPath == "/api/bootstrap" ->
+                    respond(buildJsonObject {
+                        put("identity", buildJsonObject { put("profiles", JsonArray(emptyList())); put("profile_id", "2") })
+                        put("profile_management", Json.encodeToJsonElement(parentFixture(kids = true)))
+                        put("library", Json.encodeToJsonElement(CatalogPage(emptyList(), null, true)))
+                    }.toString(), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                request.url.encodedPath == "/api/profiles/2/approvals" ->
+                    respond("{\"items\":[]}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                else -> respond("{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+        }, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "2",
+            profileManagement = parentFixture(kids = true),
+            parentControls = mapOf("2" to ParentProfileControls(parentKids(true, 10, "PG-13", "TV-14", false))))
+        try {
+            controller.saveProfileKids(KidsPolicy(true, 10, "R", "TV-MA", true, parentRatings), ""); controller.job!!.join()
+            assertEquals("/api/profiles/2/kids" to kidsBody(true, 10, "R", "TV-MA", true), writes.single())
+            val saved = controller.state.value.parentControls.getValue("2").policy
+            assertEquals("R", saved.movie_rating); assertEquals("TV-MA", saved.series_rating); assertTrue(saved.allow_unrated)
+            assertNull(controller.state.value.error)
+        } finally { remote.close() }
+    }
+
     private fun kidsBody(enabled: Boolean, age: Int, movie: String, series: String, unrated: Boolean) = buildJsonObject {
         put("enabled", enabled); put("max_age", age); put("movie_rating", movie)
         put("series_rating", series); put("allow_unrated", unrated)
