@@ -10,7 +10,7 @@ private fun nativeDay(atMillis: Long, dateOnly: String?): LocalDate =
         ?: Instant.ofEpochMilli(atMillis).atZone(ZoneId.systemDefault()).toLocalDate()
 
 internal actual fun airDateLabel(atMillis: Long, dateOnly: String?): String =
-    nativeDay(atMillis, dateOnly).format(DateTimeFormatter.ofPattern("MMM d"))
+    nativeDay(atMillis, dateOnly).format(DateTimeFormatter.ofPattern("MMM d", appDateLocale))
 
 internal actual fun airDateWithYearLabel(atMillis: Long, dateOnly: String?): String =
-    nativeDay(atMillis, dateOnly).format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
+    nativeDay(atMillis, dateOnly).format(DateTimeFormatter.ofPattern("MMM d, yyyy", appDateLocale))

@@ -7,7 +7,7 @@ import platform.Foundation.dateWithTimeIntervalSince1970
 internal actual fun historyDayLabel(atMillis: Long): String {
     val date = NSDate.dateWithTimeIntervalSince1970(atMillis / 1000.0)
     val now = NSDate()
-    val formatter = NSDateFormatter()
+    val formatter = NSDateFormatter().apply { locale = appDateLocale }
     // The calendar math (Today/Yesterday/weekday/Last week) mirrors the wasm
     // implementation's day-ordinal comparison.
     val ordinal: (NSDate) -> Long = { value ->

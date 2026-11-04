@@ -34,9 +34,9 @@ internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
     val now = NSDate()
     val center = shifted(now, offsetDays)
     val todayId = dayString(now)
-    val shortWeekday = NSDateFormatter().apply { dateFormat = "EEE" }
-    val longWeekday = NSDateFormatter().apply { dateFormat = "EEEE" }
-    val fullDate = NSDateFormatter().apply { dateFormat = "MMM d, yyyy" }
+    val shortWeekday = NSDateFormatter().apply { dateFormat = "EEE"; locale = appDateLocale }
+    val longWeekday = NSDateFormatter().apply { dateFormat = "EEEE"; locale = appDateLocale }
+    val fullDate = NSDateFormatter().apply { dateFormat = "MMM d, yyyy"; locale = appDateLocale }
     val days = (-CALENDAR_VISIBLE_DAYS_PER_SIDE..CALENDAR_VISIBLE_DAYS_PER_SIDE).map { n ->
         val d = shifted(center, n)
         val id = dayString(d)

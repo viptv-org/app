@@ -8,11 +8,11 @@ import kotlin.test.*
 class ReleaseDateLabelsTest {
     private fun withZone(zone: String, block: () -> Unit) {
         val previousZone = TimeZone.getDefault()
-        val previousClock = calendarClock
+        val previousClock = appDateClock
         val now = ZonedDateTime.of(LocalDate.of(2026, 1, 2), LocalTime.of(12, 0), ZoneId.of(zone))
         TimeZone.setDefault(TimeZone.getTimeZone(zone))
-        calendarClock = Clock.fixed(now.toInstant(), now.zone)
-        try { block() } finally { calendarClock = previousClock; TimeZone.setDefault(previousZone) }
+        appDateClock = Clock.fixed(now.toInstant(), now.zone)
+        try { block() } finally { appDateClock = previousClock; TimeZone.setDefault(previousZone) }
     }
 
     @Test
