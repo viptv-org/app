@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,8 +54,9 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
             val heroForSlot = carousel.card?.let { preview ?: it }
             if (heroForSlot != null) item(key = "hero") {
                 val hero = heroForSlot
-                Box(Modifier.fillMaxWidth().heightIn(min = with(density) { heroFloor.toDp() })
-                    .onGloballyPositioned { heroFloor = maxOf(heroFloor, it.size.height) }) {
+                val heroMin = remember(density, heroFloor) { with(density) { heroFloor.toDp() } }
+                Box(Modifier.fillMaxWidth().heightIn(min = heroMin)
+                    .onSizeChanged { heroFloor = maxOf(heroFloor, it.height) }) {
                     if (!television && !tablet && !(compact && !desktopChrome)) hero?.landscape?.let { HomeBackdrop(it) }
                     Box(Modifier.padding(start = if (television || tablet) 0.dp else gutter, end = if (television || tablet) 0.dp else gutter, top = if (television || tablet || browser) 0.dp else 12.dp)) {
                         Hero(hero, compact && !desktopChrome, television, open, play, tablet, navigate, browser, save, saved(hero),
@@ -74,7 +75,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 if (home.complete && visibleRows.isEmpty() && home.hero == null && home.featured.isEmpty() && error == null) item(key = "empty") {
                     HomeStatus(home, null, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
                 }
-                items(visibleRows, key = { it.id }) { row ->
+                items(visibleRows, key = { it.id }, contentType = { if (it.id == CONTINUE_ROW) "continue" else "catalog" }) { row ->
                     HomeCatalogRow(row, compact, television, Modifier,
                         { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll,
                         entrance = entrance,
