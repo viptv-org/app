@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
@@ -44,7 +45,7 @@ fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
             }
         }
         Box(Modifier.size(64.dp).clip(CircleShape).background(Color(0xFF343333))
-            .border(1.dp, Color.White.copy(alpha = .1f), CircleShape).pointerClickable(shape = CircleShape) { navigate(Screen.Search) },
+            .border(1.dp, Color.White.copy(alpha = .1f), CircleShape).pointerClickable(role = Role.Button, shape = CircleShape) { navigate(Screen.Search) },
             contentAlignment = Alignment.Center) {
             val fill = animateColorAsState(if (selected == Screen.Search) Color.White.copy(alpha = .14f) else Color.Transparent,
                 responseSpec(), label = "Search nav fill").value

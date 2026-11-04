@@ -38,7 +38,7 @@ internal fun SearchField(term: String, query: (String) -> Unit) {
                     if (term.isEmpty()) Text("Movies, series and channels", fontSize = 14.sp, color = Palette.secondary)
                     input()
                 }
-                IconButton(onClick = { query("") }, modifier = Modifier.size(40.dp), enabled = term.isNotEmpty()) {
+                IconButton(onClick = { query("") }, modifier = Modifier.size(44.dp), enabled = term.isNotEmpty()) {
                     Icon(Lucide.X, "Clear search", Modifier.size(18.dp), tint = Palette.secondary)
                 }
             }

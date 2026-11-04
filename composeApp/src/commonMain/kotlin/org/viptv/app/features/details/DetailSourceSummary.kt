@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +49,7 @@ internal fun DetailSourcePreview.summaryFacts(): SourceSummaryFacts? {
 internal fun DetailSourceSummary(preview: DetailSourcePreview?, open: () -> Unit, modifier: Modifier = Modifier) {
     val facts = preview?.summaryFacts()
     Row(modifier.fillMaxWidth().height(PhoneSourceSummaryHeight)
-        .pointerClickable(onClick = open).semantics { contentDescription = CHOOSE_SOURCE_LABEL }
+        .pointerClickable(role = Role.Button, onClick = open).semantics { contentDescription = CHOOSE_SOURCE_LABEL }
         .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         when {

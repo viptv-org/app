@@ -25,7 +25,7 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
             Spacer(Modifier.weight(1f))
             remote?.invoke()
             if (remote != null) Spacer(Modifier.width(8.dp))
-            ProfileMenuButton(profile, navigate, RoundedCornerShape(10.dp), Modifier.size(40.dp)) { ProfileAvatar(profile, 28.dp, 7.dp) }
+            ProfileMenuButton(profile, navigate, RoundedCornerShape(10.dp), Modifier.size(44.dp)) { ProfileAvatar(profile, 28.dp, 7.dp) }
         }
         if (isHomeTab(screen)) {
             Box(Modifier.padding(horizontal = 16.dp)) {

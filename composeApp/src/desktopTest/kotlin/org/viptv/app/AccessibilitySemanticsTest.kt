@@ -75,7 +75,7 @@ class AccessibilitySemanticsTest {
                 for (name in listOf("Home", "Details", "Settings", "Search", "Calendar")) {
                     shell.show(screens.getValue(name))
                     shell.frames()
-                    addAll(shell.anonymousClickables().map { "$name: $it" })
+                    addAll(shell.clickableViolations().map { "$name: $it" })
                 }
 
                 // Open the profile menu on Home and walk its overlay items too.
@@ -87,9 +87,9 @@ class AccessibilitySemanticsTest {
                 } ?: fail("no profile menu trigger on Home")
                 assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke(), "the profile trigger opens")
                 shell.frames(40)
-                addAll(shell.anonymousClickables().map { "Profile menu: $it" })
+                addAll(shell.clickableViolations().map { "Profile menu: $it" })
             }
-            assertTrue(violations.isEmpty(), "unnamed, role-less clickables:\n${violations.joinToString("\n")}")
+            assertTrue(violations.isEmpty(), "clickable violations:\n${violations.joinToString("\n")}")
         }
     }
 
@@ -148,6 +148,48 @@ class AccessibilitySemanticsTest {
         } finally { scene.close() }
     }
 
+    @Test fun overlaysExposeTheirPaneTitle() {
+        var closed = false
+        val phone = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme(false) { PhoneSheet(visible = true, title = "Seasons", dismiss = { closed = true }, touch = true) { Text("content") } }
+        }
+        try {
+            frames(phone, 40)
+            assertTrue(nodes(phone).any { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Seasons" },
+                "the phone sheet announces its pane")
+        } finally { phone.close() }
+
+        val open = mutableStateOf(true)
+        val select = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme(false) {
+                CompositionLocalProvider(LocalSelectPresentation provides SelectPresentation.Sheet) {
+                    SearchableSelect("Type", listOf(SelectOption("series", "TV")), listOf("series"), {}, open = open)
+                }
+            }
+        }
+        try {
+            frames(select, 40)
+            assertTrue(nodes(select).any { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Type" },
+                "the select sheet announces its pane")
+        } finally { select.close() }
+    }
+
+    @Test fun theProfileTriggerIsAButtonAndItsMenuAnnouncesAPane() {
+        Shell().use { shell ->
+            shell.show(screens.getValue("Home"))
+            shell.frames()
+            val trigger = shell.nodes().single {
+                it.config.contains(SemanticsActions.OnClick) &&
+                    it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Profile menu")
+            }
+            assertEquals(Role.Button, trigger.config.getOrNull(SemanticsProperties.Role), "the trigger is Role.Button")
+            assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke(), "the trigger opens")
+            shell.frames(40)
+            assertTrue(shell.nodes().any { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Profile menu" },
+                "the profile menu announces its pane")
+        }
+    }
+
     private fun assertCloseTarget(node: SemanticsNode) {
         assertEquals(Role.Button, node.config.getOrNull(SemanticsProperties.Role), "the close button is Role.Button")
         assertEquals(listOf("Close"), node.config.getOrNull(SemanticsProperties.ContentDescription), "the close button reads Close")
@@ -155,7 +197,8 @@ class AccessibilitySemanticsTest {
             "the close button is a 48dp target: ${node.boundsInRoot}")
     }
 
-    private fun closeButtons(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
+    private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
+    private fun closeButtons(scene: ImageComposeScene) = nodes(scene)
         .filter { it.config.contains(SemanticsActions.OnClick) &&
             it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { c -> c == "Close" } }
 
@@ -186,14 +229,24 @@ class AccessibilitySemanticsTest {
 
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
 
-        fun anonymousClickables(): List<String> = nodes()
+        fun clickableViolations(): List<String> = nodes()
             .filter { it.config.contains(SemanticsActions.OnClick) }
-            .filter {
-                it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().isEmpty() &&
-                    it.config.getOrNull(SemanticsProperties.Text).orEmpty().isEmpty() &&
-                    it.config.getOrNull(SemanticsProperties.Role) == null
+            .flatMap { node ->
+                val description = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty()
+                val text = node.config.getOrNull(SemanticsProperties.Text).orEmpty()
+                val role = node.config.getOrNull(SemanticsProperties.Role)
+                val where = node.boundsInRoot.toString()
+                val placed = node.boundsInRoot.width > 0f && node.boundsInRoot.height > 0f
+                buildList {
+                    if (description.isEmpty() && text.isEmpty() && role == null) add("$where: no label or role")
+                    if (node.config.contains(SemanticsActions.SetText)) return@buildList
+                    if (description.isNotEmpty() && text.isEmpty()) {
+                        if (role == null) add("$where: '$description' has no role")
+                        if (placed && (node.boundsInRoot.width < 44f || node.boundsInRoot.height < 44f))
+                            add("$where: '$description' is under 44dp")
+                    }
+                }
             }
-            .map { it.boundsInRoot.toString() }
 
         override fun close() {
             scene.close(); scope.cancel()
