@@ -235,7 +235,8 @@ jobs:
           results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.compile-android-app.result }} ${{ needs.native-prep.result }} ${{ needs.desktop-test.result }}'
           echo "parallel jobs: $results"
           for result in $results; do
-            if [[ "$result" != "success" ]]; then
+            # compile-android is push-only; every other job must pass.
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
               echo "a parallel job did not succeed: $results" >&2
               exit 1
             fi
