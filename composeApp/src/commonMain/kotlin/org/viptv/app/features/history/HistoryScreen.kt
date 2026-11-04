@@ -24,8 +24,11 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.connection.HistoryCorrection
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.Button
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
 
 internal sealed interface HistoryLine {
     data class Day(val label: String) : HistoryLine
@@ -75,7 +78,7 @@ internal fun HistoryDisplay.progressFraction(): Double = when {
 @Composable
 fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, open: (Card) -> Unit,
     clear: () -> Unit, back: () -> Unit = {}, correct: (HistoryDisplay, HistoryCorrection) -> Unit = { _, _ -> },
-    localMode: Boolean = false) {
+    localMode: Boolean = false, retry: () -> Unit = {}) {
     var confirm by remember { mutableStateOf(false) }
     val restore = rememberPageRestore("history")
     val lines = remember(history) { history.lines() }
@@ -113,7 +116,12 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                 }
             }
             if (busy) item(key = "busy") { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-            error?.let { item(key = "error") { Text(it, color = Palette.danger) } }
+            error?.let {
+                item(key = "error") {
+                    if (history.isEmpty()) HistoryFailure(it, retry)
+                    else Text(it, color = Palette.danger)
+                }
+            }
             if (localMode) item(key = "server") { Text("Progress corrections need a server.", color = Palette.secondary) }
             if (!busy && history.isEmpty() && error == null) item(key = "empty") { Text("Nothing watched yet.", color = Palette.secondary) }
             itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
@@ -134,4 +142,15 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
         text = { Text("This removes viewing history for this profile.") },
         confirmButton = { TextButton(onClick = { clear(); confirm = false }) { Text("Clear") } },
         dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } })
+}
+
+@Composable
+private fun HistoryFailure(reason: String, retry: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = 64.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text("Couldn’t load history", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
+        Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }
+    }
 }

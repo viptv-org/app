@@ -9,10 +9,12 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -38,7 +40,8 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
     type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
-    sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null, browser: Boolean = false) {
+    sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null, browser: Boolean = false,
+    retry: () -> Unit = {}) {
     var chosen by remember { mutableStateOf(CALENDAR_DEFAULT_FILTER) }
     val offered = calendarFilterOffered(entries, sources)
     val filter = chosen.takeIf { offered }
@@ -48,7 +51,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     val emptyFilter = filter.takeUnless { fallback }
     val restore = rememberPageRestore("calendar")
     if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice, restore = restore); return }
+        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice, restore = restore, retry = retry); return }
     val choose = calendarOpener(open, openEntry)
     val entrance = rememberListEntrance(shown.isNotEmpty())
     var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
@@ -76,6 +79,10 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                     val index = lines.indexOfFirst { it is CalendarLine.Day && it.day.id == day }
                     if (index >= 0) { if (reduceMotion) list.scrollToItem(index) else list.animateScrollToItem(index) }
                 }
+            }
+            if (entries.isEmpty() && error != null && !busy) {
+                CalendarFailure(error, retry)
+                return@Column
             }
             error?.let { Text(it, color = Palette.danger) }
             notice?.let { Text(it, color = Palette.secondary, fontSize = if (phone) 13.sp else 14.sp) }
@@ -119,4 +126,15 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
 @Composable
 private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit, modifier: Modifier = Modifier) {
     CalendarRow(entry, phone, false, if(phone)1f else scale, focus, open, modifier, watch = watch)
+}
+
+@Composable
+private fun CalendarFailure(reason: String, retry: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = 64.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text("Couldn’t load the calendar", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
+        Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }
+    }
 }

@@ -32,7 +32,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
     filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null,
-    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar")) {
+    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar"), retry: () -> Unit = {}) {
     val choose = calendarOpener(open, openEntry)
     var chosen by rememberSaveable { mutableStateOf<String?>(null) }
     val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
@@ -86,7 +86,12 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                     modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-            error?.let { message -> item { Text(message, color = Palette.danger) } }
+            error?.let { message ->
+                item {
+                    if (visible.isEmpty()) TvCalendarFailure(message, retry, scale)
+                    else Text(message, color = Palette.danger)
+                }
+            }
             if (visible.isEmpty() && !busy && error == null) item {
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter.takeIf { notice == null }),
@@ -101,6 +106,18 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             TvCalendarPreview(entry, actions[entry.id] ?: releaseAction, scale, preview, selectedRow, date, { choose(entry) },
                 if(releaseAction!=null&&watchRelease!=null){{ _: Card -> watchRelease(entry) }}else watch,contentY)
         }
+        }
+    }
+}
+
+@Composable
+private fun TvCalendarFailure(reason: String, retry: () -> Unit, scale: Float) {
+    Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+        Text("Couldn’t load the calendar", fontSize = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+        Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
+        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
+            contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+            Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         }
     }
 }
