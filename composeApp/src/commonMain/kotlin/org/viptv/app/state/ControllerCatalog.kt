@@ -589,7 +589,7 @@ internal fun ApplicationController.beginDetails() {
             ?: previous.detailReturnScreen
         val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
         val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
-            else (previous.navBack + previous.screen).takeLast(32)
+            else (previous.navBack + previous.captureBackEntry(previous.screen)).takeLast(32)
         previous.copy(detailReturnScreen = origin, detailHistory = history,
             navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
             screen = Screen.Details, detail = null, detailShell = false, detailFocus = null, calendarEpisode = null)
