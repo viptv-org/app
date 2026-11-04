@@ -212,4 +212,78 @@ class PlaybackLeaseTest {
         assertEquals(listOf("lease-1", "lease-1", "lease-1"), server.heartbeats)
         controller.closePlayer()
     }
+
+    @Test fun aLiveStreamReacquiresWithAFreshGrantAndStreamId() = runTest {
+        val channel = LiveCatalogChannel("channel-1", "m3u:1", Card(MediaIdentity("channel-1", "live", emptyList()), provider_id = "m3u:1", title = "Channel", badges = emptyList()))
+        var granted = "stream-1"
+        val grants = mutableListOf<String>()
+        val opens = mutableListOf<String>()
+        val deletes = mutableListOf<String>()
+        val client = HttpClient(MockEngine) {
+            engine {
+                dispatcher = StandardTestDispatcher(testScheduler)
+                addHandler { request ->
+                    val path = request.url.encodedPath
+                    fun json(body: String, status: HttpStatusCode = HttpStatusCode.OK) =
+                        respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
+                    when {
+                        path == "/api/profiles/profile/live/channel-1/sources" && request.method == HttpMethod.Post -> {
+                            grants += granted
+                            json("""{"streams":[{"id":"$granted","provider_id":"m3u:1","label":"Channel"}]}""")
+                        }
+                        path == "/api/playback" && request.method == HttpMethod.Post -> {
+                            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                            val used = body.getValue("stream_id").jsonPrimitive.content
+                            opens += used
+                            if (used == "stream-1" && granted != "stream-1")
+                                json("""{"error":"source_not_found"}""", HttpStatusCode.NotFound)
+                            else json("""{"id":"lease-${if (used == "stream-1") "1" else "2"}","status":"ready","renew_after_seconds":20,
+                                "delivery":{"kind":"direct","live":true,"url":"https://media.example/live-${used}.m3u8","position":0}}""")
+                        }
+                        path.endsWith("/heartbeat") -> {
+                            val lease = path.removePrefix("/api/playback/").removeSuffix("/heartbeat")
+                            json(if (lease == "lease-1") """{"error":"playback_expired"}""" else "{}",
+                                if (lease == "lease-1") HttpStatusCode.Gone else HttpStatusCode.OK)
+                        }
+                        path.startsWith("/api/playback/") && request.method == HttpMethod.Delete -> {
+                            deletes += path.removePrefix("/api/playback/")
+                            json("{}")
+                        }
+                        else -> json("{}", HttpStatusCode.NotFound)
+                    }
+                }
+            }
+            configureTransport()
+        }
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val controller = ApplicationController(backgroundScope, store)
+        controller.connection = remote
+        controller.leaseOpener = PlaybackLeaseOpener { connection, candidate, profile, forceGateway, position, stage ->
+            connection.openPlayback(candidate, profile, facts, forceGateway, position, torrents = null, stage = stage)
+        }
+        controller.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "profile",
+            livePage = LiveCatalogPage(listOf(channel), availability = "Available"), preferences = PreferencesSnapshot())
+        try {
+            controller.playLive("channel-1"); runCurrent()
+            val input = assertNotNull(controller.state.value.playback)
+            assertTrue(input.live)
+            assertEquals("lease-1", input.id)
+            controller.observePlaybackFor(input, PlayerFact.Status("Playing"))
+            assertEquals(listOf("stream-1"), opens)
+            granted = "stream-2"
+            advanceTimeBy(20_001); runCurrent()
+            assertEquals(listOf("stream-1", "stream-2"), grants, "Reacquiring a live channel re-fetches its sources")
+            assertEquals(listOf("stream-1", "stream-2"), opens, "The fresh stream id opens, not the expired one")
+            val state = controller.state.value
+            assertEquals(Screen.Player, state.screen)
+            assertEquals("lease-2", state.playback?.id)
+            assertTrue(state.playback?.live == true)
+            assertFalse(state.paused)
+            assertNull(state.error)
+            assertEquals(listOf("lease-1"), deletes, "The expired lease is released")
+        } finally {
+            controller.closePlayer()
+            remote.close()
+        }
+    }
 }
