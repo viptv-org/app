@@ -18,11 +18,14 @@ import kotlinx.coroutines.yield
 import org.viptv.app.components.ListEndFooter
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
+import org.junit.Rule
 import java.io.File
 import kotlin.test.Test
 
 @OptIn(ExperimentalComposeUiApi::class)
 class ListEndFooterRenderTest {
+    @get:Rule val uiThread = UiThreadRule()
+
     @Composable
     private fun FooterView(loading: Boolean = false, ended: Boolean = false, failed: Boolean = false,
         television: Boolean = false, scale: Float = 1f) {

@@ -98,7 +98,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
             }
             LazyColumn(Modifier.weight(1f).bleedHorizontally(left = 0.dp, right = gutter).onFocusChanged { resultsHaveFocus = it.hasFocus }, state = rows, sectionControlled = true, verticalArrangement = Arrangement.spacedBy(66.dp * scale), contentPadding = PaddingValues(bottom = gutter)) {
                 if (busy && !hasResults && groups.none { it.message != null }) item { TvSearchLoading(scale) }
-                if (!hasResults) error?.let { item {
+                error?.let { item {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                         Text(it, fontSize = (24 * scale).sp, color = Palette.danger)
                         if (retry != null) TvAction(Modifier.height(52.dp * scale).width(200.dp * scale), scale, primary = true,
@@ -140,9 +140,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
 
                     }
                 }
-                if (!busy && error != null && hasResults) item(key = "footer") {
-                    ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
-                } else if (busy && hasResults) item(key = "footer") {
+                if (busy && hasResults) item(key = "footer") {
                     ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                 } else if (!busy && error == null && hasResults) item(key = "footer") {
                     ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
