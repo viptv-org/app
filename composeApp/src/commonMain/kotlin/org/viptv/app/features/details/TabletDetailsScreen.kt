@@ -50,7 +50,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
         }
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
         val episodesList = rememberLazyListState()
-        val landing = resume.indexIn(selected?.episodes) ?: focus.episodeIn(selected)
+        val landing = focus.episodeIn(selected)
         LandOnResume(seasonChoice, episodesList, landing?.plus(1), selected)
         val paneWidth = maxWidth
         Row(Modifier.fillMaxSize()) {

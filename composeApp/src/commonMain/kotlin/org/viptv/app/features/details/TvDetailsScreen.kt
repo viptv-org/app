@@ -109,7 +109,6 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             visit.seen = true
             when {
                 firstLook -> when {
-                    resume != null -> focusEpisodes(ShelfLanding.Resume)
                     focus != null -> focusEpisodes(ShelfLanding.Focus)
                     else -> returnHero()
                 }

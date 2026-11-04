@@ -77,7 +77,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             onDispose { cancelSourcesPreview?.invoke() }
         }
         val episodesShown = detail != null && (!desktop && section == DetailSection.Episodes || desktop && seasons.isNotEmpty())
-        val landing = if (!episodesShown) null else (resume.indexIn(selected?.episodes) ?: focus.episodeIn(selected))
+        val landing = if (!episodesShown) null else focus.episodeIn(selected)
         val resumeIndex = landing?.let { episode ->
             (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 + (if (desktop) 0 else 1) + 1 + episode }
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)

@@ -59,6 +59,8 @@ class DetailsResumeLayoutsTest {
         fun nodes() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
         fun node(text: String) = nodes().firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any {
             it.text == text || it.text == text.substringAfter(". ") && text.matches(Regex("[0-9]+\\. .*")) } }
+        fun exact(text: String) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
+            .firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == text } }
         fun click(text: String) = assertTrue(nodes().first { node -> node.config.contains(SemanticsActions.OnClick) &&
             node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == text } }.config[SemanticsActions.OnClick].action!!.invoke())
         fun top(text: String) = assertNotNull(node(text), "$text is composed (${width}x$height): " + nodes().mapNotNull { node ->
@@ -71,18 +73,16 @@ class DetailsResumeLayoutsTest {
         override fun close() = scene.close()
     }
 
-    private fun assertBelowBackBar(text: String, top: Float) = assertTrue(top in 48f..72f, "$text is first in the list below the back bar, not at ${top}px")
-
-    @Test fun phoneOpensOnTheContinuedSeasonOnceItsPageArrivesAndScrollsToTheEpisode() = onEdt {
+    @Test fun phoneOpensOnTheContinuedSeasonAndStaysAtTheTop() = onEdt {
         Details(390, 844, firstPage).use { page ->
             page.settle(1)
-            assertNotNull(page.node("Season 3"), "season 3 is selected while its episodes load")
-            assertEquals(listOf(49L), page.pages, "the selected season loads through Details paging")
+            assertEquals(listOf(49L), page.pages, "the continued season loads through Details paging")
+            val heroTop = page.top("Re: Zero")
             page.detail = withSeason(firstPage, 3, 16)
             page.settle()
-            assertBelowBackBar(label(3, 5), page.top(label(3, 5)))
-            assertNotNull(page.nodes().firstOrNull { it.config.contains(SemanticsProperties.ProgressBarRangeInfo) &&
-                it.config[SemanticsProperties.ProgressBarRangeInfo].current == 0.4f }, "the continued episode is marked with its progress")
+            assertNotNull(page.exact("Resume S3 E5"), "the hero resumes the continued episode")
+            assertNull(page.exact(label(3, 5)), "the episode list is not scrolled into view")
+            assertTrue(kotlin.math.abs(page.top("Re: Zero") - heroTop) <= 1f, "the hero stays at the top when the season arrives")
         }
     }
 
@@ -90,11 +90,11 @@ class DetailsResumeLayoutsTest {
         val legacy = firstPage.copy(seasons = emptyList())
         Details(390, 844, legacy).use { page ->
             page.settle(1)
-            assertNotNull(page.node("Season 1"))
             assertEquals(listOf(25L), page.pages, "the legacy cursor keeps paging")
             page.detail = withSeason(withSeason(legacy, 2, 24), 3, 16).copy(next_cursor = null)
             page.settle()
-            assertBelowBackBar(label(3, 5), page.top(label(3, 5)))
+            assertNotNull(page.exact("Resume S3 E5"), "the page names the continued episode once its season arrives")
+            assertNull(page.exact(label(3, 5)), "the list does not jump to S3 E5")
         }
     }
 
@@ -128,42 +128,47 @@ class DetailsResumeLayoutsTest {
     @Test fun aSeriesWithNothingToContinueKeepsTheFirstNumberedSeasonAtTheTop() = onEdt {
         Details(390, 844, withSeason(firstPage, 3, 16), continuing = emptyList()).use { page ->
             page.settle()
-            assertNotNull(page.node("Season 1"))
+            assertNotNull(page.node(label(1, 1)))
             assertNull(page.node(label(3, 5)))
             assertNotNull(page.node("Re: Zero"), "the hero is still on screen: nothing scrolled")
         }
     }
 
-    @Test fun tabletDesktopAndBrowserLayoutsLandOnTheContinuedEpisode() = onEdt {
+    @Test fun tabletDesktopAndBrowserLayoutsOpenAtTheTop() = onEdt {
         for ((name, details) in listOf(
             "tablet" to { Details(1280, 800, firstPage, tablet = true) },
             "desktop" to { Details(1280, 800, firstPage) },
             "browser" to { Details(1280, 900, firstPage, browser = true) })) {
             details().use { page ->
                 page.settle(1)
-                assertEquals(listOf(49L), page.pages, "$name: season 3 loads through Details paging")
+                assertEquals(listOf(49L), page.pages, "$name: the continued season loads through Details paging")
                 page.detail = withSeason(firstPage, 3, 16)
                 page.settle()
-                val top = page.top(label(3, 5))
-                assertTrue(top in 0f..80f, "$name: S3 E5 is the first item in its list, not ${top}px down")
+                assertNotNull(page.exact("Resume S3 E5"), "$name: the hero names the continued episode")
+                val top = if (name == "tablet") page.exact(label(3, 1)) else page.exact("Re: Zero")
+                assertNotNull(top, "$name: the layout opens at its top rather than at the continued episode")
             }
         }
     }
 
-    @Test fun tvShelfOpensOnTheContinuedSeasonAndFocusLandsOnTheEpisode() = onEdt {
+    @Test fun tvOpensOnTheHeroOfTheContinuedSeasonAndDownReachesTheEpisode() = onEdt {
         Details(1920, 1080, firstPage, television = true).use { page ->
             page.settle(1)
             assertNotNull(page.node("Season 3"), "the shelf selects season 3 before its episodes arrive")
             assertEquals(listOf(49L), page.pages, "season 3 loads through Details paging")
             page.detail = withSeason(firstPage, 3, 16)
             page.settle()
-            assertNotNull(page.node(label(3, 5)), "S3 E5 is placed in the shelf")
+            assertNotNull(page.exact("Resume S3 E5"), "the hero resumes the continued episode")
+            val title = assertNotNull(page.exact("Re: Zero"), "the hero title is on screen")
+            assertTrue(title.boundsInRoot.top < 400f, "the page opens on the hero: ${title.boundsInRoot}")
+            val season = assertNotNull(page.exact("Season 3"), "the shelf keeps the continued season selected")
+            assertTrue(season.boundsInRoot.top > 800f, "the episode shelf starts below the hero: ${season.boundsInRoot}")
             page.scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
             page.scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
             page.settle()
             val focused = page.nodes().filter { it.config.getOrNull(SemanticsProperties.Focused) == true }
                 .map { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text } }
-            assertTrue(focused.any { it.contains(label(3, 5)) }, "focus is on S3 E5, not $focused")
+            assertTrue(focused.any { it.contains(label(3, 5)) }, "Down from the hero reaches S3 E5, not $focused")
         }
     }
 }
