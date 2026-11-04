@@ -57,8 +57,8 @@ internal class MpvSession(input: PlaybackInput) {
             caption.style?.let { style ->
                 option("sub-ass-override", "force")
                 style.primaryColor?.let { option("sub-color", mpvSubtitleColour(it)) }
-                style.backgroundColor?.let { option("sub-back-color", mpvSubtitleColour(it)); option("sub-border-style", "background-box") }
             }
+            mpvSubtitleBoxOptions(caption.style?.backgroundColor).forEach { (name, value) -> option(name, value) }
             if (input.headers.isNotEmpty()) setHeaders(input.headers)
             mpvCheck(api.mpv_initialize(handle))
         } catch (failure: Throwable) {

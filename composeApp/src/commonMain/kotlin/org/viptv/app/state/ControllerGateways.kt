@@ -21,19 +21,31 @@ private suspend fun ApplicationController.loadGateways() {
     }
 }
 
-fun ApplicationController.setGatewayEnabled(id: String, enabled: Boolean) = run {
-    val remote = requireNotNull(connection)
-    remote.updateGateway(id, enabled)
-    loadGateways()
+fun ApplicationController.setGatewayEnabled(id: String, enabled: Boolean) {
+    val before = mutable.value
+    mutate(gatewayTarget(id, GATEWAY_ENABLE_ACTION),
+        optimistic = { state -> state.copy(gateways = state.gateways?.let { snapshot ->
+            snapshot.copy(items = snapshot.items.map { if (it.id == id) it.copy(enabled = enabled) else it }) }) },
+        revert = { it.copy(gateways = before.gateways) }) {
+        val remote = requireNotNull(connection)
+        remote.updateGateway(id, enabled)
+        loadGateways()
+    }
 }
 
-fun ApplicationController.deleteGateway(id: String) = run {
-    val remote = requireNotNull(connection)
-    remote.deleteGateway(id)
-    loadGateways()
+fun ApplicationController.deleteGateway(id: String) {
+    val before = mutable.value
+    mutate(gatewayTarget(id, GATEWAY_DELETE_ACTION),
+        optimistic = { state -> state.copy(gateways = state.gateways?.let { snapshot ->
+            snapshot.copy(items = snapshot.items.filterNot { it.id == id }) }) },
+        revert = { it.copy(gateways = before.gateways) }) {
+        val remote = requireNotNull(connection)
+        remote.deleteGateway(id)
+        loadGateways()
+    }
 }
 
-fun ApplicationController.checkGateway(id: String) = run {
+fun ApplicationController.checkGateway(id: String) = mutate(gatewayTarget(id, GATEWAY_CHECK_ACTION)) {
     val remote = requireNotNull(connection)
     val result = remote.checkGateway(id)
     updateState { next -> next.copy(gatewayChecks = next.gatewayChecks + (id to result)) }
@@ -44,17 +56,29 @@ fun ApplicationController.loadGatewayGrants(id: String) = run {
     publishGatewayGrants(remote, id)
 }
 
-fun ApplicationController.grantGatewayAccess(id: String, accountId: Long) = run {
-    val remote = requireNotNull(connection)
-    remote.grantGateway(id, accountId)
-    publishGatewayGrants(remote, id)
-}
+fun ApplicationController.grantGatewayAccess(id: String, accountId: Long) =
+    mutate(gatewayTarget(id, gatewayGrantTarget(accountId)),
+        optimistic = { state -> state.copy(gatewayGrants = state.gatewayGrants + (id to (state.gatewayGrants[id].orEmpty() + accountId))) },
+        revert = { it.copy(gatewayGrants = it.gatewayGrants + (id to it.gatewayGrants[id].orEmpty().filterNot { grant -> grant == accountId })) }) {
+        val remote = requireNotNull(connection)
+        remote.grantGateway(id, accountId)
+        publishGatewayGrants(remote, id)
+    }
 
-fun ApplicationController.revokeGatewayAccess(id: String, accountId: Long) = run {
-    val remote = requireNotNull(connection)
-    remote.revokeGateway(id, accountId)
-    publishGatewayGrants(remote, id)
-}
+fun ApplicationController.revokeGatewayAccess(id: String, accountId: Long) =
+    mutate(gatewayTarget(id, gatewayGrantTarget(accountId)),
+        optimistic = { state -> state.copy(gatewayGrants = state.gatewayGrants + (id to state.gatewayGrants[id].orEmpty().filterNot { it == accountId })) },
+        revert = { it.copy(gatewayGrants = it.gatewayGrants + (id to it.gatewayGrants[id].orEmpty() + accountId)) }) {
+        val remote = requireNotNull(connection)
+        remote.revokeGateway(id, accountId)
+        publishGatewayGrants(remote, id)
+    }
+
+internal const val GATEWAY_ENABLE_ACTION = "Enable"
+internal const val GATEWAY_DELETE_ACTION = "Delete"
+internal const val GATEWAY_CHECK_ACTION = "Check capacity"
+internal fun gatewayTarget(id: String, action: String) = MutationTarget(MutationKind.Gateway, "$id $action")
+internal fun gatewayGrantTarget(accountId: Long) = "Access $accountId"
 
 private suspend fun ApplicationController.publishGatewayGrants(remote: RemoteConnection, id: String) {
     val grants = remote.gatewayGrants(id)

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
@@ -14,6 +15,11 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.*
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.GATEWAY_CHECK_ACTION
+import org.viptv.app.state.GATEWAY_ENABLE_ACTION
+import org.viptv.app.state.gatewayTarget
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -44,21 +50,31 @@ internal fun TvGatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, G
             contentPadding = PaddingValues(top = 12.dp * scale, bottom = 80.dp * scale)) {
             itemsIndexed(items, key = { _, gateway -> gateway.id }) { index, gateway ->
                 val checked = checks[gateway.id]
+                val mutations = LocalPendingMutation.current
+                val enabling = mutations.isPending(gatewayTarget(gateway.id, GATEWAY_ENABLE_ACTION))
+                val checking = mutations.isPending(gatewayTarget(gateway.id, GATEWAY_CHECK_ACTION))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
                     TvSettingsRow(gateway.name,
                         subtitle = listOfNotNull(
                             if (gateway.can_manage) "Yours" else "Shared with your account",
                             gateway.namespace,
                             if (gateway.enabled) "Enabled" else "Disabled").joinToString(" · "),
-                        scale = scale, checked = if (gateway.can_manage) gateway.enabled else null,
+                        scale = scale, checked = if (gateway.can_manage && !enabling) gateway.enabled else null,
+                        value = if (enabling) "Saving…" else null,
                         requester = if (index == 0) first else null, left = left,
                         leading = Lucide.Network,
-                        activate = { if (gateway.can_manage) setEnabled(gateway.id, !gateway.enabled) })
+                        activate = { if (gateway.can_manage && !enabling) setEnabled(gateway.id, !gateway.enabled) })
                     TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, ring = false,
-                        enabled = !busy, keepFocus = true, activate = { check(gateway.id) },
+                        enabled = !busy && !checking, keepFocus = true, activate = { check(gateway.id) },
                         background = androidx.compose.ui.graphics.Color(0xFF191919),
                         arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
-                        Text(checked?.let(::capacityLabel) ?: "Check capacity", color = tint,
+                        if (checking) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+                                MutationSpinner(28.dp, scale = scale, strokeWidth = 3.dp, color = tint)
+                                Text("Checking…", color = tint, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
+                                    fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        } else Text(checked?.let(::capacityLabel) ?: "Check capacity", color = tint,
                             fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
