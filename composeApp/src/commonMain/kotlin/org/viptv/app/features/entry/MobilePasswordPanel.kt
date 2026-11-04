@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.connection.openAccountAuthorization
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
@@ -21,7 +22,8 @@ import org.viptv.app.components.TextButton
 
 @Composable
 internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, back: () -> Unit,
-    forgot: () -> Unit, connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {}) {
+    connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {},
+    forgot: (String) -> Unit = { address -> if (address.isNotBlank()) runCatching { openAccountAuthorization(address) } }) {
     var server by remember { mutableStateOf(origin) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -51,7 +53,7 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
         colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
         Text(if (busy) "Signing in…" else "Sign in", fontSize = 16.sp, fontWeight = FontWeight.Bold)
     }
-    TextButton(onClick = forgot, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+    TextButton(onClick = { forgot(server) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
         Text("Forgot password?", color = Palette.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
     TextButton(onClick = { editServer = !editServer }, modifier = Modifier.fillMaxWidth()) {

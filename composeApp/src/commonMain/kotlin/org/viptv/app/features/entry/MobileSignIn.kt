@@ -52,17 +52,15 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
                 }
                 Spacer(Modifier.height(18.dp))
                 MobileSignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
-                MobileSignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }
                 MobileSignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
                 MobileSignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
                 if (local != null) MobileSignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", local)
             }
-            SignInStep.Password -> MobilePasswordPanel(server, busy, error, back, { step = SignInStep.Email }, connect, serverChanged = { server = it })
+            SignInStep.Password -> MobilePasswordPanel(server, busy, error, back, connect, serverChanged = { server = it })
             SignInStep.Browser, SignInStep.Device -> if (startPairing != null)
                 NativeDevicePairing(server, pairing, busy, error, true, step == SignInStep.Browser,
                     { server = it }, startPairing, cancelPairing, back)
                 else MobileSignInUnavailable(step, back, { step = SignInStep.Password })
-            else -> MobileSignInUnavailable(step, back, { step = SignInStep.Password })
         }
         Spacer(Modifier.height(24.dp))
     } }
