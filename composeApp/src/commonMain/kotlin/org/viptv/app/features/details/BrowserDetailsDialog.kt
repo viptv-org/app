@@ -31,6 +31,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -136,8 +137,9 @@ private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, p
         AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
         Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-            else Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+            TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp)) {
+                Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+            }
             Button(onClick = { play(resumeEpisode ?: card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                 Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(15.dp))

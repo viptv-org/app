@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.Brand
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
@@ -69,9 +70,9 @@ private fun SharedTitleArtwork(card: Card, modifier: Modifier) {
 @Composable
 private fun SharedTitleSummary(card: Card, signIn: () -> Unit, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.widthIn(max = 340.dp).fillMaxWidth().height(112.dp),
-            alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-        else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+        TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(112.dp)) {
+            Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+        }
         MediaMetadata(card)
         card.description?.let { Text(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body) }
         Button(onClick = signIn, modifier = Modifier.width(200.dp).height(48.dp), shape = RoundedCornerShape(12.dp),
