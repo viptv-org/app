@@ -12,6 +12,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.connection.openAccountAuthorization
 import com.composables.icons.lucide.*
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.pointerClickable
@@ -26,6 +27,7 @@ internal fun DesktopPasswordPanel(
     back: () -> Unit,
     connect: (String, String, String) -> Unit,
     serverChanged: (String) -> Unit = {},
+    forgot: (String) -> Unit = { address -> if (address.isNotBlank()) runCatching { openAccountAuthorization(address) } },
 ) {
     var server by remember { mutableStateOf(initialOrigin) }
     var username by remember { mutableStateOf("") }
@@ -58,6 +60,9 @@ internal fun DesktopPasswordPanel(
             Text(if (busy) "Signing in…" else "Sign in", fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(4.dp))
+        Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            Text("Forgot password?", Modifier.pointerClickable(onClick = { forgot(server) }), color = Palette.text, fontSize = 13.sp)
+        }
         Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
             Text(if (changeServer) "Hide server address" else "Use another server",
                 Modifier.pointerClickable { changeServer = !changeServer }, color = Palette.secondary, fontSize = 11.sp)
