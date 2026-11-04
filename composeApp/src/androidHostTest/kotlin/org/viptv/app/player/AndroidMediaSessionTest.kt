@@ -24,7 +24,7 @@ class AndroidMediaSessionTest {
         override fun getState(): State = State.Builder()
             .setAvailableCommands(Player.Commands.Builder().addAllCommands().build())
             .setPlayWhenReady(playing, Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
-            .setPlaybackState(Player.STATE_READY)
+            .setPlaybackState(Player.STATE_IDLE)
             .build()
         override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
             playing = playWhenReady; invalidateState(); return Futures.immediateVoidFuture()

@@ -12,6 +12,7 @@ internal class AndroidMediaSession(context: Context, player: Player, seek: (Long
         override fun seekTo(mediaItemIndex: Int, positionMs: Long) { seek(positionMs) }
     }
     val session: MediaSession = MediaSession.Builder(context, seekPlayer)
+        .setId(java.util.UUID.randomUUID().toString())
         .apply { launchIntent(context)?.let(::setSessionActivity) }
         .build()
     val player: Player get() = seekPlayer
