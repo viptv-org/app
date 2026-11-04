@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,8 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     left: FocusRequester? = null,
     // A press that starts work disables the control; staying focusable keeps the D-pad from falling to an unrelated row.
     keepFocus: Boolean = false,
+    // A non-null selected exposes the control as a selectable Tab with a selected state, e.g. calendar day chips.
+    selected: Boolean? = null,
     arrangement: Arrangement.Horizontal = Arrangement.Center, content: @Composable RowScope.(Color) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     // Register with an enclosing TvFocusColumn so Up/Down clamp at the page edges instead of falling into the settings sidebar.
@@ -43,6 +46,8 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
     val light = enabled && focused
     val fill by animateColorAsState(when { enabled && pressed -> Palette.body; light -> Palette.text; else -> background }, tween(150), label = "TV action fill")
     val ink by animateColorAsState(if (light || enabled && pressed) Palette.background else Palette.text, tween(150), label = "TV action content")
+    val click = if (selected == null) Modifier.pointerClickable(enabled = enabled || keepFocus, interactionSource = interactions, indication = null, onClick = { if (enabled) activate() }, shape = shape)
+        else Modifier.pointerSelectable(selected, interactions, null, enabled || keepFocus, Role.Tab, shape) { if (enabled) activate() }
     Row(modifier.then(column.position).focusRequester(target)
         .focusProperties {
             left?.let { this.left = it }
@@ -53,7 +58,7 @@ internal fun TvAction(modifier: Modifier, scale: Float, primary: Boolean = false
         .then(if (ring) Modifier.tvFocusOutline(light, cornerRadius, scale) else Modifier)
         .graphicsLayer { alpha = if (enabled) 1f else .38f; this.shape = shape; shadowElevation = if (light) 24.dp.toPx() * scale else 0f }
         .clip(shape).background(fill)
-        .pointerClickable(enabled = enabled || keepFocus, interactionSource = interactions, indication = null, onClick = { if (enabled) activate() }, shape = shape)
+        .then(click)
         .then(if (keepFocus && !enabled) Modifier.semantics { disabled() } else Modifier).padding(contentPadding),
         horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) { content(ink) }
 }

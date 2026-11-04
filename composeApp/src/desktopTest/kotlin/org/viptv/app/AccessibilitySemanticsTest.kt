@@ -36,6 +36,7 @@ import org.viptv.app.connection.Profile
 import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.features.calendar.CalendarDay
+import org.viptv.app.features.calendar.TvCalendarScreen
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.ApplicationState
@@ -102,6 +103,23 @@ class AccessibilitySemanticsTest {
             assertEquals(1, chips.count { it.config.getOrNull(SemanticsProperties.Selected) == true },
                 "exactly one date chip is selected")
         }
+    }
+
+    @Test fun tvCalendarDateChipsExposeTabRoleAndSelection() {
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) {
+            ViptvTheme(true) {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    TvCalendarScreen(days, emptyList(), {}, {})
+                }
+            }
+        }
+        try {
+            frames(scene, 40)
+            val chips = nodes(scene).filter { it.config.getOrNull(SemanticsProperties.Role) == Role.Tab }
+            assertEquals(7, chips.size, "seven TV date chips, not ${chips.size}")
+            assertEquals(1, chips.count { it.config.getOrNull(SemanticsProperties.Selected) == true },
+                "exactly one TV date chip is selected")
+        } finally { scene.close() }
     }
 
     @Test fun theSheetCloseButtonsExposeA48dpButtonRole() {
