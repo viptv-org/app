@@ -6,15 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -36,7 +29,6 @@ fun main() {
 
 private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
-    val searchFocus = remember { FocusRequester() }
     val mac = remember { System.getProperty("os.name").startsWith("Mac") }
     val scope = rememberCoroutineScope()
     val controller = remember { ApplicationController(scope) }
@@ -49,13 +41,7 @@ private fun launchApplication() = application {
             scope.launch { controller.closeForExit(3_000) { exitApplication() } }
         }
     }
-    DesktopAppWindow(requestClose, "VIPTV Experiment", windowState, framed = !mac, visible = visible,
-        onPreviewKeyEvent = { event ->
-            if (event.type == KeyEventType.KeyDown && (event.isCtrlPressed || event.isMetaPressed) && event.key == Key.K) {
-                runCatching { searchFocus.requestFocus() }
-                true
-            } else false
-        }) {
+    DesktopAppWindow(requestClose, "VIPTV Experiment", windowState, framed = !mac, visible = visible) {
         val globalBack = remember(controller) { GlobalBack(controller) }
         val base = remember { desktopDataDirectory() }
         LaunchedEffect(window) {
@@ -86,7 +72,7 @@ private fun launchApplication() = application {
             close = requestClose, maximized = placement.maximized, fullscreen = placement.fullscreen, toggleFullscreen = toggleFullscreen)
         org.viptv.app.player.mpv.MpvWindow(window) {
             DesktopShell(controller, globalBack, mac, controls, localDatabase = "$base/viptv-experiment/local.sqlite",
-                searchFocus = searchFocus, titleBarArea = { bar -> WindowDraggableArea(Modifier.fillMaxWidth()) { bar() } })
+                titleBarArea = { bar -> WindowDraggableArea(Modifier.fillMaxWidth()) { bar() } })
         }
     }
 }
