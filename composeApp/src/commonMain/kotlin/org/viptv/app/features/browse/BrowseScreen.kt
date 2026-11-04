@@ -55,13 +55,16 @@ import org.viptv.app.components.PhoneBrowseTitleGap
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.pressScale
+import org.viptv.app.components.AddonFailureNotice
+import org.viptv.app.connection.AddonFailure
 
 @Composable
 fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, loadedCards: List<Card>? = null, controls: org.viptv.app.connection.DiscoveryControls? = null,
     query: org.viptv.app.connection.BrowseQuery = org.viptv.app.connection.BrowseQuery("movie"), busy: Boolean = false, error: String? = null,
     filterChanged: (String, String) -> Unit = { _, _ -> }, more: (() -> Unit)? = null,
     multipleChanged: (String, List<String>) -> Unit = { _, _ -> }, browser: Boolean = false,
-    applyQuery: (BrowseQuery) -> Unit = {}, pageError: String? = null) {
+    applyQuery: (BrowseQuery) -> Unit = {}, pageError: String? = null,
+    failures: List<AddonFailure> = emptyList(), manageAddons: () -> Unit = {}) {
     var sort by remember(screen) { mutableStateOf("Popular") }
     val cards = remember(home, loadedCards, screen, sort) {
         val loaded = loadedCards ?: home?.rows.orEmpty().flatMap { it.cards }
@@ -77,7 +80,8 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
     if (television) {
         TvBrowseScreen(cards, busy || (loadedCards == null && home == null), open, controls = controls, query = query,
             filterChanged = filterChanged, multipleChanged = multipleChanged, applyQuery = applyQuery,
-            more = more, error = error, retry = { applyQuery(query) }, pageError = pageError)
+            more = more, error = error, retry = { applyQuery(query) }, pageError = pageError,
+            failures = failures, manageAddons = manageAddons)
         return
     }
     val grid = rememberLazyGridState()
@@ -113,6 +117,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                     }
                 }
                 if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
+                if (failures.isNotEmpty() && cards.isNotEmpty()) AddonFailureNotice(failures, manageAddons)
                 val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
                 val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
                 val footerLoading = cards.isNotEmpty() && busy

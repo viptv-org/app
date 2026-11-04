@@ -16,8 +16,10 @@ import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.AddonFailure
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.TextButton
 
 internal enum class TvDetailRow { Hero, Episodes, Recommendations }
@@ -45,7 +47,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
     retry: (() -> Unit)? = null,
     pageError: String? = null,
     retryPage: (() -> Unit)? = null,
-    focus: DetailFocus? = null) {
+    focus: DetailFocus? = null,
+    failures: List<AddonFailure> = emptyList()) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     if (detail == null) {
         TvDetailUnavailable(error, scale = 1f, back = back, retry = retry)
@@ -124,14 +127,20 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         LazyColumn(state = scroll, sectionControlled = true, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp * scale)) {
             if (detail != null) {
                 item(key = "hero") {
-                    TvDetailHero(detail.item, extras, scale,
-                        play = { sources(extras.resume ?: detail.item) },
-                        save = { save(detail.item) }, saved = saved,
-                        trailer = { notice = "No trailer is available for this title." },
-                        restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
-                        down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
-                        downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }),
-                        hold = { chooseSource(extras.resume ?: detail.item) })
+                    Column {
+                        TvDetailHero(detail.item, extras, scale,
+                            play = { sources(extras.resume ?: detail.item) },
+                            save = { save(detail.item) }, saved = saved,
+                            trailer = { notice = "No trailer is available for this title." },
+                            restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
+                            down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
+                            downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }),
+                            hold = { chooseSource(extras.resume ?: detail.item) })
+                        if (failures.isNotEmpty() && !busy && error == null) {
+                            AddonFailureNotice(failures, null, Modifier.padding(start = 96.dp * scale, top = 16.dp * scale),
+                                television = true, scale = scale)
+                        }
+                    }
                 }
                 when {
                     !busy && error != null -> item(key = "failure") {
