@@ -65,11 +65,11 @@ class ParentControlsTest {
         controller.connection = remote
         controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1", parentSettings = parentFixture(kids = true))
         try {
-            controller.changeParentPin("1234", ""); controller.job!!.join()
-            assertContains(controller.state.value.error.orEmpty(), "every profile")
-            controller.changeParentPin("1234", "12"); controller.job!!.join()
-            controller.changeKidsPolicy("foreign", KidsPolicy(true, 6)); controller.job!!.join()
-            controller.unlockParentControls("१२३४"); controller.job!!.join()
+            controller.changeParentPin("1234", ""); controller.job?.join()
+            assertContains(controller.state.value.mutations.failure(preferenceTarget(PARENT_PIN_TARGET)).orEmpty(), "every profile")
+            controller.changeParentPin("1234", "12"); controller.job?.join()
+            controller.changeKidsPolicy("foreign", KidsPolicy(true, 6)); controller.job?.join()
+            controller.unlockParentControls("१२३४"); controller.job?.join()
             assertEquals(0, requests)
         } finally { remote.close() }
     }
@@ -149,8 +149,8 @@ class ParentControlsTest {
         try {
             controller.refreshParentControls(); controller.job!!.join()
             assertEquals(parentRatings, controller.state.value.parentControls.getValue("2").policy.ratings)
-            controller.changeKidsPolicy("2", KidsPolicy(true, 10, "PG-14")); controller.job!!.join()
-            assertContains(controller.state.value.error.orEmpty(), "movie rating limits")
+            controller.changeKidsPolicy("2", KidsPolicy(true, 10, "PG-14")); controller.job?.join()
+            assertContains(controller.state.value.mutations.failure(preferenceTarget(kidsPolicyTarget("2"))).orEmpty(), "movie rating limits")
             assertEquals(0, writes.size)
             controller.changeKidsPolicy("2", KidsPolicy(true, 10, "PG-13", "TV-14", true)); controller.job!!.join()
             assertEquals("/api/profiles/2/kids" to kidsBody(true, 10, "PG-13", "TV-14", true), writes.single())
@@ -189,8 +189,8 @@ class ParentControlsTest {
             controller.changeProfileLeavePin("2", "", "1234"); controller.job!!.join()
             assertEquals("/api/profiles/2/pin" to buildJsonObject { put("pin", "1234") }, writes.last())
             assertEquals(true, controller.state.value.parentControls.getValue("2").leavePin)
-            controller.changeProfileLeavePin("2", "", "5678"); controller.job!!.join()
-            assertContains(controller.state.value.error.orEmpty(), "current PIN")
+            controller.changeProfileLeavePin("2", "", "5678"); controller.job?.join()
+            assertContains(controller.state.value.mutations.failure(preferenceTarget(leavePinTarget("2"))).orEmpty(), "current PIN")
             assertEquals(1, writes.size)
             controller.changeProfileLeavePin("2", "1234", "5678"); controller.job!!.join()
             assertEquals("/api/profiles/2/pin" to buildJsonObject { put("pin", "5678"); put("current_pin", "1234") }, writes.last())
@@ -208,8 +208,8 @@ class ParentControlsTest {
         controller.connection = remote
         controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1", parentSettings = parentFixture())
         try {
-            controller.changeProfileLeavePin("2", "", "1234"); controller.job!!.join()
-            assertContains(controller.state.value.error.orEmpty(), "does not support")
+            controller.changeProfileLeavePin("2", "", "1234"); controller.job?.join()
+            assertContains(controller.state.value.mutations.failure(preferenceTarget(leavePinTarget("2"))).orEmpty(), "does not support")
             assertEquals(0, calls)
         } finally { remote.close() }
     }
@@ -251,7 +251,7 @@ class ParentControlsTest {
             release.complete(Unit); controller.job!!.join()
             assertTrue(controller.state.value.policyRefreshNeeded)
             assertTrue(controller.state.value.results.isEmpty())
-            assertNotNull(controller.state.value.error)
+            assertNotNull(controller.state.value.mutations.failure(preferenceTarget(kidsPolicyTarget("2"))))
         } finally { release.complete(Unit); remote.close() }
     }
 

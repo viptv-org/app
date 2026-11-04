@@ -430,25 +430,61 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val device = local
         val remote = connection
         val context = rankingContext(seriesMemoryOf(profile, card), capability)
+        val preferences = mutable.value.preferences?.preferences
+        val heightPreference = preferences?.max_quality_height
+        val heightDevice = context.device.maxHeight
+        val cap = when {
+            heightPreference == null -> heightDevice
+            heightDevice == null -> heightPreference
+            else -> minOf(heightPreference, heightDevice)
+        }
         coroutineScope {
-            var playing = false
-            fun rememberedStart(ranked: RankedSources, target: SourceCandidate) {
-                if (playing || generation != operation || sourcesScrolled) return
-                playing = true
-                startBestMatch(ranked, target)
+            var started = false
+            var openingId: String? = null
+            var graceDeadline = 0L
+
+            fun targetFor(ranked: RankedSources): SourceCandidate? {
+                val remembered = reuse?.let { ranked.matchingSource(it) }
+                if (remembered != null || reuse != null) return remembered
+                val autoplay = startPlayback || preferences?.source_selection == "best"
+                return if (autoplay) ranked.autoplayTarget() else null
             }
-            fun autoplay(ranked: RankedSources) {
-                if (playing || generation != operation || sourcesScrolled) return
-                val target = ranked.autoplayTarget() ?: return
-                if (!startPlayback && mutable.value.preferences?.preferences?.source_selection != "best") return
-                playing = true
-                startBestMatch(ranked, target)
+
+            fun consider(ranked: RankedSources) {
+                if (generation != operation || sourcesScrolled) return
+                val target = targetFor(ranked) ?: return
+                if (reuse != null || startPlayback) {
+                    if (started) return
+                    started = true
+                    startBestMatch(ranked, target)
+                    return
+                }
+                when {
+                    !started -> {
+                        started = true
+                        openingId = target.id
+                        graceDeadline = clockMillis() + PLAY_FIRST_GRACE_MILLIS
+                        openNow(target, ranked)
+                    }
+                    clockMillis() < graceDeadline && mutable.value.playback == null && target.id != openingId -> {
+                        val current = ranked.rows.firstOrNull { it.id == openingId } ?: return
+                        if (!target.clearlyBetterThan(current, cap)) return
+                        openingId = target.id
+                        openNow(target, ranked)
+                    }
+                }
             }
-            fun rememberedMatch(ranked: RankedSources) = reuse?.let { ranked.matchingSource(it) }
+
             val ranking = ProgressiveSourceRanking(this,
                 rank = { rows -> device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
-                show = { ranked -> if (generation == operation) updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups) } },
-                onMatch = { if (reuse == null) autoplay(it) })
+                show = { ranked ->
+                    if (generation != operation) return@ProgressiveSourceRanking
+                    updateState { state ->
+                        val session = state.bestMatch?.takeIf { started }?.copy(ranked = ranked.rows)
+                        state.copy(sources = ranked.rows, sourceGroups = ranked.groups, bestMatch = session)
+                    }
+                    consider(ranked)
+                })
             val observed: (SourcesOutcome) -> Unit = { outcome ->
                 if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
                 ranking.arrived(outcome.candidates)
@@ -459,16 +495,10 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
                 ranking.finish(); throw deadline
             }
             ranking.arrived(outcome.candidates)
-            val ranked = ranking.finish()
+            ranking.finish()
             if (generation != operation) return@coroutineScope
             updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders, sourceProducers = producersLabelled(outcome.producers)) }
-            if (reuse != null) {
-                val match = ranked?.let(::rememberedMatch)
-                if (match != null) rememberedStart(requireNotNull(ranked), match)
-                else updateState { it.copy(screen = Screen.Sources) }
-            } else {
-                ranked?.let(::autoplay)
-            }
+            if (reuse != null && !started) updateState { it.copy(screen = Screen.Sources) }
         }
     } catch (_: TimeoutCancellationException) {
         if (reuse != null) updateState { it.copy(screen = Screen.Sources) }

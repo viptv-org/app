@@ -10,7 +10,6 @@ internal class ProgressiveSourceRanking(
     private val rank: suspend (List<SourceCandidate>) -> RankedSources,
     private val show: (RankedSources) -> Unit,
     private val spacingMillis: Long = 300,
-    private val onMatch: (RankedSources) -> Unit = {},
 ) {
     private val arrivals = Channel<List<SourceCandidate>>(Channel.CONFLATED)
     private var submitted: List<String> = emptyList()
@@ -18,17 +17,12 @@ internal class ProgressiveSourceRanking(
     private var failed = false
 
     private val worker = scope.launch {
-        var matched = false
         for (rows in arrivals) {
             if (failed) { appendUnranked(rows); continue }
             val spacing = launch { delay(spacingMillis) }
             try {
                 shown = rank(rows)
                 show(shown)
-                if (!matched && shown.bestMatchFullyMatches) {
-                    matched = true
-                    onMatch(shown)
-                }
             } catch (error: CancellationException) { throw error }
             catch (_: Exception) {
                 failed = true

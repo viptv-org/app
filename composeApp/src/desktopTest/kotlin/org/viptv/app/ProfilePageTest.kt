@@ -288,7 +288,7 @@ class ProfilePageTest {
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
             focusManager = LocalFocusManager.current
             SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {}, null,
-                television = true, initialSection = "Profile", tvPreferences = TvSettingsPreferences(), changeTvPreferences = { },
+                television = true, initialSection = "Profile", tvPreferences = TvSettingsPreferences(), changeTvPreferences = { _, _ -> },
                 tvProfilePage = { first, sidebar, scale, _ ->
                     TvProfileSettingsPage(values, false, null, saved.value, actions(saved), scale, first, sidebar) { }
                 })

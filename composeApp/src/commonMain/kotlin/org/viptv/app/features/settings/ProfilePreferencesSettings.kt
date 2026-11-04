@@ -8,11 +8,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.viptv.app.components.Button
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.connection.*
+import org.viptv.app.state.PREFERENCES_TARGET
+import org.viptv.app.state.preferenceTarget
 import org.viptv.app.theme.Palette
 
 private val subtitleSizeOptions = listOf(0.75 to "Small", 1.0 to "Medium", 1.25 to "Large", 1.5 to "Extra large")
@@ -28,11 +32,15 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
     retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null) {
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
+    val mutations = LocalPendingMutation.current
+    val target = preferenceTarget(PREFERENCES_TARGET)
+    val pending = mutations.isPending(target)
+    val failure = mutations.failure(target)
     org.viptv.app.components.TvFocusScroll(horizontal = false) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Text(section, style = MaterialTheme.typography.headlineSmall)
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            error?.let { Text(it, color = Palette.danger) }
+            (failure ?: error)?.let { Text(it, color = Palette.danger) }
             val value = draft
             if (value == null || error != null) TextButton(retry, enabled = !busy) { Text(if (value == null && error == null) "Load settings" else "Retry settings") }
             if (section == "Playback" && devicePlayback != null) {
@@ -87,7 +95,10 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
                             anyLabel = null, placeholder = "Choose")
                     }
                 }
-                Button({ save(value) }, enabled = !busy && value != snapshot?.preferences, modifier = Modifier.fillMaxWidth()) { Text("Save preferences") }
+                Button({ save(value) }, enabled = !busy && !pending && value != snapshot?.preferences, modifier = Modifier.fillMaxWidth()) {
+                    if (pending) { MutationSpinner(16.dp, color = Palette.background); Spacer(Modifier.width(8.dp)); Text("Saving…") }
+                    else Text("Save preferences")
+                }
             }
         }
     }

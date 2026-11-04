@@ -46,6 +46,19 @@ internal const val FALLBACK_REASON_FAILED = "This source could not play"
 internal const val FALLBACK_REASON_UNDECODABLE = "This device can’t decode this stream"
 internal const val FALLBACK_REASON_TIMEOUT = "This source did not start"
 
+internal const val PLAY_FIRST_GRACE_MILLIS = 1_000L
+
+internal fun SourceCandidate.clearlyBetterThan(other: SourceCandidate?, cap: Int?): Boolean {
+    other ?: return true
+    return qualityScore(cap) > other.qualityScore(cap)
+}
+
+// An over-cap height ranks below every within-cap height, so a higher number is not always better.
+private fun SourceCandidate.qualityScore(cap: Int?): Long {
+    val height = quality_height ?: return 0L
+    return if (cap != null && height > cap.toLong()) -1L else height
+}
+
 internal fun ApplicationState.sourcesBanner(): String? =
     bestMatch?.takeIf { it.exhausted }?.failed?.size?.let(::failedSourcesNotice)
 
