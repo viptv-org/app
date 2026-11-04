@@ -89,7 +89,8 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Un
                         Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = if (short) 2 else 3,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
-                    DesktopHeroActions({ play(shown) }, { open(shown) }, { save(shown) }, saved, pending = shown.isPlayPending())
+                    DesktopHeroActions(shown, { play(shown) }, { open(shown) }, { save(shown) }, saved,
+                        pending = shown.isPlayPending())
                 }
             }
             carousel?.let { HeroIndicators(it.count, it.index, it.progress) }

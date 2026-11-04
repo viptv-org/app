@@ -123,6 +123,7 @@ internal object MpvRuntime {
 }
 
 internal fun mpvCheck(code: Int) { check(code >= 0) { "mpv error $code" } }
+internal const val MPV_ERROR_OPTION_NOT_FOUND = -5
 
 // ABI layout from mpv/client.h; decode borrowed nodes before their owner advances.
 internal fun mpvNode(pointer: Pointer): JsonElement = when (pointer.getInt(8)) {

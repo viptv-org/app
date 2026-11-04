@@ -16,6 +16,10 @@ import org.viptv.app.components.HoverFill
 import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.responseSpec
 import org.viptv.app.components.tvFocusOutline
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.saveTarget
+import org.viptv.engine.wire.Card
 import org.viptv.app.theme.Palette
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
@@ -24,7 +28,10 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.PendingActionSpinner
 
 @Composable
-internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> Unit, saved: Boolean, pending: Boolean = false) {
+internal fun DesktopHeroActions(card: Card, play: () -> Unit, info: () -> Unit, save: () -> Unit, saved: Boolean,
+    pending: Boolean = false) {
+    val mutations = LocalPendingMutation.current
+    val target = saveTarget(card)
     val playInteractions = remember { MutableInteractionSource() }
     val playFocused by playInteractions.collectIsFocusedAsState()
     val infoInteractions = remember { MutableInteractionSource() }
@@ -54,7 +61,8 @@ internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> 
             .tvFocusOutline(saveFocused, 22.dp, darkGap = 2.dp, width = 2.dp),
             interactionSource = saveInteractions,
             colors = IconButtonDefaults.filledIconButtonColors(containerColor = saveFill, contentColor = Palette.text)) {
-            Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp))
+            if (mutations.isPending(target)) MutationSpinner(22.dp)
+            else Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp))
         }
     }
 }

@@ -234,11 +234,14 @@ class BottomClearanceUiTest {
     private fun scrollToEnd(scene: ImageComposeScene): Boolean {
         var before = -1f
         repeat(60) {
-            val scroll = scroller(nodes(scene))
-            val value = scroll.config[SemanticsProperties.VerticalScrollAxisRange].value()
+            var scroll = scroller(nodes(scene))
+            var waited = 0
+            while (scroll == null && waited < 20) { frames(scene, 1); scroll = scroller(nodes(scene)); waited++ }
+            val node = scroll ?: fail("no vertical scroller")
+            val value = node.config[SemanticsProperties.VerticalScrollAxisRange].value()
             if (value <= before + 0.5f) return before > 0f
             before = value
-            scroll.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 4000f)
+            node.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 4000f)
             frames(scene, 6)
         }
         fail("the page never reached its end")

@@ -26,9 +26,17 @@ internal fun ApplicationController.mutate(
     optimistic: (ApplicationState) -> ApplicationState = { it },
     revert: (ApplicationState) -> ApplicationState = { it },
     message: (Exception) -> String? = ::failureMessage,
+    prepare: (ApplicationState) -> Unit = {},
+    ownsControllerJob: Boolean = false,
     operation: suspend () -> Unit,
 ) {
     if (mutable.value.mutations.isPending(target)) return
+    // A rejected press never flips the control: its message lands beside the control instead.
+    try { prepare(mutable.value) }
+    catch (error: Exception) {
+        updateState { it.copy(mutations = it.mutations.failed(target, message(error) ?: COULD_NOT_SAVE)) }
+        return
+    }
     val retry = MutationRetry(optimistic, revert, message, operation)
     mutationRetries[target] = retry
     val profile = mutable.value.selectedProfile
@@ -55,13 +63,15 @@ internal fun ApplicationController.mutate(
         }
     }
     mutationJobs[target] = task
+    if (ownsControllerJob) claimOperation(task)
     task.start()
 }
 
 fun ApplicationController.retryMutation(target: MutationTarget) {
     if (mutable.value.mutations.failure(target) == null) return
     val retry = mutationRetries[target] ?: return
-    mutate(target, retry.optimistic, retry.revert, retry.message, retry.operation)
+    mutate(target, optimistic = retry.optimistic, revert = retry.revert, message = retry.message,
+        operation = retry.operation)
 }
 
 fun ApplicationController.dismissMutationFailure(target: MutationTarget) = updateState {
