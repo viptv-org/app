@@ -8,13 +8,15 @@ import org.viptv.engine.wire.*
 
 fun ApplicationController.toggleFavorite(card: Card) {
     val saved = mutable.value.isSaved(card)
-    mutate(saveTarget(card), optimistic = { it.withSavedOverride(card, !saved) }, revert = { it.withSavedOverride(card, null) }) {
+    mutate(saveTarget(card), optimistic = { it.withSavedOverride(card, !saved) }, revert = { it.withSavedOverride(card, null) },
+        ownsControllerJob = true) {
         val profile = requireNotNull(mutable.value.selectedProfile)
         libraryHydration?.cancel()
         libraryHydration?.join()
         if (mutable.value.favoriteKeys == null || card.metadata_origin != null && mutable.value.libraryMembership == null) loadLibrary()
-        // A catalog alias that becomes known must not turn a shown Add action into a removal.
-        val wasSaved = mutable.value.isSaved(card)
+        // A catalog alias that becomes known must not turn a shown Add action into a removal. The optimistic
+        // override is this press's own prediction, so the decision reads the host's answer instead of it.
+        val wasSaved = mutable.value.isSavedByHost(card)
         val favorite = if (wasSaved) card.parent_identity?.let { card.copy(identity = it, parent_identity = null) } ?: card
             else if (card.metadata_origin != null || card.parent_identity != null || card.identity.episode != null)
                 (local?.detail(profile, card) ?: requireNotNull(connection).detail(card)).item else card
@@ -35,13 +37,24 @@ internal fun ApplicationState.withSavedOverride(card: Card, saved: Boolean?): Ap
     return copy(savedOverrides = if (saved == null) savedOverrides - key else savedOverrides + (key to saved))
 }
 
+// [ApplicationState.isSaved] without the optimistic override the press just published, so a write decides
+// from the host's answer rather than from its own prediction.
+internal fun ApplicationState.isSavedByHost(card: Card): Boolean {
+    libraryMembership?.let { return it.containsCard(card) }
+    // Only an exact saved lookup may match a card with a metadata origin; older hosts send no membership.
+    if (card.metadata_origin != null) return savedCardsContain(library, card)
+    val identity = card.parent_identity ?: card.identity
+    return favoriteKeys?.contains(identity.kind to identity.id) ?: savedCardsContain(library, card)
+}
+
 // The card leaves at once; the re-read then agrees with the host on membership and the page.
 fun ApplicationController.removeFromMyList(card: Card) {
     val before = mutable.value
     mutate(saveTarget(card),
         optimistic = { it.withoutSavedCard(card).withSavedOverride(card, false) },
         revert = { it.copy(library = before.library, libraryPage = before.libraryPage, home = before.home,
-            favoriteKeys = before.favoriteKeys, savedOverrides = it.savedOverrides - cardLookupKey(card)) }) {
+            favoriteKeys = before.favoriteKeys, savedOverrides = it.savedOverrides - cardLookupKey(card)) },
+        ownsControllerJob = true) {
         val profile = requireNotNull(mutable.value.selectedProfile)
         libraryHydration?.cancel()
         libraryHydration?.join()

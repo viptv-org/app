@@ -117,6 +117,12 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
 
+    // The quiet lane and Back wait on the controller's operation job, so a write that must not be reloaded under
+    // hands claims it instead of leaving it pointing at nothing.
+    internal fun claimOperation(task: Job) {
+        synchronized(runGate) { generation++; job = task }
+    }
+
     internal fun run(operation: suspend () -> Unit) {
         detailPagingJob?.cancel(); detailPagingJob = null
         val claimed = synchronized(runGate) {
