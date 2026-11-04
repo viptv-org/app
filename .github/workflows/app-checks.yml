@@ -177,7 +177,10 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
       - name: Install native media dependencies
-        run: sudo apt-get update && sudo apt-get install -y libmpv-dev mpv patchelf
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libmpv-dev mpv patchelf
+          version: 1.0
       - name: Download desktop natives
         uses: actions/download-artifact@v7
         with:
