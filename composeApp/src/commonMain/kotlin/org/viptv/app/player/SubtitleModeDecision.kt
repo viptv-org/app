@@ -33,6 +33,12 @@ internal fun audioIsForeign(audioLanguage: String?, preferredAudio: String?): Bo
     return audio != (subtitleModeLanguage(preferredAudio) ?: "en")
 }
 
+internal fun subtitleModeEnabled(mode: String, preferredAudio: String?, audioLanguage: String?): Boolean = when (mode) {
+    "always" -> true
+    "foreign" -> audioIsForeign(audioLanguage, preferredAudio)
+    else -> false
+}
+
 internal fun <T> subtitleModeChoice(mode: String, preferredAudio: String?, preferredSubtitle: String?, audioLanguage: String?,
     tracks: List<SubtitleModeTrack<T>>): SubtitleModeTrack<T>? {
     if (mode == "never") return null
