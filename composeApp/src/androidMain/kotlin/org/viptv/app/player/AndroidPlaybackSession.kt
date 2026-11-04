@@ -9,13 +9,15 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.viptv.app.connection.subtitleMode
 import org.viptv.engine.wire.SubtitleCandidate
 
 @UnstableApi
 internal class AndroidPlaybackSession(context: Context, private val input: PlaybackInput,
-    scope: CoroutineScope, var observe: (PlayerFact) -> Unit) {
+    private val scope: CoroutineScope, var observe: (PlayerFact) -> Unit) {
     private fun emit(fact: PlayerFact) = observe(fact)
+    private val application = context.applicationContext
     private val sourceFactory = DefaultMediaSourceFactory(context).setDataSourceFactory(
         androidx.media3.datasource.DefaultDataSource.Factory(context,
             DefaultHttpDataSource.Factory().setDefaultRequestProperties(input.headers)
@@ -25,6 +27,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER))
         .setMediaSourceFactory(sourceFactory)
         .build()
+    private val mediaSession = AndroidMediaSession(application, player) { position ->
+        if (!closed) scope.launch { command(PlayerCommand.Seek(position)) }
+    }
     var view: PlayerView? = null
         set(value) { field = value; subtitles.bind(value); applySubtitleStyle() }
     private val tracks = Media3Tracks(player, input, ::emit)
@@ -64,6 +69,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         override fun onVolumeChanged(volume: Float) = properties()
     }
     init {
+        AndroidMediaSessions.publish(application, mediaSession.session)
         val selection = player.trackSelectionParameters.buildUpon()
             .setPreferredAudioLanguage(input.preferences.preferred_audio_language)
             .setPreferredTextLanguage(input.preferences.preferred_subtitle_language)
@@ -100,7 +106,8 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         input.diagnostics?.invoke("opening_position_ms=${input.positionMillis} opening_timeline_offset_ms=${input.timelineOffsetMillis} opening_live=${input.live}")
         input.diagnostics?.invoke("ffmpeg_audio_available=${androidx.media3.decoder.ffmpeg.FfmpegLibrary.isAvailable()} ffmpeg_version=${androidx.media3.decoder.ffmpeg.FfmpegLibrary.getVersion()}")
         emit(PlayerFact.Status("Opening"))
-        val source = sourceFactory.createMediaSource(MediaItem.Builder().setUri(input.uri).setMimeType(input.mimeType).build())
+        val source = sourceFactory.createMediaSource(MediaItem.Builder().setUri(input.uri).setMimeType(input.mimeType)
+            .setMediaMetadata(MediaMetadata.Builder().setTitle(input.title).build()).build())
         player.setMediaSource(if (!input.live && source is HlsMediaSource) TitleHlsMediaSource(source) else source,
             input.positionMillis.coerceAtLeast(0))
         player.playWhenReady = !paused
@@ -175,7 +182,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     }
     fun close() {
         if (closed) return
-        closed = true; player.removeListener(listener); subtitles.close(); player.release(); view = null
+        closed = true; player.removeListener(listener); subtitles.close()
+        AndroidMediaSessions.withdraw(application, mediaSession.session)
+        mediaSession.close(); player.release(); view = null
     }
 }
 

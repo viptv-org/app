@@ -1,5 +1,10 @@
 package org.viptv.app.player
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +31,7 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
         val model = remember(owner) { ViewModelProvider(owner)[AndroidPlaybackModel::class.java] }
         val latestObserve by rememberUpdatedState(observe)
         var starts by remember(lifecycle) { mutableIntStateOf(0) }
+        MediaNotificationPermission()
         val session = remember(model, input) { model.acquire(context, input) { latestObserve(it) } }
         SideEffect { session.observe = { latestObserve(it) } }
         AndroidView(factory = { viewContext -> PlayerView(viewContext).apply {
@@ -53,7 +59,10 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
             }
         }
         LaunchedEffect(session) { session.open(paused || !lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) }
-        LaunchedEffect(session, paused, starts) { session.player.playWhenReady = !paused && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) }
+        LaunchedEffect(session, paused, starts) {
+            if (paused) session.player.pause()
+            else if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) session.player.play()
+        }
         LaunchedEffect(session, commands) { commands.collect(session::command) }
         LaunchedEffect(session) { input.providerSubtitles.collect { session.sourcesChanged(it) } }
         LaunchedEffect(session) { while (true) { delay(200); session.progress() } }
@@ -65,4 +74,15 @@ private tailrec fun android.content.Context.activity(): android.app.Activity? = 
     is android.app.Activity -> this
     is android.content.ContextWrapper -> baseContext.activity()
     else -> null
+}
+
+// The media notification needs POST_NOTIFICATIONS on API 33+; a television has no notification shade to show it in.
+@Composable
+private fun MediaNotificationPermission() {
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) return
+    val context = LocalContext.current
+    if (context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION) return
+    if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+    val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(context) { request.launch(Manifest.permission.POST_NOTIFICATIONS) }
 }

@@ -12,6 +12,7 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     preferences: org.viptv.app.connection.ProfilePreferences = org.viptv.app.connection.ProfilePreferences(), val live: Boolean = false,
     val diagnostics: ((String) -> Unit)? = null, val mimeType: String? = null,
     val requiredAudioIndex: Int? = null,
+    val title: String? = null,
     // Loopback media of this device's torrent runtime: reads wait on peers, not a server.
     val localTorrent: Boolean = false) {
     init { require(requiredAudioIndex == null || requiredAudioIndex >= 0) }
