@@ -58,13 +58,13 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {},
     errorCode: String? = null, openGateways: (() -> Unit)? = null, producers: List<SourceProducerOutcome> = emptyList(),
-    banner: String? = null, failed: List<String> = emptyList(), opening: Boolean = false, retry: () -> Unit = {}) {
+    banner: String? = null, failed: List<String> = emptyList(), opening: Boolean = false, retry: () -> Unit = {}, manageAddons: () -> Unit = {}) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
             detail = detail,
             loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders, openingStage = openingStage,
-            groups = groups, producers = producers, banner = banner, failed = failed, opening = opening, retry = retry)
+            groups = groups, producers = producers, banner = banner, failed = failed, opening = opening, retry = retry, manageAddons = manageAddons)
         return
     }
     var quality by remember { mutableStateOf<String?>(null) }
@@ -164,10 +164,14 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                     }
                 }
                 if (!busy && !loadingMore && visible.isEmpty() && error == null && notice == null) item {
-                    val empty = if (torrentOnlyProviders > 0)
-                        "${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this device cannot stream directly" else "providers returned torrent links this device cannot stream directly"}. Add a debrid service (for example TorBox) to play them, or try another title."
-                    else "No streams found. Enable a provider that supplies sources."
-                    Text(empty, Modifier.padding(20.dp), color = Palette.secondary)
+                    if (torrentOnlyProviders > 0) {
+                        Text("${torrentOnlyProviders} ${if (torrentOnlyProviders == 1) "provider returned torrent links this device cannot stream directly" else "providers returned torrent links this device cannot stream directly"}. Add a debrid service (for example TorBox) to play them, or try another title.", Modifier.padding(20.dp), color = Palette.secondary)
+                    } else {
+                        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("No sources available. Check your add-ons in Settings.", color = Palette.secondary)
+                            org.viptv.app.components.TextButton(manageAddons, Modifier) { Text("Manage add-ons") }
+                        }
+                    }
                 }
                 items(rows, key = { it.source.id }) { row ->
                     SourceRow(row.source, television, choose, enabled = !busy, selected = row.source.id == selectedSource,
