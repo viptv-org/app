@@ -13,6 +13,7 @@ import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -85,7 +86,7 @@ class AndroidMediaSessionTest {
         AndroidMediaSessions.publish(application, media.session)
         assertNotNull(AndroidMediaSessions.session)
         AndroidMediaSessions.withdraw(application, media.session)
-        assertEquals(null, AndroidMediaSessions.session)
+        assertNull(AndroidMediaSessions.session)
         media.close()
     }
 }

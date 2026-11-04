@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 @Composable
 internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, modifier: Modifier,
     observe: (PlayerFact) -> Unit, commands: Flow<PlayerCommand>) {
+    MediaNotificationPermission()
     key(input) {
         val context = LocalContext.current
         val activity = remember(context) { context.activity() }
@@ -31,7 +32,6 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
         val model = remember(owner) { ViewModelProvider(owner)[AndroidPlaybackModel::class.java] }
         val latestObserve by rememberUpdatedState(observe)
         var starts by remember(lifecycle) { mutableIntStateOf(0) }
-        MediaNotificationPermission()
         val session = remember(model, input) { model.acquire(context, input) { latestObserve(it) } }
         SideEffect { session.observe = { latestObserve(it) } }
         AndroidView(factory = { viewContext -> PlayerView(viewContext).apply {

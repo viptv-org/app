@@ -108,8 +108,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         input.diagnostics?.invoke("opening_position_ms=${input.positionMillis} opening_timeline_offset_ms=${input.timelineOffsetMillis} opening_live=${input.live}")
         input.diagnostics?.invoke("ffmpeg_audio_available=${androidx.media3.decoder.ffmpeg.FfmpegLibrary.isAvailable()} ffmpeg_version=${androidx.media3.decoder.ffmpeg.FfmpegLibrary.getVersion()}")
         emit(PlayerFact.Status("Opening"))
-        val source = sourceFactory.createMediaSource(MediaItem.Builder().setUri(input.uri).setMimeType(input.mimeType)
-            .setMediaMetadata(MediaMetadata.Builder().setTitle(input.title).build()).build())
+        val item = MediaItem.Builder().setUri(input.uri).setMimeType(input.mimeType)
+        input.title?.let { item.setMediaMetadata(MediaMetadata.Builder().setTitle(it).build()) }
+        val source = sourceFactory.createMediaSource(item.build())
         player.setMediaSource(if (!input.live && source is HlsMediaSource) TitleHlsMediaSource(source) else source,
             input.positionMillis.coerceAtLeast(0))
         player.playWhenReady = !paused
