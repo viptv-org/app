@@ -144,7 +144,7 @@ class AuthFailureCopyTest {
         } finally { remote.close() }
     }
 
-    @Test fun aStreamStillRefusedAfterARefreshIsAFailedRequestNotAnExpiry() = runBlocking {
+    @Test fun aStreamStillRefusedAfterARefreshEndsTheSession() = runBlocking {
         val store = Store()
         var refreshes = 0
         val server = client { path ->
@@ -163,7 +163,32 @@ class AuthFailureCopyTest {
             remote.login("member", "password")
             val failure = assertFailsWith<RemoteFailure> { remote.streamWithRetry { true } }
             assertEquals(401, failure.status)
-            assertFalse(failure.sessionExpired, "Only the refresh endpoint ends a session")
+            assertTrue(failure.sessionExpired, "A 401 that survives a refresh is an expired session")
+            assertEquals(1, refreshes)
+            assertEquals("r2", store.saved?.refreshToken)
+        } finally { remote.close() }
+    }
+
+    @Test fun aRequestStillUnauthorizedAfterARefreshEndsTheSession() = runBlocking {
+        val store = Store()
+        var refreshes = 0
+        val server = client { path ->
+            when (path) {
+                "/api/auth/device/login" -> json(deviceSession)
+                "/api/bootstrap" -> json(bootstrapBody)
+                "/api/auth/device/refresh" -> {
+                    refreshes++
+                    json("""{"access_token":"a2","refresh_token":"r2"}""")
+                }
+                else -> json("{}", HttpStatusCode.Unauthorized)
+            }
+        }
+        val remote = RemoteConnection("https://watch.example", store, server, browserMode = false)
+        try {
+            remote.login("member", "password")
+            val failure = assertFailsWith<RemoteFailure> { remote.call("/api/discover?type=all&search=dune") }
+            assertEquals(401, failure.status)
+            assertTrue(failure.sessionExpired, "A 401 that survives a refresh is an expired session")
             assertEquals(1, refreshes)
             assertEquals("r2", store.saved?.refreshToken)
         } finally { remote.close() }

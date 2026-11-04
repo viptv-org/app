@@ -41,7 +41,7 @@ class RemoteFailure(val status: Int, message: String, val code: String? = null, 
     val sessionExpired: Boolean = false) : Exception(message)
 internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && code == "metadata_not_found"
 
-// Only the credential refresh says the session is gone: any other 401 is a failed request the viewer can retry.
+// A 401 that survives a fresh token is a dead session too: route to sign-in, not a retryable error.
 internal fun sessionExpired() = RemoteFailure(401, "Sign in to continue.", sessionExpired = true)
 
 internal class SearchStreamUnavailable : Exception()
@@ -297,7 +297,7 @@ open class RemoteConnection(
         refreshAfterUnauthorized(version)
         currentCoroutineContext().ensureActive()
         ensureOpen()
-        if (attempt()) throw RemoteFailure(401, "Sign in to continue.")
+        if (attempt()) throw sessionExpired()
     }
 
     private suspend fun refreshAfterUnauthorized(version: Long) = authSession {
@@ -344,6 +344,7 @@ open class RemoteConnection(
             currentCoroutineContext().ensureActive()
             ensureOpen()
             response = send(path, method, body, accessToken, csrf, timeoutMillis)
+            if (response.status == HttpStatusCode.Unauthorized) throw sessionExpired()
         }
         return response
     }
