@@ -57,6 +57,14 @@ internal suspend fun ApplicationController.closePlaybackQuietly(lease: RemotePla
     withContext(NonCancellable) { withTimeoutOrNull(5_000) { try { lease.close() } catch (_: Exception) { } } }
 }
 
+internal suspend fun ApplicationController.closeForExit(timeoutMillis: Long, onExit: () -> Unit) {
+    withTimeoutOrNull(timeoutMillis) {
+        if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
+        releasePlaybackSession()?.join()
+    }
+    onExit()
+}
+
 internal fun ApplicationController.saveProgress(completed: Boolean, final: Boolean = false): Job? {
     val input=mutable.value.playback ?: return null
     if (input.live) return null

@@ -15,6 +15,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.engine.wire.SourcePresentation
 import org.junit.Rule
 import kotlin.test.*
 
@@ -27,10 +28,10 @@ class SourceDrawerLayoutTest {
     }
 
     private fun render(width: Int, height: Int, television: Boolean = false, busy: Boolean = false, loadingMore: Boolean = false, tablet: Boolean = false,
-        opening: Boolean = false, check: (List<SemanticsNode>) -> Unit) {
+        opening: Boolean = false, rows: List<SourceCandidate> = sources, check: (List<SemanticsNode>) -> Unit) {
         val scene = ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(television) { Box(Modifier.fillMaxSize().background(Palette.background)) {
-                SourcesScreen(title, sources, busy, null, {}, {}, television = television, tablet = tablet, loadingMore = loadingMore, opening = opening)
+                SourcesScreen(title, rows, busy, null, {}, {}, television = television, tablet = tablet, loadingMore = loadingMore, opening = opening)
             } }
         }
         try {
@@ -41,12 +42,6 @@ class SourceDrawerLayoutTest {
     }
 
     private fun texts(nodes: List<SemanticsNode>) = nodes.flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
-    private fun releaseLines(nodes: List<SemanticsNode>): Int {
-        val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
-        val node = nodes.first { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "$release #1" } }
-        assertTrue(node.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(results))
-        return results.single().lineCount
-    }
     private fun drawerWidth(nodes: List<SemanticsNode>) = nodes.first { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Choose a source" }.boundsInRoot.width
 
     @Test fun noLayoutShowsTheBestMatchHint() {
@@ -98,17 +93,22 @@ class SourceDrawerLayoutTest {
         }
     }
 
-    @Test fun aLongReleaseLineWrapsLessInTheWiderDrawer() {
-        var wide = 0
-        var narrow = 0
-        render(1440, 900) { nodes ->
-            assertTrue(drawerWidth(nodes) >= 640f, "the drawer is at least 640 dp at 1440x900, not ${drawerWidth(nodes)}")
-            wide = releaseLines(nodes)
+    @Test fun theFactsLineStaysOnOneLineRatherThanWrapping() {
+        val long = SourceCandidate(
+            "long", "addon:torrentio", "[TB+] Torrentio\n2160p",
+            detail = "Oak.Street.2026.2160p.WEB-DL.DV.HDR10.HEVC.10bit (Batch)\n👤 412 💾 14.2 GB ⚙️ ThePirateBay",
+            quality_height = 2160, release_type = "web_dl", seeders = 412, delivery = "direct",
+            presentation = SourcePresentation(provider_name = "A.Very.Long.Provider.Name", size_label = "14.2 GB", video_codec = "HEVC"),
+        )
+        for (width in listOf(800, 1440)) {
+            render(width, 900, rows = listOf(long)) { nodes ->
+                val facts = nodes.first { node ->
+                    node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text.contains("14.2 GB") && it.text.contains("ThePirateBay") }
+                }
+                val result = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+                assertTrue(facts.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(result))
+                assertEquals(1, result.single().lineCount, "the facts line stays on one line at $width")
+            }
         }
-        render(800, 900) { nodes ->
-            assertEquals(460f, drawerWidth(nodes))
-            narrow = releaseLines(nodes)
-        }
-        assertTrue(wide < narrow, "the release wraps in fewer lines at 720 dp ($wide) than at 460 dp ($narrow)")
     }
 }

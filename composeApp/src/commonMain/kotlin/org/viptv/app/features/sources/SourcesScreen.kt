@@ -145,7 +145,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             KeepSourceListPosition(listState, rows, focusedSource, headerHeight,
                 leading = (if (error != null) 1 else 0) + (if (notice != null) 1 else 0))
             LazyColumn(Modifier.weight(1f), state = listState, contentPadding = PaddingValues(horizontal = if (television) 48.dp else 0.dp,
-                vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp), topEdgeFade = false) {
+                vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), topEdgeFade = false) {
                 error?.let {
                     item(key = "error") {
                         if (visible.isEmpty()) SourcesFailure(it, retry, openGateways?.takeIf { errorCode == "gateway_required" })

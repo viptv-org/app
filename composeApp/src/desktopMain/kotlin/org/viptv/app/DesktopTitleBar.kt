@@ -2,6 +2,7 @@ package org.viptv.app
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -11,6 +12,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import com.composables.icons.lucide.Lucide
@@ -65,6 +67,7 @@ internal fun DesktopTitleBar(
     cast: (() -> Unit)? = null,
     remote: (() -> Unit)? = null,
     maximized: Boolean = false,
+    onDoubleClick: () -> Unit = {},
 ) {
     val simple = state.screen in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit)
     val barHeight = if (simple) 40.dp else 48.dp
@@ -72,7 +75,9 @@ internal fun DesktopTitleBar(
     LaunchedEffect(state.searchTerm) { query = state.searchTerm }
     var searchFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight).background(Palette.background).then(dragModifier)) {
+    val currentDoubleClick by rememberUpdatedState(onDoubleClick)
+    BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight).background(Palette.background).then(dragModifier)
+        .pointerInput(Unit) { detectTapGestures(onDoubleTap = { currentDoubleClick() }) }) {
         val narrow = maxWidth < DesktopBreakpoints.narrowMax
         val mini = maxWidth < DesktopBreakpoints.miniMax
         Row(Modifier.align(Alignment.CenterStart).fillMaxHeight().padding(start = if (simple) 14.dp else 8.dp),
@@ -125,7 +130,7 @@ internal fun DesktopTitleBar(
                             fontFamily = MaterialTheme.typography.bodyMedium.fontFamily),
                         decorationBox = { inner ->
                             Box {
-                                if (query.isEmpty()) Text("Search movies, series and channels", color = Palette.secondary, fontSize = 13.sp)
+                                if (query.isEmpty()) Text("Search movies and series", color = Palette.secondary, fontSize = 13.sp)
                                 inner()
                             }
                         })
@@ -133,8 +138,6 @@ internal fun DesktopTitleBar(
                         Modifier.size(20.dp), radius = 10.dp, hover = Color(0xFF34343A)) {
                         Icon(Lucide.X, "Clear search", Modifier.size(14.dp), tint = Palette.secondary)
                     }
-                    Text(if (mac) "⌘K" else "Ctrl K", color = Palette.secondary, fontSize = 11.sp,
-                        modifier = Modifier.background(Color(0xFF121214), RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp))
                 }
             }
         }

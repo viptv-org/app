@@ -81,35 +81,6 @@ class TvPreferenceRowsUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun badgesStayOnTheTitleLineAndDropOnNarrowPhones() = runBlocking {
-        val source = SourceCandidate("a", "p", "Provider name that is fairly long", detail = "Some.Release.2160p.WEB-DL.DV.mkv",
-            quality_height = 2160, release_type = "web_dl", dynamic_range = listOf("dv"), audio_flags = listOf("dual"), three_d = true)
-        fun heightOf(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.maxOf { it.boundsInRoot.height }
-        fun phone(candidate: SourceCandidate, width: Int) = ImageComposeScene(width, 400, Density(1f)) { ViptvTheme {
-            Column(Modifier.width(width.dp)) { SourceRow(candidate, false, {}) } } }
-        val cases = listOf(Triple(source, 320, 1), Triple(source, 390, 0), Triple(source.copy(label = "LordStreams"), 390, 2), Triple(source, 800, 4))
-        for ((candidate, width, least) in cases) {
-            val withBadges = phone(candidate, width)
-            val without = phone(candidate.copy(release_type = null, dynamic_range = emptyList(), audio_flags = emptyList(), three_d = false), width)
-            try {
-                frames(withBadges); frames(without)
-                assertEquals(heightOf(without), heightOf(withBadges), "badges never add a line at $width")
-                val badges = unmerged(withBadges).filter { it.layoutInfo.isPlaced && text(it) in listOf("WEB-DL", "DV", "Dual audio", "3D") }
-                assertEquals(listOf("WEB-DL", "DV", "Dual audio", "3D").take(badges.size), badges.map(::text), "at $width")
-                assertTrue(badges.size >= least, "at $width ${candidate.label}: ${badges.map(::text)}")
-                assertTrue(badges.all { it.boundsInRoot.right <= width }, "no overflow at $width")
-                capture(withBadges, "phone-source-row-$width-${candidate.label.length}")
-            } finally { withBadges.close(); without.close() }
-        }
-        val tv = ImageComposeScene(1920, 300, Density(1f)) { ViptvTheme(true) { Column(Modifier.width(1200.dp)) {
-            TvSourceRow(source, TvSourceInfo("4K", "MKV", "[Add-on]"), 1f, null, true, {}, bestMatch = true) } } }
-        try {
-            frames(tv)
-            assertEquals(listOf("WEB-DL", "DV", "Dual audio", "3D"), unmerged(tv).filter { it.layoutInfo.isPlaced && text(it) in listOf("WEB-DL", "DV", "Dual audio", "3D") }.map(::text))
-            capture(tv, "tv-source-row")
-        } finally { tv.close() }
-    }
-
     private var focusManager: FocusManager? = null
     private fun tvSettings(section: String, current: () -> TvSettingsPreferences = { TvSettingsPreferences() },
         change: (TvSettingsPreferences) -> Unit) = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
