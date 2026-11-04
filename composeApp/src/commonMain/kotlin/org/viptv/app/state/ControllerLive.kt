@@ -110,6 +110,7 @@ fun ApplicationController.showLiveGuide(channel: String, force: Boolean = false)
 }
 
 fun ApplicationController.playLive(channel: String) = run {
+    livePlaybackChannel = channel
     val operation = generation
     liveGuideJob?.cancel()
     val card = mutable.value.livePage?.channels?.find { it.id == channel }?.card ?: throw LocalFailure("Choose an available channel first.")
