@@ -25,6 +25,8 @@ data class ApplicationState(
     val settingsPage: SettingsPage? = null,
     val settingsReturnsToPlayer: Boolean = false,
     val busy: Boolean = false,
+    val mutations: PendingMutations = PendingMutations(),
+    val savedOverrides: Map<String, Boolean> = emptyMap(),
     val error: String? = null,
     val errorCode: String? = null,
     val profiles: List<Profile> = emptyList(),
@@ -162,6 +164,7 @@ internal fun ApplicationState.detailsPending(): Boolean =
 
 internal fun ApplicationState.isSaved(card: Card?): Boolean {
     card ?: return false
+    savedOverrides[cardLookupKey(card)]?.let { return it }
     libraryMembership?.let { return it.containsCard(card) }
     // Only an exact saved lookup may match a card with a metadata origin; older hosts send no membership.
     if (card.metadata_origin != null) return savedCardsContain(library, card)
