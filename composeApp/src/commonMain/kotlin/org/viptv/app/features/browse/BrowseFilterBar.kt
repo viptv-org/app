@@ -21,6 +21,8 @@ import org.viptv.app.connection.forCatalog
 import org.viptv.app.connection.selectedCatalog
 import org.viptv.app.connection.selectionKey
 import org.viptv.app.connection.selections
+import org.viptv.app.state.Screen
+import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 
 internal fun browseFacets(controls: DiscoveryControls?, query: BrowseQuery, showType: Boolean): List<QueryControl> {
@@ -41,6 +43,23 @@ internal fun appliedFacets(facets: List<QueryControl>, query: BrowseQuery): List
 
 internal fun clearedFilters(query: BrowseQuery): BrowseQuery =
     query.copy(skip = 0, genre = null, search = null, extras = emptyMap(), values = emptyList())
+
+internal data class AppliedChip(val id: String, val value: String, val label: String, val multiple: Boolean)
+
+internal fun appliedChips(facets: List<QueryControl>, query: BrowseQuery): List<AppliedChip> =
+    appliedFacets(facets, query).flatMap { control ->
+        query.facetValues(control).map { value ->
+            AppliedChip(control.id, value, control.choices.find { it.value == value }?.label ?: value,
+                control.kind != ControlKind.SINGLECHOICE)
+        }
+    }
+
+internal fun browseNoun(screen: Screen): String = when (screen) {
+    Screen.Movies -> "movies"
+    Screen.Series -> "series"
+    Screen.Anime -> "anime"
+    else -> "titles"
+}
 
 @Composable
 internal fun BrowseFilterBar(controls: DiscoveryControls?, query: BrowseQuery, showType: Boolean,
