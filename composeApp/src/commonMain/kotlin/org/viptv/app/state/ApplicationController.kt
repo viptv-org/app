@@ -125,7 +125,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                 catch (e: CancellationException) { throw e }
                 catch (e: Exception) {
                     if (generation == current && e is RemoteFailure && e.sessionExpired && local == null) {
-                        releaseRemotePlayback()
+                        releasePlaybackSession()
                         resetLiveRequests()
                         discardStremioImport()
                         connection?.close(); connection = null

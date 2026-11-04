@@ -117,7 +117,7 @@ private suspend fun ApplicationController.renewPreparedQuietly(lease: PreparedPl
     }
 }
 
-private fun ApplicationController.clearNextEpisodePreparation(releaseLease: Boolean) {
+private fun ApplicationController.clearNextEpisodePreparation(releaseLease: Boolean): Job? {
     nextEpisodePreparationGeneration++
     nextEpisodePreparationJob?.cancel(); nextEpisodePreparationJob = null
     nextEpisodePreparationKey = null
@@ -125,10 +125,10 @@ private fun ApplicationController.clearNextEpisodePreparation(releaseLease: Bool
     val lease = nextEpisodePreparedLease
     nextEpisodePreparedLease = null
     if (mutable.value.nextEpisodePreparation != null) updateState { it.copy(nextEpisodePreparation = null) }
-    if (releaseLease && lease != null) scope.launch { withContext(NonCancellable) { releaseQuietly(lease) } }
+    return if (releaseLease && lease != null) scope.launch(start = CoroutineStart.UNDISPATCHED) { withContext(NonCancellable) { releaseQuietly(lease) } } else null
 }
 
-internal fun ApplicationController.cancelNextEpisodePreparation() = clearNextEpisodePreparation(releaseLease = true)
+internal fun ApplicationController.cancelNextEpisodePreparation(): Job? = clearNextEpisodePreparation(releaseLease = true)
 
 internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean {
     val state = mutable.value

@@ -41,7 +41,7 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
         previousScreen in listOf(Screen.Player, Screen.Settings)
     if (screen != Screen.Player && !playerVisit && mutable.value.playback != null) {
         val live = mutable.value.playback?.live == true
-        if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releaseRemotePlayback(); updateState { it.copy(playback = null) }
+        if (!completionSeen) saveProgress(false, final = true); job?.cancel(); releasePlaybackSession(); updateState { it.copy(playback = null) }
         afterPlayback(live)
     }
     val recorded = when (previousScreen) {

@@ -232,11 +232,10 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
 fun ApplicationController.closePlayer() {
     job?.cancel()
     playbackSegmentsJob?.cancel()
-    cancelNextEpisodePreparation()
     startDeadlineJob?.cancel(); startDeadlineJob = null
     clearBestMatchSession()
     val live = mutable.value.playback?.live == true
-    releaseRemotePlayback()
+    releasePlaybackSession()
     if(!completionSeen) saveProgress(false, final = true)
     updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false, openingSource = null) }
     lastProgress=null
