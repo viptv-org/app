@@ -20,8 +20,10 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
+import kotlinx.coroutines.launch
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.SourceMemory
+import org.viptv.app.state.closeForExit
 
 fun main() {
     SourceMemory.useDeviceStorage()
@@ -37,15 +39,24 @@ private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
     val searchFocus = remember { FocusRequester() }
     val mac = remember { System.getProperty("os.name").startsWith("Mac") }
-    DesktopAppWindow(::exitApplication, "VIPTV Experiment", windowState, framed = !mac,
+    val scope = rememberCoroutineScope()
+    val controller = remember { ApplicationController(scope) }
+    var visible by remember { mutableStateOf(true) }
+    var closing by remember { mutableStateOf(false) }
+    val requestClose = {
+        if (!closing) {
+            closing = true
+            visible = false
+            scope.launch { controller.closeForExit(3_000) { exitApplication() } }
+        }
+    }
+    DesktopAppWindow(requestClose, "VIPTV Experiment", windowState, framed = !mac, visible = visible,
         onPreviewKeyEvent = { event ->
             if (event.type == KeyEventType.KeyDown && (event.isCtrlPressed || event.isMetaPressed) && event.key == Key.K) {
                 runCatching { searchFocus.requestFocus() }
                 true
             } else false
         }) {
-        val scope = rememberCoroutineScope()
-        val controller = remember { ApplicationController(scope) }
         val globalBack = remember(controller) { GlobalBack(controller) }
         val base = remember { desktopDataDirectory() }
         LaunchedEffect(window) {
@@ -74,7 +85,7 @@ private fun launchApplication() = application {
             }
         }
         val controls = DesktopWindowControls(minimize = { windowState.isMinimized = true }, maximize = maximize,
-            close = ::exitApplication, maximized = maximized)
+            close = requestClose, maximized = maximized)
         org.viptv.app.player.mpv.MpvWindow(window) {
             DesktopShell(controller, globalBack, mac, controls, localDatabase = "$base/viptv-experiment/local.sqlite",
                 searchFocus = searchFocus, titleBarArea = { bar -> WindowDraggableArea(Modifier.fillMaxWidth()) { bar() } })
