@@ -1,6 +1,7 @@
 package org.viptv.app
 
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -17,7 +18,7 @@ import org.viptv.app.player.PlayerFact
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DesktopActivationKeysTest {
     @get:Rule val uiThread = UiThreadRule()
 
