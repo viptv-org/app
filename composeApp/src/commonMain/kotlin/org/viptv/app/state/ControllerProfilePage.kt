@@ -10,10 +10,11 @@ fun ApplicationController.refreshProfilePage() = run {
     loadPreferences()
     if (remote != null) {
         val management = remote.profileManagement()
+        val controls = loadParentControls(remote, management)
         val approvals = if (management.profiles.any { it.id == profile && it.kids }) remote.approvalCount(profile) else null
         if (connection === remote && generation == owner && mutable.value.selectedProfile == profile)
             updateState { next -> next.copy(profiles = management.cards(), profileManagement = management,
-                parentSettings = management, profileApprovals = approvals) }
+                parentSettings = management, parentControls = controls, profileApprovals = approvals) }
     }
 }
 
@@ -39,13 +40,13 @@ fun ApplicationController.setSelectedProfilePin(oldPin: String, newPin: String) 
     finishProfilePageSave()
 }
 
-fun ApplicationController.saveProfileKids(enabled: Boolean, maxAge: Int, pin: String) = run {
+fun ApplicationController.saveProfileKids(policy: KidsPolicy, pin: String) = run {
     val id = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
     val remote = connection ?: throw LocalFailure("Connect to your account to manage kids restrictions.")
-    if (maxAge !in 0..17) throw LocalFailure("Choose an age between 0 and 17.")
+    if (policy.max_age !in 0..17) throw LocalFailure("Choose an age between 0 and 17.")
     val parent = (mutable.value.profileManagement ?: remote.profileManagement()).parent
-    if (enabled && !parent.pin_configured) throw LocalFailure("Set a household PIN before turning on Kids profile.")
-    if (enabled && parent.pin_configured && !parent.unlocked) {
+    if (policy.enabled && !parent.pin_configured) throw LocalFailure("Set a household PIN before turning on Kids profile.")
+    if (policy.enabled && parent.pin_configured && !parent.unlocked) {
         if (!validParentPin(pin)) throw LocalFailure("Enter the household PIN to change this profile’s limits.")
         remote.unlockParent(pin)
     }
@@ -53,12 +54,13 @@ fun ApplicationController.saveProfileKids(enabled: Boolean, maxAge: Int, pin: St
     val page = mutable.value.settingsPage
     val saved = mutable.value.profilePageSaved
     if (mutable.value.selectedProfile == id) invalidatePolicyContent()
-    remote.saveKidsPolicy(id, KidsPolicy(enabled, maxAge))
-    val approvals = if (enabled) remote.approvalCount(id) else null
+    val written = remote.saveKidsPolicy(id, policy)
+    val approvals = if (policy.enabled) remote.approvalCount(id) else null
     val snapshot = remote.bootstrap()
     if (connection === remote && generation == owner) {
         accept(snapshot, screen = Screen.Settings)
         updateState { next -> next.copy(settingsPage = page, selectedProfile = id, profileApprovals = approvals,
+            parentControls = next.parentControls + (id to (next.parentControls[id] ?: ParentProfileControls()).copy(policy = written)),
             profilePageSaved = saved + 1) }
     }
 }

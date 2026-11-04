@@ -22,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import org.viptv.app.connection.Profile
 import org.viptv.app.connection.SimklLinkStatus
 import org.viptv.app.features.settings.LinkedServicesSettings
+import org.viptv.app.features.settings.MaturityLimitDialog
 import org.viptv.app.features.settings.ProfilePageActions
 import org.viptv.app.features.settings.ProfilePageValues
 import org.viptv.app.features.settings.ProfileSettingsPage
@@ -49,7 +50,7 @@ class ProfilePageTest {
         rename = { name, pin -> calls += "rename:$name:$pin" },
         avatar = { pick, _ -> calls += "avatar:${pick.style}:${pick.choice}" },
         kids = { enabled, pin -> calls += "kids:$enabled:$pin"; saved.value += 1 },
-        maturity = { age, pin -> calls += "maturity:$age:$pin"; saved.value += 1 },
+        maturity = { movie, series, unrated, pin -> calls += "maturity:$movie:$series:$unrated:$pin"; saved.value += 1 },
         approvedTitles = { calls += "approved titles" },
         lock = { old, next -> calls += "lock:$old:$next"; saved.value += 1 },
         parentalControls = { calls += "parental controls" },
@@ -154,15 +155,39 @@ class ProfilePageTest {
         }
     }
 
-    @Test fun theMaturityRowWritesTheRatingAsItsAge() {
-        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = null, approvedTitles = 2)).use { page ->
+    @Test fun theMaturityRowEditsTheSamePerTypeRatingsAsParentalControls() {
+        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 10,
+            movieRating = "PG", seriesRating = "TV-PG", ratings = parentRatings, approvedTitles = 2)).use { page ->
             page.render()
             assertTrue(page.shows("Maturity limit"), "the row appears while Kids profile is on")
+            assertTrue(page.shows("Movies up to PG · Series up to TV-PG"), "the row shows both per-type limits")
             page.click("Maturity limit")
+            assertTrue(page.shows("Allow titles with no rating"), "the editor offers the unrated toggle")
             page.click("PG-13")
             page.click("Save")
-            assertEquals(listOf("maturity:13:"), calls)
+            assertEquals(listOf("maturity:PG-13:TV-PG:false:"), calls)
         }
+    }
+
+    @Test fun theMaturityDialogSavesTheRatingsAndTheUnratedToggle() {
+        var saved: Triple<String?, String?, Boolean>? = null
+        val scene = ImageComposeScene(720, 900, Density(1f)) {
+            ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                MaturityLimitDialog(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 10,
+                    movieRating = "PG", seriesRating = "TV-PG", ratings = parentRatings),
+                    false, null, {}, { movie, series, unrated -> saved = Triple(movie, series, unrated) })
+            } }
+        }
+        try {
+            render(scene)
+            click(nodes(scene), "PG-13"); render(scene)
+            click(nodes(scene), "TV-14"); render(scene)
+            nodes(scene).single {
+                it.config.contains(SemanticsProperties.ToggleableState) && it.config.contains(SemanticsActions.OnClick)
+            }.config[SemanticsActions.OnClick].action!!.invoke(); render(scene)
+            click(nodes(scene), "Save")
+            assertEquals(Triple("PG-13", "TV-14", true), saved)
+        } finally { scene.close() }
     }
 
     @Test fun approvedTitlesShowsItsCountAndOpensOnlyWhileKidsIsOn() {
