@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -39,6 +41,11 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary, textAlign = TextAlign.Center)
         Box(Modifier.width(if (browser) 170.dp else 220.dp).aspectRatio(16f / 9).clip(RoundedCornerShape(8.dp)).background(Palette.surface)) {
             AsyncImage(episode.landscape ?: episode.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            if (episode.isPlayPending()) {
+                Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
+                    PendingActionSpinner(Modifier.size(30.dp), size = 30.dp, strokeWidth = 3.dp, color = Palette.text)
+                }
+            }
             episode.progress?.takeIf { it.isFinite() && it > 0.0 && it < 1.0 }?.let { progress ->
                 Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 10.dp).height(3.dp)
                     .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = .25f))
