@@ -42,7 +42,8 @@ internal fun AccountDeviceConfirmation(name: String?, all: Boolean, busy: Boolea
             error?.let { Text(it, color = Palette.danger) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         } },
-        confirmButton = { TextButton({ if (!locked) { submitting = true; confirm() } }, enabled = !locked) {
+        // The guard re-reads the live state: a repeat press inside the same frame must not publish twice.
+        confirmButton = { TextButton({ if (!busy && !submitting && !pending) { submitting = true; confirm() } }, enabled = !locked) {
             if (locked) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Signing out…", color = Palette.danger) }
             else Text(if (all) "Sign out of all devices" else "Sign out", color = Palette.danger)
         } },
