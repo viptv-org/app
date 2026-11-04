@@ -23,6 +23,9 @@ class ForgotPasswordTest {
     @Test fun thePhoneForgotPasswordLinkOpensTheServerWebSignInPage() = verify(mobile = true)
     @Test fun theDesktopForgotPasswordLinkOpensTheServerWebSignInPage() = verify(mobile = false)
 
+    @Test fun thePhoneForgotPasswordIsDisabledUntilAServerIsConfigured() = verifyDisabled(mobile = true)
+    @Test fun theDesktopForgotPasswordIsDisabledUntilAServerIsConfigured() = verifyDisabled(mobile = false)
+
     private fun verify(mobile: Boolean) {
         var opened: String? = null
         val scene = ImageComposeScene(if (mobile) 390 else 1280, if (mobile) 844 else 800, Density(1f)) { ViptvTheme {
@@ -35,6 +38,20 @@ class ForgotPasswordTest {
                 ?: fail("${if (mobile) "phone" else "desktop"}: no Forgot password link")
             assertTrue(link.config[SemanticsActions.OnClick].action!!.invoke())
             assertEquals("https://watch.example", opened)
+        } finally { scene.close() }
+    }
+
+    private fun verifyDisabled(mobile: Boolean) {
+        val scene = ImageComposeScene(if (mobile) 390 else 1280, if (mobile) 844 else 800, Density(1f)) { ViptvTheme {
+            if (mobile) MobilePasswordPanel("", false, null, {}, { _, _, _ -> })
+            else DesktopPasswordPanel("", false, null, {}, { _, _, _ -> })
+        } }
+        try {
+            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+            val link = nodes(scene).firstOrNull { text(it) == "Forgot password?" && it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(link == null, "${if (mobile) "phone" else "desktop"}: Forgot password is clickable without a server")
+            assertTrue(nodes(scene).any { text(it) == "Enter your server address first." },
+                "${if (mobile) "phone" else "desktop"}: no explanation for the disabled Forgot password link")
         } finally { scene.close() }
     }
 

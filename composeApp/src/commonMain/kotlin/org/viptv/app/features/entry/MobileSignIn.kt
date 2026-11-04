@@ -20,15 +20,17 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.BackControl
+import org.viptv.app.connection.openAccountAuthorization
 
 @Composable
 internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: (() -> Unit)?,
     connect: (String, String, String) -> Unit, pairing: org.viptv.app.connection.DevicePairingDisplay? = null,
     startPairing: ((String) -> Unit)? = null, cancelPairing: () -> Unit = {}, backChanged: ((() -> Unit)?) -> Unit = {},
-    retry: (() -> Unit)? = null,
+    retry: (() -> Unit)? = null, openRegister: (String) -> Unit = { address -> if (address.isNotBlank()) runCatching { openAccountAuthorization(address) } },
 ) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
     var server by remember(origin) { mutableStateOf(origin) }
+    var accountEntryServer by remember { mutableStateOf(false) }
     val back = { step = SignInStep.Choice }
     DisposableEffect(step) {
         backChanged(if (step == SignInStep.Choice) null else back)
@@ -54,6 +56,9 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
                 MobileSignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
                 MobileSignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
                 MobileSignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
+                MobileSignInChoice(SignInMethod.Account, "Create account", "Open your server’s web sign-in page") {
+                    if (server.isNotBlank()) runCatching { openRegister(server) } else accountEntryServer = true
+                }
                 if (local != null) MobileSignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", local)
             }
             SignInStep.Password -> MobilePasswordPanel(server, busy, error, connect, serverChanged = { server = it })
@@ -64,6 +69,9 @@ internal fun MobileSignIn(origin: String, busy: Boolean, error: String?, local: 
         }
         Spacer(Modifier.height(24.dp))
     } }
+    if (accountEntryServer) ServerAddressDialog(server,
+        onConfirm = { server = it; accountEntryServer = false; runCatching { openRegister(it) } },
+        onDismiss = { accountEntryServer = false })
 }
 
 @Composable
