@@ -69,6 +69,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             days.forEach { day ->
                 TvAction(Modifier.height(64.dp * scale).focusProperties { if (selectedRow != null) down = selectedRow; if(controls)up=typeChip }, scale,
                     primary = activeDay == day.id, requester = if (activeDay == day.id) date else null,
+                    selected = activeDay == day.id,
                     activate = { chosen = day.id; focusedId = null; rows.requestScrollToItem(0) }, cornerRadius = 32.dp * scale,
                     background = if(activeDay==day.id)Palette.raised else androidx.compose.ui.graphics.Color.Transparent, contentPadding = PaddingValues(horizontal = 26.dp * scale)) {
                     Text(day.label, color = if (it == Palette.background) it else Palette.secondary, fontSize = (26 * scale).sp,
