@@ -17,6 +17,7 @@ fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Bool
 
 internal fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean, choice: SourceChoice) {
     val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
+    if (!beginPendingSource(source)) return
     val restart = restartRequested
     restartRequested = false
     clearBestMatchSession()
@@ -85,7 +86,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
-    updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null) }
+    updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
     armStartDeadline(input, source)
     loadNextEpisode()
     playbackSegmentsJob?.cancel()
@@ -132,7 +133,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
     completionSeen = false
     progressSavedAt = TimeSource.Monotonic.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
-    updateState { next -> next.copy(playback = input, playingSource = source, paused = false, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null) }
+    updateState { next -> next.copy(playback = input, playingSource = source, paused = false, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
     armStartDeadline(input, source)
     loadNextEpisode()
     playbackSegmentsJob?.cancel()
@@ -237,7 +238,7 @@ fun ApplicationController.closePlayer() {
     val live = mutable.value.playback?.live == true
     releasePlaybackSession()
     if(!completionSeen) saveProgress(false, final = true)
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false, openingSource = null) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false, openingSource = null, pendingAction = null) }
     lastProgress=null
     afterPlayback(live)
 }

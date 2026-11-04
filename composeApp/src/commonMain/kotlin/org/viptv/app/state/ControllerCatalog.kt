@@ -237,6 +237,7 @@ fun ApplicationController.playTitle(card: Card) {
         updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
     }
+    if (!beginPendingPlayback(card)) return
     val navigation = navigationGeneration
     val before = mutable.value
     val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
@@ -290,6 +291,7 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
 private const val DETAILS_TIMEOUT = "Your server took too long to show this title. Try again."
 
 private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
+    clearPendingAction()
     if (error is RemoteFailure && error.sessionExpired && device == null) { expireSession(remote, device); return }
     val unresolved = (error as? RemoteFailure)?.titleNeedsSearch
     if (unresolved != null) { openTitleSearch(unresolved); return }
@@ -400,6 +402,7 @@ internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boole
         }
         chooseSource(target, startPlayback); return
     }
+    if (!beginPendingPlayback(card)) return
     cancelSourceDetail()
     releaseRemotePlayback()
     val preview = if (startPlayback) null else adoptDetailSourcePreview(card)
@@ -567,7 +570,7 @@ internal fun ApplicationController.beginDetails() {
             ?: previous.detailReturnScreen
         val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
         val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
-            else (previous.navBack + previous.screen).takeLast(32)
+            else (previous.navBack + previous.captureBackEntry(previous.screen)).takeLast(32)
         previous.copy(detailReturnScreen = origin, detailHistory = history,
             navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
             screen = Screen.Details, detail = null, detailShell = false, detailFocus = null, calendarEpisode = null)

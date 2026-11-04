@@ -68,15 +68,15 @@ class DesktopBackInputsTest {
         override fun close() { scene.close(); scope.cancel() }
     }
 
-    private fun page(screen: Screen, navBack: List<Screen>) = ApplicationState(screen = screen, navBack = navBack, selectedProfile = "1", localMode = true)
+    private fun page(screen: Screen, navBack: List<BackEntry>) = ApplicationState(screen = screen, navBack = navBack, selectedProfile = "1", localMode = true)
 
-    @Test fun escapeThatNothingTookGoesBack() = Window(page(Screen.Library, listOf(Screen.Home, Screen.Calendar))).use { w ->
+    @Test fun escapeThatNothingTookGoesBack() = Window(page(Screen.Library, listOf(BackEntry(Screen.Home), BackEntry(Screen.Calendar)))).use { w ->
         w.render()
         w.escape()
         assertEquals(Screen.Calendar, w.screen)
     }
 
-    @Test fun aFocusedControlOrAnOpenDialogKeepsItsEscape() = Window(page(Screen.Library, listOf(Screen.Home))).use { w ->
+    @Test fun aFocusedControlOrAnOpenDialogKeepsItsEscape() = Window(page(Screen.Library, listOf(BackEntry(Screen.Home)))).use { w ->
         w.render()
         w.field.requestFocus(); w.render()
         w.escape()
@@ -90,7 +90,7 @@ class DesktopBackInputsTest {
         assertEquals(Screen.Home, w.screen)
     }
 
-    @Test fun theMouseButtonsGoBackAndForward() = Window(page(Screen.Library, listOf(Screen.Home, Screen.Calendar))).use { w ->
+    @Test fun theMouseButtonsGoBackAndForward() = Window(page(Screen.Library, listOf(BackEntry(Screen.Home), BackEntry(Screen.Calendar)))).use { w ->
         w.render()
         w.mouse(PointerButton.Back)
         assertEquals(Screen.Calendar, w.screen)

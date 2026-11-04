@@ -26,6 +26,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     private var touched = false
     private var pending: String? = null
     private var desired: String? = null
+    private val cache = mutableMapOf<String, SidecarCueTimeline<Cue>>()
     private var timeline: SidecarCueTimeline<Cue>? = null
     private var view: PlayerView? = null
     private var overlay: SubtitleView? = null
@@ -72,7 +73,10 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
             // Validate and select embedded tracks before clearing a working provider choice.
             tracks.select(PlaybackTrackKind.Subtitle, id)
             clear()
-        } else attach(candidate, chosen = true)
+        } else {
+            clear()
+            attach(candidate, chosen = true)
+        }
     }
 
     fun autoSelect(values: List<SubtitleCandidate>) {
@@ -129,8 +133,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         pending = candidate.id
         job = scope.launch {
             try {
-                val bytes = requireNotNull(input.subtitleContent)(candidate.id)
-                val parsed = withContext(Dispatchers.Default) { parseSidecarCues(bytes) }
+                val parsed = cache[candidate.id] ?: loadSidecar(candidate.id).also { if (generation == operation) cache[candidate.id] = it }
                 ensureActive()
                 if (closed || generation != operation || input.providerSubtitles.value.none { it.id == candidate.id }) return@launch
                 // Only text selection changes: the media item, seek position and audio override do not.
@@ -144,11 +147,36 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         }
     }
 
+    private suspend fun loadSidecar(id: String): SidecarCueTimeline<Cue> {
+        val bytes = requireNotNull(input.subtitleContent)(id)
+        return withContext(Dispatchers.Default) { parseSidecarCues(bytes) }
+    }
+
+    fun prefetch(values: List<SubtitleCandidate>) {
+        if (closed || input.preferences.subtitleMode == "never") return
+        val preferred = input.preferences.preferred_subtitle_language ?: return
+        val wanted = canonicalLanguageTag(preferred)
+        for (candidate in values) {
+            if (candidate.id in cache) continue
+            val language = canonicalLanguageTag(candidate.language)
+            if (language != wanted && language.substringBefore('-') != wanted.substringBefore('-')) continue
+            scope.launch {
+                try {
+                    val parsed = loadSidecar(candidate.id)
+                    if (closed) return@launch
+                    cache[candidate.id] = parsed
+                } catch (error: CancellationException) { throw error }
+                catch (_: Exception) { }
+            }
+        }
+    }
+
     fun sourcesChanged(values: List<SubtitleCandidate>) {
         if (pending?.let { id -> values.none { it.id == id } } == true) {
             generation++; job?.cancel(); job = null; pending = null; foreignSatisfied = false
         }
         if (desired?.let { id -> values.none { it.id == id } } == true) { clear(); foreignSatisfied = false }
+        prefetch(values)
         autoSelect(values)
     }
 

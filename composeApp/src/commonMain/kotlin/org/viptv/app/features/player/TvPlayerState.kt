@@ -34,6 +34,10 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var dismissTracks: (() -> Unit)? = null
     var interaction by mutableIntStateOf(0)
     var controlError by mutableStateOf<String?>(null)
+    var pendingSubtitle by mutableStateOf<SubtitleSelection?>(null)
+    var subtitleError by mutableStateOf<SubtitleSelection?>(null)
+    var pendingAudio by mutableStateOf<Int?>(null)
+    var audioError by mutableStateOf<Int?>(null)
     var undecodable by mutableStateOf(false)
     private val skipped = mutableSetOf<TvSkipRange>()
     private var lastPosition = position
@@ -60,7 +64,11 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
                     position = fact.positionMillis; seekTarget = null
                 }
             }
-            is PlayerFact.Tracks -> tracks = fact.options
+            is PlayerFact.Tracks -> {
+                tracks = fact.options
+                pendingSubtitle?.takeIf { it.resolved(fact.options) }?.let { pendingSubtitle = null }
+                pendingAudio?.takeIf { id -> fact.options.audio.firstOrNull { it.selected }?.id == id }?.let { pendingAudio = null }
+            }
             is PlayerFact.Buffered -> buffered = fact.ranges
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> {
@@ -71,7 +79,11 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             is PlayerFact.Presentation -> { hasPresented = true; buffering = false; undecodable = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.Undecodable -> { buffering = false; undecodable = true }
-            is PlayerFact.ControlFailed -> controlError = playbackControlErrorCopy
+            is PlayerFact.ControlFailed -> when {
+                fact.control == PlaybackControl.Track && pendingSubtitle != null -> { subtitleError = pendingSubtitle; pendingSubtitle = null }
+                fact.control == PlaybackControl.Track && pendingAudio != null -> { audioError = pendingAudio; pendingAudio = null }
+                else -> controlError = playbackControlErrorCopy
+            }
         }
     }
     fun keepWatching() { showNext = false; visible = false; endHandled = true }
@@ -89,6 +101,14 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             seekStarted = TimeSource.Monotonic.markNow()
         }
         commands.tryEmit(command); preview?.invoke(command); interaction++; if (!command.isAutomatic) controlError = null
+    }
+    fun chooseSubtitle(id: Int?, preview: ((PlayerCommand) -> Unit)?) {
+        pendingSubtitle = SubtitleSelection.of(id); subtitleError = null; controlError = null
+        send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, id), preview)
+    }
+    fun chooseAudio(id: Int, preview: ((PlayerCommand) -> Unit)?) {
+        pendingAudio = id; audioError = null; controlError = null
+        send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, id), preview)
     }
     fun step(direction: Int) {
         if (live) return

@@ -32,6 +32,8 @@ import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 
 private val PhoneHeroArt = 300.dp
 private val PhoneHeroHeader = 76.dp
@@ -60,6 +62,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             val progress = resume?.progress?.takeIf { resuming(resume) }
             val remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel)
             val label = heroPlayLabel(resume)
+            val pending = (resume ?: card).isPlayPending()
             Box(Modifier.fillMaxWidth()) {
                 Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 19.dp),
@@ -68,7 +71,8 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                         horizontalArrangement = if (remaining != null) Arrangement.SpaceBetween else Arrangement.Center) {
                         Row(verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
+                            if (pending) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Color(0xFF111113))
+                            else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
                             Text(label, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                                 overflow = TextOverflow.Ellipsis)
                         }
