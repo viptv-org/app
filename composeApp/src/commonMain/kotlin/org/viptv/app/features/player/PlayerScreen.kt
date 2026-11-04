@@ -17,9 +17,11 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalDensity
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.connection.ProfilePreferences
 import com.composables.icons.lucide.*
@@ -33,6 +35,8 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
@@ -59,6 +63,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
+    var playerSizePx by remember { mutableStateOf(IntSize.Zero) }
+    var timelineTopPx by remember { mutableStateOf(Float.NaN) }
     var position by remember(playbackKey) { mutableStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: preview?.positionMillis ?: 0) }
     var duration by remember(playbackKey) { mutableStateOf(input?.durationMillis ?: preview?.durationMillis) }
     var buffered by remember(playbackKey) { mutableStateOf(emptyList<BufferedRange>()) }
@@ -189,7 +195,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
     LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
-    Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }) {
+    val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
+        with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
+    Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.onGloballyPositioned { playerSizePx = it.size }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (rendering != null) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->
             if (input === rendering) { applyFact(fact); observe(fact) }
@@ -227,9 +235,11 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))) {
                         val gutter = if (!phone && maxWidth < CompactButtonsBelow) 12.dp else 24.dp
                         Column(Modifier.fillMaxWidth().padding(horizontal = gutter, vertical = 12.dp)) {
-                            if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
-                                Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            } else PlaybackTimeline(position, duration, ::seek, remaining = phone, skips = tvExtras.skips, buffered = buffered)
+                            Box(Modifier.onGloballyPositioned { timelineTopPx = it.positionInRoot().y }) {
+                                if (input?.live == true || title?.identity?.kind in listOf("channel", "tv") && duration == null) {
+                                    Text("LIVE", color = Palette.danger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                } else PlaybackTimeline(position, duration, ::seek, remaining = phone, skips = tvExtras.skips, buffered = buffered)
+                            }
                             if (phone) {
                                 if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
                                     color = Palette.secondary, fontSize = 12.sp)
@@ -256,7 +266,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         .firstOrNull { it.id == choice.id }?.language)
                 }, { showTracks = false }, phone, { send(PlayerCommand.SubtitleSize(it)) },
                     preferences ?: rendering?.preferences ?: ProfilePreferences(), updatePreferences,
-                    { background -> send(PlayerCommand.SubtitleBackground(background)) }, controlInsets, openSettings)
+                    { background -> send(PlayerCommand.SubtitleBackground(background)) }, controlInsets, bottomInset = panelBottomInset, openSettings)
                 if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
                     if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                         latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }

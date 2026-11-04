@@ -56,6 +56,9 @@ class AudioSubtitlesPanelUiTest {
                 assertTrue(heights.all { it == heights.first() }, "Rows must share one height at $width: $heights")
                 val link = assertNotNull(clickable(scene, PLAYER_SETTINGS_LINK)).boundsInRoot
                 assertTrue(link.right <= width && link.bottom <= 900, "The panel footer escapes the player at $width: $link")
+                val panelBottom = assertNotNull(nodes(scene).firstOrNull { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Audio and subtitles" }, "No panel at $width").boundsInRoot.bottom
+                val timelineTop = assertNotNull(nodes(scene).firstOrNull { texts(it).contains("14:02") }, "No timeline at $width").boundsInRoot.top
+                assertTrue(panelBottom < timelineTop, "The panel bottom ($panelBottom) must sit above the timeline ($timelineTop) at $width")
             } finally { scene.close() }
         }
     }
@@ -75,7 +78,7 @@ class AudioSubtitlesPanelUiTest {
         val scene = scene(390, 844, phone = true, audio = listOf(PlaybackTrack(1, "English · 5.1", true, "en")), subs = subtitles(3))
         try {
             frames(scene); click(scene, "Audio & subtitles"); frames(scene, 20)
-            for (value in listOf("Default audio", "Subtitles", "Subtitle language", "Size", "Background", PLAYER_SETTINGS_LINK)) {
+            for (value in listOf("Default audio", "Subtitles", "Language", "Size", "Background", PLAYER_SETTINGS_LINK, "Always", "Default")) {
                 assertTrue(shows(scene, value), "The phone sheet is missing \"$value\"")
             }
         } finally { scene.close() }
