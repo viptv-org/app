@@ -134,7 +134,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                         sourceChoice = SourceChoice.None
                         updateState { it.copy(error = failureMessage(e), errorCode = (e as? RemoteFailure)?.code,
                             detailRetryable = e !is RemoteFailure || !e.metadataNotFound,
-                            devicesRetryable = e !is RemoteFailure || !e.deviceListUnavailable, openingSource = null) }
+                            devicesRetryable = e !is RemoteFailure || !e.deviceListUnavailable, openingSource = null, pendingAction = null) }
                     }
                 }
             }
