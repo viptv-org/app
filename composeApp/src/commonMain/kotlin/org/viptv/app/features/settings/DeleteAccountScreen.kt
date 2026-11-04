@@ -16,6 +16,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.Button
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.DELETE_ACCOUNT_TARGET
+import org.viptv.app.state.MutationKind
+import org.viptv.app.state.MutationTarget
 import org.viptv.app.components.TextButton
 import org.viptv.app.connection.AccountIdentity
 import org.viptv.app.connection.validParentPin
@@ -34,7 +39,11 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
         null -> pin.isEmpty() || validParentPin(pin)
         false -> true
     }
-    val ready = confirmed && password.isNotEmpty() && pinOk && !busy
+    val mutations = LocalPendingMutation.current
+    val target = MutationTarget(MutationKind.Account, DELETE_ACCOUNT_TARGET)
+    val deleting = mutations.isPending(target)
+    val failure = mutations.failure(target)
+    val ready = confirmed && password.isNotEmpty() && pinOk && !busy && !deleting
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
         if (!compact) Text("Delete account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = Palette.danger)
@@ -42,7 +51,7 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
             else "This deletes the account, its profiles, their history, My List, add-ons and paired devices. It cannot be undone.",
             fontSize = 14.sp, lineHeight = 21.sp, color = Palette.secondary)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-        error?.let { Text(it, color = Palette.danger) }
+        (failure ?: error)?.let { Text(it, color = Palette.danger) }
         when {
             identity == null -> {
                 Text(if (busy) "Loading your account…" else "Could not load your account.", color = Palette.secondary)
@@ -65,7 +74,8 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
                         contentPadding = PaddingValues(horizontal = 18.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.danger.copy(alpha = .12f),
                             contentColor = Palette.danger)) {
-                        Text("Delete account", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        if (deleting) { MutationSpinner(16.dp, color = Palette.danger); Spacer(Modifier.width(8.dp)); Text("Deleting…", fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+                        else Text("Delete account", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                     TextButton(back, enabled = !busy) { Text("Cancel") }
                 }

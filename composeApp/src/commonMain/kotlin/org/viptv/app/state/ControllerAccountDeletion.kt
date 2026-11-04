@@ -11,19 +11,24 @@ fun ApplicationController.refreshAccountDeletion() = run {
         updateState { next -> next.copy(accountIdentity = identity, parentSettings = management) }
 }
 
-fun ApplicationController.deleteAccount(username: String, password: String, pin: String?) = run {
-    val remote = connection ?: throw LocalFailure("Connect to your account to delete it.")
-    val owner = generation
-    try {
-        remote.deleteAccount(username, password, pin?.takeIf(String::isNotEmpty))
-    } catch (failure: RemoteFailure) {
-        if (failure.status == 401) throw failure
-        throw LocalFailure(accountDeletionFailure(failure))
+fun ApplicationController.deleteAccount(username: String, password: String, pin: String?) =
+    mutate(MutationTarget(MutationKind.Account, DELETE_ACCOUNT_TARGET), message = { failure ->
+        (failure as? LocalFailure)?.message ?: failureMessage(failure) ?: "Could not delete your account. Nothing was changed. Try again."
+    }, ownsControllerJob = true) {
+        val remote = connection ?: throw LocalFailure("Connect to your account to delete it.")
+        val owner = generation
+        try {
+            remote.deleteAccount(username, password, pin?.takeIf(String::isNotEmpty))
+        } catch (failure: RemoteFailure) {
+            if (failure.status == 401) throw failure
+            throw LocalFailure(accountDeletionFailure(failure))
+        }
+        if (connection !== remote || generation != owner) return@mutate
+        remote.forgetDeletedAccount()
+        clearDeletedSession(remote)
     }
-    if (connection !== remote || generation != owner) return@run
-    remote.forgetDeletedAccount()
-    clearDeletedSession(remote)
-}
+
+internal const val DELETE_ACCOUNT_TARGET = "Delete account"
 
 internal fun accountDeletionFailure(failure: RemoteFailure): String = when {
     failure.code == "last_owner" -> "Other accounts still need an owner. Have them delete their accounts first."

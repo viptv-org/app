@@ -41,7 +41,7 @@ class LocalProfileDeletionTest {
                 liveFavorites = setOf("private-channel"), preferences = PreferencesSnapshot(preferences = ProfilePreferences(preferred_audio_language = "fr")))
             controller.deleteProfile("9999"); controller.job!!.join()
             assertEquals("default", controller.state.value.selectedProfile); assertEquals(listOf(card), controller.state.value.results)
-            assertNotNull(controller.state.value.error)
+            assertNotNull(controller.state.value.mutations.failure(profileMutationTarget(PROFILE_DELETE)))
             controller.deleteProfile("1234"); controller.job!!.join()
             val state = controller.state.value
             assertNull(state.selectedProfile); assertEquals(Screen.Profiles, state.screen)
