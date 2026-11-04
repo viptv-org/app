@@ -129,6 +129,16 @@ fun ApplicationController.loadRecentSearches(profile: String) {
     }
 }
 
+fun ApplicationController.clearRecentSearches() {
+    val profile = mutable.value.selectedProfile ?: return
+    updateState { it.copy(recentSearches = emptyList()) }
+    scope.launch {
+        try { sessionStore.saveRecentSearches(profile, emptyList()) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { }
+    }
+}
+
 fun ApplicationController.loadTrendingSearches() {
     if (mutable.value.trendingSearches.isNotEmpty()) return
     val titles = mutable.value.home?.rows.orEmpty()

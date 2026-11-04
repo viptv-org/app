@@ -263,6 +263,24 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun idleSearchRecentHeaderOffersClear() {
+        var cleared = 0
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("", emptyList(), emptyList(), false, null, false, {}, {}, editQuery = {},
+                        recentSearches = listOf("monster"), clearRecents = { cleared++ })
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val clear = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && text(it) == "Clear" }
+            assertTrue(clear.config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals(1, cleared)
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }

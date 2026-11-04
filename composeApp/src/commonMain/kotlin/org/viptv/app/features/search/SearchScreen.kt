@@ -1,7 +1,6 @@
 package org.viptv.app.features.search
 
 import org.viptv.app.components.responseSpec
-import org.viptv.app.components.edgeToEdgeScroll
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
@@ -10,7 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed as rowItemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.*
@@ -44,7 +43,8 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false, editQuery: ((String) -> String) -> Unit,
     searchRows: List<SearchResultRow> = emptyList(), filters: Set<String> = emptySet(), filterChanged: (Set<String>) -> Unit = {},
     focusResults: Boolean = false, retry: (() -> Unit)? = null,
-    recentSearches: List<String> = emptyList(), trendingSearches: List<String> = emptyList()) {
+    recentSearches: List<String> = emptyList(), trendingSearches: List<String> = emptyList(),
+    clearRecents: () -> Unit = {}) {
     if (television) {
         TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows, focusResults = focusResults,
             retry = retry)
@@ -63,9 +63,9 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             Modifier.padding(horizontal = gutter),
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
         if (!desktop) Box(Modifier.fillMaxWidth().padding(horizontal = gutter)) { SearchField(term, query) }
-        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter),
+        LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = gutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            searchFilterOptions.forEach { tab ->
+            items(searchFilterOptions) { tab ->
                 val active = if (tab == "All") filters.isEmpty() else tab in filters
                 val interactions = remember { MutableInteractionSource() }
                 val hovered by interactions.collectIsHoveredAsState()
@@ -82,7 +82,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     color = if (active) Palette.background else Palette.text,
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
-        } }
+        }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
         error?.let { message ->
             Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -96,7 +96,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows), Modifier.padding(horizontal = gutter), color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (term.isBlank() && !busy && error == null) {
-            SearchIdle(recentSearches, trendingSearches, gutter, query, Modifier.weight(1f))
+            SearchIdle(recentSearches, trendingSearches, gutter, query, clearRecents, Modifier.weight(1f))
         } else if (searchRows.isNotEmpty() || groups.size > 1) {
             val column = rememberLazyListState()
             val anchorGroup = remember(restore.lastKey, groups) {
@@ -144,10 +144,17 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
 }
 
 @Composable
-private fun SearchIdle(recent: List<String>, trending: List<String>, gutter: Dp, query: (String) -> Unit, modifier: Modifier) {
+private fun SearchIdle(recent: List<String>, trending: List<String>, gutter: Dp, query: (String) -> Unit,
+    clearRecents: () -> Unit, modifier: Modifier) {
     Column(modifier.fillMaxWidth().padding(horizontal = gutter), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (recent.isNotEmpty()) {
-            Text("Recent", color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Recent", color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.weight(1f))
+                Text("Clear", Modifier.pointerClickable(onClickLabel = "Clear", shape = RoundedCornerShape(8.dp), hover = null) { clearRecents() }
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                    color = Palette.accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
             recent.forEach { SearchTermRow(it, query) }
         }
         if (trending.isNotEmpty()) {
