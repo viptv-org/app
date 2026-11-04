@@ -1,6 +1,7 @@
 package org.viptv.app.player
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.media3.common.*
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -32,6 +33,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     }, skip = { deltaMillis ->
         if (!closed) scope.launch { skip(deltaMillis) }
     })
+    // A television has no lock screen or notification shade, and its transport keys already reach the player screens.
+    private val systemControls = context.resources.configuration.uiMode and
+        Configuration.UI_MODE_TYPE_MASK != Configuration.UI_MODE_TYPE_TELEVISION
     var view: PlayerView? = null
         set(value) { field = value; subtitles.bind(value); applySubtitleStyle() }
     private val tracks = Media3Tracks(player, input, ::emit)
@@ -71,7 +75,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         override fun onVolumeChanged(volume: Float) = properties()
     }
     init {
-        AndroidMediaSessions.publish(application, mediaSession.session)
+        if (systemControls) AndroidMediaSessions.publish(application, mediaSession.session)
         val selection = player.trackSelectionParameters.buildUpon()
             .setPreferredAudioLanguage(input.preferences.preferred_audio_language)
             .setPreferredTextLanguage(input.preferences.preferred_subtitle_language)
@@ -186,7 +190,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     fun close() {
         if (closed) return
         closed = true; player.removeListener(listener); subtitles.close()
-        AndroidMediaSessions.withdraw(application, mediaSession.session)
+        if (systemControls) AndroidMediaSessions.withdraw(application, mediaSession.session)
         mediaSession.close(); player.release(); view = null
     }
 }
