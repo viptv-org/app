@@ -62,7 +62,7 @@ class PullToRefreshTest {
             }
         }
         controller = controller(server, ApplicationState(screen = Screen.Home, selectedProfile = "12", home = shown,
-            navBack = listOf(Screen.Library), searchTerm = "draft"))
+            navBack = listOf(BackEntry(Screen.Library)), searchTerm = "draft"))
         controller.freshen(); controller.quietJob?.join()
         server.paths.clear()
         controller.pullToRefresh()
@@ -70,7 +70,7 @@ class PullToRefreshTest {
         assertEquals(listOf("/api/bootstrap"), server.paths, "A pull skips the revision comparison and the check coalescing")
         assertEquals(listOf("new", "old"), state.home?.rows?.first()?.cards?.map { it.identity.id })
         assertEquals(listOf(false), busyDuringBuild, "No full-screen loading cover")
-        assertEquals(Screen.Home, state.screen); assertEquals(listOf(Screen.Library), state.navBack); assertEquals("draft", state.searchTerm)
+        assertEquals(Screen.Home, state.screen); assertEquals(listOf(Screen.Library), state.navBack.map { it.screen }); assertEquals("draft", state.searchTerm)
         assertFalse(state.busy); assertNull(state.error)
         controller.connection?.close()
     }
