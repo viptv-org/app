@@ -60,7 +60,12 @@ internal fun DesktopPasswordPanel(
             Text(if (busy) "Signing in…" else "Sign in", fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(4.dp))
-        Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+        if (server.isBlank()) {
+            Column(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                Text("Forgot password?", color = Palette.text.copy(alpha = 0.4f), fontSize = 13.sp)
+                Text("Enter your server address first.", Modifier.padding(top = 2.dp), color = Palette.secondary, fontSize = 11.sp)
+            }
+        } else Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
             Text("Forgot password?", Modifier.pointerClickable(onClick = { forgot(server) }), color = Palette.text, fontSize = 13.sp)
         }
         Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {

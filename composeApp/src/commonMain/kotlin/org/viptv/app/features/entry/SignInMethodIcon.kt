@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 
-internal enum class SignInMethod { Browser, Password, Device, Local }
+internal enum class SignInMethod { Browser, Password, Device, Local, Account }
 
 @Composable
 internal fun SignInMethodIcon(method: SignInMethod, modifier: Modifier) {
@@ -15,6 +15,7 @@ internal fun SignInMethodIcon(method: SignInMethod, modifier: Modifier) {
         SignInMethod.Password -> Lucide.KeyRound
         SignInMethod.Device -> Lucide.ScanQrCode
         SignInMethod.Local -> Lucide.UserRound
+        SignInMethod.Account -> Lucide.UserPlus
     }
     Icon(icon, null, modifier, tint = Palette.text)
 }

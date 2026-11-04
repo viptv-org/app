@@ -34,7 +34,7 @@ internal fun interface NextSourcePreparer {
             val ranked = coroutineScope {
                 val ranking = ProgressiveSourceRanking(this,
                     rank = { rows -> local?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
-                    show = {}, onMatch = {})
+                    show = {})
                 val observed: (SourcesOutcome) -> Unit = { ranking.arrived(it.candidates) }
                 val outcome = local?.sources(profile, card, observed) ?: requireNotNull(remote).sources(card, observed)
                 ranking.arrived(outcome.candidates)

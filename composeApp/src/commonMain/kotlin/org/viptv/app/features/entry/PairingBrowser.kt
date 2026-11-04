@@ -60,7 +60,7 @@ internal fun PairingBrowser(display: DevicePairingDisplay?, busy: Boolean, error
         (openError ?: error)?.let { Text(it, Modifier.padding(top = 12.dp), color = Palette.danger, fontSize = 13.sp) }
         if (display == null && !busy) TextButton(refresh) { Text("Create a new code") }
         Spacer(Modifier.height(12.dp))
-        PairingBackLink(back, mobile)
+        if (!mobile) PairingBackLink(back, mobile)
         TextButton(changeServer) { Text("Use another server", color = Palette.secondary, fontSize = 12.sp) }
     }
 }

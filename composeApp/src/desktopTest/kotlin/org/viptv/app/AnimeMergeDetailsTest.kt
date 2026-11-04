@@ -83,7 +83,9 @@ class AnimeMergeDetailsTest {
             assertEquals(listOf(8L), page.pages, "season 3 pages from its canonical offset")
             page.detail = page.detail.copy(episodes = firstPage + (1L..22L).map { episode(3, it) }, next_cursor = null)
             page.settle()
-            assertNotNull(page.node(label(3, 5)), "S3 E5 is the continued episode: ${page.nodes().map(page::text)}")
+            assertTrue(page.nodes().any { page.text(it).contains("Resume S3 E5") },
+                "the hero resumes the continued S3 E5: ${page.nodes().map(page::text)}")
+            assertNull(page.node(label(3, 5)), "the page opens at the top instead of jumping to S3 E5")
         }
     }
 

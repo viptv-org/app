@@ -44,6 +44,7 @@ private fun ApplicationController.transition(screen: Screen, record: Boolean, br
     if (screen != Screen.Sources && screen != Screen.Player && mutable.value.openingSource != null) {
         generation++
         job?.cancel()
+        sourceOpenJob?.cancel(); sourceOpenJob = null
         updateState { it.copy(openingSource = null, busy = false) }
     }
     val playerVisit = screen == Screen.Settings && mutable.value.settingsReturnsToPlayer &&
@@ -126,6 +127,7 @@ fun ApplicationController.backSources() {
     sourcePreviewSession?.adopted = false
     val awaitingTitle = mutable.value.let { it.playTapTitle != null && it.detail == null && it.sourceReturnScreen == Screen.Details }
     generation++; job?.cancel()
+    sourceOpenJob?.cancel(); sourceOpenJob = null
     clearBestMatchSession()
     if (!awaitingTitle) cancelSourceDetail()
     updateState { state ->
