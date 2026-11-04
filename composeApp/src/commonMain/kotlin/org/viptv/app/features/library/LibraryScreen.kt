@@ -33,6 +33,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.Surface
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
 
@@ -47,8 +49,8 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     history: () -> Unit, home: () -> Unit, snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
     query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
     changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null,
-    remove: ((Card) -> Unit)? = null, retry: () -> Unit = {}) {
-    if (television) { TvLibraryScreen(cards, available, open, home, snapshot = snapshot, query = query, changeQuery = changeQuery, more = more, busy = busy, error = error, remove = remove, retry = retry); return }
+    remove: ((Card) -> Unit)? = null, retry: () -> Unit = {}, pageError: String? = null) {
+    if (television) { TvLibraryScreen(cards, available, open, home, snapshot = snapshot, query = query, changeQuery = changeQuery, more = more, busy = busy, error = error, remove = remove, retry = retry, pageError = pageError); return }
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf("Date added") }
     var confirming by remember { mutableStateOf<Card?>(null) }
@@ -91,7 +93,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                                 verticalArrangement = Arrangement.spacedBy(18.dp)) {
                                 if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                                 else LibraryControls(filter, { filter = it }, sort, { sort = it })
-                                if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                                if (busy && gridCards.isEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                                 if (!failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
                             }
                             if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
@@ -116,6 +118,13 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                         MediaCard(card, if (phone) 112 else 176, portrait = true, showLabels = !phone,
                             open = { restore.mark(key, index); open(it) },
                             modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
+                    }
+                    if (gridCards.isNotEmpty() && !busy && pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                        ListEndFooter(failed = true, retry = more ?: retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+                    } else if (gridCards.isNotEmpty() && busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                        ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+                    } else if (gridCards.isNotEmpty() && !busy && pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                        ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
                     }
                 }
             }

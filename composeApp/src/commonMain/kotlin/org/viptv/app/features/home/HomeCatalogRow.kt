@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +26,7 @@ import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.InlineRetryTile
 import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.ListEntrance
 import org.viptv.app.components.listItemEntrance
@@ -161,20 +161,10 @@ private fun RowSkeletonCard(width: Int, portrait: Boolean) {
 
 @Composable
 private fun RowMessageCard(width: Int, portrait: Boolean, retry: () -> Unit) {
-    Column(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
+    Box(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
         .clip(RoundedCornerShape(9.dp)).background(Palette.surface).padding(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center) {
-        Text("Couldn’t load more", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center, maxLines = 2)
-        Spacer(Modifier.height(12.dp))
-        Box(Modifier.size(48.dp).clip(CircleShape).background(Palette.raised)
-            .pointerClickable(onClickLabel = "Retry", role = androidx.compose.ui.semantics.Role.Button, shape = CircleShape, onClick = retry),
-            contentAlignment = Alignment.Center) {
-            Icon(Lucide.RotateCw, "Retry", Modifier.size(20.dp), tint = Palette.text)
-        }
-        Spacer(Modifier.height(6.dp))
-        Text("Retry", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Palette.secondary)
+        contentAlignment = Alignment.Center) {
+        InlineRetryTile(retry, Modifier.fillMaxWidth(), television = false, scale = 1f)
     }
 }
 

@@ -32,6 +32,8 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvFocusOutline
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
@@ -79,10 +81,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
             }
             Spacer(Modifier.height(32.dp * scale))
             if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            error?.let {
-                if (history.isEmpty()) TvHistoryFailure(it, retry, scale, requester = if (!attached) first else null)
-                else Text(it, color = Palette.danger, fontSize = (24 * scale).sp)
-            }
+            if (error != null && history.isEmpty()) TvHistoryFailure(error, retry, scale, requester = if (!attached) first else null)
             if (localMode) Text("Progress corrections need a server.", color = Palette.secondary, fontSize = (24 * scale).sp)
             if (!busy && history.isEmpty() && error == null) {
                 Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
@@ -110,6 +109,13 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                                 open = { restore.mark(key, index); open(it) })
                         }
                     }
+                }
+                if (history.isNotEmpty() && !busy && error != null) item(key = "footer") {
+                    ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                } else if (history.isNotEmpty() && busy) item(key = "footer") {
+                    ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                } else if (history.isNotEmpty() && !busy && error == null) item(key = "footer") {
+                    ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                 }
             }
             if (!localMode && history.isNotEmpty()) {
