@@ -27,9 +27,11 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER))
         .setMediaSourceFactory(sourceFactory)
         .build()
-    private val mediaSession = AndroidMediaSession(application, player) { position ->
-        if (!closed) scope.launch { command(PlayerCommand.Seek(position)) }
-    }
+    private val mediaSession = AndroidMediaSession(application, player, seek = { position ->
+        if (!closed && seekable) scope.launch { command(PlayerCommand.Seek(position)) }
+    }, skip = { deltaMillis ->
+        if (!closed) scope.launch { skip(deltaMillis) }
+    })
     var view: PlayerView? = null
         set(value) { field = value; subtitles.bind(value); applySubtitleStyle() }
     private val tracks = Media3Tracks(player, input, ::emit)

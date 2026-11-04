@@ -6,16 +6,17 @@ import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
 import androidx.media3.session.MediaSession
 
-internal class AndroidMediaSession(context: Context, player: Player, seek: (Long) -> Unit) {
+internal class AndroidMediaSession(context: Context, player: Player, seek: (Long) -> Unit, skip: (Long) -> Unit) {
     private val seekPlayer = object : ForwardingPlayer(player) {
         override fun seekTo(positionMs: Long) { seek(positionMs) }
         override fun seekTo(mediaItemIndex: Int, positionMs: Long) { seek(positionMs) }
+        override fun seekBack() { skip(-player.seekBackIncrement) }
+        override fun seekForward() { skip(player.seekForwardIncrement) }
     }
     val session: MediaSession = MediaSession.Builder(context, seekPlayer)
         .setId(java.util.UUID.randomUUID().toString())
         .apply { launchIntent(context)?.let(::setSessionActivity) }
         .build()
-    val player: Player get() = seekPlayer
 
     fun close() { session.release() }
 }

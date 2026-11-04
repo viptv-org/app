@@ -25,6 +25,8 @@ class AndroidMediaSessionTest {
             .setAvailableCommands(Player.Commands.Builder().addAllCommands().build())
             .setPlayWhenReady(playing, Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
             .setPlaybackState(Player.STATE_IDLE)
+            .setSeekBackIncrementMs(10_000)
+            .setSeekForwardIncrementMs(30_000)
             .build()
         override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
             playing = playWhenReady; invalidateState(); return Futures.immediateVoidFuture()
@@ -36,23 +38,32 @@ class AndroidMediaSessionTest {
 
     private class Controls {
         val targets = mutableListOf<Long>()
+        val skips = mutableListOf<Long>()
     }
 
     private fun session(player: Player, controls: Controls) =
-        AndroidMediaSession(RuntimeEnvironment.getApplication(), player) { controls.targets += it }
+        AndroidMediaSession(RuntimeEnvironment.getApplication(), player, { controls.targets += it }, { controls.skips += it })
 
     @Test fun controllerSeekTakesThePlaybackControlPathNotThePlayer() {
         val player = PlayerStub(Looper.getMainLooper())
         val controls = Controls()
-        session(player, controls).use { it.player.seekTo(42_000) }
+        session(player, controls).use { it.session.player.seekTo(42_000) }
         assertEquals(listOf(42_000L), controls.targets)
+        assertTrue(player.seeks.isEmpty())
+    }
+
+    @Test fun controllerSkipTakesThePlaybackControlPath() {
+        val player = PlayerStub(Looper.getMainLooper())
+        val controls = Controls()
+        session(player, controls).use { it.session.player.seekBack() }
+        assertEquals(listOf(-10_000L), controls.skips)
         assertTrue(player.seeks.isEmpty())
     }
 
     @Test fun controllerSeekByMediaItemTakesThePlaybackControlPath() {
         val player = PlayerStub(Looper.getMainLooper())
         val controls = Controls()
-        session(player, controls).use { it.player.seekTo(0, 7_000) }
+        session(player, controls).use { it.session.player.seekTo(0, 7_000) }
         assertEquals(listOf(7_000L), controls.targets)
     }
 
@@ -60,9 +71,9 @@ class AndroidMediaSessionTest {
         val player = PlayerStub(Looper.getMainLooper())
         val controls = Controls()
         session(player, controls).use { session ->
-            session.player.play()
+            session.session.player.play()
             assertTrue(player.playing)
-            session.player.pause()
+            session.session.player.pause()
             assertFalse(player.playing)
         }
         assertTrue(controls.targets.isEmpty())
