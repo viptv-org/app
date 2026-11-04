@@ -67,6 +67,7 @@ private fun ApplicationController.transition(screen: Screen, record: Boolean, br
             searchFocusResults = restored.searchFocusResults && screen == Screen.Search,
             pendingDetailSeason = restored.pendingDetailSeason.takeIf { screen == Screen.Search },
             leavePinFrom = restored.leavePinFrom.takeIf { screen == Screen.ProfilePin },
+            pendingAction = null,
             settingsEntrySection = if (screen == Screen.Settings) restored.settingsEntrySection else null,
             liveSetupReturnFocus = restored.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
             settingsReturnsToPlayer = playerVisit,
@@ -113,8 +114,8 @@ fun ApplicationController.backDetails() {
     generation++
     job?.cancel()
     val previous = mutable.value.detailHistory.lastOrNull()
-    if (previous != null) updateState { it.copy(detail = previous, detailHistory = it.detailHistory.dropLast(1), busy = false, error = null, detailRetryable = true, detailShell = false) }
-    else { updateState { it.copy(busy = false) }; returnTo(mutable.value.detailReturnScreen) }
+    if (previous != null) updateState { it.copy(detail = previous, detailHistory = it.detailHistory.dropLast(1), busy = false, error = null, detailRetryable = true, detailShell = false, pendingAction = null) }
+    else { updateState { it.copy(busy = false, pendingAction = null) }; returnTo(mutable.value.detailReturnScreen) }
     rememberNavigation()
 }
 
@@ -128,7 +129,7 @@ fun ApplicationController.backSources() {
     if (!awaitingTitle) cancelSourceDetail()
     updateState { state ->
         state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false, openingSource = null,
-            error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
+            pendingAction = null, error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
     }
     rememberNavigation()
 }

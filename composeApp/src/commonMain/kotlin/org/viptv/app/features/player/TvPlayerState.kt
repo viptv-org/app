@@ -107,6 +107,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
         send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, id), preview)
     }
     fun chooseAudio(id: Int, preview: ((PlayerCommand) -> Unit)?) {
+        if (pendingAudio == id) return
         pendingAudio = id; audioError = null; controlError = null
         send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, id), preview)
     }

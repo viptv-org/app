@@ -21,9 +21,10 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.components.Button
+import org.viptv.app.components.PendingActionSpinner
 
 @Composable
-internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> Unit, saved: Boolean) {
+internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> Unit, saved: Boolean, pending: Boolean = false) {
     val playInteractions = remember { MutableInteractionSource() }
     val playFocused by playInteractions.collectIsFocusedAsState()
     val infoInteractions = remember { MutableInteractionSource() }
@@ -37,7 +38,9 @@ internal fun DesktopHeroActions(play: () -> Unit, info: () -> Unit, save: () -> 
             .tvFocusOutline(playFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
             interactionSource = playInteractions, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp))
+            if (pending) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Palette.background)
+            else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
             Text("Play", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
         Button(info, Modifier.height(44.dp)
