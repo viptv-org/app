@@ -80,15 +80,15 @@ class NextEpisodeEndPanelUiTest {
         } finally { player.close() }
     }
 
-    @Test fun finaleShowsNoPanelAndKeepsNextUnavailableUntilANextEpisodeIsKnown() {
+    @Test fun finaleShowsNoPanelAndHidesNextUntilANextEpisodeIsKnown() {
         val played = mutableListOf<Card>()
         val player = Player(844, 390, phone = true, next = null) { played += it }
         try {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended"))
             player.frames(40)
             assertFalse(player.hasText("Up next"), "No next episode: no automatic panel")
-            assertTrue(player.hasText("Next episode unavailable"))
-            assertTrue(player.action("Next episode").config.contains(SemanticsProperties.Disabled))
+            assertFalse(player.hasText("Next episode"), "No next episode: the Next button is hidden")
+            assertFalse(player.hasText("Next episode unavailable"))
             assertTrue(played.isEmpty())
             player.next = episode(2); player.frames(60)
             assertTrue(player.hasText("Up next")); assertTrue(played.isEmpty())

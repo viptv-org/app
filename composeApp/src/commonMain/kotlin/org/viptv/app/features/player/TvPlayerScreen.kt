@@ -22,6 +22,7 @@ import org.viptv.app.player.*
 import org.viptv.app.theme.LocalFitToScreen
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.LocalActivationKeys
 import org.viptv.app.components.TvBackdrop
 import org.viptv.app.components.tvBackdropSource
 
@@ -35,6 +36,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
+    val activationKeys = LocalActivationKeys.current
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
     val rendering = input ?: retainedInput
@@ -87,9 +89,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             (state.timelineFocused || state.scrub != null)) true
         else if (event.type != KeyEventType.KeyDown) false else when (event.key) {
             Key.Escape -> { back(); true }
-            Key.Spacebar, Key.MediaPlayPause -> { if (!state.failed) { state.reveal(); toggle() }; true }
-            Key.MediaFastForward -> { if (!state.failed) state.skip(MediaSkipMillis, previewCommand); true }
-            Key.MediaRewind -> { if (!state.failed) state.skip(-MediaSkipMillis, previewCommand); true }
+            Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!state.failed) { state.reveal(); toggle() }; true } else false
+            Key.MediaFastForward -> if (activationKeys) { if (!state.failed) state.skip(MediaSkipMillis, previewCommand); true } else false
+            Key.MediaRewind -> if (activationKeys) { if (!state.failed) state.skip(-MediaSkipMillis, previewCommand); true } else false
             Key.DirectionLeft, Key.DirectionRight -> if (!state.failed && !state.showNext && (state.timelineFocused || state.rootFocused || !state.visible)) {
                 state.step(if (event.key == Key.DirectionLeft) -1 else 1); true
             } else false
@@ -137,13 +139,18 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             androidx.compose.material3.CircularProgressIndicator(Modifier.align(androidx.compose.ui.Alignment.Center).size(48.dp * scale), color = Palette.text)
         if (state.showTracks) TvPlaybackTrackPicker(state.tracks, state.subtitleSize, scale,
             { choice ->
-                state.send(choice, previewCommand)
+                if (choice is PlayerCommand.SelectTrack) when (choice.kind) {
+                    PlaybackTrackKind.Subtitle -> state.chooseSubtitle(choice.id, previewCommand)
+                    PlaybackTrackKind.Audio -> choice.id?.let { state.chooseAudio(it, previewCommand) } ?: state.send(choice, previewCommand)
+                } else state.send(choice, previewCommand)
                 (choice as? PlayerCommand.SelectTrack)?.let { pick ->
                     trackChosen(pick.kind, (if (pick.kind == PlaybackTrackKind.Audio) state.tracks.audio else state.tracks.subtitles)
                         .firstOrNull { it.id == pick.id }?.language)
                 }
             }, { state.showTracks = false; state.reveal() }, trackFocus,
-            dismissChanged = { state.dismissTracks = it }, openSettings = openSettings)
+            dismissChanged = { state.dismissTracks = it }, openSettings = openSettings,
+            pendingSubtitle = state.pendingSubtitle, subtitleError = state.subtitleError,
+            pendingAudio = state.pendingAudio, audioError = state.audioError)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
         audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
     }

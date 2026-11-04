@@ -39,6 +39,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     var channel by remember { mutableStateOf(channels.firstOrNull()) }
     var program by remember { mutableStateOf<LiveProgram?>(null) }
     val first = remember { FocusRequester() }; val chip = remember { FocusRequester() }
+    val empty = remember { FocusRequester() }; val integrationsFocus = remember { FocusRequester() }
     val hasGuide = start != null && visible.any { channel -> channel.programs.any { it.end > start && it.start < start + 120 } }
     val chipsOnly = spread.showsChannelRows()
     val hasFilters = if (chipsOnly) sourceChanged != null && sources.size > 1 else groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
@@ -57,16 +58,22 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         val scale = maxWidth / 1920.dp
         val pageHeight = maxHeight
         if (chipsOnly) {
-            Column(Modifier.fillMaxSize().padding(start = 96.dp * scale, end = 96.dp * scale, top = if (hasFilters) 24.dp * scale else 60.dp * scale),
-                verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                if (hasFilters) Box(Modifier.fillMaxWidth().focusGroup()) {
-                    CompositionLocalProvider(LocalTvScale provides scale) {
-                        LiveFilters(emptyMap(), null, { _ -> }, false, null, {}, sources, selectedSource, sourceChanged, entry = chip)
+            Box(Modifier.fillMaxSize().focusProperties { onEnter = { when {
+                noChannelsRetry != null -> empty.requestFocus()
+                hasFilters -> chip.requestFocus()
+                sourceIntegrations != null -> integrationsFocus.requestFocus()
+            } } }.focusGroup()) {
+                Column(Modifier.fillMaxSize().padding(start = 96.dp * scale, end = 96.dp * scale, top = if (hasFilters) 24.dp * scale else 60.dp * scale),
+                    verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                    if (hasFilters) Box(Modifier.fillMaxWidth().focusGroup()) {
+                        CompositionLocalProvider(LocalTvScale provides scale) {
+                            LiveFilters(emptyMap(), null, { _ -> }, false, null, {}, sources, selectedSource, sourceChanged, entry = chip)
+                        }
                     }
+                    if (spread == LiveSpread.Loading) LiveChannelSkeletons(true, scale, false)
+                    else if (spread == LiveSpread.Failed) LiveLoadFailed(true, scale, false, noChannelsReason, noChannelsRetry, sourceIntegrations, empty, integrationsFocus)
+                    else LiveNoChannels(true, scale, false, noChannelsReason, noChannelsRetry, sourceIntegrations, empty, integrationsFocus)
                 }
-                if (spread == LiveSpread.Loading) LiveChannelSkeletons(true, scale, false)
-                else if (spread == LiveSpread.Failed) LiveLoadFailed(true, scale, false, noChannelsReason, noChannelsRetry, sourceIntegrations)
-                else LiveNoChannels(true, scale, false, noChannelsReason, noChannelsRetry, sourceIntegrations)
             }
             return@BoxWithConstraints
         }
