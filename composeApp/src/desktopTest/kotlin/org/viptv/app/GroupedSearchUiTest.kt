@@ -219,6 +219,50 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun idleSearchShowsRecentAndTrendingSearches() {
+        var queried: String? = null
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("", emptyList(), emptyList(), false, null, false, { queried = it }, {}, editQuery = {},
+                        recentSearches = listOf("monster", "naruto"), trendingSearches = listOf("The Whisper Man", "Mayday"))
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertTrue(texts.contains("Recent"))
+            assertTrue(texts.contains("monster"))
+            assertTrue(texts.contains("naruto"))
+            assertTrue(texts.contains("Trending searches"))
+            assertTrue(texts.contains("The Whisper Man"))
+            assertTrue(texts.contains("Mayday"))
+            val recent = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && text(it) == "monster" }
+            assertTrue(recent.config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals("monster", queried)
+        } finally { scene.close() }
+    }
+
+    @Test fun idleDesktopSearchShowsRecentButNotTrending() {
+        val scene = ImageComposeScene(1440, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("", emptyList(), emptyList(), false, null, true, {}, {}, editQuery = {},
+                        recentSearches = listOf("monster"), trendingSearches = listOf("Mayday"))
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertTrue(texts.contains("Recent"))
+            assertTrue(texts.contains("monster"))
+            assertFalse(texts.contains("Trending searches"))
+            assertFalse(texts.contains("Mayday"))
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }
