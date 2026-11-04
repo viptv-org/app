@@ -26,7 +26,7 @@ import org.viptv.app.components.BrandMark
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.TextButton
 
-internal enum class SignInStep { Choice, Password, Browser, Email, Device }
+internal enum class SignInStep { Choice, Password, Browser, Device }
 
 @Composable
 internal fun DesktopSignIn(
@@ -65,13 +65,12 @@ internal fun DesktopSignIn(
                     if (retry != null) TextButton(retry, modifier = Modifier.fillMaxWidth(), enabled = !busy) { Text("Try again") }
                     Spacer(Modifier.height(16.dp))
                     SignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
-                    SignInChoice(SignInMethod.Email, "Email me a code", "No password needed") { step = SignInStep.Email }
                     SignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
                     SignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
                     if (local != null) SignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", last = true, activate = local)
                 }
                 SignInStep.Password -> DesktopPasswordPanel(server, busy, error, back,
-                    { step = SignInStep.Email }, connect, serverChanged = { server = it })
+                    connect, serverChanged = { server = it })
                 SignInStep.Browser, SignInStep.Device -> if (startPairing != null)
                     NativeDevicePairing(server, pairing, busy, error, false, step == SignInStep.Browser,
                         { server = it }, startPairing, cancelPairing, back)
@@ -79,7 +78,6 @@ internal fun DesktopSignIn(
                         Text("Device sign-in requires a server connection.", color = Palette.secondary)
                         TextButton(back) { Text("All sign-in options") }
                     }
-                SignInStep.Email -> DesktopEmailPanel(back)
             }
         }
     }

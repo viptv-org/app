@@ -24,7 +24,6 @@ internal fun DesktopPasswordPanel(
     busy: Boolean,
     error: String?,
     back: () -> Unit,
-    forgot: () -> Unit,
     connect: (String, String, String) -> Unit,
     serverChanged: (String) -> Unit = {},
 ) {
@@ -59,9 +58,6 @@ internal fun DesktopPasswordPanel(
             Text(if (busy) "Signing in…" else "Sign in", fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(4.dp))
-        Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            Text("Forgot password?", Modifier.pointerClickable(onClick = forgot), color = Palette.text, fontSize = 13.sp)
-        }
         Box(Modifier.fillMaxWidth().height(20.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
             Text(if (changeServer) "Hide server address" else "Use another server",
                 Modifier.pointerClickable { changeServer = !changeServer }, color = Palette.secondary, fontSize = 11.sp)

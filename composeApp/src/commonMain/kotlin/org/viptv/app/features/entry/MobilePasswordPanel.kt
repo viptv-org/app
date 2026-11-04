@@ -21,7 +21,7 @@ import org.viptv.app.components.TextButton
 
 @Composable
 internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, back: () -> Unit,
-    forgot: () -> Unit, connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {}) {
+    connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {}) {
     var server by remember { mutableStateOf(origin) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -50,9 +50,6 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
         modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
         Text(if (busy) "Signing in…" else "Sign in", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-    }
-    TextButton(onClick = forgot, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-        Text("Forgot password?", color = Palette.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
     TextButton(onClick = { editServer = !editServer }, modifier = Modifier.fillMaxWidth()) {
         Text("Use another server", color = Palette.secondary, fontSize = 12.sp)
