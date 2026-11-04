@@ -98,6 +98,7 @@ fun App(
     val watchOnTvState = rememberWatchOnTvState()
     val watchOnTvPlatform = rememberWatchOnTvAvailable()
     var remoteOpen by remember { mutableStateOf(false) }
+    val pendingMutation = remember(controller, state.mutations) { org.viptv.app.components.PendingMutationUi(state.mutations, controller::retryMutation) }
     val cardActions = remember(controller, localMode) {
         CardActions(play = controller::playTitle, toggleSave = controller::toggleFavorite,
             isSaved = { controller.state.value.isSaved(it) },
@@ -107,7 +108,8 @@ fun App(
     CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
         LocalAccent provides accent, LocalShowRatings provides ratings,
         LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
-        LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState) {
+        LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState,
+        org.viptv.app.components.LocalPendingMutation provides pendingMutation) {
     ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
