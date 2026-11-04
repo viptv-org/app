@@ -60,14 +60,15 @@ class BestMatchesDiscoveryTest {
         assertEquals(listOf("b", "a", "cam"), early.sources.map { it.id }, "The first answer is shown ranked, never in arrival order")
         assertEquals(SourceGroups(listOf("b", "a"), "b"), early.sourceGroups)
         assertTrue(early.findingSources)
-        assertTrue(fake.opened.isEmpty(), "Nothing autoplays while providers are still answering")
+        withTimeout(5000) { while (fake.opened.isEmpty()) delay(5) }
+        assertEquals(listOf("b"), fake.opened, "The first best match opens while providers are still answering")
 
         fake.release.complete(Unit)
         settle(controller)
         assertEquals(listOf("best", "b", "a", "c", "d", "e", "cam"), controller.state.value.sources.map { it.id })
         assertEquals(SourceGroups(listOf("best", "b", "a", "c", "d"), "best"), controller.state.value.sourceGroups,
             "The better row takes the marker; the sixth passing row and the camera row stay in All sources")
-        assertEquals(listOf("best"), fake.opened, "Best match autoplay still plays the first Best matches row")
+        assertEquals(listOf("b", "best"), fake.opened, "A clearly better row switches during the grace window")
         assertEquals(2, fake.rankingCalls.size)
     }
 
@@ -82,16 +83,16 @@ class BestMatchesDiscoveryTest {
         assertFalse(controller.state.value.findingSources)
     }
 
-    @Test fun aFailedRankingKeepsTheShownOrderWithoutGroupsAndDoesNotAutoplay() = discover("best", {
+    @Test fun aFailedLateRankingKeepsTheShownOrderWithoutGroupsAndHoldsTheEarlyStart() = discover("best", {
         Discovery(it, listOf(row("a", 720), row("b", 1080)), listOf(row("best", 2160)), rankingFails = true)
     }) { controller, fake ->
         withTimeout(5000) { fake.firstRanked.await() }
+        withTimeout(5000) { while (fake.opened.isEmpty()) delay(5) }
+        assertEquals(listOf("b"), fake.opened, "The first best match opens before a later ranking fails")
         fake.release.complete(Unit)
         settle(controller)
         assertEquals(listOf("b", "a", "best"), controller.state.value.sources.map { it.id }, "The late row appends in arrival order")
         assertEquals(SourceGroups(), controller.state.value.sourceGroups)
-        assertTrue(fake.opened.isEmpty(), "A failed ranking leaves the picker as on Always ask")
-        assertNull(controller.state.value.error)
     }
 
     @Test fun onlyCameraReleasesFormNoGroupAndAutoplayPlaysNothing() = discover("best", {
@@ -113,37 +114,41 @@ class BestMatchesDiscoveryTest {
         settle(controller)
         assertEquals(listOf("good", "cam"), controller.state.value.sources.map { it.id })
         assertEquals(SourceGroups(listOf("good"), "good"), controller.state.value.sourceGroups)
+        withTimeout(5000) { while (fake.opened.isEmpty()) delay(5) }
         assertEquals(listOf("good"), fake.opened, "The one passing row is the autoplay target, unchanged")
     }
 
-    @Test fun aFullyMatchingSourceStartsPlaybackBeforeTheSlowProviderFinishes() = discover("best", {
+    @Test fun theFirstQualifyingSourceStartsPlaybackBeforeTheSlowProviderFinishes() = discover("best", {
         Discovery(it, listOf(row("a", 720), row("good", 1080)), listOf(row("best", 2160)), fullyMatches = { call -> call == 1 })
     }) { controller, fake ->
         withTimeout(5000) { fake.firstRanked.await() }
         withTimeout(5000) { while (fake.opened.isEmpty()) delay(5) }
         assertFalse(fake.release.isCompleted, "Playback starts while the slow provider is still answering")
-        assertEquals(listOf("good"), fake.opened, "The fully-matching source starts at once")
+        assertEquals(listOf("good"), fake.opened, "The first qualifying source starts at once")
     }
 
-    @Test fun partlyMatchingSourcesWaitForEveryProviderThenPlayTheBestMatch() = discover("best", {
+    @Test fun theFirstQualifyingSourceStartsAtOnceThenSwitchesToAClearlyBetterOne() = discover("best", {
         Discovery(it, listOf(row("a", 720)), listOf(row("best", 1080)), fullyMatches = { false })
     }) { controller, fake ->
         withTimeout(5000) { fake.firstRanked.await() }
-        assertTrue(fake.opened.isEmpty(), "Nothing autoplays while the early sources only partly match")
+        withTimeout(5000) { while (fake.opened.isEmpty()) delay(5) }
+        assertEquals(listOf("a"), fake.opened, "The first qualifying source opens while providers are still answering")
         fake.release.complete(Unit)
         settle(controller)
-        assertEquals(listOf("best"), fake.opened, "Completion plays the best match when nothing fully matched")
+        assertEquals(listOf("a", "best"), fake.opened, "The clearly better source switches within the grace window")
     }
 
-    @Test fun closingTheDrawerDuringDiscoveryStopsAutoplay() = discover("best", {
+    @Test fun closingTheDrawerDuringDiscoveryStopsTheLaterSwitch() = discover("best", {
         Discovery(it, listOf(row("a", 720)), listOf(row("best", 1080)), fullyMatches = { call -> call >= 2 })
     }) { controller, fake ->
         withTimeout(5000) { fake.firstRanked.await() }
-        assertTrue(fake.opened.isEmpty())
+        withTimeout(5000) { while (fake.opened.isEmpty()) delay(5) }
+        assertEquals(listOf("a"), fake.opened, "The first qualifying source opens at once")
         controller.backSources()
         fake.release.complete(Unit)
         settle(controller)
-        assertTrue(fake.opened.isEmpty(), "Closing the drawer cancels discovery and its autoplay")
+        assertEquals(listOf("a"), fake.opened, "Closing the drawer cancels discovery before a better source can switch")
+        assertNull(controller.state.value.openingSource)
         assertFalse(controller.state.value.findingSources)
     }
 
@@ -155,17 +160,19 @@ class BestMatchesDiscoveryTest {
         controller.playSource(chosen)
         fake.release.complete(Unit)
         settle(controller)
-        assertEquals(listOf("a"), fake.opened, "The viewer's pick is the only playback")
+        assertEquals("a", fake.opened.last(), "The viewer's pick is the final playback")
     }
 
-    @Test fun scrollingTheDrawerDuringDiscoveryStopsAutoplay() = discover("best", {
+    @Test fun scrollingTheDrawerDuringDiscoveryStopsTheLaterSwitch() = discover("best", {
         Discovery(it, listOf(row("a", 720)), listOf(row("best", 1080)), fullyMatches = { call -> call >= 2 })
     }) { controller, fake ->
         withTimeout(5000) { fake.firstRanked.await() }
+        withTimeout(5000) { while (fake.opened.isEmpty()) delay(5) }
+        assertEquals(listOf("a"), fake.opened, "The first qualifying source opens at once")
         controller.markSourcesScrolled()
         fake.release.complete(Unit)
         settle(controller)
-        assertTrue(fake.opened.isEmpty(), "Scrolling the drawer disarms autoplay")
+        assertEquals(listOf("a"), fake.opened, "Scrolling the drawer disarms the later switch to a better source")
         assertFalse(controller.state.value.findingSources)
     }
 }

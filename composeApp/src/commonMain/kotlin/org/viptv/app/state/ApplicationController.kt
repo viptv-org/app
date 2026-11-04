@@ -97,6 +97,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var firstFrameSeen = false
     internal var fallbackJob: Job? = null
     internal var startDeadlineJob: Job? = null
+    internal var sourceOpenJob: Job? = null
     internal var sourceChoice = SourceChoice.None
     internal var sourceMemory = SourceMemory.book()
     internal var frameAcknowledgment: Job? = null

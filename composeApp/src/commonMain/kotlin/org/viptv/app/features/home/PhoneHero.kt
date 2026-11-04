@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,12 +37,15 @@ import org.viptv.app.components.isPlayPending
 @Composable
 internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {
     Box(Modifier.fillMaxWidth().height(470.dp).clip(RoundedCornerShape(16.dp)).background(Palette.surface)) {
-        val art = card.landscape ?: card.poster
-        if (art == null) HeroArtworkFallback(Modifier.fillMaxSize())
-        else BufferedArtwork(art, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-            0f to Color.Transparent, 0.48f to Color.Transparent,
-            0.8f to Color.Black.copy(alpha = 0.65f), 1f to Palette.background.copy(alpha = 0.96f))))
+        // The artwork and scrim are static while the list scrolls: composite them once and translate the cached layer.
+        Box(Modifier.fillMaxSize().graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }) {
+            val art = card.landscape ?: card.poster
+            if (art == null) HeroArtworkFallback(Modifier.fillMaxSize())
+            else BufferedArtwork(art, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+                0f to Color.Transparent, 0.48f to Color.Transparent,
+                0.8f to Color.Black.copy(alpha = 0.65f), 1f to Palette.background.copy(alpha = 0.96f))))
+        }
         Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             HeroCopyFade(card, Modifier.fillMaxWidth().weight(1f), Alignment.BottomCenter) { shown ->
