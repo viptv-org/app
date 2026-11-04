@@ -27,7 +27,7 @@ import org.viptv.app.components.TvFocusScroll
 @Composable
 internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, failure: String?, dismiss: () -> Unit,
     submit: (String, String) -> Unit) {
-    SecureWindow()
+    SecureWindow(dialog = true)
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }
@@ -67,7 +67,7 @@ private fun ParentPinField(label: String, value: String, change: (String) -> Uni
 @Composable
 internal fun LeavePinDialog(profileName: String, configured: Boolean, busy: Boolean, failure: String?,
     dismiss: () -> Unit, submit: (String, String) -> Unit) {
-    SecureWindow()
+    SecureWindow(dialog = true)
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }

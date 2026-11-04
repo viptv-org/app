@@ -138,7 +138,7 @@ internal fun XtreamConnectionsSettings(connections: List<XtreamConnection>?, def
     val form = mode
     if (form != null) {
         val draft = rememberXtreamDraft(form, editing)
-        SecureWindow(secure = form != XtreamFormMode.Edit)
+        SecureWindow(secure = form != XtreamFormMode.Edit, dialog = !sheet)
         val save = {
             if (draft.valid && !busy) {
                 val target = editing
