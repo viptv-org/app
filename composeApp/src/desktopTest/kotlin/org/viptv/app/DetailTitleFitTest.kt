@@ -14,6 +14,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import org.junit.Rule
 import org.viptv.app.components.TITLE_LOGO_TAG
@@ -23,6 +24,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -74,8 +76,10 @@ class DetailTitleFitTest {
         assertTrue(bounds.left >= area.left - 1f && bounds.top >= area.top - 1f &&
             bounds.right <= area.right + 1f && bounds.bottom <= area.bottom + 1f,
             "$surface draws the title outside its ${area.width} x ${area.height} title area: $bounds")
-        assertTrue(!layout.didOverflowHeight || layout.isLineEllipsized(layout.lineCount - 1),
-            "$surface cuts the title through a glyph: ${layout.lineCount} lines at ${layout.size.height} px")
+        assertTrue(layout.size.height >= layout.multiParagraph.height - 1f,
+            "$surface cuts the title through a glyph: ${layout.lineCount} lines at ${layout.size.height} of ${layout.multiParagraph.height} px")
+        assertTrue(!layout.multiParagraph.didExceedMaxLines || layout.layoutInput.overflow == TextOverflow.Ellipsis,
+            "$surface drops title text without an ellipsis at ${layout.lineCount} lines")
         return layout
     }
 
@@ -87,8 +91,6 @@ class DetailTitleFitTest {
             page.render()
             val layout = page.assertEveryGlyphIsWhole("phone")
             assertTrue(layout.lineCount >= 3, "a 120-character title wraps at 390 wide: ${layout.lineCount} lines")
-            assertTrue(layout.size.height >= layout.multiParagraph.height - 1f,
-                "the whole title is laid out, not a clipped part: ${layout.size.height} of ${layout.multiParagraph.height}")
             val bounds = page.titleNode().boundsInRoot
             val play = page.nodes().filter { it.text() == "Play" }.minByOrNull { it.boundsInRoot.top }
             assertNotNull(play, "the primary action renders")
@@ -129,7 +131,11 @@ class DetailTitleFitTest {
         }
         try {
             page.render()
-            page.assertEveryGlyphIsWhole("TV")
+            val layout = page.assertEveryGlyphIsWhole("TV")
+            val region = page.titleArea().boundsInRoot.height
+            assertEquals(2, layout.lineCount, "the TV board holds two title lines")
+            assertTrue(layout.getLineBottom(layout.lineCount - 1) <= region + 1f,
+                "the last title line ends inside the ${region}px board region, not at ${layout.getLineBottom(layout.lineCount - 1)}px")
         } finally { page.close() }
     }
 }
