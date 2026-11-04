@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
-import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
@@ -39,8 +39,9 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     Spacer(Modifier.height(6.dp))
     SignInInput(password, { password = it }, "Password", height = 48.dp, secret = true,
         transformation = if (visible) VisualTransformation.None else PasswordVisualTransformation()) {
-        Icon(if (visible) Lucide.EyeOff else Lucide.Eye, if (visible) "Hide password" else "Show password",
-            Modifier.size(20.dp).pointerClickable { visible = !visible }, tint = Palette.secondary)
+        AccessibleIconButton(if (visible) Lucide.EyeOff else Lucide.Eye,
+            if (visible) "Hide password" else "Show password",
+            { visible = !visible }, iconSize = 20.dp, tint = Palette.secondary, wash = null)
     }
     error?.let { Text(it, Modifier.padding(top = 12.dp), color = Palette.danger, fontSize = 13.sp) }
     Spacer(Modifier.height(16.dp))

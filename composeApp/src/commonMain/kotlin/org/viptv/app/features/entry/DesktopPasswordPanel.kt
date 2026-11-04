@@ -13,10 +13,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import com.composables.icons.lucide.*
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
-import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 internal fun DesktopPasswordPanel(
@@ -46,9 +46,9 @@ internal fun DesktopPasswordPanel(
         Spacer(Modifier.height(5.dp))
         SignInInput(password, { password = it }, "Password", secret = true,
             transformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation()) {
-            Icon(if (showPassword) Lucide.EyeOff else Lucide.Eye,
+            AccessibleIconButton(if (showPassword) Lucide.EyeOff else Lucide.Eye,
                 if (showPassword) "Hide password" else "Show password",
-                Modifier.size(18.dp).pointerClickable(shape = CircleShape) { showPassword = !showPassword }, tint = Palette.secondary)
+                { showPassword = !showPassword }, iconSize = 18.dp, tint = Palette.secondary, wash = null)
         }
         error?.let { Text(it, Modifier.padding(top = 9.dp), color = Palette.danger, fontSize = 12.sp) }
         Spacer(Modifier.height(12.dp))
