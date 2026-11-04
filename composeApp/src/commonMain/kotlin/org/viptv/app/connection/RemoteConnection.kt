@@ -59,7 +59,7 @@ internal fun Throwable.searchStreamTimeout(): Throwable? {
 private val nativeSessionGate = Mutex()
 internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
 
-internal val offMainRemoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store ->
+val offMainRemoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store ->
     RemoteConnection(origin, sessionStore = store, workerDispatcher = Dispatchers.Default)
 }
 
