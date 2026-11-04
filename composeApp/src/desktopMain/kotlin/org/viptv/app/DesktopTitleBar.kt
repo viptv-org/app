@@ -2,6 +2,7 @@ package org.viptv.app
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -13,6 +14,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import com.composables.icons.lucide.Lucide
@@ -68,6 +70,7 @@ internal fun DesktopTitleBar(
     remote: (() -> Unit)? = null,
     searchFocus: FocusRequester? = null,
     maximized: Boolean = false,
+    onDoubleClick: () -> Unit = {},
 ) {
     val simple = state.screen in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit)
     val barHeight = if (simple) 40.dp else 48.dp
@@ -75,7 +78,9 @@ internal fun DesktopTitleBar(
     LaunchedEffect(state.searchTerm) { query = state.searchTerm }
     var searchFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight).background(Palette.background).then(dragModifier)) {
+    val currentDoubleClick by rememberUpdatedState(onDoubleClick)
+    BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight).background(Palette.background).then(dragModifier)
+        .pointerInput(Unit) { detectTapGestures(onDoubleTap = { currentDoubleClick() }) }) {
         val narrow = maxWidth < DesktopBreakpoints.narrowMax
         val mini = maxWidth < DesktopBreakpoints.miniMax
         Row(Modifier.align(Alignment.CenterStart).fillMaxHeight().padding(start = if (simple) 14.dp else 8.dp),

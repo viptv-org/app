@@ -14,7 +14,12 @@ internal class DesktopWindowControls(
     val maximize: () -> Unit,
     val close: () -> Unit,
     val maximized: Boolean = false,
+    val fullscreen: Boolean = false,
+    val toggleFullscreen: () -> Unit = {},
 )
+
+internal fun titleBarDoubleClick(screen: Screen, controls: DesktopWindowControls): () -> Unit =
+    if (screen == Screen.Player) controls.toggleFullscreen else controls.maximize
 
 @Composable
 internal fun DesktopShell(
@@ -35,29 +40,25 @@ internal fun DesktopShell(
     ViptvTheme(pointer = true) {
         DesktopBackInputs(globalBack, state) {
             Column(Modifier.fillMaxSize()) {
-                if (state.screen == Screen.Player) {
-                    Box(Modifier.fillMaxSize()) {
-                        App(localDatabase = localDatabase, desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
-                            manageControllerLifecycle = manageControllerLifecycle, entryBackChanged = globalBack.routeBackChanged)
-                        DesktopWindowButtons(mac, controls.minimize, controls.maximize, controls.close, Modifier.align(Alignment.TopEnd), maximized = controls.maximized)
-                    }
-                } else {
+                if (state.screen != Screen.Player || !controls.fullscreen) {
                     titleBarArea {
                         DesktopTitleBar(state, mac, controller::navigate, controller::search,
                             { menuOpen = !menuOpen }, controls.minimize, controls.maximize, controls.close, Modifier,
                             back = if (globalBack.canGoBack(state)) globalBack::back else null,
                             forward = if (globalBack.canGoForward(state)) globalBack::forward else null,
                             searchFocus = searchFocus,
-                            maximized = controls.maximized)
+                            maximized = controls.maximized,
+                            onDoubleClick = titleBarDoubleClick(state.screen, controls))
                     }
-                    Box(Modifier.weight(1f)) {
-                        App(localDatabase = localDatabase, desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
-                            manageControllerLifecycle = manageControllerLifecycle, entryBackChanged = globalBack.routeBackChanged)
-                        if (state.screen == Screen.Home && state.error == ServerUnreachableMessage && !offlineDismissed) DesktopOfflineBar(
-                            retry = controller::refresh,
-                            dismiss = { offlineDismissed = true },
-                            modifier = Modifier.align(Alignment.TopStart).padding(start = 72.dp))
-                    }
+                }
+                Box(Modifier.weight(1f)) {
+                    App(localDatabase = localDatabase, desktopChrome = true, desktopMenuOpen = menuOpen, providedController = controller,
+                        manageControllerLifecycle = manageControllerLifecycle, entryBackChanged = globalBack.routeBackChanged,
+                        desktopFullscreen = controls.fullscreen, toggleDesktopFullscreen = controls.toggleFullscreen)
+                    if (state.screen == Screen.Home && state.error == ServerUnreachableMessage && !offlineDismissed) DesktopOfflineBar(
+                        retry = controller::refresh,
+                        dismiss = { offlineDismissed = true },
+                        modifier = Modifier.align(Alignment.TopStart).padding(start = 72.dp))
                 }
             }
         }

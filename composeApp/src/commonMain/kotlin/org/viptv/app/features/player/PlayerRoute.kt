@@ -11,7 +11,8 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun PlayerRoute(state: ApplicationState, controller: ApplicationController, television: Boolean,
-    phone: Boolean, browser: Boolean, backChanged: ((() -> Unit)?) -> Unit) {
+    phone: Boolean, browser: Boolean, backChanged: ((() -> Unit)?) -> Unit,
+    fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null) {
     val detail = state.detail
     val episodes = playerEpisodes(state.sourceTitle, detail?.episodes.orEmpty() + state.playbackSeason)
     LaunchedEffect(state.playback, state.selectedProfile, state.sourceTitle?.identity, state.sourceTitle?.provider_id, state.sourceTitle?.parent_identity) {
@@ -43,7 +44,8 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         stopFallback = if (fallbackNotice != null) controller::stopBestMatchFallback else null,
         audioNotice = state.audioNotice,
         nextSource = if (state.bestMatch != null) controller::playNextSource else null,
-        openingSource = state.openingSource)
+        openingSource = state.openingSource,
+        fullscreen = fullscreen, toggleFullscreen = toggleFullscreen)
 }
 
 internal fun playerEpisodes(current: Card?, loaded: List<Card>): List<Card> {
