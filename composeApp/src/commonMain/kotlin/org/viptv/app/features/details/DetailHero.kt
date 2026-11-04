@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,9 +65,8 @@ private fun DetailArtwork(card: Card, modifier: Modifier, portrait: Boolean = fa
 private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, save: (Card) -> Unit, saved: Boolean,
     playFromStart: ((Card) -> Unit)? = null) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.width(220.dp).height(120.dp),
-            alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-        else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+        DetailHeroTitle(card, TextStyle(fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold),
+            logo = Modifier.width(220.dp).height(120.dp))
         MediaMetadata(card, kindFirst = true)
         val resuming = card.progress != null && card.progress > 0f
         Button(onClick = { play(card) }, modifier = Modifier.height(48.dp).widthIn(min = 140.dp),

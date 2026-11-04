@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,9 +70,8 @@ private fun SharedTitleArtwork(card: Card, modifier: Modifier) {
 @Composable
 private fun SharedTitleSummary(card: Card, signIn: () -> Unit, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.widthIn(max = 340.dp).fillMaxWidth().height(112.dp),
-            alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-        else Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+        DetailHeroTitle(card, TextStyle(fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold),
+            logo = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(112.dp))
         MediaMetadata(card)
         card.description?.let { Text(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body) }
         Button(onClick = signIn, modifier = Modifier.width(200.dp).height(48.dp), shape = RoundedCornerShape(12.dp),

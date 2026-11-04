@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -63,12 +64,8 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
 
 @Composable
 private fun DesktopTitleArt(card: Card) {
-    if (card.logo != null) {
-        AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-            Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp), contentScale = ContentScale.Fit,
-            alignment = Alignment.CenterStart)
-    } else Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
-        color = Palette.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    DetailHeroTitle(card, TextStyle(fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold, color = Palette.text),
+        logo = Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp))
 }
 
 @OptIn(ExperimentalLayoutApi::class)

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,11 +52,8 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.fillMaxWidth().height(PhoneHeroHeader), contentAlignment = Alignment.CenterStart) {
-                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-                    Modifier.width(240.dp).height(PhoneHeroHeader), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-                else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
-            }
+            DetailHeroTitle(card, TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold),
+                Modifier.fillMaxWidth(), logo = Modifier.width(240.dp).height(PhoneHeroHeader), reserve = PhoneHeroHeader)
             Box(Modifier.fillMaxWidth().heightIn(min = PhoneHeroMetaLine)) { MediaMetadata(card, fontSize = 13f, lineHeight = 19f, kindFirst = true) }
             val resume = resumeEpisode ?: card.takeIf(::resuming)
             val progress = resume?.progress?.takeIf { resuming(resume) }
