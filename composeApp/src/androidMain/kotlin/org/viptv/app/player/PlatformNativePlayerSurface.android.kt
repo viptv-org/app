@@ -40,9 +40,11 @@ internal actual fun PlatformNativePlayerSurface(input: PlaybackInput, paused: Bo
             descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
             setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
             keepScreenOn = true
+            applyFill(fill)
         } }, modifier = modifier, update = { view ->
             view.player = session.player
             session.view = view
+            view.applyFill(fill)
         }, onRelease = { if (session.view === it) session.view = null; it.player = null })
         DisposableEffect(session, lifecycle) {
             AndroidPictureInPicture.bind(session)
