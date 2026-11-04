@@ -41,6 +41,17 @@ internal class MpvSession(input: PlaybackInput) {
     init {
         try {
             fun option(name: String, value: String) = mpvCheck(api.mpv_set_option_string(handle, name, value))
+            var unknownSubtitleOptionLogged = false
+            // Subtitle styling is best-effort: a runtime that lacks an option must not fail client creation.
+            fun subtitleOption(name: String, value: String) {
+                val code = api.mpv_set_option_string(handle, name, value)
+                if (code == MPV_ERROR_OPTION_NOT_FOUND) {
+                    if (!unknownSubtitleOptionLogged) {
+                        System.err.println("VIPTV_PLAYER: libmpv does not know option $name")
+                        unknownSubtitleOptionLogged = true
+                    }
+                } else mpvCheck(code)
+            }
             option("config", "no"); option("terminal", "no"); option("input-default-bindings", "no")
             option("load-scripts", "no"); option("osc", "no"); option("ytdl", "no")
             option("vo", "libmpv"); option("pause", "yes"); option("keep-open", "yes")
@@ -53,12 +64,12 @@ internal class MpvSession(input: PlaybackInput) {
             option("sub-auto", "no"); option("sid", if (subtitles) "auto" else "no")
             if (subtitles) input.preferences.preferred_subtitle_language?.let { option("slang", it) }
             val caption = desktopSubtitleConfig(input.preferences)
-            option("sub-scale", caption.fontScale.toString())
+            subtitleOption("sub-scale", caption.fontScale.toString())
             caption.style?.let { style ->
-                option("sub-ass-override", "force")
-                style.primaryColor?.let { option("sub-color", mpvSubtitleColour(it)) }
+                subtitleOption("sub-ass-override", "force")
+                style.primaryColor?.let { subtitleOption("sub-color", mpvSubtitleColour(it)) }
             }
-            mpvSubtitleBoxOptions(caption.style?.backgroundColor).forEach { (name, value) -> option(name, value) }
+            mpvSubtitleBoxOptions(caption.style?.backgroundColor).forEach { (name, value) -> subtitleOption(name, value) }
             if (input.headers.isNotEmpty()) setHeaders(input.headers)
             mpvCheck(api.mpv_initialize(handle))
         } catch (failure: Throwable) {
