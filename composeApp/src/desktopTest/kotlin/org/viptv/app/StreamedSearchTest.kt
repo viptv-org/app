@@ -153,6 +153,30 @@ class StreamedSearchTest {
         } finally { remote.close() }
     }
 
+    @Test fun aSearchStreamThatNeverFinishesShowsTheDeadlineFailureAndKeepsShownRows() = runBlocking {
+        var hang = true
+        val remote = StreamedRemote(store) { _, emit ->
+            emit("plan", Json.encodeToString(SearchStreamPlan(listOf(loading("addon:1", "Fast catalog")))))
+            emit("row", Json.encodeToString(fast))
+            if (hang) awaitCancellation() else emit("done", """{"complete":true}""")
+        }
+        val controller = ApplicationController(this, store, searchStreamTimeoutMillis = 150)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Search, selectedProfile = "profile")
+        try {
+            controller.search("dune")
+            until("the fast row") { controller.state.value.searchRows.any { it.id == "addon:1" && it.cards.isNotEmpty() } }
+            until("the deadline failure") { controller.state.value.error == "Your server took too long to answer this search. Try again." }
+            controller.job!!.join()
+            assertTrue(controller.state.value.searchRows.any { it.id == "addon:1" && it.cards.isNotEmpty() }, "rows already shown survive the deadline")
+            assertFalse(controller.state.value.busy, "the deadline settles the search rather than leaving it busy")
+            hang = false
+            controller.retrySearch(); controller.job!!.join()
+            assertNull(controller.state.value.error, "a retry that completes clears the deadline failure")
+            assertTrue(controller.state.value.searchRows.any { it.id == "addon:1" && it.cards.isNotEmpty() })
+        } finally { remote.close() }
+    }
+
     @Test fun aSearchThatFailsAfterTheViewerLeftPublishesNoErrorOnTheScreenTheyMovedTo() = runBlocking {
         val release = CompletableDeferred<Unit>()
         val remote = StreamedRemote(store) { _, emit ->
