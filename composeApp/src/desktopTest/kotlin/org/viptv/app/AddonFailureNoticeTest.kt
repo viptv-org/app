@@ -35,6 +35,8 @@ import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.AddonFailure
+import org.viptv.engine.wire.HomeSnapshot
+import org.viptv.engine.wire.Scope
 import java.io.File
 import kotlin.test.*
 
@@ -69,6 +71,7 @@ class AddonFailureNoticeTest {
         }) { configureTransport() }
         private val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store)
+        private val home = HomeSnapshot(scope = Scope("addon:1", "acct", "12", 1), revision = 1, rows = emptyList(), complete = false)
         private val size = if (television) 1920 to 1080 else 390 to 844
         private val scene = ImageComposeScene(size.first, size.second, Density(1f)) {
             App(television = television, providedController = controller, manageControllerLifecycle = false)
@@ -77,7 +80,7 @@ class AddonFailureNoticeTest {
 
         init {
             controller.connection = remote
-            controller.mutable.value = ApplicationState(screen = Screen.Home,
+            controller.mutable.value = ApplicationState(screen = Screen.Home, home = home,
                 profiles = listOf(Profile("12", "Parent", null)), selectedProfile = "12")
         }
 
@@ -119,6 +122,8 @@ class AddonFailureNoticeTest {
                 app.controller.state.value.browseCards.isNotEmpty() &&
                     app.controller.state.value.browseFailures.isNotEmpty() && !app.controller.state.value.busy
             }
+            app.frames(20)
+            assertFalse(app.texts().any { "Home isn’t available yet" in it }, "no Home status card draws over Discover")
             assertTrue(app.texts().any { "Torrentio didn’t respond" in it }, "the browse notice — ${app.texts()}")
             assertTrue(app.texts().any { "Manage add-ons" in it }, "the browse notice offers Manage add-ons")
             app.capture("browse-390")
@@ -138,7 +143,8 @@ class AddonFailureNoticeTest {
                 app.controller.state.value.browseCards.isNotEmpty() &&
                     app.controller.state.value.browseFailures.isNotEmpty() && !app.controller.state.value.busy
             }
-            app.frames(10)
+            app.frames(20)
+            assertFalse(app.texts().any { "Home isn’t available yet" in it }, "no Home status card draws over Discover")
             assertTrue(app.texts().any { "Torrentio didn’t respond" in it }, "the TV browse notice — ${app.texts()}")
             assertTrue(app.texts().any { "Manage add-ons" in it }, "the TV browse notice offers Manage add-ons")
             app.capture("browse-tv")
