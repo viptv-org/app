@@ -327,6 +327,14 @@ private fun ApplicationController.resolveFailed(error: Exception, remote: Remote
     }
 }
 
+fun ApplicationController.retrySources() {
+    val state = mutable.value
+    if (state.screen != Screen.Sources) return
+    val card = state.sourceTitle ?: return
+    sourcesScrolled = false
+    run { discoverSources(card) }
+}
+
 fun ApplicationController.retryDetails() {
     val state = mutable.value
     if (state.screen != Screen.Details) return

@@ -33,6 +33,8 @@ fun ApplicationController.applyBrowse(query: BrowseQuery) {
     run { loadBrowse(query.copy(skip = 0)) }
 }
 
+fun ApplicationController.retryBrowse() = run { loadBrowse(mutable.value.browseQuery) }
+
 fun ApplicationController.browseMore() = run {
     val skip = mutable.value.browseNext?.toIntOrNull() ?: return@run
     loadBrowse(mutable.value.browseQuery.copy(skip = skip), append = true)
