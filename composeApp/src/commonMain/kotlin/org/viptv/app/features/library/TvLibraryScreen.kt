@@ -32,7 +32,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     lastWatched: Map<String, Long> = emptyMap(), snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
     query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
     changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null,
-    remove: ((Card) -> Unit)? = null) {
+    remove: ((Card) -> Unit)? = null, retry: () -> Unit = {}) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf(if (lastWatched.isEmpty()) "Date added" else "Last watched") }
@@ -54,6 +54,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     val restore = rememberPageRestore("library")
     val anchored = restore.landing(visible.size) { cardLookupKey(visible[it]) }
     val empty = libraryEmptyState(snapshot, query, available)
+    val failed = error != null && visible.isEmpty() && !busy
     PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(visible.size) { cardLookupKey(visible[it]) } })
     AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -67,10 +68,11 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 }
                 Spacer(Modifier.height(32.dp * scale))
                 if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-                (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let {
+                if (!failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let {
                     Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp)
                 }
-                if (visible.isEmpty()) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                if (failed) TvLibraryFailure(error ?: "", retry, scale)
+                else if (visible.isEmpty()) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     Text(empty.title, fontSize = (32 * scale).sp)
                     Text(empty.message, fontSize = (24 * scale).sp, color = Palette.secondary)
                     TvAction(Modifier.height(64.dp * scale), scale, primary = true,
@@ -107,5 +109,17 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     }
     confirming?.let { card ->
         ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
+    }
+}
+
+@Composable
+private fun TvLibraryFailure(reason: String, retry: () -> Unit, scale: Float) {
+    Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+        Text("Couldn’t load My List", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
+        Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp)
+        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
+            contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+            Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
