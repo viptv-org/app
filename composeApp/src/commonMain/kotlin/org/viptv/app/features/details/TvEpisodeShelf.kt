@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -142,9 +141,10 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
 
         Column(Modifier.fillMaxWidth().heightIn(min = if (expanded) 656.dp * scale else 460.dp * scale)) {
             if (expanded) Box(Modifier.fillMaxWidth().height(154.dp * scale).padding(start = 96.dp * scale, top = 56.dp * scale)) {
-                DetailHeroTitle(parent, TextStyle(fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold, color = Palette.text),
-                    Modifier.fillMaxWidth(), logo = Modifier.height(64.dp * scale).width(260.dp * scale),
-                    alignment = Alignment.TopStart, maxLines = 2)
+                if (parent.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(parent.logo), parent.title,
+                    Modifier.height(64.dp * scale).width(260.dp * scale),
+                    contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
+                else Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
             }
             TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::enterEpisodes,
                 select = { season -> pendingEntry = null; kept = true; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },

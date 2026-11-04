@@ -69,7 +69,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
 private fun DesktopTitleArt(card: Card) {
     TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp)) {
         Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
-            color = Palette.text)
+            color = Palette.text, maxLines = if (card.logo != null) 2 else Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
     }
 }
 

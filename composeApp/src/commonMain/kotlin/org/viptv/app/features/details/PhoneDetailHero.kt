@@ -53,7 +53,8 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            TitleLogo(card.logo, card.title, Modifier.fillMaxWidth().heightIn(min = PhoneHeroHeader),
+            val titleArea = if (card.logo != null) Modifier.height(PhoneHeroHeader) else Modifier.heightIn(min = PhoneHeroHeader)
+            TitleLogo(card.logo, card.title, Modifier.fillMaxWidth().then(titleArea),
                 logoModifier = Modifier.width(240.dp).height(PhoneHeroHeader)) {
                 Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
             }
