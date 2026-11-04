@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -245,7 +246,7 @@ private fun SelectChip(title: String, value: String, valueSet: Boolean, highligh
                 panel(SelectMetrics(48.dp, listMax, sheet = true), close) }
             SelectPresentation.Panel -> if (open.value) SelectPanelSheet(title, close) { scale ->
                 panel(SelectMetrics(72.dp * scale, 640.dp * scale, sheet = false, tv = true, scale = scale), close) }
-            SelectPresentation.Popover -> PopoverMenu(open.value, close) { panel(PopoverMetrics, close) }
+            SelectPresentation.Popover -> PopoverMenu(open.value, close, paneTitle = title) { panel(PopoverMetrics, close) }
         }
     }
 }
@@ -297,7 +298,7 @@ private fun SelectSheet(visible: Boolean, title: String, dismiss: () -> Unit, co
                 .graphicsLayer { translationY = size.height * (1f - motion.container) + drag.offset }
                 .onSizeChanged { sheetHeight = it.height.toFloat() }
                 .nestedScroll(drag.nestedScroll)
-                .shadow(24.dp, SheetShape).clip(SheetShape).background(Palette.surface)
+                .shadow(24.dp, SheetShape).clip(SheetShape).background(Palette.surface).semantics { paneTitle = title }
                 // A tap on the sheet's own background must not reach the scrim below it.
                 .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
                 .padding(bottom = 24.dp)) {
@@ -328,7 +329,7 @@ private fun SelectPanelSheet(title: String, dismiss: () -> Unit, content: @Compo
                     if (event.type == KeyEventType.KeyDown && (event.key == Key.Back || event.key == Key.Escape)) { dismiss(); true }
                     else false
                 }
-                .background(Color(0xFF161618)).padding(start = 56.dp * scale, end = 56.dp * scale,
+                .background(Color(0xFF161618)).semantics { paneTitle = title }.padding(start = 56.dp * scale, end = 56.dp * scale,
                     top = 72.dp * scale, bottom = 56.dp * scale)) {
                 Text(title, Modifier.semantics { heading() }, fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp,
                     letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)

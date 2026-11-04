@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -171,7 +172,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 Box(Modifier.align(Alignment.BottomEnd).padding(6.dp)
                     .onGloballyPositioned { at = IntOffset(it.positionInParent().x.roundToInt(), it.positionInParent().y.roundToInt()) }
                     .size(44.dp).pressScale(more, Motion.button).clip(CircleShape).background(HoverFill.cardScrim)
-                    .pointerClickable(interactionSource = more, indication = null,
+                    .pointerClickable(interactionSource = more, indication = null, role = Role.Button,
                         onClickLabel = "More actions", shape = CircleShape) { previewOpen = false; menuAt = at; menuOpen = true },
                     contentAlignment = Alignment.Center) {
                     Icon(Lucide.Ellipsis, "More actions", Modifier.size(20.dp), tint = Palette.text)

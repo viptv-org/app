@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -41,10 +42,10 @@ internal fun ProfileMenuButton(
 ) {
     var open by remember { mutableStateOf(false) }
     Box {
-        Box(modifier.clip(shape).semantics { contentDescription = "Profile menu" }.pointerClickable(shape = shape) { open = true }, contentAlignment = Alignment.Center) {
+        Box(modifier.clip(shape).semantics { contentDescription = "Profile menu" }.pointerClickable(role = Role.Button, shape = shape) { open = true }, contentAlignment = Alignment.Center) {
             Box(Modifier.clearAndSetSemantics {}) { trigger(open) }
         }
-        PopoverMenu(open, { open = false }, wash = profile?.let(::profileColor)) {
+        PopoverMenu(open, { open = false }, wash = profile?.let(::profileColor), paneTitle = "Profile menu") {
             if (profile != null) {
                 ProfileMenuHeader(profile)
                 PopoverMenuDivider()

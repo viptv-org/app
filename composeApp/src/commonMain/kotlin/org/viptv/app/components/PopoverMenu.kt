@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
@@ -51,6 +53,7 @@ internal fun PopoverMenu(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     wash: Color? = null,
+    paneTitle: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val motion = rememberEnterLeaveMotion(expanded,
@@ -73,7 +76,8 @@ internal fun PopoverMenu(
             .clip(PopoverShape)
             .background(Palette.surface)
             .then(if (washBrush == null) Modifier else Modifier.background(washBrush, PopoverShape))
-            .border(1.dp, Hairline, PopoverShape)) {
+            .border(1.dp, Hairline, PopoverShape)
+            .then(if (paneTitle == null) Modifier else Modifier.semantics { this.paneTitle = paneTitle })) {
             content()
         }
     }

@@ -56,7 +56,7 @@ private fun GenresChip(genres: HomeGenrePicker) {
                 Text("Genres", fontSize = 14.sp, lineHeight = 18.sp)
             }
         }
-        PopoverMenu(open, { open = false }, Modifier.heightIn(max = 396.dp)) {
+        PopoverMenu(open, { open = false }, Modifier.heightIn(max = 396.dp), paneTitle = "Genres") {
             genres.choices.forEach { choice -> PopoverMenuItem(choice.label) { open = false; genres.choose(choice) } }
         }
     }
