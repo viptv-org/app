@@ -12,9 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
 import org.viptv.app.images.rememberLogoRequest
+
+internal const val TITLE_LOGO_TAG = "title-logo"
 
 // The text title stays drawn until the logo has actually decoded; a dead logo link never blanks it.
 @Composable
@@ -35,7 +38,7 @@ internal fun TitleLogo(
     val spec = motionSpec<Float>(tween(Motion.arrive, easing = Motion.standard))
     val textAlpha by animateFloatAsState(if (ready) 0f else 1f, spec, label = "TitleLogo text")
     val logoAlpha by animateFloatAsState(if (ready) 1f else 0f, spec, label = "TitleLogo logo")
-    Box(modifier, contentAlignment = contentAlignment) {
+    Box(modifier.testTag(TITLE_LOGO_TAG), contentAlignment = contentAlignment) {
         Box(Modifier.graphicsLayer { alpha = textAlpha }) { titleContent() }
         if (request != null) {
             Image(painter, title, logoModifier.graphicsLayer { alpha = logoAlpha }, contentScale = contentScale,
