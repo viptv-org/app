@@ -85,7 +85,8 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
     fun report(success: Boolean) { if (!reported) { reported = true; completion(success) } else Unit }
     mutate(target,
         revert = { report(false); it },
-        message = { error -> report(false); failureMessage(error) ?: COULD_NOT_SAVE }) {
+        message = { error -> report(false); failureMessage(error) ?: COULD_NOT_SAVE },
+        ownsControllerJob = true) {
         markAddonOperation()
         val owner = AddonOperationOwner(generation, device, remote, profile, currentCoroutineContext()[Job])
         val selected = profile ?: throw LocalFailure("Choose a profile first.")
@@ -104,7 +105,8 @@ fun ApplicationController.toggleAddon(id: String, enabled: Boolean) {
     val before = mutable.value
     mutate(MutationTarget(MutationKind.Addon, id),
         optimistic = { state -> state.copy(enabledAddonIds = if (enabled) state.enabledAddonIds + id else state.enabledAddonIds - id) },
-        revert = { it.copy(enabledAddonIds = before.enabledAddonIds) }) {
+        revert = { it.copy(enabledAddonIds = before.enabledAddonIds) },
+        ownsControllerJob = true) {
         val owner = beginAddonOperation()
         val profile = requireNotNull(owner.profile)
         if (owner.device != null) owner.device.setAddonEnabled(profile, id, enabled)
@@ -122,7 +124,8 @@ fun ApplicationController.removeAddon(id: String) {
     mutate(MutationTarget(MutationKind.Addon, id),
         optimistic = { state -> state.copy(addons = state.addons.filterNot { it.id == id },
             enabledAddonIds = state.enabledAddonIds - id) },
-        revert = { it.copy(addons = before.addons, enabledAddonIds = before.enabledAddonIds) }) {
+        revert = { it.copy(addons = before.addons, enabledAddonIds = before.enabledAddonIds) },
+        ownsControllerJob = true) {
         val owner = beginAddonOperation()
         if (owner.device != null) owner.device.removeAddon(id) else requireNotNull(owner.remote).removeAddon(id)
         owner.requireCurrent(this)

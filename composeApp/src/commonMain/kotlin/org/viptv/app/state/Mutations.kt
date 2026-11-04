@@ -26,6 +26,7 @@ internal fun ApplicationController.mutate(
     optimistic: (ApplicationState) -> ApplicationState = { it },
     revert: (ApplicationState) -> ApplicationState = { it },
     message: (Exception) -> String? = ::failureMessage,
+    ownsControllerJob: Boolean = false,
     operation: suspend () -> Unit,
 ) {
     if (mutable.value.mutations.isPending(target)) return
@@ -55,6 +56,7 @@ internal fun ApplicationController.mutate(
         }
     }
     mutationJobs[target] = task
+    if (ownsControllerJob) claimOperation(task)
     task.start()
 }
 
