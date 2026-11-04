@@ -142,7 +142,7 @@ class ContinueWatchingPlayerEpisodesTest {
         } finally { started.close() }
     }
 
-    @Test fun seriesFinaleFromContinueWatchingKeepsEpisodesAndShowsNextUnavailable() = runBlocking<Unit> {
+    @Test fun seriesFinaleFromContinueWatchingKeepsEpisodesAndHidesNext() = runBlocking<Unit> {
         val started = playFromContinueWatching(3L to 14L)
         try {
             val state = started.state
@@ -213,14 +213,20 @@ class ContinueWatchingPlayerEpisodesTest {
         var frame = 0
         fun frames() = repeat(16) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
         fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
-        fun button(label: String) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }.single {
-            it.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { text -> text.text } == label && it.config.contains(SemanticsActions.OnClick)
+        fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
+        fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
+        fun button(label: String) = nodes().single {
+            text(it) == label && it.config.contains(SemanticsActions.OnClick)
         }
         fun click(label: String) { assertTrue(button(label).config[SemanticsActions.OnClick].action!!.invoke(), label); frames() }
         try {
             frames()
             assertFalse(button("Episodes").config.contains(SemanticsProperties.Disabled), "Episodes is enabled")
-            assertEquals(!nextEnabled, button("Next episode").config.contains(SemanticsProperties.Disabled), "Next episode enabled = $nextEnabled")
+            if (nextEnabled) {
+                assertFalse(button("Next episode").config.contains(SemanticsProperties.Disabled), "Next episode is enabled")
+            } else {
+                assertTrue(nodes().none { text(it) == "Next episode" }, "no next episode: the Next button is hidden")
+            }
             System.getenv("VIPTV_PHONE_PLAYER_CAPTURE_DIR")?.let { path ->
                 java.io.File(path).mkdirs()
                 scene.render(3_000_000_000L).use { image -> image.encodeToData()!!.use { java.io.File(path, "$capture.png").writeBytes(it.bytes) } }

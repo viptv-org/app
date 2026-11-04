@@ -37,6 +37,7 @@ import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import org.viptv.app.components.LocalActivationKeys
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
@@ -48,7 +49,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black,
     television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
     playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}, playbackKey: Any? = input,
-    nextEpisodeLoading: Boolean = false, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
+    trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
@@ -85,6 +86,10 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
     var controlError by remember(playbackKey) { mutableStateOf<String?>(null) }
+    var pendingSubtitle by remember(playbackKey) { mutableStateOf<SubtitleSelection?>(null) }
+    var subtitleError by remember(playbackKey) { mutableStateOf<SubtitleSelection?>(null) }
+    var pendingAudio by remember(playbackKey) { mutableStateOf<Int?>(null) }
+    var audioError by remember(playbackKey) { mutableStateOf<Int?>(null) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
     var fill by remember(title?.identity) { mutableStateOf(false) }
@@ -155,6 +160,16 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
+    fun chooseSubtitle(id: Int?) {
+        pendingSubtitle = SubtitleSelection.of(id); subtitleError = null; controlError = null
+        send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, id))
+    }
+    fun retrySubtitle() { subtitleError?.let { chooseSubtitle(it.idOrNull) } }
+    fun chooseAudio(id: Int) {
+        if (pendingAudio == id) return
+        pendingAudio = id; audioError = null; controlError = null; send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, id))
+    }
+    fun retryAudio() { audioError?.let(::chooseAudio) }
     fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
@@ -175,7 +190,11 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         seekPending?.let { target -> if (fact.settlesSeek(target) || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) seekPending = null }
         when (fact) {
             is PlayerFact.Properties -> { volume = fact.volume; speed = fact.speed; subtitleSize = fact.subtitleSize }
-            is PlayerFact.Tracks -> tracks = fact.options
+            is PlayerFact.Tracks -> {
+                tracks = fact.options
+                pendingSubtitle?.takeIf { it.resolved(fact.options) }?.let { pendingSubtitle = null }
+                pendingAudio?.takeIf { id -> fact.options.audio.firstOrNull { it.selected }?.id == id }?.let { pendingAudio = null }
+            }
             is PlayerFact.Buffered -> buffered = fact.ranges
             is PlayerFact.Progress -> {
                 duration = fact.durationMillis ?: duration
@@ -189,13 +208,18 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (!ended) endHandled = false
             }
             is PlayerFact.Presentation -> Unit
-            is PlayerFact.ControlFailed -> controlError = playbackControlErrorCopy
+            is PlayerFact.ControlFailed -> when {
+                fact.control == PlaybackControl.Track && pendingSubtitle != null -> { subtitleError = pendingSubtitle; pendingSubtitle = null }
+                fact.control == PlaybackControl.Track && pendingAudio != null -> { audioError = pendingAudio; pendingAudio = null }
+                else -> controlError = playbackControlErrorCopy
+            }
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.Undecodable -> { buffering = false; failed = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
     LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
+    val activationKeys = LocalActivationKeys.current
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.onGloballyPositioned { playerSizePx = it.size }) {
@@ -213,9 +237,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         else close()
                         true
                     }
-                    Key.Spacebar, Key.MediaPlayPause -> { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true }
-                    Key.MediaFastForward -> { seek(position + MediaSkipMillis); true }
-                    Key.MediaRewind -> { seek(position - MediaSkipMillis); true }
+                    Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.MediaFastForward -> if (activationKeys) { seek(position + MediaSkipMillis); true } else false
+                    Key.MediaRewind -> if (activationKeys) { seek(position - MediaSkipMillis); true } else false
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
@@ -250,19 +274,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                                 } else PlaybackTimeline(position, duration, ::seek, remaining = phone, skips = tvExtras.skips, buffered = buffered)
                             }
                             if (phone) {
-                                if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
-                                    color = Palette.secondary, fontSize = 12.sp)
                                 PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
                                     episodes = openEpisodes,
                                     episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
-                                    next = if (episodeTitle) playNext else null,
+                                    next = if (episodeTitle && next != null) playNext else null,
                                     nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus,
                                     fill = fill, toggleFill = toggleFill)
                             }
                             else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
                                 { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
                                 streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
-                                next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
+                                next = if (seriesEpisode && next != null) playNext else null, nextEnabled = nextEnabled,
                                 episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
                                 fill = fill, toggleFill = toggleFill,
                                 fullscreen = fullscreen, toggleFullscreen = toggleFullscreen)
@@ -271,12 +293,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 }
                 }
                 if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
-                    send(choice)
+                    if (choice.kind == PlaybackTrackKind.Subtitle) chooseSubtitle(choice.id)
+                    else choice.id?.let(::chooseAudio) ?: send(choice)
                     trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
                         .firstOrNull { it.id == choice.id }?.language)
                 }, { showTracks = false }, phone, { send(PlayerCommand.SubtitleSize(it)) },
                     preferences ?: rendering?.preferences ?: ProfilePreferences(), updatePreferences,
-                    { background -> send(PlayerCommand.SubtitleBackground(background)) }, controlInsets, bottomInset = panelBottomInset, openSettings)
+                    { background -> send(PlayerCommand.SubtitleBackground(background)) }, controlInsets, bottomInset = panelBottomInset, openSettings,
+                    pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = ::retrySubtitle,
+                    pendingAudio = pendingAudio, audioError = audioError, retryAudio = ::retryAudio)
                 if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
                     if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                         latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }

@@ -75,8 +75,9 @@ class NativeProgressiveSourcesTest {
             val first = CompletableDeferred<SourceCandidate>(); val updates = mutableListOf<List<String>>()
             val loading = launch { fixture.local.fetchLocalSources("default", card) { progress -> updates += progress.candidates.map { s -> s.id }; progress.candidates.firstOrNull()?.let { first.complete(it) } } }
             val selected = withTimeout(3_000) { first.await() }; fixture.lateStarted.await()
-            loading.cancelAndJoin(); fixture.releaseLate.complete(Unit)
-            assertEquals(1, updates.size); assertTrue(fixture.lateCancelled.isCompleted)
+            loading.cancelAndJoin()
+            withTimeout(3_000) { fixture.lateCancelled.await() }
+            assertEquals(1, updates.size)
             assertTrue(fixture.local.engine.openSource(selected.id).contains("fast.example.mp4"))
         }
     }
@@ -126,8 +127,8 @@ class NativeProgressiveSourcesTest {
                 assertEquals(Screen.Player, controller.state.value.screen)
                 assertEquals(selected.id, controller.state.value.playingSource?.id)
                 assertContains(requireNotNull(controller.state.value.playback).uri, "fast.example.mp4")
-                assertFalse(controller.state.value.findingSources); assertTrue(fixture.lateCancelled.isCompleted)
-                fixture.releaseLate.complete(Unit)
+                assertFalse(controller.state.value.findingSources)
+                withTimeout(3_000) { fixture.lateCancelled.await() }
                 assertEquals(Screen.Player, controller.state.value.screen)
                 assertEquals(listOf(selected.id), controller.state.value.sources.map { it.id })
             } finally { controller.job?.cancelAndJoin(); controller.subtitleDiscovery?.cancelAndJoin() }

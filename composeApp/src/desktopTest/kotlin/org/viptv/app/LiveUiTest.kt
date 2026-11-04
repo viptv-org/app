@@ -177,6 +177,65 @@ class LiveUiTest {
         }
     }
 
+    @Test fun tvDownFromTheNavigationEntersTheEmptyStateOnTryAgain() {
+        val failed = liveController(null, error = "Could not reach your server. Check the connection and try again.")
+        val answered = liveController(livePage("m3u:1" to "Playlist", "xtream:2" to "Other feed", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"))
+        for (controller in listOf(failed, answered)) {
+            val focusManager = mutableListOf<androidx.compose.ui.focus.FocusManager>()
+            var frame = 0L
+            val scene = ImageComposeScene(1920, 1080, Density(1f)) {
+                ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    ConfigureImageLoading()
+                    focusManager += LocalFocusManager.current
+                    val state by controller.state.collectAsState()
+                    val navigation = remember { FocusRequester() }
+                    Column(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxWidth().height(132.dp).focusRequester(navigation).focusable())
+                        Box(Modifier.weight(1f)) { LiveRoute(state, controller, true) }
+                    }
+                    LaunchedEffect(Unit) { navigation.requestFocus() }
+                } }
+            }
+            try {
+                repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
+                scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
+                repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
+                repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                assertEquals(LiveTryAgain, focusedText(scene), "Down from the navigation lands on Try again")
+            } finally { scene.close() }
+        }
+    }
+
+    @Test fun tvDownFromTheNavigationEntersTheEmptyStateOnTheSourceChipWhenThereIsNoRetry() {
+        val controller = liveController(livePage("m3u:1" to "Playlist", "xtream:2" to "Other feed"))
+        val focusManager = mutableListOf<androidx.compose.ui.focus.FocusManager>()
+        var frame = 0L
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) {
+            ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                ConfigureImageLoading()
+                focusManager += LocalFocusManager.current
+                val state by controller.state.collectAsState()
+                val navigation = remember { FocusRequester() }
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxWidth().height(132.dp).focusRequester(navigation).focusable())
+                    Box(Modifier.weight(1f)) { LiveRoute(state, controller, true) }
+                }
+                LaunchedEffect(Unit) { navigation.requestFocus() }
+            } }
+        }
+        try {
+            repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
+            scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
+            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
+            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            assertTrue(focusedText(scene)?.startsWith("Source:") == true, "Down from the navigation lands on the Source chip when there is no retry")
+        } finally { scene.close() }
+    }
+
     @Test fun identityStillLoadingLeavesTheActionBlockEmpty() {
         val controller = liveController(livePage(), access = null)
         val scene = liveScene(1920, 1080, true, controller)
