@@ -23,7 +23,7 @@ class PasswordToggleTest {
     @get:Rule val uiThread = UiThreadRule()
 
     @Test fun thePhoneRevealToggleIsA44dpButtonWithState() = toggleTarget("mobile") {
-        MobilePasswordPanel("", false, null, {}, { _, _, _ -> })
+        MobilePasswordPanel("", false, null, { _, _, _ -> })
     }
 
     @Test fun theDesktopRevealToggleIsA44dpButtonWithState() = toggleTarget("desktop") {
