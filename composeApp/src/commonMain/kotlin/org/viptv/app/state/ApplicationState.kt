@@ -95,6 +95,8 @@ data class ApplicationState(
     val searchTerm: String = "",
     val searchFilters: Set<String> = emptySet(),
     val searchFocusResults: Boolean = false,
+    val recentSearches: List<String> = emptyList(),
+    val trendingSearches: List<String> = emptyList(),
     val pendingDetailSeason: Long? = null,
     val detailReturnScreen: Screen = Screen.Home,
     val playTapTitle: Card? = null,

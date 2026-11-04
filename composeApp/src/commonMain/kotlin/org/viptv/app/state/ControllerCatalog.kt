@@ -102,6 +102,44 @@ fun ApplicationController.searchFilters(filters: Set<String>) = updateState { it
 
 fun ApplicationController.retrySearch() = search(mutable.value.searchTerm, retry = true)
 
+private const val MAX_RECENT_SEARCHES = 8
+
+private fun ApplicationController.recordSearch(term: String) {
+    val normalized = term.trim()
+    if (normalized.isBlank()) return
+    val profile = mutable.value.selectedProfile ?: return
+    val recent = (listOf(normalized) + mutable.value.recentSearches.filterNot { it.equals(normalized, ignoreCase = true) })
+        .take(MAX_RECENT_SEARCHES)
+    updateState { it.copy(recentSearches = recent) }
+    scope.launch {
+        try { sessionStore.saveRecentSearches(profile, recent) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { }
+    }
+}
+
+fun ApplicationController.loadRecentSearches(profile: String) {
+    scope.launch {
+        val recent = try { sessionStore.recentSearches(profile) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { emptyList() }
+        if (mutable.value.selectedProfile == profile && recent.isNotEmpty())
+            updateState { it.copy(recentSearches = recent) }
+    }
+}
+
+fun ApplicationController.loadTrendingSearches() {
+    if (mutable.value.localMode || mutable.value.trendingSearches.isNotEmpty()) return
+    val remote = connection ?: return
+    val operation = generation
+    scope.launch {
+        val terms = try { remote.trendingSearches() }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { emptyList() }
+        if (generation == operation && connection === remote) updateState { it.copy(trendingSearches = terms) }
+    }
+}
+
 fun ApplicationController.search(term: String, retry: Boolean = false) {
     if (!retry && term == lastSearchedTerm) return
     val unchanged = term == mutable.value.searchTerm
@@ -121,8 +159,8 @@ fun ApplicationController.search(term: String, retry: Boolean = false) {
         try {
             when {
                 term.isBlank() -> if (session()) updateState { it.copy(results = emptyList(), searchRows = emptyList()) }
-                remote != null -> searchRemote(remote, term, ::session)
-                device != null -> searchLocal(device, requireNotNull(profile), term, ::session)
+                remote != null -> if (session()) { recordSearch(term); searchRemote(remote, term, ::session) }
+                device != null -> if (session()) { recordSearch(term); searchLocal(device, requireNotNull(profile), term, ::session) }
             }
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {

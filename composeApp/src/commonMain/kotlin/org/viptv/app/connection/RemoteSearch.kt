@@ -30,6 +30,9 @@ data class SearchSnapshot(val rows: List<SearchResultRow> = emptyList(), val com
 @Serializable
 internal data class SearchStreamPlan(val rows: List<SearchResultRow> = emptyList())
 
+@Serializable
+private data class TrendingSearches(val terms: List<String> = emptyList())
+
 internal sealed interface SearchStreamEvent {
     data class Plan(val rows: List<SearchResultRow>) : SearchStreamEvent
     data class Row(val row: SearchResultRow) : SearchStreamEvent
@@ -43,6 +46,13 @@ internal suspend fun RemoteConnection.searchResults(term: String): SearchSnapsho
 } catch (failure: RemoteFailure) {
     // Older QA servers predate grouped search: a 404 means no results, not a failure.
     if (failure.status == 404) null else throw failure
+}
+
+internal suspend fun RemoteConnection.trendingSearches(): List<String> = try {
+    searchCodec.decodeFromJsonElement<TrendingSearches>(call("/api/search/trending")).terms
+} catch (failure: RemoteFailure) {
+    // Older QA servers predate trending searches: a 404 means none, not a failure.
+    if (failure.status == 404) emptyList() else throw failure
 }
 
 internal suspend fun RemoteConnection.searchStreamResults(term: String, publish: suspend (SearchStreamEvent) -> Unit): Boolean {

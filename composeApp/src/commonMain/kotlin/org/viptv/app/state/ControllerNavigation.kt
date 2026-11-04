@@ -5,6 +5,7 @@ import kotlinx.coroutines.CancellationException
 
 fun ApplicationController.navigate(screen: Screen, record: Boolean = true, browse: BrowseQuery? = null) {
     transition(screen, record, browse, restore = null)
+    if (screen == Screen.Search) loadTrendingSearches()
 }
 
 private fun ApplicationController.restoreScreen(entry: BackEntry) {

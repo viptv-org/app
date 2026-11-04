@@ -21,6 +21,8 @@ interface RemoteSessionStore {
     suspend fun rememberLocalConnection() = Unit
     suspend fun navigation(profile: String): SavedNavigation? = null
     suspend fun saveNavigation(profile: String, record: SavedNavigation) = Unit
+    suspend fun recentSearches(profile: String): List<String> = emptyList()
+    suspend fun saveRecentSearches(profile: String, recent: List<String>) = Unit
 }
 
 expect fun remoteSessionStore(): RemoteSessionStore
