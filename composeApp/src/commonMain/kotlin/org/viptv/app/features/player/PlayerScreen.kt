@@ -54,7 +54,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     openSettings: (() -> Unit)? = null,
     autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
-    preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {}) {
+    preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {},
+    fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
@@ -205,7 +206,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         if (!pictureInPicture) {
             PlayerOverlayHost(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
-                    Key.Escape -> { if (phone) latestPhoneBack() else if (phonePanel != null) dismissPanel() else close(); true }
+                    Key.Escape -> {
+                        if (phone) latestPhoneBack()
+                        else if (fullscreen && toggleFullscreen != null) toggleFullscreen!!()
+                        else if (phonePanel != null) dismissPanel()
+                        else close()
+                        true
+                    }
                     Key.Spacebar, Key.MediaPlayPause -> { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true }
                     Key.MediaFastForward -> { seek(position + MediaSkipMillis); true }
                     Key.MediaRewind -> { seek(position - MediaSkipMillis); true }
@@ -257,7 +264,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                                 streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
                                 next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
                                 episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
-                                fill = fill, toggleFill = toggleFill)
+                                fill = fill, toggleFill = toggleFill,
+                                fullscreen = fullscreen, toggleFullscreen = toggleFullscreen)
                         }
                     }
                 }
