@@ -44,7 +44,9 @@ import org.viptv.app.theme.Palette
 internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.SelectTrack) -> Unit,
     close: () -> Unit, phone: Boolean, setSize: (Float) -> Unit,
     preferences: ProfilePreferences, onPreferences: (ProfilePreferences) -> Unit,
-    setBackground: (String?) -> Unit, insets: WindowInsets, bottomInset: Dp = 76.dp, openSettings: (() -> Unit)? = null) {
+    setBackground: (String?) -> Unit, insets: WindowInsets, bottomInset: Dp = 76.dp, openSettings: (() -> Unit)? = null,
+    pendingSubtitle: SubtitleSelection? = null, subtitleError: SubtitleSelection? = null, retrySubtitle: () -> Unit = {},
+    pendingAudio: Int? = null, audioError: Int? = null, retryAudio: () -> Unit = {}) {
     val reveal = rememberArriveFade()
     var dialog by remember { mutableStateOf<PhonePreferenceField?>(null) }
     var draft by remember(preferences) { mutableStateOf(preferences) }
@@ -67,13 +69,13 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                 }
                 if (phone) {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        AudioColumn(tracks.audio, select, scrollable = false)
-                        SubtitlesColumn(tracks.subtitles, select, scrollable = false)
+                        AudioColumn(tracks.audio, select, scrollable = false, pendingAudio = pendingAudio, audioError = audioError, retryAudio = retryAudio)
+                        SubtitlesColumn(tracks.subtitles, select, scrollable = false, pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = retrySubtitle)
                         SubtitleSettingsColumn(draft, apply, setSize, setBackground) { dialog = it }
                     }
                 } else Row(Modifier.weight(1f, fill = false).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    AudioColumn(tracks.audio, select, if (tracks.audio.size <= 1) Modifier else Modifier.weight(1f))
-                    SubtitlesColumn(tracks.subtitles, select, Modifier.weight(1.4f))
+                    AudioColumn(tracks.audio, select, if (tracks.audio.size <= 1) Modifier else Modifier.weight(1f), pendingAudio = pendingAudio, audioError = audioError, retryAudio = retryAudio)
+                    SubtitlesColumn(tracks.subtitles, select, Modifier.weight(1.4f), pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = retrySubtitle)
                     SubtitleSettingsColumn(draft, apply, setSize, setBackground, Modifier.weight(1.2f)) { dialog = it }
                 }
                 if (openSettings != null) PlaybackSettingsLink(openSettings)
@@ -86,6 +88,10 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
 }
 
 internal const val PLAYER_SETTINGS_LINK = "Subtitles & audio settings"
+
+internal const val subtitleTrackErrorCopy = "Couldn't load subtitles."
+
+internal const val audioTrackErrorCopy = "Couldn't switch audio."
 
 @Composable
 private fun PlaybackSettingsLink(open: () -> Unit) {
@@ -106,26 +112,33 @@ private fun SectionLabel(text: String, modifier: Modifier = Modifier) =
     Text(text, modifier, fontSize = 12.sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
 
 @Composable
-private fun AudioColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier, scrollable: Boolean = true) {
+private fun AudioColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier,
+    scrollable: Boolean = true, pendingAudio: Int? = null, audioError: Int? = null, retryAudio: () -> Unit = {}) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         SectionLabel("Audio")
         if (tracks.size <= 1) {
             Text("Default audio", fontSize = 14.sp, lineHeight = 20.sp, color = Palette.secondary)
         } else if (scrollable) {
             LazyColumn(topEdgeFade = false) {
-                items(tracks, key = { it.id }) { track -> audioRow(track, select) }
+                items(tracks, key = { it.id }) { track -> audioRow(track, select, pendingAudio, audioError, retryAudio) }
             }
-        } else Column { tracks.forEach { track -> audioRow(track, select) } }
+        } else Column { tracks.forEach { track -> audioRow(track, select, pendingAudio, audioError, retryAudio) } }
     }
 }
 
 @Composable
-private fun audioRow(track: PlaybackTrack, select: (PlayerCommand.SelectTrack) -> Unit) {
-    PlaybackTrackRow(track.label, null, track.selected) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) }
+private fun audioRow(track: PlaybackTrack, select: (PlayerCommand.SelectTrack) -> Unit,
+    pendingAudio: Int?, audioError: Int?, retryAudio: () -> Unit) {
+    val pending = pendingAudio == track.id
+    PlaybackTrackRow(track.label, null, (track.selected && pendingAudio == null) || pending,
+        pending = pending, error = if (audioError == track.id) audioTrackErrorCopy else null,
+        retry = if (audioError == track.id) retryAudio else null) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) }
 }
 
 @Composable
-private fun SubtitlesColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier, scrollable: Boolean = true) {
+private fun SubtitlesColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier,
+    scrollable: Boolean = true, pendingSubtitle: SubtitleSelection? = null, subtitleError: SubtitleSelection? = null,
+    retrySubtitle: () -> Unit = {}) {
     val groups = remember(tracks) { groupSubtitleTracks(tracks) }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         SectionLabel("Subtitles")
@@ -133,24 +146,40 @@ private fun SubtitlesColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.
             Text("No subtitle tracks available", fontSize = 12.sp, color = Palette.secondary)
         } else if (scrollable) {
             LazyColumn(topEdgeFade = false) {
-                item(key = "off") { offRow(tracks, select) }
-                items(groups, key = { it.ids.joinToString() }) { group -> groupRow(group, select) }
+                item(key = "off") { offRow(tracks, select, pendingSubtitle, subtitleError, retrySubtitle) }
+                items(groups, key = { it.ids.joinToString() }) { group -> groupRow(group, select, pendingSubtitle, subtitleError, retrySubtitle) }
             }
         } else Column {
-            offRow(tracks, select)
-            groups.forEach { group -> groupRow(group, select) }
+            offRow(tracks, select, pendingSubtitle, subtitleError, retrySubtitle)
+            groups.forEach { group -> groupRow(group, select, pendingSubtitle, subtitleError, retrySubtitle) }
         }
     }
 }
 
 @Composable
-private fun offRow(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit) {
-    PlaybackTrackRow("Off", null, tracks.none { it.selected }) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) }
+private fun offRow(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit,
+    pendingSubtitle: SubtitleSelection?, subtitleError: SubtitleSelection?, retrySubtitle: () -> Unit) {
+    val offPending = pendingSubtitle is SubtitleSelection.Off
+    val offSelected = (tracks.none { it.selected } && pendingSubtitle == null) || offPending
+    PlaybackTrackRow("Off", null, offSelected,
+        pending = offPending,
+        error = if (subtitleError is SubtitleSelection.Off) subtitleTrackErrorCopy else null,
+        retry = if (subtitleError is SubtitleSelection.Off) retrySubtitle else null) {
+        select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null))
+    }
 }
 
 @Composable
-private fun groupRow(group: SubtitleGroup, select: (PlayerCommand.SelectTrack) -> Unit) {
-    PlaybackTrackRow(group.primary, group.source, group.selected) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, group.ids.first())) }
+private fun groupRow(group: SubtitleGroup, select: (PlayerCommand.SelectTrack) -> Unit,
+    pendingSubtitle: SubtitleSelection?, subtitleError: SubtitleSelection?, retrySubtitle: () -> Unit) {
+    val pending = (pendingSubtitle as? SubtitleSelection.Track)?.let { it.id in group.ids } == true
+    val failedId = (subtitleError as? SubtitleSelection.Track)?.takeIf { it.id in group.ids }?.id
+    PlaybackTrackRow(group.primary, group.source, (group.selected && pendingSubtitle == null) || pending,
+        pending = pending,
+        error = if (failedId != null) subtitleTrackErrorCopy else null,
+        retry = if (failedId != null) retrySubtitle else null) {
+        select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, group.ids.first()))
+    }
 }
 
 @Composable

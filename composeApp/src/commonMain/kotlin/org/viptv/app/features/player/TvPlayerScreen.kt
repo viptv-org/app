@@ -137,13 +137,18 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             androidx.compose.material3.CircularProgressIndicator(Modifier.align(androidx.compose.ui.Alignment.Center).size(48.dp * scale), color = Palette.text)
         if (state.showTracks) TvPlaybackTrackPicker(state.tracks, state.subtitleSize, scale,
             { choice ->
-                state.send(choice, previewCommand)
+                if (choice is PlayerCommand.SelectTrack) when (choice.kind) {
+                    PlaybackTrackKind.Subtitle -> state.chooseSubtitle(choice.id, previewCommand)
+                    PlaybackTrackKind.Audio -> choice.id?.let { state.chooseAudio(it, previewCommand) } ?: state.send(choice, previewCommand)
+                } else state.send(choice, previewCommand)
                 (choice as? PlayerCommand.SelectTrack)?.let { pick ->
                     trackChosen(pick.kind, (if (pick.kind == PlaybackTrackKind.Audio) state.tracks.audio else state.tracks.subtitles)
                         .firstOrNull { it.id == pick.id }?.language)
                 }
             }, { state.showTracks = false; state.reveal() }, trackFocus,
-            dismissChanged = { state.dismissTracks = it }, openSettings = openSettings)
+            dismissChanged = { state.dismissTracks = it }, openSettings = openSettings,
+            pendingSubtitle = state.pendingSubtitle, subtitleError = state.subtitleError,
+            pendingAudio = state.pendingAudio, audioError = state.audioError)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
         audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
     }
