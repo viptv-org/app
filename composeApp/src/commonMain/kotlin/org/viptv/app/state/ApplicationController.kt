@@ -110,6 +110,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var quietDetail = false
     internal var freshnessWatcher: Job? = null
     internal var addonOperation: Job? = null
+    internal val mutationJobs = mutableMapOf<MutationTarget, Job>()
+    internal val mutationRetries = mutableMapOf<MutationTarget, MutationRetry>()
     internal var crashReportChecked = false
     internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
