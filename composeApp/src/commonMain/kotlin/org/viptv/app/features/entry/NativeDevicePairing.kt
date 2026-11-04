@@ -31,7 +31,7 @@ internal fun NativeDevicePairing(server: String, display: DevicePairingDisplay?,
 @Composable
 internal fun DevicePairingPanel(display: DevicePairingDisplay?, busy: Boolean, error: String?, mobile: Boolean,
     back: () -> Unit, refresh: () -> Unit, changeServer: () -> Unit) {
-    PairingBackLink(back, mobile)
+    if (!mobile) PairingBackLink(back, mobile)
     Spacer(Modifier.height(if (mobile) 16.dp else 12.dp))
     Text("Use another device", color = Palette.text, fontSize = if (mobile) 26.sp else 23.sp,
         fontWeight = FontWeight.Bold, letterSpacing = if (mobile) (-.52).sp else (-.46).sp,

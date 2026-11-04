@@ -15,7 +15,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.conflate
@@ -42,8 +42,8 @@ internal fun HeroCopyFade(card: Card, modifier: Modifier = Modifier, alignment: 
             outgoing.value = null
         }
     }
-    Box(modifier.heightIn(min = floor).onGloballyPositioned {
-        floor = maxOf(floor, with(density) { it.size.height.toDp() })
+    Box(modifier.heightIn(min = floor).onSizeChanged {
+        floor = maxOf(floor, with(density) { it.height.toDp() })
     }, contentAlignment = alignment) {
         outgoing.value?.let { Box(Modifier.alpha(1f - fade.value)) { content(it) } }
         Box(Modifier.alpha(fade.value)) { content(shown.value) }
