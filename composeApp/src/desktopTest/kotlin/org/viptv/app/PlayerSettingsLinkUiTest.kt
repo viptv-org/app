@@ -145,7 +145,7 @@ class PlayerSettingsLinkUiTest {
         }
         fun open() {
             controller.mutable.value = ApplicationState(screen = Screen.Player, selectedProfile = "1", localMode = true, playback = input,
-                preferences = PreferencesSnapshot(), navBack = listOf(Screen.Home))
+                preferences = PreferencesSnapshot(), navBack = listOf(BackEntry(Screen.Home)))
             controller.observePlaybackFor(input, PlayerFact.Progress(842_000, 3_132_000))
             controller.mutable.value = controller.state.value.copy(paused = true, settingsReturnsToPlayer = true, settingsEntrySection = PLAYER_SETTINGS_SECTION, screen = Screen.Settings)
         }
