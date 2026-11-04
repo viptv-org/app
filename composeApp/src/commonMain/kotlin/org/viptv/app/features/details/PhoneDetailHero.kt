@@ -14,25 +14,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 
 private val PhoneHeroArt = 300.dp
 private val PhoneHeroHeader = 76.dp
@@ -45,20 +46,23 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
     Column(verticalArrangement = Arrangement.spacedBy((-60).dp)) {
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
             if (art != null) {
-                AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                BufferedArtwork(art, Modifier.fillMaxSize())
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
                     0f to Palette.background.copy(alpha = .55f), .3f to Color.Transparent,
                     .55f to Color.Transparent, 1f to Palette.background)))
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            DetailHeroTitle(card, TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold),
-                Modifier.fillMaxWidth(), logo = Modifier.width(240.dp).height(PhoneHeroHeader), reserve = PhoneHeroHeader)
+            TitleLogo(card.logo, card.title, Modifier.fillMaxWidth().heightIn(min = PhoneHeroHeader),
+                logoModifier = Modifier.width(240.dp).height(PhoneHeroHeader)) {
+                Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+            }
             Box(Modifier.fillMaxWidth().heightIn(min = PhoneHeroMetaLine)) { MediaMetadata(card, fontSize = 13f, lineHeight = 19f, kindFirst = true) }
             val resume = resumeEpisode ?: card.takeIf(::resuming)
             val progress = resume?.progress?.takeIf { resuming(resume) }
             val remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel)
             val label = heroPlayLabel(resume)
+            val pending = (resume ?: card).isPlayPending()
             Box(Modifier.fillMaxWidth()) {
                 Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 19.dp),
@@ -67,7 +71,8 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                         horizontalArrangement = if (remaining != null) Arrangement.SpaceBetween else Arrangement.Center) {
                         Row(verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
+                            if (pending) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Color(0xFF111113))
+                            else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
                             Text(label, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                                 overflow = TextOverflow.Ellipsis)
                         }

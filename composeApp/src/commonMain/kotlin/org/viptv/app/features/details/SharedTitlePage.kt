@@ -11,13 +11,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.Brand
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
@@ -70,8 +70,9 @@ private fun SharedTitleArtwork(card: Card, modifier: Modifier) {
 @Composable
 private fun SharedTitleSummary(card: Card, signIn: () -> Unit, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        DetailHeroTitle(card, TextStyle(fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold),
-            logo = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(112.dp))
+        TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(112.dp)) {
+            Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+        }
         MediaMetadata(card)
         card.description?.let { Text(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body) }
         Button(onClick = signIn, modifier = Modifier.width(200.dp).height(48.dp), shape = RoundedCornerShape(12.dp),

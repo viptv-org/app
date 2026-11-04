@@ -209,16 +209,16 @@ private fun LiveEmptySecondary(television: Boolean, scale: Float, metrics: LiveE
 }
 
 @Composable
-internal fun LiveNoChannels(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?) =
-    LiveEmptyCopy(television, scale, compact, LiveNoChannelsHeadline, reason ?: LiveNoChannelsBody, retry, integrations)
+internal fun LiveNoChannels(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?, primary: FocusRequester? = null, secondary: FocusRequester? = null) =
+    LiveEmptyCopy(television, scale, compact, LiveNoChannelsHeadline, reason ?: LiveNoChannelsBody, retry, integrations, primary, secondary)
 
 @Composable
-internal fun LiveLoadFailed(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?) =
-    LiveEmptyCopy(television, scale, compact, LiveLoadFailedHeadline, reason ?: ServerMessages.GENERIC, retry, integrations)
+internal fun LiveLoadFailed(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?, primary: FocusRequester? = null, secondary: FocusRequester? = null) =
+    LiveEmptyCopy(television, scale, compact, LiveLoadFailedHeadline, reason ?: ServerMessages.GENERIC, retry, integrations, primary, secondary)
 
 @Composable
 private fun LiveEmptyCopy(television: Boolean, scale: Float, compact: Boolean, headline: String, body: String,
-    retry: (() -> Unit)?, integrations: (() -> Unit)?) {
+    retry: (() -> Unit)?, integrations: (() -> Unit)?, primary: FocusRequester?, secondary: FocusRequester?) {
     val metrics = LiveEmptyMetrics.noChannels(television, scale, compact)
     val full = if (compact && !television) Modifier.fillMaxWidth() else Modifier
     Column(Modifier.fillMaxWidth()) {
@@ -228,7 +228,7 @@ private fun LiveEmptyCopy(television: Boolean, scale: Float, compact: Boolean, h
         Text(body, color = Palette.secondary, fontSize = metrics.body, lineHeight = metrics.bodyLine, maxLines = metrics.bodyLines)
         retry?.let {
             Spacer(Modifier.height(metrics.bodyToActions))
-            if (television) TvAction(full.height(metrics.primaryHeight), scale, activate = it, cornerRadius = metrics.primaryRadius,
+            if (television) TvAction(full.height(metrics.primaryHeight), scale, requester = primary, activate = it, cornerRadius = metrics.primaryRadius,
                 contentPadding = PaddingValues(horizontal = metrics.primaryPadding), background = Color.White.copy(alpha = .12f)) { color ->
                 Text(LiveTryAgain, color = color, fontSize = metrics.primaryText, lineHeight = metrics.primaryLine, fontWeight = FontWeight.Bold)
             } else Button(it, full.height(metrics.primaryHeight), shape = RoundedCornerShape(metrics.primaryRadius),
@@ -239,7 +239,7 @@ private fun LiveEmptyCopy(television: Boolean, scale: Float, compact: Boolean, h
         }
         integrations?.let {
             Spacer(Modifier.height(if (retry != null) metrics.primaryToSecondary else metrics.bodyToActions))
-            if (television) TvAction(full.height(metrics.secondaryHeight), scale, activate = it, cornerRadius = metrics.secondaryRadius,
+            if (television) TvAction(full.height(metrics.secondaryHeight), scale, requester = secondary, activate = it, cornerRadius = metrics.secondaryRadius,
                 contentPadding = PaddingValues(horizontal = metrics.secondaryPadding), background = Color.White.copy(alpha = .12f)) { color ->
                 Text(LiveSourceIntegrations, color = color, fontSize = metrics.secondaryText, lineHeight = metrics.secondaryLine, fontWeight = FontWeight.SemiBold)
             } else TextButton(it, full.height(metrics.secondaryHeight), contentPadding = PaddingValues(horizontal = metrics.secondaryPadding)) {

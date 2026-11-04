@@ -57,6 +57,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var libraryImportRefresh: Job? = null
     internal var calendarReread: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
+    internal var livePlaybackChannel: String? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null
     internal var leaseOpener: PlaybackLeaseOpener = PlaybackLeaseOpener.Server
@@ -134,7 +135,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
                         sourceChoice = SourceChoice.None
                         updateState { it.copy(error = failureMessage(e), errorCode = (e as? RemoteFailure)?.code,
                             detailRetryable = e !is RemoteFailure || !e.metadataNotFound,
-                            devicesRetryable = e !is RemoteFailure || !e.deviceListUnavailable, openingSource = null) }
+                            devicesRetryable = e !is RemoteFailure || !e.deviceListUnavailable, openingSource = null, pendingAction = null) }
                     }
                 }
             }

@@ -22,6 +22,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.connection.sameLookupIdentity
 import org.viptv.app.features.details.DetailEpisodeCard
+import org.viptv.app.state.validNextEpisode
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.IconButton
@@ -33,6 +34,14 @@ internal fun phonePlaybackEpisodes(current: Card?, episodes: List<Card>): List<C
         it.parent_identity?.let { identity -> sameLookupIdentity(identity, parent) } == true &&
         it.provider_id == current.provider_id && it.metadata_origin == current.metadata_origin }
         .distinctBy(::cardLookupKey)
+}
+
+internal fun nextEpisodeAfter(current: Card?, episodes: List<Card>): Card? {
+    val here = current ?: return null
+    val ordered = phonePlaybackEpisodes(here, episodes).sortedWith(
+        compareBy<Card> { it.identity.episode?.season ?: 0L }.thenBy { it.identity.episode?.episode ?: 0L })
+    val index = ordered.indexOfFirst { cardLookupKey(it) == cardLookupKey(here) }
+    return ordered.getOrNull(index + 1)?.takeIf { index >= 0 && validNextEpisode(here, it) }
 }
 
 @Composable

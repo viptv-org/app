@@ -29,8 +29,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
@@ -90,17 +92,31 @@ internal fun SourceFactsRow(source: SourceCandidate, addon: String?, color: Colo
     if (facts.isEmpty()) return
     val size = source.sizeLabel()
     val packageId = "season-pack"
-    val placeholder = with(LocalDensity.current) { iconSize.toSp() }
+    val density = LocalDensity.current
+    val label = rememberTextMeasurer().measure("Season pack", TextStyle(fontSize = fontSize, fontWeight = FontWeight.SemiBold))
+    val iconPx = with(density) { iconSize.toPx() }
+    val gapPx = with(density) { 4.dp.toPx() }
+    val widthPx = iconPx + gapPx + label.size.width.toFloat()
+    val heightPx = maxOf(iconPx, label.size.height.toFloat())
     val inline = mapOf(
         packageId to InlineTextContent(
-            Placeholder(width = placeholder, height = placeholder, placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter),
-        ) { Icon(Lucide.Package, null, Modifier.size(iconSize), tint = color.copy(alpha = .75f)) },
+            Placeholder(
+                width = with(density) { widthPx.toSp() },
+                height = with(density) { heightPx.toSp() },
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
+            ),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Lucide.Package, null, Modifier.size(iconSize), tint = color.copy(alpha = .75f))
+                Text("Season pack", fontSize = fontSize, color = color.copy(alpha = .75f), fontWeight = FontWeight.SemiBold)
+            }
+        },
     )
     val text = buildAnnotatedString {
         facts.forEachIndexed { index, item ->
             if (index > 0) append(" · ")
             when {
-                item == SEASON_PACK_LABEL -> { appendInlineContent(packageId, "Season pack"); append(" Season pack") }
+                item == SEASON_PACK_LABEL -> appendInlineContent(packageId, "Season pack")
                 item == size -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(item) }
                 else -> append(item)
             }

@@ -16,7 +16,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import org.junit.Rule
-import org.viptv.app.features.details.DETAIL_TITLE_TAG
+import org.viptv.app.components.TITLE_LOGO_TAG
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.details.SharedTitlePage
 import org.viptv.app.theme.Palette
@@ -64,7 +64,7 @@ class DetailTitleFitTest {
     }
 
     private fun ImageComposeScene.titleArea() =
-        nodes().single { node -> node.config.getOrNull(SemanticsProperties.TestTag) == DETAIL_TITLE_TAG }
+        nodes().single { node -> node.config.getOrNull(SemanticsProperties.TestTag) == TITLE_LOGO_TAG }
 
     private fun ImageComposeScene.assertEveryGlyphIsWhole(surface: String): TextLayoutResult {
         val node = titleNode()

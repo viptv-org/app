@@ -10,19 +10,19 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.key.*
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.*
-import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.components.tvHold
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -34,16 +34,22 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
     save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
     saved: Boolean = false, downAction: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
     val series = card.identity.kind == "series"
+    val pending = (extras.resume ?: card).isPlayPending()
     org.viptv.app.components.TvRequestedFocus(first, card.identity, requestInitialFocus)
     Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds().onPreviewKeyEvent {
         if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown && downAction != null) {
             downAction(); true
         } else false
     }) {
-        DetailHeroTitle(card, TextStyle(fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp, fontWeight = FontWeight.Bold),
-            Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale).width(800.dp * scale),
-            logo = Modifier.width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale),
-            reserve = (if (series) 134 else 190).dp * scale, alignment = Alignment.BottomStart, maxLines = 2)
+        TitleLogo(card.logo, card.title,
+            Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
+                .size(800.dp * scale, (if (series) 134 else 190).dp * scale),
+            contentAlignment = Alignment.BottomStart,
+            logoModifier = Modifier.width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale),
+            logoAlignment = Alignment.BottomStart) {
+            Text(card.title, fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp,
+                fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
         Box(Modifier.offset(96.dp * scale, (if (series) 410 else 432).dp * scale).width(1100.dp * scale)) {
             TvDetailMetadata(card, scale)
         }
@@ -62,7 +68,8 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                 contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) { tint ->
                 Box(Modifier.fillMaxSize()) {
                     Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), tint)
+                        if (pending) PendingActionSpinner(Modifier.size(24.dp * scale), size = 24.dp * scale, strokeWidth = 3.dp * scale, color = tint)
+                        else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), tint)
                         Spacer(Modifier.width(12.dp * scale))
                         Text(extras.resumeLabel ?: "Play", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                         extras.remaining?.let { Spacer(Modifier.width(54.dp * scale)); Text(it, color = tint.copy(alpha = 0.7f), fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold) }

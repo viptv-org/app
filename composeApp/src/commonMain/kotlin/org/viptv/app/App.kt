@@ -89,6 +89,7 @@ fun App(
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }
     val tvDisplay = rememberTvDisplayState()
+    val surface = inputSurface(television, browser, desktopChrome)
     val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
     val accent = accentColor(tvDisplay.value)
     val ratings = showRatings(tvDisplay.value)
@@ -107,8 +108,9 @@ fun App(
     CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
         LocalAccent provides accent, LocalShowRatings provides ratings,
         LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
-        LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState) {
-    ViptvTheme(television, pointer = browser || desktopChrome) {
+        LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState,
+        LocalPendingAction provides state.pendingAction) {
+    ViptvTheme(television, pointer = browser || desktopChrome, activationKeys = surface.bindsActivationKeys) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
@@ -126,7 +128,7 @@ fun App(
                 return@BoxWithConstraints
             }
             val compact = maxWidth < 640.dp && !television
-            val touch = !television && !browser && !desktopChrome
+            val touch = surface == InputSurface.Touch
             val tablet = !compact && touch
             val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = bottomBarShown(state.screen, compact, browser, desktopChrome)
@@ -355,7 +357,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             previewSources = controller::previewDetailSources,
             cancelSourcesPreview = controller::cancelDetailSourcePreview)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources) }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }
