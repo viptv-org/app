@@ -37,16 +37,15 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private val systemControls = context.resources.configuration.uiMode and
         Configuration.UI_MODE_TYPE_MASK != Configuration.UI_MODE_TYPE_TELEVISION
     var view: PlayerView? = null
-        set(value) { field = value; subtitles.bind(value); applySubtitleStyle() }
+        set(value) { field = value; subtitles.bind(value); captionStyle.attach(value?.subtitleView) }
     private val tracks = Media3Tracks(player, input, ::emit)
-    private val subtitles = Media3ProviderSubtitles(player, input, scope, tracks, ::titlePositionMillis) { error, chosen ->
+    private val captionStyle = Media3CaptionStyle(input.preferences)
+    private val subtitles = Media3ProviderSubtitles(player, input, scope, tracks, captionStyle, ::titlePositionMillis) { error, chosen ->
         input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) ::emit else null)
     }
     private var audioDecoder = "pending"
     private var videoDecoder = "pending"
     private var presented = false
-    private var subtitleScale = input.preferences.subtitle_font_scale.toFloat().coerceIn(.5f, 2f)
-    private var subtitleBackground = input.preferences.subtitle_background_color
     private var closed = false
     private var opened = false
     private var mediaTransitions = 0
@@ -149,8 +148,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         val target = progress.positionMillis + deltaMillis
         command(PlayerCommand.Seek(progress.durationMillis?.let { target.coerceIn(0, it) } ?: target.coerceAtLeast(0)))
     }
-    private fun properties() = emit(PlayerFact.Properties(player.volume, player.playbackParameters.speed.toDouble(), subtitleScale))
-    private fun applySubtitleStyle() = view?.subtitleView?.profileStyle(input.preferences.copy(subtitle_background_color = subtitleBackground), subtitleScale)
+    private fun properties() = emit(PlayerFact.Properties(player.volume, player.playbackParameters.speed.toDouble(), captionStyle.scale))
     suspend fun command(command: PlayerCommand) {
         try { when (command) {
             is PlayerCommand.Seek -> if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
@@ -158,15 +156,10 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
             is PlayerCommand.Volume -> player.volume = command.value.coerceIn(0f, 1f)
             is PlayerCommand.Speed -> player.setPlaybackSpeed(command.value.toFloat().coerceIn(.25f, 2f))
             is PlayerCommand.SubtitleSize -> {
-                subtitleScale = command.value.coerceIn(.5f, 2f)
-                applySubtitleStyle()
-                subtitles.size(subtitleScale)
+                captionStyle.size(command.value)
                 properties()
             }
-            is PlayerCommand.SubtitleBackground -> {
-                subtitleBackground = command.color ?: "#00000000"
-                applySubtitleStyle()
-            }
+            is PlayerCommand.SubtitleBackground -> captionStyle.background(command.color)
             is PlayerCommand.SelectTrack -> {
                 if (command.kind == PlaybackTrackKind.Subtitle) subtitles.select(command.id)
                 else tracks.select(command.kind, command.id)
