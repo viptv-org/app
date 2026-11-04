@@ -134,7 +134,7 @@ class FilterBarPagesTest {
         }
     }
 
-    @Test fun emptyBrowseOffersNewestFilterRemovalAndKeepsClearSecondary() {
+    @Test fun emptyBrowseWithOneFilterNamesItAndOffersOnlyRemove() {
         val browse = Browse()
         browse.query = BrowseQuery("movie", "top", "c1", genre = "comedy")
         Page(390, 844, density = 1f, pointer = false) {
@@ -142,13 +142,29 @@ class FilterBarPagesTest {
                 multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
             assertTrue(it.has("Nothing matches"), "a filtered empty grid blames the filters")
-            assertTrue(it.has("Movies from Cinemeta has no movies with all 1 filters. Removing the newest one usually helps."))
-            assertTrue(it.has("Remove “Comedy”"), "the newest filter is the primary action")
-            assertTrue(it.has("Clear all filters"), "clear demoted to a secondary action")
+            assertTrue(it.has("Movies from Cinemeta has no movies matching “Comedy”."))
+            assertTrue(it.has("Remove “Comedy”"), "the one filter is the primary action")
+            assertFalse(it.has("Clear all filters"), "a single filter needs no redundant clear")
             assertFalse(it.has("No titles yet"), "the no-titles copy is not for a filtered grid")
             it.press("Remove “Comedy”")
             assertEquals(listOf("genre="), browse.requests)
             assertNull(browse.query.genre)
+        }
+    }
+
+    @Test fun emptyBrowseWithSeveralFiltersKeepsClearSecondary() {
+        val browse = Browse()
+        browse.query = BrowseQuery("movie", "top", "c1", genre = "comedy", values = listOf(QueryValue("language", listOf("english"))))
+        Page(390, 844, density = 1f, pointer = false) {
+            BrowseScreen(Screen.Movies, null, false, {}, emptyList(), controls, browse.query, filterChanged = browse.changed,
+                multipleChanged = browse.multiple, applyQuery = browse.apply)
+        }.use {
+            assertTrue(it.has("Nothing matches"))
+            assertTrue(it.has("Movies from Cinemeta has no movies with all 2 filters. Removing the newest one usually helps."))
+            assertTrue(it.has("Remove “English”"), "the newest filter is the primary action")
+            assertTrue(it.has("Clear all filters"), "clear demoted to a secondary action")
+            it.press("Remove “English”")
+            assertEquals(listOf("language="), browse.requests)
         }
     }
 

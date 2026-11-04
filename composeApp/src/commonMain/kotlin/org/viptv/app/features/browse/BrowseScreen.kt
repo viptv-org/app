@@ -181,11 +181,14 @@ private fun BrowseEmptyState(source: String?, chips: List<AppliedChip>, noun: St
         } else {
             Text("Nothing matches", fontSize = 22.sp, lineHeight = 25.sp, letterSpacing = (-0.44).sp,
                 fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Text(source?.let { "$it has no $noun with all ${chips.size} filters. Removing the newest one usually helps." }
-                ?: "No $noun are available for these filters.",
+            val single = chips.size == 1
+            Text(if (single) source?.let { "$it has no $noun matching “${newest.label}”." }
+                    ?: "No $noun match “${newest.label}”."
+                else source?.let { "$it has no $noun with all ${chips.size} filters. Removing the newest one usually helps." }
+                    ?: "No $noun are available for these filters.",
                 color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
             BoardAction(if (newest.label.length > 24) "Remove filter" else "Remove “${newest.label}”", primary = true, run = { remove(newest) })
-            BoardAction("Clear all filters", primary = false, run = clearAll)
+            if (!single) BoardAction("Clear all filters", primary = false, run = clearAll)
         }
     }
 }
