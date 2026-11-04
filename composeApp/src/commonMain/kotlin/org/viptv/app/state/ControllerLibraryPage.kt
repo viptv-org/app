@@ -13,6 +13,10 @@ fun ApplicationController.libraryMore() = run {
     loadLibraryPage(mutable.value.libraryQuery.copy(offset = offset), append = true)
 }
 fun ApplicationController.refreshLibraryPage() = run { loadLibraryPage(refresh = true) }
+fun ApplicationController.retryLibrary() {
+    if (mutable.value.screen != Screen.Library) return
+    run { loadLibraryPage() }
+}
 internal suspend fun ApplicationController.loadLibraryPage(query: LibraryQuery = mutable.value.libraryQuery, append: Boolean = false, refresh: Boolean = false) {
     val profile = requireNotNull(mutable.value.selectedProfile)
     val page = local?.libraryPage(profile, query) ?: requireNotNull(connection).libraryPage(profile, query)

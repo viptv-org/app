@@ -16,7 +16,11 @@ import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import org.viptv.app.features.calendar.CalendarScreen
+import org.viptv.app.features.calendar.TvCalendarScreen
 import org.viptv.app.features.history.HistoryScreen
+import org.viptv.app.features.history.TvHistoryScreen
+import org.viptv.app.features.library.LibraryScreen
+import org.viptv.app.features.library.TvLibraryScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.junit.Rule
@@ -26,8 +30,8 @@ import kotlin.test.*
 class ListFailureRetryUiTest {
     @get:Rule val uiThread = UiThreadRule()
 
-    private fun page(width: Int = 1280, height: Int = 900, content: @Composable () -> Unit): ImageComposeScene =
-        ImageComposeScene(width, height, Density(1f)) { ViptvTheme(false) {
+    private fun page(width: Int = 1280, height: Int = 900, television: Boolean = false, content: @Composable () -> Unit): ImageComposeScene =
+        ImageComposeScene(width, height, Density(1f)) { ViptvTheme(television) {
             val routes = rememberSaveableStateHolder()
             routes.SaveableStateProvider("page") { Box(Modifier.fillMaxSize().background(Palette.background)) { content() } }
         } }
@@ -46,7 +50,9 @@ class ListFailureRetryUiTest {
     private fun texts(scene: ImageComposeScene): List<String> = nodes(scene).map(::label)
 
     private fun click(scene: ImageComposeScene, text: String) {
-        val node = nodes(scene).first { label(it).contains(text) && it.config.contains(SemanticsActions.OnClick) }
+        val node = nodes(scene).first {
+            it.config.contains(SemanticsActions.OnClick) && (label(it).contains(text) || it.children.any { child -> label(child).contains(text) })
+        }
         assertTrue(node.config[SemanticsActions.OnClick].action?.invoke() == true, "$text is clickable")
         frames(scene)
     }
@@ -78,6 +84,68 @@ class ListFailureRetryUiTest {
             frames(scene)
             assertTrue(visible(scene, "Couldn’t load the calendar"), "a failed calendar shows its failure title")
             assertFalse(visible(scene, "Nothing is scheduled"), "no empty answer appears beside the failure")
+            click(scene, "Try again")
+            assertEquals(1, retried, "Try again re-runs the load")
+        } finally { scene.close() }
+    }
+
+    @Test fun myListFailureOffersTryAgain() {
+        var retried = 0
+        val scene = page {
+            LibraryScreen(cards = emptyList(), available = true, television = false, open = {}, history = {}, home = {},
+                busy = false, error = "The server did not answer.", retry = { retried++ })
+        }
+        try {
+            frames(scene)
+            assertTrue(visible(scene, "Couldn’t load My List"), "a failed My List shows its failure title")
+            assertTrue(visible(scene, "The server did not answer."), "the reason is shown")
+            assertFalse(visible(scene, "Your list is empty."), "no empty answer appears beside the failure")
+            click(scene, "Try again")
+            assertEquals(1, retried, "Try again re-runs the load")
+        } finally { scene.close() }
+    }
+
+    @Test fun tvMyListFailureOffersTryAgain() {
+        var retried = 0
+        val scene = page(width = 1920, height = 1080, television = true) {
+            TvLibraryScreen(cards = emptyList(), available = true, open = {}, home = {},
+                busy = false, error = "The server did not answer.", retry = { retried++ })
+        }
+        try {
+            frames(scene)
+            assertTrue(visible(scene, "Couldn’t load My List"), "a failed TV My List shows its failure title")
+            assertTrue(visible(scene, "The server did not answer."), "the reason is shown")
+            assertFalse(visible(scene, "Your list is empty."), "no empty answer appears beside the failure")
+            click(scene, "Try again")
+            assertEquals(1, retried, "Try again re-runs the load")
+        } finally { scene.close() }
+    }
+
+    @Test fun tvHistoryFailureOffersTryAgain() {
+        var retried = 0
+        val scene = page(width = 1920, height = 1080, television = true) {
+            TvHistoryScreen(history = emptyList(), busy = false, error = "The server did not answer.",
+                open = {}, clear = {}, back = {}, retry = { retried++ })
+        }
+        try {
+            frames(scene)
+            assertTrue(visible(scene, "Couldn’t load history"), "a failed TV history shows its failure title")
+            assertTrue(visible(scene, "The server did not answer."), "the reason is shown")
+            click(scene, "Try again")
+            assertEquals(1, retried, "Try again re-runs the load")
+        } finally { scene.close() }
+    }
+
+    @Test fun tvCalendarFailureOffersTryAgain() {
+        var retried = 0
+        val scene = page(width = 1920, height = 1080, television = true) {
+            TvCalendarScreen(days = emptyList(), entries = emptyList(), open = {}, manage = {},
+                busy = false, error = "The server did not answer.", retry = { retried++ })
+        }
+        try {
+            frames(scene)
+            assertTrue(visible(scene, "Couldn’t load the calendar"), "a failed TV calendar shows its failure title")
+            assertFalse(visible(scene, "No releases for this day."), "no empty answer appears beside the failure")
             click(scene, "Try again")
             assertEquals(1, retried, "Try again re-runs the load")
         } finally { scene.close() }

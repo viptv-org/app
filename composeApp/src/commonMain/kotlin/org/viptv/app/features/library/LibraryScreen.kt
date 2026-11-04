@@ -47,8 +47,8 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     history: () -> Unit, home: () -> Unit, snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
     query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
     changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null,
-    remove: ((Card) -> Unit)? = null) {
-    if (television) { TvLibraryScreen(cards, available, open, home, snapshot = snapshot, query = query, changeQuery = changeQuery, more = more, busy = busy, error = error, remove = remove); return }
+    remove: ((Card) -> Unit)? = null, retry: () -> Unit = {}) {
+    if (television) { TvLibraryScreen(cards, available, open, home, snapshot = snapshot, query = query, changeQuery = changeQuery, more = more, busy = busy, error = error, remove = remove, retry = retry); return }
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf("Date added") }
     var confirming by remember { mutableStateOf<Card?>(null) }
@@ -62,6 +62,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val anchored = restore.anchor(gridCards.size) { cardLookupKey(gridCards[it]) }
     val scrolled = remember(grid) { derivedStateOf { grid.canScrollBackward } }.value
     val empty = libraryEmptyState(snapshot, query, available)
+    val failed = error != null && visible.isEmpty() && !busy
     var pinned by remember { mutableIntStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
@@ -91,7 +92,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                                 if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                                 else LibraryControls(filter, { filter = it }, sort, { sort = it })
                                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-                                (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
+                                if (!failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
                             }
                             if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
                         }
@@ -118,7 +119,9 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                     }
                 }
             }
-            if (visible.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+            if (failed) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+                LibraryFailure(error ?: "", retry)
+            } else if (visible.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
                         Icon(Lucide.Bookmark, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)
@@ -133,6 +136,17 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     }
     confirming?.let { card ->
         ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
+    }
+}
+
+@Composable
+private fun LibraryFailure(reason: String, retry: () -> Unit) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text("Couldn’t load My List", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }
     }
 }
 
