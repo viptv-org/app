@@ -59,6 +59,7 @@ class DetailsStagedRenderTest {
         text(node) == value || node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { it == value } }
     private fun ImageComposeScene.mentions(value: String) = nodes(this).any { node ->
         text(node).contains(value) || node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { it.contains(value) } }
+    private fun ImageComposeScene.hasText(value: String) = nodes(this).any { text(it) == value }
     private fun ImageComposeScene.loadingSkeleton() = nodes(this).any {
         it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { label -> label == "Loading title details" } }
 
@@ -81,7 +82,7 @@ class DetailsStagedRenderTest {
     @Test fun phoneSlotsOnlyFillAndImprove() {
         Details(false).use { page ->
             page.render()
-            assertTrue(page.scene.shows("Gabby & Friends"), "the shell shows the title")
+            assertTrue(page.scene.hasText("Gabby & Friends"), "the shell draws the title")
             assertTrue(page.scene.shows(metaLine), "the shell shows the card's full metadata line")
             assertTrue(page.scene.shows(shortDescription), "the shell shows the card's short description")
             assertTrue(page.scene.loadingSkeleton(), "the meta-only parts are skeletons during the read")
@@ -89,7 +90,7 @@ class DetailsStagedRenderTest {
             page.detail = full.withCardPresentation(shell.item); page.busy = false
             page.render(24)
 
-            assertTrue(page.scene.shows("Gabby & Friends"), "the title stays")
+            assertTrue(page.scene.hasText("Gabby & Friends"), "the title slot never blanks")
             assertTrue(page.scene.shows(metaLine), "the metadata line is not downgraded by the sparser detail")
             assertTrue(page.scene.shows(longDescription), "the longer description replaces the shorter one")
             assertTrue(page.scene.shows(castLine), "the cast fills in once")
@@ -105,12 +106,12 @@ class DetailsStagedRenderTest {
     @Test fun tvSlotsOnlyFillAndImprove() {
         Details(true).use { page ->
             page.render()
-            assertTrue(page.scene.shows("Gabby & Friends"), "the TV shell shows the title")
+            assertTrue(page.scene.hasText("Gabby & Friends"), "the TV shell draws the title")
 
             page.detail = full.withCardPresentation(shell.item); page.busy = false
             page.render(24)
 
-            assertTrue(page.scene.shows("Gabby & Friends"), "the TV title stays")
+            assertTrue(page.scene.hasText("Gabby & Friends"), "the TV title slot never blanks")
             assertTrue(page.scene.shows(longDescription), "the TV description fills in")
             assertTrue(page.scene.shows(castLine), "the TV cast fills in")
             assertFalse(page.scene.loadingSkeleton(), "the TV skeleton is gone")

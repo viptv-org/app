@@ -14,17 +14,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.features.home.BufferedArtwork
@@ -52,10 +51,9 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.fillMaxWidth().height(PhoneHeroHeader), contentAlignment = Alignment.CenterStart) {
-                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-                    Modifier.width(240.dp).height(PhoneHeroHeader), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-                else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+            TitleLogo(card.logo, card.title, Modifier.fillMaxWidth().height(PhoneHeroHeader),
+                logoModifier = Modifier.width(240.dp).height(PhoneHeroHeader)) {
+                Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
             }
             Box(Modifier.fillMaxWidth().heightIn(min = PhoneHeroMetaLine)) { MediaMetadata(card, fontSize = 13f, lineHeight = 19f, kindFirst = true) }
             val resume = resumeEpisode ?: card.takeIf(::resuming)

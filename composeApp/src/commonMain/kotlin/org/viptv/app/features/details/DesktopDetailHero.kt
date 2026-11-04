@@ -30,6 +30,7 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.features.home.BufferedArtwork
 
 @Composable
@@ -64,12 +65,10 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
 
 @Composable
 private fun DesktopTitleArt(card: Card) {
-    if (card.logo != null) {
-        AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-            Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp), contentScale = ContentScale.Fit,
-            alignment = Alignment.CenterStart)
-    } else Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
-        color = Palette.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp)) {
+        Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
+            color = Palette.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
