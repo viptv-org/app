@@ -32,7 +32,7 @@ import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.theme.Palette
-import org.viptv.engine.wire.AddonFailure
+import org.viptv.app.connection.AddonFailure
 import org.viptv.engine.wire.Card
 
 @Composable

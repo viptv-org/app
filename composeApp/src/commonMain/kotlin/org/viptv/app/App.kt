@@ -362,7 +362,8 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             sourcePreview = state.detailSourcePreview,
             previewSources = controller::previewDetailSources,
             cancelSourcesPreview = controller::cancelDetailSourcePreview,
-            manageAddons = controller::openAddonsSettings)
+            manageAddons = controller::openAddonsSettings,
+            failures = state.detailFailures)
         if (drawerShown) {
             val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings) }
             // Over the Details dialog the drawer needs a window layer of its own.

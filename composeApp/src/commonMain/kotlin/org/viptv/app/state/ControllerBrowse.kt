@@ -68,8 +68,9 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
         updateState { next -> next.copy(error = "Choose the required filters: ${required.joinToString()}.") }
         return
     }
-    val page = try {
-        local?.browse(profile, selected) ?: requireNotNull(connection).browse(selected, scoped)
+    val read = try {
+        local?.let { BrowsePage(it.browse(profile, selected), emptyList()) }
+            ?: requireNotNull(connection).browse(selected, scoped)
     } catch (e: CancellationException) { throw e }
     catch (e: Exception) {
         if (append && !(e is RemoteFailure && e.sessionExpired)) {
@@ -79,7 +80,7 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
         throw e
     }
     updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
-        browseCards = ((if (append) next.browseCards else emptyList()) + page.cards).distinctBy(::cardLookupKey),
-        browseNext = page.next_cursor,
-        browseFailures = if (append) next.browseFailures else page.failures) }
+        browseCards = ((if (append) next.browseCards else emptyList()) + read.page.cards).distinctBy(::cardLookupKey),
+        browseNext = read.page.next_cursor,
+        browseFailures = if (append) next.browseFailures else read.failures) }
 }

@@ -71,19 +71,10 @@ data class CardMetadata(
 )
 
 @Serializable
-@Immutable
-data class AddonFailure(
-    val addon_id: Long,
-    val addon_name: String,
-    val error_code: String,
-)
-
-@Serializable
 data class CatalogPage(
     val cards: List<Card>,
     val next_cursor: String? = null,
     val complete: Boolean,
-    val failures: List<AddonFailure> = emptyList(),
 )
 
 @Serializable
@@ -138,7 +129,6 @@ data class DetailSnapshot(
     val episodes: List<Card>,
     val next_cursor: String? = null,
     val seasons: List<EpisodeSeason> = emptyList(),
-    val failures: List<AddonFailure> = emptyList(),
 )
 
 @Serializable

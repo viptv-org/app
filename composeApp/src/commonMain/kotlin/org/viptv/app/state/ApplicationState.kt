@@ -4,7 +4,6 @@ import org.viptv.app.components.NextEpisodes
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.Card
-import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.engine.wire.SourceCandidate
@@ -109,6 +108,7 @@ data class ApplicationState(
     val detailFailure: String? = null,
     val detailRetryable: Boolean = true,
     val detail: DetailSnapshot? = null,
+    val detailFailures: List<AddonFailure> = emptyList(),
     val detailShell: Boolean = false,
     val detailFocus: DetailFocus? = null,
     val detailSourcePreview: DetailSourcePreview? = null,

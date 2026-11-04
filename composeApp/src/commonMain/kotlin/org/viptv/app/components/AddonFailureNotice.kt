@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
-import org.viptv.engine.wire.AddonFailure
+import org.viptv.app.connection.AddonFailure
 
 internal fun addonFailureMessage(failures: List<AddonFailure>): String {
     val names = failures.map { it.addon_name }.filter { it.isNotBlank() }.distinct()

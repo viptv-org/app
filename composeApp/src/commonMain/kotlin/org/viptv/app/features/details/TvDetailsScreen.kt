@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.launch
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.AddonFailure
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.AddonFailureNotice
@@ -46,7 +47,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
     retry: (() -> Unit)? = null,
     pageError: String? = null,
     retryPage: (() -> Unit)? = null,
-    focus: DetailFocus? = null) {
+    focus: DetailFocus? = null,
+    failures: List<AddonFailure> = emptyList()) {
     if (detail == null && busy) { DetailLoadingLayout(true); return }
     if (detail == null) {
         TvDetailUnavailable(error, scale = 1f, back = back, retry = retry)
@@ -134,8 +136,8 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                             down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
                             downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }),
                             hold = { chooseSource(extras.resume ?: detail.item) })
-                        if (detail.failures.isNotEmpty() && !busy && error == null) {
-                            AddonFailureNotice(detail.failures, null, Modifier.padding(start = 96.dp * scale, top = 16.dp * scale),
+                        if (failures.isNotEmpty() && !busy && error == null) {
+                            AddonFailureNotice(failures, null, Modifier.padding(start = 96.dp * scale, top = 16.dp * scale),
                                 television = true, scale = scale)
                         }
                     }

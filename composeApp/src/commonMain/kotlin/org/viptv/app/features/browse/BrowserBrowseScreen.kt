@@ -45,7 +45,7 @@ import org.viptv.app.state.open
 import org.viptv.app.state.openAddonsSettings
 import org.viptv.app.state.retryBrowse
 import org.viptv.app.theme.Palette
-import org.viptv.engine.wire.AddonFailure
+import org.viptv.app.connection.AddonFailure
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable

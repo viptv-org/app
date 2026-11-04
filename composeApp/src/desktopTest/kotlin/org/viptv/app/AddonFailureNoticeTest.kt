@@ -34,7 +34,7 @@ import org.viptv.app.connection.configureTransport
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
-import org.viptv.engine.wire.AddonFailure
+import org.viptv.app.connection.AddonFailure
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.Scope
 import java.io.File
@@ -104,7 +104,7 @@ class AddonFailureNoticeTest {
             controller.open(card)
             until("Details loads") {
                 controller.state.value.screen == Screen.Details &&
-                    controller.state.value.detail?.failures?.isNotEmpty() == true && !controller.state.value.busy
+                    controller.state.value.detailFailures.isNotEmpty() && !controller.state.value.busy
             }
             frames(10)
         }

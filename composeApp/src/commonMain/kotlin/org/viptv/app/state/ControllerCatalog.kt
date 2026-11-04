@@ -239,7 +239,7 @@ fun ApplicationController.enrichSummary(card: Card) {
 fun ApplicationController.open(card: Card) {
     beginDetails()
     val navigation = navigationGeneration
-    updateState { it.copy(detail = DetailSnapshot(item = card, episodes = emptyList()), detailShell = true) }
+    updateState { it.copy(detail = DetailSnapshot(item = card, episodes = emptyList()), detailShell = true, detailFailures = emptyList()) }
     runPage { readDetail(card, navigation) }
 }
 
@@ -260,7 +260,7 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
     updateState { it.copy(detail = read.detail.withCardPresentation(card).withOpenedProgress(card),
         detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus
             ?: card.identity.episode?.let { coordinates -> DetailFocus(coordinates.season, coordinates.episode) },
-        pendingDetailSeason = null, detailShell = false) }
+        pendingDetailSeason = null, detailShell = false, detailFailures = read.failures) }
     rememberNavigation()
 }
 
@@ -306,7 +306,7 @@ fun ApplicationController.playTitle(card: Card) {
 }
 
 private fun ApplicationController.showSourceDetail(detail: org.viptv.engine.wire.DetailSnapshot, card: Card, target: Card) {
-    updateState { it.copy(detail = detail.withCardPresentation(card).withOpenedProgress(card), sourceReturnScreen = Screen.Details, sourceTitle = target, detailShell = false) }
+    updateState { it.copy(detail = detail.withCardPresentation(card).withOpenedProgress(card), sourceReturnScreen = Screen.Details, sourceTitle = target, detailShell = false, detailFailures = emptyList()) }
 }
 
 private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Long, reuse: RememberedSource? = null) {
@@ -431,7 +431,7 @@ fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
     val navigation = navigationGeneration
     runPage {
         val detail = readCurrentPage(navigation) { requireNotNull(connection).detail(kind, id) } ?: return@runPage
-        updateState { it.copy(detail = detail) }
+        updateState { it.copy(detail = detail, detailFailures = emptyList()) }
     }
 }
 

@@ -239,7 +239,8 @@ open class RemoteConnection(
         val page = parameters.takeIf { it.isNotEmpty() }?.joinToString("&", prefix = "?") ?: ""
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             val value = call("/api/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page")
-            DetailRead(codec.decodeFromJsonElement<DetailSnapshot>(value), (value as? JsonObject)?.let(::detailFocus))
+            DetailRead(codec.decodeFromJsonElement<DetailSnapshot>(value), (value as? JsonObject)?.let(::detailFocus),
+                codec.decodeFromJsonElement<AddonFailuresBody>(value).failures)
         }
     }
 

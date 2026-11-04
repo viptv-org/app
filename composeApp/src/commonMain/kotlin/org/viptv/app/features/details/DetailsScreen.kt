@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.AddonFailure
 import org.viptv.app.connection.epochMillis
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
@@ -39,10 +40,11 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     sourcePreview: DetailSourcePreview? = null,
     previewSources: ((Card) -> Unit)? = null,
     cancelSourcesPreview: (() -> Unit)? = null,
-    manageAddons: () -> Unit = {}) {
+    manageAddons: () -> Unit = {},
+    failures: List<AddonFailure> = emptyList()) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, chooseSource = chooseSource, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
-            continuing = continuing, shown = paging, playTap = playTap, retry = retry, pageError = pageError, retryPage = retryPage, focus = focus)
+            continuing = continuing, shown = paging, playTap = playTap, retry = retry, pageError = pageError, retryPage = retryPage, focus = focus, failures = failures)
         return
     }
     if (detail == null && busy && !browser) { DetailLoadingLayout(false); return }
@@ -50,8 +52,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         DetailUnavailable(error, back, retry)
         return
     }
-    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons); return }
+    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons, failures = failures); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons, failures = failures); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val airDateNow = remember { epochMillis() }
     val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
@@ -83,7 +85,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             else (if (playTap || focus != null) resume.indexIn(selected?.episodes) else null) ?: focus.episodeIn(selected)
         val resumeIndex = landing?.let { episode ->
             (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 +
-                (if (detail?.failures.orEmpty().isNotEmpty() && !busy && error == null) 1 else 0) +
+                (if (failures.isNotEmpty() && !busy && error == null) 1 else 0) +
                 (if (desktop) 0 else 1) + 1 + episode }
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
         val reveal = rememberContentReveal(!busy)
@@ -102,8 +104,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                             sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
                     } else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved, playFromStart) }
                 }
-                if (value.failures.isNotEmpty() && !busy && error == null) item(key = "addon-failure") {
-                    AddonFailureNotice(value.failures, manageAddons, Modifier.padding(horizontal = gutter, vertical = 4.dp))
+                if (failures.isNotEmpty() && !busy && error == null) item(key = "addon-failure") {
+                    AddonFailureNotice(failures, manageAddons, Modifier.padding(horizontal = gutter, vertical = 4.dp))
                 }
                 when {
                     !busy && error != null -> item(key = "failure") {
