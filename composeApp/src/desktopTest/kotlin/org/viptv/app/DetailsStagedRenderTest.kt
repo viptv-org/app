@@ -75,7 +75,13 @@ class DetailsStagedRenderTest {
                 DetailsScreen(detail, busy, error = null, back = {}, sources = {}, television = television, sourcePreview = sourcePreview)
             }
         } }
-        fun render(frames: Int = 8) = repeat(frames) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render(frames: Int = 8) = repeat(frames) { scene.render(frame++ * 16_666_667L).close() }
+        fun renderUntil(maxFrames: Int = 60, condition: () -> Boolean) {
+            repeat(maxFrames) {
+                scene.render(frame++ * 16_666_667L).close()
+                if (condition()) return
+            }
+        }
         override fun close() = scene.close()
     }
 
@@ -88,7 +94,8 @@ class DetailsStagedRenderTest {
             assertTrue(page.scene.loadingSkeleton(), "the meta-only parts are skeletons during the read")
 
             page.detail = full.withCardPresentation(shell.item); page.busy = false
-            page.render(24)
+            page.renderUntil { page.scene.hasText("Gabby & Friends") && page.scene.shows(longDescription) &&
+                page.scene.shows(castLine) && page.scene.shows("1. Episode 1") && !page.scene.loadingSkeleton() }
 
             assertTrue(page.scene.hasText("Gabby & Friends"), "the title slot never blanks")
             assertTrue(page.scene.shows(metaLine), "the metadata line is not downgraded by the sparser detail")
@@ -98,7 +105,7 @@ class DetailsStagedRenderTest {
             assertFalse(page.scene.loadingSkeleton(), "the skeleton is gone")
 
             page.sourcePreview = preview
-            page.render(12)
+            page.renderUntil { page.scene.mentions("Torrentio · 1 source") }
             assertTrue(page.scene.mentions("Torrentio · 1 source"), "the source summary fills in once")
         }
     }
@@ -109,7 +116,8 @@ class DetailsStagedRenderTest {
             assertTrue(page.scene.hasText("Gabby & Friends"), "the TV shell draws the title")
 
             page.detail = full.withCardPresentation(shell.item); page.busy = false
-            page.render(24)
+            page.renderUntil { page.scene.hasText("Gabby & Friends") && page.scene.shows(longDescription) &&
+                page.scene.shows(castLine) && !page.scene.loadingSkeleton() }
 
             assertTrue(page.scene.hasText("Gabby & Friends"), "the TV title slot never blanks")
             assertTrue(page.scene.shows(longDescription), "the TV description fills in")
