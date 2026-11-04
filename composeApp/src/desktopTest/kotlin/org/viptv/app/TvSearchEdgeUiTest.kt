@@ -173,7 +173,7 @@ class TvSearchEdgeUiTest {
             screen.settle()
             val texts = screen.nodes().flatMap(::texts)
             assertFalse(texts.any { it == "No matching titles" })
-            assertFalse(texts.any { it == "Search movies, series and channels" })
+            assertFalse(texts.any { it == "Search movies and series" })
         }
     }
 

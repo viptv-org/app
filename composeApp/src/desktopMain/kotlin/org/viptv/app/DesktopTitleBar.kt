@@ -128,7 +128,7 @@ internal fun DesktopTitleBar(
                             fontFamily = MaterialTheme.typography.bodyMedium.fontFamily),
                         decorationBox = { inner ->
                             Box {
-                                if (query.isEmpty()) Text("Search movies, series and channels", color = Palette.secondary, fontSize = 13.sp)
+                                if (query.isEmpty()) Text("Search movies and series", color = Palette.secondary, fontSize = 13.sp)
                                 inner()
                             }
                         })
@@ -136,8 +136,6 @@ internal fun DesktopTitleBar(
                         Modifier.size(20.dp), radius = 10.dp, hover = Color(0xFF34343A)) {
                         Icon(Lucide.X, "Clear search", Modifier.size(14.dp), tint = Palette.secondary)
                     }
-                    Text(if (mac) "⌘K" else "Ctrl K", color = Palette.secondary, fontSize = 11.sp,
-                        modifier = Modifier.background(Color(0xFF121214), RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp))
                 }
             }
         }
