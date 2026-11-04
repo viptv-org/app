@@ -33,7 +33,7 @@ class TvSettingsGroupsFocusTest {
         focusManager = LocalFocusManager.current
         SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {},
             { left += "switch profile" }, { left += "leave" }, null,
-            television = true, initialSection = section, tvPreferences = TvSettingsPreferences(), changeTvPreferences = { },
+            television = true, initialSection = section, tvPreferences = TvSettingsPreferences(), changeTvPreferences = { _, _ -> },
             tvProfilePage = { _, _, _, _ -> androidx.compose.material3.Text("profile page") })
     } }
 

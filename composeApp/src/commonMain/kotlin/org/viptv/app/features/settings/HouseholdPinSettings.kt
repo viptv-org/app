@@ -14,6 +14,9 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.connection.ProfileManagement
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.state.PARENT_PIN_TARGET
+import org.viptv.app.state.preferenceTarget
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -50,7 +53,10 @@ internal fun HouseholdPinSettings(snapshot: ProfileManagement?, busy: Boolean, e
         }
         if (error != null && snapshot != null) TextButton(load, enabled = !busy) { Text("Retry") }
     }
-    mode?.let { current -> ParentPinDialog(current, configured, busy, error,
+    val mutations = LocalPendingMutation.current
+    val pinTarget = preferenceTarget(PARENT_PIN_TARGET)
+    mode?.let { current -> ParentPinDialog(current, configured, busy, mutations.failure(pinTarget) ?: error,
         dismiss = { if (!busy) mode = null },
-        submit = { pin0, next -> if (current == "unlock") unlock(pin0) else pin(pin0, next) }) }
+        submit = { pin0, next -> if (current == "unlock") unlock(pin0) else pin(pin0, next) },
+        pending = mutations.isPending(pinTarget)) }
 }
