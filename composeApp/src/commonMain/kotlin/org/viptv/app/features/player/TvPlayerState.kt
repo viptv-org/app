@@ -6,6 +6,8 @@ import org.viptv.app.player.*
 import kotlin.time.TimeSource
 import kotlin.time.Duration.Companion.seconds
 
+internal const val MediaSkipMillis = 10_000L
+
 internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, scene: TvPlayerScene) {
     val live = input?.live == true
     val commands = MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16)
@@ -97,6 +99,13 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     }
     fun commit(preview: ((PlayerCommand) -> Unit)?) {
         scrub?.let { send(PlayerCommand.Seek(it), preview) }; scrub = null
+    }
+    fun skip(deltaMillis: Long, preview: ((PlayerCommand) -> Unit)? = null) {
+        if (live) return
+        val length = duration?.takeIf { it > 0 } ?: return
+        scrub = null
+        reveal()
+        send(PlayerCommand.Seek((position + deltaMillis).coerceIn(0, length)), preview)
     }
     fun skip(range: TvSkipRange, automatic: Boolean, preview: ((PlayerCommand) -> Unit)? = null) {
         if (seekTarget != null) return
