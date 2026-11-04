@@ -213,9 +213,9 @@ fun ApplicationController.navigateForward() {
 }
 
 private fun ApplicationController.returnTo(screen: Screen) {
-    val target = mutable.value.navBack.lastOrNull()?.takeIf { it.screen == screen }
+    val entry = mutable.value.navBack.lastOrNull()?.takeIf { it.screen == screen }
     updateState { current -> current.copy(navBack = if (current.navBack.lastOrNull()?.screen == screen) current.navBack.dropLast(1) else current.navBack) }
-    restoreScreen(target ?: BackEntry(screen))
+    if (entry != null) restoreScreen(entry) else navigate(screen, record = false)
 }
 
 private fun ApplicationController.popHistory() {
