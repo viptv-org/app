@@ -138,7 +138,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         accountRequested = if (!state.localMode) controller::refreshAccountIdentity else null,
         accountDashboard = controller.connection?.accountDashboardUrl?.let { url -> { org.viptv.app.connection.openAccountAuthorization(url) } },
         tvPreferences = state.preferences?.preferences?.tvSettings(),
-        changeTvPreferences = { controller.updatePreferences(it.profilePreferences(state.preferences?.preferences ?: ProfilePreferences())) },
+        changeTvPreferences = { prefs, row -> controller.updatePreferences(prefs.profilePreferences(state.preferences?.preferences ?: ProfilePreferences()), row) },
         parentalBack = if (state.parentTitles != null) controller::closeParentTitles else null,
         parental = {
             if (!state.localMode && state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,

@@ -30,7 +30,7 @@ import org.viptv.app.components.TextButton
 internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection>, enabled: Set<String>, busy: Boolean, error: String?,
     notice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit, profiles: () -> Unit, leave: () -> Unit, profile: Profile?,
     initialSection: TvSettingsSection = TvSettingsSection.Playback, prefs: TvSettingsPreferences? = null,
-    change: ((TvSettingsPreferences) -> Unit)? = null, addonInfo: Map<String, TvAddonInfo> = emptyMap(), account: TvAccountInfo? = null,
+    change: ((TvSettingsPreferences, String) -> Unit)? = null, addonInfo: Map<String, TvAddonInfo> = emptyMap(), account: TvAccountInfo? = null,
     initialLeave: Boolean = false, placeholderQr: Boolean = false, sourceIntegrations: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null, gateways: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null, actualPreferencesOnly: Boolean = false,
     parental: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     accountRequested: (() -> Unit)? = null, accountDashboard: (() -> Unit)? = null,

@@ -24,13 +24,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.rememberTvColumnItem
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float, value: String? = null,
     checked: Boolean? = null, requester: FocusRequester? = null, left: FocusRequester? = null,
-    leading: ImageVector? = null, rowHeight: Int = 96, labelColor: Color? = null, activate: () -> Unit) {
+    leading: ImageVector? = null, rowHeight: Int = 96, labelColor: Color? = null, pending: Boolean = false, activate: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) Palette.background else Palette.text
     val fallback = remember { FocusRequester() }
@@ -57,8 +58,9 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
             subtitle?.let { Text(it, color = if (focused) Color(0xFF4A4945) else Palette.secondary,
                 fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Medium) }
         }
-        if (checked != null) TvSettingsSwitch(checked, scale)
-        if (value != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+        if (pending) MutationSpinner(28.dp, scale = scale, strokeWidth = 3.dp, color = color)
+        else if (checked != null) TvSettingsSwitch(checked, scale)
+        if (!pending && value != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             Text(value, color = if (focused) Color(0xFF4A4945) else Palette.secondary, fontSize = (24 * scale).sp,
                 lineHeight = (30 * scale).sp, fontWeight = FontWeight.Medium)
             Icon(Lucide.ChevronRight, null, Modifier.size(24.dp * scale), if (focused) Palette.background else Palette.secondary)

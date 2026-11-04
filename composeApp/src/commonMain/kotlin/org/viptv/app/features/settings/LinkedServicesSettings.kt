@@ -13,6 +13,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.Button
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.UNLINK_SERVICE_TARGET
+import org.viptv.app.state.preferenceTarget
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.connection.SimklLinkStatus
@@ -23,6 +27,9 @@ internal fun LinkedServicesSettings(status: SimklLinkStatus?, profileName: Strin
     error: String?, load: () -> Unit, link: () -> Unit, unlink: () -> Unit) {
     var confirming by remember { mutableStateOf(false) }
     var awaitingBrowser by remember { mutableStateOf(false) }
+    val mutations = LocalPendingMutation.current
+    val unlinkTarget = preferenceTarget(UNLINK_SERVICE_TARGET)
+    val unlinking = mutations.isPending(unlinkTarget)
     val windowFocused = LocalWindowInfo.current.isWindowFocused
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(windowFocused) {
@@ -47,8 +54,13 @@ internal fun LinkedServicesSettings(status: SimklLinkStatus?, profileName: Strin
                 }
                 if (status?.linked == true) {
                     HorizontalDivider(color = Palette.raised, thickness = 1.dp)
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        OutlinedButton({ confirming = true }, enabled = !busy) { Text("Unlink Simkl") }
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton({ confirming = true }, enabled = !busy && !unlinking) {
+                            if (unlinking) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Unlinking…") }
+                            else Text("Unlink Simkl")
+                        }
                     }
                 } else if (status?.configured == true) {
                     HorizontalDivider(color = Palette.raised, thickness = 1.dp)
@@ -62,10 +74,13 @@ internal fun LinkedServicesSettings(status: SimklLinkStatus?, profileName: Strin
         error?.let { Text(it, color = Palette.danger) }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
     }
-    if (confirming) AlertDialog(onDismissRequest = { if (!busy) confirming = false }, title = { Text("Unlink Simkl?") },
+    if (confirming) AlertDialog(onDismissRequest = { if (!busy && !unlinking) confirming = false }, title = { Text("Unlink Simkl?") },
         text = { Text("This removes the connection for this profile. Your Simkl history is preserved.") },
-        confirmButton = { TextButton({ confirming = false; unlink() }, enabled = !busy) { Text("Unlink", color = Palette.danger) } },
-        dismissButton = { TextButton({ confirming = false }, enabled = !busy) { Text("Cancel") } })
+        confirmButton = { TextButton({ if (!unlinking) { confirming = false; unlink() } }, enabled = !busy && !unlinking) {
+            if (unlinking) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Unlinking…") }
+            else Text("Unlink", color = Palette.danger)
+        } },
+        dismissButton = { TextButton({ confirming = false }, enabled = !busy && !unlinking) { Text("Cancel") } })
 }
 
 private fun linkedServicesNote(status: SimklLinkStatus?, busy: Boolean): String = when {
