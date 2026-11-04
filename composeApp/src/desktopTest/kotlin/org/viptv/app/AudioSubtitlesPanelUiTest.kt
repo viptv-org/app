@@ -78,7 +78,7 @@ class AudioSubtitlesPanelUiTest {
         val scene = scene(390, 844, phone = true, audio = listOf(PlaybackTrack(1, "English · 5.1", true, "en")), subs = subtitles(3))
         try {
             frames(scene); click(scene, "Audio & subtitles"); frames(scene, 20)
-            for (value in listOf("Default audio", "Subtitles", "Language", "Size", "Background", PLAYER_SETTINGS_LINK, "Always", "Default")) {
+            for (value in listOf("Default audio", "Subtitles", "Show subtitles", "Language", "Size", "Background", PLAYER_SETTINGS_LINK, "Always", "Default")) {
                 assertTrue(shows(scene, value), "The phone sheet is missing \"$value\"")
             }
         } finally { scene.close() }

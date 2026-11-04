@@ -158,7 +158,7 @@ private fun SubtitleSettingsColumn(preferences: ProfilePreferences, update: (Pro
     setSize: (Float) -> Unit, setBackground: (String?) -> Unit, modifier: Modifier = Modifier,
     openChoice: (PhonePreferenceField) -> Unit) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        SettingSection("Subtitles") {
+        SettingSection("Show subtitles") {
             SettingsSelectRow(subtitleModeLabel(preferences.subtitleMode, preferences.preferred_audio_language)) { openChoice(PhonePreferenceField.SubtitleMode) }
         }
         SettingSection("Language") {
