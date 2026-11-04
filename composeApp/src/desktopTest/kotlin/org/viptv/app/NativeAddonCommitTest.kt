@@ -44,7 +44,8 @@ class NativeAddonCommitTest {
             controller.installAddon("https://fixture.example/manifest.json", results::add); controller.job!!.join()
             assertEquals(listOf(true), results, "Ancillary native reads must not turn a committed installation into failure")
             assertEquals(1, inventoryReads, "Commit-only adapter must not read inventory")
-            assertEquals("Installed, but inventory could not refresh.", controller.state.value.error)
+            assertEquals("Installed, but inventory could not refresh.",
+                controller.state.value.mutations.failure(MutationTarget(MutationKind.Addon, ADDON_INSTALL_TARGET)))
             val persisted = Json.parseToJsonElement(native.engine.addons()).jsonArray.single().jsonObject
             assertEquals("Committed fixture", persisted.getValue("name").jsonPrimitive.content)
             val id = persisted.getValue("id").jsonPrimitive.content

@@ -57,7 +57,8 @@ fun ApplicationController.replaceXtreamPassword(id: Long, password: String) = ru
     profileConfigurationChanged()
 }
 
-fun ApplicationController.syncXtreamConnection(id: Long) = run {
+fun ApplicationController.syncXtreamConnection(id: Long) = mutate(MutationTarget(MutationKind.Xtream, xtreamTarget(id)),
+    ownsControllerJob = true) {
     val remote = xtreamRemote()
     val owner = generation
     val refresh = remote.syncXtreamConnection(id)
@@ -67,23 +68,38 @@ fun ApplicationController.syncXtreamConnection(id: Long) = run {
     }
 }
 
-fun ApplicationController.setXtreamDefaultLive(id: Long) = run {
-    val remote = xtreamRemote()
-    val owner = generation
-    val selected = remote.setXtreamDefaultLive(id)
-    if (connection === remote && generation == owner) updateState { next ->
-        next.copy(xtreamDefaultLive = selected, xtreamNotice = "Default live playlist saved.")
+fun ApplicationController.setXtreamDefaultLive(id: Long) {
+    val before = mutable.value
+    mutate(MutationTarget(MutationKind.Xtream, xtreamTarget(id)),
+        optimistic = { it.copy(xtreamDefaultLive = id) },
+        revert = { it.copy(xtreamDefaultLive = before.xtreamDefaultLive) },
+        ownsControllerJob = true) {
+        val remote = xtreamRemote()
+        val owner = generation
+        val selected = remote.setXtreamDefaultLive(id)
+        if (connection === remote && generation == owner) updateState { next ->
+            next.copy(xtreamDefaultLive = selected, xtreamNotice = "Default live playlist saved.")
+        }
+        profileConfigurationChanged()
     }
-    profileConfigurationChanged()
 }
 
-fun ApplicationController.deleteXtreamConnection(id: Long) = run {
-    val remote = xtreamRemote()
-    val owner = generation
-    remote.deleteXtreamConnection(id)
-    publishXtreamDefaultLive(remote, owner)
-    if (connection === remote && generation == owner) updateState { next ->
-        next.copy(xtreamConnections = next.xtreamConnections?.filterNot { it.id == id }, xtreamNotice = "Connection removed.")
+fun ApplicationController.deleteXtreamConnection(id: Long) {
+    val before = mutable.value
+    mutate(MutationTarget(MutationKind.Xtream, xtreamTarget(id)),
+        optimistic = { state -> state.copy(xtreamConnections = state.xtreamConnections?.filterNot { it.id == id },
+            xtreamDefaultLive = state.xtreamDefaultLive.takeUnless { it == id }) },
+        revert = { it.copy(xtreamConnections = before.xtreamConnections, xtreamDefaultLive = before.xtreamDefaultLive) },
+        ownsControllerJob = true) {
+        val remote = xtreamRemote()
+        val owner = generation
+        remote.deleteXtreamConnection(id)
+        publishXtreamDefaultLive(remote, owner)
+        if (connection === remote && generation == owner) updateState { next ->
+            next.copy(xtreamConnections = next.xtreamConnections?.filterNot { it.id == id }, xtreamNotice = "Connection removed.")
+        }
+        profileConfigurationChanged()
     }
-    profileConfigurationChanged()
 }
+
+internal fun xtreamTarget(id: Long) = "Xtream connection $id"

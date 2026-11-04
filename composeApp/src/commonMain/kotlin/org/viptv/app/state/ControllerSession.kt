@@ -227,6 +227,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         accountRole = connection?.accountRole ?: "member",
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
     if (switchesProfile) value.selected?.let { startBrowsingConfiguration(it) }
+    value.selected?.let { loadRecentSearches(it) }
     adoptContinuation(value.continuation)
     discardReplacedStremioImport()
     value.library?.let { updateLibrary(it, membership = value.libraryMembership) }

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 
@@ -20,7 +21,10 @@ internal fun AddonInstallForm(address: TextFieldState, busy: Boolean, install: (
         }
         val action: @Composable (Modifier) -> Unit = { modifier ->
             Button(onClick = install, enabled = !busy && address.text.isNotBlank(), modifier = modifier.height(50.dp),
-                shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Install") }
+                shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
+                if (busy) { MutationSpinner(16.dp, color = Palette.background); Spacer(Modifier.width(8.dp)); Text("Installing…") }
+                else Text("Install")
+            }
         }
         if (compact) { field(Modifier.fillMaxWidth()); action(Modifier.fillMaxWidth()) }
         else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { field(Modifier.weight(1f)); action(Modifier) }
