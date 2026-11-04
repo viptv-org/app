@@ -80,7 +80,7 @@ class PlayerSettingsVisitTest {
             }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(testScheduler))
         val controller = ApplicationController(backgroundScope, store)
         controller.connection = remote
         val facts = buildJsonObject { put("platform", "android"); put("can_play_direct", !server.gateway) }

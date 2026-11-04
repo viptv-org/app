@@ -111,7 +111,7 @@ class NextEpisodePreparationTest {
             }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(testScheduler))
         val controller = ApplicationController(this, store)
         controller.connection = remote
         controller.local = local
@@ -378,7 +378,7 @@ class NextEpisodePreparationTest {
             }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(testScheduler))
         val controller = ApplicationController(this, store); controller.connection = remote
         controller.capability = { DeviceCapability() }
         controller.nextEpisodeDeliveryPreparer = NextEpisodeDeliveryPreparer { _, _, _ -> null }

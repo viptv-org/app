@@ -16,6 +16,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
@@ -26,6 +27,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 import kotlinx.serialization.json.*
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.CatalogPage
@@ -59,14 +62,19 @@ internal fun Throwable.searchStreamTimeout(): Throwable? {
 private val nativeSessionGate = Mutex()
 internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
 
+internal fun workerDispatcherFor(context: CoroutineContext): CoroutineDispatcher =
+    (context[ContinuationInterceptor] as? CoroutineDispatcher)
+        ?.takeUnless { it is MainCoroutineDispatcher }
+        ?: Dispatchers.Default
+
 open class RemoteConnection(
     rawOrigin: String,
     private val sessionStore: RemoteSessionStore = remoteSessionStore(),
     client: HttpClient? = null,
     browserMode: Boolean = browserOrigin() != null,
+    internal open val workerDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val codec = Json { ignoreUnknownKeys = true }
-    internal open val workerDispatcher: CoroutineDispatcher get() = Dispatchers.Default
     private val browser = browserMode
     internal val browserSession: Boolean get() = browser
     internal var accountManagementEnabled: Boolean = browser
