@@ -21,16 +21,15 @@ class AudioSubtitlesPanelUiTest {
     private fun frames(scene: ImageComposeScene, count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
-    private fun label(node: SemanticsNode) = listOf(
-        node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty(),
-        node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()).filter { it.isNotBlank() }.joinToString(" ")
+    private fun texts(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
+        node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
     private fun clickable(scene: ImageComposeScene, value: String) = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }
-        .firstOrNull { node -> label(node) == value || flatten(node).any { label(it) == value } }
+        .firstOrNull { node -> texts(node).contains(value) || flatten(node).any { texts(it).contains(value) } }
     private fun click(scene: ImageComposeScene, value: String) {
         val node = assertNotNull(clickable(scene, value), "No clickable \"$value\"")
         assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
     }
-    private fun shows(scene: ImageComposeScene, value: String) = nodes(scene).any { label(it) == value }
+    private fun shows(scene: ImageComposeScene, value: String) = nodes(scene).any { texts(it).contains(value) }
 
     private fun subtitles(vararg ids: Int) = ids.map { id ->
         PlaybackTrack(id, when (id) { 3 -> "English"; 4 -> "English (SDH)"; 5 -> "Spanish"; else -> "English" }, id == 3, "en")

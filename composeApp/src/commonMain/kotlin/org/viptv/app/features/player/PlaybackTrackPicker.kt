@@ -63,9 +63,9 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                     }
                 }
                 if (phone) {
-                    Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        AudioColumn(tracks.audio, select)
-                        SubtitlesColumn(tracks.subtitles, select)
+                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        AudioColumn(tracks.audio, select, scrollable = false)
+                        SubtitlesColumn(tracks.subtitles, select, scrollable = false)
                         SubtitleSettingsColumn(draft, apply, setSize, setBackground) { dialog = it }
                     }
                 } else Row(Modifier.weight(1f, fill = false).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -103,32 +103,51 @@ private fun TrackColumnLabel(text: String, modifier: Modifier = Modifier) =
     Text(text, modifier.padding(horizontal = 12.dp), fontSize = 12.sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
 
 @Composable
-private fun AudioColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier) {
+private fun AudioColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier, scrollable: Boolean = true) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         TrackColumnLabel("Audio")
         if (tracks.size <= 1) {
             Text("Default audio", Modifier.padding(12.dp), fontSize = 14.sp, lineHeight = 20.sp, color = Palette.secondary)
-        } else LazyColumn(topEdgeFade = false) {
-            items(tracks, key = { it.id }) { track ->
-                PlaybackTrackRow(track.label, null, track.selected) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) }
+        } else if (scrollable) {
+            LazyColumn(topEdgeFade = false) {
+                items(tracks, key = { it.id }) { track -> audioRow(track, select) }
             }
+        } else Column { tracks.forEach { track -> audioRow(track, select) } }
+    }
+}
+
+@Composable
+private fun audioRow(track: PlaybackTrack, select: (PlayerCommand.SelectTrack) -> Unit) {
+    PlaybackTrackRow(track.label, null, track.selected) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) }
+}
+
+@Composable
+private fun SubtitlesColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier, scrollable: Boolean = true) {
+    val groups = remember(tracks) { groupSubtitleTracks(tracks) }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        TrackColumnLabel("Subtitles")
+        if (tracks.isEmpty()) {
+            Text("No subtitle tracks available", Modifier.padding(12.dp), fontSize = 12.sp, color = Palette.secondary)
+        } else if (scrollable) {
+            LazyColumn(topEdgeFade = false) {
+                item(key = "off") { offRow(tracks, select) }
+                items(groups, key = { it.ids.joinToString() }) { group -> groupRow(group, select) }
+            }
+        } else Column {
+            offRow(tracks, select)
+            groups.forEach { group -> groupRow(group, select) }
         }
     }
 }
 
 @Composable
-private fun SubtitlesColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit, modifier: Modifier = Modifier) {
-    val groups = remember(tracks) { groupSubtitleTracks(tracks) }
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        TrackColumnLabel("Subtitles")
-        if (tracks.isEmpty()) Text("No subtitle tracks available", Modifier.padding(12.dp), fontSize = 12.sp, color = Palette.secondary)
-        LazyColumn(topEdgeFade = false) {
-            item(key = "off") { PlaybackTrackRow("Off", null, tracks.none { it.selected }) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) } }
-            items(groups, key = { it.ids.joinToString() }) { group ->
-                PlaybackTrackRow(group.primary, group.source, group.selected) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, group.ids.first())) }
-            }
-        }
-    }
+private fun offRow(tracks: List<PlaybackTrack>, select: (PlayerCommand.SelectTrack) -> Unit) {
+    PlaybackTrackRow("Off", null, tracks.none { it.selected }) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) }
+}
+
+@Composable
+private fun groupRow(group: SubtitleGroup, select: (PlayerCommand.SelectTrack) -> Unit) {
+    PlaybackTrackRow(group.primary, group.source, group.selected) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, group.ids.first())) }
 }
 
 @Composable
