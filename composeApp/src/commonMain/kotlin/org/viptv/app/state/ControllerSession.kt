@@ -169,7 +169,7 @@ fun ApplicationController.disconnect() {
     libraryHydration?.cancel(); resetLiveRequests()
     quietJob?.cancel(); quietJob = null; freshness.reset()
     cancelDetailPaging()
-    val stopping = releaseRemotePlayback()
+    val stopping = releasePlaybackSession()
     val priorRemote = connection
     val prior=local
     val finishing=if(completionSeen) progressJob else saveProgress(false, final = true)
@@ -190,7 +190,7 @@ fun ApplicationController.signOut() = run {
     libraryImportRefresh?.cancel()
     calendarReread?.cancel(); calendarReread = null
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
-    releaseRemotePlayback()?.join()
+    releasePlaybackSession()?.join()
     val remote = connection
     val device = local
     remote?.signOut()
@@ -205,7 +205,7 @@ fun ApplicationController.signOut() = run {
 
 internal fun ApplicationController.expireSession(remote: RemoteConnection?, device: LocalConnection?) {
     if (remote == null || connection !== remote || local !== device) return
-    releaseRemotePlayback()
+    releasePlaybackSession()
     resetLiveRequests()
     connection = null
     remote.close()

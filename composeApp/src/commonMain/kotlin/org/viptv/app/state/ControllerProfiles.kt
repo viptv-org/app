@@ -31,7 +31,7 @@ internal fun ApplicationController.beginHomeTransition(profile: String) {
 
 internal suspend fun ApplicationController.openProfile(id: String, pin: String? = null) {
     if (!completionSeen) saveProgress(false, final = true)?.join() else progressJob?.join()
-    releaseRemotePlayback()?.join()
+    releasePlaybackSession()?.join()
     val device = local
     val result = if (device != null) {
         beginHomeTransition(id)

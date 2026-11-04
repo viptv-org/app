@@ -103,6 +103,7 @@ class NextEpisodePreparationTest {
                             server.events += "delete:${path.removePrefix("/api/playback/")}"
                             json("{}")
                         }
+                        path == "/api/auth/logout" && request.method == HttpMethod.Post -> json("{}")
                         path.endsWith("/progress") -> json("{}")
                         else -> json("{}", HttpStatusCode.NotFound)
                     }
@@ -489,5 +490,64 @@ class NextEpisodePreparationTest {
             assertNull(state.playback)
             controller.closePlayer()
         } finally { fixture.close(controller) }
+    }
+
+    private fun TestScope.preparedController(server: PlaybackServer = PlaybackServer()): ApplicationController {
+        val controller = controller(server = server)
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
+        controller.progress(1_300_000); runCurrent()
+        assertEquals(1, server.prepares, "One prepared delivery is admitted")
+        assertNotNull(controller.nextEpisodePreparedLease)
+        return controller
+    }
+
+    private fun TestScope.assertReleasedOnExit(server: PlaybackServer, controller: ApplicationController, exit: () -> Unit) {
+        advanceTimeBy(21_000); runCurrent()
+        val heartbeats = server.heartbeats
+        assertTrue(heartbeats >= 1, "The prepared delivery is heartbeated before the exit")
+        exit()
+        runCurrent()
+        assertTrue("delete:prep-1" in server.events, "The exit releases the prepared delivery")
+        assertNull(controller.nextEpisodePreparedLease)
+        assertNull(controller.nextEpisodePreparationRenewal)
+        assertNull(controller.state.value.nextEpisodePreparation)
+        advanceTimeBy(120_000); runCurrent()
+        assertEquals(heartbeats, server.heartbeats, "No heartbeat renew happens after the exit")
+    }
+
+    @Test fun closingThePlayerReleasesThePreparedDelivery() = runTest {
+        val server = PlaybackServer()
+        val controller = preparedController(server)
+        assertReleasedOnExit(server, controller) { controller.closePlayer() }
+    }
+
+    @Test fun navigatingAwayReleasesThePreparedDelivery() = runTest {
+        val server = PlaybackServer()
+        val controller = preparedController(server)
+        assertReleasedOnExit(server, controller) { controller.navigate(Screen.Home) }
+    }
+
+    @Test fun disconnectingReleasesThePreparedDelivery() = runTest {
+        val server = PlaybackServer()
+        val controller = preparedController(server)
+        assertReleasedOnExit(server, controller) { controller.disconnect() }
+    }
+
+    @Test fun signingOutReleasesThePreparedDelivery() = runTest {
+        val server = PlaybackServer()
+        val controller = preparedController(server)
+        assertReleasedOnExit(server, controller) { controller.signOut() }
+    }
+
+    @Test fun switchingProfileReleasesThePreparedDelivery() = runTest {
+        val server = PlaybackServer()
+        val controller = preparedController(server)
+        assertReleasedOnExit(server, controller) { controller.selectProfile("other") }
+    }
+
+    @Test fun anExpiredSessionReleasesThePreparedDelivery() = runTest {
+        val server = PlaybackServer()
+        val controller = preparedController(server)
+        assertReleasedOnExit(server, controller) { controller.expireSession(requireNotNull(controller.connection), null) }
     }
 }
