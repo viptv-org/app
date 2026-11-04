@@ -37,6 +37,8 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.tvHold
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
@@ -84,7 +86,8 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
                 SourceAudioSubsLine(source, foreground, RowDetailFont, 11.sp, 12.dp, 6.dp, 20.dp, 6.dp, 1.dp, 4.dp)
                 SourceFactsRow(source, addon, foreground, RowDetailFont, 12.dp)
             }
-            if (selected) Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
+            if (source.isPlayPending()) PendingActionSpinner(Modifier.size(22.dp), size = 22.dp, strokeWidth = 2.dp, color = foreground)
+            else if (selected) Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
                 Icon(Lucide.Check, "Selected source", Modifier.size(14.dp), tint = Palette.text)
             }
         }

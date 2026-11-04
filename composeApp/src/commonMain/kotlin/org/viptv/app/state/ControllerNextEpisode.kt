@@ -108,7 +108,7 @@ internal fun loadedNextEpisode(card: Card, detail: DetailSnapshot?): Card? {
     return detail.episodes.getOrNull(index + 1)?.takeIf { index >= 0 && validNextEpisode(card, it) }
 }
 
-private fun validNextEpisode(current: Card, next: Card): Boolean {
+internal fun validNextEpisode(current: Card, next: Card): Boolean {
     val here = current.identity.episode ?: return false
     val there = next.identity.episode ?: return false
     if (next.metadata_origin != current.metadata_origin || next.provider_id != current.provider_id || next.identity.kind != "series" ||

@@ -215,28 +215,6 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
     rememberNavigation()
 }
 
-// A later, sparser meta keeps the first-painted art and never removes the better description.
-internal fun org.viptv.engine.wire.DetailSnapshot.withCardPresentation(card: Card): org.viptv.engine.wire.DetailSnapshot {
-    val merged = item.copy(
-        description = bestDescription(item.description, card.description),
-        landscape = card.landscape ?: item.landscape,
-        poster = card.poster ?: item.poster,
-        logo = card.logo ?: item.logo,
-    )
-    return if (merged == item) this else copy(item = merged)
-}
-
-private fun bestDescription(loaded: String?, card: String?): String? {
-    val loaded = loaded?.takeIf { it.isNotBlank() }
-    val card = card?.takeIf { it.isNotBlank() }
-    return when {
-        loaded == null -> card
-        card == null -> loaded
-        loaded.length > card.length -> loaded
-        else -> card
-    }
-}
-
 internal fun org.viptv.engine.wire.DetailSnapshot.withOpenedProgress(card: Card): org.viptv.engine.wire.DetailSnapshot {
     val progress = card.progress?.takeIf { it > 0.0 && it < 1.0 } ?: return this
     val coordinates = card.identity.episode
@@ -259,6 +237,7 @@ fun ApplicationController.playTitle(card: Card) {
         updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
     }
+    if (!beginPendingPlayback(card)) return
     val navigation = navigationGeneration
     val before = mutable.value
     val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
@@ -312,6 +291,7 @@ private fun ApplicationController.resolveSourceTarget(card: Card, navigation: Lo
 private const val DETAILS_TIMEOUT = "Your server took too long to show this title. Try again."
 
 private fun ApplicationController.resolveFailed(error: Exception, remote: RemoteConnection?, device: LocalConnection?, onSelector: Boolean) {
+    clearPendingAction()
     if (error is RemoteFailure && error.sessionExpired && device == null) { expireSession(remote, device); return }
     val unresolved = (error as? RemoteFailure)?.titleNeedsSearch
     if (unresolved != null) { openTitleSearch(unresolved); return }
@@ -422,6 +402,7 @@ internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boole
         }
         chooseSource(target, startPlayback); return
     }
+    if (!beginPendingPlayback(card)) return
     cancelSourceDetail()
     releaseRemotePlayback()
     val preview = if (startPlayback) null else adoptDetailSourcePreview(card)
@@ -589,7 +570,7 @@ internal fun ApplicationController.beginDetails() {
             ?: previous.detailReturnScreen
         val history = if (previous.screen == Screen.Details) previous.detailHistory + listOfNotNull(previous.detail) else emptyList()
         val navBack = if (previous.screen in listOf(Screen.Details, Screen.Sources, Screen.Player)) previous.navBack
-            else (previous.navBack + previous.screen).takeLast(32)
+            else (previous.navBack + previous.captureBackEntry(previous.screen)).takeLast(32)
         previous.copy(detailReturnScreen = origin, detailHistory = history,
             navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
             screen = Screen.Details, detail = null, detailShell = false, detailFocus = null, calendarEpisode = null)

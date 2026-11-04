@@ -104,7 +104,9 @@ private val LEADING_GROUP = Regex("""^\[\s*([^\[\]]+?)\s*]""")
 private val TRAILING_EXTENSION = Regex("""\.\w{2,5}$""")
 private val TRAILING_GROUP = Regex("""-([A-Za-z][A-Za-z0-9._-]*)$""")
 private val BIT_DEPTH = Regex("""(?i)\b10[ ._-]*bit""")
-private val SEASON_PACK = Regex("""(?i)\(batch\)|\bseason\s*(?:pack|full|complete)\b""")
+private val SEASON_PACK = Regex(
+    """(?i)\[batch]|\(batch\)|"batch"|\bs\d{1,2}\s*[-:.]?\s*complete\b|\bseason\s*\d{1,2}\s*-\s*\d{1,2}\b|\bs\d{1,2}e\d{1,3}\s*-\s*e?\d{1,3}\b|\bseason\s*(?:pack|full|complete)\b"""
+)
 internal const val SEASON_PACK_LABEL = "Season pack"
 private val DEBRID_TAG = Regex("""\[(TB|RD|AD|PM|DL)\s*([^\]]*?)]""")
 private val DEBRID_SERVICES = mapOf(

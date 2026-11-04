@@ -100,12 +100,12 @@ class QuietRefreshTest {
         }
         val time = TestTimeSource()
         controller = controller(server, time, ApplicationState(screen = Screen.Home, selectedProfile = "12", home = shown,
-            navBack = listOf(Screen.Library), searchTerm = "draft"))
+            navBack = listOf(BackEntry(Screen.Library)), searchTerm = "draft"))
         controller.freshen(); controller.settle()
         val state = controller.state.value
         assertEquals(listOf(false), busyDuringBuild, "A background refresh never shows a busy Home")
         assertEquals(listOf("new", "old"), state.home?.rows?.first()?.cards?.map { it.identity.id })
-        assertEquals(Screen.Home, state.screen); assertEquals(listOf(Screen.Library), state.navBack)
+        assertEquals(Screen.Home, state.screen); assertEquals(listOf(Screen.Library), state.navBack.map { it.screen })
         assertEquals("draft", state.searchTerm); assertNull(state.error); assertFalse(state.busy)
         server.paths.clear()
         time += 15.seconds

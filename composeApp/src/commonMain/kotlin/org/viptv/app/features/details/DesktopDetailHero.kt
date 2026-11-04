@@ -30,6 +30,10 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.TitleLogo
+import org.viptv.app.features.home.BufferedArtwork
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 
 @Composable
 internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
@@ -54,7 +58,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
             art?.let { url ->
                 Box(Modifier.width(682.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp))
                     .background(Palette.surface)) {
-                    AsyncImage(url, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    BufferedArtwork(url, Modifier.fillMaxSize())
                 }
             }
         }
@@ -63,12 +67,10 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
 
 @Composable
 private fun DesktopTitleArt(card: Card) {
-    if (card.logo != null) {
-        AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-            Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp), contentScale = ContentScale.Fit,
-            alignment = Alignment.CenterStart)
-    } else Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
-        color = Palette.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp)) {
+        Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
+            color = Palette.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -106,6 +108,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
     val progress = resumeCard?.progress
     val partway = resuming(resumeCard)
     val remaining = if (partway) remainingMinutes(resumeCard ?: card) else null
+    val pending = (resumeCard ?: card).isPlayPending()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Box {
@@ -113,7 +116,8 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 18.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Color(0xFF111113))) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Lucide.Play, null, Modifier.size(15.dp))
+                        if (pending) PendingActionSpinner(Modifier.size(15.dp), size = 15.dp, strokeWidth = 2.dp, color = Color(0xFF111113))
+                        else Icon(Lucide.Play, null, Modifier.size(15.dp))
                         Text(heroPlayLabel(resumeCard),
                             fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (remaining != null) {
