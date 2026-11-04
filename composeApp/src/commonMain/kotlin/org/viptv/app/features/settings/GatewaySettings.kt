@@ -19,6 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.viptv.app.components.Button
+import org.viptv.app.components.InlineMutationError
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.GATEWAY_CHECK_ACTION
+import org.viptv.app.state.GATEWAY_DELETE_ACTION
+import org.viptv.app.state.GATEWAY_ENABLE_ACTION
+import org.viptv.app.state.gatewayGrantTarget
+import org.viptv.app.state.gatewayTarget
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.Switch
 import org.viptv.app.connection.*
@@ -90,6 +98,10 @@ internal fun GatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, Gat
 @Composable
 private fun GatewayCard(gateway: Gateway, checked: GatewayCheck?, busy: Boolean,
     check: () -> Unit, setEnabled: (Boolean) -> Unit, replace: () -> Unit, remove: () -> Unit, grants: () -> Unit) {
+    val mutations = LocalPendingMutation.current
+    val enabling = mutations.isPending(gatewayTarget(gateway.id, GATEWAY_ENABLE_ACTION))
+    val deleting = mutations.isPending(gatewayTarget(gateway.id, GATEWAY_DELETE_ACTION))
+    val checking = mutations.isPending(gatewayTarget(gateway.id, GATEWAY_CHECK_ACTION))
     Surface(color = Palette.surface, shape = RoundedCornerShape(14.dp)) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -97,17 +109,27 @@ private fun GatewayCard(gateway: Gateway, checked: GatewayCheck?, busy: Boolean,
                     Text(gateway.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(if (gateway.can_manage) "Yours" else "Shared with your account", fontSize = 13.sp, color = Palette.secondary)
                 }
-                if (gateway.can_manage) Switch(gateway.enabled, setEnabled, enabled = !busy, modifier = Modifier)
+                if (enabling) MutationSpinner(20.dp, color = Palette.secondary)
+                else if (gateway.can_manage) Switch(gateway.enabled, setEnabled, enabled = !busy, modifier = Modifier)
             }
             Text(gateway.endpoint, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("Namespace ${gateway.namespace} · priority ${gateway.priority} · ${if (gateway.enabled) "Enabled" else "Disabled"}", fontSize = 13.sp, color = Palette.secondary)
             checked?.let { Text(capacityLabel(it), fontSize = 13.sp, color = if (it.ready) Palette.body else Palette.secondary) }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Button(check, enabled = !busy) { Text(if (checked == null) "Check capacity" else "Check again") }
+                Button(check, enabled = !busy && !checking) {
+                    if (checking) { MutationSpinner(16.dp, color = Palette.background); Spacer(Modifier.width(8.dp)); Text("Checking…") }
+                    else Text(if (checked == null) "Check capacity" else "Check again")
+                }
                 if (gateway.can_manage) {
                     TextButton(replace, enabled = !busy) { Text("Replace") }
-                    TextButton(remove, enabled = !busy) { Text("Delete", color = Palette.danger) }
+                    TextButton(remove, enabled = !busy && !deleting) {
+                        if (deleting) { MutationSpinner(16.dp, color = Palette.danger); Spacer(Modifier.width(8.dp)); Text("Deleting…", color = Palette.danger) }
+                        else Text("Delete", color = Palette.danger)
+                    }
                     TextButton(grants, enabled = !busy) { Text("Access", color = Palette.secondary) }
+                }
+                mutations.failure(gatewayTarget(gateway.id, GATEWAY_ENABLE_ACTION))?.let { message ->
+                    InlineMutationError(message, retry = { mutations.retry(gatewayTarget(gateway.id, GATEWAY_ENABLE_ACTION)) })
                 }
             }
         }
@@ -119,6 +141,7 @@ private fun GatewayAccessDialog(gateway: Gateway, grantees: List<Long>?, busy: B
     load: () -> Unit, grant: (Long) -> Unit, revoke: (Long) -> Unit, dismiss: () -> Unit) {
     var accountInput by remember { mutableStateOf("") }
     var revoking by remember { mutableStateOf<Long?>(null) }
+    val mutations = LocalPendingMutation.current
     LaunchedEffect(gateway.id) { load() }
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, containerColor = Palette.surface,
         title = { Text("Access to ${gateway.name}") },
@@ -130,14 +153,21 @@ private fun GatewayAccessDialog(gateway: Gateway, grantees: List<Long>?, busy: B
             ids.forEach { id ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Account $id", Modifier.weight(1f), fontSize = 14.sp, color = Palette.text)
-                    TextButton({ revoking = id }, enabled = !busy) { Text("Revoke", color = Palette.danger) }
+                    val revokingTarget = gatewayTarget(gateway.id, gatewayGrantTarget(id))
+                    if (mutations.isPending(revokingTarget)) MutationSpinner(16.dp, color = Palette.danger)
+                    else TextButton({ revoking = id }, enabled = !busy) { Text("Revoke", color = Palette.danger) }
                 }
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AppTextField(accountInput, { accountInput = it }, Modifier.weight(1f), enabled = !busy,
                     label = "Account ID", onEscape = { if (!busy) dismiss() },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                Button({ accountInput.toLongOrNull()?.let(grant); accountInput = "" }, enabled = !busy && accountInput.toLongOrNull() != null) { Text("Grant") }
+                val grantId = accountInput.toLongOrNull()
+                val granting = grantId != null && mutations.isPending(gatewayTarget(gateway.id, gatewayGrantTarget(grantId)))
+                Button({ grantId?.let(grant); accountInput = "" }, enabled = !busy && grantId != null && !granting) {
+                    if (granting) { MutationSpinner(16.dp, color = Palette.background); Spacer(Modifier.width(8.dp)); Text("Granting…") }
+                    else Text("Grant")
+                }
             }
         } },
         confirmButton = { TextButton(dismiss, enabled = !busy) { Text("Close") } })
