@@ -43,7 +43,7 @@ class ForgotPasswordTest {
 
     private fun verifyDisabled(mobile: Boolean) {
         val scene = ImageComposeScene(if (mobile) 390 else 1280, if (mobile) 844 else 800, Density(1f)) { ViptvTheme {
-            if (mobile) MobilePasswordPanel("", false, null, {}, { _, _, _ -> })
+            if (mobile) MobilePasswordPanel("", false, null, { _, _, _ -> })
             else DesktopPasswordPanel("", false, null, {}, { _, _, _ -> })
         } }
         try {
