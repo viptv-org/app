@@ -102,6 +102,54 @@ fun ApplicationController.searchFilters(filters: Set<String>) = updateState { it
 
 fun ApplicationController.retrySearch() = search(mutable.value.searchTerm, retry = true)
 
+private const val MAX_RECENT_SEARCHES = 8
+private const val MAX_TRENDING_SEARCHES = 5
+
+private fun ApplicationController.recordSearch(term: String) {
+    val normalized = term.trim()
+    if (normalized.isBlank()) return
+    val profile = mutable.value.selectedProfile ?: return
+    val recent = (listOf(normalized) + mutable.value.recentSearches.filterNot { it.equals(normalized, ignoreCase = true) })
+        .take(MAX_RECENT_SEARCHES)
+    updateState { it.copy(recentSearches = recent) }
+    scope.launch {
+        try { sessionStore.saveRecentSearches(profile, recent) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { }
+    }
+}
+
+fun ApplicationController.loadRecentSearches(profile: String) {
+    scope.launch {
+        val recent = try { sessionStore.recentSearches(profile) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { emptyList() }
+        if (mutable.value.selectedProfile == profile && recent.isNotEmpty())
+            updateState { it.copy(recentSearches = recent) }
+    }
+}
+
+fun ApplicationController.clearRecentSearches() {
+    val profile = mutable.value.selectedProfile ?: return
+    updateState { it.copy(recentSearches = emptyList()) }
+    scope.launch {
+        try { sessionStore.saveRecentSearches(profile, emptyList()) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { }
+    }
+}
+
+fun ApplicationController.loadTrendingSearches() {
+    if (mutable.value.trendingSearches.isNotEmpty()) return
+    val titles = mutable.value.home?.rows.orEmpty()
+        .firstOrNull { it.cards.isNotEmpty() }
+        ?.cards.orEmpty()
+        .mapNotNull { it.title.takeIf(String::isNotBlank) }
+        .distinctBy { it.lowercase() }
+        .take(MAX_TRENDING_SEARCHES)
+    if (titles.isNotEmpty()) updateState { it.copy(trendingSearches = titles) }
+}
+
 fun ApplicationController.search(term: String, retry: Boolean = false) {
     if (!retry && term == lastSearchedTerm) return
     val unchanged = term == mutable.value.searchTerm
@@ -121,8 +169,8 @@ fun ApplicationController.search(term: String, retry: Boolean = false) {
         try {
             when {
                 term.isBlank() -> if (session()) updateState { it.copy(results = emptyList(), searchRows = emptyList()) }
-                remote != null -> searchRemote(remote, term, ::session)
-                device != null -> searchLocal(device, requireNotNull(profile), term, ::session)
+                remote != null -> if (session()) { recordSearch(term); searchRemote(remote, term, ::session) }
+                device != null -> if (session()) { recordSearch(term); searchLocal(device, requireNotNull(profile), term, ::session) }
             }
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
@@ -210,7 +258,8 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
     }
     val pendingSeason = mutable.value.pendingDetailSeason
     updateState { it.copy(detail = read.detail.withCardPresentation(card).withOpenedProgress(card),
-        detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus,
+        detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus
+            ?: card.identity.episode?.let { coordinates -> DetailFocus(coordinates.season, coordinates.episode) },
         pendingDetailSeason = null, detailShell = false) }
     rememberNavigation()
 }
@@ -430,25 +479,61 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val device = local
         val remote = connection
         val context = rankingContext(seriesMemoryOf(profile, card), capability)
+        val preferences = mutable.value.preferences?.preferences
+        val heightPreference = preferences?.max_quality_height
+        val heightDevice = context.device.maxHeight
+        val cap = when {
+            heightPreference == null -> heightDevice
+            heightDevice == null -> heightPreference
+            else -> minOf(heightPreference, heightDevice)
+        }
         coroutineScope {
-            var playing = false
-            fun rememberedStart(ranked: RankedSources, target: SourceCandidate) {
-                if (playing || generation != operation || sourcesScrolled) return
-                playing = true
-                startBestMatch(ranked, target)
+            var started = false
+            var openingId: String? = null
+            var graceDeadline = 0L
+
+            fun targetFor(ranked: RankedSources): SourceCandidate? {
+                val remembered = reuse?.let { ranked.matchingSource(it) }
+                if (remembered != null || reuse != null) return remembered
+                val autoplay = startPlayback || preferences?.source_selection == "best"
+                return if (autoplay) ranked.autoplayTarget() else null
             }
-            fun autoplay(ranked: RankedSources) {
-                if (playing || generation != operation || sourcesScrolled) return
-                val target = ranked.autoplayTarget() ?: return
-                if (!startPlayback && mutable.value.preferences?.preferences?.source_selection != "best") return
-                playing = true
-                startBestMatch(ranked, target)
+
+            fun consider(ranked: RankedSources) {
+                if (generation != operation || sourcesScrolled) return
+                val target = targetFor(ranked) ?: return
+                if (reuse != null || startPlayback) {
+                    if (started) return
+                    started = true
+                    startBestMatch(ranked, target)
+                    return
+                }
+                when {
+                    !started -> {
+                        started = true
+                        openingId = target.id
+                        graceDeadline = clockMillis() + PLAY_FIRST_GRACE_MILLIS
+                        openNow(target, ranked)
+                    }
+                    clockMillis() < graceDeadline && mutable.value.playback == null && target.id != openingId -> {
+                        val current = ranked.rows.firstOrNull { it.id == openingId } ?: return
+                        if (!target.clearlyBetterThan(current, cap)) return
+                        openingId = target.id
+                        openNow(target, ranked)
+                    }
+                }
             }
-            fun rememberedMatch(ranked: RankedSources) = reuse?.let { ranked.matchingSource(it) }
+
             val ranking = ProgressiveSourceRanking(this,
                 rank = { rows -> device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
-                show = { ranked -> if (generation == operation) updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups) } },
-                onMatch = { if (reuse == null) autoplay(it) })
+                show = { ranked ->
+                    if (generation != operation) return@ProgressiveSourceRanking
+                    updateState { state ->
+                        val session = state.bestMatch?.takeIf { started }?.copy(ranked = ranked.rows)
+                        state.copy(sources = ranked.rows, sourceGroups = ranked.groups, bestMatch = session)
+                    }
+                    consider(ranked)
+                })
             val observed: (SourcesOutcome) -> Unit = { outcome ->
                 if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
                 ranking.arrived(outcome.candidates)
@@ -459,16 +544,10 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
                 ranking.finish(); throw deadline
             }
             ranking.arrived(outcome.candidates)
-            val ranked = ranking.finish()
+            ranking.finish()
             if (generation != operation) return@coroutineScope
             updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders, sourceProducers = producersLabelled(outcome.producers)) }
-            if (reuse != null) {
-                val match = ranked?.let(::rememberedMatch)
-                if (match != null) rememberedStart(requireNotNull(ranked), match)
-                else updateState { it.copy(screen = Screen.Sources) }
-            } else {
-                ranked?.let(::autoplay)
-            }
+            if (reuse != null && !started) updateState { it.copy(screen = Screen.Sources) }
         }
     } catch (_: TimeoutCancellationException) {
         if (reuse != null) updateState { it.copy(screen = Screen.Sources) }

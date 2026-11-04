@@ -35,6 +35,10 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.features.search.TvSearchKeyboard
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.MutationKind
+import org.viptv.app.state.MutationTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 
@@ -66,10 +70,11 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     contentPadding = PaddingValues(top = tvRingReach(scale), bottom = TvAddonListBottom * scale),
                     verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     itemsIndexed(shown, key = { _, addon -> addon.id }) { index, addon ->
+                        val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
                         TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
                             .focusProperties { left = sidebar }
                             .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
-                            .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy, keepFocus = true,
+                            .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { if (manage) toggle(addon.id, addon.id !in enabled) }) { tint ->
                             AddonLogoTile(logos[addon.id], Modifier.size(60.dp * scale).clip(RoundedCornerShape(14.dp * scale))
@@ -84,7 +89,10 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                                 Text(info[addon.id]?.subtitle ?: if (!addon.enabled) "Disabled for this account" else addon.providesSummary(),
                                     color = tint.copy(alpha = 0.75f), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
-                            if (manage) TvSettingsSwitch(addon.id in enabled, scale)
+                            if (manage) {
+                                if (pending) MutationSpinner(28.dp, scale = scale, strokeWidth = 3.dp, color = tint)
+                                else TvSettingsSwitch(addon.id in enabled, scale)
+                            }
                         }
                     }
                     if (addons.isNotEmpty() && shown.isEmpty()) item(key = "no-matches") {

@@ -217,13 +217,15 @@ fun App(
                                 routes.SaveableStateProvider("${state.selectedProfile}:browse:${current.name}") {
                                     if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
                                     else BrowseScreen(current, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
-                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse)
+                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse, pageError = state.browsePageError)
                                 }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
                                     controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows,
                                     filters = state.searchFilters, filterChanged = controller::searchFilters,
-                                    focusResults = state.searchFocusResults, retry = controller::retrySearch)
+                                    focusResults = state.searchFocusResults, retry = controller::retrySearch,
+                                    recentSearches = state.recentSearches, trendingSearches = state.trendingSearches,
+                                    clearRecents = controller::clearRecentSearches)
                             }
                             // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {

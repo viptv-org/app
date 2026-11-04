@@ -32,7 +32,7 @@ class TvPreferenceRowsUiTest {
     @Test fun playbackStartsOnTheFirstStoredRowAndMovesUpDownAndLeft() = runBlocking {
         val choices = mutableListOf<String>()
         var prefs by mutableStateOf(TvSettingsPreferences())
-        val scene = tvSettings("Playback", { prefs }) { prefs = it; choices += it.hdr }
+        val scene = tvSettings("Playback", { prefs }) { updated, _ -> prefs = updated; choices += updated.hdr }
         try {
             frames(scene)
             val rows = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.map(::text)
@@ -62,7 +62,7 @@ class TvPreferenceRowsUiTest {
 
     @Test fun subtitlesAndAudioIsOneVerticalList() = runBlocking {
         var prefs by mutableStateOf(TvSettingsPreferences(audioLanguage = "French"))
-        val scene = tvSettings("Subtitles & audio", { prefs }) { prefs = it }
+        val scene = tvSettings("Subtitles & audio", { prefs }) { updated, _ -> prefs = updated }
         try {
             frames(scene)
             assertFocused(scene, "Audio language")
@@ -83,7 +83,7 @@ class TvPreferenceRowsUiTest {
 
     private var focusManager: FocusManager? = null
     private fun tvSettings(section: String, current: () -> TvSettingsPreferences = { TvSettingsPreferences() },
-        change: (TvSettingsPreferences) -> Unit) = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
+        change: (TvSettingsPreferences, String) -> Unit) = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
         focusManager = LocalFocusManager.current
         SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {}, television = true,
             initialSection = section, tvPreferences = current(), changeTvPreferences = change)

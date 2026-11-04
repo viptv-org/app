@@ -20,7 +20,6 @@ import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.ListEndFooter
-import org.viptv.app.components.LIST_CHANNELS
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.theme.Palette
 
@@ -104,11 +103,11 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                                 modifier = Modifier.pageAnchor(restore, item.key(), index, target = anchored == index))
                         }
                         if (visible.isNotEmpty() && !busy && pageError != null) item(key = "footer") {
-                            ListEndFooter(failed = true, retry = more, noun = LIST_CHANNELS, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                            ListEndFooter(failed = true, retry = more, noun = "channels", modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         } else if (visible.isNotEmpty() && busy) item(key = "footer") {
-                            ListEndFooter(loading = true, noun = LIST_CHANNELS, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                            ListEndFooter(loading = true, noun = "channels", modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         } else if (visible.isNotEmpty() && !busy && pageError == null && more == null) item(key = "footer") {
-                            ListEndFooter(ended = true, noun = LIST_CHANNELS, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                            ListEndFooter(ended = true, noun = "channels", modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         }
                     }
                 }

@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.Switch
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
@@ -31,6 +33,10 @@ import org.viptv.app.features.entry.AvatarPicker
 import org.viptv.app.features.entry.AvatarPickerLayout
 import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.features.entry.requiresLocalPin
+import org.viptv.app.state.PROFILE_DELETE
+import org.viptv.app.state.PROFILE_PIN
+import org.viptv.app.state.PROFILE_RENAME
+import org.viptv.app.state.profileMutationTarget
 import org.viptv.app.theme.Palette
 
 internal data class ProfilePageValues(
@@ -186,17 +192,21 @@ internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, erro
 @Composable
 internal fun ProfileDialogsContent(dialogs: ProfileDialogs, values: ProfilePageValues, busy: Boolean, error: String?,
     actions: ProfilePageActions, avatarLayout: AvatarPickerLayout) {
+    val mutations = LocalPendingMutation.current
     if (dialogs.name) ProfileNameDialog(values.profile.name, values.pinRequired, busy, error,
-        { if (!busy) dialogs.name = false }) { name, pin -> actions.rename(name, pin) }
+        dismiss = { if (!busy) dialogs.name = false }, save = { name, pin -> actions.rename(name, pin) },
+        pending = mutations.isPending(profileMutationTarget(PROFILE_RENAME)))
     if (dialogs.avatar) AvatarPicker(values.profile, busy, avatarLayout, { if (!busy) dialogs.avatar = false },
         choose = { pick, pin -> actions.avatar(pick, pin) })
     if (dialogs.lock) ProfileLockDialog(values.profile.locked, values.pinRequired, busy, error,
-        { if (!busy) dialogs.lock = false }) { old, next -> actions.lock(old, next) }
+        dismiss = { if (!busy) dialogs.lock = false }, save = { old, next -> actions.lock(old, next) },
+        pending = mutations.isPending(profileMutationTarget(PROFILE_PIN)))
     if (dialogs.maturity) MaturityLimitDialog(values, busy, error,
         { if (!busy) dialogs.maturity = false }) { movie, series, unrated ->
         dialogs.chooseMaturity(MaturitySelection(movie, series, unrated), values, actions) }
     if (dialogs.delete) DeleteProfileDialog(values.profile.name, values.pinRequired, busy, error,
-        { if (!busy) dialogs.delete = false }) { pin -> actions.delete(pin) }
+        dismiss = { if (!busy) dialogs.delete = false }, delete = { pin -> actions.delete(pin) },
+        pending = mutations.isPending(profileMutationTarget(PROFILE_DELETE)))
     if (dialogs.kidsPin) HouseholdPinDialog("Turn on Kids profile", busy, error, { if (!busy) dialogs.kidsPin = false }) { pin ->
         actions.kids(true, pin)
     }
@@ -230,39 +240,44 @@ internal fun ProfileRow(label: String, note: String? = null, value: String? = nu
 
 @Composable
 internal fun ProfileNameDialog(name: String, pinRequired: Boolean, busy: Boolean, failure: String?, dismiss: () -> Unit,
-    save: (String, String) -> Unit) {
+    save: (String, String) -> Unit, pending: Boolean = false) {
+    val blocked = busy || pending
     var typed by remember(name) { mutableStateOf(name) }
     var pin by remember(name) { mutableStateOf("") }
     val valid = typed.isNotBlank() && typed != name && (!pinRequired || pin.length in 4..8)
-    AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Name") },
+    AlertDialog(onDismissRequest = { if (!blocked) dismiss() }, title = { Text("Name") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             AppTextField(typed, { if (it.length <= 64) typed = it }, label = "Name",
-                enabled = !busy, modifier = Modifier.fillMaxWidth(), onEscape = { if (!busy) dismiss() })
-            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !busy, onEscape = { if (!busy) dismiss() })
+                enabled = !blocked, modifier = Modifier.fillMaxWidth(), onEscape = { if (!blocked) dismiss() })
+            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !blocked, onEscape = { if (!blocked) dismiss() })
             failure?.let { Text(it, color = Palette.danger) }
         } },
-        confirmButton = { TextButton({ if (!busy && valid) save(typed, pin) }, enabled = !busy && valid) { Text("Save") } },
-        dismissButton = { TextButton(dismiss, enabled = !busy) { Text("Cancel") } })
+        confirmButton = { TextButton({ if (!blocked && valid) save(typed, pin) }, enabled = !blocked && valid) {
+            if (pending) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Saving…") } else Text("Save")
+        } },
+        dismissButton = { TextButton(dismiss, enabled = !blocked) { Text("Cancel") } })
 }
 
 @Composable
 internal fun ProfileLockDialog(locked: Boolean, pinRequired: Boolean, busy: Boolean, failure: String?, dismiss: () -> Unit,
-    save: (String, String) -> Unit) {
+    save: (String, String) -> Unit, pending: Boolean = false) {
+    val blocked = busy || pending
     var old by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
     val needsOld = pinRequired && locked
     val valid = (!needsOld || old.length in 4..8) && (next.length in 4..8 || (locked && next.isEmpty()))
-    AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text(if (locked) "Change profile PIN" else "Set profile PIN") },
+    AlertDialog(onDismissRequest = { if (!blocked) dismiss() }, title = { Text(if (locked) "Change profile PIN" else "Set profile PIN") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Ask for a PIN before this profile opens.", color = Palette.secondary)
-            if (needsOld) ProfilePinField("Current PIN", old, { old = it }, !busy, onEscape = { if (!busy) dismiss() })
-            ProfilePinField(if (locked) "New PIN (blank removes the lock)" else "New PIN", next, { next = it }, !busy, onEscape = { if (!busy) dismiss() })
+            if (needsOld) ProfilePinField("Current PIN", old, { old = it }, !blocked, onEscape = { if (!blocked) dismiss() })
+            ProfilePinField(if (locked) "New PIN (blank removes the lock)" else "New PIN", next, { next = it }, !blocked, onEscape = { if (!blocked) dismiss() })
             failure?.let { Text(it, color = Palette.danger) }
         } },
-        confirmButton = { TextButton({ if (!busy && valid) save(old, next) }, enabled = !busy && valid) {
-            Text(if (locked && next.isEmpty()) "Remove PIN" else "Save PIN")
+        confirmButton = { TextButton({ if (!blocked && valid) save(old, next) }, enabled = !blocked && valid) {
+            if (pending) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Saving…") }
+            else Text(if (locked && next.isEmpty()) "Remove PIN" else "Save PIN")
         } },
-        dismissButton = { TextButton(dismiss, enabled = !busy) { Text("Cancel") } })
+        dismissButton = { TextButton(dismiss, enabled = !blocked) { Text("Cancel") } })
 }
 
 @Composable
@@ -275,19 +290,21 @@ private fun ProfilePinField(label: String, value: String, change: (String) -> Un
 
 @Composable
 internal fun DeleteProfileDialog(name: String, pinRequired: Boolean, busy: Boolean, failure: String?, dismiss: () -> Unit,
-    delete: (String) -> Unit) {
+    delete: (String) -> Unit, pending: Boolean = false) {
+    val blocked = busy || pending
     var pin by remember(name) { mutableStateOf("") }
     val valid = !pinRequired || pin.length in 4..8
-    AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Delete $name?") },
+    AlertDialog(onDismissRequest = { if (!blocked) dismiss() }, title = { Text("Delete $name?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("This permanently removes this profile’s watch history, favorites and preferences.")
-            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !busy, onEscape = { if (!busy) dismiss() })
+            if (pinRequired) ProfilePinField("Current PIN", pin, { pin = it }, !blocked, onEscape = { if (!blocked) dismiss() })
             failure?.let { Text(it, color = Palette.danger) }
         } },
-        confirmButton = { TextButton({ if (!busy && valid) delete(pin) }, enabled = !busy && valid) {
-            Text("Delete profile", color = Palette.danger)
+        confirmButton = { TextButton({ if (!blocked && valid) delete(pin) }, enabled = !blocked && valid) {
+            if (pending) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Deleting…") }
+            else Text("Delete profile", color = Palette.danger)
         } },
-        dismissButton = { TextButton(dismiss, enabled = !busy) { Text("Cancel") } })
+        dismissButton = { TextButton(dismiss, enabled = !blocked) { Text("Cancel") } })
 }
 
 @Composable

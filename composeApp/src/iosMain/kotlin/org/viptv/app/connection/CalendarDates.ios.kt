@@ -16,11 +16,11 @@ private fun dayString(date: NSDate): String {
     return f.stringFromDate(date)
 }
 
-private fun shifted(days: Int): NSDate {
+private fun shifted(base: NSDate, days: Int): NSDate {
     val calendar = NSCalendar.currentCalendar
     val components = NSDateComponents()
     components.day = days.toLong()
-    return calendar.dateByAddingComponents(components, toDate = NSDate(), options = 0u)!!
+    return calendar.dateByAddingComponents(components, toDate = base, options = 0u)!!
 }
 
 private fun dateFromDayString(value: String): NSDate? {
@@ -32,12 +32,13 @@ private fun dateFromDayString(value: String): NSDate? {
 
 internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
     val now = NSDate()
+    val center = shifted(now, offsetDays)
     val todayId = dayString(now)
     val shortWeekday = NSDateFormatter().apply { dateFormat = "EEE" }
     val longWeekday = NSDateFormatter().apply { dateFormat = "EEEE" }
     val fullDate = NSDateFormatter().apply { dateFormat = "MMM d, yyyy" }
-    val days = (-3..3).map { n ->
-        val d = shifted(offsetDays + n)
+    val days = (-CALENDAR_VISIBLE_DAYS_PER_SIDE..CALENDAR_VISIBLE_DAYS_PER_SIDE).map { n ->
+        val d = shifted(center, n)
         val id = dayString(d)
         CalendarDay(
             id = id,
@@ -47,14 +48,18 @@ internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
             fullDate = fullDate.stringFromDate(d),
         )
     }
+    val range = calendarRequestRange(dayString(center))
     return CalendarWindow(
-        start = days.first().id,
-        end = days.last().id,
+        start = range.start,
+        end = range.end,
         days = days,
     )
 }
 
 internal actual fun calendarLabel(date: String): CalendarLabel? {
+    if (isDateOnly(date)) {
+        return CalendarLabel(date, "All day", date <= dayString(NSDate()))
+    }
     val d = dateFromDayString(date) ?: return null
     val time = NSDateFormatter().apply { dateFormat = "h:mm a" }
     return CalendarLabel(

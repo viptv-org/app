@@ -15,8 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusRestorer
-import org.viptv.app.components.ServerMessages
-import org.viptv.app.components.TvAction
+import org.viptv.app.components.InlineRetryTile
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.graphicsLayer
@@ -33,18 +33,13 @@ import org.viptv.engine.wire.*
 internal const val HOME_ROW_TRAILING = 6
 
 @Composable
-private fun TvRowMessageCard(scale: Float, title: String, message: String?, retry: () -> Unit) {
-    Column(Modifier.width(940.dp * scale).height(169.dp * scale)
+private fun TvRowMessageCard(scale: Float, retry: () -> Unit) {
+    Box(Modifier.width(940.dp * scale).height(169.dp * scale)
         .background(Palette.text.copy(alpha = .05f), androidx.compose.foundation.shape.RoundedCornerShape(12.dp * scale))
         .border(1.dp * scale, Palette.text.copy(alpha = .07f), androidx.compose.foundation.shape.RoundedCornerShape(12.dp * scale))
         .padding(horizontal = 28.dp * scale, vertical = 24.dp * scale),
-        verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-        Text(title, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
-        Text(ServerMessages.human(message, ServerMessages.ROW_FAILURE), color = Palette.secondary,
-            fontSize = (19 * scale).sp, lineHeight = (26 * scale).sp, maxLines = 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-        TvAction(Modifier.height(60.dp * scale).width(180.dp * scale), scale, primary = true,
-            activate = retry) { tint -> Text("Try again", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold) }
+        contentAlignment = Alignment.Center) {
+        InlineRetryTile(retry, Modifier.fillMaxWidth(), television = true, scale = scale)
     }
 }
 
@@ -123,7 +118,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
                             onUp = up)
                     }
                     if (appendError != null) item(key = "row-append", contentType = "failed") {
-                        TvRowMessageCard(scale, "Couldn’t load more titles", appendError, { loadPage.value?.invoke(row.id) })
+                        TvRowMessageCard(scale) { loadPage.value?.invoke(row.id) }
                     } else items(trailing, key = { "append-$it" }, contentType = { "skeleton" }) { TvHomeSkeletonCard(scale, portrait) }
                 }
                 RowState.PENDING -> items(6, contentType = { "skeleton" }) { TvHomeSkeletonCard(scale, portrait) }

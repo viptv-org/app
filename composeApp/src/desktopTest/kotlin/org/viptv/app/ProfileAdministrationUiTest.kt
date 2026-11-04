@@ -41,7 +41,7 @@ class ProfileAdministrationUiTest {
         try{frames(scene);assertTrue(nodes(scene).any{text(it).contains("Select Other in Profiles")});assertFalse(nodes(scene).any{text(it)=="Current PIN"});click(scene,"Choose profile");assertEquals("Subtitles & audio",section);capture(scene,"other-profile-language-guidance")}finally{scene.close()}
     }
     @Test fun existingTvSettingsHonorsAudioSectionEntry(){
-        val scene=ImageComposeScene(1920,1080,Density(1f)){ViptvTheme(true){Surface(Modifier.fillMaxSize(),color=Palette.background){SettingsScreen(false,emptyList(),emptySet(),false,null,null,{}, {_,_->},{},{},{},initialSection="Subtitles & audio",television=true,tvPreferences=TvSettingsPreferences(),changeTvPreferences={})}}}
+        val scene=ImageComposeScene(1920,1080,Density(1f)){ViptvTheme(true){Surface(Modifier.fillMaxSize(),color=Palette.background){SettingsScreen(false,emptyList(),emptySet(),false,null,null,{}, {_,_->},{},{},{},initialSection="Subtitles & audio",television=true,tvPreferences=TvSettingsPreferences(),changeTvPreferences={_,_->})}}}
         try{frames(scene);assertTrue(nodes(scene).any{text(it).startsWith("Audio language")});assertTrue(nodes(scene).any{text(it).startsWith("Subtitle language")});capture(scene,"profile-audio-settings")}finally{scene.close()}
     }
     private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(16){s.render((offset+it)*16_666_667L).close();Thread.sleep(3)}

@@ -11,7 +11,8 @@ import uniffi.viptv_core.SecretStore
 private const val SESSION_KEY = "remote-session-v1"
 private const val LOCAL_CONNECTION = "local-mode-v1"
 private const val NAVIGATION_KEY = "navigation-v1"
-private val navigationCodec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+private const val RECENT_SEARCHES_KEY = "recent-searches-v1"
+private val vaultCodec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
 internal class NativeRemoteSessionStore(private val remembersNavigation: Boolean = false,
     vaultFactory: () -> SecretStore = ::platformSecrets) : RemoteSessionStore {
@@ -39,6 +40,7 @@ internal class NativeRemoteSessionStore(private val remembersNavigation: Boolean
     override suspend fun clear() = withContext(Dispatchers.IO) {
         vault.remove(SESSION_KEY)
         if (remembersNavigation) vault.remove(NAVIGATION_KEY)
+        vault.remove(RECENT_SEARCHES_KEY)
     }
 
     override suspend fun navigation(profile: String): SavedNavigation? {
@@ -53,15 +55,34 @@ internal class NativeRemoteSessionStore(private val remembersNavigation: Boolean
                 val profiles = readNavigationBook().toMutableMap()
                 if (profiles[profile] == record) return@withLock
                 profiles[profile] = record
-                vault.put(NAVIGATION_KEY, navigationCodec.encodeToString(SavedNavigationBook(profiles)))
+                vault.put(NAVIGATION_KEY, vaultCodec.encodeToString(SavedNavigationBook(profiles)))
             }
+        }
+    }
+
+    override suspend fun recentSearches(profile: String): List<String> = withContext(Dispatchers.IO) {
+        navigationGate.withLock { readRecentSearchesBook()[profile].orEmpty() }
+    }
+
+    override suspend fun saveRecentSearches(profile: String, recent: List<String>) = withContext(Dispatchers.IO) {
+        navigationGate.withLock {
+            val profiles = readRecentSearchesBook().toMutableMap()
+            if (profiles[profile] == recent) return@withLock
+            profiles[profile] = recent
+            vault.put(RECENT_SEARCHES_KEY, vaultCodec.encodeToString(SavedRecentSearchesBook(profiles)))
         }
     }
 
     // A newer build may add fields, and a damaged record must not block the next screen.
     private fun readNavigationBook(): Map<String, SavedNavigation> = try {
         vault.get(NAVIGATION_KEY)
-            ?.let { navigationCodec.decodeFromString<SavedNavigationBook>(it).profiles }
+            ?.let { vaultCodec.decodeFromString<SavedNavigationBook>(it).profiles }
+            .orEmpty()
+    } catch (_: Exception) { emptyMap() }
+
+    private fun readRecentSearchesBook(): Map<String, List<String>> = try {
+        vault.get(RECENT_SEARCHES_KEY)
+            ?.let { vaultCodec.decodeFromString<SavedRecentSearchesBook>(it).profiles }
             .orEmpty()
     } catch (_: Exception) { emptyMap() }
 }

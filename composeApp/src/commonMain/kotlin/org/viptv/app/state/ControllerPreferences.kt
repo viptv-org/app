@@ -31,34 +31,34 @@ internal fun ApplicationController.ownsProfile(profile: String, remote: RemoteCo
 
 fun ApplicationController.refreshPreferences() = run { loadPreferences() }
 
-fun ApplicationController.updatePreferences(preferences: ProfilePreferences) = run {
-    val profile = requireNotNull(mutable.value.selectedProfile)
+internal const val PREFERENCES_TARGET = "Profile preferences"
+private const val PREFERENCES_FAILED = "Could not save profile preferences. Try again."
+
+// The row that was changed names the write, so only it draws the pending state and only it drops a repeat press.
+fun ApplicationController.updatePreferences(preferences: ProfilePreferences, target: String = PREFERENCES_TARGET) {
+    val profile = mutable.value.selectedProfile ?: return
     val remote = connection
     val device = local
-    val snapshot = mutable.value.preferences ?: throw LocalFailure("Refresh profile preferences first.")
-    try {
+    val snapshot = mutable.value.preferences ?: return
+    mutate(preferenceTarget(target),
+        optimistic = { it.copy(preferences = it.preferences?.copy(preferences = preferences), preferencesError = null) },
+        revert = { it.withPreferences(snapshot).copy(preferencesError = PREFERENCES_FAILED) },
+        message = { PREFERENCES_FAILED },
+        ownsControllerJob = true) {
         val updated = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
             ?: requireNotNull(remote).updateProfilePreferences(profile, snapshot.revision, preferences)
         if (ownsProfile(profile, remote, device)) {
             cancelNextEpisodePreparation()
             updateState { it.copy(preferences = updated, preferencesError = null) }
         }
-    } catch (error: CancellationException) { throw error }
-    catch (error: RemoteFailure) {
-        if (error.status == 401 && device == null) throw error
-        rejectPreferences(profile, remote, device)
     }
-    catch (_: Exception) { rejectPreferences(profile, remote, device) }
 }
 
-private fun ApplicationController.rejectPreferences(profile: String, remote: RemoteConnection?, device: LocalConnection?) {
-    if (!ownsProfile(profile, remote, device)) return
-    // The server refused the write: republish the last good snapshot so the phone and desktop drafts revert instead of pinning a rejected value.
-    updateState { state ->
-        state.copy(preferencesError = "Could not save profile preferences. Try again.",
-            preferences = state.preferences?.let { saved -> PreferencesSnapshot(saved.revision, saved.preferences.copy()) })
-    }
-}
+internal fun preferenceTarget(target: String) = MutationTarget(MutationKind.Preference, target)
+
+// The last good snapshot is what a refused write puts back, so no rejected value stays pinned in the row.
+internal fun ApplicationState.withPreferences(snapshot: PreferencesSnapshot): ApplicationState =
+    copy(preferences = snapshot.copy(preferences = snapshot.preferences.copy()))
 
 // Not `run {}`: it cancels the controller job and sets `busy`, which must not happen while a player is open.
 fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language: String?) {
@@ -76,43 +76,43 @@ fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language:
     }
     if (updated == current) return
     val profile = mutable.value.selectedProfile ?: return
-    val remote = connection
+    val remote = connection ?: return
     val device = local
-    scope.launch {
-        try {
-            val saved = device?.updateProfilePreferences(profile, snapshot.revision, updated)
-                ?: remote?.updateProfilePreferences(profile, snapshot.revision, updated) ?: return@launch
-            if (ownsProfile(profile, remote, device)) {
-                cancelNextEpisodePreparation()
-                updateState { it.copy(preferences = saved, preferencesError = null) }
-            }
-        } catch (error: CancellationException) { throw error }
-        catch (_: Exception) {
-            if (ownsProfile(profile, remote, device))
-                updateState { it.copy(preferencesError = "Could not save this track choice to the profile.") }
+    val failed = "Could not save this track choice to the profile."
+    mutate(preferenceTarget(if (kind == PlaybackTrackKind.Audio) AUDIO_LANGUAGE_TARGET else SUBTITLE_LANGUAGE_TARGET),
+        optimistic = { it.copy(preferences = it.preferences?.copy(preferences = updated), preferencesError = null) },
+        revert = { it.withPreferences(snapshot).copy(preferencesError = failed) },
+        message = { failed }) {
+        val saved = device?.updateProfilePreferences(profile, snapshot.revision, updated)
+            ?: remote.updateProfilePreferences(profile, snapshot.revision, updated)
+        if (ownsProfile(profile, remote, device)) {
+            cancelNextEpisodePreparation()
+            updateState { it.copy(preferences = saved, preferencesError = null) }
         }
     }
 }
+
+internal const val AUDIO_LANGUAGE_TARGET = "Audio language"
+internal const val SUBTITLE_LANGUAGE_TARGET = "Subtitle language"
+internal const val PLAYER_SETTINGS_TARGET = "Player settings"
 
 // Inline player settings save to the profile without closing or reopening the player, like a track choice.
 fun ApplicationController.savePlaybackPreferences(preferences: ProfilePreferences) {
     val snapshot = mutable.value.preferences ?: return
     if (preferences == snapshot.preferences) return
     val profile = mutable.value.selectedProfile ?: return
-    val remote = connection
+    val remote = connection ?: return
     val device = local
-    scope.launch {
-        try {
-            val saved = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
-                ?: remote?.updateProfilePreferences(profile, snapshot.revision, preferences) ?: return@launch
-            if (ownsProfile(profile, remote, device)) {
-                cancelNextEpisodePreparation()
-                updateState { it.copy(preferences = saved, preferencesError = null) }
-            }
-        } catch (error: CancellationException) { throw error }
-        catch (_: Exception) {
-            if (ownsProfile(profile, remote, device))
-                updateState { it.copy(preferencesError = "Could not save this subtitle setting to the profile.") }
+    val failed = "Could not save this subtitle setting to the profile."
+    mutate(preferenceTarget(PLAYER_SETTINGS_TARGET),
+        optimistic = { it.copy(preferences = it.preferences?.copy(preferences = preferences), preferencesError = null) },
+        revert = { it.withPreferences(snapshot).copy(preferencesError = failed) },
+        message = { failed }) {
+        val saved = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
+            ?: remote.updateProfilePreferences(profile, snapshot.revision, preferences)
+        if (ownsProfile(profile, remote, device)) {
+            cancelNextEpisodePreparation()
+            updateState { it.copy(preferences = saved, preferencesError = null) }
         }
     }
 }

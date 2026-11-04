@@ -94,7 +94,10 @@ class PhoneAddonSettingsUiTest {
             assertFalse(nodes(scene).any { text(it).contains("Valid add-on") })
             click(scene, "Install"); frames(scene)
             assertEquals(listOf("https://fixture.invalid/manifest.json"), requests)
-            assertTrue(visibleAction(scene, "Install").config.contains(SemanticsProperties.Disabled))
+            // The pressed control carries the pending state, so it offers no second Install and cannot be closed over.
+            assertTrue(visibleAction(scene, "Installing…").config.contains(SemanticsProperties.Disabled),
+                "the install control draws its own pending state")
+            assertTrue(actions(scene, "Install").isEmpty(), "a pending install offers no Install action to press again")
             assertTrue(descriptionAction(scene, "Close add-on form").config.contains(SemanticsProperties.Disabled))
             busy = false; error = "The add-on could not be installed. Check the manifest and secure storage."; frames(scene)
             assertTrue(nodes(scene).any { text(it) == error })

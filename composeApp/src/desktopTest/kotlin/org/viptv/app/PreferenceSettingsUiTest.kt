@@ -27,7 +27,7 @@ class PreferenceSettingsUiTest {
         var retried = 0; var changed = 0
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
             SettingsScreen(false, emptyList(), emptySet(), busy, null, null, {}, { _, _ -> }, {}, {}, {}, television = true,
-                tvPreferences = preferences, changeTvPreferences = { changed++ }, preferencesError = error,
+                tvPreferences = preferences, changeTvPreferences = { _, _ -> changed++ }, preferencesError = error,
                 retryPreferences = { retried++; busy = true })
         } }
         try {

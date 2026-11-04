@@ -1,7 +1,6 @@
 package org.viptv.app.features.search
 
 import org.viptv.app.components.responseSpec
-import org.viptv.app.components.edgeToEdgeScroll
 import org.viptv.app.components.FocusLazyVerticalGrid as LazyVerticalGrid
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
@@ -10,11 +9,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed as rowItemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,10 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.listItemEntrance
@@ -42,7 +47,9 @@ import org.viptv.app.components.pointerClickable
 fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean, error: String?, desktop: Boolean,
     query: (String) -> Unit, open: (Card) -> Unit, television: Boolean = false, editQuery: ((String) -> String) -> Unit,
     searchRows: List<SearchResultRow> = emptyList(), filters: Set<String> = emptySet(), filterChanged: (Set<String>) -> Unit = {},
-    focusResults: Boolean = false, retry: (() -> Unit)? = null) {
+    focusResults: Boolean = false, retry: (() -> Unit)? = null,
+    recentSearches: List<String> = emptyList(), trendingSearches: List<String> = emptyList(),
+    clearRecents: () -> Unit = {}) {
     if (television) {
         TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows, focusResults = focusResults,
             retry = retry)
@@ -61,9 +68,9 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             Modifier.padding(horizontal = gutter),
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
         if (!desktop) Box(Modifier.fillMaxWidth().padding(horizontal = gutter)) { SearchField(term, query) }
-        org.viptv.app.components.TvFocusScroll(horizontal = true) { Row(Modifier.fillMaxWidth().edgeToEdgeScroll(rememberScrollState(), gutter),
+        LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = gutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            searchFilterOptions.forEach { tab ->
+            items(searchFilterOptions) { tab ->
                 val active = if (tab == "All") filters.isEmpty() else tab in filters
                 val interactions = remember { MutableInteractionSource() }
                 val hovered by interactions.collectIsHoveredAsState()
@@ -80,9 +87,9 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     color = if (active) Palette.background else Palette.text,
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
-        } }
+        }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
-        error?.let { message ->
+        if (!hasResults) error?.let { message ->
             Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(message, Modifier.weight(1f, fill = false), color = Palette.danger)
                 if (retry != null) Text("Try again", Modifier
@@ -93,7 +100,15 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         }
         if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows), Modifier.padding(horizontal = gutter), color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        if (searchRows.isNotEmpty() || groups.size > 1) {
+        val footer: (@Composable (Modifier) -> Unit)? = when {
+            !busy && error != null && hasResults -> { { ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
+            busy && hasResults -> { { ListEndFooter(loading = true, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
+            !busy && error == null && hasResults -> { { ListEndFooter(ended = true, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
+            else -> null
+        }
+        if (term.isBlank() && !busy && error == null) {
+            SearchIdle(recentSearches, trendingSearches, gutter, query, clearRecents, Modifier.weight(1f))
+        } else if (searchRows.isNotEmpty() || groups.size > 1) {
             val column = rememberLazyListState()
             val anchorGroup = remember(restore.lastKey, groups) {
                 groups.indexOfFirst { group -> group.cards.any { searchCardKey(it) == restore.lastKey } }
@@ -121,6 +136,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                         }
                     }
                 }
+                footer?.let { render -> item(key = "footer") { render(Modifier.fillMaxWidth().padding(horizontal = gutter)) } }
             }
         } else {
             val grid = rememberLazyGridState()
@@ -133,8 +149,40 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                         open = { restore.mark(key, index); open(it) },
                         modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                 }
+                footer?.let { render -> item(span = { GridItemSpan(maxLineSpan) }, key = "footer") { render(Modifier.fillMaxWidth()) } }
             }
         }
     }
 }
+}
+
+@Composable
+private fun SearchIdle(recent: List<String>, trending: List<String>, gutter: Dp, query: (String) -> Unit,
+    clearRecents: () -> Unit, modifier: Modifier) {
+    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).pageBottomClearance().padding(horizontal = gutter), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (recent.isNotEmpty()) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Recent", color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.weight(1f))
+                Text("Clear", Modifier.pointerClickable(onClickLabel = "Clear", shape = RoundedCornerShape(8.dp), hover = null) { clearRecents() }
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                    color = Palette.accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+            recent.forEach { SearchTermRow(it, query) }
+        }
+        if (trending.isNotEmpty()) {
+            if (recent.isNotEmpty()) Spacer(Modifier.height(16.dp))
+            Text("Trending searches", color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            trending.forEach { SearchTermRow(it, query) }
+        }
+    }
+}
+
+@Composable
+private fun SearchTermRow(term: String, run: (String) -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    Text(term, Modifier.fillMaxWidth()
+        .pointerClickable(interactionSource = interaction, onClickLabel = term, shape = RoundedCornerShape(8.dp), hover = null, onClick = { run(term) })
+        .padding(vertical = 6.dp),
+        color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
 }

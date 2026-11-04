@@ -24,6 +24,8 @@ import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -32,7 +34,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     lastWatched: Map<String, Long> = emptyMap(), snapshot: org.viptv.engine.wire.LibrarySnapshot? = null,
     query: org.viptv.engine.wire.LibraryQuery = org.viptv.app.connection.defaultLibraryQuery(),
     changeQuery: (org.viptv.engine.wire.LibraryQuery) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, error: String? = null,
-    remove: ((Card) -> Unit)? = null, retry: () -> Unit = {}) {
+    remove: ((Card) -> Unit)? = null, retry: () -> Unit = {}, pageError: String? = null) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     var filter by remember { mutableStateOf("All") }
     var sort by remember { mutableStateOf(if (lastWatched.isEmpty()) "Date added" else "Last watched") }
@@ -67,7 +69,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                     else LibraryControls(filter, { filter = it }, sort, { sort = it }, watchedAvailable = lastWatched.isNotEmpty(), down = gridFocus)
                 }
                 Spacer(Modifier.height(32.dp * scale))
-                if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                if (busy && visible.isEmpty()) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                 if (!failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let {
                     Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp)
                 }
@@ -91,6 +93,13 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                                     if (index < 7) up = selectedFilter
                                     if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                                 }, { lastFocused = it }, { restore.mark(key, index); open(it) }, focusedCaptions = true)
+                        }
+                        if (visible.isNotEmpty() && !busy && pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(failed = true, retry = more ?: retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                        } else if (visible.isNotEmpty() && busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                        } else if (visible.isNotEmpty() && !busy && pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         }
                     }
                     if (remove != null) Row(Modifier.fillMaxWidth().padding(bottom = 96.dp * scale),

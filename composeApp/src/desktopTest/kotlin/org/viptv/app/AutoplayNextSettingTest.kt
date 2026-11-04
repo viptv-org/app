@@ -78,7 +78,7 @@ class AutoplayNextSettingTest {
         val store = MemoryStore()
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
             SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {}, television = true,
-                tvPreferences = TvSettingsPreferences(), changeTvPreferences = {}, tvDevicePlayback = remember { DevicePlaybackState(store) })
+                tvPreferences = TvSettingsPreferences(), changeTvPreferences = { _, _ -> }, tvDevicePlayback = remember { DevicePlaybackState(store) })
         } }
         try {
             frames(scene)

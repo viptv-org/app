@@ -25,6 +25,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.BrandMark
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.TextButton
+import org.viptv.app.connection.openAccountAuthorization
 
 internal enum class SignInStep { Choice, Password, Browser, Device }
 
@@ -39,10 +40,11 @@ internal fun DesktopSignIn(
     startPairing: ((String) -> Unit)? = null,
     cancelPairing: () -> Unit = {},
     backChanged: ((() -> Unit)?) -> Unit = {},
-    retry: (() -> Unit)? = null,
+    retry: (() -> Unit)? = null, openRegister: (String) -> Unit = { address -> if (address.isNotBlank()) runCatching { openAccountAuthorization(address) } },
 ) {
     var step by remember { mutableStateOf(SignInStep.Choice) }
     var server by remember(origin) { mutableStateOf(origin) }
+    var accountEntryServer by remember { mutableStateOf(false) }
     val back = { step = SignInStep.Choice }
     DisposableEffect(step) {
         backChanged(if (step == SignInStep.Choice) null else back)
@@ -67,6 +69,9 @@ internal fun DesktopSignIn(
                     SignInChoice(SignInMethod.Browser, "Continue in browser", "Approve this sign-in through your server") { step = SignInStep.Browser }
                     SignInChoice(SignInMethod.Password, "Use a password") { step = SignInStep.Password }
                     SignInChoice(SignInMethod.Device, "Use another device", "Scan a code and approve this sign-in") { step = SignInStep.Device }
+                    SignInChoice(SignInMethod.Account, "Create account", "Open your server’s web sign-in page") {
+                        if (server.isNotBlank()) runCatching { openRegister(server) } else accountEntryServer = true
+                    }
                     if (local != null) SignInChoice(SignInMethod.Local, "Use without an account", "Everything stays on this device", last = true, activate = local)
                 }
                 SignInStep.Password -> DesktopPasswordPanel(server, busy, error, back,
@@ -81,6 +86,9 @@ internal fun DesktopSignIn(
             }
         }
     }
+    if (accountEntryServer) ServerAddressDialog(server,
+        onConfirm = { server = it; accountEntryServer = false; runCatching { openRegister(it) } },
+        onDismiss = { accountEntryServer = false })
 }
 
 @Composable

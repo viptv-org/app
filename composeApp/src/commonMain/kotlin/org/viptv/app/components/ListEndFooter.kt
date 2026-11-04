@@ -22,7 +22,6 @@ internal const val LIST_END_COPY = "You’ve reached the end."
 internal const val LIST_LOAD_MORE_COPY = "Couldn’t load more"
 internal const val LIST_RETRY_COPY = "Retry"
 internal const val LIST_TITLES = "titles"
-internal const val LIST_CHANNELS = "channels"
 
 private fun loadingCopy(noun: String) = "Loading more $noun…"
 

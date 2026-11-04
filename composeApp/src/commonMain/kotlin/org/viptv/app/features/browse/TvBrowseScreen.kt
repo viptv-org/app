@@ -23,6 +23,8 @@ import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvRequestedFocus
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
@@ -36,7 +38,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     controls: DiscoveryControls? = null, query: BrowseQuery = BrowseQuery("movie"),
     filterChanged: (String, String) -> Unit = { _, _ -> }, multipleChanged: (String, List<String>) -> Unit = { _, _ -> },
     more: (() -> Unit)? = null, error: String? = null, applyQuery: (BrowseQuery) -> Unit = {},
-    retry: (() -> Unit)? = null) {
+    retry: (() -> Unit)? = null, pageError: String? = null) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val selected = remember(cards) { cards.distinctBy(::cardLookupKey) }
     val restore = rememberPageRestore("browse")
@@ -87,6 +89,13 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                                             if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                                         },
                                     {}, { restore.mark(key, index); open(it) }, focusedCaptions = true)
+                            }
+                            if (selected.isNotEmpty() && !busy && pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                                ListEndFooter(failed = true, retry = more, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                            } else if (selected.isNotEmpty() && busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                                ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                            } else if (selected.isNotEmpty() && !busy && pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                                ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                             }
                         }
                     }
