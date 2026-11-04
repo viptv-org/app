@@ -13,10 +13,12 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
+import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.TextButton
 
 @Composable
 fun ProfilePinScreen(profile: Profile?, compact: Boolean, busy: Boolean, error: String?, submit: (String) -> Unit, back: () -> Unit, television: Boolean = false, leaving: Boolean = false) {
+    SecureWindow()
     var pin by remember(profile?.id) { mutableStateOf("") }
     if (television) {
         TvPinScreen(profile, pin, busy, error, { if (pin.length < 8) pin += it }, { pin = pin.dropLast(1) },

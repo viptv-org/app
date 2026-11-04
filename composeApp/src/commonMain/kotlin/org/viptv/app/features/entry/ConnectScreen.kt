@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.components.Brand
 import org.viptv.app.components.CredentialFields
 import org.viptv.app.components.CredentialForm
+import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.TextButton
 import org.viptv.app.theme.Palette
 
@@ -18,6 +19,7 @@ fun ConnectScreen(browser: Boolean, origin: String, busy: Boolean, error: String
     pairing: org.viptv.app.connection.DevicePairingDisplay? = null, startPairing: ((String) -> Unit)? = null,
     cancelPairing: () -> Unit = {},
     register: ((String, String, String) -> Unit)? = null, recover: ((String, String, String) -> Unit)? = null, retry: (() -> Unit)? = null) {
+    SecureWindow()
     if (television) {
         TvSignIn(origin, busy, error, local, connect, backChanged, remotePairing = pairing, startPairing = startPairing, cancelPairing = cancelPairing, retry = retry)
         return

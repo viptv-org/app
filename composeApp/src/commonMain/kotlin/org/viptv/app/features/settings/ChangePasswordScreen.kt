@@ -13,6 +13,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.viptv.app.components.CredentialFields
 import org.viptv.app.components.CredentialForm
+import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.connection.RemoteConnection
 import org.viptv.app.connection.RemoteFailure
@@ -27,6 +28,7 @@ internal const val passwordFailedMessage = "Could not change your password. Try 
 
 @Composable
 internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, changed: () -> Unit, compact: Boolean = false) {
+    SecureWindow()
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }

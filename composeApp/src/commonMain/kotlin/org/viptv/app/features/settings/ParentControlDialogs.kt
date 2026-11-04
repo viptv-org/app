@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.Switch
 import org.viptv.app.components.FilterChip
@@ -26,6 +27,7 @@ import org.viptv.app.components.TvFocusScroll
 @Composable
 internal fun ParentPinDialog(mode: String, configured: Boolean, busy: Boolean, failure: String?, dismiss: () -> Unit,
     submit: (String, String) -> Unit) {
+    SecureWindow(dialog = true)
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }
@@ -65,6 +67,7 @@ private fun ParentPinField(label: String, value: String, change: (String) -> Uni
 @Composable
 internal fun LeavePinDialog(profileName: String, configured: Boolean, busy: Boolean, failure: String?,
     dismiss: () -> Unit, submit: (String, String) -> Unit) {
+    SecureWindow(dialog = true)
     var current by remember { mutableStateOf("") }
     var next by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }
