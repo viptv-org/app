@@ -57,6 +57,9 @@ internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
 }
 
 internal actual fun calendarLabel(date: String): CalendarLabel? {
+    if (isDateOnly(date)) {
+        return CalendarLabel(date, "All day", date <= dayString(NSDate()))
+    }
     val d = dateFromDayString(date) ?: return null
     val time = NSDateFormatter().apply { dateFormat = "h:mm a" }
     return CalendarLabel(

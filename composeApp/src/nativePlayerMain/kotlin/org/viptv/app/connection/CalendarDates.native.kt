@@ -24,6 +24,11 @@ internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
     return CalendarWindow(range.start, range.end, days)
 }
 internal actual fun calendarLabel(date: String): CalendarLabel? = runCatching {
+    if (isDateOnly(date)) {
+        val day = LocalDate.parse(date)
+        val today = LocalDate.now(clock())
+        return@runCatching CalendarLabel(day.toString(), "All day", !day.isAfter(today))
+    }
     val instant = Instant.parse(date)
     val clock = clock()
     val local = instant.atZone(clock.zone)

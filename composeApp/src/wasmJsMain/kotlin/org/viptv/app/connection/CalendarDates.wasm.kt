@@ -26,6 +26,13 @@ internal actual fun calendarLabel(date: String): CalendarLabel? {
 }""")
 private external fun calendarWindowJson(offsetDays: Int): String
 @JsFun("""(value) => {
+ const plain = /^\d{4}-\d{2}-\d{2}$/.test(value);
+ if (plain) {
+  const parts = value.split('-').map(Number), d = new Date(parts[0], parts[1]-1, parts[2]);
+  const id = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+  const now = new Date();
+  return JSON.stringify({day:id(d), time:'All day', aired:id(d)<=id(now)});
+ }
  const d=new Date(value); if(!Number.isFinite(d.getTime())) return 'null';
  const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  return JSON.stringify({day,time:d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}),aired:d.getTime()<Date.now()});

@@ -33,10 +33,10 @@ internal fun episodeUpcoming(card: Card, lastReleased: Card?, nowMillis: Long): 
     return lastReleased != null && EPISODE_ORDER.compare(card, lastReleased) > 0
 }
 
-internal fun Card.episodeDateText(): String? = released_at_millis?.let(::airDateWithYearLabel)
+internal fun Card.episodeDateText(): String? = released_at_millis?.let { airDateWithYearLabel(it, released_at_date) }
 
 internal fun Card.episodeUpcomingText(): String =
-    released_at_millis?.let { "$EPISODE_UPCOMING_LABEL · Airs ${airDateLabel(it)}" }
+    released_at_millis?.let { "$EPISODE_UPCOMING_LABEL · Airs ${airDateLabel(it, released_at_date)}" }
         ?: EPISODE_UPCOMING_LABEL
 
 @Composable

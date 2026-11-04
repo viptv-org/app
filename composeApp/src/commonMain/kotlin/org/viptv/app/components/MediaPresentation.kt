@@ -43,7 +43,7 @@ internal fun Card.caughtUpCaption(): String? =
     identity.episode?.takeIf { isCaughtUp() }?.let { "${it.caption()} · $WATCHED_BADGE" }
 
 internal fun NextEpisode.caughtUpNextCaption(): String? = identity.episode?.let { episode ->
-    released_at_millis?.let { "${episode.caption()} · ${airDateLabel(it)}" } ?: "${episode.caption()} coming soon"
+    released_at_millis?.let { "${episode.caption()} · ${airDateLabel(it, released_at_date)}" } ?: "${episode.caption()} coming soon"
 }
 
 internal fun Card.cardChip(): String? = newEpisodesBadge() ?: badges.firstOrNull { !it.equals("Simkl", true) && !it.equals(WATCHED_BADGE, true) }
